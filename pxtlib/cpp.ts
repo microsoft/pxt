@@ -38,6 +38,7 @@ namespace pxt {
     }
 }
 
+// preprocess C++ file to find functions exposed to pxt
 namespace pxt.cpp {
     import U = pxtc.Util;
     let lf = U.lf;
@@ -126,6 +127,7 @@ namespace pxt.cpp {
     export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
         let pkgSnapshot: Map<string> = {}
         let constsName = "dal.d.ts"
+        let sourcePath = "/source/"
 
         for (let pkg of mainPkg.sortedDeps()) {
             pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
@@ -137,6 +139,15 @@ namespace pxt.cpp {
         }
 
         pxt.debug("Generating new extinfo")
+
+        let isPlatformio = false;
+        if (pxt.appTarget.compileService && pxt.appTarget.compileService.platformioIni) {
+            isPlatformio = true
+        }
+
+        if (isPlatformio) {
+            sourcePath = "/src/"
+        }
 
         let res = pxtc.emptyExtInfo();
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -189,6 +200,9 @@ namespace pxt.cpp {
             let currAttrs = ""
             let inDocComment = false
 
+            // replace #if 0 .... #endif with newlines
+            src = src.replace(/^\s*#\s*if\s+0\s*$[^]*?^\s*#\s*endif\s*$/mg, f => f.replace(/[^\n]/g, ""))
+
             function interfaceName() {
                 let n = currNs.replace(/Methods$/, "")
                 if (n == currNs) return null
@@ -197,10 +211,11 @@ namespace pxt.cpp {
 
             lineNo = 0
 
+            // the C++ types we can map to TypeScript
             function mapType(tp: string) {
                 switch (tp.replace(/\s+/g, "")) {
                     case "void": return "void";
-
+                    // TODO: need int16_t
                     case "int32_t":
                     case "uint32_t":
                     case "int": return "number";
@@ -436,7 +451,10 @@ namespace pxt.cpp {
                         protos.write(`${retTp} ${funName}(${origArgs});`)
                     }
                     res.functions.push(fi)
-                    pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
+                    if (isPlatformio)
+                        pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
+                    else
+                        pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
                     return;
                 }
 
@@ -455,6 +473,11 @@ namespace pxt.cpp {
         let settingSrc: Map<Package> = {}
 
         function parseJson(pkg: Package) {
+            let j0 = pkg.config.platformio
+            if (j0 && j0.dependencies) {
+                U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
+            }
+
             let json = pkg.config.yotta
             if (!json) return;
 
@@ -487,11 +510,13 @@ namespace pxt.cpp {
 
 
         // This is overridden on the build server, but we need it for command line build
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-            U.assert(!!pxt.appTarget.compileService.yottaCorePackage);
-            U.assert(!!pxt.appTarget.compileService.githubCorePackage);
-            U.assert(!!pxt.appTarget.compileService.gittag);
-            res.yotta.dependencies[pxt.appTarget.compileService.yottaCorePackage] = pxt.appTarget.compileService.githubCorePackage + "#" + compileService.gittag;
+        if (!isPlatformio && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+            let cs = pxt.appTarget.compileService
+            U.assert(!!cs.yottaCorePackage);
+            U.assert(!!cs.githubCorePackage);
+            U.assert(!!cs.gittag);
+            let tagged = cs.githubCorePackage + "#" + compileService.gittag
+            res.yotta.dependencies[cs.yottaCorePackage] = tagged;
         }
 
         if (mainPkg) {
@@ -513,13 +538,15 @@ namespace pxt.cpp {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
                         let fullName = pkg.config.name + "/" + fn
+                        if (pkg.config.name == "core" && isHeader)
+                            fullName = fn
                         if (isHeader)
-                            includesInc += `#include "source/${fullName}"\n`
+                            includesInc += `#include "${isPlatformio ? "" : sourcePath.slice(1)}${fullName}"\n`
                         let src = pkg.readFile(fn)
                         fileName = fullName
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         src = parseCpp(src, isHeader)
-                        res.extensionFiles["/source/" + fullName] = src
+                        res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)
                             res.onlyPublic = false
@@ -538,26 +565,42 @@ namespace pxt.cpp {
 
         res.yotta.config = U.jsonUnFlatten(currSettings)
         let configJson = res.yotta.config
-        let moduleJson = {
-            "name": "pxt-microbit-app",
-            "version": "0.0.0",
-            "description": "Auto-generated. Do not edit.",
-            "license": "n/a",
-            "dependencies": res.yotta.dependencies,
-            "targetDependencies": {},
-            "bin": "./source"
+
+        if (isPlatformio) {
+            let iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            iniLines.push("lib_deps =")
+            U.iterMap(res.platformio.dependencies, (pkg, ver) => {
+                let pkgSpec = /[@#\/]/.test(ver) ? ver : pkg + "@" + ver
+                iniLines.push("  " + pkgSpec)
+            })
+            res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
+        } else {
+            let moduleJson = {
+                "name": "pxt-microbit-app",
+                "version": "0.0.0",
+                "description": "Auto-generated. Do not edit.",
+                "license": "n/a",
+                "dependencies": res.yotta.dependencies,
+                "targetDependencies": {},
+                "bin": "./source"
+            }
+            res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         }
-        res.generatedFiles["/source/pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
-        res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
+
+        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-        res.generatedFiles["/source/main.cpp"] = `
+        res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
+#ifdef PXT_MAIN
+PXT_MAIN
+#else
 int main() { 
     uBit.init(); 
     pxt::start(); 
     while (1) uBit.sleep(10000);    
     return 0; 
 }
+#endif
 `
 
         let tmp = res.extensionFiles
@@ -845,9 +888,9 @@ namespace pxt.hex {
             })
     }
 
-    export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo, cloudModule?: any): Promise<any> {
+    export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo, cloudModule?: any): Promise<pxtc.HexInfo> {
         if (!extInfo.sha)
-            return Promise.resolve(null)
+            return Promise.resolve<any>(null)
 
         if (pxtc.hex.isSetupFor(extInfo))
             return Promise.resolve(pxtc.hex.currentHexInfo)

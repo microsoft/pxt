@@ -887,7 +887,7 @@ namespace ts.pxtc {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
-                thumbEmit(bin, opts, res)
+                processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -3185,6 +3185,9 @@ ${lbl}: .short 0xffff
             shimsDTS: "",
             enumsDTS: "",
             onlyPublic: true,
+            platformio: {
+                dependencies: {}
+            },
             yotta: {
                 dependencies: {},
                 config: {}

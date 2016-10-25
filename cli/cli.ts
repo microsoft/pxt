@@ -22,6 +22,7 @@ import * as server from './server';
 import * as uploader from './uploader';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
+let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
 
 function initTargetCommands() {
     let cmdsjs = path.join(nodeutil.targetDir, 'built/cmds.js');
@@ -1492,7 +1493,7 @@ function buildSemanticUIAsync() {
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
     cfg.bundledpkgs = {}
-    pxt.appTarget = cfg;
+    pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
     let isFork = !!pxt.appTarget.forkof
     if (isFork)
@@ -1534,7 +1535,7 @@ function buildTargetCoreAsync() {
             const webmanifest = buildWebManifest(cfg)
             const webmanifestjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", webmanifestjson)
-            pxt.appTarget = cfg; // make sure we're using the latest version
+            pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
@@ -1828,9 +1829,9 @@ class SnippetHost implements pxt.Host {
         SnippetHost.files[module.id][filename] = contents
     }
 
-    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         //console.log(`getHexInfoAsync(${extInfo})`);
-        return Promise.resolve()
+        return Promise.resolve<any>(null)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -1916,11 +1917,11 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
-        if (extInfo.onlyPublic || forceCloudBuild)
+        if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
-        return buildHexAsync(extInfo)
-            .then(() => patchHexInfo(extInfo))
+        return buildHexAsync(thisBuild, extInfo)
+            .then(() => thisBuild.patchHexInfo(extInfo))
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -2246,6 +2247,22 @@ export function initAsync() {
         .then(() => installAsync())
 }
 
+// abstract over build engine 
+export interface BuildEngine {
+    updateEngineAsync: () => Promise<void>;
+    setPlatformAsync: () => Promise<void>;
+    buildAsync: () => Promise<void>;
+    patchHexInfo: (extInfo: pxtc.ExtensionInfo) => pxtc.HexInfo;
+    buildPath: string;
+    moduleConfig: string;
+    deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
+}
+
+// abstract over C++ runtime target (currently the DAL)
+export interface TargetRuntime {
+    includePath: string;
+}
+
 enum BuildOption {
     JustBuild,
     Run,
@@ -2300,11 +2317,24 @@ export function timeAsync() {
         .then(() => console.log("MIN", min))
 }
 
-const ytPath = "built/yt"
-
 interface BuildCache {
     sha?: string;
     modSha?: string;
+}
+
+function runPlatformioAsync(args: string[]) {
+    console.log("*** platformio " + args.join(" "))
+    let child = child_process.spawn("platformio", args, {
+        cwd: thisBuild.buildPath,
+        stdio: "inherit",
+        env: process.env
+    })
+    return new Promise<void>((resolve, reject) => {
+        child.on("close", (code: number) => {
+            if (code === 0) resolve()
+            else reject(new Error("platformio " + args.join(" ") + ": exit code " + code))
+        })
+    })
 }
 
 function runYottaAsync(args: string[]) {
@@ -2324,7 +2354,7 @@ function runYottaAsync(args: string[]) {
 
     console.log("*** " + ytCommand + " " + args.join(" "))
     let child = child_process.spawn("yotta", args, {
-        cwd: ytPath,
+        cwd: thisBuild.buildPath,
         stdio: "inherit",
         env: env
     })
@@ -2336,37 +2366,84 @@ function runYottaAsync(args: string[]) {
     })
 }
 
-function patchHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let infopath = ytPath + "/yotta_modules/" + pxt.appTarget.compileService.yottaCorePackage + "/generated/metainfo.json"
+const buildEngines: Map<BuildEngine> = {
+    yotta: {
+        updateEngineAsync: () => { return runYottaAsync(["update"]) },
+        buildAsync: () => { return runYottaAsync(["build"]) },
+        setPlatformAsync: () => {
+            return runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget])
+        },
+        patchHexInfo: patchYottaHexInfo,
+        buildPath: "built/yt",
+        moduleConfig: "module.json"
+    },
 
-    let hexPath = ytPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
-
-    let hexinfo = readJson(infopath)
-    hexinfo.hex = fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
-
-    return hexinfo
+    platformio: {
+        updateEngineAsync: () => Promise.resolve(),
+        buildAsync: () => { return runPlatformioAsync(["run"]) },
+        setPlatformAsync: () => Promise.resolve(),
+        patchHexInfo: patchPioHexInfo,
+        buildPath: "built/pio",
+        moduleConfig: "platformio.ini",
+        deployAsync: platformioDeployAsync,
+    }
 }
 
-function buildHexAsync(extInfo: pxtc.ExtensionInfo) {
-    let yottaTasks = Promise.resolve()
-    let buildCachePath = ytPath + "/buildcache.json"
+// once we have a different build engine, set this appropriately
+let thisBuild = buildEngines['yotta']
+
+function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let buildEngine = buildEngines['yotta']
+    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
+
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function pioFirmwareHex() {
+    let buildEngine = buildEngines['platformio']
+    return buildEngine.buildPath + "/.pioenvs/myenv/firmware.hex"
+}
+
+function patchPioHexInfo(extInfo: pxtc.ExtensionInfo) {
+    return {
+        hex: fs.readFileSync(pioFirmwareHex(), "utf8").split(/\r?\n/)
+    }
+}
+
+function platformioDeployAsync(r: pxtc.CompileResult) {
+    // TODO maybe platformio has some option to do this?
+    let buildEngine = buildEngines['platformio']
+    let prevHex = fs.readFileSync(pioFirmwareHex())
+    fs.writeFileSync(pioFirmwareHex(), r.outfiles[pxtc.BINARY_HEX])
+    return runPlatformioAsync(["run", "--target", "upload", "-v"])
+        .finally(() => {
+            console.log('Restoring ' + pioFirmwareHex())
+            fs.writeFileSync(pioFirmwareHex(), prevHex)
+        })
+}
+
+function buildHexAsync(buildEngine: BuildEngine, extInfo: pxtc.ExtensionInfo) {
+    let tasks = Promise.resolve()
+    let buildCachePath = buildEngine.buildPath + "/buildcache.json"
     let buildCache: BuildCache = {}
     if (fs.existsSync(buildCachePath)) {
         buildCache = readJson(buildCachePath)
     }
 
     if (buildCache.sha == extInfo.sha) {
-        console.log("Skipping yotta build.")
-        return yottaTasks
+        console.log("Skipping build.")
+        return tasks
     }
 
-    console.log("Writing yotta files to " + ytPath)
+    console.log("Writing build files to " + buildEngine.buildPath)
 
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
     U.iterMap(allFiles, (fn, v) => {
-        fn = ytPath + fn
+        fn = buildEngine.buildPath + fn
         nodeutil.mkdirP(path.dirname(fn))
         let existing: string = null
         if (fs.existsSync(fn))
@@ -2377,34 +2454,35 @@ function buildHexAsync(extInfo: pxtc.ExtensionInfo) {
 
     let saveCache = () => fs.writeFileSync(buildCachePath, JSON.stringify(buildCache, null, 4) + "\n")
 
-    let modSha = U.sha256(extInfo.generatedFiles["/module.json"])
+    let modSha = U.sha256(extInfo.generatedFiles["/" + buildEngine.moduleConfig])
     if (buildCache.modSha !== modSha) {
-        yottaTasks = yottaTasks
-            .then(() => runYottaAsync(["target", pxt.appTarget.compileService.yottaTarget]))
-            .then(() => runYottaAsync(["update"]))
+        tasks = tasks
+            .then(() => buildEngine.setPlatformAsync())
+            .then(() => buildEngine.updateEngineAsync())
             .then(() => {
                 buildCache.sha = ""
                 buildCache.modSha = modSha
                 saveCache();
-                buildDalConst(true);
+                buildDalConst(buildEngine, true);
             })
     } else {
-        console.log("Skipping yotta update.")
+        console.log("Skipping build update.")
     }
 
-    yottaTasks = yottaTasks
-        .then(() => runYottaAsync(["build"]))
+    tasks = tasks
+        .then(() => buildEngine.buildAsync())
         .then(() => {
             buildCache.sha = extInfo.sha
             saveCache()
         })
 
-    return yottaTasks
+    return tasks
 }
 
 let parseCppInt = pxt.cpp.parseCppInt;
 
-function buildDalConst(force = false) {
+// TODO: DAL specific code should be lifted out
+function buildDalConst(buildEngine: BuildEngine, force = false) {
     let constName = "dal.d.ts"
     let vals: Map<string> = {}
     let done: Map<string> = {}
@@ -2431,6 +2509,7 @@ function buildDalConst(force = false) {
                     }
                 } else {
                     vals[n] = "?"
+                    // TODO: DAL-specific code
                     if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
                         console.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
                 }
@@ -2476,7 +2555,8 @@ function buildDalConst(force = false) {
     if (mainPkg && mainPkg.getFiles().indexOf(constName) >= 0 &&
         (force || !fs.existsSync(constName))) {
         console.log(`rebuilding ${constName}...`)
-        let incPath = ytPath + "/yotta_modules/microbit-dal/inc/"
+        // TODO: DAL-specific code
+        let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
         let files = allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: Map<string> = {}
@@ -2653,10 +2733,12 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
 function testAssemblers(): Promise<void> {
     console.log("- testing Thumb")
-    pxtc.thumb.test();
+    let thumb = new pxtc.thumb.ThumbProcessor();
+    thumb.testAssembler();
     console.log("- done testing Thumb");
     console.log("- testing AVR")
-    pxtc.avr.testAVR();
+    let avr = new pxtc.avr.AVRProcessor();
+    avr.testAssembler();
     console.log("- done testing AVR");
     return Promise.resolve();
 }
@@ -3331,7 +3413,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
     return mainPkg.loadAsync()
         .then(() => {
             if (!quick) {
-                buildDalConst();
+                buildDalConst(thisBuild);
                 copyCommonFiles();
             }
             // TODO pass down 'quick' to disable the C++ extension work
@@ -3773,7 +3855,7 @@ cmd("precachehex                  - download hex images of current target for of
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs [--locs] [--docs]    - build current package and its docs. --locs produce localization files, --docs produce docs files", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
-cmd("testassembler                - test the assemblers", testAssemblers, 2)
+cmd("testassembler                - test the assemblers", testAssemblers, 1)
 cmd("decompile file.ts...         - decompile ts files and produce similarly named .blocks files", decompileAsync, 1)
 cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and compare to baselines", testDecompilerAsync, 1)
 cmd("testdecompilererrors  DIR    - decompile unsupported files from DIR one-by-one and check for errors", testDecompilerErrorsAsync, 1)
@@ -3920,9 +4002,20 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     nodeutil.targetDir = targetDir;
 
     let trg = nodeutil.getPxtTarget()
-    pxt.appTarget = trg;
+    pxt.setAppTarget(trg)
 
-    process.stderr.write(`Using PXT/${trg.id} from ${targetDir}.\n`)
+    let compileId = "none"
+    if (trg.compileService) {
+        compileId = trg.compileService.buildEngine || "yotta"
+    }
+
+    process.stderr.write(`Using PXT/${trg.id} from ${targetDir} with build engine ${compileId}.\n`)
+
+    if (compileId != "none") {
+        thisBuild = buildEngines[compileId]
+        if (!thisBuild) U.userError("cannot find build engine: " + compileId)
+    }
+
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
         pxt.debug = console.log;
@@ -3936,6 +4029,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     if (cmd != "buildtarget") {
         initTargetCommands();
+    }
+
+    if (!pxt.commands.deployCoreAsync && thisBuild.deployAsync) {
+        pxt.commands.deployCoreAsync = thisBuild.deployAsync
     }
 
     if (!cmd) {

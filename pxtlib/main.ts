@@ -12,6 +12,23 @@ namespace pxt {
 
     export var appTarget: TargetBundle;
 
+    export function setAppTarget(trg: TargetBundle) {
+        appTarget = trg
+
+        // patch-up the target
+        let comp = appTarget.compile
+        if (!comp)
+            comp = appTarget.compile = { isNative: false, hasHex: false }
+        if (comp.hasHex && comp.jsRefCounting === undefined)
+            comp.jsRefCounting = true
+        if (!comp.hasHex && comp.floatingPoint === undefined)
+            comp.floatingPoint = true
+        if (comp.nativeType == "AVR") {
+            comp.shortPointers = true
+            comp.flashCodeAlign = 0x10
+        }
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
@@ -128,7 +145,7 @@ namespace pxt {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any>;
+        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
@@ -440,11 +457,7 @@ namespace pxt {
 
         getTargetOptions(): CompileTarget {
             let res = U.clone(appTarget.compile)
-            if (!res) res = { isNative: false, hasHex: false }
-            if (res.hasHex && res.jsRefCounting === undefined)
-                res.jsRefCounting = true
-            if (!res.hasHex && res.floatingPoint === undefined)
-                res.floatingPoint = true
+            U.assert(!!res)
             return res
         }
 
@@ -453,7 +466,7 @@ namespace pxt {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
-                hexinfo: {}
+                hexinfo: { hex: [] }
             }
 
             let generateFile = (fn: string, cont: string) => {
@@ -482,7 +495,9 @@ namespace pxt {
                     let ext = cpp.getExtensionInfo(this)
                     if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
                     if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
-                    return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))
+                    return (target.isNative
+                        ? this.host().getHexInfoAsync(ext)
+                        : Promise.resolve<pxtc.HexInfo>(null))
                         .then(inf => {
                             ext = U.flatClone(ext)
                             delete ext.compileData;
@@ -492,7 +507,7 @@ namespace pxt {
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly ? null : this.filesToBePublishedAsync(true))
+                .then(() => this.config.binaryonly || appTarget.compile.shortPointers ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         files = U.mapMap(files, upgradeFile);
