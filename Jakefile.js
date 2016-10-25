@@ -117,7 +117,7 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
 task('downloadcrowdin', ["built/pxt.js"], { async:true }, function() {
     jake.exec([
         "node built/pxt.js crowdin download strings.json webapp/public/locales"
-    ], { printStdout: true }, complete.bind(this));    
+    ], { printStdout: true }, complete.bind(this));
 })
 
 task("lint", [], { async: true }, function () {
@@ -287,6 +287,9 @@ task('serve', ['default'], { async: true }, function () {
     }
     else if (process.env.packaged === 'true') {
         cmdArg = '-pkg'
+    }
+    if (process.env.browser) {
+        cmdArg += ' -browser ' + process.env.browser;
     }
     cmdIn(this, '../pxt-microbit', 'node ../pxt/built/pxt.js serve ' + cmdArg)
 })

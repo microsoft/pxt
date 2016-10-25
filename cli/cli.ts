@@ -1678,9 +1678,20 @@ export function serveAsync(...args: string[]) {
         return trimmedArgs && trimmedArgs.length && trimmedArgs.indexOf(arg) !== -1;
     };
 
+    let argValue = (arg: string): string => {
+        if (trimmedArgs && trimmedArgs.length) {
+            const i = trimmedArgs.indexOf(arg);
+            if (i !== -1 && i < trimmedArgs.length - 1) {
+                return trimmedArgs[i + 1];
+            }
+        }
+        return undefined;
+    };
+
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
+    let browser: string = argValue("browser");
 
     if (hasArg("yt")) {
         forceCloudBuild = false
@@ -1724,7 +1735,8 @@ export function serveAsync(...args: string[]) {
             localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
             packaged: packaged,
-            electron: hasArg("electron")
+            electron: hasArg("electron"),
+            browser
         }))
 }
 
