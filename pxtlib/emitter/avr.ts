@@ -317,7 +317,7 @@ namespace ts.pxtc.avr {
                 "0e01  l6: add     r0, r17\n" +
                 "0000  l8: nop     \n")
 
-
+/*
             assembler.expect(this,
                 "92cf push r12\n" +
                 "92df push r13\n" +
