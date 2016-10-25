@@ -12,6 +12,11 @@ import defaultToolbox from "./toolbox"
 import Util = pxt.Util;
 let lf = Util.lf
 
+enum FoundState {
+    IsPresent = 1,
+    MaybePresent = -1
+}
+
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
@@ -103,6 +108,7 @@ export class Editor extends srceditor.Editor {
             Blockly.Xml.domToWorkspace(this.editor, xml);
 
             this.editor.clearUndo();
+            this.reportDeprecatedBlocks();
         } catch (e) {
             pxt.log(e);
         }
@@ -110,6 +116,34 @@ export class Editor extends srceditor.Editor {
         this.changeCallback();
 
         return true;
+    }
+
+    private reportDeprecatedBlocks() {
+        const deprecatedMap: {[index: string]: FoundState } = {};
+        let deprecatedFound = false;
+
+        this.blockInfo.blocks.forEach(symbolInfo => {
+            if (symbolInfo.attributes.deprecated) {
+                deprecatedMap[symbolInfo.attributes.blockId] = FoundState.MaybePresent;
+            }
+        });
+
+        this.editor.getAllBlocks().forEach(block => {
+            if (deprecatedMap[block.type]) {
+                deprecatedMap[block.type] = FoundState.IsPresent;
+                deprecatedFound = true;
+            }
+        });
+
+        if (deprecatedFound) {
+            for (const block in deprecatedMap) {
+                if (deprecatedMap[block] === FoundState.MaybePresent) {
+                    delete deprecatedMap[block];
+                }
+            }
+
+            pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
+        }
     }
 
     updateHelpCard() {
