@@ -125,6 +125,7 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];        
+        blocklyOptions?: {};
     }
 
     interface DocMenuEntry {
