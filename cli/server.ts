@@ -556,7 +556,7 @@ function initSerialMonitor() {
     }, 5000);
 }
 
-function openUrl(startUrl: string) {
+function openUrl(startUrl: string, browser: string) {
     if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_]+$/.test(startUrl)) {
         console.error("invalid URL to open: " + startUrl)
         return
@@ -571,9 +571,65 @@ function openUrl(startUrl: string) {
     else
         startUrl = startUrl.replace('\\', '/');
 
-    let cmd = cmds[process.platform];
     console.log(`opening ${startUrl}`)
-    child_process.exec(`${cmd} ${startUrl}`);
+
+    if (browser) {
+        child_process.spawn(getBrowserLocation(browser), [startUrl]);
+    }
+    else {
+        child_process.exec(`${cmds[process.platform]} ${startUrl}`);
+    }
+}
+
+
+function getBrowserLocation(browser: string) {
+    let browserPath: string;
+
+    const normalizedBrowser = browser.toLowerCase();
+
+    if (normalizedBrowser === "chrome") {
+        switch (os.platform()) {
+            case "win32":
+            case "win64":
+                browserPath = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe";
+                break;
+            case "darwin":
+                browserPath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+                break;
+            case "linux":
+                browserPath = "/opt/google/chrome/chrome";
+                break;
+            default:
+                break;
+        }
+    }
+    else if (normalizedBrowser === "firefox") {
+        browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
+        switch (os.platform()) {
+            case "win32":
+            case "win64":
+                browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
+                break;
+            case "darwin":
+                browserPath = "/Applications/Firefox.app";
+                break;
+            case "linux":
+            default:
+                break;
+        }
+    }
+    else if (normalizedBrowser === "ie") {
+        browserPath = "C:/Program Files/Internet Explorer/iexplore.exe";
+    }
+    else if (normalizedBrowser === "safari") {
+        browserPath = "/Applications/Safari.app/Contents/MacOS/Safari";
+    }
+
+    if (browserPath && fs.existsSync(browserPath)) {
+        return browserPath;
+    }
+
+    return browser;
 }
 
 export interface ServeOptions {
@@ -581,6 +637,7 @@ export interface ServeOptions {
     autoStart: boolean;
     packaged?: boolean;
     electron?: boolean;
+    browser?: string;
 }
 
 let serveOptions: ServeOptions;
@@ -766,7 +823,7 @@ export function serveAsync(options: ServeOptions) {
     console.log(``);
     console.log(`---------------------------------------------`);
     if (options.autoStart)
-        openUrl(start);
+        openUrl(start, options.browser);
 
     return new Promise<void>((resolve, reject) => { })
 }
