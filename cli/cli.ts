@@ -574,7 +574,7 @@ function travisAsync() {
                 }
                 let trg = readLocalPxTarget()
                 if (rel)
-                    return preCacheHexAsync()
+                    return  Promise.resolve() //preCacheHexAsync()
                         .then(() => uploadTargetAsync(trg.id + "/" + rel))
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadTargetTranslationsAsync())
