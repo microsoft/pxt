@@ -2077,10 +2077,6 @@ pxt_modules
         "isTestCommand": true,
         "problemMatcher": "$tsc",
         "args": ["build"]
-    }, {
-        "taskName": "publish",
-        "problemMatcher": "$tsc",
-        "args": ["publish"]
     }]
 }
 `
