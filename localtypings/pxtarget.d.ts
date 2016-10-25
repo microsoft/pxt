@@ -1,5 +1,6 @@
 /// <reference path="pxtpackage.d.ts" />
 /// <reference path="pxtparts.d.ts" />
+/// <reference path="blockly.d.ts" />
 
 declare namespace pxt {
     interface AppTarget {
@@ -125,7 +126,7 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];        
-        blocklyOptions?: {};
+        blocklyOptions?: Blockly.Options;
     }
 
     interface DocMenuEntry {
