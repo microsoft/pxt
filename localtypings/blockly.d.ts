@@ -30,7 +30,6 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
-    function fireUiEvent(node: any, eventName: string): void;
     function genUid(): string;
     function terminateDrag_(): void;
     function mouseToSvg(e: Event, svg: Element): any;
@@ -246,7 +245,7 @@ declare namespace Blockly {
     }
 
     class Scrollbar {
-        svgKnob_: Element;
+        svgHandle_: Element;
         ratio_: number;
         set(x: number): void;
     }
@@ -296,7 +295,7 @@ declare namespace Blockly {
     namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;
-        function domToWorkspace(workspace: Workspace, dom: Element): void;
+        function domToWorkspace(dom: Element, workspace: Workspace): void;
         function textToDom(text: string): Element;
         function workspaceToDom(workspace: Workspace): Element;
     }

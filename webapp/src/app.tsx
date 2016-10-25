@@ -614,7 +614,7 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     componentDidUpdate() {
-        Blockly.fireUiEvent(window, 'resize');
+        window.dispatchEvent(new Event('resize'))
     }
 
     renderCore() {
@@ -941,7 +941,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        Blockly.fireUiEvent(window, 'resize');
+        window.dispatchEvent(new Event('resize'))
     }
 
     setSideFile(fn: pkg.File) {

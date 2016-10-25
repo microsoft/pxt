@@ -953,6 +953,7 @@ namespace pxt.blocks {
 
     // TODO: port changes to blockly
     export function initMouse(ws: Blockly.Workspace) {
+        // Blockly wheel scroll and zoom:
         Blockly.bindEvent_(ws.svgGroup_, 'wheel', ws, ev => {
             let e = ev as WheelEvent;
             Blockly.terminateDrag_();
@@ -961,7 +962,7 @@ namespace pxt.blocks {
             if (e.ctrlKey || e.metaKey)
                 ws.zoom(position.x, position.y, delta);
             else if (ws.scrollbar) {
-                let y = parseFloat(ws.scrollbar.vScroll.svgKnob_.getAttribute("y") || "0");
+                let y = parseFloat(ws.scrollbar.vScroll.svgHandle_.getAttribute("y") || "0");
                 y /= ws.scrollbar.vScroll.ratio_;
                 ws.scrollbar.vScroll.set(y + e.deltaY);
                 ws.scrollbar.resize();

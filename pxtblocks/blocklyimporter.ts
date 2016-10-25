@@ -14,7 +14,7 @@ namespace pxt.blocks {
     export function loadWorkspaceXml(xml: string) {
         let workspace = new Blockly.Workspace();
         try {
-            Blockly.Xml.domToWorkspace(workspace, Blockly.Xml.textToDom(xml));
+            Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xml), workspace);
             return workspace;
         } catch (e) {
             pxt.reportException(e, { xml: xml });

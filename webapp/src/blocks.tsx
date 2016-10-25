@@ -29,7 +29,7 @@ export class Editor extends srceditor.Editor {
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
-            Blockly.fireUiEvent(window, 'resize');
+            window.dispatchEvent(new Event('resize'))
         }
         else $(classes).hide();
     }
@@ -100,7 +100,7 @@ export class Editor extends srceditor.Editor {
         try {
             let text = s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(this.editor, xml);
+            Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.editor.clearUndo();
         } catch (e) {
