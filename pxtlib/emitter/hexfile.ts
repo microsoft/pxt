@@ -403,7 +403,7 @@ ${hex.hexPrelude()}
     .space 14 ; reserved
 `
         let snippets: AssemblerSnippets = null;
-        if (opts.target.nativeType.toLowerCase() == "avr")
+        if (opts.target.nativeType == "AVR")
             snippets = new AVRSnippets()
         else
             snippets = new ThumbSnippets()
@@ -450,7 +450,7 @@ ${hex.hexPrelude()}
 
     function mkProcessorFile(nativeType: string) {
         let processor: assembler.AbstractProcessor = null
-        if (nativeType.toLowerCase() == "avr")
+        if (nativeType == "AVR")
             processor = new avr.AVRProcessor()
         else
             processor = new thumb.ThumbProcessor()
