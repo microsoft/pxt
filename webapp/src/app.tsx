@@ -1985,8 +1985,7 @@ function initTheme() {
     }
 
     for (let u of pxt.appTarget.appTheme.usbHelp || []) {
-        u.path = u.path.replace("@pxtCdnUrl@",
-            pxt.webConfig.pxtCdnUrl.replace(/^(https:\/\/[^\/]+).*/, (a, b) => b))
+        u.path = u.path.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
     }
 }
 
