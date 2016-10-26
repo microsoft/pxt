@@ -201,6 +201,7 @@ namespace pxt.cpp {
                 switch (tp.replace(/\s+/g, "")) {
                     case "void": return "void";
 
+                    case "float":
                     case "int32_t":
                     case "uint32_t":
                     case "int": return "number";
