@@ -6,6 +6,12 @@ PXT uses the [Semantic UI](http://semantic-ui.com/) framework to create the user
 
 The ``pxtarget.json`` contains an extensive customization section to control logos, names, colors, etc...
 
+### Blockly
+
+To Blockly themeing, you can overwrite the default Blockly options by configuring `blocklyOptions` under your target's `appTheme`. 
+
+See [Blockly Configuration](https://developers.google.com/blockly/guides/get-started/web) for a full list of Blockly configurable options.
+
 ## Semantic Theming
 
 PXT comes with a default Semantic UI theme. You can however completely override the theme and use all the flexibility of Semantic UI to customize your target.

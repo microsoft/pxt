@@ -5,20 +5,21 @@
     var pxtConfig = null;
 
     var appCdnRoot = "/cdn/";
-    var simCdnRoot = "/sim/";
-    var simUrl = "/sim/simulator.html";
-
     var scripts = [
         "highlight.js/highlight.pack.js",
         "bluebird.min.js",
         "typescript.js",
+        "semantic.js",
+        "marked/marked.min.js",
         "lzma/lzma_worker-min.js",
         "blockly/blockly_compressed.js",
         "blockly/blocks_compressed.js",
         "blockly/msg/js/en.js",
         "pxtlib.js",
         "pxtblocks.js",
+        "pxteditor.js",
         "pxtsim.js",
+        "target.js",
         "pxtrunner.js"
     ].map(function(s) { return appCdnRoot + s; })
 

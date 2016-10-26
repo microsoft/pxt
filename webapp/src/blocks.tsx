@@ -193,7 +193,7 @@ export class Editor extends srceditor.Editor {
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
         let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
-        this.editor = Blockly.inject(blocklyDiv, {
+        let blocklyOptions: Blockly.Options = {
             toolbox: toolboxDiv,
             scrollbars: true,
             media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
@@ -211,7 +211,9 @@ export class Editor extends srceditor.Editor {
                 scaleSpeed: 1.05
             },
             rtl: Util.userLanguageRtl()
-        });
+        };
+        Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
+        this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
             if (ev.recordUndo) {

@@ -781,7 +781,11 @@ namespace pxt.hex {
 
     function getCdnUrlAsync() {
         if (cdnUrlPromise) return cdnUrlPromise
-        else return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig").then(r => r.primaryCdnUrl));
+        else {
+            let curr = getOnlineCdnUrl()
+            if (curr) return (cdnUrlPromise = Promise.resolve(curr))
+            return (cdnUrlPromise = Cloud.privateGetAsync("clientconfig").then(r => r.primaryCdnUrl));
+        }
     }
 
     function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
