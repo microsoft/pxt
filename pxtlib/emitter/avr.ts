@@ -49,11 +49,6 @@ namespace ts.pxtc.avr {
         public registerNo(actual: string) {
             if (!actual) return null;
             actual = actual.toLowerCase()
-            switch (actual) {
-                // case "pc": actual = "r15"; break;
-                // case "lr": actual = "r14"; break;
-                // case "sp": actual = "r13"; break;
-            }
             let m = /^r(\d+)$/.exec(actual)
             if (m) {
                 let r = parseInt(m[1], 10)

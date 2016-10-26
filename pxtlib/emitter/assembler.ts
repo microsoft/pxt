@@ -1074,9 +1074,8 @@ namespace ts.pxtc.assembler {
                     if (w) { words.push(w); w = "" }
                     break;
                 case ";":
-                    if (!w) break loop;
-                    w += line[i]
-                    break;
+                    // drop the trailing comment
+                    break loop;
                 default:
                     w += line[i]
                     break;

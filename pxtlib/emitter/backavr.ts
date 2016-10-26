@@ -88,27 +88,20 @@ namespace ts.pxtc {
             let imm_hi = (imm & 0xff00) >> 8
             return `
     ldi ${this.rmap_lo[reg]}, #${imm_lo}
-    ldi ${this.rmap_hi[reg]}, #${imm_hi}
-    `
+    ldi ${this.rmap_hi[reg]}, #${imm_hi}`
         }
         push_fixed(regs: string[]) {
             this.push_cnt += regs.length
             let res = ""
             regs.forEach(r => {
-                res = res + `
-    push ${this.rmap_lo[r]}
-    push ${this.rmap_hi[r]}
-    `
+                res = res + `\npush ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
             });
             return res
         }
         pop_fixed(regs: string[]) {
             let res = ""
             regs.forEach(r => {
-                res = res + `
-    pop ${this.rmap_hi[r]}
-    pop ${this.rmap_lo[r]}
-    `
+                res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
             return res
         }
@@ -119,16 +112,14 @@ namespace ts.pxtc {
             return `
     ${set_r1_zero}
     push r28
-    push r29
-    `
+    push r29`
         }
         proc_setup_end() {
             if (this.push_cnt > 0) {
                 // FP <- SP
                 return `
     in r28, 0x3d
-    in r29, 0x3e
-    `
+    in r29, 0x3e`
             } else {
                 return ""
             }
@@ -138,8 +129,7 @@ namespace ts.pxtc {
             return `
     pop r29
     pop r28
-    ret
-    `
+    ret`
         }
         debugger_hook(lbl: string) { return "eor r1, r1" }
         debugger_bkpt(lbl: string) { return "eor r1, r1" }
@@ -148,8 +138,7 @@ namespace ts.pxtc {
             this.push_cnt += 1
             return `
     push ${this.rmap_lo[reg]}
-    push ${this.rmap_hi[reg]}
-            `
+    push ${this.rmap_hi[reg]}`
         }
         pop_locals(n: number) {
             // note: updates both the SP and FP
@@ -159,8 +148,7 @@ namespace ts.pxtc {
     in	r29, 0x3e
     sbiw	r28, #2*${n}
     out	0x3d, r28
-    out	0x3e, r29
-    `
+    out	0x3e, r29`
         }
         unconditional_branch(lbl: string) { return "jmp " + lbl }
         beq(lbl: string) { return "breq " + lbl }
@@ -173,16 +161,14 @@ namespace ts.pxtc {
             let reg2_hi = this.rmap_hi[reg2]
             return `
     cp ${reg1_lo}, ${reg2_lo}
-    cpc ${reg1_hi}, ${reg2_hi}
-    `
+    cpc ${reg1_hi}, ${reg2_hi}`
         }
         cmp_zero(reg: string) {
             let reg_lo = this.rmap_lo[reg]
             let reg_hi = this.rmap_hi[reg]
             return `
     cp ${reg_lo}, r1
-    cpc ${reg_hi}, r1
-    `
+    cpc ${reg_hi}, r1`
         }
 
         // load_reg_src_off is load/store indirect
@@ -201,11 +187,10 @@ namespace ts.pxtc {
                 if (z_reg == "Y") {
                     prelude += `
     movw r30, r28
-    `           }
+`               }
                 prelude += `
     add r30, ${this.rmap_lo["r1"]}
-    adc r31, ${this.rmap_hi["r1"]}
-    `
+    adc r31, ${this.rmap_hi["r1"]}`
                 off = "0"
                 z_reg = "Z"
             }
@@ -214,8 +199,7 @@ namespace ts.pxtc {
             // any indirection we want to do using Y+C, Z+C (recall Y=sp, r6 -> Z)
             if (src == "r0" || src == "r5") {
                 prelude = `
-    movw r30, ${this.rmap_lo[src]}
-    `
+    movw r30, ${this.rmap_lo[src]}`
                 z_reg = "Z"
             } else
                 z_reg = this.ld_map[src]  // maps to Y or Z
@@ -239,11 +223,10 @@ namespace ts.pxtc {
                 if (z_reg == "Y") {
                     prelude += `
     movw r30, r28
-    `           }
+`           }
                 prelude += `
     add r30, ${this.rmap_lo[off]}
-    adc r31, ${this.rmap_hi[off]}
-    `
+    adc r31, ${this.rmap_hi[off]}`
                 off = "0"
             } else {
                 // args@, locals@
@@ -259,14 +242,14 @@ namespace ts.pxtc {
                 // std	Y+2, r25
                 return `
     ${prelude}
-    std ${z_reg}+${off}, ${reg}
-    `
+    std ${z_reg}, ${off}, ${this.rmap_lo[reg]}
+    std ${z_reg}, ${off}|1, ${this.rmap_hi[reg]}`
             else
                 // ldd	r24, Y+1
                 return `
     ${prelude}
-    ldd ${reg}, ${z_reg}+${off}
-    `
+    ldd ${this.rmap_lo[reg]}, ${z_reg}, ${off}
+    ldd ${this.rmap_hi[reg]}, ${z_reg}, ${off}|1`
         }
 
         rt_call(name: string, r0: string, r1: string) {
@@ -284,21 +267,18 @@ namespace ts.pxtc {
     add	r25, r0
     mul	r21, r22
     add	r25, r0
-    eor	r1, r1
-    `
+    eor	r1, r1`
             } else {
                 return `
     ${this.inst_lo[name]} r18, r20
-    ${this.inst_hi[name]} r19, r21
-    `
+    ${this.inst_hi[name]} r19, r21`
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
         call_reg(reg: string) {
             return `
     movw r30, ${this.rmap_lo[reg]}
-    icall
-    `
+    icall`
         }
 
         // no virtuals for now
@@ -309,8 +289,7 @@ namespace ts.pxtc {
             return `
     @stackmark args
     ${this.proc_setup()}
-    movw r26, r24
-    `
+    movw r26, r24`
         }
 
         lambda_epilogue() {
@@ -318,16 +297,14 @@ namespace ts.pxtc {
     call pxtrt::getGlobalsPtr
     movw r30, r24
     ${this.proc_return()}
-    @stackempty args
-    `
+    @stackempty args`
         }
 
         load_ptr(lbl: string, reg: string) {
             assert(!!lbl)
             return `
     ldi ${this.rmap_lo[reg]}, ${lbl}@lo
-    ldi ${this.rmap_hi[reg]}, ${lbl}@hi
-    `
+    ldi ${this.rmap_hi[reg]}, ${lbl}@hi`
         }
 
         emit_int(v: number, reg: string) {

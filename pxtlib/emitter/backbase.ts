@@ -312,11 +312,11 @@ ${baseLabel}:
                     let idx = this.exprStack.indexOf(arg)
                     U.assert(idx >= 0)
                     if (idx == 0 && arg.totalUses == arg.currUses) {
-                        this.write(this.t.pop_fixed([reg]) + `; tmpref @${this.exprStack.length}`)
+                        this.write(this.t.pop_fixed([reg]) + ` ; tmpref @${this.exprStack.length}`)
                         this.exprStack.shift()
                         this.clearStack()
                     } else {
-                        this.write(this.t.load_reg_src_off(reg, "sp", idx.toString(), true) + `; tmpref @${this.exprStack.length - idx}`)
+                        this.write(this.t.load_reg_src_off(reg, "sp", idx.toString(), true) + ` ; tmpref @${this.exprStack.length - idx}`)
                     }
                     break;
                 case ir.EK.CellRef:
