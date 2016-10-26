@@ -12,11 +12,6 @@ import defaultToolbox from "./toolbox"
 import Util = pxt.Util;
 let lf = Util.lf
 
-enum FoundState {
-    IsPresent = 1,
-    MaybePresent = -1
-}
-
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     delayLoadXml: string;
@@ -119,30 +114,30 @@ export class Editor extends srceditor.Editor {
     }
 
     private reportDeprecatedBlocks() {
-        const deprecatedMap: {[index: string]: FoundState } = {};
+        const deprecatedMap: {[index: string]: number } = {};
+        let deprecatedBlocksFound = false;
 
         this.blockInfo.blocks.forEach(symbolInfo => {
             if (symbolInfo.attributes.deprecated) {
-                deprecatedMap[symbolInfo.attributes.blockId] = FoundState.MaybePresent;
+                deprecatedMap[symbolInfo.attributes.blockId] = 0;
             }
         });
 
         this.editor.getAllBlocks().forEach(block => {
-            if (deprecatedMap[block.type]) {
-                deprecatedMap[block.type] = FoundState.IsPresent;
+            if (deprecatedMap[block.type] >= 0) {
+                deprecatedMap[block.type]++;
+                deprecatedBlocksFound = true;
             }
         });
 
-        const foundBlocks: string[] = []
-
         for (const block in deprecatedMap) {
-            if (deprecatedMap[block] === FoundState.IsPresent) {
-                foundBlocks.push(block);
+            if (deprecatedMap[block] === 0) {
+                delete deprecatedMap[block];
             }
         }
 
-        if (foundBlocks.length) {
-            pxt.tickEvent("blocks.usingDeprecated", foundBlocks);
+        if (deprecatedBlocksFound) {
+            pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
         }
     }
 
