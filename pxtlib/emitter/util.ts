@@ -748,8 +748,8 @@ namespace ts.pxtc.BrowserImpl {
                         buffer: client.responseBody,
                         text: client.responseText,
                     }
-                    client.getAllResponseHeaders().split('\r\n').forEach(l => {
-                        let m = /^([^:]+): (.*)/.exec(l)
+                    client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {
+                        let m = /^\s*([^:]+): (.*)/.exec(l)
                         if (m) res.headers[m[1].toLowerCase()] = m[2]
                     })
                     resolve(res)
