@@ -123,9 +123,8 @@ namespace pxt.runner {
         let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
         let cfg = pxt.webConfig
         return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
-            .then(() => Util.httpGetJsonAsync(cfg.targetCdnUrl + "target.json"))
-            .then((trgbundle: pxt.TargetBundle) => {
-                pxt.appTarget = trgbundle
+            .then(() => {
+                pxt.appTarget = (window as any).pxtTargetBundle
                 mainPkg = new pxt.MainPackage(new Host());
             })
     }

@@ -52,6 +52,7 @@ export interface UserConfig {
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
+const targetJsPrefix = "var pxtTargetBundle = "
 
 function reportDiagnostics(diagnostics: pxtc.KsDiagnostic[]): void {
     for (const diagnostic of diagnostics) {
@@ -574,7 +575,7 @@ function travisAsync() {
                 }
                 let trg = readLocalPxTarget()
                 if (rel)
-                    return  Promise.resolve() //preCacheHexAsync()
+                    return Promise.resolve() //preCacheHexAsync()
                         .then(() => uploadTargetAsync(trg.id + "/" + rel))
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadTargetTranslationsAsync())
@@ -707,7 +708,6 @@ function targetFileList() {
     }
     let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(forkFiles("sim/public"))
-    // the cloud only accepts *.json and sim* files in targets - TODO is this still true?
     pxt.debug(`target files: ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -1035,7 +1035,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                         // save it for developer inspection
                         fs.writeFileSync("built/uploadrepl/" + fileName, content)
                     }
-                } else if (fileName == "target.json") {
+                } else if (fileName == "target.json" || fileName == "target.js") {
+                    let isJs = fileName == "target.js"
+                    if (isJs) content = content.slice(targetJsPrefix.length)
                     let trg: pxt.TargetBundle = JSON.parse(content)
                     if (opts.localDir) {
                         for (let e of trg.appTheme.docMenu)
@@ -1051,11 +1053,13 @@ function uploadCoreAsync(opts: UploadOptions) {
                             (trg.appTheme.usbHelp || []).filter(h => !!h.path)
                                 .map(h => uploadArtFileAsync(h.path)
                                     .then(blob => {
-                                        console.log(`target.json patch:    ${h.path} -> ${blob}`)
+                                        console.log(`${fileName} patch:    ${h.path} -> ${blob}`)
                                         h.path = blob;
                                     }))
                         ).then(() => {
                             content = JSON.stringify(trg, null, 2);
+                            if (isJs)
+                                content = targetJsPrefix + content
                         })
                     }
                 }
@@ -1532,8 +1536,9 @@ function buildTargetCoreAsync() {
             saveThemeJson(cfg)
 
             const webmanifest = buildWebManifest(cfg)
-            const webmanifestjson = JSON.stringify(cfg, null, 2)
-            fs.writeFileSync("built/target.json", webmanifestjson)
+            const targetjson = JSON.stringify(cfg, null, 2)
+            fs.writeFileSync("built/target.json", targetjson)
+            fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
             pxt.appTarget = cfg; // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
