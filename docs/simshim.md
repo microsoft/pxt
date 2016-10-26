@@ -31,6 +31,11 @@ separately, so that they can be `<referenced ...>` from simulator sources.
 Both files should be listed in `"files"` section of `pxt.json`, and we also recommend
 they are checked into git.
 
+PXT implements a simple parser for a fragment of C++. This parser will not handle
+everything you throw at it. In particular, it is line based and doesn't take
+multi-line comments (other than doc comments) very well. To comment out a piece of C++
+code use `#if 0 .... #endif`.
+
 Checkout the [microbit target](https://github.com/Microsoft/pxt-microbit) for an example.
 
 ## Auto-generation from the simulator

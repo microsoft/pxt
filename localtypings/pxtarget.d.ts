@@ -22,13 +22,13 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
     }
-    
+
     interface ProjectTemplate {
         id: string;
         config: PackageConfig;
         files: Map<string>;
     }
-    
+
 
     interface RuntimeOptions {
         mathBlocks?: boolean;
@@ -80,8 +80,10 @@ declare namespace pxt {
         yottaTarget?: string; // bbc-microbit-classic-gcc
         yottaCorePackage?: string; // pxt-microbit-core
         githubCorePackage?: string; // microsoft/pxt-microbit-core
+        platformioIni?: string[];
         gittag: string;
         serviceId: string;
+        buildEngine?: string;  // default is yotta, set to platformio
     }
 
     interface SpecializedResource {
@@ -162,6 +164,8 @@ declare namespace ts.pxtc {
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        shortPointers?: boolean; // set to true for 16 bit pointers
+        flashCodeAlign?: number; // defualts to 1k
         upgrades?: UpgradePolicy[];
     }
 
@@ -170,7 +174,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
-        hexinfo: any;
+        hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
         forceEmit?: boolean;
@@ -209,10 +213,15 @@ declare namespace ts.pxtc {
         generatedFiles: pxt.Map<string>;
         extensionFiles: pxt.Map<string>;
         yotta: pxt.YottaConfig;
+        platformio: pxt.PlatformIOConfig;
         sha: string;
         compileData: string;
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
+    }
+
+    interface HexInfo {
+        hex: string[];
     }
 }
