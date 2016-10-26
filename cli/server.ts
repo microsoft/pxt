@@ -746,9 +746,12 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (!/\.js\.map$/.test(pathname)) {
+        if (!/\.js\.map$/.test(pathname) || pathname == "/cdn/target.js") {
             let dd = dirs
-            if (U.startsWith(pathname, "/sim/")) {
+            if (pathname == "/cdn/target.js") {
+                pathname = pathname.slice(4)
+                dd = simdirs
+            } else if (U.startsWith(pathname, "/sim/")) {
                 pathname = pathname.slice(4)
                 dd = simdirs
             } else if (U.startsWith(pathname, "/parts/")) {
