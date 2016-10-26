@@ -1985,8 +1985,7 @@ function initTheme() {
     }
 
     for (let u of pxt.appTarget.appTheme.usbHelp || []) {
-        u.path = u.path.replace("@pxtCdnUrl@",
-            pxt.webConfig.pxtCdnUrl.replace(/^(https:\/\/[^\/]+).*/, (a, b) => b))
+        u.path = u.path.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
     }
 }
 
@@ -2081,17 +2080,17 @@ $(document).ready(() => {
 
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const cfg = pxt.webConfig;
-    Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
-        .catch(core.handleNetworkError)
-        .then(pkg.setupAppTarget)
-        .then(() => {
-            if (!pxt.BrowserUtils.isBrowserSupported()) {
-                let redirect = pxt.BrowserUtils.suggestedBrowserPath();
-                if (redirect) {
-                    window.location.href = redirect;
-                }
-            }
-        })
+
+    pkg.setupAppTarget((window as any).pxtTargetBundle)
+    
+    if (!pxt.BrowserUtils.isBrowserSupported()) {
+        let redirect = pxt.BrowserUtils.suggestedBrowserPath();
+        if (redirect) {
+            window.location.href = redirect;
+        }
+    }
+    
+    Promise.resolve()
         .then(() => {
             const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             const lang = mlang ? mlang[1] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);

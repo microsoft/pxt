@@ -69,7 +69,7 @@ namespace pxt {
      * Ticks activity events. This event gets aggregated and eventually gets sent.
      */
     export function tickActivity(...ids: string[]) {
-        ids.forEach(id =>  activityEvents[id] = (activityEvents[id] || 0) + 1);
+        ids.forEach(id => activityEvents[id] = (activityEvents[id] || 0) + 1);
         tickActivityDebounced();
     }
 
@@ -114,6 +114,13 @@ namespace pxt {
     }
 
     export var webConfig: WebConfig;
+
+    export function getOnlineCdnUrl(): string {
+        if (!webConfig) return null
+        let m = /^(https:\/\/[^\/]+)/.exec(webConfig.pxtCdnUrl)
+        if (m) return m[1]
+        else return null
+    }
 
     export function setupWebConfig(cfg: WebConfig) {
         if (cfg) webConfig = cfg;

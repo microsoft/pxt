@@ -50,7 +50,7 @@ CACHE:
 
 @workerjs@
 
-/sim/target.json
+/sim/target.js
 
 # External
 https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
