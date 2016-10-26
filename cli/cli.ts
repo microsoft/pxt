@@ -1679,9 +1679,20 @@ export function serveAsync(...args: string[]) {
         return trimmedArgs && trimmedArgs.length && trimmedArgs.indexOf(arg) !== -1;
     };
 
+    let argValue = (arg: string): string => {
+        if (trimmedArgs && trimmedArgs.length) {
+            const i = trimmedArgs.indexOf(arg);
+            if (i !== -1 && i < trimmedArgs.length - 1) {
+                return trimmedArgs[i + 1];
+            }
+        }
+        return undefined;
+    };
+
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
+    let browser: string = argValue("browser");
 
     if (hasArg("yt")) {
         forceCloudBuild = false
@@ -1725,7 +1736,8 @@ export function serveAsync(...args: string[]) {
             localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
             packaged: packaged,
-            electron: hasArg("electron")
+            electron: hasArg("electron"),
+            browser
         }))
 }
 
@@ -3863,7 +3875,7 @@ cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirA
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 cmd("snippets [--re NAME] [--i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
-cmd("serve    [-yt]               - start web server for your local target; -yt = use local yotta build", serveAsync)
+cmd("serve [-yt] [-browser NAME]  - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("bump                         - bump target or package version", bumpAsync)
