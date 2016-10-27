@@ -3642,21 +3642,17 @@ export interface SavedProject {
     files: Map<string>;
 }
 
-export function extractAsync(...args: string[]) {
+export function extractAsync(...args: string[]): Promise<void> {
     let vscode = false;
     if (/--code/i.test(args[0])) {
         vscode = true;
         args.shift();
     }
     const filename = args[0];
-    if (!filename) {
-        console.error("Missing filename to extract");
-        return Promise.resolve();
-    }
-    let oneFile = (src: string, editor: string) => {
-        let files: any = {}
-        files["main." + (editor || "td")] = src || ""
-        return files
+    if (filename && nodeutil.existDirSync(filename)) {
+        pxt.log(`extracting folder ${filename}`);
+        return Promise.all(fs.readdirSync(filename).filter(f => /\.hex/.test(f)).map(f => extractAsync(f)))
+            .then(() => {});
     }
 
     return (filename == "-" || !filename
@@ -3671,7 +3667,24 @@ export function extractAsync(...args: string[]) {
                 })
                 .then(resp => resp.buffer)
             : readFileAsync(filename) as Promise<Buffer>)
-        .then(buf => {
+        .then(buf => extractBufferAsync(buf))
+        .then(dirs => {
+            if (dirs && vscode) {
+                pxt.debug('launching code...')
+                dirs.forEach(dir => openVsCode(dir));
+            }
+        })
+}
+
+function extractBufferAsync(buf: Buffer): Promise<string[]> {
+    const oneFile = (src: string, editor: string) => {
+        let files: any = {}
+        files["main." + (editor || "td")] = src || ""
+        return files
+    }
+
+    return Promise.resolve()
+        .then(() => {
             let str = buf.toString("utf8")
             if (str[0] == ":") {
                 console.log("Detected .hex file.")
@@ -3733,39 +3746,45 @@ export function extractAsync(...args: string[]) {
             }
 
             let prjs: SavedProject[] = json.projects
-
             if (!prjs) {
                 console.log("No projects found.")
                 return
             }
-
-            for (let prj of prjs) {
-                let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
-                nodeutil.mkdirP(dirname)
-                for (let fn of Object.keys(prj.files)) {
-                    fn = fn.replace(/[\/]/g, "-")
-                    let fullname = dirname + "/" + fn
-                    fs.writeFileSync(fullname, prj.files[fn])
-                    console.log("wrote " + fullname)
-                }
-                // add default files if not present
-                for (let f in defaultFiles) {
-                    if (prj.files[f]) continue;
-                    let fullname = dirname + "/" + f
-                    nodeutil.mkdirP(path.dirname(fullname))
-                    fs.writeFileSync(fullname, defaultFiles[f])
-                    console.log("wrote " + fullname)
-                }
-
-                // start installing in the background
-                child_process.exec(`pxt install`, { cwd: dirname });
-
-                if (vscode) {
-                    pxt.debug('launching code...')
-                    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..                    
-                }
-            }
+            const dirs = writeProjects(prjs)
+            return dirs;
         })
+}
+
+function openVsCode(dirname: string) {
+    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..                    
+}
+
+function writeProjects(prjs: SavedProject[], vscode?: boolean): string[] {
+    const dirs: string[] = [];
+    for (let prj of prjs) {
+        let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
+        nodeutil.mkdirP(dirname)
+        for (let fn of Object.keys(prj.files)) {
+            fn = fn.replace(/[\/]/g, "-")
+            let fullname = dirname + "/" + fn
+            fs.writeFileSync(fullname, prj.files[fn])
+            console.log("wrote " + fullname)
+        }
+        // add default files if not present
+        for (let f in defaultFiles) {
+            if (prj.files[f]) continue;
+            let fullname = dirname + "/" + f
+            nodeutil.mkdirP(path.dirname(fullname))
+            fs.writeFileSync(fullname, defaultFiles[f])
+            console.log("wrote " + fullname)
+        }
+
+        // start installing in the background
+        child_process.exec(`pxt install`, { cwd: dirname });
+
+        dirs.push(dirname);
+    }
+    return dirs;
 }
 
 export function preCacheHexAsync() {

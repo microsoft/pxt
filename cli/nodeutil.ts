@@ -166,6 +166,10 @@ export function mkdirP(thePath: string) {
     }
 }
 
+export function existDirSync(name: string) : boolean {
+    return fs.existsSync(name) && fs.statSync(name).isDirectory();
+}
+
 export function deleteFolderRecursive(thePath: string) {
     if (!path || !fs.existsSync(thePath)) {
         return;
