@@ -501,7 +501,13 @@ function initSerialMonitor() {
     console.log('serial: monitoring ports...')
     initSocketServer();
 
-    const SerialPort = require("serialport");
+    let SerialPort: any;
+    try {
+        SerialPort = require("serialport");
+    } catch (er) {
+        console.warn('serial: failed to load, skipping...');
+        return;
+    }
 
     function close(info: SerialPortInfo) {
         console.log('serial: closing ' + info.pnpId);
