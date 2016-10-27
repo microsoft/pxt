@@ -163,12 +163,12 @@ namespace ts.pxtc {
     cp ${reg1_lo}, ${reg2_lo}
     cpc ${reg1_hi}, ${reg2_hi}`
         }
-
-        // note this assumes call to runtime that generates a one-byte result
         cmp_zero(reg: string) {
             let reg_lo = this.rmap_lo[reg]
+            let reg_hi = this.rmap_hi[reg]
             return `
-    cp ${reg_lo}, r1`
+    cp ${reg_lo}, r1
+    cpc ${reg_hi}, r1`
         }
 
         // load_reg_src_off is load/store indirect
