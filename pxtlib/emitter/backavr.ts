@@ -195,12 +195,14 @@ namespace ts.pxtc {
                 z_reg = "Z"
             }
 
-            if (src != "sp") {
+            // different possibilities for src: r0, r5, sp, r6
+            // any indirection we want to do using Y+C, Z+C (recall Y=sp, r6 -> Z)
+            if (src == "r0" || src == "r5") {
                 prelude = `
     movw r30, ${this.rmap_lo[src]}`
                 z_reg = "Z"
             } else
-                z_reg = "Y"         // recall that Y = FP = SP
+                z_reg = this.ld_map[src]  // maps to Y or Z
 
             // different possibilities for off
             if (word || off[0] == "#") {
@@ -251,11 +253,7 @@ namespace ts.pxtc {
         }
 
         rt_call(name: string, r0: string, r1: string) {
-            // r0 <- r0 op r2
             assert(r0 == "r0" && r1 == "r1")
-            // r0 => r24
-            // r1 => r22
-            // r2 => r20
             assert(name == "adds" || name == "subs" || name == "muls")
             if (name == "muls") {
                 // for multiplication, we get result of multiplying r20 x r18 into R0,R1!
@@ -269,11 +267,11 @@ namespace ts.pxtc {
     add	r25, r0
     mul	r21, r22
     add	r25, r0
-    eor r1, r1`
+    eor	r1, r1`
             } else {
                 return `
-    ${this.inst_lo[name]} r24, r22
-    ${this.inst_hi[name]} r25, r23`
+    ${this.inst_lo[name]} r18, r20
+    ${this.inst_hi[name]} r19, r21`
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
@@ -297,7 +295,7 @@ namespace ts.pxtc {
         lambda_epilogue() {
             return `
     call pxtrt::getGlobalsPtr
-    movw r2, r24
+    movw r30, r24
     ${this.proc_return()}
     @stackempty args`
         }
@@ -320,7 +318,7 @@ namespace ts.pxtc {
             "r2": "r20",
             "r3": "r18",
             "r5": "r26",  // X
-            "r6": "r2"
+            "r6": "r30"   // Z
         }
 
         rmap_hi: pxt.Map<string> = {
@@ -329,7 +327,7 @@ namespace ts.pxtc {
             "r2": "r21",
             "r3": "r19",
             "r5": "r27",
-            "r6": "r3"
+            "r6": "r31"
         }
 
         inst_lo: pxt.Map<string> = {
@@ -340,6 +338,11 @@ namespace ts.pxtc {
         inst_hi: pxt.Map<string> = {
             "adds": "adc",
             "subs": "sbc"
+        }
+
+        ld_map: pxt.Map<string> = {
+            "sp": "Y",
+            "r6": "Z"
         }
     }
 }
