@@ -166,7 +166,7 @@ export function mkdirP(thePath: string) {
     }
 }
 
-export function existDirSync(name: string) : boolean {
+export function existDirSync(name: string): boolean {
     return fs.existsSync(name) && fs.statSync(name).isDirectory();
 }
 
