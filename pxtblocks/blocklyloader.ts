@@ -555,7 +555,7 @@ namespace pxt.blocks {
             const mutation = document.createElement("mutation");
             const attr = block.parameters.map(param => {
                 const varName = block.getFieldValue(param);
-                return varName !== param ? `${Util.htmlEscape(varName)}:${Util.htmlEscape(param)}` : Util.htmlEscape(param);
+                return varName !== param ? `${Util.htmlEscape(param)}:${Util.htmlEscape(varName)}` : Util.htmlEscape(param);
             }).join(",");
             mutation.setAttribute(savedMutationAttribute, attr);
 
