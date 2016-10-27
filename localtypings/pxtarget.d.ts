@@ -116,7 +116,6 @@ declare namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        downloadClass?: string;
         invertedMenu?: boolean;
         locales?: Map<AppTheme>;
         cardLogo?: string;
