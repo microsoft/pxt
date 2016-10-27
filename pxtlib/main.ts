@@ -58,7 +58,7 @@ namespace pxt {
     /**
      * Track an event.
      */
-    export var tickEvent: (id: string, data?: Map<string | number> | string[]) => void = function (id) { }
+    export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
 
     let activityEvents: Map<number> = {};
     const tickActivityDebounced = Util.debounce(() => {
