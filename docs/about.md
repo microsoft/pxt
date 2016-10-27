@@ -7,7 +7,7 @@ is a subset of TypeScript (leaving out JavaScript dynamic features).
 The main features of PXT are:
 
 * a [Google Blockly](https://developers.google.com/blockly/)-based code editor along with converter to JavaScript
-* a [Cloud9 ACE](https://ace.c9.io/)-based text editor with enhanced, robust auto-completion and auto-correction powered by [TypeScript](https://www.typescriptlang.org/).
+* a [Monaco](https://github.com/Microsoft/monaco-editor)-based text editor with enhanced, robust auto-completion and auto-correction powered by [TypeScript](https://www.typescriptlang.org/).
 * extensibility support to define new blocks in TypeScript or C++
 * markdown-based documentation system with built-in macros to render block snippets
 * an ARM Thumb machine code emitter
