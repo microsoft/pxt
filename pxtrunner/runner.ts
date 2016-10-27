@@ -465,7 +465,9 @@ ${files["main.ts"]}
             // patch a elements
             $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
                 $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
-            })
+            });
+            // enable embeds
+            ($(content).find('.ui.embed') as any).embed();
         });
     }
 
