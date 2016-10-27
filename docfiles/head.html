@@ -23,6 +23,10 @@
 
 <script>
     $(document).ready(function() {
+        // patch youtube in semantic
+        if ($ && $.fn && $.fn.embed && $.fn.embed.settings && $.fn.embed.settings.sources && $.fn.embed.settings.sources.youtube) {
+            $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
+        }
         $('.ui.embed').embed();        
     })
 </script>
