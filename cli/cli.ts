@@ -144,6 +144,13 @@ export function loginAsync(access_token: string) {
     return Promise.resolve()
 }
 
+export function logoutAsync() {
+    globalConfig.accessToken = undefined;
+    saveConfig();
+    console.log('access token removed');
+    return Promise.resolve();
+}
+
 function searchAsync(...query: string[]) {
     return pxt.github.searchAsync(query.join(" "))
         .then(res => {
@@ -3919,6 +3926,7 @@ cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) 
 cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
+cmd("logout                       - clears access token", logoutAsync, 1)
 
 cmd("add      ARGUMENTS...        - add a feature (.asm, C++ etc) to package", addAsync)
 cmd("search   QUERY...            - search GitHub for a published package", searchAsync)
