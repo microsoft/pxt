@@ -75,7 +75,10 @@ function renderSnippets() {
 $(document).ready(function () {
     renderSnippets();
 
-    //This is an adapted version of the original template code in Semantic UI
+    // don't show related videos
+    $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
+    
+    //This is an adapted version of the original template code in Semantic UI 
     $.fn.embed.settings.templates.placeholder = function(image, icon) {
       var html = '';
       if(icon) {
@@ -106,7 +109,7 @@ $(document).ready(function () {
           src = src.replace(/\#t=([0-9]+m)?([0-9]+s)?/, "");
       }
       if (parameters) {
-          src += '?' + parameters;
+          src += (/\?/.test(url) ? '&' : '?') + parameters;
       }
       return ''
         + '<iframe src="' + src + '"'
