@@ -296,8 +296,7 @@ namespace ts.pxtc.thumb {
                 ln.update("")
                 lnNext2.update("")
             } else if ((lnop == "pop" || lnop == "push") && lnNext.getOp() == lnop) {
-                let sr = singleReg(lnNext)
-                if ((lnop == "pop" && sr == this.registerNo("pc")) || (lnop == "push" && sr == this.registerNo("lr"))) {
+                if ((lnop == "pop" && singleReg(lnNext) == this.registerNo("pc")) || (lnop == "push" && singleReg(ln) == this.registerNo("lr"))) {
                     let close = ln.words.indexOf("}")
                     ln.words[close] = (lnop == "pop") ? ", pc" : ", lr"
                     ln.words.push("}")
