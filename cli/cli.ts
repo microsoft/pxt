@@ -937,6 +937,26 @@ function gitHash(buf: Buffer) {
 function uploadCoreAsync(opts: UploadOptions) {
     let liteId = "<none>"
 
+    let targetConfig = readLocalPxTarget();
+    let defaultLocale = targetConfig.appTheme.defaultLocale;
+    let hexCache = path.join("built", "hexcache");
+    let hexFiles: string[] = [];
+
+    if (fs.existsSync(hexCache)) {
+        hexFiles = fs.readdirSync(hexCache).filter((f) => {
+            let file = path.join(hexCache, f);
+            if (!fs.statSync(file).isDirectory() && path.extname(f) === ".hex") {
+                return true;
+            }
+
+            return false;
+        });
+
+        hexFiles = hexFiles.map((f) => {
+            return "@pxtCdnUrl@compile/" + f;
+        });
+    }
+
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
         "/sim/siminstructions.html": "@partsUrl@",
@@ -947,8 +967,9 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/": "@targetCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
+        "@defaultLocaleStrings@": defaultLocale ? "@pxtCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
+        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : ""
     }
-
 
     if (opts.localDir) {
         let cfg: pxt.WebConfig = {
@@ -978,6 +999,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
+            "@defaultLocaleStrings@": "",
+            "@cachedHexFiles@": ""
         }
     }
 
