@@ -21,6 +21,7 @@ export class Editor extends srceditor.Editor {
     isFirstBlocklyLoad = true;
     currentComment: B.Comment;
     selectedEventGroup: string;
+    currentHelpCardType: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -114,26 +115,31 @@ export class Editor extends srceditor.Editor {
 
     updateHelpCard() {
         let selected = Blockly.selected;
-        if (selected && selected.inputList && selected.codeCard) {
-            //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
-            let props: any = {};
-            for (let i = 0; i < selected.inputList.length; i++) {
-                let input = selected.inputList[i];
-                for (let j = 0; j < input.fieldRow.length; j++) {
-                    let field = input.fieldRow[j];
-                    if (field.name != undefined && field.value_ != undefined) {
-                        props[field.name] = field.value_;
+        let selectedType = selected ? selected.type : null;
+        if (selectedType != this.currentHelpCardType) {
+            if (selected && selected.inputList && selected.codeCard) {
+                this.currentHelpCardType = selectedType;
+                //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
+                let props: any = {};
+                for (let i = 0; i < selected.inputList.length; i++) {
+                    let input = selected.inputList[i];
+                    for (let j = 0; j < input.fieldRow.length; j++) {
+                        let field = input.fieldRow[j];
+                        if (field.name != undefined && field.value_ != undefined) {
+                            props[field.name] = field.value_;
+                        }
                     }
                 }
-            }
 
-            let card: pxt.CodeCard = selected.codeCard;
-            card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-            card.blocksXml = this.updateFields(card.blocksXml, props);
-            this.parent.setHelpCard(card);
-        }
-        else {
-            this.parent.setHelpCard(null);
+                let card: pxt.CodeCard = selected.codeCard;
+                card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
+                card.blocksXml = this.updateFields(card.blocksXml, props);
+                this.parent.setHelpCard(card);
+            }
+            else {
+                this.currentHelpCardType = null;
+                this.parent.setHelpCard(null);
+            }
         }
     }
 
@@ -248,22 +254,19 @@ export class Editor extends srceditor.Editor {
                         }
                     }
                 }
-            }
-            if (ev.element == 'field' && ev.type == Blockly.Events.CHANGE) {
-                this.updateHelpCard();
-            }
-        })
-        Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
-            this.updateHelpCard();
+                else if (ev.element == 'selected') {
+                    this.updateHelpCard();
 
-            if (this.currentComment) {
-                this.currentComment.setVisible(false)
-            }
+                    if (this.currentComment) {
+                        this.currentComment.setVisible(false)
+                    }
 
-            const selected = Blockly.selected
-            if (selected && selected.comment && typeof (selected.comment) !== "string") {
-                (selected.comment as Blockly.Comment).setVisible(true)
-                this.currentComment = selected.comment
+                    const selected = Blockly.selected
+                    if (selected && selected.comment && typeof (selected.comment) !== "string") {
+                        (selected.comment as Blockly.Comment).setVisible(true)
+                        this.currentComment = selected.comment
+                    }
+                }
             }
         })
 
