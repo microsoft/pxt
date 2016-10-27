@@ -109,7 +109,16 @@ namespace pxt.blocks {
             const field = document.createElement("field");
             shadow.appendChild(field);
             field.setAttribute("name", shadowType == "variables_get" ? "VAR" : typeInfo.field);
-            field.appendChild(document.createTextNode(v || typeInfo.defaultValue));
+
+            let value: Text;
+            if (type == "boolean") {
+                value = document.createTextNode((v || typeInfo.defaultValue).toUpperCase())
+            }
+            else {
+                value = document.createTextNode(v || typeInfo.defaultValue)
+            }
+
+            field.appendChild(value);
         }
 
         return value;
