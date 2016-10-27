@@ -159,7 +159,7 @@ namespace pxsim {
     }
     function readPin(arg: string): MicrobitPin {
         U.assert(!!arg, "Invalid pin: " + arg);
-        let pin = arg.split("DigitalPin.")[1];
+        let pin = arg.split(/(?:Analog|Touch|Digital)Pin\./)[1];
         return <MicrobitPin>pin;
     }
     function mkReverseMap(map: { [key: string]: string }) {
