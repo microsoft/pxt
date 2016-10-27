@@ -2082,20 +2082,21 @@ $(document).ready(() => {
     const cfg = pxt.webConfig;
 
     pkg.setupAppTarget((window as any).pxtTargetBundle)
-    
+
     if (!pxt.BrowserUtils.isBrowserSupported()) {
         let redirect = pxt.BrowserUtils.suggestedBrowserPath();
         if (redirect) {
             window.location.href = redirect;
         }
     }
-    
+
     Promise.resolve()
         .then(() => {
-            const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            const lang = mlang ? mlang[1] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
-            if (lang) pxt.tickEvent("locale." + lang);
-            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang);
+            const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const live = mlang && !!mlang[1];
+            if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
+            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
