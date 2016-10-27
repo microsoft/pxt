@@ -549,7 +549,7 @@ namespace ts.pxtc.Util {
             code = code.split("-")[0]
 
         if (live) {
-            pxt.log(`loading live translations for ${code}`)
+            console.log(`loading live translations for ${code}`)
             return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${code}&filename=strings.json`)
                 .then(tr => {
                     _localizeStrings = tr || {};
