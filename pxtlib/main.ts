@@ -12,6 +12,23 @@ namespace pxt {
 
     export var appTarget: TargetBundle;
 
+    export function setAppTarget(trg: TargetBundle) {
+        appTarget = trg
+
+        // patch-up the target
+        let comp = appTarget.compile
+        if (!comp)
+            comp = appTarget.compile = { isNative: false, hasHex: false }
+        if (comp.hasHex && comp.jsRefCounting === undefined)
+            comp.jsRefCounting = true
+        if (!comp.hasHex && comp.floatingPoint === undefined)
+            comp.floatingPoint = true
+        if (comp.nativeType == "AVR") {
+            comp.shortPointers = true
+            comp.flashCodeAlign = 0x10
+        }
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
@@ -51,7 +68,7 @@ namespace pxt {
     }
 
     /**
-     * Time an event by including the time between this call 
+     * Time an event by including the time between this call
      * and a later 'tickEvent' call for the same event in the properties sent with the event.
      */
     export var timeEvent: (id: string) => void = function (id) { }
@@ -64,12 +81,12 @@ namespace pxt {
     const tickActivityDebounced = Util.debounce(() => {
         tickEvent("activity", activityEvents);
         activityEvents = {};
-    }, 60000, false);
+    }, 10000, false);
     /**
      * Ticks activity events. This event gets aggregated and eventually gets sent.
      */
     export function tickActivity(...ids: string[]) {
-        ids.forEach(id =>  activityEvents[id] = (activityEvents[id] || 0) + 1);
+        ids.forEach(id => activityEvents[id] = (activityEvents[id] || 0) + 1);
         tickActivityDebounced();
     }
 
@@ -115,6 +132,13 @@ namespace pxt {
 
     export var webConfig: WebConfig;
 
+    export function getOnlineCdnUrl(): string {
+        if (!webConfig) return null
+        let m = /^(https:\/\/[^\/]+)/.exec(webConfig.pxtCdnUrl)
+        if (m) return m[1]
+        else return null
+    }
+
     export function setupWebConfig(cfg: WebConfig) {
         if (cfg) webConfig = cfg;
         else if (!webConfig) webConfig = localWebConfig()
@@ -128,7 +152,7 @@ namespace pxt {
         readFile(pkg: Package, filename: string): string;
         writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
         downloadPackageAsync(pkg: Package): Promise<void>;
-        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any>;
+        getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo>;
         cacheStoreAsync(id: string, val: string): Promise<void>;
         cacheGetAsync(id: string): Promise<string>; // null if not found
     }
@@ -440,11 +464,7 @@ namespace pxt {
 
         getTargetOptions(): CompileTarget {
             let res = U.clone(appTarget.compile)
-            if (!res) res = { isNative: false, hasHex: false }
-            if (res.hasHex && res.jsRefCounting === undefined)
-                res.jsRefCounting = true
-            if (!res.hasHex && res.floatingPoint === undefined)
-                res.floatingPoint = true
+            U.assert(!!res)
             return res
         }
 
@@ -453,7 +473,7 @@ namespace pxt {
                 sourceFiles: [],
                 fileSystem: {},
                 target: target,
-                hexinfo: {}
+                hexinfo: { hex: [] }
             }
 
             let generateFile = (fn: string, cont: string) => {
@@ -469,7 +489,7 @@ namespace pxt {
             let upgradeFile = (fn: string, cont: string) => {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
-                    // save file (force write) 
+                    // save file (force write)
                     pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
@@ -482,7 +502,9 @@ namespace pxt {
                     let ext = cpp.getExtensionInfo(this)
                     if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
                     if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
-                    return (target.isNative ? this.host().getHexInfoAsync(ext) : Promise.resolve(null))
+                    return (target.isNative
+                        ? this.host().getHexInfoAsync(ext)
+                        : Promise.resolve<pxtc.HexInfo>(null))
                         .then(inf => {
                             ext = U.flatClone(ext)
                             delete ext.compileData;
@@ -492,7 +514,7 @@ namespace pxt {
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly ? null : this.filesToBePublishedAsync(true))
+                .then(() => this.config.binaryonly || appTarget.compile.shortPointers ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         files = U.mapMap(files, upgradeFile);

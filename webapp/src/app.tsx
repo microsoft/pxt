@@ -569,7 +569,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !pxt.options.light;
-        return <sui.DropdownMenuItem icon="help" title={lf("Help") }>
+        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" title={lf("Help") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
@@ -1612,7 +1612,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
-        const downloadClass = targetTheme.downloadClass || "green";
+        const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1627,9 +1627,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </span> }
                         <div className="ui item portrait only">
                             <div className="ui">
-                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class={downloadClass} icon="download" tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : "" }
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class="download-button download-button-full" icon="download" tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : "" }
                                 {make ? <sui.Button role="menuitem" icon='configure' class="secondary" tooltip={makeTooltip} tooltipPosition="bottom left"  onClick={() => this.openInstructions() } /> : undefined }
-                                <sui.Button role="menuitem" key='runmenubtn' icon={this.state.running ? "stop" : "play"} tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.startStopSimulator() } />
+                                <sui.Button role="menuitem" class="play-button play-button-full" key='runmenubtn' icon={this.state.running ? "stop" : "play"} tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.startStopSimulator() } />
                             </div>
                         </div>
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
@@ -1648,7 +1648,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div>
                         {this.editor.menu() }
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar'>
+                        {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
                             <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header ? <div className="ui divider"></div> : undefined }
@@ -1679,9 +1679,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
-                        {compile ? <sui.Button icon='icon download' class={`huge fluid ${downloadClass}`} text={lf("Download") } disabled={compileDisabled} tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : ""}
+                        {compile ? <sui.Button icon='icon download' class={`huge fluid download-button`} text={lf("Download") } disabled={compileDisabled} tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : ""}
                         {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } tooltip={makeTooltip} tooltipPosition="bottom left" onClick={() => this.openInstructions() } /> : undefined }
-                        <sui.Button key='runbtn' icon={this.state.running ? "stop" : "play"} title={this.state.running ? lf("Stop") : lf("Play") } tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        <sui.Button key='runbtn' class="play-button" icon={this.state.running ? "stop" : "play"} title={this.state.running ? lf("Stop") : lf("Play") } tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1690,7 +1690,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
                     </div>
-                    {sandbox ? undefined : <FileList parent={this} />}
+                    {sandbox || isBlocks ? undefined : <FileList parent={this} />}
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
@@ -1985,8 +1985,7 @@ function initTheme() {
     }
 
     for (let u of pxt.appTarget.appTheme.usbHelp || []) {
-        u.path = u.path.replace("@pxtCdnUrl@",
-            pxt.webConfig.pxtCdnUrl.replace(/^(https:\/\/[^\/]+).*/, (a, b) => b))
+        u.path = u.path.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
     }
 }
 
@@ -2081,22 +2080,23 @@ $(document).ready(() => {
 
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const cfg = pxt.webConfig;
-    Util.httpGetJsonAsync(config.targetCdnUrl + "target.json")
-        .catch(core.handleNetworkError)
-        .then(pkg.setupAppTarget)
+
+    pkg.setupAppTarget((window as any).pxtTargetBundle)
+
+    if (!pxt.BrowserUtils.isBrowserSupported()) {
+        let redirect = pxt.BrowserUtils.suggestedBrowserPath();
+        if (redirect) {
+            window.location.href = redirect;
+        }
+    }
+
+    Promise.resolve()
         .then(() => {
-            if (!pxt.BrowserUtils.isBrowserSupported()) {
-                let redirect = pxt.BrowserUtils.suggestedBrowserPath();
-                if (redirect) {
-                    window.location.href = redirect;
-                }
-            }
-        })
-        .then(() => {
-            const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            const lang = mlang ? mlang[1] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
-            if (lang) pxt.tickEvent("locale." + lang);
-            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang);
+            const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const live = mlang && !!mlang[1];
+            if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
+            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

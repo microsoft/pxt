@@ -38,10 +38,10 @@ namespace ts.pxtc.assembler {
         public args: string[];
         public friendlyFmt: string;
         public code: string;
-        private ei: EncodersInstructions;
+        private ei: AbstractProcessor;
         public is32bit: boolean;
 
-        constructor(ei: EncodersInstructions, format: string, public opcode: number, public mask: number, public jsFormat: string) {
+        constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public jsFormat: string) {
             assert((opcode & mask) == opcode)
 
             this.ei = ei;
@@ -93,9 +93,9 @@ namespace ts.pxtc.assembler {
                             return emitErr("expecting number", actual)
                         } else {
                             if (this.ei.isAddSP(this.opcode))
-                                stack = -(v / 4);
+                                stack = -(v / this.ei.wordSize());
                             else if (this.ei.isSubSP(this.opcode))
-                                stack = (v / 4);
+                                stack = (v / this.ei.wordSize());
                         }
                     } else if (enc.isRegList) {
                         // register lists are ARM-specific - this code not used in AVR 
@@ -126,8 +126,7 @@ namespace ts.pxtc.assembler {
                             labelName = "abs" + v
                         } else {
                             labelName = actual
-                            // console.log("op = ", this.name)
-                            v = ln.bin.getRelativeLabel(actual, enc.isWordAligned)
+                            v = this.ei.getAddressFromLabel(ln.bin, this, actual, enc.isWordAligned)
                             if (v == null) {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
@@ -138,6 +137,7 @@ namespace ts.pxtc.assembler {
                             }
                         }
                         if (this.ei.is32bit(this)) {
+                            // console.log(actual + " " + v.toString())
                             bit32_value = v
                             bit32_actual = actual
                             continue
@@ -222,7 +222,7 @@ namespace ts.pxtc.assembler {
     // File is the center of the action: parsing a file into a sequence of Lines
     // and also emitting the binary (buf)
     export class File {
-        constructor(ei: EncodersInstructions) {
+        constructor(ei: AbstractProcessor) {
             this.currLine = new Line(this, "<start>");
             this.currLine.lineNo = 0;
             this.ei = ei;
@@ -235,7 +235,7 @@ namespace ts.pxtc.assembler {
         public inlineMode = false;
         public lookupExternalLabel: (name: string) => number;
         public normalizeExternalLabel = (n: string) => n;
-        private ei: EncodersInstructions;
+        private ei: AbstractProcessor;
         private lines: Line[];
         private currLineNo: number = 0;
         private realCurrLineNo: number;
@@ -325,7 +325,7 @@ namespace ts.pxtc.assembler {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
                     if (this.stackpointers.hasOwnProperty(m[1]))
-                        v = 4 * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                        v = this.ei.wordSize() * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
                     else
                         this.directiveError(lf("saved stack not found"))
                 }
@@ -372,14 +372,18 @@ namespace ts.pxtc.assembler {
             else return name;
         }
 
+
         public lookupLabel(name: string, direct = false) {
             let v: number = null;
             let scoped = this.scopedName(name)
-            if (this.labels.hasOwnProperty(scoped))
+            if (this.labels.hasOwnProperty(scoped)) {
                 v = this.labels[scoped];
-            else if (this.lookupExternalLabel) {
+                v = this.ei.postProcessRelAddress(this,v)
+            } else if (this.lookupExternalLabel) {
                 v = this.lookupExternalLabel(name)
-                if (v != null) v -= this.baseOffset
+                if (v != null)  {
+                    v = this.ei.postProcessAbsAddress(this,v)
+                }
             }
             if (v == null && direct) {
                 if (this.finalEmit)
@@ -388,10 +392,6 @@ namespace ts.pxtc.assembler {
                     v = 42;
             }
             return v;
-        }
-
-        public getRelativeLabel(s: string, wordAligned = false) {
-            return this.ei.getRelativeLabel(this, s, wordAligned)
         }
 
         private align(n: number) {
@@ -502,6 +502,7 @@ namespace ts.pxtc.assembler {
         private emitHex(words: string[]) {
             words.slice(1).forEach(w => {
                 if (w == ",") return
+                // TODO: why 4 and not 2?
                 if (w.length % 4 != 0)
                     this.directiveError(".hex needs an even number of bytes")
                 else if (!/^[a-f0-9]+$/i.test(w))
@@ -574,6 +575,7 @@ namespace ts.pxtc.assembler {
                     break;
                 case ".word":
                 case ".4bytes":
+                    // TODO: a word is machine-dependent (16-bit for AVR, 32-bit for ARM)
                     this.parseNumbers(words).forEach(n => {
                         // we allow negative numbers
                         if (-0x80000000 <= n && n <= 0xffffffff) {
@@ -937,7 +939,7 @@ namespace ts.pxtc.assembler {
 
     // an assembler provider must inherit from this
     // class and provide Encoders and Instructions
-    export abstract class EncodersInstructions {
+    export abstract class AbstractProcessor {
 
         public encoders: pxt.Map<Encoder>;
         public instructions: pxt.Map<Instruction[]>;
@@ -945,6 +947,10 @@ namespace ts.pxtc.assembler {
         constructor() {
             this.encoders = {};
             this.instructions = {}
+        }
+
+        public wordSize() {
+            return -1;
         }
 
         public is32bit(i: Instruction) {
@@ -955,15 +961,23 @@ namespace ts.pxtc.assembler {
             return null;
         }
 
-        public peephole(ln: Line, lnNext: Line, lnNext2: Line) {
+        public postProcessRelAddress(f: File, v: number): number {
+            return v;
+        }
 
+        public postProcessAbsAddress(f: File, v: number): number {
+            return v;
+        }
+
+        public peephole(ln: Line, lnNext: Line, lnNext2: Line) {
+            return;
         }
 
         public registerNo(actual: string): number {
             return null;
         }
 
-        public getRelativeLabel(f: File, s: string, wordAligned = false): number {
+        public getAddressFromLabel(f: File, i: Instruction, s: string, wordAligned = false): number {
             return null;
         }
 
@@ -981,6 +995,10 @@ namespace ts.pxtc.assembler {
 
         public isSubSP(opcode: number): boolean {
             return false;
+        }
+
+        public testAssembler() {
+            assert(false)
         }
 
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {
@@ -1056,9 +1074,8 @@ namespace ts.pxtc.assembler {
                     if (w) { words.push(w); w = "" }
                     break;
                 case ";":
-                    if (!w) break loop;
-                    w += line[i]
-                    break;
+                    // drop the trailing comment
+                    break loop;
                 default:
                     w += line[i]
                     break;
@@ -1091,14 +1108,14 @@ namespace ts.pxtc.assembler {
         }
     }
 
-    function testOne(ei: EncodersInstructions, op: string, code: number) {
+    function testOne(ei: AbstractProcessor, op: string, code: number) {
         let b = new File(ei)
         b.checkStack = false;
         b.emit(op)
         assert(b.buf[0] == code)
     }
 
-    export function expectError(ei: EncodersInstructions, asm: string) {
+    export function expectError(ei: AbstractProcessor, asm: string) {
         let b = new File(ei);
         b.emit(asm);
         if (b.errors.length == 0) {
@@ -1114,7 +1131,7 @@ namespace ts.pxtc.assembler {
             return ("0x" + ("000" + n.toString(16)).slice(-4)).toLowerCase()
     }
 
-    export function expect(ei: EncodersInstructions, disasm: string) {
+    export function expect(ei: AbstractProcessor, disasm: string) {
         let exp: number[] = []
         let asm = disasm.replace(/^([0-9a-fA-F]{4,8})\s/gm, (w, n) => {
             exp.push(parseInt(n.slice(0,4), 16))

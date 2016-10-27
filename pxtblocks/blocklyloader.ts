@@ -109,7 +109,16 @@ namespace pxt.blocks {
             const field = document.createElement("field");
             shadow.appendChild(field);
             field.setAttribute("name", shadowType == "variables_get" ? "VAR" : typeInfo.field);
-            field.appendChild(document.createTextNode(v || typeInfo.defaultValue));
+
+            let value: Text;
+            if (type == "boolean") {
+                value = document.createTextNode((v || typeInfo.defaultValue).toUpperCase())
+            }
+            else {
+                value = document.createTextNode(v || typeInfo.defaultValue)
+            }
+
+            field.appendChild(value);
         }
 
         return value;
@@ -555,7 +564,7 @@ namespace pxt.blocks {
             const mutation = document.createElement("mutation");
             const attr = block.parameters.map(param => {
                 const varName = block.getFieldValue(param);
-                return varName !== param ? `${Util.htmlEscape(varName)}:${Util.htmlEscape(param)}` : Util.htmlEscape(param);
+                return varName !== param ? `${Util.htmlEscape(param)}:${Util.htmlEscape(varName)}` : Util.htmlEscape(param);
             }).join(",");
             mutation.setAttribute(savedMutationAttribute, attr);
 

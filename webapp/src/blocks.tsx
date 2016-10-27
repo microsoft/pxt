@@ -104,6 +104,7 @@ export class Editor extends srceditor.Editor {
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.editor.clearUndo();
+            this.reportDeprecatedBlocks();
         } catch (e) {
             pxt.log(e);
         }
@@ -111,6 +112,34 @@ export class Editor extends srceditor.Editor {
         this.changeCallback();
 
         return true;
+    }
+
+    private reportDeprecatedBlocks() {
+        const deprecatedMap: {[index: string]: number } = {};
+        let deprecatedBlocksFound = false;
+
+        this.blockInfo.blocks.forEach(symbolInfo => {
+            if (symbolInfo.attributes.deprecated) {
+                deprecatedMap[symbolInfo.attributes.blockId] = 0;
+            }
+        });
+
+        this.editor.getAllBlocks().forEach(block => {
+            if (deprecatedMap[block.type] >= 0) {
+                deprecatedMap[block.type]++;
+                deprecatedBlocksFound = true;
+            }
+        });
+
+        for (const block in deprecatedMap) {
+            if (deprecatedMap[block] === 0) {
+                delete deprecatedMap[block];
+            }
+        }
+
+        if (deprecatedBlocksFound) {
+            pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
+        }
     }
 
     updateHelpCard() {
@@ -343,7 +372,7 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <sui.Item text={lf("JavaScript") } textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
+            <sui.Item text={lf("JavaScript") } class="javascript-menuitem" textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
                 tooltip={lf("Convert code to JavaScript")} tooltipPosition="bottom left"
             />
         )

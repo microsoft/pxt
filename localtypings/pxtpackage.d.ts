@@ -19,10 +19,15 @@ declare namespace pxt {
         testFiles?: string[];
         public?: boolean;
         binaryonly?: boolean;
+        platformio?: PlatformIOConfig;
         yotta?: YottaConfig;
         card?: CodeCard;
         additionalFilePath?: string;
         minTargetVersion?: string;
+    }
+
+    interface PlatformIOConfig {
+        dependencies?: Map<string>;        
     }
 
     interface YottaConfig {

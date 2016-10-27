@@ -501,7 +501,13 @@ function initSerialMonitor() {
     console.log('serial: monitoring ports...')
     initSocketServer();
 
-    const SerialPort = require("serialport");
+    let SerialPort: any;
+    try {
+        SerialPort = require("serialport");
+    } catch (er) {
+        console.warn('serial: failed to load, skipping...');
+        return;
+    }
 
     function close(info: SerialPortInfo) {
         console.log('serial: closing ' + info.pnpId);
@@ -746,9 +752,12 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (!/\.js\.map$/.test(pathname)) {
+        if (!/\.js\.map$/.test(pathname) || pathname == "/cdn/target.js") {
             let dd = dirs
-            if (U.startsWith(pathname, "/sim/")) {
+            if (pathname == "/cdn/target.js") {
+                pathname = pathname.slice(4)
+                dd = simdirs
+            } else if (U.startsWith(pathname, "/sim/")) {
                 pathname = pathname.slice(4)
                 dd = simdirs
             } else if (U.startsWith(pathname, "/parts/")) {

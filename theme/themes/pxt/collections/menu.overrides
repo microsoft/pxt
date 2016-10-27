@@ -3,5 +3,21 @@
 *******************************/
 
 .ui.inverted.menu {
-    border: 1px solid transparent;
+    border: 0px solid transparent;
+}
+
+#menubar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    height: @mainMenuHeight;
+}
+
+#menubar .ui.menu {
+    min-height: @mainMenuMinHeight !important;
+}
+
+#menubar .item > .button {
+    margin-right: 0.25rem;
 }

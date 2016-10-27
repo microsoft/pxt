@@ -16,6 +16,8 @@ CACHE:
 /cdn/custom.css
 /cdn/icons.css
 /cdn/fonts/icons.woff2
+@defaultLocaleStrings@
+@cachedHexFiles@
 
 # blockly
 /cdn/blockly/blockly_compressed.js
@@ -50,7 +52,7 @@ CACHE:
 
 @workerjs@
 
-/sim/target.json
+/sim/target.js
 
 # External
 https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
