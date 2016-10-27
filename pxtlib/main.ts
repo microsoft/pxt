@@ -68,7 +68,7 @@ namespace pxt {
     }
 
     /**
-     * Time an event by including the time between this call 
+     * Time an event by including the time between this call
      * and a later 'tickEvent' call for the same event in the properties sent with the event.
      */
     export var timeEvent: (id: string) => void = function (id) { }
@@ -489,7 +489,7 @@ namespace pxt {
             let upgradeFile = (fn: string, cont: string) => {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
-                    // save file (force write) 
+                    // save file (force write)
                     pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
