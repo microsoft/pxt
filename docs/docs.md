@@ -13,5 +13,5 @@ They are meant for people creating PXT targets (experiences).
 * [custom targets](/target-creation), create your own targets
 
 * [writing docs](/writing-docs), leverage the markdown-based documentation system
-* [translations](/localization)
+* [translations](/translate)
  
