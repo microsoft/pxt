@@ -95,11 +95,11 @@ namespace ts.pxtc {
         export let currentHexInfo: pxtc.HexInfo;
 
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
-        export function flashCodeAlign() {
-            return pxt.appTarget.compile.flashCodeAlign || defaultPageSize
+        export function flashCodeAlign(opts: CompileTarget) {
+            return opts.flashCodeAlign || defaultPageSize
         }
 
-        export function setupFor(extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
+        export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
 
@@ -142,9 +142,9 @@ namespace ts.pxtc {
                     }
 
                     bytecodeStartIdx = lastIdx + 1
-                    let pageSize = flashCodeAlign()
+                    const pageSize = flashCodeAlign(opts)
                     bytecodeStartAddrPadded = (bytecodeStartAddr & ~(pageSize - 1)) + pageSize
-                    let paddingBytes = bytecodeStartAddrPadded - bytecodeStartAddr
+                    const paddingBytes = bytecodeStartAddrPadded - bytecodeStartAddr
                     assert((paddingBytes & 0xf) == 0)
                     bytecodePaddingSize = paddingBytes
                 }
@@ -191,7 +191,7 @@ namespace ts.pxtc {
                 if (!m) continue;
 
                 let s = hex[i].slice(9)
-                let step = pxt.appTarget.compile.shortPointers ? 4 : 8
+                let step = opts.shortPointers ? 4 : 8
                 while (s.length >= step) {
                     let inf = funs.shift()
                     if (!inf) return;
@@ -564,7 +564,7 @@ _stored_program: .string "`
             for (let i = 0; i < res.buf.length; i += 2) {
                 cres.quickFlash.words.push(res.buf[i] | (res.buf[i + 1] << 16))
             }
-            while (cres.quickFlash.words.length & ((hex.flashCodeAlign() >> 2) - 1))
+            while (cres.quickFlash.words.length & ((hex.flashCodeAlign(opts.target) >> 2) - 1))
                 cres.quickFlash.words.push(0)
         }
 

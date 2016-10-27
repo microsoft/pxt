@@ -654,7 +654,7 @@ namespace ts.pxtc {
                 };
             }
 
-            hex.setupFor(opts.extinfo || emptyExtInfo(), opts.hexinfo);
+            hex.setupFor(opts.target, opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
 
             opts.breakpoints = true
