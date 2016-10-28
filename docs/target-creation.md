@@ -17,7 +17,7 @@ A target contains the following folders:
 
 ## Getting started
 
-* If you haven't do so yet, instal Node.JS and the **PXT** command line
+* If you haven't do so yet, install Node.JS and the **PXT** command line
 
 ```
 npm install -g pxt
@@ -30,7 +30,7 @@ npm install -g pxt
 npm install
 ```
 
-At this point, pick a identifier for your target. Use only alphanumeric characters as it will be used in various routing operations.
+At this point, pick an identifier for your target. Use only alphanumeric characters as it will be used in various routing operations.
 
 ### Updating ``package.json``
 
@@ -50,6 +50,14 @@ the ``id``, ``corpkg``, ``name`` and ``title`` fields to reflect your target inf
 * Rename the ``/libs/sample`` project to your target id, ``libs/[your target id]``
 * open ``pxt.json`` under that folder and rename ``id`` field value to your target id.
 
+### Updating the ``templates`` packages
+
+Templates are the default projects for your target. There is one default blocks project, and one default JavaScript project.
+The initial templates are empty projects.
+
+* To change the default blocks project, modify the package under ``libs/templates/blocksprj``
+* To change the default JavaScript project, modify the package under ``libs/templates/tsprj``
+
 ### Testing the target locally
 
 Now that you've updated your target, it is ready to be run locally. Run the following command:
@@ -60,7 +68,7 @@ pxt serve
 
 The editor will automatically open the target API project which you can edit directly in PXT. 
 At this point, we recommend to create a new project using blocks that will serve as a sandbox. 
-New projects are created under the ``/projects`` folder when testing a target locally (and are automatically "git-ignored").
+New projects are created under the ``/projects`` folder when testing a target locally (and are automatically "git-ignored"). You can use these projects to change your templates. Simply copy the contents of your project under ``/projects`` to one of the templates under ``/libs/templates/``.
 
 Whenever you make a change, the local web server will trigger a build. Simply reload the page once the build is done.
 

@@ -116,7 +116,6 @@ declare namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        downloadClass?: string;
         invertedMenu?: boolean;
         locales?: Map<AppTheme>;
         cardLogo?: string;
@@ -127,8 +126,11 @@ declare namespace pxt {
         usbHelp?: SpecializedResource[];
         usbDocs?: string;
         exportVsCode?: boolean;
-        browserSupport?: SpecializedResource[];        
+        browserSupport?: SpecializedResource[];
+        invertedToolbox?: boolean;    
         blocklyOptions?: Blockly.Options;
+        simAnimationEnter?: string;
+        simAnimationExit?: string;
     }
 
     interface DocMenuEntry {

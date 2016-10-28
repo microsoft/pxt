@@ -144,6 +144,13 @@ export function loginAsync(access_token: string) {
     return Promise.resolve()
 }
 
+export function logoutAsync() {
+    globalConfig.accessToken = undefined;
+    saveConfig();
+    console.log('access token removed');
+    return Promise.resolve();
+}
+
 function searchAsync(...query: string[]) {
     return pxt.github.searchAsync(query.join(" "))
         .then(res => {
@@ -937,6 +944,26 @@ function gitHash(buf: Buffer) {
 function uploadCoreAsync(opts: UploadOptions) {
     let liteId = "<none>"
 
+    let targetConfig = readLocalPxTarget();
+    let defaultLocale = targetConfig.appTheme.defaultLocale;
+    let hexCache = path.join("built", "hexcache");
+    let hexFiles: string[] = [];
+
+    if (fs.existsSync(hexCache)) {
+        hexFiles = fs.readdirSync(hexCache).filter((f) => {
+            let file = path.join(hexCache, f);
+            if (!fs.statSync(file).isDirectory() && path.extname(f) === ".hex") {
+                return true;
+            }
+
+            return false;
+        });
+
+        hexFiles = hexFiles.map((f) => {
+            return "@pxtCdnUrl@compile/" + f;
+        });
+    }
+
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
         "/sim/siminstructions.html": "@partsUrl@",
@@ -947,8 +974,9 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/": "@targetCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
+        "@defaultLocaleStrings@": defaultLocale ? "@pxtCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
+        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : ""
     }
-
 
     if (opts.localDir) {
         let cfg: pxt.WebConfig = {
@@ -978,6 +1006,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
+            "@defaultLocaleStrings@": "",
+            "@cachedHexFiles@": ""
         }
     }
 
@@ -1494,8 +1524,51 @@ function buildSemanticUIAsync() {
     })
 }
 
+function updateDefaultProjects(cfg: pxt.TargetBundle) {
+    let templatesRoot = path.join("libs", "templates");
+    let defaultProjects = [
+        "blocksprj",
+        "tsprj"
+    ];
+
+    defaultProjects.forEach((p) => {
+        let projectPath = path.join(templatesRoot, p);
+        let newProject: pxt.ProjectTemplate = {
+            id: p,
+            config: {
+                name: "",
+                dependencies: {},
+                files: []
+            },
+            files: {}
+        };
+
+        if (!fs.existsSync(projectPath)) {
+            return;
+        }
+
+        fs.readdirSync(projectPath).forEach((f) => {
+            let file = path.join(projectPath, f);
+            if (fs.statSync(file).isDirectory()) {
+                return;
+            }
+
+            if (f === "pxt.json") {
+                newProject.config = nodeutil.readJson(file);
+            } else if (f === "tsconfig.json") {
+                return;
+            } else {
+                newProject.files[f] = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+            }
+        });
+
+        (<any>cfg)[p] = newProject;
+    });
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
+    updateDefaultProjects(cfg);
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
@@ -3642,21 +3715,30 @@ export interface SavedProject {
     files: Map<string>;
 }
 
-export function extractAsync(...args: string[]) {
+export function extractAsync(...args: string[]): Promise<void> {
     let vscode = false;
-    if (/--code/i.test(args[0])) {
+    let out = '.';
+    console.log(args)
+    if (/^--?code/i.test(args[0])) {
         vscode = true;
         args.shift();
     }
-    const filename = args[0];
-    if (!filename) {
-        console.error("Missing filename to extract");
-        return Promise.resolve();
+    if (/^--?out/i.test(args[0])) {
+        out = args[1];
+        args.shift(); args.shift();
+        pxt.debug(`extracting in ${out}`);
     }
-    let oneFile = (src: string, editor: string) => {
-        let files: any = {}
-        files["main." + (editor || "td")] = src || ""
-        return files
+    const filename = args[0];
+    return extractAsyncInternal(filename, out, vscode);
+}
+
+function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<void> {
+    if (filename && nodeutil.existDirSync(filename)) {
+        pxt.log(`extracting folder ${filename}`);
+        return Promise.all(fs.readdirSync(filename)
+            .filter(f => /\.hex/.test(f))
+            .map(f => extractAsyncInternal(path.join(filename, f), out, vscode)))
+            .then(() => { });
     }
 
     return (filename == "-" || !filename
@@ -3671,7 +3753,24 @@ export function extractAsync(...args: string[]) {
                 })
                 .then(resp => resp.buffer)
             : readFileAsync(filename) as Promise<Buffer>)
-        .then(buf => {
+        .then(buf => extractBufferAsync(buf, out))
+        .then(dirs => {
+            if (dirs && vscode) {
+                pxt.debug('launching code...')
+                dirs.forEach(dir => openVsCode(dir));
+            }
+        })
+}
+
+function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
+    const oneFile = (src: string, editor: string) => {
+        let files: any = {}
+        files["main." + (editor || "td")] = src || ""
+        return files
+    }
+
+    return Promise.resolve()
+        .then(() => {
             let str = buf.toString("utf8")
             if (str[0] == ":") {
                 console.log("Detected .hex file.")
@@ -3733,39 +3832,48 @@ export function extractAsync(...args: string[]) {
             }
 
             let prjs: SavedProject[] = json.projects
-
             if (!prjs) {
                 console.log("No projects found.")
                 return
             }
-
-            for (let prj of prjs) {
-                let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
-                nodeutil.mkdirP(dirname)
-                for (let fn of Object.keys(prj.files)) {
-                    fn = fn.replace(/[\/]/g, "-")
-                    let fullname = dirname + "/" + fn
-                    fs.writeFileSync(fullname, prj.files[fn])
-                    console.log("wrote " + fullname)
-                }
-                // add default files if not present
-                for (let f in defaultFiles) {
-                    if (prj.files[f]) continue;
-                    let fullname = dirname + "/" + f
-                    nodeutil.mkdirP(path.dirname(fullname))
-                    fs.writeFileSync(fullname, defaultFiles[f])
-                    console.log("wrote " + fullname)
-                }
-
-                // start installing in the background
-                child_process.exec(`pxt install`, { cwd: dirname });
-
-                if (vscode) {
-                    pxt.debug('launching code...')
-                    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..                    
-                }
-            }
+            const dirs = writeProjects(prjs, outDir)
+            return dirs;
         })
+}
+
+function openVsCode(dirname: string) {
+    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..                    
+}
+
+function writeProjects(prjs: SavedProject[], outDir: string): string[] {
+    const dirs: string[] = [];
+    for (let prj of prjs) {
+        let dirname = prj.name.replace(/[^A-Za-z0-9_]/g, "-")
+        for (let fn of Object.keys(prj.files)) {
+            fn = fn.replace(/[\/]/g, "-")
+            const fdir = path.join(outDir, dirname);
+            const fullname = path.join(fdir, fn)
+            nodeutil.mkdirP(path.dirname(fullname));
+            fs.writeFileSync(fullname, prj.files[fn])
+            console.log("wrote " + fullname)
+        }
+        // add default files if not present
+        for (let fn in defaultFiles) {
+            if (prj.files[fn]) continue;
+            const fdir = path.join(outDir, dirname);
+            nodeutil.mkdirP(fdir);
+            const fullname = path.join(fdir, fn)
+            nodeutil.mkdirP(path.dirname(fullname));
+            fs.writeFileSync(fullname, defaultFiles[fn])
+            console.log("wrote " + fullname)
+        }
+
+        // start installing in the background
+        child_process.exec(`pxt install`, { cwd: dirname });
+
+        dirs.push(dirname);
+    }
+    return dirs;
 }
 
 export function preCacheHexAsync() {
@@ -3867,7 +3975,7 @@ cmd("install  [PACKAGE...]        - install new packages, or all packages", inst
 cmd("build    [--cloud]            - build current package, --cloud forces a build in the cloud", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
-cmd("extract  [FILENAME]          - extract sources from .hex/.jsz file, stdin (-), or URL", extractAsync)
+cmd("extract [--code] [--out DIRNAME]  [FILENAME] - extract sources from .hex file, folder of .hex files, stdin (-), or URL", extractAsync)
 cmd("precachehex                  - download hex images of current target for offline compilation", preCacheHexAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs [--locs] [--docs]    - build current package and its docs. --locs produce localization files, --docs produce docs files", gendocsAsync, 1)
@@ -3896,6 +4004,7 @@ cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) 
 cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
+cmd("logout                       - clears access token", logoutAsync, 1)
 
 cmd("add      ARGUMENTS...        - add a feature (.asm, C++ etc) to package", addAsync)
 cmd("search   QUERY...            - search GitHub for a published package", searchAsync)

@@ -84,10 +84,9 @@ export class LoginBox extends data.Component<ILoginBoxProps, ILoginBoxState> {
             workspace.resetAsync()
                 .then(() => Cloud.privatePostAsync("logout", {}))
                 .catch((e: any) => { })
-                .then(() => {
+                .done(() => {
                     window.location.reload()
                 })
-                .done()
         });
     }
 

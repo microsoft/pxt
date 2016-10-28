@@ -119,12 +119,24 @@ namespace pxt.runner {
         return files
     }
 
+    function patchSemantic() {
+        if ($ && $.fn && $.fn.embed && $.fn.embed.settings && $.fn.embed.settings.sources && $.fn.embed.settings.sources.youtube) {
+            $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
+        }
+    }
+
     function initInnerAsync() {
-        let lang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        let cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang ? lang[1] : (navigator.userLanguage || navigator.language))
+        pxt.appTarget = (window as any).pxtTargetBundle
+        Util.assert(!!pxt.appTarget);
+
+        const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+        const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+        const live = mlang && !!mlang[1];
+
+        patchSemantic();
+        const cfg = pxt.webConfig
+        return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang, live)
             .then(() => {
-                pxt.appTarget = (window as any).pxtTargetBundle
                 mainPkg = new pxt.MainPackage(new Host());
             })
     }
@@ -159,14 +171,14 @@ namespace pxt.runner {
             .then(() => host.readFile(mainPkg, pxt.CONFIG_NAME))
             .then(str => {
                 if (!str) return Promise.resolve()
-                return mainPkg.installAllAsync().then( () => {
+                return mainPkg.installAllAsync().then(() => {
                     if (code) {
                         //Set the custom code if provided for docs
                         getEditorPkg(mainPkg).files["main.ts"] = code;
                     }
                 }).catch(e => {
-                        showError(lf("Cannot load package: {0}", e.message))
-                    })
+                    showError(lf("Cannot load package: {0}", e.message))
+                })
             });
     }
 
@@ -328,7 +340,7 @@ namespace pxt.runner {
             renderHash();
         }, false);
 
-        parent.postMessage({type: "sidedocready"}, "*");
+        parent.postMessage({ type: "sidedocready" }, "*");
 
         // delay load doc page to allow simulator to load first
         setTimeout(() => renderHash(), 5000);
@@ -453,7 +465,9 @@ ${files["main.ts"]}
             // patch a elements
             $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
                 $(a).attr('href', '#doc:' + $(a).attr('href').replace(/^\//, ''));
-            })
+            });
+            // enable embeds
+            ($(content).find('.ui.embed') as any).embed();
         });
     }
 
