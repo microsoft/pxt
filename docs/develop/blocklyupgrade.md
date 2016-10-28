@@ -50,4 +50,10 @@ Test the following on various browsers:
 * Check that deleting / shuffling works. 
 
 
+### Javascript editor
 
+* Make sure you can switch to the Javascript editor and back and forth between the two editors.
+
+### Sandbox Mode
+
+* Check sandbox mode for both the blocks editor and the Javascript editor. 
