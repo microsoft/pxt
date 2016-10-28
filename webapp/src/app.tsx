@@ -2070,7 +2070,7 @@ $(document).ready(() => {
         // in iframe
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
+    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
 
     enableAnalytics()
     appcache.init();
