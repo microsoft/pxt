@@ -163,12 +163,11 @@ namespace ts.pxtc {
     cp ${reg1_lo}, ${reg2_lo}
     cpc ${reg1_hi}, ${reg2_hi}`
         }
+
         cmp_zero(reg: string) {
             let reg_lo = this.rmap_lo[reg]
-            let reg_hi = this.rmap_hi[reg]
             return `
-    cp ${reg_lo}, r1
-    cpc ${reg_hi}, r1`
+    cp ${reg_lo}, r1`
         }
 
         // load_reg_src_off is load/store indirect
@@ -197,12 +196,12 @@ namespace ts.pxtc {
 
             // different possibilities for src: r0, r5, sp, r6
             // any indirection we want to do using Y+C, Z+C (recall Y=sp, r6 -> Z)
-            if (src == "r0" || src == "r5") {
+            if (src != "sp") {
                 prelude = `
     movw r30, ${this.rmap_lo[src]}`
                 z_reg = "Z"
             } else
-                z_reg = this.ld_map[src]  // maps to Y or Z
+                z_reg = "Y" // sp -> FP = r29
 
             // different possibilities for off
             if (word || off[0] == "#") {
@@ -338,11 +337,6 @@ namespace ts.pxtc {
         inst_hi: pxt.Map<string> = {
             "adds": "adc",
             "subs": "sbc"
-        }
-
-        ld_map: pxt.Map<string> = {
-            "sp": "Y",
-            "r6": "Z"
         }
     }
 }
