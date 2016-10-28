@@ -794,7 +794,15 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
-        window.dispatchEvent(new Event('resize'))
+        this.fireResize();
+    }
+
+    fireResize() {
+        if (document.createEvent) { // W3C
+            window.dispatchEvent(new Event('resize'))
+        } else { // IE
+            (document as any).fireEvent('onresize');
+        }
     }
 
     saveFile() {
@@ -938,7 +946,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        window.dispatchEvent(new Event('resize'))
+        this.fireResize();
     }
 
     setSideFile(fn: pkg.File) {

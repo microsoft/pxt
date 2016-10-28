@@ -30,7 +30,7 @@ export class Editor extends srceditor.Editor {
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
-            window.dispatchEvent(new Event('resize'))
+            this.parent.fireResize();
         }
         else $(classes).hide();
     }
