@@ -11,6 +11,8 @@ namespace pxsim.visuals {
         public defs: SVGElement[] = [];
         public state: MicroServoState;
         public bus: EventBus;
+        private currentAngle = 0;
+        private targetAngle = 0;
 
         private crankEl: SVGGElement;
         private crankTransform: string;
@@ -52,11 +54,19 @@ namespace pxsim.visuals {
             translateEl(this.element, [x, y])
         }
         updateState(): void {
-            let angle = this.state.angle
-            const cx = 460.974;
-            const cy = 408.037;
-            this.crankEl.setAttribute("transform", this.crankTransform 
-                + ` rotate(${angle}, ${cx}, ${cy})`)
+            this.targetAngle = this.state.angle
+            if (this.targetAngle != this.currentAngle) {
+                const cx = 460.974;
+                const cy = 408.037;
+                const speed = 600; // 0.1s/60 degree
+                const maxdelta = speed * 0.2;
+                const delta = this.targetAngle - this.currentAngle;
+                this.currentAngle += Math.max(Math.abs(delta), maxdelta) * (delta > 0 ? 1 : -1);
+                this.crankEl.setAttribute("transform", this.crankTransform
+                    + ` rotate(${this.currentAngle}, ${cx}, ${cy})`)
+                runtime.queueDisplayUpdate(); // render animation
+            }
+
         }
         updateTheme(): void {
 
