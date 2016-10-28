@@ -295,15 +295,6 @@ namespace ts.pxtc.thumb {
                 // RULE: push {rX}; movs rY, #V; pop {rX} -> movs rY, #V (when X != Y)
                 ln.update("")
                 lnNext2.update("")
-            } else if ((lnop == "pop" || lnop == "push") && lnNext.getOp() == lnop) {
-                // combine lists of two instructions, remove duplicates
-                let regs: string[] = []
-                ln.words.slice(2).forEach(w => {
-                    if (w != "," && w != "}" && regs.indexOf(w) == -1)
-                        regs.push(w)
-                })
-                ln.update(lnop + " {" + regs.join(",") + " }" )
-                lnNext.update("")
             }
         }
 
