@@ -15,7 +15,7 @@ namespace pxt.blocks {
 
         parameters: string[];
         currentlyVisible: string[];
-        parameterTypes: {[index: string]: string};
+        parameterTypes: { [index: string]: string };
         updateVisibleProperties(): void;
 
         /* Functions used by Blockly */
@@ -124,45 +124,6 @@ namespace pxt.blocks {
         return value;
     }
 
-    export interface BlockParameter {
-        name: string;
-        type?: string;
-        shadowType?: string;
-        shadowValue?: string;
-    }
-
-    export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
-        // collect blockly parameter name mapping
-        const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
-        let attrNames: Map<BlockParameter> = {};
-
-        if (instance) attrNames["this"] = { name: "this", type: fn.namespace };
-        if (fn.parameters)
-            fn.parameters.forEach(pr => attrNames[pr.name] = {
-                name: pr.name,
-                type: pr.type,
-                shadowValue: pr.defaults ? pr.defaults[0] : undefined
-            });
-        if (fn.attributes.block) {
-            Object.keys(attrNames).forEach(k => attrNames[k].name = "");
-            let rx = /%([a-zA-Z0-9_]+)(=([a-zA-Z0-9_]+))?/g;
-            let m: RegExpExecArray;
-            let i = 0;
-            while (m = rx.exec(fn.attributes.block)) {
-                if (i == 0 && instance) {
-                    attrNames["this"].name = m[1];
-                    if (m[3]) attrNames["this"].shadowType = m[3];
-                    m = rx.exec(fn.attributes.block); if (!m) break;
-                }
-
-                let at = attrNames[fn.parameters[i++].name];
-                at.name = m[1];
-                if (m[3]) at.shadowType = m[3];
-            }
-        }
-        return attrNames;
-    }
-
     function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>): HTMLElement {
         //
         // toolbox update
@@ -229,7 +190,7 @@ namespace pxt.blocks {
 
                 if (nsn.attributes.advanced) {
                     const advancedCategoryName = Util.lf("{id:category}Advanced")
-                    parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1)
+                    parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1, "#5577EE")
                     categories = getChildCategories(parentCategoryList)
                 }
 
@@ -295,15 +256,15 @@ namespace pxt.blocks {
     }
 
     function getOrAddSubcategory(parent: Element, name: string, weight: number, colour?: string) {
-         const existing = parent.querySelector(`category[name="${name}"]`);
-         if (existing) {
-             return existing;
-         }
+        const existing = parent.querySelector(`category[name="${name}"]`);
+        if (existing) {
+            return existing;
+        }
 
-         const newCategory = createCategoryElement(name, weight, colour);
-         parent.appendChild(newCategory)
+        const newCategory = createCategoryElement(name, weight, colour);
+        parent.appendChild(newCategory)
 
-         return newCategory;
+        return newCategory;
     }
 
     function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>, blockXml: HTMLElement): boolean {
@@ -384,15 +345,14 @@ namespace pxt.blocks {
             || blockColors[ns]
             || 255);
 
-        fn.attributes.block.split('|').map((n, ni) => {
-            let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
+        parseFields(fn.attributes.block).map(field => {
             let i: any;
-            if (!m) {
-                i = initField(block.appendDummyInput(), ni, fn, n);
+            if (!field.p) {
+                i = initField(block.appendDummyInput(), field.ni, fn, field.n);
             } else {
                 // find argument
-                let pre = m[1]; if (pre) pre = pre.trim();
-                let p = m[2];
+                let pre = field.pre;
+                let p = field.p;
                 let n = Object.keys(attrNames).filter(k => attrNames[k].name == p)[0];
                 if (!n) {
                     console.error("block " + fn.attributes.blockId + ": unkown parameter " + p);
@@ -400,31 +360,31 @@ namespace pxt.blocks {
                 }
                 let pr = attrNames[n];
                 if (/\[\]$/.test(pr.type)) { // Array type
-                    i = initField(block.appendValueInput(p), ni, fn, pre, true, "Array");
+                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Array");
                 } else if (instance && n == "this") {
-                    i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);
+                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
                 } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();
                         if (pre) i.appendField(pre)
                         i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
                     }
-                    else i = initField(block.appendValueInput(p), ni, fn, pre, true, "Number");
+                    else i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Number");
                 }
                 else if (pr.type == "boolean") {
-                    i = initField(block.appendValueInput(p), ni, fn, pre, true, "Boolean");
+                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Boolean");
                 } else if (pr.type == "string") {
-                    i = initField(block.appendValueInput(p), ni, fn, pre, true, "String");
+                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "String");
                 } else {
                     let prtype = Util.lookup(info.apis.byQName, pr.type);
                     if (prtype && prtype.kind == pxtc.SymbolKind.Enum) {
                         let dd = Util.values(info.apis.byQName)
                             .filter(e => e.namespace == pr.type)
                             .map(v => [v.attributes.block || v.attributes.blockId || v.name, v.namespace + "." + v.name]);
-                        i = initField(block.appendDummyInput(), ni, fn, pre, true);
+                        i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
                     } else {
-                        i = initField(block.appendValueInput(p), ni, fn, pre, true, pr.type);
+                        i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
                     }
                 }
             }
@@ -487,14 +447,14 @@ namespace pxt.blocks {
             const subBlockName = parameterId(property.name);
             subBlocks.push(subBlockName);
             Blockly.Blocks[subBlockName] = Blockly.Blocks[subBlockName] || {
-                init: function() { initializeSubBlock(this as Blockly.Block, property.name, block.getColour()) }
+                init: function () { initializeSubBlock(this as Blockly.Block, property.name, block.getColour()) }
             };
         });
 
         // Also define the top-level block to appear in the mutator workspace
         const topBlockName = block.type + "_mutator";
         Blockly.Blocks[topBlockName] = Blockly.Blocks[topBlockName] || {
-            init: function() { initializeMutatorTopBlock(this as Blockly.Block, info.attributes.mutateText, block.getColour()) }
+            init: function () { initializeMutatorTopBlock(this as Blockly.Block, info.attributes.mutateText, block.getColour()) }
         }
 
         block.setMutator(new Blockly.Mutator(subBlocks));
@@ -798,6 +758,7 @@ namespace pxt.blocks {
         initLogic();
         initText();
         initDrag();
+        initToolboxColor();
 
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
         // we're taking off hats.
@@ -962,6 +923,7 @@ namespace pxt.blocks {
 
     // TODO: port changes to blockly
     export function initMouse(ws: Blockly.Workspace) {
+        // Blockly wheel scroll and zoom:
         Blockly.bindEvent_(ws.svgGroup_, 'wheel', ws, ev => {
             let e = ev as WheelEvent;
             Blockly.terminateDrag_();
@@ -970,7 +932,7 @@ namespace pxt.blocks {
             if (e.ctrlKey || e.metaKey)
                 ws.zoom(position.x, position.y, delta);
             else if (ws.scrollbar) {
-                let y = parseFloat(ws.scrollbar.vScroll.svgKnob_.getAttribute("y") || "0");
+                let y = parseFloat(ws.scrollbar.vScroll.svgHandle_.getAttribute("y") || "0");
                 y /= ws.scrollbar.vScroll.ratio_;
                 ws.scrollbar.vScroll.set(y + e.deltaY);
                 ws.scrollbar.resize();
@@ -993,7 +955,7 @@ namespace pxt.blocks {
          * @return {!goog.math.Coordinate} New location of object.
          */
         let moveDrag = (<any>Blockly).WorkspaceSvg.prototype.moveDrag;
-        (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function(e: any) {
+        (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function (e: any) {
             const blocklyTreeRoot = $('.blocklyTreeRoot');
             const trashIcon = $("#blocklyTrashIcon");
             const distance = calculateDistance(blocklyTreeRoot, e.pageX);
@@ -1014,11 +976,64 @@ namespace pxt.blocks {
          * @private
          */
         let terminateDrag_ = (<any>Blockly).terminateDrag_;
-        (<any>Blockly).terminateDrag_ = function() {
+        (<any>Blockly).terminateDrag_ = function () {
             $("#blocklyTrashIcon").hide();
             $('.blocklyTreeRoot').css('opacity', 1);
             terminateDrag_.call(this);
         }
+    }
+
+    function initToolboxColor() {
+        let appTheme = pxt.appTarget.appTheme;
+        if (!appTheme.invertedToolbox || appTheme.invertedToolbox != true) return;
+        /**
+         * Recursively add colours to this toolbox.
+         * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
+         *     Defaults to the root node.
+         * @private
+         */
+        (<any>Blockly).Toolbox.prototype.addColour_ = function (opt_tree: any) {
+            let tree = opt_tree || this.tree_;
+            let children = tree.getChildren();
+            for (let i = 0, child: any; child = children[i]; i++) {
+                let element = child.getRowElement();
+                let onlyChild = children.length == 1;
+                if (element) {
+                    let nextElement = element.parentNode.nextSibling;
+                    let previousElement = element.parentNode.previousSibling;
+                    if (!nextElement && !onlyChild) {
+                        element.style.borderBottomLeftRadius = "10px";
+                        element.style.borderBottomRightRadius = "10px";
+                    }
+                    if (!previousElement && !onlyChild) {
+                        element.style.borderTopLeftRadius = "10px";
+                        element.style.borderTopRightRadius = "10px";
+                    }
+                    if (this.hasColours_) {
+                        element.style.color = '#fff';
+                        element.style.background = (child.hexColour || '#ddd');
+                    }
+                }
+                this.addColour_(child);
+            }
+        };
+
+        /**
+         * Display/hide the flyout when an item is selected.
+         * @param {goog.ui.tree.BaseNode} node The item to select.
+         * @override
+         */
+        let setSelectedItem = (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem;
+        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
+            let toolbox = this.toolbox_;
+            // Capture the last category and reset it after Blockly's setSelectedItem has been called.
+            let lastCategory = toolbox.lastCategory_;
+            setSelectedItem.call(this, node);
+            if (lastCategory) {
+                // reset last category colour
+                lastCategory.getRowElement().style.backgroundColor = lastCategory.hexColour;
+            }
+        };
     }
 
     function initContextMenu() {
@@ -1176,13 +1191,13 @@ namespace pxt.blocks {
                 callback: () => {
                     pxt.tickEvent("blocks.context.screenshot");
                     pxt.blocks.layout.screenshotAsync(this)
-                    .done((uri) => {
-                        if (pxt.BrowserUtils.isSafari())
-                            uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                        BrowserUtils.browserDownloadDataUri(
-                            uri,
-                            `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                    });
+                        .done((uri) => {
+                            if (pxt.BrowserUtils.isSafari())
+                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                            BrowserUtils.browserDownloadDataUri(
+                                uri,
+                                `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                        });
                 }
             };
             menuOptions.push(screenshotOption);
@@ -1197,11 +1212,12 @@ namespace pxt.blocks {
         // We override Blockly's category mouse event handler so that only one
         // category can be expanded at a time. Also prevent categories from toggling
         // once openend.
-        Blockly.Toolbox.TreeNode.prototype.onMouseDown = function(a: Event) {
+        Blockly.Toolbox.TreeNode.prototype.onMouseDown = function (a: Event) {
+            // Expand icon.
             const that = <Blockly.Toolbox.TreeNode>this;
 
-            // Collapse the currently selected node and its parent nodes
             if (!that.isSelected()) {
+                // Collapse the currently selected node and its parent nodes
                 collapseMoreCategory(that.getTree().getSelectedItem(), that);
             }
 
@@ -1218,12 +1234,18 @@ namespace pxt.blocks {
                 }
                 else {
                     // If this category has 1 or less children, don't bother toggling; we always want "More..." to show
-                    that.setExpanded(true);
-                    that.select();
+                    if (that.isSelected()) {
+                        collapseMoreCategory(that.getTree().getSelectedItem(), that);
+                        that.getTree().setSelectedItem(null);
+                    } else {
+                        that.setExpanded(true);
+                        that.select();
+                    }
                 }
-            }
-            else if (!that.isSelected()) {
-                 that.select();
+            } else if (that.isSelected()) {
+                that.getTree().setSelectedItem(null);
+            } else {
+                that.select();
             }
 
             that.updateRow()
@@ -1231,7 +1253,7 @@ namespace pxt.blocks {
 
         // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
         const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
-        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function(a: Blockly.Toolbox.TreeNode) {
+        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
             const that = <Blockly.Toolbox.TreeControl>this;
 
             if (a === null) {
@@ -1245,7 +1267,7 @@ namespace pxt.blocks {
     function collapseMoreCategory(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
         while (cat) {
             // Only collapse categories that have a single child (e.g. "More...")
-            if (cat.getChildCount() === 1 && cat.isUserCollapsible_ && (!child || !isChild(child, cat))) {
+            if (cat.getChildCount() === 1 && cat.isUserCollapsible_ && cat != child && (!child || !isChild(child, cat))) {
                 cat.setExpanded(false);
                 cat.updateRow();
             }

@@ -1367,7 +1367,7 @@ ${lbl}: .short 0xffff
                     }
                     ev = val + ""
                 }
-                if (/^\d+$/.test(ev))
+                if (/^[+-]?\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature) {

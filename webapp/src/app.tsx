@@ -613,10 +613,6 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
     }
 
-    componentDidUpdate() {
-        Blockly.fireUiEvent(window, 'resize');
-    }
-
     renderCore() {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const state = this.props.parent.state;
@@ -798,6 +794,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
+        this.fireResize();
+    }
+
+    fireResize() {
+        if (document.createEvent) { // W3C
+            let event = document.createEvent('Event');
+            event.initEvent('resize', true, true);
+            window.dispatchEvent(event);
+        } else { // IE
+            (document as any).fireEvent('onresize');
+        }
     }
 
     saveFile() {
@@ -855,8 +862,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.runOptions.debug
                         && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
-                        if (this.editor == this.blocksEditor)
-                            this.autoRunBlocksSimulator();
+                        if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                         else this.autoRunSimulator();
                     }
                 }
@@ -872,7 +878,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!this.editor.isIncomplete())
             this.typecheck();
         this.markdownChangeHandler();
-    }, 2000, false);
+    }, 1000, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
@@ -951,7 +957,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        Blockly.fireUiEvent(window, 'resize');
+        this.fireResize();
     }
 
     setSideFile(fn: pkg.File) {
@@ -2070,7 +2076,7 @@ $(document).ready(() => {
         // in iframe
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
+    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
 
     enableAnalytics()
     appcache.init();
