@@ -799,7 +799,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     fireResize() {
         if (document.createEvent) { // W3C
-            window.dispatchEvent(new Event('resize'))
+            let event = document.createEvent('Event');
+            event.initEvent('resize', true, true);
+            window.dispatchEvent(event);
         } else { // IE
             (document as any).fireEvent('onresize');
         }
