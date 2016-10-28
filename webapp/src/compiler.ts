@@ -164,9 +164,24 @@ function localizeApis(apis: pxtc.ApisInfo) {
             const jsDoc = loc[fn.qName]
             if (jsDoc) {
                 fn.attributes.jsDoc = jsDoc;
-                fn.attributes.block = loc[`${fn.qName}|block`] || fn.attributes.block;
                 if (fn.parameters)
                     fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+            }
+            const locBlock = loc[`${fn.qName}|block`];
+            if (locBlock) {
+                try {
+                    const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
+                    const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
+                    if (fields == locFields)
+                        fn.attributes.block = locBlock;
+                    else {
+                        console.error(`localized block description of ${fn.attributes.block} invalid`);
+                        console.debug(`original: `, fields);
+                        console.debug(`loc: `, fields);
+                    }
+                } catch (e) {
+                        console.error(`error while parsing localized block of ${fn.attributes.block}`);
+                }
             }
         });
     }

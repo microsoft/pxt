@@ -37,4 +37,23 @@ namespace pxt.blocks {
         }
         return attrNames;
     }
+
+
+    export interface FieldDescription {
+        n: string;
+        pre?: string;
+        p?: string;
+        ni: number;
+    }
+
+    export function parseFields(b: string): FieldDescription[] {
+        return b.split('|').map((n, ni) => {
+            let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
+            if (!m) return { n, ni };
+
+            let pre = m[1]; if (pre) pre = pre.trim();
+            let p = m[2];
+            return { n, ni, pre, p };
+        });
+    }
 }
