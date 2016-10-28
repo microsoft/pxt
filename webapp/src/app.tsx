@@ -613,10 +613,6 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
     }
 
-    componentDidUpdate() {
-        Blockly.fireUiEvent(window, 'resize');
-    }
-
     renderCore() {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const state = this.props.parent.state;
@@ -798,6 +794,15 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
+        this.fireResize();
+    }
+
+    fireResize() {
+        if (document.createEvent) { // W3C
+            window.dispatchEvent(new Event('resize'))
+        } else { // IE
+            (document as any).fireEvent('onresize');
+        }
     }
 
     saveFile() {
@@ -951,7 +956,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        Blockly.fireUiEvent(window, 'resize');
+        this.fireResize();
     }
 
     setSideFile(fn: pkg.File) {

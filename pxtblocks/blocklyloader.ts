@@ -229,7 +229,7 @@ namespace pxt.blocks {
 
                 if (nsn.attributes.advanced) {
                     const advancedCategoryName = Util.lf("{id:category}Advanced")
-                    parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1)
+                    parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1, "#5577EE")
                     categories = getChildCategories(parentCategoryList)
                 }
 
@@ -798,6 +798,7 @@ namespace pxt.blocks {
         initLogic();
         initText();
         initDrag();
+        initToolboxColor();
 
         // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
         // we're taking off hats.
@@ -962,6 +963,7 @@ namespace pxt.blocks {
 
     // TODO: port changes to blockly
     export function initMouse(ws: Blockly.Workspace) {
+        // Blockly wheel scroll and zoom:
         Blockly.bindEvent_(ws.svgGroup_, 'wheel', ws, ev => {
             let e = ev as WheelEvent;
             Blockly.terminateDrag_();
@@ -970,7 +972,7 @@ namespace pxt.blocks {
             if (e.ctrlKey || e.metaKey)
                 ws.zoom(position.x, position.y, delta);
             else if (ws.scrollbar) {
-                let y = parseFloat(ws.scrollbar.vScroll.svgKnob_.getAttribute("y") || "0");
+                let y = parseFloat(ws.scrollbar.vScroll.svgHandle_.getAttribute("y") || "0");
                 y /= ws.scrollbar.vScroll.ratio_;
                 ws.scrollbar.vScroll.set(y + e.deltaY);
                 ws.scrollbar.resize();
@@ -1019,6 +1021,59 @@ namespace pxt.blocks {
             $('.blocklyTreeRoot').css('opacity', 1);
             terminateDrag_.call(this);
         }
+    }
+
+    function initToolboxColor() {
+        let appTheme = pxt.appTarget.appTheme;
+        if (!appTheme.invertedToolbox || appTheme.invertedToolbox != true) return;
+        /**
+         * Recursively add colours to this toolbox.
+         * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
+         *     Defaults to the root node.
+         * @private
+         */
+        (<any>Blockly).Toolbox.prototype.addColour_ = function(opt_tree: any) {
+            let tree = opt_tree || this.tree_;
+            let children = tree.getChildren();
+            for (let i = 0, child: any; child = children[i]; i++) {
+                let element = child.getRowElement();
+                let onlyChild = children.length == 1;
+                if (element) {
+                    let nextElement = element.parentNode.nextSibling;
+                    let previousElement = element.parentNode.previousSibling;
+                    if (!nextElement && !onlyChild) {
+                        element.style.borderBottomLeftRadius = "10px";
+                        element.style.borderBottomRightRadius = "10px";
+                    }
+                    if (!previousElement && !onlyChild) {
+                        element.style.borderTopLeftRadius = "10px";
+                        element.style.borderTopRightRadius = "10px";
+                    }
+                    if (this.hasColours_) {
+                        element.style.color = '#fff';
+                        element.style.background = (child.hexColour || '#ddd');
+                    }
+                }
+                this.addColour_(child);
+            }
+        };
+
+        /**
+         * Display/hide the flyout when an item is selected.
+         * @param {goog.ui.tree.BaseNode} node The item to select.
+         * @override
+         */
+        let setSelectedItem = (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem;
+        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function(node: any) {
+            let toolbox = this.toolbox_;
+            // Capture the last category and reset it after Blockly's setSelectedItem has been called.
+            let lastCategory = toolbox.lastCategory_;
+            setSelectedItem.call(this, node);
+            if (lastCategory) {
+                // reset last category colour
+                lastCategory.getRowElement().style.backgroundColor = lastCategory.hexColour;
+            }
+        };
     }
 
     function initContextMenu() {
@@ -1198,10 +1253,11 @@ namespace pxt.blocks {
         // category can be expanded at a time. Also prevent categories from toggling
         // once openend.
         Blockly.Toolbox.TreeNode.prototype.onMouseDown = function(a: Event) {
+            // Expand icon.
             const that = <Blockly.Toolbox.TreeNode>this;
 
-            // Collapse the currently selected node and its parent nodes
             if (!that.isSelected()) {
+                // Collapse the currently selected node and its parent nodes
                 collapseMoreCategory(that.getTree().getSelectedItem(), that);
             }
 
@@ -1218,12 +1274,18 @@ namespace pxt.blocks {
                 }
                 else {
                     // If this category has 1 or less children, don't bother toggling; we always want "More..." to show
-                    that.setExpanded(true);
-                    that.select();
+                    if (that.isSelected()) {
+                        collapseMoreCategory(that.getTree().getSelectedItem(), that);
+                        that.getTree().setSelectedItem(null);
+                    } else {
+                        that.setExpanded(true);
+                        that.select();
+                    }
                 }
-            }
-            else if (!that.isSelected()) {
-                 that.select();
+            } else if (that.isSelected()) {
+                that.getTree().setSelectedItem(null);
+            } else {
+                that.select();
             }
 
             that.updateRow()
@@ -1245,7 +1307,7 @@ namespace pxt.blocks {
     function collapseMoreCategory(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
         while (cat) {
             // Only collapse categories that have a single child (e.g. "More...")
-            if (cat.getChildCount() === 1 && cat.isUserCollapsible_ && (!child || !isChild(child, cat))) {
+            if (cat.getChildCount() === 1 && cat.isUserCollapsible_ && cat != child && (!child || !isChild(child, cat))) {
                 cat.setExpanded(false);
                 cat.updateRow();
             }
