@@ -860,8 +860,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.runOptions.debug
                         && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
-                        if (this.editor == this.blocksEditor)
-                            this.autoRunBlocksSimulator();
+                        if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                         else this.autoRunSimulator();
                     }
                 }
@@ -877,7 +876,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!this.editor.isIncomplete())
             this.typecheck();
         this.markdownChangeHandler();
-    }, 2000, false);
+    }, 1000, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
