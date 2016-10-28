@@ -56,4 +56,10 @@ namespace pxt.blocks {
             return { n, ni, pre, p };
         });
     }
+
+    export function areFieldsEquivalent(original: string, localized: string): boolean {
+        const o = parseFields(original);
+        const l = parseFields(localized);
+        return o.length == l.length && !o.some((ofield, i) => !!ofield.pre != !!l[i].pre || !!ofield.p != !!l[i].p)
+    }
 }

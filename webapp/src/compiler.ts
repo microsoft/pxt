@@ -156,35 +156,35 @@ function waitForFirstTypecheckAsync() {
 }
 
 function localizeApis(apis: pxtc.ApisInfo) {
-
     const lang = pxtc.Util.userLanguage();
-    if (pxtc.Util.userLanguage() != "en") {
-        let loc = pkg.mainPkg.localizationStrings(lang);
-        Util.values(apis.byQName).forEach(fn => {
-            const jsDoc = loc[fn.qName]
-            if (jsDoc) {
-                fn.attributes.jsDoc = jsDoc;
-                if (fn.parameters)
-                    fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
-            }
+    if (pxtc.Util.userLanguage() == "en") return;
+    let loc = pkg.mainPkg.localizationStrings(lang);
+    Util.values(apis.byQName).forEach(fn => {
+        const jsDoc = loc[fn.qName]
+        if (jsDoc) {
+            fn.attributes.jsDoc = jsDoc;
+            if (fn.parameters)
+                fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+        }
+        if (fn.attributes.block) {
             const locBlock = loc[`${fn.qName}|block`];
             if (locBlock) {
                 try {
-                    const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
-                    const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
-                    if (fields == locFields)
+                    if (pxt.blocks.areFieldsEquivalent(fn.attributes.block, locBlock))
                         fn.attributes.block = locBlock;
                     else {
+                        const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
+                        const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
                         console.error(`localized block description of ${fn.attributes.block} invalid`);
                         console.debug(`original: `, fields);
-                        console.debug(`loc: `, fields);
+                        console.debug(`loc: `, locFields);
                     }
                 } catch (e) {
-                        console.error(`error while parsing localized block of ${fn.attributes.block}`);
+                    console.error(`error while parsing localized block of ${fn.attributes.block}`);
                 }
             }
-        });
-    }
+        }
+    });
 }
 
 function ensureApisInfoAsync() {
