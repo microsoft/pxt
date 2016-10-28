@@ -613,10 +613,6 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
     }
 
-    componentDidUpdate() {
-        window.dispatchEvent(new Event('resize'))
-    }
-
     renderCore() {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const state = this.props.parent.state;
@@ -798,6 +794,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
+        window.dispatchEvent(new Event('resize'))
     }
 
     saveFile() {
