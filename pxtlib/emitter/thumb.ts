@@ -296,14 +296,14 @@ namespace ts.pxtc.thumb {
                 ln.update("")
                 lnNext2.update("")
             } else if ((lnop == "pop" || lnop == "push") && lnNext.getOp() == lnop) {
-                let sr = singleReg(lnNext)
-                if ((lnop == "pop" && sr == this.registerNo("pc")) || (lnop == "push" && sr == this.registerNo("lr"))) {
-                    let close = ln.words.indexOf("}")
-                    ln.words[close] = (lnop == "pop") ? ", pc" : ", lr"
-                    ln.words.push("}")
-                    ln.update(ln.words.join(""))
-                    lnNext.update("")
-                }
+                // combine lists of two instructions, remove duplicates
+                let regs: string[] = []
+                ln.words.slice(2).forEach(w => {
+                    if (w != "," && w != "}" && regs.indexOf(w) == -1)
+                        regs.push(w)
+                })
+                ln.update(lnop + " {" + regs.join(",") + " }" )
+                lnNext.update("")
             }
         }
 
