@@ -1524,8 +1524,51 @@ function buildSemanticUIAsync() {
     })
 }
 
+function updateDefaultProjects(cfg: pxt.TargetBundle) {
+    let templatesRoot = path.join("libs", "templates");
+    let defaultProjects = [
+        "blocksprj",
+        "tsprj"
+    ];
+
+    defaultProjects.forEach((p) => {
+        let projectPath = path.join(templatesRoot, p);
+        let newProject: pxt.ProjectTemplate = {
+            id: p,
+            config: {
+                name: "",
+                dependencies: {},
+                files: []
+            },
+            files: {}
+        };
+
+        if (!fs.existsSync(projectPath)) {
+            return;
+        }
+
+        fs.readdirSync(projectPath).forEach((f) => {
+            let file = path.join(projectPath, f);
+            if (fs.statSync(file).isDirectory()) {
+                return;
+            }
+
+            if (f === "pxt.json") {
+                newProject.config = nodeutil.readJson(file);
+            } else if (f === "tsconfig.json") {
+                return;
+            } else {
+                newProject.files[f] = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+            }
+        });
+
+        (<any>cfg)[p] = newProject;
+    });
+}
+
 function buildTargetCoreAsync() {
     let cfg = readLocalPxTarget()
+    updateDefaultProjects(cfg);
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
