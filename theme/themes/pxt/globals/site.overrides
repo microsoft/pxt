@@ -2,12 +2,6 @@
          Site Overrides
 *******************************/
 
-@importGoogleFonts: false;
-
-body {
-    background: @backgroundColor;
-}
-
 /*******************************
              Blockly
 *******************************/
