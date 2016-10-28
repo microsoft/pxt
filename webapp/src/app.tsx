@@ -831,13 +831,20 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.typecheck()
     }
 
-    private autoRunSimulator = pxtc.Util.debounce(
+    private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
             if (!this.state.active)
                 return;
             this.runSimulator({ background: true });
         },
         2000, false);
+    private autoRunSimulator = pxtc.Util.debounce(
+        () => {
+            if (!this.state.active)
+                return;
+            this.runSimulator({ background: true });
+        },
+        4000, false);
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
@@ -847,8 +854,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.runOptions.debug
-                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
-                        this.autoRunSimulator();
+                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
+                        if (this.editor == this.blocksEditor)
+                            this.autoRunBlocksSimulator();
+                        else this.autoRunSimulator();
+                    }
                 }
             });
     }
@@ -856,13 +866,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     private markdownChangeHandler = Util.debounce(() => {
         if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 2000, false);
+    }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
         this.saveFile();
         if (!this.editor.isIncomplete())
             this.typecheck();
         this.markdownChangeHandler();
-    }, 1000, false);
+    }, 2000, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
