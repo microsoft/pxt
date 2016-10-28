@@ -128,6 +128,8 @@ declare namespace pxt {
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];        
         blocklyOptions?: Blockly.Options;
+        simAnimationEnter?: string;
+        simAnimationExit?: string;
     }
 
     interface DocMenuEntry {
