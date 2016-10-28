@@ -269,8 +269,8 @@ namespace ts.pxtc {
     eor	r1, r1`
             } else {
                 return `
-    ${this.inst_lo[name]} r18, r20
-    ${this.inst_hi[name]} r19, r21`
+    ${this.inst_lo[name]} r24, r22
+    ${this.inst_hi[name]} r25, r23`
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
@@ -294,7 +294,7 @@ namespace ts.pxtc {
         lambda_epilogue() {
             return `
     call pxtrt::getGlobalsPtr
-    movw r30, r24
+    movw r2, r24
     ${this.proc_return()}
     @stackempty args`
         }
@@ -317,7 +317,7 @@ namespace ts.pxtc {
             "r2": "r20",
             "r3": "r18",
             "r5": "r26",  // X
-            "r6": "r30"   // Z
+            "r6": "r2"   // Z
         }
 
         rmap_hi: pxt.Map<string> = {
@@ -326,7 +326,7 @@ namespace ts.pxtc {
             "r2": "r21",
             "r3": "r19",
             "r5": "r27",
-            "r6": "r31"
+            "r6": "r3"
         }
 
         inst_lo: pxt.Map<string> = {
