@@ -246,7 +246,7 @@ namespace pxt.blocks {
                     parentCategoryList.appendChild(category);
             }
             if (fn.attributes.advanced) {
-                category = getOrAddSubcategory(category, Util.lf("More\u2026"), 1, category.getAttribute("colour"))
+                category = getOrAddSubcategory(category, "More\u2026", 1, category.getAttribute("colour"))
             }
 
             if (fn.attributes.mutateDefaults) {
