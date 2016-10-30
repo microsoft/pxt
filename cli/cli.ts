@@ -1773,10 +1773,10 @@ export function serveAsync(...args: string[]) {
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
-            localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
-            packaged: packaged,
             electron: hasArg("electron"),
+            localToken,
+            packaged,
             browser
         }))
 }
@@ -2304,6 +2304,7 @@ enum BuildOption {
     Run,
     Deploy,
     Test,
+    DebugSim,
     GenDocs,
 }
 
@@ -3190,7 +3191,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
-            if (target.hasHex && mode != BuildOption.Run)
+            if (target.hasHex && mode != BuildOption.Run && mode != BuildOption.DebugSim)
                 target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
@@ -3220,11 +3221,25 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
             return pxtc.compile(opts);
         })
         .then((res): Promise<void | pxtc.CompileOptions> => {
-            U.iterMap(res.outfiles, (fn, c) =>
-                mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
+            U.iterMap(res.outfiles, (fn, c) => {
+                if (fn !== pxtc.BINARY_JS) {
+                    mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
+                }
+                else {
+                    mainPkg.host().writeFile(mainPkg, "built/debug/" + fn, c);
+                }
+            });
+
             reportDiagnostics(res.diagnostics);
             if (!res.success) {
                 process.exit(1)
+            }
+
+            if (buildOpts.mode === BuildOption.DebugSim) {
+                mainPkg.host().writeFile(mainPkg, "built/debug/debugInfo.json", JSON.stringify({
+                    usedParts: pxtc.computeUsedParts(res, true),
+                    usedArguments: res.usedArguments
+                }));
             }
 
             console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
@@ -3391,12 +3406,25 @@ export function downloadTargetTranslationsAsync(...args: string[]) {
     return nextFileAsync();
 }
 
-export function buildAsync(arg?: string) {
-    if (arg && arg.replace(/-*/g, "") === "cloud") {
-        forceCloudBuild = true;
+export function buildAsync(...args: string[]) {
+    let trimmedArgs = args && args.map((arg) => {
+        return arg.replace(/^-*/, "");
+    });
+
+    let mode = BuildOption.JustBuild;
+
+    if (trimmedArgs) {
+        if (trimmedArgs.indexOf("cloud") !== -1) {
+            forceCloudBuild = true;
+        }
+
+        if (trimmedArgs.indexOf("debug") !== -1) {
+            mode = BuildOption.DebugSim;
+        }
     }
 
-    return buildCoreAsync({ mode: BuildOption.JustBuild })
+
+    return buildCoreAsync({ mode })
         .then((compileOpts) => { });
 }
 
@@ -3578,7 +3606,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
 }
 
 function openVsCode(dirname: string) {
-    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..                    
+    child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..
 }
 
 function writeProjects(prjs: SavedProject[], outDir: string): string[] {
@@ -3708,7 +3736,7 @@ cmd("help     [all]               - display this message", helpAsync)
 cmd("init                         - start new package (library) in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
-cmd("build    [--cloud]            - build current package, --cloud forces a build in the cloud", buildAsync)
+cmd("build    [--cloud]           - build current package, --cloud forces a build in the cloud", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract [--code] [--out DIRNAME]  [FILENAME] - extract sources from .hex file, folder of .hex files, stdin (-), or URL", extractAsync)
