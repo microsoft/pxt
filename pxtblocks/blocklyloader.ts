@@ -1113,7 +1113,7 @@ namespace pxt.blocks {
 
                 // Option to collapse top blocks.
                 const collapseOption: any = { enabled: hasExpandedBlocks };
-                collapseOption.text = lf("Collapse Blocks");
+                collapseOption.text = lf("Collapse Block");
                 collapseOption.callback = function () {
                     pxt.tickEvent("blocks.context.collapse")
                     toggleOption(true);
@@ -1122,7 +1122,7 @@ namespace pxt.blocks {
 
                 // Option to expand top blocks.
                 const expandOption: any = { enabled: hasCollapsedBlocks };
-                expandOption.text = lf("Expand Blocks");
+                expandOption.text = lf("Expand Block");
                 expandOption.callback = function () {
                     pxt.tickEvent("blocks.context.expand")
                     toggleOption(false);
