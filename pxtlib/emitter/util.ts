@@ -543,15 +543,18 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
+    export function downloadLiveTranslationsAsync(lang: string, filename: string) {
+            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+    }
+
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|zh)/i.test(code))
             code = code.split("-")[0]
 
         if (live) {
-            pxt.tickEvent("livelocs", { lang: code });
             console.log(`loading live translations for ${code}`)
-            return pxt.crowdin.downloadLiveTranslationsAsync(code, "strings.json")
+            return downloadLiveTranslationsAsync(code, "strings.json")
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
