@@ -5,7 +5,6 @@ namespace pxt.blocks {
      */
     export interface MutatingBlock extends Blockly.Block {
         /* Internal properties */
-
         mutation: Mutation;
 
         /* Functions used by Blockly */
@@ -20,14 +19,38 @@ namespace pxt.blocks {
         decompose(workspace: Blockly.Workspace): Blockly.Block;
     }
 
+    /**
+     * Represents a mutation of a block
+     */
     export interface Mutation {
+        /**
+         * Get the unique identifier for this type of mutation
+         */
         getMutationType(): string;
-        compileMutation(e: Environment, comments: string[]): Node;
+
+        /**
+         * Compile the mutation of the block into a node representation
+         */
+        compileMutation(e: Environment, comments: string[]): JsNode;
+
+        /**
+         * Get a mapping of variables that were declared by this mutation and their types.
+         */
         getDeclaredVariables(): pxt.Map<string>;
+
+        /**
+         * Returns true if a variable with the given name was declared in the mutation's compiled node
+         */
         isDeclaredByMutation(varName: string): boolean;
     }
 
-    export interface BlockName {
+
+    export namespace MutatorTypes {
+        export const ObjectDestructuringMutator = "objectdestructuring";
+        export const RestParameterMutator = "restparameter"
+    }
+
+    interface BlockName {
         type: string;
         name: string;
     }
@@ -37,7 +60,25 @@ namespace pxt.blocks {
         property: string;
     }
 
-    export function applyMutator(b: MutatingBlock, m: MutatorHelper) {
+    export function addMutation(b: MutatingBlock, info: pxtc.SymbolInfo, mutationType: string) {
+        let m: MutatorHelper;
+
+        switch (mutationType) {
+            case MutatorTypes.ObjectDestructuringMutator:
+                if (!info.parameters || info.parameters.length !== 1 || info.parameters[0].properties.length === 0) {
+                    console.error("Mutating blocks only supported for functions with one parameter that has multiple properties");
+                    return;
+                }
+                m = new DestructuringMutator(b, info);
+                break;
+            case MutatorTypes.RestParameterMutator:
+                m = new ArrayMutator(b, info);
+                break;
+            default:
+                console.warn("Ignoring unknown mutation type: " + mutationType);
+                return;
+        }
+
         b.mutationToDom = m.mutationToDom.bind(m);
         b.domToMutation = m.domToMutation.bind(m);
         b.compose = m.compose.bind(m);
@@ -45,7 +86,25 @@ namespace pxt.blocks {
         b.mutation = m;
     }
 
-    export abstract class MutatorHelper implements Mutation {
+    export function mutateToolboxBlock(block: Node, mutationType: string, mutation: string): void {
+        const mutationElement = document.createElement("mutation");
+
+        switch (mutationType) {
+            case MutatorTypes.ObjectDestructuringMutator:
+                mutationElement.setAttribute(DestructuringMutator.propertiesAttributeName, mutation);
+                break;
+            case MutatorTypes.RestParameterMutator:
+                mutationElement.setAttribute(ArrayMutator.countAttributeName, mutation);
+                break;
+            default:
+                console.warn("Ignoring unknown mutation type: " + mutationType);
+                return;
+        }
+
+        block.appendChild(mutationElement)
+    }
+
+    abstract class MutatorHelper implements Mutation {
         protected static mutatorStatmentInput = "PROPERTIES";
         protected static mutatedVariableInputName = "properties";
 
@@ -53,7 +112,7 @@ namespace pxt.blocks {
         protected topBlockType: string;
 
         public abstract getMutationType(): string;
-        public abstract compileMutation(e: Environment, comments: string[]): Node;
+        public abstract compileMutation(e: Environment, comments: string[]): JsNode;
         public abstract getDeclaredVariables(): pxt.Map<string>;
         public abstract isDeclaredByMutation(varName: string): boolean;
 
@@ -148,9 +207,8 @@ namespace pxt.blocks {
         }
     }
 
-    export class DestructuringMutator extends MutatorHelper {
-        public static savedMutationAttribute = "callbackproperties";
-        public static mutationType = "destructuringMutator";
+    class DestructuringMutator extends MutatorHelper {
+        public static propertiesAttributeName = "callbackproperties";
         private currentlyVisible: string[] = [];
         private parameters: string[];
         private parameterTypes: {[index: string]: string};
@@ -163,10 +221,10 @@ namespace pxt.blocks {
         }
 
         public getMutationType(): string {
-            return DestructuringMutator.mutationType;
+            return MutatorTypes.ObjectDestructuringMutator;
         }
 
-        public compileMutation(e: Environment, comments: string[]): Node {
+        public compileMutation(e: Environment, comments: string[]): JsNode {
             if (!this.parameters.length) {
                 return undefined;
             }
@@ -201,14 +259,14 @@ namespace pxt.blocks {
                 const varName = this.block.getFieldValue(param);
                 return varName !== param ? `${Util.htmlEscape(param)}:${Util.htmlEscape(varName)}` : Util.htmlEscape(param);
             }).join(",");
-            mutation.setAttribute(DestructuringMutator.savedMutationAttribute, attr);
+            mutation.setAttribute(DestructuringMutator.propertiesAttributeName, attr);
 
             return mutation;
         }
 
         public domToMutation(xmlElement: Element): void {
             // Restore visible parameters based on saved DOM
-            const savedParameters = xmlElement.getAttribute(DestructuringMutator.savedMutationAttribute);
+            const savedParameters = xmlElement.getAttribute(DestructuringMutator.propertiesAttributeName);
             if (savedParameters) {
                 const split = savedParameters.split(",");
                 const properties: NamedProperty[] = [];
@@ -289,22 +347,19 @@ namespace pxt.blocks {
     }
 
 
-    export class ArrayMutator extends MutatorHelper {
-        public static mutationType: string = "ArrayMutator";
-        public static savedArrayMutation = "arrayvalues";
-
-        private static entryType = "entry";
+    class ArrayMutator extends MutatorHelper {
+        public static countAttributeName = "count";
+        private static entryTypeName = "entry";
         private static valueInputPrefix = "value_input_";
-        private static valueFieldPrefix = "value_field_";
 
         private count: number = 0;
 
         public getMutationType(): string {
-            return ArrayMutator.mutationType;
+            return MutatorTypes.RestParameterMutator;
         }
 
-        public compileMutation(e: Environment, comments: string[]): Node {
-            const values: Node[] = [];
+        public compileMutation(e: Environment, comments: string[]): JsNode {
+            const values: JsNode[] = [];
 
             this.forEachInput(block => values.push(compileExpression(e, block, comments)))
 
@@ -321,21 +376,21 @@ namespace pxt.blocks {
 
         public mutationToDom(): Element {
             const mutation = document.createElement("mutation");+
-            mutation.setAttribute("count", this.count.toString());
+            mutation.setAttribute(ArrayMutator.countAttributeName, this.count.toString());
 
             return mutation;
         }
 
         public domToMutation(xmlElement: Element): void {
-            const attribute = xmlElement.getAttribute(ArrayMutator.savedArrayMutation);
+            const attribute = xmlElement.getAttribute(ArrayMutator.countAttributeName);
              if (attribute) {
                  try {
                     this.count = parseInt(attribute)
                  }
                  catch (e) { return; }
 
-                 for (let i =0; i < this.count; i++) {
-                     this.addNumberField(false);
+                 for (let i = 0; i < this.count; i++) {
+                     this.addNumberField(false, i);
                  }
              }
         }
@@ -344,7 +399,7 @@ namespace pxt.blocks {
             if (subBlocks) {
                 const diff = Math.abs(this.count - subBlocks.length);
                 if (this.count < subBlocks.length) {
-                    for (let i = 0; i < diff; i++) this.addNumberField(true);
+                    for (let i = 0; i < diff; i++) this.addNumberField(true, this.count);
                 }
                 else if (this.count > subBlocks.length) {
                     for (let i = 0; i < diff; i++) this.removeNumberField();
@@ -355,28 +410,27 @@ namespace pxt.blocks {
         protected getSubBlockNames(): BlockName[] {
             return [{
                 name: "Value",
-                type: ArrayMutator.entryType
+                type: ArrayMutator.entryTypeName
             }];
         }
 
         protected getVisibleBlockTypes(): string[] {
             const result: string[] = [];
-            this.forEachInput(() => result.push(ArrayMutator.entryType))
+            this.forEachInput(() => result.push(ArrayMutator.entryTypeName))
             return result;
         }
 
-        private addNumberField(addShadowBlock: boolean) {
-            const input = this.block.appendValueInput(ArrayMutator.valueInputPrefix + this.count).setCheck("Number");
+        private addNumberField(isNewField: boolean, index: number) {
+            const input = this.block.appendValueInput(ArrayMutator.valueInputPrefix + index).setCheck("Number");
 
-            if (addShadowBlock) {
+            if (isNewField) {
                 const valueBlock = this.block.workspace.newBlock("math_number");
                 valueBlock.initSvg();
                 valueBlock.setShadow(true);
                 input.connection.connect(valueBlock.outputConnection);
                 this.block.workspace.render();
+                this.count++;
             }
-
-            this.count++;
         }
 
         private removeNumberField() {

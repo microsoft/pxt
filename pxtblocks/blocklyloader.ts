@@ -184,9 +184,7 @@ namespace pxt.blocks {
                 const mutationValues = fn.attributes.mutateDefaults.split(";");
                 mutationValues.forEach(mutation => {
                     const mutatedBlock = block.cloneNode(true);
-                    const mutationElement = document.createElement("mutation");
-                    mutationElement.setAttribute(DestructuringMutator.savedMutationAttribute, mutation);
-                    mutatedBlock.appendChild(mutationElement);
+                    mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
                     category.appendChild(mutatedBlock);
                 });
             }
@@ -361,7 +359,7 @@ namespace pxt.blocks {
         });
 
         if (fn.attributes.mutate) {
-            addMutator(block as MutatingBlock, fn);
+            addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
         }
 
         let body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
@@ -397,19 +395,6 @@ namespace pxt.blocks {
         block.setNextStatement(fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
-    }
-
-    function addMutator(block: MutatingBlock, info: pxtc.SymbolInfo) {
-        if (info.attributes.mutate === "array") {
-            applyMutator(block, new ArrayMutator(block, info));
-        }
-        else {
-            if (!info.parameters || info.parameters.length !== 1 || info.parameters[0].properties.length === 0) {
-                console.error("Mutating blocks only supported for functions with one parameter that has multiple properties");
-                return;
-            }
-            applyMutator(block, new DestructuringMutator(block, info));
-        }
     }
 
     function removeCategory(tb: Element, name: string) {
