@@ -245,8 +245,8 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 function uploadCrowdinAsync(prj: string, key: string, p: string): Promise<void> {
     console.log("TRAVIS_BRANCH: " + process.env.TRAVIS_BRANCH)
     console.log("TRAVIS_PULL_REQUEST: " + process.env.TRAVIS_PULL_REQUEST)
-    if ((process.env.TRAVIS_BRANCH && process.env.TRAVIS_BRANCH != "master") || !!process.env.TRAVIS_PULL_REQUEST) {
-        console.log("crowdin command skipped, not master branch");
+    if (!/^master$/.test(process.env.TRAVIS_BRANCH) || !/^false$/.test(process.env.TRAVIS_PULL_REQUEST)) {
+        console.log("crowdin command skipped, not master branch or pull request");
         return Promise.resolve();
     }
 
