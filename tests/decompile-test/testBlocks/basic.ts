@@ -95,6 +95,27 @@ namespace testNamespace {
         //% block="Some method|on %testClass|with number %x"
         public testMethod(a: number) {}
     }
+
+    /**
+     * Mutators
+     */
+
+    //% blockId=test_rest_parameter
+    //% block="rest parameter: "
+    //% mutate="restparameter""
+    //% mutateText="Number of Values"
+    export function restParameterTest(...args: number[]): void { }
+
+    export class SomeBagOfProperties {
+        public n: number;
+        public text: string;
+    }
+
+    //% blockId=test_object_destructuring
+    //% block="object destructure: "
+    //% mutate="objectdestructuring""
+    //% mutateText="Visible properties""
+    export function objectDestructuringTest(cb: (a: SomeBagOfProperties) => void): void { }
 }
 
 //% color=#A80000 weight=30

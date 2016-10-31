@@ -47,7 +47,7 @@ namespace pxt.blocks {
 
     export namespace MutatorTypes {
         export const ObjectDestructuringMutator = "objectdestructuring";
-        export const RestParameterMutator = "restparameter"
+        export const RestParameterMutator = "restparameter";
     }
 
     interface BlockName {
