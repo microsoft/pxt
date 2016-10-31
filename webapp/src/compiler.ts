@@ -185,6 +185,10 @@ function localizeApisAsync(apis: pxtc.ApisInfo): Promise<pxtc.ApisInfo> {
                     }
                 }
             }
+            const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
+            if (nsDoc) {
+                fn.attributes.block = nsDoc;
+            }
         }))
         .then(() => apis);
 }
