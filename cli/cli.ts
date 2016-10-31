@@ -243,13 +243,6 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 }
 
 function uploadCrowdinAsync(prj: string, key: string, p: string): Promise<void> {
-    console.log("TRAVIS_BRANCH: " + process.env.TRAVIS_BRANCH)
-    console.log("TRAVIS_PULL_REQUEST: " + process.env.TRAVIS_PULL_REQUEST)
-    if (!/^master$/.test(process.env.TRAVIS_BRANCH) || !/^false$/.test(process.env.TRAVIS_PULL_REQUEST)) {
-        console.log("crowdin command skipped, not master branch or pull request");
-        return Promise.resolve();
-    }
-
     const fn = path.basename(p);
     const data = JSON.parse(fs.readFileSync(p, "utf8"));
     console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}`);
@@ -569,10 +562,15 @@ function travisAsync() {
 
     const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
+    // upload locs on build on master
+    const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        return npmPublish ? runNpmAsync("publish") : Promise.resolve();
+        let p = npmPublish ? runNpmAsync("publish") : Promise.resolve();
+        if (uploadLocs)
+            p = p.then(() => execCrowdinAsync("upload", "built/strings.json"));
+        return p;
     } else {
         return buildTargetAsync()
             .then(() => uploader.checkDocsAsync())
@@ -588,9 +586,10 @@ function travisAsync() {
                     return Promise.resolve() //preCacheHexAsync()
                         .then(() => uploadTargetAsync(trg.id + "/" + rel))
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
-                        .then(() => uploadTargetTranslationsAsync())
+                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
+                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
             })
     }
 }
@@ -3605,7 +3604,7 @@ export function uploadTargetTranslationsAsync() {
         const locdir = path.join(dir, "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
-                .filter(f => /\.json$/i.test(f))
+                .filter(f => /strings\.json$/i.test(f))
                 .forEach(f => todo.push(path.join(locdir, f)))
     });
     const nextFileAsync = (): Promise<void> => {
@@ -3637,12 +3636,12 @@ export function downloadTargetTranslationsAsync(...args: string[]) {
     pxt.appTarget.bundleddirs
         .filter(dir => !name || dir == "libs/" + name)
         .forEach(dir => {
-        const locdir = path.join(dir, "_locales");
-        if (fs.existsSync(locdir))
-            fs.readdirSync(locdir)
-                .filter(f => /\.json$/i.test(f))
-                .forEach(f => todo.push(path.join(locdir, f)))
-    });
+            const locdir = path.join(dir, "_locales");
+            if (fs.existsSync(locdir))
+                fs.readdirSync(locdir)
+                    .filter(f => /\.json$/i.test(f))
+                    .forEach(f => todo.push(path.join(locdir, f)))
+        });
 
     const nextFileAsync = (): Promise<void> => {
         const f = todo.pop();
@@ -3652,7 +3651,7 @@ export function downloadTargetTranslationsAsync(...args: string[]) {
         const crowdf = path.join(crowdinDir, fn);
         const locdir = path.dirname(f);
         pxt.log(`downloading ${crowdf}`);
-        return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf, { translatedOnly: true, validatedOnly: true})
+        return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf, { translatedOnly: true, validatedOnly: true })
             .then(data => {
                 Object.keys(data)
                     .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
