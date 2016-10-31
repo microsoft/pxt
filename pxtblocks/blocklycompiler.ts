@@ -9,14 +9,14 @@
 import B = Blockly;
 
 namespace pxt.blocks {
-    enum NT {
+    export enum NT {
         Prefix, // op + map(children)
         Infix, // children.length == 2, child[0] op child[1]
         Block, // { } are implicit
         NewLine
     }
 
-    interface Node {
+    export interface Node {
         type: NT;
         children: Node[];
         op: string;
@@ -55,14 +55,14 @@ namespace pxt.blocks {
         return mkNode(NT.Infix, op, [child0, child1])
     }
 
-    function mkText(s: string) {
+    export function mkText(s: string) {
         return mkPrefix(s, [])
     }
     function mkBlock(nodes: Node[]) {
         return mkNode(NT.Block, "", nodes)
     }
 
-    function mkGroup(nodes: Node[]) {
+    export function mkGroup(nodes: Node[]) {
         return mkPrefix("", nodes)
     }
 
@@ -252,7 +252,7 @@ namespace pxt.blocks {
     // type doesn't match the inferred type, it's an error. If the type was
     // undetermined as of yet, the type of the variable becomes the expected type.
 
-    class Point {
+    export class Point {
         constructor(
             public link: Point,
             public type: string
@@ -624,7 +624,7 @@ namespace pxt.blocks {
     // [t] is the expected type; we assume that we never null block children
     // (because placeholder blocks have been inserted by the type-checking phase
     // whenever a block was actually missing).
-    function compileExpression(e: Environment, b: B.Block, comments: string[]): Node {
+    export function compileExpression(e: Environment, b: B.Block, comments: string[]): Node {
         assert(b != null);
         maybeAddComment(b, comments);
         let expr: Node;
@@ -681,29 +681,24 @@ namespace pxt.blocks {
 
     // Environments are persistent.
 
-    interface Environment {
+    export interface Environment {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
     }
 
-    enum VarUsage {
+    export enum VarUsage {
         Unknown,
         Read,
         Assign
     }
 
-    interface Binding {
+    export interface Binding {
         name: string;
         type: Point;
         declaredInLocalScope: number;
         assigned?: VarUsage; // records the first usage of this variable (read/assign)
         mustBeGlobal?: boolean;
-    }
-
-    export interface NamedProperty {
-        property: string;
-        newName: string;
     }
 
     function isCompiledAsLocalVariable(b: Binding) {
@@ -831,7 +826,7 @@ namespace pxt.blocks {
     }
 
     // convert to javascript friendly name
-    function escapeVarName(name: string): string {
+    export function escapeVarName(name: string): string {
         if (!name) return '_';
         let n = name.split(/[^a-zA-Z0-9_$]+/)
             //.map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1)) breaks roundtrip...
@@ -901,7 +896,14 @@ namespace pxt.blocks {
     }
 
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): Node {
-        let args = func.args.map((p: StdArg) => compileArgument(e, b, p, comments));
+        let args: Node[]
+        if (isMutatingBlock(b) && b.mutation.getMutationType() === ArrayMutator.mutationType) {
+            args = b.mutation.compileMutation(e, comments).children;
+        }
+        else {
+            args = func.args.map((p: StdArg) => compileArgument(e, b, p, comments));
+        }
+
         if (func.isIdentity)
             return args[0];
         else if (func.isExtensionMethod) {
@@ -917,12 +919,11 @@ namespace pxt.blocks {
         return mkStmt(compileStdCall(e, b, f, comments))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node, callbackProperties?: NamedProperty[]): Node {
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node, argumentDeclaration?: Node): Node {
         body.noFinalNewline = true
         let callback: Node;
-        if (callbackProperties && callbackProperties.length) {
-            const declarations = callbackProperties.map(prop => prop.newName ? `${prop.property}: ${prop.newName}` : prop.property);
-            callback = mkGroup([mkText(`({${declarations.join(", ")}}) =>`), body]);
+        if (argumentDeclaration) {
+            callback = mkGroup([argumentDeclaration, body]);
         }
         else {
             callback = mkGroup([mkText("() =>"), body]);
@@ -940,23 +941,17 @@ namespace pxt.blocks {
         });
         let body = compileStatements(e, bBody);
 
-        let callbackProperties: NamedProperty[];
+        let argumentDeclaration: Node;
 
-        if (isMutatingBlock(b)) {
-            callbackProperties = b.parameters.map(param => {
-                const varName = b.getFieldValue(param);
-                return {
-                    property: escapeVarName(param),
-                    newName: varName !== param ? escapeVarName(varName) : undefined
-                };
-            });
+        if (isMutatingBlock(b) && b.mutation.getMutationType() === DestructuringMutator.mutationType) {
+            argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
 
-        return mkCallWithCallback(e, ns, event, compiledArgs, body, callbackProperties);
+        return mkCallWithCallback(e, ns, event, compiledArgs, body, argumentDeclaration);
     }
 
     function isMutatingBlock(b: B.Block): b is MutatingBlock {
-        return !!(b as MutatingBlock).parameters;
+        return !!(b as MutatingBlock).mutation;
     }
 
     function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: Node[]): Node {
@@ -981,7 +976,7 @@ namespace pxt.blocks {
     // or a string|number literal.
     // The literal is used to hide argument in blocks
     // that are available in TD.
-    interface StdArg {
+    export interface StdArg {
         field?: string;
         literal?: string | number;
     }
@@ -997,7 +992,7 @@ namespace pxt.blocks {
     //   call like [f(x, y...)], we generate the more "natural" [x → f (y...)]
     // - [namespace] is also an optional flag to generate a "namespace" call, that
     //   is, "basic -> show image" instead of "micro:bit -> show image".
-    interface StdFunc {
+    export interface StdFunc {
         f: string;
         args: StdArg[];
         isExtensionMethod?: boolean;
@@ -1111,15 +1106,11 @@ namespace pxt.blocks {
             else if ((b.type == "controls_for" || b.type == "controls_simple_for")
                 && escapeVarName(b.getFieldValue("VAR")) == name)
                 return true;
-            else if (isMutatingBlock(b) && isCallbackParameter(b, name))
+            else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
             else
                 return variableIsScoped(b.getSurroundParent(), name);
         };
-
-        function isCallbackParameter(b: MutatingBlock, name: string) {
-            return b.parameters.some(param => b.getFieldValue(param) === name)
-        }
 
         function trackLocalDeclaration(name: string, type: string) {
             // It's ok for two loops to share the same variable.
@@ -1140,7 +1131,12 @@ namespace pxt.blocks {
                 trackLocalDeclaration(x, pNumber.type);
             }
             else if (isMutatingBlock(b)) {
-                b.parameters.forEach(parameter => trackLocalDeclaration(escapeVarName(b.getFieldValue(parameter)), b.parameterTypes[parameter]))
+                const declarations = b.mutation.getDeclaredVariables();
+                if (declarations) {
+                    for (const varName in declarations) {
+                        trackLocalDeclaration(escapeVarName(varName), declarations[varName]);
+                    }
+                }
             }
         });
 

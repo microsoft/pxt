@@ -6,8 +6,7 @@ namespace pxt.blocks {
     export interface MutatingBlock extends Blockly.Block {
         /* Internal properties */
 
-        parameters: string[];
-        parameterTypes: {[index: string]: string};
+        mutation: Mutation;
 
         /* Functions used by Blockly */
 
@@ -21,24 +20,42 @@ namespace pxt.blocks {
         decompose(workspace: Blockly.Workspace): Blockly.Block;
     }
 
+    export interface Mutation {
+        getMutationType(): string;
+        compileMutation(e: Environment, comments: string[]): Node;
+        getDeclaredVariables(): pxt.Map<string>;
+        isDeclaredByMutation(varName: string): boolean;
+    }
+
     export interface BlockName {
         type: string;
         name: string;
     }
 
-    export function applyMutator(b: MutatingBlock, m: Mutator) {
+    interface NamedProperty {
+        newName: string;
+        property: string;
+    }
+
+    export function applyMutator(b: MutatingBlock, m: MutatorHelper) {
         b.mutationToDom = m.mutationToDom.bind(m);
         b.domToMutation = m.domToMutation.bind(m);
         b.compose = m.compose.bind(m);
         b.decompose = m.decompose.bind(m);
+        b.mutation = m;
     }
 
-    export abstract class Mutator {
+    export abstract class MutatorHelper implements Mutation {
         protected static mutatorStatmentInput = "PROPERTIES";
         protected static mutatedVariableInputName = "properties";
 
         protected block: MutatingBlock;
         protected topBlockType: string;
+
+        public abstract getMutationType(): string;
+        public abstract compileMutation(e: Environment, comments: string[]): Node;
+        public abstract getDeclaredVariables(): pxt.Map<string>;
+        public abstract isDeclaredByMutation(varName: string): boolean;
 
         public abstract mutationToDom(): Element;
         public abstract domToMutation(xmlElement: Element): void;
@@ -80,7 +97,7 @@ namespace pxt.blocks {
             topBlock.initSvg();
 
             for (const input of topBlock.inputList) {
-                if (input.name === Mutator.mutatorStatmentInput) {
+                if (input.name === MutatorHelper.mutatorStatmentInput) {
                     let currentConnection = input.connection;
 
                     this.getVisibleBlockTypes().forEach(sub => {
@@ -114,7 +131,7 @@ namespace pxt.blocks {
                     top.appendDummyInput()
                         .appendField(topBlockTitle);
                     top.setColour(colour);
-                    top.appendStatementInput(Mutator.mutatorStatmentInput);
+                    top.appendStatementInput(MutatorHelper.mutatorStatmentInput);
                 }
             };
         }
@@ -131,21 +148,56 @@ namespace pxt.blocks {
         }
     }
 
-    export class DestructuringMutator extends Mutator {
+    export class DestructuringMutator extends MutatorHelper {
         public static savedMutationAttribute = "callbackproperties";
+        public static mutationType = "destructuringMutator";
         private currentlyVisible: string[] = [];
+        private parameters: string[];
+        private parameterTypes: {[index: string]: string};
 
         constructor(b: Blockly.Block, info: pxtc.SymbolInfo) {
             super(b, info);
-            this.block.appendDummyInput(Mutator.mutatedVariableInputName);
+            this.block.appendDummyInput(MutatorHelper.mutatedVariableInputName);
             this.block.appendStatementInput("HANDLER")
                 .setCheck("null");
+        }
+
+        public getMutationType(): string {
+            return DestructuringMutator.mutationType;
+        }
+
+        public compileMutation(e: Environment, comments: string[]): Node {
+            if (!this.parameters.length) {
+                return undefined;
+            }
+
+            const declarationString =  this.parameters.map(param => {
+                const declaredName = this.block.getFieldValue(param);
+                const escapedParam = escapeVarName(param);
+                return declaredName === param ? escapedParam : `${param}: ${escapeVarName(declaredName)}`
+            }).join(", ");
+
+            return mkText(`({ ${declarationString} }) => `);
+        }
+
+        public getDeclaredVariables(): pxt.Map<string> {
+            const result: pxt.Map<string> = {};
+
+            this.parameters.forEach(param => {
+                result[this.block.getFieldValue(param)] = this.parameterTypes[param];
+            });
+
+            return result;
+        }
+
+        public isDeclaredByMutation(varName: string): boolean {
+            return this.parameters.some(param => this.block.getFieldValue(param) === varName)
         }
 
         public mutationToDom(): Element {
             // Save the parameters that are currently visible to the DOM along with their names
             const mutation = document.createElement("mutation");
-            const attr = this.block.parameters.map(param => {
+            const attr = this.parameters.map(param => {
                 const varName = this.block.getFieldValue(param);
                 return varName !== param ? `${Util.htmlEscape(param)}:${Util.htmlEscape(varName)}` : Util.htmlEscape(param);
             }).join(",");
@@ -170,7 +222,7 @@ namespace pxt.blocks {
                     }
                 })
                 // Create the fields for each property with default variable names
-                this.block.parameters = properties.map(p => p.property);
+                this.parameters = properties.map(p => p.property);
                 this.updateVisibleProperties();
 
                 // Override any names that the user has changed
@@ -179,12 +231,12 @@ namespace pxt.blocks {
         }
 
         protected updateBlock(subBlocks: BlockName[]) {
-            this.block.parameters = [];
+            this.parameters = [];
 
             // Ignore duplicate blocks
             subBlocks.forEach(p => {
-                if (this.block.parameters.indexOf(p.name) === -1) {
-                    this.block.parameters.push(p.name);
+                if (this.parameters.indexOf(p.name) === -1) {
+                    this.parameters.push(p.name);
                 }
             });
 
@@ -192,12 +244,12 @@ namespace pxt.blocks {
         }
 
         protected getSubBlockNames(): BlockName[] {
-            this.block.parameters = [];
-            this.block.parameterTypes = {};
+            this.parameters = [];
+            this.parameterTypes = {};
 
             return this.info.parameters[0].properties.map(property => {
                 // Used when compiling the destructured arguments
-                this.block.parameterTypes[property.name] = property.type;
+                this.parameterTypes[property.name] = property.type;
 
                 return {
                     type: this.propertyId(property.name),
@@ -211,24 +263,24 @@ namespace pxt.blocks {
         }
 
         private updateVisibleProperties() {
-            if (Util.listsEqual(this.currentlyVisible, this.block.parameters)) {
+            if (Util.listsEqual(this.currentlyVisible, this.parameters)) {
                 return;
             }
 
-            const dummyInput = this.block.inputList.filter(i => i.name === Mutator.mutatedVariableInputName)[0];
+            const dummyInput = this.block.inputList.filter(i => i.name === MutatorHelper.mutatedVariableInputName)[0];
             this.currentlyVisible.forEach(param => {
-                if (this.block.parameters.indexOf(param) === -1) {
+                if (this.parameters.indexOf(param) === -1) {
                     dummyInput.removeField(param);
                 }
             });
 
-            this.block.parameters.forEach(param => {
+            this.parameters.forEach(param => {
                 if (this.currentlyVisible.indexOf(param) === -1) {
                     dummyInput.appendField(new Blockly.FieldVariable(param), param);
                 }
             });
 
-            this.currentlyVisible = this.block.parameters;
+            this.currentlyVisible = this.parameters;
         }
 
         private propertyId(property: string) {
@@ -236,7 +288,9 @@ namespace pxt.blocks {
         }
     }
 
-    export class ArrayMutator extends Mutator {
+
+    export class ArrayMutator extends MutatorHelper {
+        public static mutationType: string = "ArrayMutator";
         public static savedArrayMutation = "arrayvalues";
 
         private static entryType = "entry";
@@ -245,36 +299,52 @@ namespace pxt.blocks {
 
         private count: number = 0;
 
+        public getMutationType(): string {
+            return ArrayMutator.mutationType;
+        }
+
+        public compileMutation(e: Environment, comments: string[]): Node {
+            const values: Node[] = [];
+
+            this.forEachInput(block => values.push(compileExpression(e, block, comments)))
+
+            return mkGroup(values);
+        }
+
+        public getDeclaredVariables(): pxt.Map<string> {
+            return undefined;
+        }
+
+        public isDeclaredByMutation(varName: string): boolean {
+            return false;
+        }
+
         public mutationToDom(): Element {
-            const mutation = document.createElement("mutation");
-            const values: number[] = [];
-
-            this.forEachEntry(value => {
-                values.push(parseFloat(value));
-            });
-
-            mutation.setAttribute(DestructuringMutator.savedMutationAttribute, values.join(","));
+            const mutation = document.createElement("mutation");+
+            mutation.setAttribute("count", this.count.toString());
 
             return mutation;
         }
 
         public domToMutation(xmlElement: Element): void {
             const attribute = xmlElement.getAttribute(ArrayMutator.savedArrayMutation);
-             if (attribute) attribute.split(",").forEach(value => {
-                let parsed = 0;
-                try {
-                    parsed = parseFloat(value);
-                }
-                catch(e) {}
-                this.addNumberField(parsed);
-            });
+             if (attribute) {
+                 try {
+                    this.count = parseInt(attribute)
+                 }
+                 catch (e) { return; }
+
+                 for (let i =0; i < this.count; i++) {
+                     this.addNumberField(false);
+                 }
+             }
         }
 
         protected updateBlock(subBlocks: BlockName[]) {
             if (subBlocks) {
                 const diff = Math.abs(this.count - subBlocks.length);
                 if (this.count < subBlocks.length) {
-                    for (let i = 0; i < diff; i++) this.addNumberField();
+                    for (let i = 0; i < diff; i++) this.addNumberField(true);
                 }
                 else if (this.count > subBlocks.length) {
                     for (let i = 0; i < diff; i++) this.removeNumberField();
@@ -291,17 +361,20 @@ namespace pxt.blocks {
 
         protected getVisibleBlockTypes(): string[] {
             const result: string[] = [];
-            this.forEachEntry(() => result.push(ArrayMutator.entryType))
+            this.forEachInput(() => result.push(ArrayMutator.entryType))
             return result;
         }
 
-        private addNumberField(value = 5) {
+        private addNumberField(addShadowBlock: boolean) {
             const input = this.block.appendValueInput(ArrayMutator.valueInputPrefix + this.count).setCheck("Number");
 
-            const valueBlock = this.block.workspace.newBlock("math_number");
-            valueBlock.setOutput(true, "Number");
-            valueBlock.setFieldValue(value.toString(), "NUM");
-            input.connection.connect(valueBlock.outputConnection);
+            if (addShadowBlock) {
+                const valueBlock = this.block.workspace.newBlock("math_number");
+                valueBlock.initSvg();
+                valueBlock.setShadow(true);
+                input.connection.connect(valueBlock.outputConnection);
+                this.block.workspace.render();
+            }
 
             this.count++;
         }
@@ -313,9 +386,9 @@ namespace pxt.blocks {
             this.count--;
         }
 
-        private forEachEntry(cb: (v: string, i: number) => void) {
+        private forEachInput(cb: (v: Blockly.Block, i: number) => void) {
             for (let i = 0; i < this.count; i++) {
-                cb(this.block.getFieldValue(ArrayMutator.entryType + i), i);
+                cb(this.block.getInputTargetBlock(ArrayMutator.valueInputPrefix + i), i);
             }
         }
     }
