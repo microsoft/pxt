@@ -639,8 +639,18 @@ namespace ts.pxtc.Util {
 
     export function fmt(f: string, ...args: any[]) { return fmt_va(f, args); }
 
+    const locStats: Map<number> = {};
+    export function dumpLocStats() {
+        const r: Map<string> = {};
+        Object.keys(locStats).sort((a, b) => locStats[b] - locStats[a])
+            .forEach(k => r[k] = k);
+        console.log('prioritized list of strings:')
+        console.log(JSON.stringify(r, null, 2));
+    }
+
     let sForPlural = true;
     export function lf_va(format: string, args: any[]): string {
+        if (locStats) locStats[format] = (locStats[format] || 0) + 1;
         let lfmt = Util._localize(format)
 
         if (!sForPlural && lfmt != format && /\d:s\}/.test(lfmt)) {
