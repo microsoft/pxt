@@ -526,7 +526,7 @@ namespace ts.pxtc.Util {
 
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
-    let _localizeLive = false;
+    export var localizeLive = false;
 
     /**
      * Returns current user language iSO-code. Default is `en`.
@@ -543,6 +543,10 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
+    export function downloadLiveTranslationsAsync(lang: string, filename: string) {
+            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+    }
+
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|zh)/i.test(code))
@@ -550,11 +554,11 @@ namespace ts.pxtc.Util {
 
         if (live) {
             console.log(`loading live translations for ${code}`)
-            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${code}&filename=strings.json`)
+            return downloadLiveTranslationsAsync(code, "strings.json")
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
-                    _localizeLive = true;
+                    localizeLive = true;
                 }, e => {
                     console.error('failed to load localizations')
                 })
