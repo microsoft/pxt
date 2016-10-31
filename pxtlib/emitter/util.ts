@@ -549,6 +549,7 @@ namespace ts.pxtc.Util {
             code = code.split("-")[0]
 
         if (live) {
+            pxt.tickEvent("livelocs", { lang: code });
             console.log(`loading live translations for ${code}`)
             return pxt.crowdin.downloadLiveTranslationsAsync(code, "strings.json")
                 .then(tr => {
