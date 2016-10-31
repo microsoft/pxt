@@ -119,8 +119,6 @@ ${baseLabel}:
     @stackmark func
     @stackmark args
 `)
-            this.write(this.t.proc_setup(true))
-
             // create a new function for later use by hex file generation
             this.proc.fillDebugInfo = th => {
                 let labels = th.getLabels()
@@ -151,7 +149,7 @@ ${baseLabel}:
                 }
             }
 
-
+            this.write(this.t.proc_setup(true))
             // initialize the locals
             let numlocals = this.proc.locals.length
             if (numlocals > 0)
