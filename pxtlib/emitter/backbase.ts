@@ -402,7 +402,7 @@ ${baseLabel}:
             else {
                 this.emitExpr(arg)
                 this.exprStack.unshift(arg)
-                this.write(this.t.push_fixed(["r0"]) + "; tmpstore @" + this.exprStack.length)
+                this.write(this.t.push_local("r0") + "; tmpstore @" + this.exprStack.length)
             }
         }
 
@@ -449,7 +449,7 @@ ${baseLabel}:
             //console.log("PROCCALL", topExpr.toString())
             let argStmts = topExpr.args.map((a, i) => {
                 this.emitExpr(a)
-                this.write(this.t.push_fixed(["r0"]) + " ; proc-arg")
+                this.write(this.t.push_local("r0") + " ; proc-arg")
                 a.totalUses = 1
                 a.currUses = 0
                 this.exprStack.unshift(a)
