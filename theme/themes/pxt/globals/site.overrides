@@ -49,7 +49,7 @@
     height: 80px;
     z-index: 8;
     font-size:5rem;
-    color: @primaryColor;
+    color: @trashIconColor;
 }
 
 
