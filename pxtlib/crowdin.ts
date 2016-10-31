@@ -19,6 +19,10 @@ namespace pxt.crowdin {
         validatedOnly?: boolean;
     }
 
+    export function downloadLiveTranslationsAsync(lang: string, filename: string) {
+            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+    }
+
     export function downloadTranslationsAsync(prj: string, key: string, filename: string, options: DownloadOptions = {}): Promise<Map<Map<string>>> {
         const q: Map<string> = { json: "true" }
         if (options.translatedOnly) q["export_translated_only"] = "1";

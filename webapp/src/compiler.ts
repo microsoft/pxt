@@ -155,44 +155,47 @@ function waitForFirstTypecheckAsync() {
     else return typecheckAsync();
 }
 
-function localizeApis(apis: pxtc.ApisInfo) {
+function localizeApisAsync(apis: pxtc.ApisInfo): Promise<pxtc.ApisInfo> {
     const lang = pxtc.Util.userLanguage();
-    if (pxtc.Util.userLanguage() == "en") return;
-    let loc = pkg.mainPkg.localizationStrings(lang);
-    Util.values(apis.byQName).forEach(fn => {
-        const jsDoc = loc[fn.qName]
-        if (jsDoc) {
-            fn.attributes.jsDoc = jsDoc;
-            if (fn.parameters)
-                fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
-        }
-        if (fn.attributes.block) {
-            const locBlock = loc[`${fn.qName}|block`];
-            if (locBlock) {
-                try {
-                    if (pxt.blocks.areFieldsEquivalent(fn.attributes.block, locBlock))
-                        fn.attributes.block = locBlock;
-                    else {
-                        const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
-                        const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
-                        console.error(`localized block description of ${fn.attributes.block} invalid`);
-                        console.debug(`original: `, fields);
-                        console.debug(`loc: `, locFields);
+    if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
+
+    return pkg.mainPkg.localizationStringsAsync(lang)
+        .then(loc => Util.values(apis.byQName).forEach(fn => {
+            const jsDoc = loc[fn.qName]
+            if (jsDoc) {
+                fn.attributes.jsDoc = jsDoc;
+                if (fn.parameters)
+                    fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+            }
+            if (fn.attributes.block) {
+                const locBlock = loc[`${fn.qName}|block`];
+                if (locBlock) {
+                    try {
+                        if (pxt.blocks.areFieldsEquivalent(fn.attributes.block, locBlock))
+                            fn.attributes.block = locBlock;
+                        else {
+                            const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
+                            const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
+                            console.error(`localized block description of ${fn.attributes.block} invalid`);
+                            console.debug(`original: `, fields);
+                            console.debug(`loc: `, locFields);
+                        }
+                    } catch (e) {
+                        console.error(`error while parsing localized block of ${fn.attributes.block}`);
                     }
-                } catch (e) {
-                    console.error(`error while parsing localized block of ${fn.attributes.block}`);
                 }
             }
-        }
-    });
+        }))
+        .then(() => apis);
 }
 
-function ensureApisInfoAsync() {
+function ensureApisInfoAsync(): Promise<void> {
     if (refreshApis || !cachedApis)
         return workerOpAsync("apiInfo", {})
             .then(apis => {
                 refreshApis = false;
-                localizeApis(apis);
+                return localizeApisAsync(apis);
+            }).then(apis => {
                 cachedApis = apis;
             })
     else return Promise.resolve()

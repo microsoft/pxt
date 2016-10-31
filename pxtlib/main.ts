@@ -401,11 +401,22 @@ namespace pxt {
         /**
          * Returns localized strings qName -> translation
          */
-        packageLocalizationStrings(lang: string): Map<string> {
-            let r: Map<string> = {};
-            let files = this.config.files;
+        packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
+            const targetId = pxt.appTarget.id;
+            const filenames = [this.id + "-jsdoc", this.id];
+            const r: Map<string> = {};
+            if (pxt.Util.localizeLive && this.id != "this") {
+                pxt.log(`loading live translations for ${this.id}`)
+                const code = pxt.Util.userLanguage();
+                return Promise.all(filenames.map(
+                    fn => pxt.crowdin.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`)
+                        .then(tr => Util.jsonMergeFrom(r, tr))
+                        .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
+                    ).then(() => r);
+            }
 
-            [this.id + "-jsdoc", this.id].map(name => {
+            const files = this.config.files;
+            filenames.map(name => {
                 let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     return JSON.parse(this.readFile(fn)) as Map<string>;
@@ -417,7 +428,7 @@ namespace pxt {
                 return undefined;
             }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
 
-            return r;
+            return Promise.resolve(r);
         }
     }
 
@@ -451,15 +462,16 @@ namespace pxt {
             return ids.map(id => this.resolveDep(id))
         }
 
-        localizationStrings(lang: string): Map<string> {
-            let loc: Map<string> = {};
-            Util.values(this.deps).forEach(dep => {
-                let depLoc = dep.packageLocalizationStrings(lang);
-                if (depLoc) // merge data
-                    for (let k in depLoc)
-                        if (!loc[k]) loc[k] = depLoc[k];
-            })
-            return loc;
+        localizationStringsAsync(lang: string): Promise<Map<string>> {
+            const loc: Map<string> = {};
+            return Promise.all(Util.values(this.deps).map(dep =>
+                dep.packageLocalizationStringsAsync(lang)
+                    .then(depLoc => {
+                        if (depLoc) // merge data
+                            for (let k in depLoc)
+                                if (!loc[k]) loc[k] = depLoc[k];
+                    })))
+                .then(() => loc);
         }
 
         getTargetOptions(): CompileTarget {
