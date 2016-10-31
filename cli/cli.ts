@@ -3620,7 +3620,7 @@ export function uploadTargetTranslationsAsync() {
     return nextFileAsync();
 }
 
-export function downloadTargetTranslationsAsync() {
+export function downloadTargetTranslationsAsync(...args: string[]) {
     const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
     if (!prj) {
         pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
@@ -3632,8 +3632,11 @@ export function downloadTargetTranslationsAsync() {
         return Promise.resolve();
     }
     const crowdinDir = pxt.appTarget.id;
+    const name = args[0] || "";
     const todo: string[] = [];
-    pxt.appTarget.bundleddirs.forEach(dir => {
+    pxt.appTarget.bundleddirs
+        .filter(dir => !name || dir == "libs/" + name)
+        .forEach(dir => {
         const locdir = path.join(dir, "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
@@ -3998,7 +4001,7 @@ cmd("uploadart FILE               - upload one art resource", uploader.uploadArt
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("uploadtrgtranslations        - upload translations from bundled projects", uploadTargetTranslationsAsync, 1)
-cmd("downloadtrgtranslations      - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
+cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
