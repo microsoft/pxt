@@ -47,7 +47,16 @@ namespace pxt.blocks {
     }
 
     export function parseFields(b: string): FieldDescription[] {
-        return b.split('|').map((n, ni) => {
+        // normalize and validate common errors
+        // made while translating
+        let nb = b.replace(/%\s+/g, '%');
+        if (nb != b)
+            pxt.log(`block has extra spaces: ${b}`);
+        if (nb[0] == nb[0].toLocaleUpperCase() && nb[0] != nb[0].toLowerCase())
+            pxt.log(`block is capitalized: ${b}`);
+
+        nb = nb.replace(/\s*\|\s*/g, '|');
+        return nb.split('|').map((n, ni) => {
             let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
             if (!m) return { n, ni };
 
