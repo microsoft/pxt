@@ -568,7 +568,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        const sideDocs = !pxt.options.light;
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" title={lf("Help") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
@@ -611,10 +611,6 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     toggleVisibility() {
         const state = this.props.parent.state;
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
-    }
-
-    componentDidUpdate() {
-        Blockly.fireUiEvent(window, 'resize');
     }
 
     renderCore() {
@@ -798,6 +794,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
+        this.fireResize();
+    }
+
+    fireResize() {
+        if (document.createEvent) { // W3C
+            let event = document.createEvent('Event');
+            event.initEvent('resize', true, true);
+            window.dispatchEvent(event);
+        } else { // IE
+            (document as any).fireEvent('onresize');
+        }
     }
 
     saveFile() {
@@ -831,13 +838,20 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.typecheck()
     }
 
-    private autoRunSimulator = pxtc.Util.debounce(
+    private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
             if (!this.state.active)
                 return;
             this.runSimulator({ background: true });
         },
         2000, false);
+    private autoRunSimulator = pxtc.Util.debounce(
+        () => {
+            if (!this.state.active)
+                return;
+            this.runSimulator({ background: true });
+        },
+        4000, false);
     private typecheck() {
         let state = this.editor.snapshotState()
         compiler.typecheckAsync()
@@ -847,8 +861,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.runOptions.debug
-                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
-                        this.autoRunSimulator();
+                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
+                        if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
+                        else this.autoRunSimulator();
+                    }
                 }
             });
     }
@@ -856,7 +872,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     private markdownChangeHandler = Util.debounce(() => {
         if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 2000, false);
+    }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
         this.saveFile();
         if (!this.editor.isIncomplete())
@@ -941,7 +957,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        Blockly.fireUiEvent(window, 'resize');
+        this.fireResize();
     }
 
     setSideFile(fn: pkg.File) {
@@ -1613,9 +1629,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -1668,7 +1686,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                         </sui.DropdownMenuItem>}
-                        {sandbox ? undefined : <DocsMenuItem parent={this} />}
+                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item link logo"><a className="ui image" target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a></span>
@@ -1696,7 +1714,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                {sandbox || pxt.options.light ? undefined : <SideDocs ref="sidedoc" parent={this} />}
+                {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
@@ -2060,7 +2078,7 @@ $(document).ready(() => {
         // in iframe
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
+    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
 
     enableAnalytics()
     appcache.init();

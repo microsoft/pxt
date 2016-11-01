@@ -109,8 +109,7 @@ task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
     jake.exec([
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget",
-        "node built/pxt.js uploaddoc",
-        "node built/pxt.js crowdin upload built/strings.json"
+        "node built/pxt.js uploaddoc"
     ], { printStdout: true }, complete.bind(this));
 })
 

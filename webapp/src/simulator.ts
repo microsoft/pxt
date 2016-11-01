@@ -31,13 +31,13 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     let options: pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {
             ($(el) as any).transition({
-                animation: 'fly right in',
+                animation: pxt.appTarget.appTheme.simAnimationEnter || 'fly right in',
                 duration: '0.5s',
             })
         },
         removeElement: (el) => {
             ($(el) as any).transition({
-                animation: 'fly right out',
+                animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
                 duration: '0.5s',
                 onComplete: function () {
                     $(el).remove();
