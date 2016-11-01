@@ -149,9 +149,10 @@ namespace pxt.blocks {
         return block;
     }
 
-    function createCategoryElement(name: string, weight: number, colour?: string): Element {
+    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string): Element {
         const result = document.createElement("category");
         result.setAttribute("name", name);
+        result.setAttribute("nameid", nameid.toLowerCase());
         result.setAttribute("weight", weight.toString());
         if (colour) {
             result.setAttribute("colour", colour);
@@ -179,7 +180,8 @@ namespace pxt.blocks {
                 pxt.debug('toolbox: adding category ' + ns)
 
                 const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-                category = createCategoryElement(catName, nsWeight)
+                const locCatName = (nsn ? nsn.attributes.block : "") || catName;
+                category = createCategoryElement(locCatName, catName, nsWeight);
 
                 if (nsn && nsn.attributes.color) {
                     category.setAttribute("colour", nsn.attributes.color);
@@ -188,9 +190,8 @@ namespace pxt.blocks {
                     category.setAttribute("colour", blockColors[ns].toString());
                 }
 
-                if (nsn.attributes.advanced) {
-                    const advancedCategoryName = Util.lf("{id:category}Advanced")
-                    parentCategoryList = getOrAddSubcategory(tb, advancedCategoryName, 1, "#5577EE")
+                if (nsn && nsn.attributes.advanced) {
+                    parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE")
                     categories = getChildCategories(parentCategoryList)
                 }
 
@@ -207,7 +208,7 @@ namespace pxt.blocks {
                     parentCategoryList.appendChild(category);
             }
             if (fn.attributes.advanced) {
-                category = getOrAddSubcategory(category, "More\u2026", 1, category.getAttribute("colour"))
+                category = getOrAddSubcategory(category, lf("More\u2026"), "More\u2026", 1, category.getAttribute("colour"))
             }
 
             if (fn.attributes.mutateDefaults) {
@@ -226,11 +227,11 @@ namespace pxt.blocks {
         }
     }
 
-    let iconCanvasCache: Map<HTMLCanvasElement> = {};
+    let iconCanvasCache: Map<string> = {};
     function iconToFieldImage(c: string): Blockly.FieldImage {
-        let canvas = iconCanvasCache[c];
-        if (!canvas) {
-            canvas = iconCanvasCache[c] = document.createElement('canvas');
+        let url = iconCanvasCache[c];
+        if (!url) {
+            let canvas = document.createElement('canvas');
             canvas.width = 64;
             canvas.height = 64;
             let ctx = canvas.getContext('2d');
@@ -238,8 +239,9 @@ namespace pxt.blocks {
             ctx.font = "56px Icons";
             ctx.textAlign = "center";
             ctx.fillText(c, canvas.width / 2, 56);
+            url = iconCanvasCache[c] = canvas.toDataURL();
         }
-        return new Blockly.FieldImage(canvas.toDataURL(), 16, 16, '');
+        return new Blockly.FieldImage(url, 16, 16, '');
     }
 
     function getChildCategories(parent: Element) {
@@ -255,13 +257,13 @@ namespace pxt.blocks {
         return result;
     }
 
-    function getOrAddSubcategory(parent: Element, name: string, weight: number, colour?: string) {
-        const existing = parent.querySelector(`category[name="${name}"]`);
+    function getOrAddSubcategory(parent: Element, name: string, nameid: string, weight: number, colour?: string) {
+        const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
         if (existing) {
             return existing;
         }
 
-        const newCategory = createCategoryElement(name, weight, colour);
+        const newCategory = createCategoryElement(name, nameid, weight, colour);
         parent.appendChild(newCategory)
 
         return newCategory;
@@ -717,8 +719,8 @@ namespace pxt.blocks {
         }
     }
 
-    function categoryElement(tb: Element, name: string): Element {
-        return tb ? tb.querySelector(`category[name="${Util.capitalize(name)}"]`) : undefined;
+    function categoryElement(tb: Element, nameid: string): Element {
+        return tb ? tb.querySelector(`category[nameid="${nameid.toLowerCase()}"]`) : undefined;
     }
 
     export function cleanBlocks() {
@@ -1113,7 +1115,7 @@ namespace pxt.blocks {
 
                 // Option to collapse top blocks.
                 const collapseOption: any = { enabled: hasExpandedBlocks };
-                collapseOption.text = lf("Collapse Blocks");
+                collapseOption.text = lf("Collapse Block");
                 collapseOption.callback = function () {
                     pxt.tickEvent("blocks.context.collapse")
                     toggleOption(true);
@@ -1122,7 +1124,7 @@ namespace pxt.blocks {
 
                 // Option to expand top blocks.
                 const expandOption: any = { enabled: hasCollapsedBlocks };
-                expandOption.text = lf("Expand Blocks");
+                expandOption.text = lf("Expand Block");
                 expandOption.callback = function () {
                     pxt.tickEvent("blocks.context.expand")
                     toggleOption(false);
@@ -1424,6 +1426,11 @@ namespace pxt.blocks {
     function initVariables() {
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
+            let xmlList: HTMLElement[] = [];
+            let button = goog.dom.createDom('button');
+            button.setAttribute('text', lf("Make a Variable"));
+            xmlList.push(button);
+
             let variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
             // In addition to the user's variables, we also want to display the default
@@ -1432,7 +1439,6 @@ namespace pxt.blocks {
             goog.array.remove(variableList, varname);
             variableList.unshift(varname);
 
-            let xmlList: HTMLElement[] = [];
             // variables getters first
             for (let i = 0; i < variableList.length; i++) {
                 // <block type="variables_get" gap="24">

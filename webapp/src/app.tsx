@@ -568,7 +568,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        const sideDocs = !pxt.options.light;
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" title={lf("Help") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
@@ -799,7 +799,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     fireResize() {
         if (document.createEvent) { // W3C
-            window.dispatchEvent(new Event('resize'))
+            let event = document.createEvent('Event');
+            event.initEvent('resize', true, true);
+            window.dispatchEvent(event);
         } else { // IE
             (document as any).fireEvent('onresize');
         }
@@ -1627,9 +1629,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -1682,7 +1686,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                         </sui.DropdownMenuItem>}
-                        {sandbox ? undefined : <DocsMenuItem parent={this} />}
+                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item link logo"><a className="ui image" target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a></span>
@@ -1710,7 +1714,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                {sandbox || pxt.options.light ? undefined : <SideDocs ref="sidedoc" parent={this} />}
+                {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}

@@ -439,7 +439,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(nativeType)
         b.disablePeepHole = true
         b.emit(src)
-        throwThumbErrors(b)
+        throwAssemblerErrors(b)
 
         let res: number[] = []
         for (let i = 0; i < b.buf.length; i += 2) {
@@ -469,7 +469,7 @@ ${hex.hexPrelude()}
         return b
     }
 
-    function throwThumbErrors(b: assembler.File) {
+    function throwAssemblerErrors(b: assembler.File) {
         if (b.errors.length > 0) {
             let userErrors = ""
             b.errors.forEach(e => {
@@ -501,7 +501,7 @@ ${hex.hexPrelude()}
 
         src = b.getSource(!peepDbg);
 
-        throwThumbErrors(b)
+        throwAssemblerErrors(b)
 
         return {
             src: src,

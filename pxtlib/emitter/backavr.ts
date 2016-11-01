@@ -80,7 +80,6 @@ namespace ts.pxtc {
 
     // for now, everything is 16-bit (word)
     export class AVRSnippets extends AssemblerSnippets {
-        private push_cnt: number = 0;
 
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
@@ -91,11 +90,13 @@ namespace ts.pxtc {
     ldi ${this.rmap_hi[reg]}, #${imm_hi}`
         }
         push_fixed(regs: string[]) {
-            this.push_cnt += regs.length
             let res = ""
             regs.forEach(r => {
                 res = res + `\npush ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
             });
+            res += `
+    in r28, 0x3d
+    in r29, 0x3e`
             return res
         }
         pop_fixed(regs: string[]) {
@@ -106,7 +107,6 @@ namespace ts.pxtc {
             return res
         }
         proc_setup(main?: boolean) {
-            this.push_cnt = 0;
             let set_r1_zero = main ? "eor r1, r1" : ""
             // push the frame pointer
             return `
@@ -114,16 +114,7 @@ namespace ts.pxtc {
     push r28
     push r29`
         }
-        proc_setup_end() {
-            if (this.push_cnt > 0) {
-                // FP <- SP
-                return `
-    in r28, 0x3d
-    in r29, 0x3e`
-            } else {
-                return ""
-            }
-        }
+
         proc_return() {
             // pop frame pointer and return
             return `
@@ -134,22 +125,25 @@ namespace ts.pxtc {
         debugger_hook(lbl: string) { return "eor r1, r1" }
         debugger_bkpt(lbl: string) { return "eor r1, r1" }
         breakpoint() { return "eor r1, r1" }
+
         push_local(reg: string) {
-            this.push_cnt += 1
             return `
     push ${this.rmap_lo[reg]}
-    push ${this.rmap_hi[reg]}`
+    push ${this.rmap_hi[reg]}
+    in r28, 0x3d
+    in r29, 0x3e`
         }
+
         pop_locals(n: number) {
-            // note: updates both the SP and FP
-            // could make this into a call???
             return `
     in	r28, 0x3d
     in	r29, 0x3e
-    sbiw	r28, #2*${n}
+    adiw	r28, #2*${n}
     out	0x3d, r28
-    out	0x3e, r29`
+    out	0x3e, r29
+    @dummystack -2*${n}`
         }
+
         unconditional_branch(lbl: string) { return "jmp " + lbl }
         beq(lbl: string) { return "breq " + lbl }
         bne(lbl: string) { return "brne " + lbl }
@@ -176,14 +170,14 @@ namespace ts.pxtc {
         // str?  - true=Store/false=Load
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) {
             assert(src != "r1")
-            let z_reg = ""
+            let tgt_reg = ""
             let prelude = ""
 
             function spill_it(new_off: number) {
                 prelude += `
     ${this.reg_gets_imm("r1", new_off)}
     `
-                if (z_reg == "Y") {
+                if (tgt_reg == "Y") {
                     prelude += `
     movw r30, r28
 `               }
@@ -191,7 +185,7 @@ namespace ts.pxtc {
     add r30, ${this.rmap_lo["r1"]}
     adc r31, ${this.rmap_hi["r1"]}`
                 off = "0"
-                z_reg = "Z"
+                tgt_reg = "Z"
             }
 
             // different possibilities for src: r0, r5, sp, r6
@@ -199,9 +193,10 @@ namespace ts.pxtc {
             if (src != "sp") {
                 prelude = `
     movw r30, ${this.rmap_lo[src]}`
-                z_reg = "Z"
-            } else
-                z_reg = "Y" // sp -> FP = r29
+                tgt_reg = "Z"
+            } else {
+                tgt_reg = "Y" // sp -> FP = r29
+            }
 
             // different possibilities for off
             if (word || off[0] == "#") {
@@ -219,36 +214,42 @@ namespace ts.pxtc {
                     spill_it(new_off)
                 }
             } else if (off[0] == "r") {
-                if (z_reg == "Y") {
+                if (tgt_reg == "Y") {
                     prelude += `
     movw r30, r28
-`           }
+`               }
                 prelude += `
     add r30, ${this.rmap_lo[off]}
     adc r31, ${this.rmap_hi[off]}`
                 off = "0"
             } else {
                 // args@, locals@
+                /* for now, assume we have space
                 let at_index = off.indexOf("@")
                 assert(at_index >= 0)
                 let slot = parseInt(off.slice(at_index + 1)) * 2
                 if (!(0 <= slot && slot <= 63)) {
                     spill_it(slot)
                 }
+                */
             }
-
-            if (store)
-                // std	Y+2, r25
+            let [off_lo,off_hi] = [ off, off ]
+            if (off.indexOf("@") == -1 ) {
+                // because stack grows down, need to treat stack offsets (for temporaries)
+                // differently than regular memory accesses
+                [off_lo, off_hi] = (tgt_reg == "Y") ? [(parseInt(off) + 2).toString(),(parseInt(off) + 1).toString()] : [off,off + "|1"]
+            }
+            if (store) {
                 return `
     ${prelude}
-    std ${z_reg}, ${off}, ${this.rmap_lo[reg]}
-    std ${z_reg}, ${off}|1, ${this.rmap_hi[reg]}`
-            else
-                // ldd	r24, Y+1
+    std ${tgt_reg}, ${off_lo}, ${this.rmap_lo[reg]}
+    std ${tgt_reg}, ${off_hi}, ${this.rmap_hi[reg]}`
+            } else {
                 return `
     ${prelude}
-    ldd ${this.rmap_lo[reg]}, ${z_reg}, ${off}
-    ldd ${this.rmap_hi[reg]}, ${z_reg}, ${off}|1`
+    ldd ${this.rmap_lo[reg]}, ${tgt_reg}, ${off_lo}
+    ldd ${this.rmap_hi[reg]}, ${tgt_reg}, ${off_hi}`
+            }
         }
 
         rt_call(name: string, r0: string, r1: string) {
@@ -269,8 +270,8 @@ namespace ts.pxtc {
     eor	r1, r1`
             } else {
                 return `
-    ${this.inst_lo[name]} r18, r20
-    ${this.inst_hi[name]} r19, r21`
+    ${this.inst_lo[name]} r24, r22
+    ${this.inst_hi[name]} r25, r23`
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
@@ -294,7 +295,7 @@ namespace ts.pxtc {
         lambda_epilogue() {
             return `
     call pxtrt::getGlobalsPtr
-    movw r30, r24
+    movw r2, r24
     ${this.proc_return()}
     @stackempty args`
         }
@@ -317,7 +318,7 @@ namespace ts.pxtc {
             "r2": "r20",
             "r3": "r18",
             "r5": "r26",  // X
-            "r6": "r30"   // Z
+            "r6": "r2"   // Z
         }
 
         rmap_hi: pxt.Map<string> = {
@@ -326,7 +327,7 @@ namespace ts.pxtc {
             "r2": "r21",
             "r3": "r19",
             "r5": "r27",
-            "r6": "r31"
+            "r6": "r3"
         }
 
         inst_lo: pxt.Map<string> = {

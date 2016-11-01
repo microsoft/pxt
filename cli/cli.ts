@@ -225,7 +225,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         case "download": {
             if (!args[1]) throw new Error("output path missing");
             const fn = path.basename(args[0]);
-            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0])
+            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0], { translatedOnly: true, validatedOnly: false })
                 .then(r => {
                     Object.keys(r).forEach(k => {
                         nodeutil.mkdirP(path.join(args[1], k));
@@ -243,11 +243,6 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 }
 
 function uploadCrowdinAsync(prj: string, key: string, p: string): Promise<void> {
-    if ((process.env.TRAVIS_BRANCH && process.env.TRAVIS_BRANCH != "master") || !!process.env.TRAVIS_PULL_REQUEST) {
-        console.log("crowdin command skipped, not master branch");
-        return Promise.resolve();
-    }
-
     const fn = path.basename(p);
     const data = JSON.parse(fs.readFileSync(p, "utf8"));
     console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}`);
@@ -567,10 +562,15 @@ function travisAsync() {
 
     const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
+    // upload locs on build on master
+    const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        return npmPublish ? runNpmAsync("publish") : Promise.resolve();
+        let p = npmPublish ? runNpmAsync("publish") : Promise.resolve();
+        if (uploadLocs)
+            p = p.then(() => execCrowdinAsync("upload", "built/strings.json"));
+        return p;
     } else {
         return buildTargetAsync()
             .then(() => uploader.checkDocsAsync())
@@ -586,9 +586,10 @@ function travisAsync() {
                     return Promise.resolve() //preCacheHexAsync()
                         .then(() => uploadTargetAsync(trg.id + "/" + rel))
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
-                        .then(() => uploadTargetTranslationsAsync())
+                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
+                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
             })
     }
 }
@@ -2852,7 +2853,7 @@ function testForBuildTargetAsync() {
         })
         .then(res => {
             reportDiagnostics(res.diagnostics);
-            if (!res.success) U.userError("Test failed")
+            if (!res.success) U.userError("Compiler test failed")
             if (!pxt.appTarget.forkof)
                 simulatorCoverage(res, opts)
         })
@@ -3603,7 +3604,7 @@ export function uploadTargetTranslationsAsync() {
         const locdir = path.join(dir, "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
-                .filter(f => /\.json$/i.test(f))
+                .filter(f => /strings\.json$/i.test(f))
                 .forEach(f => todo.push(path.join(locdir, f)))
     });
     const nextFileAsync = (): Promise<void> => {
@@ -3618,7 +3619,7 @@ export function uploadTargetTranslationsAsync() {
     return nextFileAsync();
 }
 
-export function downloadTargetTranslationsAsync() {
+export function downloadTargetTranslationsAsync(...args: string[]) {
     const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
     if (!prj) {
         pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
@@ -3630,14 +3631,17 @@ export function downloadTargetTranslationsAsync() {
         return Promise.resolve();
     }
     const crowdinDir = pxt.appTarget.id;
+    const name = args[0] || "";
     const todo: string[] = [];
-    pxt.appTarget.bundleddirs.forEach(dir => {
-        const locdir = path.join(dir, "_locales");
-        if (fs.existsSync(locdir))
-            fs.readdirSync(locdir)
-                .filter(f => /\.json$/i.test(f))
-                .forEach(f => todo.push(path.join(locdir, f)))
-    });
+    pxt.appTarget.bundleddirs
+        .filter(dir => !name || dir == "libs/" + name)
+        .forEach(dir => {
+            const locdir = path.join(dir, "_locales");
+            if (fs.existsSync(locdir))
+                fs.readdirSync(locdir)
+                    .filter(f => /\.json$/i.test(f))
+                    .forEach(f => todo.push(path.join(locdir, f)))
+        });
 
     const nextFileAsync = (): Promise<void> => {
         const f = todo.pop();
@@ -3647,7 +3651,7 @@ export function downloadTargetTranslationsAsync() {
         const crowdf = path.join(crowdinDir, fn);
         const locdir = path.dirname(f);
         pxt.log(`downloading ${crowdf}`);
-        return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf)
+        return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf, { translatedOnly: true, validatedOnly: true })
             .then(data => {
                 Object.keys(data)
                     .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
@@ -3996,7 +4000,7 @@ cmd("uploadart FILE               - upload one art resource", uploader.uploadArt
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("uploadtrgtranslations        - upload translations from bundled projects", uploadTargetTranslationsAsync, 1)
-cmd("downloadtrgtranslations      - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
+cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
 
