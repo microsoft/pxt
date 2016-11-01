@@ -142,11 +142,11 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    updateHelpCard() {
+    updateHelpCard(clear?: boolean) {
         let selected = Blockly.selected;
         let selectedType = selected ? selected.type : null;
-        if (selectedType != this.currentHelpCardType) {
-            if (selected && selected.inputList && selected.codeCard) {
+        if (selectedType != this.currentHelpCardType || clear) {
+            if (selected && selected.inputList && selected.codeCard && !clear) {
                 this.currentHelpCardType = selectedType;
                 //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
                 let props: any = {};
@@ -263,6 +263,7 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
+                    this.updateHelpCard(ev.newValue != null);
                 }
                 else if (ev.element == 'commentOpen') {
                     /*
