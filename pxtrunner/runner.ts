@@ -173,8 +173,14 @@ namespace pxt.runner {
                 if (!str) return Promise.resolve()
                 return mainPkg.installAllAsync().then(() => {
                     if (code) {
-                        //Set the custom code if provided for docs
-                        getEditorPkg(mainPkg).files["main.ts"] = code;
+                        //Set the custom code if provided for docs.
+                        let epkg = getEditorPkg(mainPkg);
+                        epkg.files["main.ts"] = code;
+                        //set the custom doc name from the URL.                        
+                        let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
+                        epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        mainPkg.config.name = cfg.name;
                     }
                 }).catch(e => {
                     showError(lf("Cannot load package: {0}", e.message))
