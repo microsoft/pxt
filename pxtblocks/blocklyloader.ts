@@ -1426,6 +1426,11 @@ namespace pxt.blocks {
     function initVariables() {
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
+            let xmlList: HTMLElement[] = [];
+            let button = goog.dom.createDom('button');
+            button.setAttribute('text', (<any>Blockly).Msg.NEW_VARIABLE);
+            xmlList.push(button);
+
             let variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
             // In addition to the user's variables, we also want to display the default
@@ -1434,7 +1439,6 @@ namespace pxt.blocks {
             goog.array.remove(variableList, varname);
             variableList.unshift(varname);
 
-            let xmlList: HTMLElement[] = [];
             // variables getters first
             for (let i = 0; i < variableList.length; i++) {
                 // <block type="variables_get" gap="24">

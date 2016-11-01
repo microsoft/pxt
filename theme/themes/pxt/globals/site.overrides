@@ -26,6 +26,10 @@
     font-size:1.25rem !important;
 }
 
+.blocklyFlyoutButton {
+    fill: rgb(165, 91, 128) !important;
+}
+
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
 .blocklyTreeRoot div div div div .blocklyTreeRow {
     border-left-width: 12px !important;
