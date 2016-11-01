@@ -224,26 +224,32 @@ namespace ts.pxtc {
                 off = "0"
             } else {
                 // args@, locals@
+                /* for now, assume we have space
                 let at_index = off.indexOf("@")
                 assert(at_index >= 0)
                 let slot = parseInt(off.slice(at_index + 1)) * 2
                 if (!(0 <= slot && slot <= 63)) {
                     spill_it(slot)
                 }
+                */
             }
-            // because stack grows down, need to treat stack offsets for (lo,hi) bytes differently
-            // than regular memory accesses
-            let [off_lo,off_hi] = tgt_reg == "Y" ? [(parseInt(off) + 2).toString(),(parseInt(off) + 1).toString()] : [off,off + "|1"]
-            if (store)
+            let [off_lo,off_hi] = [ off, off ]
+            if (off.indexOf("@") == -1 ) {
+                // because stack grows down, need to treat stack offsets (for temporaries)
+                // differently than regular memory accesses
+                [off_lo, off_hi] = (tgt_reg == "Y") ? [(parseInt(off) + 2).toString(),(parseInt(off) + 1).toString()] : [off,off + "|1"]
+            }
+            if (store) {
                 return `
     ${prelude}
     std ${tgt_reg}, ${off_lo}, ${this.rmap_lo[reg]}
     std ${tgt_reg}, ${off_hi}, ${this.rmap_hi[reg]}`
-            else
+            } else {
                 return `
     ${prelude}
     ldd ${this.rmap_lo[reg]}, ${tgt_reg}, ${off_lo}
     ldd ${this.rmap_hi[reg]}, ${tgt_reg}, ${off_hi}`
+            }
         }
 
         rt_call(name: string, r0: string, r1: string) {
