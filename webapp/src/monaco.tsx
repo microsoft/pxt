@@ -121,16 +121,12 @@ export class Editor extends srceditor.Editor {
             disagreeLbl: lf("Stay in JavaScript"),
             disagreeClass: "positive",
             disagreeIcon: "checkmark",
-            deleteLbl: lf("Remove Blocks file"),
             size: "medium",
             hideCancel: !bf
         }).then(b => {
             // discard                
             if (!b) {
                 pxt.tickEvent("typescript.keepText");
-            } else if (b == 2) {
-                pxt.tickEvent("typescript.removeBlocksFile");
-                this.parent.removeFile(bf, true);
             } else {
                 pxt.tickEvent("typescript.discardText");
                 this.parent.setFile(bf);
