@@ -36,6 +36,23 @@
     font-size: 1rem !important;
 }
 
+
+/* The trash icon inside the toolbox */
+#blocklyTrashIcon {
+    position: absolute;
+    top: 20%;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    width: 100px;
+    height: 80px;
+    z-index: 8;
+    font-size:5rem;
+    color: @trashIconColor;
+}
+
+
 @media only screen and (max-width: @largestMobileScreen) {
     .blocklyTreeLabel, .blocklyText {
         font-size: 0.75rem !important;
@@ -44,7 +61,6 @@
         font-size: 0.75rem !important;
     }
 }
-
 
 @media only screen and (max-width: 60em), only screen and (max-aspect-ratio: 12/10) {
     .blocklyTreeLabel {
