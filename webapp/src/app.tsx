@@ -2039,10 +2039,6 @@ function handleHash(hash: { cmd: string; arg: string }) {
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
             break;
-        case "uploader": // editor launched by the uploader
-            pxt.tickEvent("hash.uploader")
-            pxt.storage.setLocal("uploader", "1");
-            break;
         case "sandbox":
         case "pub":
         case "edit":
