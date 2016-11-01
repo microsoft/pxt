@@ -57,7 +57,7 @@ interface IAppState {
     showFiles?: boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
-    sideDocsLoaded?: boolean;
+    sideDocsLoadUrl?: string; // set once to load the side docs frame
     sideDocsCollapsed?: boolean;
 
     running?: boolean;
@@ -589,16 +589,21 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el) el.src = `${docsUrl}#doc:${path}`;
-        this.props.parent.setState({ sideDocsLoaded: true, sideDocsCollapsed: false });
+        const url = `${docsUrl}#doc:${path}`;
+        this.setUrl(url);
     }
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const url = `${docsUrl}#md:${encodeURIComponent(md)}`;
+        this.setUrl(url);
+    }
+
+    private setUrl(url: string) {
         let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el) el.src = `${docsUrl}#md:${encodeURIComponent(md)}`;
-        this.props.parent.setState({ sideDocsLoaded: true, sideDocsCollapsed: false });
+        if (el) el.src = url;
+        else this.props.parent.setState({ sideDocsLoadUrl: url });
+        this.props.parent.setState({ sideDocsCollapsed: false });
     }
 
     popOut() {
@@ -613,14 +618,16 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const state = this.props.parent.state;
-        const icon = !state.sideDocsLoaded || state.sideDocsCollapsed ? "expand" : "compress";
+        const docsUrl = state.sideDocsLoadUrl;
+        if (!docsUrl) return null;
+
+        const icon = !docsUrl || state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
-            {state.sideDocsLoaded ? <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" /> : undefined }
-            {state.sideDocsLoaded ? <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
+            <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
+            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
                 <i className={`external icon`}></i>
-            </button> : undefined }
+            </button>
             <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation") } className="circular ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`${icon} icon`}></i>
             </button>
@@ -1099,7 +1106,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
-                else this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
             })
     }
 
@@ -1632,7 +1638,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoaded || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
