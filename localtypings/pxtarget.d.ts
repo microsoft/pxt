@@ -110,7 +110,6 @@ declare namespace pxt {
         homeUrl?: string;
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
-        sideDoc?: string;
         hideSideDocs?: boolean;
         boardName?: string;
         privacyUrl?: string;
