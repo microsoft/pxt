@@ -13,6 +13,7 @@ namespace pxsim.visuals {
         public bus: EventBus;
         private currentAngle = 0;
         private targetAngle = 0;
+        private lastAngleTime = 0;
 
         private crankEl: SVGGElement;
         private crankTransform: string;
@@ -37,10 +38,9 @@ namespace pxsim.visuals {
     <path id="LOGIC" fill="#fc0" stroke-width="2" d="M47.3 21.93h5.503v22.627H47.3z"/>
     <path id="GND" fill="#a02c2c" stroke-width="2" d="M60.14 21.93h5.505v22.627H60.14z"/>
     <path id="connector" stroke-width="2" d="M45.064 0a1.488 1.488 0 0 0-1.488 1.488v24.5a1.488 1.488 0 0 0 1.488 1.487h22.71a1.488 1.488 0 0 0 1.49-1.488v-24.5A1.488 1.488 0 0 0 67.774 0h-22.71z"/>
-    <g id="crank" stroke-width="2" transform="translate(-404.313 -261.25)">
-      <path id="arm" fill="#ececec" stroke="#000" d="M462.165 389.752c-10.042 0-18.184 8.14-18.183 18.184 0 10.042 8.14 18.184 18.183 18.183 29.69-.34 169.678 4.973 169.706-16.67.03-21.645-124.41-19.977-169.703-19.7z"/>
-      <path id="path8233" fill="#b3b3b3" d="M505.565 395.923c-17.97-.142-34.197.013-45.54.082a6.252 6.252 0 0 1-.04 0c-6.664 0-11.932 5.268-11.932 11.932 0 6.664 5.268 11.932 11.932 11.932 15.364-.175 57.37 1.064 95.746-.34 19.208-.707 37.47-2.1 50.456-4.537 6.493-1.218 11.685-2.76 14.65-4.228 1.31-.65 1.963-1.203 2.323-1.545.003.003.204.176-.517-.41-1.11-.903-3.482-2.186-6.778-3.335-6.592-2.3-16.75-4.23-28.645-5.633-23.79-2.807-54.7-3.706-81.653-3.92z"/>
-      <circle id="path8216" cx="460.974" cy="408.037" r="8.972" fill="gray"/>
+    <g id="crank" transform="translate(0 -752.688)">
+      <path id="arm" fill="#ececec" stroke="#000" stroke-width="1.372" d="M47.767 880.88c-4.447 1.162-8.412 8.278-8.412 18.492s3.77 18.312 8.412 18.494c8.024.314 78.496 5.06 78.51-16.952.012-22.013-74.377-21.117-78.51-20.035z"/>
+      <circle id="path8216" cx="56.661" cy="899.475" r="8.972" fill="gray" stroke-width="2"/>
     </g>
   </g>
 </svg>            
@@ -56,17 +56,18 @@ namespace pxsim.visuals {
         updateState(): void {
             this.targetAngle = this.state.angle
             if (this.targetAngle != this.currentAngle) {
-                const cx = 460.974;
-                const cy = 408.037;
-                const speed = 600; // 0.1s/60 degree
-                const maxdelta = speed * 0.2;
+                const now = U.now();
+                const cx = 56.661;
+                const cy = 899.475;
+                const speed = 300; // 0.1s/60 degree
+                const dt = Math.min(now - this.lastAngleTime, 50) / 1000;
                 const delta = this.targetAngle - this.currentAngle;
-                this.currentAngle += Math.max(Math.abs(delta), maxdelta) * (delta > 0 ? 1 : -1);
+                this.currentAngle += Math.min(Math.abs(delta), speed * dt) * (delta > 0 ? 1 : -1);
                 this.crankEl.setAttribute("transform", this.crankTransform
                     + ` rotate(${this.currentAngle}, ${cx}, ${cy})`)
-                runtime.queueDisplayUpdate(); // render animation
+                this.lastAngleTime = now;
+                setTimeout(() => runtime.updateDisplay(), 20);
             }
-
         }
         updateTheme(): void {
 
