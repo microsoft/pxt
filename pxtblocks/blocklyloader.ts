@@ -1428,7 +1428,7 @@ namespace pxt.blocks {
         Blockly.Variables.flyoutCategory = function (workspace) {
             let xmlList: HTMLElement[] = [];
             let button = goog.dom.createDom('button');
-            button.setAttribute('text', (<any>Blockly).Msg.NEW_VARIABLE);
+            button.setAttribute('text', lf("Make a Variable"));
             xmlList.push(button);
 
             let variableList = Blockly.Variables.allVariables(workspace);
