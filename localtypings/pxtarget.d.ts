@@ -127,7 +127,8 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
-        invertedToolbox?: boolean;    
+        invertedToolbox?: boolean;
+        invertedMonaco?: boolean;
         blocklyOptions?: Blockly.Options;
         simAnimationEnter?: string;
         simAnimationExit?: string;
