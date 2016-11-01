@@ -1864,11 +1864,13 @@ function enableAppInsights() {
     let ai = (window as any).appInsights;
     if (!ai) return;
 
-    ai.trackPageView();
     let rexp = pxt.reportException;
     pxt.reportException = function (err: any, data: any): void {
         if (rexp) rexp(err, data);
-        let props: pxt.Map<string> = {};
+        let props: pxt.Map<string> = {
+            target: pxt.appTarget.id,
+            version: pxt.appTarget.versions.target
+        }
         if (data)
             for (let k in data)
                 props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
@@ -1881,7 +1883,10 @@ function enableAppInsights() {
             throw msg
         }
         catch (err) {
-            let props: pxt.Map<string> = {};
+            let props: pxt.Map<string> = {
+                target: pxt.appTarget.id,
+                version: pxt.appTarget.versions.target
+            }
             if (data)
                 for (let k in data)
                     props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
