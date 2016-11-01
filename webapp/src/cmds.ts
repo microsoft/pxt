@@ -35,13 +35,7 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         }).then(() => {});
     }
 
-    let uploader = !!pxt.storage.getLocal("uploader");
-    if (uploader) {
-        core.infoNotification(lf("Save the .hex file to your Downloads folder and make sure the uploader is running."))
-        return Promise.resolve();
-    }
-    else
-        return showUploadInstructionsAsync(fn, url);
+    return showUploadInstructionsAsync(fn, url);
 }
 
 //Searches the known USB image, matching on platform and browser
@@ -78,18 +72,6 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         }
     ];
 
-    if ((pxt.appTarget.appTheme.exportVsCode || pxt.options.debug) && (pxt.BrowserUtils.isMac() || pxt.BrowserUtils.isWindows() || pxt.BrowserUtils.isLinux())) {
-        instructions.push({
-            title: lf("(Optional) Edit your code from Visual Studio Code."),
-            body: lf("Install <a href='https://nodejs.org/en/download/' target='_blank'>Node.JS</a> and <a href='http://code.visualstudio.com/Download' target='_blank'>Visual Studio Code</a>, then run:") + `
-<pre><code>
-npm install -g pxt
-pxt target ${pxt.appTarget.id}
-pxt extract --code ${pxt.appTarget.nickname}-YOUR-PROJECT-NAME.hex
-</code></pre>`
-        });
-    }
-
     let usbImagePath = namedUsbImage("connection");
     let docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
@@ -105,13 +87,7 @@ ${instructions.map((step: UploadInstructionStep, i: number) =>
     ${step.body ? step.body : ""}
     ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}" class="ui centered large image" />` : ""}
 </div>`).join('')}
-</div>
-${pxt.BrowserUtils.isWindows() ? `
-    <div class="ui info message landscape desktop only">
-        ${lf("Tired of copying the .hex file?")}
-        <a href="/uploader" target="_blank">${lf("Install the Uploader!")}</a>
-    </div>
-    ` : ""}`,
+</div>`,
         hideCancel: true,
         agreeLbl: lf("Done!"),
         buttons: !docUrl ? undefined : [{

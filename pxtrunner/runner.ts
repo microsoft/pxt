@@ -349,7 +349,7 @@ namespace pxt.runner {
         parent.postMessage({ type: "sidedocready" }, "*");
 
         // delay load doc page to allow simulator to load first
-        setTimeout(() => renderHash(), 5000);
+        setTimeout(() => renderHash(), 1);
     }
 
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {

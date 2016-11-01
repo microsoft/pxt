@@ -225,7 +225,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         case "download": {
             if (!args[1]) throw new Error("output path missing");
             const fn = path.basename(args[0]);
-            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0], { translatedOnly: true, validatedOnly: true })
+            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0], { translatedOnly: true, validatedOnly: false })
                 .then(r => {
                     Object.keys(r).forEach(k => {
                         nodeutil.mkdirP(path.join(args[1], k));
@@ -2853,7 +2853,7 @@ function testForBuildTargetAsync() {
         })
         .then(res => {
             reportDiagnostics(res.diagnostics);
-            if (!res.success) U.userError("Test failed")
+            if (!res.success) U.userError("Compiler test failed")
             if (!pxt.appTarget.forkof)
                 simulatorCoverage(res, opts)
         })

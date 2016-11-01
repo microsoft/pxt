@@ -21,8 +21,6 @@ namespace pxt.crowdin {
 
     export function downloadTranslationsAsync(prj: string, key: string, filename: string, options: DownloadOptions = {}): Promise<Map<Map<string>>> {
         const q: Map<string> = { json: "true" }
-        if (options.translatedOnly) q["export_translated_only"] = "1";
-        if (options.validatedOnly) q["export_approved_only"] = "1";
         const infoUri = apiUri(prj, key, "info", q);
 
         const r: Map<Map<string>> = {};
@@ -37,7 +35,9 @@ namespace pxt.crowdin {
                 if (!item) return Promise.resolve();
                 const exportFileUri = apiUri(prj, key, "export-file", {
                     file: filename,
-                    language: item.code
+                    language: item.code,
+                    export_translated_only: options.translatedOnly ? "1" : "0",
+                    export_approved_only: options.validatedOnly ? "1" : "0"
                 });
                 pxt.log(`downloading ${item.name} (${todo.length} more)`)
                 return Util.httpGetTextAsync(exportFileUri).then((transationsText) => {
