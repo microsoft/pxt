@@ -57,3 +57,6 @@ Test the following on various browsers:
 ### Sandbox Mode
 
 * Check sandbox mode for both the blocks editor and the Javascript editor. 
+
+### Custom Variables Flyout 
+* Check that the custom variables flyout looks right, and that you're able to create, delete, and change variables from within Blockly.
