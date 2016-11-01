@@ -119,8 +119,6 @@ ${baseLabel}:
     @stackmark func
     @stackmark args
 `)
-            this.write(this.t.proc_setup(true))
-
             // create a new function for later use by hex file generation
             this.proc.fillDebugInfo = th => {
                 let labels = th.getLabels()
@@ -151,7 +149,7 @@ ${baseLabel}:
                 }
             }
 
-
+            this.write(this.t.proc_setup(true))
             // initialize the locals
             let numlocals = this.proc.locals.length
             if (numlocals > 0)
@@ -404,7 +402,7 @@ ${baseLabel}:
             else {
                 this.emitExpr(arg)
                 this.exprStack.unshift(arg)
-                this.write(this.t.push_fixed(["r0"]) + "; tmpstore @" + this.exprStack.length)
+                this.write(this.t.push_local("r0") + "; tmpstore @" + this.exprStack.length)
             }
         }
 
@@ -451,7 +449,7 @@ ${baseLabel}:
             //console.log("PROCCALL", topExpr.toString())
             let argStmts = topExpr.args.map((a, i) => {
                 this.emitExpr(a)
-                this.write(this.t.push_fixed(["r0"]) + " ; proc-arg")
+                this.write(this.t.push_local("r0") + " ; proc-arg")
                 a.totalUses = 1
                 a.currUses = 0
                 this.exprStack.unshift(a)
