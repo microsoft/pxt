@@ -98,28 +98,6 @@ export class Editor extends srceditor.Editor {
                             if (!resp.success) return failedAsync(blockFile);
                             xml = resp.outfiles[blockFile];
                             Util.assert(!!xml);
-                            // try to convert back to typescript
-                            let workspace = pxt.blocks.loadWorkspaceXml(xml);
-                            if (!workspace) return failedAsync(blockFile);
-
-                            let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
-
-                            const cleanRx = /[\s;]/g;
-                            if (b2jsr.source.replace(cleanRx, '') != js.replace(cleanRx, '')) {
-                                pxt.tickEvent("typescript.conversionFailed");
-                                console.log('js roundtrip failed:')
-                                console.log('-- original:');
-                                console.log(js.replace(cleanRx, ''));
-                                console.log('-- roundtrip:');
-                                console.log(b2jsr.source.replace(cleanRx, ''));
-                                pxt.reportError("compile", "decompilation failure", {
-                                    js: js,
-                                    blockly: xml,
-                                    jsroundtrip: b2jsr.source
-                                })
-                                return failedAsync(blockFile);
-                            }
-
                             return mainPkg.setContentAsync(blockFile, xml)
                                 .then(() => this.parent.setFile(mainPkg.files[blockFile]));
                         })
@@ -143,16 +121,12 @@ export class Editor extends srceditor.Editor {
             disagreeLbl: lf("Stay in JavaScript"),
             disagreeClass: "positive",
             disagreeIcon: "checkmark",
-            deleteLbl: lf("Remove Blocks file"),
             size: "medium",
             hideCancel: !bf
         }).then(b => {
             // discard                
             if (!b) {
                 pxt.tickEvent("typescript.keepText");
-            } else if (b == 2) {
-                pxt.tickEvent("typescript.removeBlocksFile");
-                this.parent.removeFile(bf, true);
             } else {
                 pxt.tickEvent("typescript.discardText");
                 this.parent.setFile(bf);
