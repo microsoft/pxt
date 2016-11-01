@@ -184,8 +184,7 @@ namespace pxt.runner {
 
                         //Propgate the change to main package
                         mainPkg.config.name = cfg.name;
-                        if (mainPkg.config.files.indexOf("main.blocks") == -1)
-                        {
+                        if (mainPkg.config.files.indexOf("main.blocks") == -1) {
                             mainPkg.config.files.push("main.blocks");
                         }
                     }
