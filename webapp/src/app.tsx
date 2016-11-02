@@ -1376,8 +1376,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return;
-
-            core.showLoading(lf("signing out..."))
             workspace.resetAsync()
                 .catch((e: any) => { })
                 .done(() => {
