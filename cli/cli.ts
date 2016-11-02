@@ -244,9 +244,9 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
 function uploadCrowdinAsync(prj: string, key: string, p: string): Promise<void> {
     const fn = path.basename(p);
-    const data = JSON.parse(fs.readFileSync(p, "utf8"));
+    const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
     console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}`);
-    return pxt.crowdin.uploadTranslationAsync(prj, key, fn, data);
+    return pxt.crowdin.uploadTranslationAsync(prj, key, fn, JSON.stringify(data));
 }
 
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
@@ -3618,7 +3618,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, prj: string, key: st
     const nextFileAsync = (): Promise<void> => {
         const f = todo.pop();
         if (!f) return Promise.resolve();
-        const data = JSON.parse(fs.readFileSync(f, 'utf8'));
+        const data = JSON.parse(fs.readFileSync(f, 'utf8')) as Map<string>;
         const crowdf = path.join(crowdinDir, path.basename(f));
         pxt.log(`uploading ${f} to ${crowdf}`);
         return pxt.crowdin.uploadTranslationAsync(prj, key, crowdf, JSON.stringify(data))
