@@ -913,6 +913,8 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 }
 
 function uploadArtFile(fn: string): string {
+    if (!fn || /^(https?|data):/.test(fn)) return fn; // nothing to do
+
     return "@pxtCdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
 }
 
@@ -1063,12 +1065,9 @@ function uploadCoreAsync(opts: UploadOptions) {
                     } else {
                         // expand usb help pages
                         (trg.appTheme.usbHelp || [])
-                            .filter(h => !!h.path)
                             .forEach(h => h.path = uploadArtFile(h.path));
-                        if (trg.appTheme.appLogo && !/^https:/.test(trg.appTheme.appLogo))
-                            trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
-                        if (trg.appTheme.cardLogo && !/^https:/.test(trg.appTheme.cardLogo))
-                            trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
+                        trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
+                        trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
                         content = JSON.stringify(trg, null, 2);
                         if (isJs)
                             content = targetJsPrefix + content
