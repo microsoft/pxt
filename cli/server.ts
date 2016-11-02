@@ -343,7 +343,12 @@ export function lookupDocFile(name: string) {
 export function expandHtml(html: string) {
     let theme = U.flatClone(pxt.appTarget.appTheme)
     html = expandDocTemplateCore(html)
-    let params: pxt.Map<string> = {}
+    let params: pxt.Map<string> = {
+        name: pxt.appTarget.appTheme.title,
+        description: pxt.appTarget.appTheme.description
+    };
+
+    // page overrides
     let m = /<title>([^<>]*)<\/title>/.exec(html)
     if (m) params["name"] = m[1]
     m = /<meta name="Description" content="([^"]*)"/.exec(html)
