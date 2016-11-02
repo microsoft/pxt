@@ -1,0 +1,259 @@
+/* Import all components */
+@import 'semantic';
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*******************************
+             Layout
+*******************************/
+
+
+#filelist,
+#maineditor,
+#sidedocs {
+  position: absolute;
+  top:@mainMenuHeight;
+  bottom: 0rem;
+}
+#sidedocs {
+  display:none;
+  overflow-y: auto;
+  right: 0;
+  border:none;
+  height: calc(100% - 4.5rem);
+}
+.rtl #sidedocs {
+    right:auto;
+    left:0;
+}
+#sidedocspopout {
+  position: absolute;
+  top:4.75rem;
+  right:4.25rem;
+  display:none;
+}
+.rtl #sidedocspopout {
+    right:auto;
+    left:4.25rem;
+}
+
+#sidedocsexpand {
+  position: absolute;
+  top:4.75rem;
+  right:1.25rem;
+  display:none;
+}
+.rtl #sidedocsexpand {
+    right:auto;
+    left:1.25rem;
+}
+
+/* default layout */
+#filelist {
+  left: 0;
+  min-width: @simulatorWidth;
+  max-width: @simulatorWidth;
+}
+.rtl #filelist {
+    left: auto;
+    right: 0;
+}
+
+.rtl #cookiemsg {
+    left:auto;
+    right:1rem;
+}
+
+#maineditor {
+  right: 0;
+  left: @simulatorWidth;
+}
+.rtl #maineditor {
+    left:0;
+    right:@simulatorWidth;
+}
+
+/*******************************
+             Blockly
+*******************************/
+
+.blocklyToolboxDiv {
+    background: @blocklyToolboxColor;
+}
+
+.blocklySvg {
+    background-color: @blocklySvgColor !important;
+}
+
+.blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
+    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+}
+
+.blocklyText {
+    font-size:1rem !important;
+}
+
+.blocklyTreeLabel {
+    font-size:1.25rem !important;
+}
+
+.blocklyFlyoutButton {
+    fill: rgb(165, 91, 128) !important;
+}
+
+/* This horrendous selector and the next are for subcategories in the Blockly toolbox */
+.blocklyTreeRoot div div div div .blocklyTreeRow {
+    border-left-width: 12px !important;
+    padding-left: 0px !important;
+}
+
+.blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
+    font-size: 1rem !important;
+}
+
+/* The trash icon inside the toolbox */
+#blocklyTrashIcon {
+    position: absolute;
+    top: 20%;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    width: 100px;
+    height: 80px;
+    z-index: 8;
+    font-size:5rem;
+    color: @trashIconColor;
+}
+
+
+/*******************************
+        Monaco Editor
+*******************************/
+#monacoEditor {
+    direction:ltr;
+}
+
+.monaco-editor .monaco-scrollable-element.editor-scrollable {
+    margin-left: .5rem;
+}
+
+/* Monaco Editor Line number colors, changed from the default light theme */
+.monaco-editor.vs .line-numbers {
+    color: #2c3e50 !important;
+}
+
+/* Monaco Editor Line number background, changed from the default light theme */
+.monaco-editor.vs .margin-view-overlays.monaco-editor-background {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Monaco Editor Current line highlighting, only needed for the light theme */
+.monaco-editor.vs .current-line {
+	background: rgba(0, 0, 255, 0.1);
+}
+
+/* Monaco Editor Suggest Widget, styling */
+.monaco-editor .suggest-widget {
+    border-radius:5px;
+    font-size: 15px;
+}
+.monaco-list-row.focused {
+    background-color:#0078D7;
+    color: #fff;
+}
+.monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
+    color: #0078D7;
+}
+.monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
+    color: #fff;
+}
+.monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
+    color: #FFB900;
+}
+.monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .docs, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .docs {
+    color: #fff;
+}
+
+/* Monaco Editor Main tokens */
+.token.ts.identifier:hover, .token.ts.keyword:hover {
+    outline: 1px auto #bdc3c7;
+}
+.token.ts.keyword.if, .token.ts.keyword.else {
+    color: #5B80A5;
+}
+.token.ts.keyword.while:not(.true), .token.ts.keyword.for {
+    color: #5BA55B;
+}
+
+.monaco-editor .highlight-statement {
+    background-color: #FFB900;
+}
+
+
+/*******************************
+        Mobile Adjustments
+*******************************/
+
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .blocklyTreeLabel, .blocklyText {
+        font-size: 0.75rem !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
+        font-size: 0.75rem !important;
+    }
+}
+
+@media only screen and (max-width: 60em), only screen and (max-aspect-ratio: 12/10) {
+    .blocklyTreeLabel {
+        font-size:1rem;
+    }
+}
+
+@media only screen and (max-width: 55em), only screen and (max-aspect-ratio: 7/10) {
+    .blocklyTreeLabel {
+        font-size:1rem;
+    }
+}
+
+@media only screen and (max-width:55em) {
+    #maineditor {
+        top:@mobileMenuHeight !important;
+    }
+}
+
+
+/* extra-large desktop screen */
+@media only screen and (min-width: 92em) and (min-height:30em) {
+    .sideDocs #maineditor {
+        right:@sideBarWidth;
+    }
+    .rtl .sideDocs #maineditor {
+        left:@sideBarWidth;
+        right:@simulatorWidth;
+    }
+    .sideDocs #sidedocs {
+        display:block;
+        width:@sideBarWidth;
+    }
+}
+
+
+@media only screen and (max-width: 64em), only screen and (max-aspect-ratio: 14/10) {
+    #filelist {
+        bottom:3rem;
+        min-width:@simulatorWidthSmall;
+        max-width:@simulatorWidthSmall;
+    }
+    #maineditor {
+        left:@simulatorWidthSmall;
+    }
+    .rtl #maineditor {
+        right:@simulatorWidthSmall;
+        left:0;
+    }
+}
