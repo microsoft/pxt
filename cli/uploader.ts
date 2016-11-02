@@ -64,14 +64,6 @@ export function sha256buffer(b: Buffer): string {
 
 let uploadDir = "docs"
 
-export function uploadArtFileAsync(fn: string) {
-    uploadDir = ""
-    return uploadArtAsync(fn, true)
-        .then(id => {
-            console.log(id)
-        })
-}
-
 export function uploadArtAsync(fn: string, noRepl = false): Promise<string> {
     let contentType = U.getMime(fn)
     if (!contentType || contentType == "application/octet-stream")
