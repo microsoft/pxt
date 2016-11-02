@@ -2193,7 +2193,7 @@ $(document).ready(() => {
     });
 
     window.addEventListener("unload", ev => {
-        if (theEditor && !LoginBox.signingOut)
+        if (theEditor)
             theEditor.saveSettings()
     });
     window.addEventListener("message", ev => {
