@@ -1071,6 +1071,8 @@ function uploadCoreAsync(opts: UploadOptions) {
                                         console.log(`${fileName} patch:    ${h.path} -> ${blob}`)
                                         h.path = blob;
                                     }))
+                        ).then(() => trg.appTheme.appLogo && !/^https:/.test(trg.appTheme.appLogo) ? uploadArtFileAsync(trg.appTheme.appLogo).then(blob => { trg.appTheme.appLogo = blob; }) : Promise.resolve()
+                        ).then(() => trg.appTheme.cardLogo && !/^https:/.test(trg.appTheme.cardLogo) ? uploadArtFileAsync(trg.appTheme.cardLogo).then(blob => { trg.appTheme.cardLogo = blob; }) : Promise.resolve()
                         ).then(() => {
                             content = JSON.stringify(trg, null, 2);
                             if (isJs)
