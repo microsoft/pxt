@@ -17,7 +17,6 @@ import * as tdlegacy from "./tdlegacy"
 import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
-import {LoginBox} from "./login"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1366,6 +1365,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
     }
 
+    reset() {
+        pxt.tickEvent("reset");
+        core.confirmAsync({
+            header: lf("Reset"),
+            body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
+            agreeLbl: lf("Reset"),
+            agreeClass: "red",
+            agreeIcon: "sign out",
+            disagreeLbl: lf("Cancel")
+        }).then(r => {
+            if (!r) return;
+            workspace.resetAsync()
+                .catch((e: any) => { })
+                .done(() => {
+                    window.location.reload()
+                })
+        });
+    }
+
     compile() {
         pxt.tickEvent("compile");
 
@@ -1685,7 +1703,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {
                                 // we always need a way to clear local storage, regardless if signed in or not
                             }
-                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
+                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } />
                             <div className="ui divider"></div>
                             { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                             { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
@@ -2173,7 +2191,7 @@ $(document).ready(() => {
     });
 
     window.addEventListener("unload", ev => {
-        if (theEditor && !LoginBox.signingOut)
+        if (theEditor)
             theEditor.saveSettings()
     });
     window.addEventListener("message", ev => {
