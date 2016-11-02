@@ -21,8 +21,6 @@ namespace pxt.crowdin {
 
     export function downloadTranslationsAsync(prj: string, key: string, filename: string, options: DownloadOptions = {}): Promise<Map<Map<string>>> {
         const q: Map<string> = { json: "true" }
-        if (options.translatedOnly) q["export_translated_only"] = "1";
-        if (options.validatedOnly) q["export_approved_only"] = "1";
         const infoUri = apiUri(prj, key, "info", q);
 
         const r: Map<Map<string>> = {};
@@ -37,7 +35,9 @@ namespace pxt.crowdin {
                 if (!item) return Promise.resolve();
                 const exportFileUri = apiUri(prj, key, "export-file", {
                     file: filename,
-                    language: item.code
+                    language: item.code,
+                    export_translated_only: options.translatedOnly ? "1" : "0",
+                    export_approved_only: options.validatedOnly ? "1" : "0"
                 });
                 pxt.log(`downloading ${item.name} (${todo.length} more)`)
                 return Util.httpGetTextAsync(exportFileUri).then((transationsText) => {
@@ -69,9 +69,11 @@ namespace pxt.crowdin {
         name = normalizeFileName(name);
         pxt.debug(`create directory ${name}`)
         if (!incr) incr = mkIncr(name);
-        return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "", name: name })
+        return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "true", name: name })
             .then(resp => {
-                if (resp.statusCode == 200)
+                console.log(resp.statusCode)
+                // 400 returned by folder already exists
+                if (resp.statusCode == 200 || resp.statusCode == 400)
                     return Promise.resolve();
 
                 const data: any = resp.json || { error: {} }
@@ -92,7 +94,7 @@ namespace pxt.crowdin {
         return filename.replace(/\\/g, '/');
     }
 
-    export function uploadTranslationAsync(prj: string, key: string, filename: string, jsondata: pxt.Map<string>) {
+    export function uploadTranslationAsync(prj: string, key: string, filename: string, data: string) {
         Util.assert(!!prj);
         Util.assert(!!key);
 
@@ -106,8 +108,9 @@ namespace pxt.crowdin {
         function uploadAsync(op: string, opts: any): Promise<void> {
             opts["type"] = "auto";
             opts["json"] = "";
+            opts["escape_quotes"] = "0";
             incr();
-            return Util.multipartPostAsync(apiUri(prj, key, op), opts, filename, JSON.stringify(jsondata))
+            return Util.multipartPostAsync(apiUri(prj, key, op), opts, filename, data)
                 .then(resp => handleResponseAsync(resp))
         }
 
