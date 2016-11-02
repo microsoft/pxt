@@ -911,11 +911,8 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
 }
 
-function uploadArtFileAsync(fn: string) {
-    if (isNewBackend())
-        return Promise.resolve("@pxtCdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn)
-    else
-        return uploader.uploadArtAsync(fn, true)
+function uploadArtFile(fn: string): string {
+    return "@pxtCdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
 }
 
 function gitHash(buf: Buffer) {
@@ -1064,20 +1061,16 @@ function uploadCoreAsync(opts: UploadOptions) {
                         data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     } else {
                         // expand usb help pages
-                        return Promise.all(
-                            (trg.appTheme.usbHelp || []).filter(h => !!h.path)
-                                .map(h => uploadArtFileAsync(h.path)
-                                    .then(blob => {
-                                        console.log(`${fileName} patch:    ${h.path} -> ${blob}`)
-                                        h.path = blob;
-                                    }))
-                        ).then(() => trg.appTheme.appLogo && !/^https:/.test(trg.appTheme.appLogo) ? uploadArtFileAsync(trg.appTheme.appLogo).then(blob => { trg.appTheme.appLogo = blob; }) : Promise.resolve()
-                        ).then(() => trg.appTheme.cardLogo && !/^https:/.test(trg.appTheme.cardLogo) ? uploadArtFileAsync(trg.appTheme.cardLogo).then(blob => { trg.appTheme.cardLogo = blob; }) : Promise.resolve()
-                        ).then(() => {
-                            content = JSON.stringify(trg, null, 2);
-                            if (isJs)
-                                content = targetJsPrefix + content
-                        })
+                        (trg.appTheme.usbHelp || [])
+                            .filter(h => !!h.path)
+                            .forEach(h => h.path = uploadArtFile(h.path));
+                        if (trg.appTheme.appLogo && !/^https:/.test(trg.appTheme.appLogo))
+                            trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
+                        if (trg.appTheme.cardLogo && !/^https:/.test(trg.appTheme.cardLogo))
+                            trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
+                        content = JSON.stringify(trg, null, 2);
+                        if (isJs)
+                            content = targetJsPrefix + content
                     }
                 }
             } else {
@@ -4006,7 +3999,6 @@ cmd("serve [-yt] [-browser NAME]  - start web server for your local target; -yt 
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("bump                         - bump target or package version", bumpAsync)
-cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
