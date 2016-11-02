@@ -82,7 +82,7 @@ function patchPioHexInfo(extInfo: pxtc.ExtensionInfo) {
     }
 }
 
-export function platformioDeployAsync(r: pxtc.CompileResult) {
+function platformioDeployAsync(r: pxtc.CompileResult) {
     // TODO maybe platformio has some option to do this?
     let buildEngine = buildEngines['platformio']
     let prevHex = fs.readFileSync(pioFirmwareHex())
