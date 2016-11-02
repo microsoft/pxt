@@ -158,8 +158,9 @@ declare namespace Blockly {
         getText(): string;
         setBubbleSize(width: number, height: number): void;
         setText(text: string): void;
-        setVisible(visible: boolean): void;
+    }
 
+    class Warning extends Icon {
     }
 
     class Icon {
@@ -172,6 +173,7 @@ declare namespace Blockly {
         dispose(): void;
         getIconLocation(): goog.math.Coordinate;
         isVisible(): boolean;
+        setVisible(visible: boolean): void;
         renderIcon(cursorX: number): number;
         setIconLocation(xy: goog.math.Coordinate): void;
         updateColour(): void;

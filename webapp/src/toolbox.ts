@@ -1,5 +1,5 @@
 export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
-        <category name="Loops" colour="120" category="50">
+        <category name="Loops" nameid="loops" colour="120" category="50">
             <block type="controls_repeat_ext">
                 <value name="TIMES">
                     <shadow type="math_number">
@@ -20,7 +20,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </value>
             </block>
         </category>
-        <category name="Logic" colour="210" category="49">
+        <category name="Logic" nameid="logic" colour="210" category="49">
             <block type="controls_if" gap="8">
                 <value name="IF0">
                     <shadow type="logic_boolean">
@@ -84,9 +84,9 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 <field name="BOOL">FALSE</field>
             </block>
         </category>
-        <category name="Variables" colour="330" custom="VARIABLE" category="48">
+        <category name="Variables" nameid="variables" colour="330" custom="VARIABLE" category="48">
         </category>
-        <category name="Math" colour="230" category="47">
+        <category name="Math" nameid="math" colour="230" category="47">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">
@@ -148,7 +148,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
-            <category colour="230" name="More\u2026">
+            <category colour="230" name="More\u2026" nameid="more\u2026">
                 <block type="math_modulo">
                     <value name="DIVIDEND">
                         <shadow type="math_number">
@@ -195,7 +195,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </block>
             </category>
         </category>
-        <category colour="160" name="Text" category="46">
+        <category colour="160" name="Text" nameid="text" category="46">
             <block type="text"></block>
             <block type="text_length">
                 <value name="VALUE">
@@ -205,7 +205,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </value>
             </block>
         </category>
-        <category colour="260" name="Lists" category="45">
+        <category colour="260" name="Lists" nameid="lists" category="45">
             <block type="lists_create_with">
                 <mutation items="1"></mutation>
                 <value name="ADD0">

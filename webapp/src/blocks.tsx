@@ -19,7 +19,7 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
-    currentComment: B.Comment;
+    currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
 
@@ -115,7 +115,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private reportDeprecatedBlocks() {
-        const deprecatedMap: {[index: string]: number } = {};
+        const deprecatedMap: { [index: string]: number } = {};
         let deprecatedBlocksFound = false;
 
         this.blockInfo.blocks.forEach(symbolInfo => {
@@ -142,11 +142,11 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    updateHelpCard() {
+    updateHelpCard(clear?: boolean) {
         let selected = Blockly.selected;
         let selectedType = selected ? selected.type : null;
-        if (selectedType != this.currentHelpCardType) {
-            if (selected && selected.inputList && selected.codeCard) {
+        if (selectedType != this.currentHelpCardType || clear) {
+            if (selected && selected.inputList && selected.codeCard && !clear) {
                 this.currentHelpCardType = selectedType;
                 //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
                 let props: any = {};
@@ -263,8 +263,10 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
+                    this.updateHelpCard(ev.newValue != null);
                 }
-                else if (ev.element == 'commentOpen') {
+                else if (ev.element == 'commentOpen' 
+                || ev.element == 'warningOpen') {
                     /*
                      * We override the default selection behavior so that when a block is selected, its
                      * comment is expanded. However, if a user selects a block by clicking on its comment
@@ -277,8 +279,8 @@ export class Editor extends srceditor.Editor {
                         if (ev.newValue) {
                             this.selectedEventGroup = ev.group
                         }
-                        else if (ev.group == this.selectedEventGroup && this.currentComment) {
-                            this.currentComment.setVisible(true)
+                        else if (ev.group == this.selectedEventGroup && this.currentCommentOrWarning) {
+                            this.currentCommentOrWarning.setVisible(true)
                             this.selectedEventGroup = undefined
                         }
                     }
@@ -286,14 +288,17 @@ export class Editor extends srceditor.Editor {
                 else if (ev.element == 'selected') {
                     this.updateHelpCard();
 
-                    if (this.currentComment) {
-                        this.currentComment.setVisible(false)
+                    if (this.currentCommentOrWarning) {
+                        this.currentCommentOrWarning.setVisible(false)
                     }
 
                     const selected = Blockly.selected
-                    if (selected && selected.comment && typeof (selected.comment) !== "string") {
-                        (selected.comment as Blockly.Comment).setVisible(true)
-                        this.currentComment = selected.comment
+                    if (selected && selected.warning && typeof (selected.warning) !== "string") {
+                        (selected.warning as Blockly.Icon).setVisible(true)
+                        this.currentCommentOrWarning = selected.warning
+                    } else if (selected && selected.comment && typeof (selected.comment) !== "string") {
+                        (selected.comment as Blockly.Icon).setVisible(true)
+                        this.currentCommentOrWarning = selected.comment
                     }
                 }
             }
@@ -373,8 +378,8 @@ export class Editor extends srceditor.Editor {
     menu() {
         return (
             <sui.Item text={lf("JavaScript") } class="javascript-menuitem" textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
-                tooltip={lf("Convert code to JavaScript")} tooltipPosition="bottom left"
-            />
+                tooltip={lf("Convert code to JavaScript") } tooltipPosition="bottom left"
+                />
         )
     }
 

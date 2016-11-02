@@ -183,6 +183,8 @@ namespace pxt.docs {
         }
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["breadcrumb"] = breadcrumbHtml;
+        params["boardname"] = html2Quote(theme.boardName);
+        params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetname"] = theme.name || "PXT"
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         if (d.filepath && theme.githubUrl) {
@@ -280,6 +282,9 @@ namespace pxt.docs {
             return f
         })
 
+        // replace pre-tempate in markdow
+        src = src.replace(/@([a-z]+)@/ig, (m,param) => params[param] || 'unknown macro')
+
         let html = marked(src)
 
         // support for breaks which somehow don't work out of the box
@@ -339,6 +344,7 @@ namespace pxt.docs {
             if (descM)
                 params["description"] = html2Quote(descM[1])
         }
+        params["twitter"] = html2Quote(theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first

@@ -66,7 +66,8 @@ namespace pxt.vs {
             mouseWheelZoom: true,
             tabCompletion: true,
             wordBasedSuggestions: true,
-            lineNumbersMinChars: 3
+            lineNumbersMinChars: 3,
+            theme: pxt.appTarget.appTheme.invertedMonaco ? 'vs-dark' : 'vs'
         });
 
         window.addEventListener('resize', function () {

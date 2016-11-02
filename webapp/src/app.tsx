@@ -17,7 +17,6 @@ import * as tdlegacy from "./tdlegacy"
 import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
-import {LoginBox} from "./login"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -57,6 +56,7 @@ interface IAppState {
     showFiles?: boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
+    sideDocsLoadUrl?: string; // set once to load the side docs frame
     sideDocsCollapsed?: boolean;
 
     running?: boolean;
@@ -568,7 +568,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        const sideDocs = !pxt.options.light;
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" title={lf("Help") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
@@ -588,17 +588,20 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el)
-            el.src = `${docsUrl}#doc:${path}`;
-        this.props.parent.setState({ sideDocsCollapsed: false });
+        const url = `${docsUrl}#doc:${path}`;
+        this.setUrl(url);
     }
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const url = `${docsUrl}#md:${encodeURIComponent(md)}`;
+        this.setUrl(url);
+    }
+
+    private setUrl(url: string) {
         let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el)
-            el.src = `${docsUrl}#md:${encodeURIComponent(md)}`;
+        if (el) el.src = url;
+        else this.props.parent.setState({ sideDocsLoadUrl: url });
         this.props.parent.setState({ sideDocsCollapsed: false });
     }
 
@@ -614,9 +617,11 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const state = this.props.parent.state;
-        const icon = state.sideDocsCollapsed ? "expand" : "compress";
+        const docsUrl = state.sideDocsLoadUrl;
+        if (!docsUrl) return null;
+
+        const icon = !docsUrl || state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
             <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
@@ -1100,7 +1105,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
-                else this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
             })
     }
 
@@ -1359,6 +1363,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         } else {
             return promise;
         }
+    }
+
+    reset() {
+        pxt.tickEvent("reset");
+        core.confirmAsync({
+            header: lf("Reset"),
+            body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
+            agreeLbl: lf("Reset"),
+            agreeClass: "red",
+            agreeIcon: "sign out",
+            disagreeLbl: lf("Cancel")
+        }).then(r => {
+            if (!r) return;
+            workspace.resetAsync()
+                .catch((e: any) => { })
+                .done(() => {
+                    window.location.reload()
+                })
+        });
     }
 
     compile() {
@@ -1629,9 +1652,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -1678,13 +1703,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {
                                 // we always need a way to clear local storage, regardless if signed in or not
                             }
-                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
+                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } />
                             <div className="ui divider"></div>
                             { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                             { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                         </sui.DropdownMenuItem>}
-                        {sandbox ? undefined : <DocsMenuItem parent={this} />}
+                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item link logo"><a className="ui image" target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a></span>
@@ -1712,7 +1737,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                {sandbox || pxt.options.light ? undefined : <SideDocs ref="sidedoc" parent={this} />}
+                {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
@@ -1862,11 +1887,13 @@ function enableAppInsights() {
     let ai = (window as any).appInsights;
     if (!ai) return;
 
-    ai.trackPageView();
     let rexp = pxt.reportException;
     pxt.reportException = function (err: any, data: any): void {
         if (rexp) rexp(err, data);
-        let props: pxt.Map<string> = {};
+        let props: pxt.Map<string> = {
+            target: pxt.appTarget.id,
+            version: pxt.appTarget.versions.target
+        }
         if (data)
             for (let k in data)
                 props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
@@ -1879,7 +1906,10 @@ function enableAppInsights() {
             throw msg
         }
         catch (err) {
-            let props: pxt.Map<string> = {};
+            let props: pxt.Map<string> = {
+                target: pxt.appTarget.id,
+                version: pxt.appTarget.versions.target
+            }
             if (data)
                 for (let k in data)
                     props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
@@ -2000,9 +2030,17 @@ function initTheme() {
         document.body.style.direction = "rtl";
     }
 
-    for (let u of pxt.appTarget.appTheme.usbHelp || []) {
-        u.path = u.path.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
+    function patchCdn(url: string): string {
+        if (!url) return url;
+        return url.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
+            .replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
+
+    theme.appLogo = patchCdn(theme.appLogo)
+    theme.cardLogo = patchCdn(theme.cardLogo)
+    for (const u of theme.usbHelp || [])
+        u.path = patchCdn(u.path)
+
 }
 
 function parseHash(): { cmd: string; arg: string } {
@@ -2036,10 +2074,6 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
-            break;
-        case "uploader": // editor launched by the uploader
-            pxt.tickEvent("hash.uploader")
-            pxt.storage.setLocal("uploader", "1");
             break;
         case "sandbox":
         case "pub":
@@ -2165,7 +2199,7 @@ $(document).ready(() => {
     });
 
     window.addEventListener("unload", ev => {
-        if (theEditor && !LoginBox.signingOut)
+        if (theEditor)
             theEditor.saveSettings()
     });
     window.addEventListener("message", ev => {

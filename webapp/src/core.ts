@@ -316,7 +316,7 @@ export function shareLinkAsync(options: ShareOptions) {
     </div>
     <div class="actions">
       <div class="ui approve right labeled icon button ${options.okClass || "teal"}">
-        ${Util.htmlEscape(options.okLabel || lf("OK"))}
+        ${Util.htmlEscape(options.okLabel || lf("Ok"))}
         <i class="${options.okIcon || "checkmark"} icon"></i>
       </div>
     </div>

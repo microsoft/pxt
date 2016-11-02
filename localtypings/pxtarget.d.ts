@@ -98,6 +98,7 @@ declare namespace pxt {
         name?: string;
         title?: string;
         description?: string;
+        twitter?: string;
         defaultLocale?: string;
         logoUrl?: string;
         logo?: string;
@@ -110,7 +111,7 @@ declare namespace pxt {
         homeUrl?: string;
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
-        sideDoc?: string;
+        hideSideDocs?: boolean;
         boardName?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
@@ -127,7 +128,8 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
-        invertedToolbox?: boolean;    
+        invertedToolbox?: boolean;
+        invertedMonaco?: boolean;
         blocklyOptions?: Blockly.Options;
         simAnimationEnter?: string;
         simAnimationExit?: string;

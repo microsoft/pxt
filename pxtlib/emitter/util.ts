@@ -538,7 +538,7 @@ namespace ts.pxtc.Util {
 
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
-    let _localizeLive = false;
+    export var localizeLive = false;
 
     /**
      * Returns current user language iSO-code. Default is `en`.
@@ -555,6 +555,10 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
+    export function downloadLiveTranslationsAsync(lang: string, filename: string) {
+            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+    }
+
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|zh)/i.test(code))
@@ -562,11 +566,11 @@ namespace ts.pxtc.Util {
 
         if (live) {
             console.log(`loading live translations for ${code}`)
-            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${code}&filename=strings.json`)
+            return downloadLiveTranslationsAsync(code, "strings.json")
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
-                    _localizeLive = true;
+                    localizeLive = true;
                 }, e => {
                     console.error('failed to load localizations')
                 })
@@ -651,8 +655,18 @@ namespace ts.pxtc.Util {
 
     export function fmt(f: string, ...args: any[]) { return fmt_va(f, args); }
 
+    const locStats: { [index: string]: number; } = {};
+    export function dumpLocStats() {
+        const r: { [index: string]: string; } = {};
+        Object.keys(locStats).sort((a, b) => locStats[b] - locStats[a])
+            .forEach(k => r[k] = k);
+        console.log('prioritized list of strings:')
+        console.log(JSON.stringify(r, null, 2));
+    }
+
     let sForPlural = true;
     export function lf_va(format: string, args: any[]): string {
+        locStats[format] = (locStats[format] || 0) + 1;
         let lfmt = Util._localize(format)
 
         if (!sForPlural && lfmt != format && /\d:s\}/.test(lfmt)) {

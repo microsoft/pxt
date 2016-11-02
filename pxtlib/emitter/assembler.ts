@@ -92,6 +92,7 @@ namespace ts.pxtc.assembler {
                         if (v == null) {
                             return emitErr("expecting number", actual)
                         } else {
+                            // explicit manipulation of stack pointer (SP)
                             if (this.ei.isAddSP(this.opcode))
                                 stack = -(v / this.ei.wordSize());
                             else if (this.ei.isSubSP(this.opcode))
