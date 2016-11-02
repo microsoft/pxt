@@ -1,4 +1,5 @@
 /// <reference path="../typings/node/node.d.ts"/>
+/// <reference path="buildengine.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -9,6 +10,7 @@ import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
 import * as os from 'os';
 import * as util from 'util';
+import * as build from './buildengine';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -112,6 +114,12 @@ let writeFileAsync: any = Promise.promisify(fs.writeFile)
 let deployCoreAsync: (r: pxtc.CompileResult) => Promise<number> = undefined;
 
 function initTargetCommands() {
+    // hack for now
+    deployCoreAsync = 
+        (r: pxtc.CompileResult) =>
+            build.buildEngines["platformio"].deployAsync(r)
+                .then(() => Promise.resolve(1))
+    /*
     let cmdsjs = path.resolve('built/cmds.js');
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
@@ -121,6 +129,7 @@ function initTargetCommands() {
             deployCoreAsync = cli.deployCoreAsync
         }
     }
+    */
 }
 
 function existsAsync(fn: string) {
