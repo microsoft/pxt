@@ -6,8 +6,6 @@
 (global as any).pxt = pxt;
 
 import * as nodeutil from './nodeutil';
-nodeutil.init();
-
 import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';

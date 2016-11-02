@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Microsoft/pxt#readme",
   "files": [
     "README.md",
+    "built/buildengine.js",
     "built/pxt.js",
     "built/pxt-common.json",
     "built/blockly.d.ts",

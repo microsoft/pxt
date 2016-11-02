@@ -5,8 +5,6 @@
 (global as any).pxt = pxt;
 
 import * as nodeutil from './nodeutil';
-nodeutil.init();
-
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
