@@ -2020,8 +2020,6 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
-    theme.portraitLogo = patchCdn(theme.portraitLogo)
-    theme.logo = patchCdn(theme.logo)
     for (const u of theme.usbHelp || [])
         u.path = patchCdn(u.path)
 

@@ -344,7 +344,7 @@ namespace pxt.docs {
             if (descM)
                 params["description"] = html2Quote(descM[1])
         }
-        params["twitter"] = html2Quote(theme.twitter || "pxtio");
+        params["twitter"] = html2Quote(theme.twitter || "mspxtio");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first
