@@ -260,6 +260,13 @@ namespace pxt.BrowserUtils {
                 document.body.appendChild(iframe);
             }
             iframe.src = uri;
+        } else if(pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) {
+            
+            let byteString = atob(uri.split(',')[1]);
+            let ia = Util.stringToUint8Array(byteString);
+            let blob = new Blob([ia], { type: "img/png" });
+            window.navigator.msSaveOrOpenBlob(blob , name); //Fix for edge      
+
         } else {
             let link = <any>window.document.createElement('a');
             if (typeof link.download == "string") {
