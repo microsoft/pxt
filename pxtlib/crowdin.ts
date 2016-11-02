@@ -69,9 +69,11 @@ namespace pxt.crowdin {
         name = normalizeFileName(name);
         pxt.debug(`create directory ${name}`)
         if (!incr) incr = mkIncr(name);
-        return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "", name: name })
+        return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "true", name: name })
             .then(resp => {
-                if (resp.statusCode == 200)
+                console.log(resp.statusCode)
+                // 400 returned by folder already exists
+                if (resp.statusCode == 200 || resp.statusCode == 400)
                     return Promise.resolve();
 
                 const data: any = resp.json || { error: {} }
@@ -92,7 +94,7 @@ namespace pxt.crowdin {
         return filename.replace(/\\/g, '/');
     }
 
-    export function uploadTranslationAsync(prj: string, key: string, filename: string, jsondata: pxt.Map<string>) {
+    export function uploadTranslationAsync(prj: string, key: string, filename: string, data: string) {
         Util.assert(!!prj);
         Util.assert(!!key);
 
@@ -106,8 +108,9 @@ namespace pxt.crowdin {
         function uploadAsync(op: string, opts: any): Promise<void> {
             opts["type"] = "auto";
             opts["json"] = "";
+            opts["escape_quotes"] = "0";
             incr();
-            return Util.multipartPostAsync(apiUri(prj, key, op), opts, filename, JSON.stringify(jsondata))
+            return Util.multipartPostAsync(apiUri(prj, key, op), opts, filename, data)
                 .then(resp => handleResponseAsync(resp))
         }
 

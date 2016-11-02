@@ -368,7 +368,7 @@ function ptrcheckAsync(cmd: string) {
             })
 
 
-    let files = U.toDictionary(allFiles("docs", 8)
+    let files = U.toDictionary(nodeutil.allFiles("docs", 8)
         .filter(e => /\.(md|html)$/.test(e))
         .map(e => {
             let s = e.slice(5).replace(/\.(md|html)$/, "")
@@ -505,32 +505,15 @@ export function ptrAsync(path: string, target?: string) {
         })
 }
 
-function allFiles(top: string, maxDepth = 8, allowMissing = false): string[] {
-    let res: string[] = []
-    if (allowMissing && !fs.existsSync(top)) return res
-    for (let p of fs.readdirSync(top)) {
-        if (p[0] == ".") continue;
-        let inner = top + "/" + p
-        let st = fs.statSync(inner)
-        if (st.isDirectory()) {
-            if (maxDepth > 1)
-                U.pushRange(res, allFiles(inner, maxDepth - 1))
-        } else {
-            res.push(inner)
-        }
-    }
-    return res
-}
-
 function onlyExts(files: string[], exts: string[]) {
     return files.filter(f => exts.indexOf(path.extname(f)) >= 0)
 }
 
 function pxtFileList(pref: string) {
-    return allFiles(pref + "webapp/public")
-        .concat(onlyExts(allFiles(pref + "built/web", 1), [".js", ".css"]))
-        .concat(allFiles(pref + "built/web/fonts", 1))
-        .concat(allFiles(pref + "built/web/vs", 4))
+    return nodeutil.allFiles(pref + "webapp/public")
+        .concat(onlyExts(nodeutil.allFiles(pref + "built/web", 1), [".js", ".css"]))
+        .concat(nodeutil.allFiles(pref + "built/web/fonts", 1))
+        .concat(nodeutil.allFiles(pref + "built/web/vs", 4))
 
 }
 
@@ -711,9 +694,9 @@ function targetFileList() {
     let forkFiles = (name: string) => {
         if (fp)
             // make sure for the local files to follow fork files - this is the overriding order
-            return allFiles(fp + name).concat(allFiles(name, 8, true))
+            return nodeutil.allFiles(fp + name).concat(nodeutil.allFiles(name, 8, true))
         else
-            return allFiles(name)
+            return nodeutil.allFiles(name)
     }
     let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(forkFiles("sim/public"))
@@ -1276,7 +1259,7 @@ function ghpSetupRepoAsync() {
         return Promise.resolve(getreponame())
     }
 
-    cpR(".git", "built/gh-pages/.git")
+    nodeutil.cpR(".git", "built/gh-pages/.git")
     return ghpGitAsync("checkout", "gh-pages")
         .then(() => getreponame(), (e: any) => {
             U.userError("No gh-pages branch. Try 'pxt ghpinit' first.")
@@ -1296,7 +1279,7 @@ export function ghpPushAsync() {
     return ghpSetupRepoAsync()
         .then(name => staticpkgAsync((repoName = name)))
         .then(() => {
-            cpR(builtPackaged + "/" + repoName, "built/gh-pages")
+            nodeutil.cpR(builtPackaged + "/" + repoName, "built/gh-pages")
         })
         .then(() => ghpGitAsync("add", "."))
         .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
@@ -1306,7 +1289,7 @@ export function ghpPushAsync() {
 export function ghpInitAsync() {
     if (fs.existsSync("built/gh-pages"))
         U.userError("built/gh-pages already exists")
-    cpR(".git", "built/gh-pages/.git")
+    nodeutil.cpR(".git", "built/gh-pages/.git")
     return ghpGitAsync("checkout", "gh-pages")
         .then(() => U.userError("gh-pages branch already exists"), (e: any) => { })
         .then(() => ghpGitAsync("checkout", "--orphan", "gh-pages"))
@@ -1503,7 +1486,7 @@ function buildSemanticUIAsync() {
     let dirty = !fs.existsSync("built/web/semantic.css");
     if (!dirty) {
         const csstime = fs.statSync("built/web/semantic.css").mtime;
-        dirty = allFiles("theme")
+        dirty = nodeutil.allFiles("theme")
             .map(f => fs.statSync(f))
             .some(stat => stat.mtime > csstime);
     }
@@ -1682,31 +1665,14 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
-function cpR(src: string, dst: string, maxDepth = 8) {
-    src = path.resolve(src)
-    let files = allFiles(src, maxDepth)
-    let dirs: Map<boolean> = {}
-    for (let f of files) {
-        let bn = f.slice(src.length)
-        let dd = path.join(dst, bn)
-        let dir = path.dirname(dd)
-        if (!U.lookup(dirs, dir)) {
-            nodeutil.mkdirP(dir)
-            dirs[dir] = true
-        }
-        let buf = fs.readFileSync(f)
-        fs.writeFileSync(dd, buf)
-    }
-}
-
 let builtPackaged = "built/packaged"
 
 function renderDocs(localDir: string) {
     let dst = path.resolve(builtPackaged + localDir)
 
-    cpR("node_modules/pxt-core/docfiles", dst + "/docfiles")
+    nodeutil.cpR("node_modules/pxt-core/docfiles", dst + "/docfiles")
     if (fs.existsSync("docfiles"))
-        cpR("docfiles", dst + "/docfiles")
+        nodeutil.cpR("docfiles", dst + "/docfiles")
 
     let webpath = localDir
     let docsTemplate = server.expandDocFileTemplate("docs.html")
@@ -1716,7 +1682,7 @@ function renderDocs(localDir: string) {
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
     let dirs: Map<boolean> = {}
-    for (let f of allFiles("docs", 8)) {
+    for (const f of nodeutil.allFiles("docs", 8)) {
         let dd = path.join(dst, f)
         let dir = path.dirname(dd)
         if (!U.lookup(dirs, dir)) {
@@ -2648,7 +2614,7 @@ function buildDalConst(buildEngine: BuildEngine, force = false) {
         console.log(`rebuilding ${constName}...`)
         // TODO: DAL-specific code
         let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
-        let files = allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
+        let files = nodeutil.allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: Map<string> = {}
         for (let fn of files) {
@@ -3587,18 +3553,58 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
         });
 }
 
-export function uploadTargetTranslationsAsync() {
+
+function crowdinCredentials(): { prj: string; key: string; } {
     const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
     if (!prj) {
         pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
-        return Promise.resolve();
+        return null;
     }
     const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
         pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        return null;
+    }
+    return { prj, key };
+}
+
+export function uploadTargetTranslationsAsync(...args: string[]) {
+    const cred = crowdinCredentials();
+    if (!cred) return Promise.resolve();
+    const uploadDocs = /^--?docs$/i.test(args[0]);
+    const crowdinDir = pxt.appTarget.id;
+    return uploadBundledTranslationsAsync(crowdinDir, cred.prj, cred.key)
+        .then(() => uploadDocs ? uploadDocsTranslationsAsync(crowdinDir, cred.prj, cred.key) : Promise.resolve());
+
+}
+
+function uploadDocsTranslationsAsync(crowdinDir: string, prj: string, key: string): Promise<void> {
+    const todo = nodeutil.allFiles("docs").filter(f => /\.md$/.test(f) && !/_locales/.test(f));
+    const knownFolders: Map<boolean> = {};
+    const ensureFolderAsync = (crowdd: string) => {
+        if (!knownFolders[crowdd]) {
+            knownFolders[crowdd] = true;
+            pxt.log(`creating folder ${crowdd}`);
+            return pxt.crowdin.createDirectoryAsync(prj, key, crowdd);
+        }
         return Promise.resolve();
     }
-    const crowdinDir = pxt.appTarget.id;
+    const nextFileAsync = (): Promise<void> => {
+        const f = todo.pop();
+        if (!f) return Promise.resolve();
+        const data = fs.readFileSync(f, 'utf8');
+        const crowdf = path.join(crowdinDir, f);
+        const crowdd = path.dirname(crowdf);
+        pxt.log(`uploading ${f} to ${crowdf}`);
+        return ensureFolderAsync(crowdd)
+            .then(() => pxt.crowdin.uploadTranslationAsync(prj, key, crowdf, data))
+            .then(nextFileAsync);
+    }
+    return ensureFolderAsync(path.join(crowdinDir, "docs"))
+        .then(nextFileAsync);
+}
+
+function uploadBundledTranslationsAsync(crowdinDir: string, prj: string, key: string): Promise<void> {
     const todo: string[] = [];
     pxt.appTarget.bundleddirs.forEach(dir => {
         const locdir = path.join(dir, "_locales");
@@ -3607,13 +3613,15 @@ export function uploadTargetTranslationsAsync() {
                 .filter(f => /strings\.json$/i.test(f))
                 .forEach(f => todo.push(path.join(locdir, f)))
     });
+
+    pxt.log(`uploading ${todo.length} files to crowdin`);
     const nextFileAsync = (): Promise<void> => {
         const f = todo.pop();
         if (!f) return Promise.resolve();
         const data = JSON.parse(fs.readFileSync(f, 'utf8'));
         const crowdf = path.join(crowdinDir, path.basename(f));
         pxt.log(`uploading ${f} to ${crowdf}`);
-        return pxt.crowdin.uploadTranslationAsync(prj, key, crowdf, data)
+        return pxt.crowdin.uploadTranslationAsync(prj, key, crowdf, JSON.stringify(data))
             .then(nextFileAsync);
     }
     return nextFileAsync();
@@ -3999,7 +4007,7 @@ cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadart FILE               - upload one art resource", uploader.uploadArtFileAsync, 1)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
-cmd("uploadtrgtranslations        - upload translations from bundled projects", uploadTargetTranslationsAsync, 1)
+cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
