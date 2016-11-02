@@ -98,6 +98,7 @@ declare namespace pxt {
         name?: string;
         title?: string;
         description?: string;
+        twitter?: string;
         defaultLocale?: string;
         logoUrl?: string;
         logo?: string;

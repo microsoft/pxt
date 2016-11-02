@@ -2012,9 +2012,19 @@ function initTheme() {
         document.body.style.direction = "rtl";
     }
 
-    for (let u of pxt.appTarget.appTheme.usbHelp || []) {
-        u.path = u.path.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
+    function patchCdn(url: string): string {
+        if (!url) return url;
+        return url.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
+            .replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
+
+    theme.appLogo = patchCdn(theme.appLogo)
+    theme.cardLogo = patchCdn(theme.cardLogo)
+    theme.portraitLogo = patchCdn(theme.portraitLogo)
+    theme.logo = patchCdn(theme.logo)
+    for (const u of theme.usbHelp || [])
+        u.path = patchCdn(u.path)
+
 }
 
 function parseHash(): { cmd: string; arg: string } {
