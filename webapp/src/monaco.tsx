@@ -364,8 +364,18 @@ export class Editor extends srceditor.Editor {
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (this.currFile.isReadonly()) return;
 
+            // Remove any Highlighted lines
             if (this.highlightDecorations)
                 this.editor.deltaDecorations(this.highlightDecorations, []);
+
+            // Remove any current error shown, as a change has been made.
+            let viewZones = this.editorViewZones || [];
+            (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                viewZones.forEach((id: any) => {
+                    changeAccessor.removeZone(id);
+                });
+            });
+            this.editorViewZones = [];
 
             if (this.lastSet != null) {
                 this.lastSet = null
