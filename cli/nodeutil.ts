@@ -117,7 +117,7 @@ function sha256(hashData: string): string {
 }
 
 
-export function init() {
+function init() {
     // no, please, I want to handle my errors myself
     let async = (<any>Promise)._async
     async.fatalError = (e: any) => async.throwLater(e);
@@ -220,3 +220,5 @@ export function deleteFolderRecursive(thePath: string) {
     });
     fs.rmdirSync(thePath);
 }
+
+init();
