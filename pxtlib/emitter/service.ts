@@ -301,7 +301,7 @@ namespace ts.pxtc {
         for (let ns of namespaces) {
             let nsHelpPages: pxt.Map<string> = {};
             let syms = infos
-                .filter(si => si.namespace == ns.name && !!si.attributes.help)
+                .filter(si => si.namespace == ns.name && !!si.attributes.jsDoc)
                 .sort(compareSymbol)
             if (!syms.length) continue;
 
