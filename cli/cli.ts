@@ -1654,6 +1654,9 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
+        .then(() => buildTargetDocsAsync(false, true).then(r => { }, e => {
+            buildFailed("target build failed: " + e.message, e)
+        }))
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
@@ -3182,7 +3185,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
     return mainPkg.loadAsync()
         .then(() => {
             if (!quick) {
-                build.buildDalConst(build.thisBuild,mainPkg);
+                build.buildDalConst(build.thisBuild, mainPkg);
                 copyCommonFiles();
             }
             // TODO pass down 'quick' to disable the C++ extension work
@@ -3398,12 +3401,21 @@ export function buildAsync(arg?: string) {
 }
 
 export function gendocsAsync(...args: string[]) {
-    return buildCoreAsync({
+    const locs = args.length == 0 || args.indexOf("--locs") > -1;
+    const docs = args.indexOf("--docs") > -1;
+    return buildTargetDocsAsync(docs, locs);
+}
+
+export function buildTargetDocsAsync(docs: boolean, locs: boolean): Promise<void> {
+    const build = () => buildCoreAsync({
         mode: BuildOption.GenDocs,
-        docs: args.length == 0 || args.indexOf("--docs") > -1,
-        locs: args.length == 0 || args.indexOf("--locs") > -1
-    })
-        .then((compileOpts) => { });
+        docs,
+        locs
+    }).then((compileOpts) => { });
+    // from target location?
+    if (fs.existsSync("pxtarget.json"))
+        return forEachBundledPkgAsync(pkg => build());
+    else return build();
 }
 
 export function deployAsync() {
