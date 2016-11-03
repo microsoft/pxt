@@ -1203,15 +1203,21 @@ function readLocalPxTarget() {
     return cfg
 }
 
-function forEachBundledPkgAndTemplateAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>) {
+function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeTemplates: boolean = false) {
     let prev = process.cwd()
-    let folders = pxt.appTarget.bundleddirs.concat(getTemplates());
+    let folders = pxt.appTarget.bundleddirs;
+
+    if (includeTemplates) {
+        folders = folders.concat(getTemplates());
+    }
+
     return Promise.mapSeries(folders, (dirname) => {
         process.chdir(path.join(nodeutil.targetDir, dirname))
         mainPkg = new pxt.MainPackage(new Host())
         return f(mainPkg, dirname);
     })
-        .finally(() => process.chdir(prev));
+        .finally(() => process.chdir(prev))
+        .then(() => { });
 }
 
 export interface SpawnOptions {
@@ -1591,7 +1597,7 @@ function buildTargetCoreAsync() {
     nodeutil.mkdirP(hexCachePath);
 
     console.log(`building target.json in ${process.cwd()}...`)
-    return forEachBundledPkgAndTemplateAsync((pkg, dirname) => {
+    return forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building in ${dirname}`);
         let isTemplate = dirname.indexOf(path.join("libs", "templates")) === 0;
 
@@ -1627,7 +1633,7 @@ function buildTargetCoreAsync() {
                     }
                 }
             })
-    })
+    }, /*includeTemplates*/ true)
         .finally(() => {
             forceCloudBuild = previousForceCloudBuild;
         })
@@ -3475,7 +3481,10 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean): Promise<void
     }).then((compileOpts) => { });
     // from target location?
     if (fs.existsSync("pxtarget.json"))
-        return forEachBundledPkgAsync(pkg => build());
+        return forEachBundledPkgAsync((pkg, dirname) => {
+            pxt.log(`building in ${dirname}`);
+            return build();
+        });
     else return build();
 }
 
