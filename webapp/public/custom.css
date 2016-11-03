@@ -447,7 +447,7 @@ html {
         right:0;
     }
     #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
-        bottom:2rem;
+        bottom:2.3rem;
     }
     .ui.landscape.only {
         display:none !important;
