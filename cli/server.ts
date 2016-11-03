@@ -345,7 +345,8 @@ export function expandHtml(html: string) {
     html = expandDocTemplateCore(html)
     let params: pxt.Map<string> = {
         name: pxt.appTarget.appTheme.title,
-        description: pxt.appTarget.appTheme.description
+        description: pxt.appTarget.appTheme.description,
+        locale: pxt.appTarget.appTheme.defaultLocale || "en"
     };
 
     // page overrides

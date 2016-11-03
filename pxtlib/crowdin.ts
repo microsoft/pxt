@@ -71,7 +71,7 @@ namespace pxt.crowdin {
         if (!incr) incr = mkIncr(name);
         return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "true", name: name })
             .then(resp => {
-                console.log(resp.statusCode)
+                pxt.debug(`crowdin resp: ${resp.statusCode}`)
                 // 400 returned by folder already exists
                 if (resp.statusCode == 200 || resp.statusCode == 400)
                     return Promise.resolve();
