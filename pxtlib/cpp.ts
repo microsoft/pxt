@@ -904,12 +904,12 @@ namespace pxt.hex {
         let key = "hex-" + extInfo.sha
         return host.cacheGetAsync(key)
             .then(res => {
-                if (res) {
+                let cachedMeta = res ? JSON.parse(res) : null
+                if (cachedMeta && cachedMeta.hex) {
                     pxt.debug("cache hit, size=" + res.length)
-                    let meta = JSON.parse(res)
-                    meta.hex = decompressHex(meta.hex)
+                    cachedMeta.hex = decompressHex(cachedMeta.hex)
                     return recordGetAsync(host, "hex-keys", key)
-                        .then(() => meta)
+                        .then(() => cachedMeta)
                 }
                 else {
                     return downloadHexInfoAsync(extInfo)
