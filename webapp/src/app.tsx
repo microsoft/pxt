@@ -144,7 +144,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
                 : null
         if (res) this.prevGhData = res.items
-        return this.prevGhData
+        return this.prevGhData || []
     }
 
     fetchCloudData(): Cloud.JsonPointer[] {
