@@ -135,22 +135,31 @@ namespace pxt.github {
         tag?: string;
     }
 
+    export enum GitRepoStatus {
+        Unknown,
+        Approved,
+        Banned
+    }
+
     export interface GitRepo extends ParsedRepo {
         name: string;
         description: string;
         defaultBranch: string;
+        status?: GitRepoStatus
     }
 
-    function mkRepo(r: Repo, tag?: string): GitRepo {
+    function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
         if (!r) return undefined;
-        return {
+        const rr: GitRepo = {
             owner: r.owner.login.toLowerCase(),
             fullName: r.full_name.toLowerCase(),
             name: r.name,
             description: r.description,
             defaultBranch: r.default_branch,
-            tag: tag,
+            tag: tag
         }
+        rr.status = isRepoBanned(rr, config) ? GitRepoStatus.Banned : isRepoApproved(rr, config) ? GitRepoStatus.Approved : GitRepoStatus.Unknown
+        return rr;
     }
 
     function isOrgBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
@@ -208,13 +217,14 @@ namespace pxt.github {
                         name: meta.name,
                         description: meta.description,
                         defaultBranch: "master",
-                        tag: rid.tag
+                        tag: rid.tag,
+                        status: GitRepoStatus.Approved
                     };
                 })
 
         // user repos
         return U.httpGetJsonAsync("https://api.github.com/repos/" + rid.fullName)
-            .then((r: Repo) => mkRepo(r, rid.tag));
+            .then((r: Repo) => mkRepo(r, config, rid.tag));
     }
 
     export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {
@@ -223,11 +233,11 @@ namespace pxt.github {
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
-                .then(rs => rs.filter(r => isRepoApproved(r, config)));
+                .then(rs => rs.filter(r => r.status == GitRepoStatus.Approved));
 
         query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
-            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item)).filter(r => !isRepoBanned(r, config) && isRepoApproved(r, config)));
+            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item, config)).filter(r => r.status == GitRepoStatus.Approved));
     }
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {

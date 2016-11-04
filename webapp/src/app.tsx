@@ -330,7 +330,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="blue"
                             />
                     ) }
-                    {ghdata.map(scr =>
+                    {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                         <codecard.CodeCardView
                             name={scr.name.replace(/^pxt-/, "") }
                             header={scr.fullName}
@@ -339,6 +339,17 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             onClick={() => installGh(scr) }
                             url={'github:' + scr.fullName}
                             color="blue"
+                            />
+                    ) }
+                    {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
+                        <codecard.CodeCardView
+                            name={scr.name.replace(/^pxt-/, "") }
+                            header={scr.fullName}
+                            description={scr.description}
+                            key={'gh' + scr.fullName}
+                            onClick={() => installGh(scr) }
+                            url={'github:' + scr.fullName}
+                            color="red"
                             />
                     ) }
                     {urldata.map(scr =>
