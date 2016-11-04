@@ -393,6 +393,10 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
 
+    resize(e?: Event) {
+        this.editor.layout();
+    }
+
     zoomIn() {
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
@@ -477,6 +481,8 @@ export class Editor extends srceditor.Editor {
                 this.loadFile(this.currFile);
             }
         });
+
+        this.resize();
     }
 
     snapshotState() {

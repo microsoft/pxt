@@ -56,6 +56,7 @@ export class Editor {
     prepare() {
         this.isReady = true;
     }
+    resize(e?: Event) { }
     domUpdate() { }
     saveToTypeScript(): string {
         return null

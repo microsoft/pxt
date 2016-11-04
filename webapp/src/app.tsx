@@ -799,7 +799,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
-        this.fireResize();
     }
 
     fireResize() {
@@ -2202,6 +2201,10 @@ $(document).ready(() => {
         if (theEditor)
             theEditor.saveSettings()
     });
+    window.addEventListener("resize", ev => {
+        if (theEditor && theEditor.editor)
+            theEditor.editor.resize(ev)
+    }, false);
     window.addEventListener("message", ev => {
         let m = ev.data as pxsim.SimulatorMessage;
         if (!m) {
