@@ -275,6 +275,7 @@ declare namespace Blockly {
         undo(): void;
         redo(): void;
         clearUndo(): void;
+        isDragging(): boolean;
         getMetrics(): {
             absoluteLeft: number;
             absoluteTop: number;

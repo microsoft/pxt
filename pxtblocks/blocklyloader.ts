@@ -638,17 +638,17 @@ namespace pxt.blocks {
             .keys(cachedBlocks).filter(k => !currentBlocks[k])
             .forEach(k => removeBlock(cachedBlocks[k].fn));
 
-        // remove unused categories
-        let config = pxt.appTarget.runtime || {};
-        if (!config.mathBlocks) removeCategory(tb, "Math");
-        if (!config.textBlocks) removeCategory(tb, "Text");
-        if (!config.listsBlocks) removeCategory(tb, "Lists");
-        if (!config.variablesBlocks) removeCategory(tb, "Variables");
-        if (!config.logicBlocks) removeCategory(tb, "Logic");
-        if (!config.loopsBlocks) removeCategory(tb, "Loops");
-
-        // Load localized names for default categories
         if (tb) {
+            // remove unused categories
+            let config = pxt.appTarget.runtime || {};
+            if (!config.mathBlocks) removeCategory(tb, "Math");
+            if (!config.textBlocks) removeCategory(tb, "Text");
+            if (!config.listsBlocks) removeCategory(tb, "Lists");
+            if (!config.variablesBlocks) removeCategory(tb, "Variables");
+            if (!config.logicBlocks) removeCategory(tb, "Logic");
+            if (!config.loopsBlocks) removeCategory(tb, "Loops");
+
+            // Load localized names for default categories   
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
