@@ -141,39 +141,34 @@ namespace pxt.github {
         return undefined;
     }
 
-    export function searchAsync(query: string, targetConfig?: pxt.PackagesConfig): Promise<SearchResults> {
+    export function searchAsync(query: string, config?: pxt.PackagesConfig): Promise<SearchResults> {
+        if (!config) return Promise.resolve({
+            total_count: 0,
+            items: [],
+            incomplete_results: false
+        });
+
+        function filterRepos(items: Repo[]): SearchResults {
+            const approvedOrgs = config.approvedOrgs || [];
+            const approvedRepos = config.approvedRepos || [];
+            let ritems = items.filter(item => !!item).filter(item =>
+                approvedOrgs.indexOf(item.owner.login) > -1 ||
+                approvedRepos.indexOf(item.full_name) > -1);
+            return {
+                total_count: ritems.length,
+                items: ritems,
+                incomplete_results: false
+            }
+        }
+
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
             return Promise.all(repos.map(id => repoAsync(id.path)))
-                .then(rs => {
-                    rs = rs.filter(r => !!r);
-                    return <SearchResults>{
-                        total_count: rs.length,
-                        incomplete_results: false,
-                        items: rs
-                    }
-                })
+                .then(rs => filterRepos(rs));
 
         query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
-            .then((r: SearchResults) => {
-                if (!targetConfig) return {
-                    total_count : 0,
-                    items: [],
-                    incomplete_results: false
-                };
-
-                const approvedOrgs = targetConfig.approvedOrgs || [];
-                const approvedRepos = targetConfig.approvedRepos || [];
-                let items = r.items.filter(item => 
-                    approvedOrgs.indexOf(item.owner.login) > -1 ||
-                    approvedRepos.indexOf(item.full_name) > -1);
-                return  {
-                    total_count: items.length,
-                    items,
-                    incomplete_results: false
-                }
-            });
+            .then((r: SearchResults) => filterRepos(r.items));
     }
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {

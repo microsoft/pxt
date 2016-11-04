@@ -37,11 +37,11 @@ mountVirtualApi("td-cloud", {
 mountVirtualApi("gh-search", {
     getAsync: query =>
         // get the target config
-        (targetConfig ? Promise.resolve() 
+        (targetConfig ? Promise.resolve()
             : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
-            .then(js => { targetConfig = js; }))
-        .then(() => pxt.github.searchAsync(stripProtocol(query), targetConfig ? targetConfig.packages : undefined))
-        .catch(core.handleNetworkError),
+                .then(js => { targetConfig = js; }))
+            .then(() => pxt.github.searchAsync(stripProtocol(query), targetConfig ? targetConfig.packages : undefined))
+            .catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
