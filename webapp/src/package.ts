@@ -146,9 +146,10 @@ export class EditorPackage {
         let p = this.ksPkg.resolveDep(pkgid);
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
-        return pxt.github.latestVersionAsync(parsed.repo)
+        return pxt.packagesConfigAsync()
+            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config))
             .then(tag => { parsed.tag = tag })
-            .then(() => pxt.github.pkgConfigAsync(parsed.repo, parsed.tag))
+            .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
             .catch(core.handleNetworkError)
             .then(cfg => this.addDepAsync(cfg.name, pxt.github.stringifyRepo(parsed)));
     }

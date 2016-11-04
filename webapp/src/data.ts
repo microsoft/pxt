@@ -35,12 +35,8 @@ mountVirtualApi("td-cloud", {
 })
 
 mountVirtualApi("gh-search", {
-    getAsync: query =>
-        // get the target config
-        (targetConfig ? Promise.resolve()
-            : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
-                .then(js => { targetConfig = js; }))
-            .then(() => pxt.github.searchAsync(stripProtocol(query), targetConfig ? targetConfig.packages : undefined))
+    getAsync: query => pxt.targetConfigAsync()
+            .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
             .catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),

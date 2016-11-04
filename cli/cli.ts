@@ -150,10 +150,11 @@ export function logoutAsync() {
 }
 
 function searchAsync(...query: string[]) {
-    return pxt.github.searchAsync(query.join(" "))
+    return pxt.packagesConfigAsync()
+        .then(config => pxt.github.searchAsync(query.join(" "), config))
         .then(res => {
-            for (let r of res.items) {
-                console.log(`${r.full_name}: ${r.description}`)
+            for (let r of res) {
+                console.log(`${r.fullName}: ${r.description}`)
             }
         })
 }
@@ -178,7 +179,7 @@ function pkginfoAsync(repopath: string) {
                 console.log(`Size: ${JSON.stringify(pkg.files).length}`)
             })
 
-    return pxt.github.pkgConfigAsync(parsed.repo)
+    return pxt.github.pkgConfigAsync(parsed.fullName)
         .then(cfg => {
             pkgInfo(cfg)
             return pxt.github.listRefsAsync(repopath)
@@ -2013,20 +2014,20 @@ export function installAsync(packageName?: string) {
     ensurePkgDir();
     if (packageName) {
         let parsed = pxt.github.parseRepoId(packageName)
-        return (parsed.tag
-            ? Promise.resolve(parsed.tag)
-            : pxt.github.latestVersionAsync(parsed.repo))
-            .then(tag => { parsed.tag = tag })
-            .then(() => pxt.github.pkgConfigAsync(parsed.repo, parsed.tag))
-            .then(cfg => mainPkg.loadAsync()
-                .then(() => {
-                    let ver = pxt.github.stringifyRepo(parsed)
-                    console.log(U.lf("Adding: {0}: {1}", cfg.name, ver))
-                    mainPkg.config.dependencies[cfg.name] = ver
-                    mainPkg.saveConfig()
-                    mainPkg = new pxt.MainPackage(new Host())
-                    return mainPkg.installAllAsync()
-                }))
+        return pxt.packagesConfigAsync()
+            .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
+                .then(tag => { parsed.tag = tag })
+                .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
+                .then(cfg => mainPkg.loadAsync()
+                    .then(() => {
+                        let ver = pxt.github.stringifyRepo(parsed)
+                        console.log(U.lf("Adding: {0}: {1}", cfg.name, ver))
+                        mainPkg.config.dependencies[cfg.name] = ver
+                        mainPkg.saveConfig()
+                        mainPkg = new pxt.MainPackage(new Host())
+                        return mainPkg.installAllAsync()
+                    }))
+            );
     } else {
         return mainPkg.installAllAsync()
             .then(() => {
