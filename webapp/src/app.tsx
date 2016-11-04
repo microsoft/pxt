@@ -758,6 +758,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     scriptSearch: ScriptSearch;
     shareEditor: ShareEditor;
 
+    private lastChangeTime: number;
+
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -856,21 +858,26 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
+            if (new Date().getTime() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
             this.runSimulator({ background: true });
         },
-        2000, false);
+        1000, true);
+
     private autoRunSimulator = pxtc.Util.debounce(
         () => {
+            if (new Date().getTime() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
             this.runSimulator({ background: true });
         },
-        4000, false);
-    private typecheck() {
-        let state = this.editor.snapshotState()
-        compiler.typecheckAsync()
+        2000, true);
+
+    private typecheck = pxtc.Util.debounce(
+        () => {
+            let state = this.editor.snapshotState()
+            compiler.typecheckAsync()
             .done(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
@@ -883,16 +890,17 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     }
                 }
             });
-    }
+        }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
         if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
             this.setSideMarkdown(this.editor.getCurrentSource());
     }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
-        this.saveFile();
-        if (!this.editor.isIncomplete())
+        if (!this.editor.isIncomplete()) {
+            this.saveFile();
             this.typecheck();
+        }
         this.markdownChangeHandler();
     }, 1000, false);
     private initEditors() {
@@ -906,6 +914,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
                 this.editorFile.markDirty();
             }
+            this.lastChangeTime = new Date().getTime();
             this.editorChangeHandler();
         }
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]

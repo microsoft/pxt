@@ -229,6 +229,10 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    isIncomplete() {
+        return this.editor.isDragging();
+    }
+
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
         let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
@@ -255,7 +259,7 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
-            if (ev.recordUndo) {
+            if (ev.type != 'ui') {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
