@@ -38,6 +38,7 @@ namespace pxt.docs {
 
     // the input already should be HTML-quoted but we want to make sure, and also quote quotes
     export function html2Quote(s: string) {
+        if (!s) return s;
         return htmlQuote(s.replace(/\&([#a-z0-9A-Z]+);/g, (f, ent) => {
             switch (ent) {
                 case "amp": return "&";
@@ -183,8 +184,10 @@ namespace pxt.docs {
         }
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["breadcrumb"] = breadcrumbHtml;
-        params["boardname"] = html2Quote(theme.boardName);
-        params["homeurl"] = html2Quote(theme.homeUrl);
+        if (theme.boardName)
+            params["boardname"] = html2Quote(theme.boardName);
+        if (theme.homeUrl)
+            params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetname"] = theme.name || "PXT"
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         if (d.filepath && theme.githubUrl) {
