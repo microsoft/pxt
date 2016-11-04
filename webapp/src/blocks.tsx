@@ -53,6 +53,7 @@ export class Editor extends srceditor.Editor {
 
             let loading = document.createElement("div");
             loading.className = "ui inverted loading";
+            let editorArea = document.getElementById('blocksArea');
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
@@ -65,6 +66,9 @@ export class Editor extends srceditor.Editor {
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
+
+                    this.resize();
+                    Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
                     editorDiv.removeChild(loading);
@@ -303,8 +307,28 @@ export class Editor extends srceditor.Editor {
                 }
             }
         })
+        this.resize();
+        Blockly.svgResize(this.editor);
 
         this.isReady = true
+    }
+
+    resize(e?: Event) {
+        let blocklyArea = document.getElementById('blocksArea');
+        let blocklyDiv = document.getElementById('blocksEditor');
+
+        // Compute the absolute coordinates and dimensions of blocklyArea.
+        let element = blocklyArea;
+        let x = 0;
+        let y = 0;
+        do {
+            x += element.offsetLeft;
+            y += element.offsetTop;
+            element = element.offsetParent as HTMLElement;
+        } while (element);
+        // Position blocklyDiv over blocklyArea.
+        blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+        blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
     }
 
     undo() {
@@ -312,7 +336,15 @@ export class Editor extends srceditor.Editor {
     }
 
     getId() {
-        return "blocksEditor"
+        return "blocksArea"
+    }
+
+    display() {
+        return (
+            <div>
+                <div id="blocksEditor"></div>
+            </div>
+        )
     }
 
     getViewState() {

@@ -32,9 +32,6 @@ body {
 .ui.item.logo img {
     height: 2.5rem;
 }
-#monacoEditor {
-    direction:ltr;
-}
 
 #cookiemsg {
    position: absolute;
@@ -537,8 +534,7 @@ html {
 *******************************/
 
 #blocksEditor {
-    right:0rem;
-    bottom:0rem;
+    position: absolute;
 }
 
 #blocksEditor > div.loading {
