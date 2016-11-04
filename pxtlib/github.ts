@@ -153,6 +153,24 @@ namespace pxt.github {
         }
     }
 
+    function isOrgBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        if (!repo || !config || !repo.owner) return true;
+        if (config.bannedOrgs
+            && config.bannedOrgs.some(org => org.toLowerCase() == repo.owner.toLowerCase()))
+            return true;
+        return false;
+    }
+
+    function isRepoBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        if (isOrgBanned(repo, config))
+            return true;
+        if (!repo || !config || !repo.fullName) return true;
+        if (config.bannedRepos
+            && config.bannedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
+            return true;
+        return false;
+    }
+
     function isOrgApproved(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
         if (!repo || !config) return false;
         if (repo.owner
@@ -176,7 +194,7 @@ namespace pxt.github {
 
     export function repoAsync(id: string, config: pxt.PackagesConfig): Promise<GitRepo> {
         let rid = parseRepoId(id);
-        if (!rid) return Promise.resolve<GitRepo>(undefined);
+        if (!rid || isRepoBanned(rid, config)) return Promise.resolve<GitRepo>(undefined);
 
         // trusted orgs use proxy
         if (isOrgApproved(rid, config))
@@ -209,7 +227,7 @@ namespace pxt.github {
 
         query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
-            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item)).filter(r => isRepoApproved(r, config)));
+            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item)).filter(r => !isRepoBanned(r, config) && isRepoApproved(r, config)));
     }
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
