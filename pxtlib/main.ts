@@ -412,7 +412,7 @@ namespace pxt {
                     fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`)
                         .then(tr => Util.jsonMergeFrom(r, tr))
                         .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
-                    ).then(() => r);
+                ).then(() => r);
             }
 
             const files = this.config.files;
@@ -638,6 +638,17 @@ namespace pxt {
             return res;
         }
 
+    }
+
+
+    let _targetConfig: pxt.TargetConfig = undefined;
+    export function targetConfigAsync(): Promise<pxt.TargetConfig> {
+        return _targetConfig ? Promise.resolve(_targetConfig)
+            : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
+                .then(js => { _targetConfig = js; return _targetConfig; });
+    }
+    export function packagesConfigAsync(): Promise<pxt.PackagesConfig> {
+        return targetConfigAsync().then(config => config ? config.packages : undefined);
     }
 
     export const CONFIG_NAME = "pxt.json"

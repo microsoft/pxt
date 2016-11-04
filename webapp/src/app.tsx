@@ -112,7 +112,7 @@ interface ScriptSearchState {
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     private prevData: Cloud.JsonPointer[] = [];
-    private prevGhData: pxt.github.Repo[] = [];
+    private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
 
     constructor(props: ISettingsProps) {
@@ -135,15 +135,15 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         this.setState({ visible: true, packages: false, searchFor: '' })
     }
 
-    fetchGhData(): pxt.github.Repo[] {
+    fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let res: pxt.github.SearchResults =
+        let res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
                 ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
                 : null
-        if (res) this.prevGhData = res.items
+        if (res) this.prevGhData = res
         return this.prevGhData || []
     }
 
@@ -245,14 +245,15 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     .done(() => core.hideLoading())
             }
         }
-        const installGh = (scr: pxt.github.Repo) => {
+        const installGh = (scr: pxt.github.GitRepo) => {
             this.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
                 core.showLoading(lf("downloading package..."));
-                pxt.github.latestVersionAsync(scr.full_name)
-                    .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
-                        .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
+                pxt.packagesConfigAsync()
+                    .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
+                    .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
+                        .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.fullName + "#" + tag))
                         .then(r => this.props.parent.reloadHeaderAsync()))
                     .catch(core.handleNetworkError)
                     .finally(() => core.hideLoading());
@@ -329,15 +330,26 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="blue"
                             />
                     ) }
-                    {ghdata.map(scr =>
+                    {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                         <codecard.CodeCardView
                             name={scr.name.replace(/^pxt-/, "") }
-                            header={scr.full_name}
+                            header={scr.fullName}
                             description={scr.description}
-                            key={'gh' + scr.full_name}
+                            key={'gh' + scr.fullName}
                             onClick={() => installGh(scr) }
-                            url={'github:' + scr.full_name}
+                            url={'github:' + scr.fullName}
                             color="blue"
+                            />
+                    ) }
+                    {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
+                        <codecard.CodeCardView
+                            name={scr.name.replace(/^pxt-/, "") }
+                            header={scr.fullName}
+                            description={scr.description}
+                            key={'gh' + scr.fullName}
+                            onClick={() => installGh(scr) }
+                            url={'github:' + scr.fullName}
+                            color="red"
                             />
                     ) }
                     {urldata.map(scr =>

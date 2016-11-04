@@ -11,6 +11,8 @@ declare namespace pxt {
     interface PackagesConfig {
         approvedOrgs?: string[];
         approvedRepos?: string[];
+        bannedOrgs?: string[];
+        bannedRepos?: string[];
     }
 
     interface AppTarget {
