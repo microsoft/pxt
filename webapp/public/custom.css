@@ -509,9 +509,6 @@ html {
         font-size: 0rem;
         padding-right: 0;
     }
-    .blocklyCheckbox {
-        font-size: 17pt !important;
-    }
     div.simframe {
         display:inline-block;
         width: 10rem;
