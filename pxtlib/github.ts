@@ -141,7 +141,7 @@ namespace pxt.github {
         return undefined;
     }
 
-    export function searchAsync(query: string, targetConfig: pxt.PackagesConfig): Promise<SearchResults> {
+    export function searchAsync(query: string, targetConfig?: pxt.PackagesConfig): Promise<SearchResults> {
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
             return Promise.all(repos.map(id => repoAsync(id.path)))
@@ -157,7 +157,22 @@ namespace pxt.github {
         query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
             .then((r: SearchResults) => {
-                return r;
+                if (!targetConfig) return {
+                    total_count : 0,
+                    items: [],
+                    incomplete_results: false
+                };
+
+                const approvedOrgs = targetConfig.approvedOrgs || [];
+                const approvedRepos = targetConfig.approvedRepos || [];
+                let items = r.items.filter(item => 
+                    approvedOrgs.indexOf(item.owner.login) > -1 ||
+                    approvedRepos.indexOf(item.full_name) > -1);
+                return  {
+                    total_count: items.length,
+                    items,
+                    incomplete_results: false
+                }
             });
     }
 

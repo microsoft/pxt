@@ -10,7 +10,7 @@ declare namespace pxt {
 
     interface PackagesConfig {
         approvedOrgs?: string[];
-        bannedOrgs?: string[];
+        approvedRepos?: string[];
     }
 
     interface AppTarget {
