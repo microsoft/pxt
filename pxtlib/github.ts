@@ -141,7 +141,7 @@ namespace pxt.github {
         return undefined;
     }
 
-    export function searchAsync(query: string): Promise<SearchResults> {
+    export function searchAsync(query: string, targetConfig: pxt.PackagesConfig): Promise<SearchResults> {
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
             return Promise.all(repos.map(id => repoAsync(id.path)))
@@ -156,7 +156,9 @@ namespace pxt.github {
 
         query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
-            .then(r => r as SearchResults)
+            .then((r: SearchResults) => {
+                return r;
+            });
     }
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
