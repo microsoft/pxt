@@ -940,9 +940,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             return false;
         });
 
-        hexFiles = hexFiles.map((f) => {
-            return "@pxtCdnUrl@compile/" + f;
-        });
+        hexFiles = hexFiles.map((f) => "@pxtCdnUrl@compile/" + f);
+        pxt.log(`hex cache: ${hexFiles.join('\n')}`)
     }
 
     let replacements: Map<string> = {
