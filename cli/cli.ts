@@ -374,7 +374,7 @@ function travisAsync() {
         return p;
     } else {
         return buildTargetAsync()
-            .then(() => uploader.checkDocsAsync())
+            .then(() => checkDocsAsync())
             .then(() => testSnippetsAsync())
             .then(() => {
                 if (!process.env.CLOUD_ACCESS_TOKEN) {
@@ -2802,7 +2802,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
     }
 
-    let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
+    let files = getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
     console.log(`checking ${files.length} documentation files`)
 
     let ignoreCount = 0
@@ -2831,7 +2831,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     return Promise.map(files, (fname: string) => {
         let pkgName = fname.replace(/\\/g, '-').replace('.md', '')
         let source = fs.readFileSync(fname, 'utf8')
-        let snippets = uploader.getSnippets(source)
+        let snippets = getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
         extraDeps.push("core")
@@ -3334,6 +3334,89 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     return dirs;
 }
 
+function getFiles(): string[] {
+    let res: string[] = []
+    function loop(path: string) {
+        for (let fn of fs.readdirSync(path)) {
+            if (fn[0] == "." || fn[0] == "_") continue;
+            let fp = path + "/" + fn
+            let st = fs.statSync(fp)
+            if (st.isDirectory()) loop(fp)
+            else if (st.isFile()) res.push(fp.replace(/^docs/, ""))
+        }
+    }
+    loop("docs")
+    if (fs.existsSync("docs/_locales"))
+        loop("docs/_locales")
+    return res
+}
+
+function checkDocsAsync(...args: string[]): Promise<void> {
+    console.log(`checking docs`);
+    let files = getFiles();
+
+    // known urls
+    let urls: Map<string> = {};
+    files.forEach(f => urls[f.replace(/\.md$/i, '')] = f);
+
+    let checked = 0;
+    let broken = 0;
+    let snipCount = 0;
+    files.filter(f => /\.md$/i.test(f)).forEach(f => {
+        let header = false;
+        let contentType = U.getMime(f)
+        if (!contentType || !/^text/.test(contentType))
+            return;
+        checked++;
+        let text = fs.readFileSync("docs" + f).toString("utf8");
+        // look for broken urls
+        text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
+            let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
+            if (!urls[url]) {
+                console.error(`${f}: broken link ${url}`);
+                broken++;
+            }
+            return '';
+        })
+
+        let snippets = getSnippets(text)
+        snipCount += snippets.length
+        for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
+            let dir = "built/docs/snippets/" + snippets[snipIndex].type;
+            let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
+            nodeutil.mkdirP(dir);
+            fs.writeFileSync(fn, snippets[snipIndex].code);
+        }
+    });
+
+    console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
+    return Promise.resolve();
+}
+
+interface SnippetInfo {
+    type: string
+    code: string
+    ignore: boolean
+    index: number
+}
+
+function getSnippets(source: string): SnippetInfo[] {
+    let snippets: SnippetInfo[] = []
+    let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
+    let index = 0
+    source.replace(re, (match, type, code) => {
+        snippets.push({
+            type: type ? type.replace("-ignore", "") : "pre",
+            code: code,
+            ignore: type ? /-ignore/g.test(type) : false,
+            index: index
+        })
+        index++
+        return ''
+    })
+    return snippets
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -3383,7 +3466,7 @@ cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
-cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
+cmd("checkdocs                    - check docs for broken links, typing errors, etc...", checkDocsAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 cmd("logout                       - clears access token", logoutAsync, 1)
