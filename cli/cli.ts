@@ -931,17 +931,10 @@ function uploadCoreAsync(opts: UploadOptions) {
     let hexFiles: string[] = [];
 
     if (fs.existsSync(hexCache)) {
-        hexFiles = fs.readdirSync(hexCache).filter((f) => {
-            let file = path.join(hexCache, f);
-            if (!fs.statSync(file).isDirectory() && path.extname(f) === ".hex") {
-                return true;
-            }
-
-            return false;
-        });
-
-        hexFiles = hexFiles.map((f) => "@pxtCdnUrl@compile/" + f);
-        pxt.log(`hex cache: ${hexFiles.join('\n')}`)
+        hexFiles = fs.readdirSync(hexCache)
+            .filter(f => /\.hex$/.test(f))
+            .map((f) => `@cdnUrl@/compile/${f}`);
+        pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
     let replacements: Map<string> = {
