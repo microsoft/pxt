@@ -90,23 +90,6 @@ function configPath() {
     return path.join(homePxtDir(), "config.json")
 }
 
-function getTemplates() {
-    let templates: string[] = [];
-    let templatesRoot = path.join("libs", "templates");
-
-    if (fs.existsSync(templatesRoot)) {
-        fs.readdirSync(templatesRoot).forEach((f) => {
-            let fullPath = path.join(templatesRoot, f);
-
-            if (fs.statSync(fullPath).isDirectory()) {
-                templates.push(fullPath);
-            }
-        });
-    }
-
-    return templates;
-}
-
 let homeDirsMade = false
 function mkHomeDirs() {
     if (homeDirsMade) return
@@ -1203,12 +1186,13 @@ function readLocalPxTarget() {
     return cfg
 }
 
-function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeTemplates: boolean = false) {
+function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeProjects: boolean = false) {
     let prev = process.cwd()
     let folders = pxt.appTarget.bundleddirs;
 
-    if (includeTemplates) {
-        folders = folders.concat(getTemplates());
+    if (includeProjects) {
+        let projects = nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true).filter(f => /prj$/.test(f));
+        folders = folders.concat(projects);
     }
 
     return Promise.mapSeries(folders, (dirname) => {
@@ -1333,7 +1317,7 @@ export function buildTargetAsync(): Promise<void> {
         .then(buildTargetCoreAsync)
         .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('server', true));
+        .then(() => buildFolderAsync('server', true))
 }
 
 function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
@@ -1522,50 +1506,49 @@ function buildSemanticUIAsync() {
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
-    let defaultTemplates = [
-        "blocksprj",
-        "tsprj"
+    let defaultProjects = [
+        pxt.BLOCKS_PROJECT_NAME,
+        pxt.JAVASCRIPT_PROJECT_NAME
     ];
 
-    getTemplates().forEach((templatePath) => {
-        if (defaultTemplates.indexOf(path.basename(templatePath)) === -1) {
-            // For target.json, we only care about the 2 main templates, blocksprj and tsprj
-            return;
-        }
+    nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true)
+        .filter((f) => {
+            return defaultProjects.indexOf(path.basename(f)) !== -1;
+        })
+        .forEach((projectPath) => {
+            let projectId = path.basename(projectPath);
+            let newProject: pxt.ProjectTemplate = {
+                id: projectId,
+                config: {
+                    name: "",
+                    dependencies: {},
+                    files: []
+                },
+                files: {}
+            };
 
-        let projectId = path.basename(templatePath);
-        let newProject: pxt.ProjectTemplate = {
-            id: projectId,
-            config: {
-                name: "",
-                dependencies: {},
-                files: []
-            },
-            files: {}
-        };
+            nodeutil.allFiles(projectPath).forEach((f) => {
+                let relativePath = path.relative(projectPath, f); // nodeutil.allFiles returns libs/blocksprj/path_to_file, this removes libs/blocksprj/
+                let fileName = path.basename(relativePath);
 
-        fs.readdirSync(templatePath).forEach((f) => {
-            let file = path.join(templatePath, f);
-            if (fs.statSync(file).isDirectory()) {
-                return;
-            }
+                if (/^((built)|(pxt_modules)|(node_modules))[\/\\]/.test(relativePath) || fileName === "tsconfig.json") {
+                    return;
+                }
 
-            if (f === "pxt.json") {
-                newProject.config = nodeutil.readJson(file);
-                U.iterMap(newProject.config.dependencies, (k, v) => {
-                    if (/^file:/.test(v)) {
-                        newProject.config.dependencies[k] = "*";
-                    }
-                });
-            } else if (f === "tsconfig.json") {
-                return;
-            } else {
-                newProject.files[f] = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
-            }
+                if (fileName === "pxt.json") {
+                    newProject.config = nodeutil.readJson(f);
+                    U.iterMap(newProject.config.dependencies, (k, v) => {
+                        if (/^file:/.test(v)) {
+                            newProject.config.dependencies[k] = "*";
+                        }
+                    });
+                } else {
+                    newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+                }
+            });
+
+            (<any>cfg)[projectId] = newProject;
         });
-
-        (<any>cfg)[projectId] = newProject;
-    });
 }
 
 function buildTargetCoreAsync() {
@@ -1593,15 +1576,14 @@ function buildTargetCoreAsync() {
     }
 
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
-    nodeutil.deleteFolderRecursive(hexCachePath);
     nodeutil.mkdirP(hexCachePath);
 
     console.log(`building target.json in ${process.cwd()}...`)
     return forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building in ${dirname}`);
-        let isTemplate = dirname.indexOf(path.join("libs", "templates")) === 0;
+        let isPrj = /prj$/.test(dirname);
 
-        if (isTemplate) {
+        if (isPrj) {
             forceCloudBuild = true;
         } else {
             forceCloudBuild = previousForceCloudBuild;
@@ -1613,10 +1595,10 @@ function buildTargetCoreAsync() {
             })
             .then(testForBuildTargetAsync)
             .then((compileOpts) => {
-                // For the templates, we need to save the base HEX file to the offline HEX cache
-                if (isTemplate) {
+                // For the projects, we need to save the base HEX file to the offline HEX cache
+                if (isPrj) {
                     if (!compileOpts) {
-                        console.error(`Failed to extract HEX image for template ${dirname}`);
+                        console.error(`Failed to extract HEX image for project ${dirname}`);
                         return;
                     }
 
@@ -1626,14 +1608,14 @@ function buildTargetCoreAsync() {
                     let hexFile = path.join(hexCachePath, sha + ".hex");
 
                     if (fs.existsSync(hexFile)) {
-                        pxt.log(`HEX image already in offline cache for template ${dirname}`);
+                        pxt.log(`HEX image already in offline cache for project ${dirname}`);
                     } else {
                         fs.writeFileSync(hexFile, hex.join(os.EOL));
-                        pxt.log(`Created HEX image in offline cache for template ${dirname}: ${hexFile}`);
+                        pxt.log(`Created HEX image in offline cache for project ${dirname}: ${hexFile}`);
                     }
                 }
             })
-    }, /*includeTemplates*/ true)
+    }, /*includeProjects*/ true)
         .finally(() => {
             forceCloudBuild = previousForceCloudBuild;
         })
