@@ -23,7 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let tempDir = ""
 let packagedDir = ""
-let localHexDir = path.join("hexcache");
+let localHexDir = path.join("built", "hexcache");
 
 export function forkPref() {
     if (pxt.appTarget.forkof)

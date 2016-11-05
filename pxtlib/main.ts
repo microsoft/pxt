@@ -369,7 +369,7 @@ namespace pxt {
                         let mod = this.resolveDep(id)
                         ver = ver || "*"
                         if (mod) {
-                            if (mod._verspec != ver)
+                            if (mod._verspec != ver && (!/^file:/.test(mod._verspec) || !/^file:/.test(ver)))
                                 U.userError("Version spec mismatch on " + id)
                             mod.level = Math.min(mod.level, this.level + 1)
                             return Promise.resolve()

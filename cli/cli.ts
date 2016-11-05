@@ -565,8 +565,7 @@ function travisAsync() {
                 }
                 let trg = readLocalPxTarget()
                 if (rel)
-                    return Promise.resolve() //preCacheHexAsync()
-                        .then(() => uploadTargetAsync(trg.id + "/" + rel))
+                    return uploadTargetAsync(trg.id + "/" + rel)
                         .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
                 else
@@ -1188,16 +1187,22 @@ function readLocalPxTarget() {
     return cfg
 }
 
-function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage) => Promise<void>) {
+function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeProjects: boolean = false) {
     let prev = process.cwd()
-    return Promise.mapSeries(pxt.appTarget.bundleddirs, (dirname) => {
-        console.log("building in " + dirname)
+    let folders = pxt.appTarget.bundleddirs;
+
+    if (includeProjects) {
+        let projects = nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true).filter(f => /prj$/.test(f));
+        folders = folders.concat(projects);
+    }
+
+    return Promise.mapSeries(folders, (dirname) => {
         process.chdir(path.join(nodeutil.targetDir, dirname))
         mainPkg = new pxt.MainPackage(new Host())
-        return f(mainPkg);
+        return f(mainPkg, dirname);
     })
         .finally(() => process.chdir(prev))
-        .then(() => { })
+        .then(() => { });
 }
 
 export interface SpawnOptions {
@@ -1502,48 +1507,53 @@ function buildSemanticUIAsync() {
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
-    let templatesRoot = path.join("libs", "templates");
     let defaultProjects = [
-        "blocksprj",
-        "tsprj"
+        pxt.BLOCKS_PROJECT_NAME,
+        pxt.JAVASCRIPT_PROJECT_NAME
     ];
 
-    defaultProjects.forEach((p) => {
-        let projectPath = path.join(templatesRoot, p);
-        let newProject: pxt.ProjectTemplate = {
-            id: p,
-            config: {
-                name: "",
-                dependencies: {},
-                files: []
-            },
-            files: {}
-        };
+    nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true)
+        .filter((f) => {
+            return defaultProjects.indexOf(path.basename(f)) !== -1;
+        })
+        .forEach((projectPath) => {
+            let projectId = path.basename(projectPath);
+            let newProject: pxt.ProjectTemplate = {
+                id: projectId,
+                config: {
+                    name: "",
+                    dependencies: {},
+                    files: []
+                },
+                files: {}
+            };
 
-        if (!fs.existsSync(projectPath)) {
-            return;
-        }
+            nodeutil.allFiles(projectPath).forEach((f) => {
+                let relativePath = path.relative(projectPath, f); // nodeutil.allFiles returns libs/blocksprj/path_to_file, this removes libs/blocksprj/
+                let fileName = path.basename(relativePath);
 
-        fs.readdirSync(projectPath).forEach((f) => {
-            let file = path.join(projectPath, f);
-            if (fs.statSync(file).isDirectory()) {
-                return;
-            }
+                if (/^((built)|(pxt_modules)|(node_modules))[\/\\]/.test(relativePath) || fileName === "tsconfig.json") {
+                    return;
+                }
 
-            if (f === "pxt.json") {
-                newProject.config = nodeutil.readJson(file);
-            } else if (f === "tsconfig.json") {
-                return;
-            } else {
-                newProject.files[f] = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
-            }
+                if (fileName === "pxt.json") {
+                    newProject.config = nodeutil.readJson(f);
+                    U.iterMap(newProject.config.dependencies, (k, v) => {
+                        if (/^file:/.test(v)) {
+                            newProject.config.dependencies[k] = "*";
+                        }
+                    });
+                } else {
+                    newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+                }
+            });
+
+            (<any>cfg)[projectId] = newProject;
         });
-
-        (<any>cfg)[p] = newProject;
-    });
 }
 
 function buildTargetCoreAsync() {
+    let previousForceCloudBuild = forceCloudBuild;
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     cfg.bundledpkgs = {}
@@ -1565,13 +1575,51 @@ function buildTargetCoreAsync() {
                 .map(p => path.join("sim", p))
                 .filter(p => fs.statSync(p).isDirectory()));
     }
+
+    let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
+    nodeutil.mkdirP(hexCachePath);
+
     console.log(`building target.json in ${process.cwd()}...`)
-    return forEachBundledPkgAsync(pkg =>
-        pkg.filesToBePublishedAsync()
+    return forEachBundledPkgAsync((pkg, dirname) => {
+        pxt.log(`building in ${dirname}`);
+        let isPrj = /prj$/.test(dirname);
+
+        if (isPrj) {
+            forceCloudBuild = true;
+        } else {
+            forceCloudBuild = previousForceCloudBuild;
+        }
+
+        return pkg.filesToBePublishedAsync(true)
             .then(res => {
                 cfg.bundledpkgs[pkg.config.name] = res
             })
-            .then(testForBuildTargetAsync))
+            .then(testForBuildTargetAsync)
+            .then((compileOpts) => {
+                // For the projects, we need to save the base HEX file to the offline HEX cache
+                if (isPrj) {
+                    if (!compileOpts) {
+                        console.error(`Failed to extract HEX image for project ${dirname}`);
+                        return;
+                    }
+
+                    // Place the base HEX image in the hex cache if necessary
+                    let sha = compileOpts.extinfo.sha;
+                    let hex: string[] = compileOpts.hexinfo.hex;
+                    let hexFile = path.join(hexCachePath, sha + ".hex");
+
+                    if (fs.existsSync(hexFile)) {
+                        pxt.log(`HEX image already in offline cache for project ${dirname}`);
+                    } else {
+                        fs.writeFileSync(hexFile, hex.join(os.EOL));
+                        pxt.log(`Created HEX image in offline cache for project ${dirname}: ${hexFile}`);
+                    }
+                }
+            })
+    }, /*includeProjects*/ true)
+        .finally(() => {
+            forceCloudBuild = previousForceCloudBuild;
+        })
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -2517,7 +2565,7 @@ function testAssemblers(): Promise<void> {
 }
 
 
-function testForBuildTargetAsync() {
+function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
     let opts: pxtc.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
@@ -2539,6 +2587,7 @@ function testForBuildTargetAsync() {
             if (!pxt.appTarget.forkof)
                 simulatorCoverage(res, opts)
         })
+        .then(() => opts);
 }
 
 function simshimAsync() {
@@ -3415,7 +3464,10 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean): Promise<void
     }).then((compileOpts) => { });
     // from target location?
     if (fs.existsSync("pxtarget.json"))
-        return forEachBundledPkgAsync(pkg => build());
+        return forEachBundledPkgAsync((pkg, dirname) => {
+            pxt.log(`building in ${dirname}`);
+            return build();
+        });
     else return build();
 }
 
@@ -3613,75 +3665,6 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     return dirs;
 }
 
-export function preCacheHexAsync() {
-    let trgInfo = readLocalPxTarget();
-
-    if (!trgInfo) {
-        console.error("pxtarget.json not found; make sure you are in a valid PXT target directory");
-        return Promise.resolve();
-    }
-
-    // Extract the target's default project to disk
-    if (!trgInfo.blocksprj) {
-        console.error("Could not find default project 'blocksprj' in pxtarget.json");
-        return Promise.resolve();
-    }
-
-    let projectPath = path.join("built", "precache");
-
-    if (fs.existsSync(projectPath)) {
-        nodeutil.deleteFolderRecursive(projectPath);
-    }
-
-    nodeutil.mkdirP(projectPath);
-    trgInfo.blocksprj.config.name = path.basename(projectPath);
-    fs.writeFileSync(path.join(projectPath, "pxt.json"), JSON.stringify(trgInfo.blocksprj.config, null, 4));
-    Object.keys(trgInfo.blocksprj.files).forEach((f) => {
-        fs.writeFileSync(path.join(projectPath, f), trgInfo.blocksprj.files[f]);
-    });
-    pxt.log("default project extracted");
-
-    // Install package dependencies
-    let previousCwd = process.cwd();
-    process.chdir(projectPath);
-
-    return installAsync()
-        .then(() => {
-            pxt.log("packages installed");
-
-            // Build in the cloud
-            forceCloudBuild = true;
-            return buildCoreAsync({ mode: BuildOption.JustBuild });
-        })
-        .then((compileOpts: pxtc.CompileOptions) => {
-            if (!compileOpts) {
-                console.log("Failed to extract HEX image");
-                return;
-            }
-
-            // Place the base HEX image in the hex cache if necessary
-            let sha = compileOpts.extinfo.sha;
-            let hex: string[] = compileOpts.hexinfo.hex;
-            let hexCache = path.join(previousCwd, "hexcache");
-            let hexFile = path.join(hexCache, sha + ".hex");
-
-            process.chdir(previousCwd);
-            nodeutil.mkdirP(hexCache);
-
-            if (fs.existsSync(hexFile)) {
-                pxt.log("HEX image already in offline cache");
-            } else {
-                fs.writeFileSync(hexFile, hex.join(os.EOL));
-                pxt.log(`Created HEX image in offline cache: ${hexFile}`);
-            }
-        })
-        .finally(() => {
-            if (process.cwd() !== previousCwd) {
-                process.chdir(previousCwd);
-            }
-        });
-}
-
 interface Command {
     name: string;
     fn: () => void;
@@ -3713,7 +3696,6 @@ cmd("build    [--cloud]            - build current package, --cloud forces a bui
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract [--code] [--out DIRNAME]  [FILENAME] - extract sources from .hex file, folder of .hex files, stdin (-), or URL", extractAsync)
-cmd("precachehex                  - download hex images of current target for offline compilation", preCacheHexAsync)
 cmd("test                         - run tests on current package", testAsync, 1)
 cmd("gendocs [--locs] [--docs]    - build current package and its docs. --locs produce localization files, --docs produce docs files", gendocsAsync, 1)
 cmd("format   [-i] file.ts...     - pretty-print TS files; -i = in-place", formatAsync, 1)
