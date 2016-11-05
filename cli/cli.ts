@@ -33,10 +33,6 @@ function initTargetCommands() {
     }
 }
 
-function isNewBackend() {
-    return U.startsWith(Cloud.accessToken, "3.")
-}
-
 let prevExports = (global as any).savedModuleExports
 if (prevExports) {
     module.exports = prevExports
@@ -1062,29 +1058,18 @@ function uploadCoreAsync(opts: UploadOptions) {
                 return writeFileAsync(fn, data)
             }
 
-            if (isNewBackend()) {
-                let req = {
-                    encoding: isText ? "utf8" : "base64",
-                    content,
-                    hash: "",
-                    filename: fileName,
-                    size: 0
-                }
-                let buf = new Buffer(req.content, req.encoding)
-                req.size = buf.length
-                req.hash = gitHash(buf)
-                uplReqs[fileName] = req
-                return Promise.resolve()
-            }
-
-            return Cloud.privatePostAsync(liteId + "/files", {
+            let req = {
                 encoding: isText ? "utf8" : "base64",
-                filename: fileName,
-                contentType: mime,
                 content,
-            }).then(resp => {
-                console.log(fileName, mime)
-            })
+                hash: "",
+                filename: fileName,
+                size: 0
+            }
+            let buf = new Buffer(req.content, req.encoding)
+            req.size = buf.length
+            req.hash = gitHash(buf)
+            uplReqs[fileName] = req
+            return Promise.resolve()
         })
     }
 
@@ -1097,59 +1082,8 @@ function uploadCoreAsync(opts: UploadOptions) {
                 console.log("Release files written to", path.resolve(builtPackaged + opts.localDir))
             })
 
-
-    if (isNewBackend())
-        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
-            .then(() => gitUploadAsync(opts, uplReqs))
-
-    let info = travisInfo()
-    return Cloud.privatePostAsync("releases", {
-        pkgversion: opts.pkgversion,
-        commit: info.commitUrl,
-        branch: info.tag || info.branch,
-        buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
-        target: pxt.appTarget ? pxt.appTarget.id : "",
-        type: "fulltarget"
-    })
-        .then(resp => {
-            console.log(resp)
-            liteId = resp.id
-            return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
-        })
-        .then(() => {
-            if (!opts.label) return Promise.resolve()
-            if (!U.startsWith(opts.label, pxt.appTarget.id))
-                opts.label = pxt.appTarget.id + "/" + opts.label
-            if (opts.legacyLabel) return Cloud.privatePostAsync(liteId + "/label", { name: opts.label })
-            else return Cloud.privatePostAsync("pointers", {
-                path: nodeutil.sanitizePath(opts.label),
-                releaseid: liteId
-            }).then(() => {
-                // semver style update, if v0.1.2, setup v0.1
-                let mami = opts.label.replace(/\/v(\d+)\.(\d+)\.(\d+)$/, `/v\$1.\$2`)
-                if (opts.label == mami)
-                    return Promise.resolve();
-                console.log("Also tagging with " + mami)
-                return Cloud.privatePostAsync("pointers", {
-                    path: nodeutil.sanitizePath(mami),
-                    releaseid: liteId
-                })
-            }).then(() => {
-                // tag release/v0.1.2 also as release/beta
-                const betaTag = opts.label.replace(/\/v\d.*$/, "/beta")
-                if (betaTag == opts.label) return Promise.resolve()
-                else {
-                    console.log("Also tagging with " + betaTag)
-                    return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(betaTag),
-                        releaseid: liteId
-                    })
-                }
-            })
-        })
-        .then(() => {
-            console.log("All done; tagged with " + opts.label)
-        })
+    return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+        .then(() => gitUploadAsync(opts, uplReqs))
 }
 
 function readLocalPxTarget() {
@@ -3411,19 +3345,6 @@ export function testAsync() {
         .then((compileOpts) => { });
 }
 
-export function uploadDocsAsync(...args: string[]): Promise<void> {
-    let info = travisInfo()
-    if (info.tag || (info.branch && info.branch != "master"))
-        return Promise.resolve()
-    if (isNewBackend()) {
-        console.log("No doc upload on new backend.")
-        return Promise.resolve()
-    }
-    let cfg = readLocalPxTarget()
-    uploader.saveThemeJson = () => saveThemeJson(cfg)
-    return uploader.uploadDocsAsync(...args)
-}
-
 export interface SavedProject {
     name: string;
     files: Map<string>;
@@ -3637,7 +3558,6 @@ cmd("update                       - update pxt-core reference and install update
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
-cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
