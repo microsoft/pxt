@@ -702,18 +702,6 @@ function targetFileList() {
     return lst;
 }
 
-export function staticpkgAsync(label?: string) {
-    let dir = label ? "/" + label + "/" : "/"
-    return Promise.resolve()
-        .then(() => uploadCoreAsync({
-            label: label || "main",
-            pkgversion: "0.0.0",
-            fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-            localDir: dir
-        }))
-        .then(() => renderDocs(dir))
-}
-
 export function uploadTargetAsync(label?: string) {
     return uploadCoreAsync({
         label: label,
@@ -1235,61 +1223,6 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
             resolve(Buffer.concat(bufs))
         });
     })
-}
-
-function ghpSetupRepoAsync() {
-    function getreponame() {
-        let cfg = fs.readFileSync("built/gh-pages/.git/config", "utf8")
-        let m = /^\s*url\s*=\s*.*github.*\/([^\/\s]+)$/mi.exec(cfg)
-        if (!m) U.userError("cannot determine GitHub repo name")
-        return m[1].replace(/\.git$/, "")
-    }
-    if (fs.existsSync("built/gh-pages")) {
-        console.log("Skipping init of built/gh-pages; you can delete it first to get full re-init")
-        return Promise.resolve(getreponame())
-    }
-
-    nodeutil.cpR(".git", "built/gh-pages/.git")
-    return ghpGitAsync("checkout", "gh-pages")
-        .then(() => getreponame(), (e: any) => {
-            U.userError("No gh-pages branch. Try 'pxt ghpinit' first.")
-        })
-}
-
-function ghpGitAsync(...args: string[]) {
-    return spawnAsync({
-        cmd: "git",
-        cwd: "built/gh-pages",
-        args: args
-    })
-}
-
-export function ghpPushAsync() {
-    let repoName = ""
-    return ghpSetupRepoAsync()
-        .then(name => staticpkgAsync((repoName = name)))
-        .then(() => {
-            nodeutil.cpR(builtPackaged + "/" + repoName, "built/gh-pages")
-        })
-        .then(() => ghpGitAsync("add", "."))
-        .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
-        .then(() => ghpGitAsync("push"))
-}
-
-export function ghpInitAsync() {
-    if (fs.existsSync("built/gh-pages"))
-        U.userError("built/gh-pages already exists")
-    nodeutil.cpR(".git", "built/gh-pages/.git")
-    return ghpGitAsync("checkout", "gh-pages")
-        .then(() => U.userError("gh-pages branch already exists"), (e: any) => { })
-        .then(() => ghpGitAsync("checkout", "--orphan", "gh-pages"))
-        .then(() => ghpGitAsync("rm", "-rf", "."))
-        .then(() => {
-            fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
-            return ghpGitAsync("add", ".")
-        })
-        .then(() => ghpGitAsync("commit", "-m", "Initial."))
-        .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
 }
 
 function maxMTimeAsync(dirs: string[]) {
@@ -3707,11 +3640,7 @@ cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1
 cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
-cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
-
-cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) hosting for target", ghpInitAsync, 1)
-cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 cmd("logout                       - clears access token", logoutAsync, 1)
