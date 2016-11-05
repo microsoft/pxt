@@ -34,7 +34,6 @@
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
-    "built/uploader.js",
     "built/web/fonts",
     "built/web/*.js",
     "built/web/*.css",

@@ -16,7 +16,6 @@ import Cloud = pxt.Cloud;
 import Map = pxt.Map;
 
 import * as server from './server';
-import * as uploader from './uploader';
 import * as build from './buildengine'
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
