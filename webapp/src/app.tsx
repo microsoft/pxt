@@ -858,7 +858,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
-            if (new Date().getTime() - this.lastChangeTime < 1000) return;
+            if (Util.now() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
             this.runSimulator({ background: true });
@@ -867,7 +867,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     private autoRunSimulator = pxtc.Util.debounce(
         () => {
-            if (new Date().getTime() - this.lastChangeTime < 1000) return;
+            if (Util.now() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
             this.runSimulator({ background: true });
@@ -914,7 +914,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
                 this.editorFile.markDirty();
             }
-            this.lastChangeTime = new Date().getTime();
+            this.lastChangeTime = Util.now();
             this.editorChangeHandler();
         }
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]

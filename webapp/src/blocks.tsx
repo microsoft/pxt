@@ -230,7 +230,7 @@ export class Editor extends srceditor.Editor {
     }
 
     isIncomplete() {
-        return this.editor.isDragging();
+        return this.editor ? this.editor.isDragging() : false;
     }
 
     prepare() {
