@@ -10,6 +10,8 @@ declare namespace pxt {
         name: string;
         version?: string;
         installedVersion?: string;
+        // semver description for support target version
+        targetVersion?: string;
         description?: string;
         dependencies: Map<string>;
         license?: string;
@@ -23,7 +25,6 @@ declare namespace pxt {
         yotta?: YottaConfig;
         card?: CodeCard;
         additionalFilePath?: string;
-        minTargetVersion?: string;
     }
 
     interface PlatformIOConfig {
