@@ -137,7 +137,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
     fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages) return [];
+        if (!cloud.packages || !this.state.packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
         let res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
@@ -149,7 +149,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
     fetchCloudData(): Cloud.JsonPointer[] {
         let cloud = pxt.appTarget.cloud || {};
-        if (cloud.packages) return [] // now handled on GitHub
+        if (cloud.packages || !this.state.packages) return [] // now handled on GitHub
         if (!cloud.workspaces && !cloud.packages) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor
