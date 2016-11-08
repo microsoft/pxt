@@ -913,7 +913,7 @@ function readLocalPxTarget() {
         console.error("This command requires pxtarget.json in current directory.")
         process.exit(1)
     }
-    nodeutil.targetDir = process.cwd()
+    nodeutil.setTargetDir(process.cwd())
     let cfg: pxt.TargetBundle = readJson("pxtarget.json")
     if (forkPref()) {
         let cfgF: pxt.TargetBundle = readJson(forkPref() + "pxtarget.json")
@@ -1185,6 +1185,11 @@ function buildSemanticUIAsync() {
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
         fs.writeFileSync('built/web/semantic.css', semCss)
     })
+}
+
+function buildWebStringsAsync() {
+    fs.writeFileSync("built/webstrings.json", JSON.stringify(webstringsJson(), null, 4))
+    return Promise.resolve()
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
@@ -1468,7 +1473,8 @@ export function serveAsync(...args: string[]) {
         forceCloudBuild = false
     } else if (hasArg("cloud")) {
         forceCloudBuild = true
-    } else if (hasArg("just")) {
+    }
+    if (hasArg("just")) {
         justServe = true
     } else if (hasArg("pkg")) {
         justServe = true
@@ -1476,7 +1482,8 @@ export function serveAsync(...args: string[]) {
     } else if (hasArg("no-browser")) {
         justServe = true
         globalConfig.noAutoStart = true
-    } else if (hasArg("include-source-maps")) {
+    }
+    if (hasArg("include-source-maps")) {
         includeSourceMaps = true;
     }
     if (!globalConfig.localToken) {
@@ -3416,6 +3423,19 @@ function getSnippets(source: string): SnippetInfo[] {
     return snippets
 }
 
+function webstringsJson() {
+    let missing: Map<string> = {}
+    for (let fn of onlyExts(nodeutil.allFiles("docfiles"), [".html"])) {
+        let res = pxt.docs.translate(fs.readFileSync(fn, "utf8"), {})
+        U.jsonCopyFrom(missing, res.missing)
+    }
+    U.iterMap(missing, (k, v) => {
+        missing[k] = k
+    })
+    missing = U.sortObjectFields(missing)
+    return missing
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -3482,6 +3502,7 @@ cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadF
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 cmd("buildcss                     - build required css files", buildSemanticUIAsync, 10)
+cmd("buildwebstrings              - build webstrings.json", buildWebStringsAsync, 10)
 
 cmd("crowdin CMD PATH [OUTPUT]    - upload, download files to/from crowdin", execCrowdinAsync, 2);
 
@@ -3587,7 +3608,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         process.exit(30)
     }
 
-    nodeutil.targetDir = targetDir;
+    nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
     pxt.setAppTarget(trg)

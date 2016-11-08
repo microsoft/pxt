@@ -17,6 +17,11 @@ export var targetDir: string = process.cwd();
 //When running the Electron app, this will be based on the initial value
 export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
 
+export function setTargetDir(dir: string) {
+    targetDir = dir;
+    pxtCoreDir = path.join(targetDir, "node_modules/pxt-core");
+}
+
 export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
         let bufs: Buffer[] = []
