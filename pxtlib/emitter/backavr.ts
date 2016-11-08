@@ -308,7 +308,7 @@ namespace ts.pxtc {
         lambda_epilogue() {
             return `
     call pxtrt::getGlobalsPtr
-    movw r2, r24
+    movw r30, r24
     ${this.proc_return()}
     @stackempty args`
         }
@@ -331,7 +331,7 @@ namespace ts.pxtc {
             "r2": "r20",
             "r3": "r18",
             "r5": "r26",  // X
-            "r6": "r2"   // Z
+            "r6": "r30"   // Z
         }
 
         rmap_hi: pxt.Map<string> = {
@@ -340,7 +340,7 @@ namespace ts.pxtc {
             "r2": "r21",
             "r3": "r19",
             "r5": "r27",
-            "r6": "r3"
+            "r6": "r31"
         }
 
         inst_lo: pxt.Map<string> = {
