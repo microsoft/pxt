@@ -14,14 +14,16 @@ namespace pxsim.visuals {
         private currentAngle = 0;
         private targetAngle = 0;
         private lastAngleTime = 0;
-        private pin: string;
+        private pin: number;
 
         private crankEl: SVGGElement;
         private crankTransform: string;
 
         public init(bus: EventBus, state: MicroServosState, svgEl: SVGSVGElement, otherParams: Map<string>) {
             this.state = state;
-            this.pin = readPin(otherParams["name"] || otherParams["pin"]).toString();
+            this.pin = this.state.props[
+                pxsim.readPin(otherParams["name"] || otherParams["pin"])
+            ];
             this.bus = bus;
             this.defs = [];
             this.initDom();
