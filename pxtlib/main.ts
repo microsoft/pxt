@@ -286,10 +286,10 @@ namespace pxt {
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
                 U.userError("Invalid package name: " + this.config.name)
-            let minVer = this.config.minTargetVersion
-            if (minVer && semver.strcmp(minVer, appTarget.versions.target) > 0)
+            const targetVersion = this.config.targetVersion
+            if (targetVersion && semver.strcmp(targetVersion, appTarget.versions.target) > 0)
                 U.userError(lf("Package {0} requires target version {1} (you are running {2})",
-                    this.config.name, minVer, appTarget.versions.target))
+                    this.config.name, targetVersion, appTarget.versions.target))
         }
 
         upgradePackage(pkg: string, val: string): string {

@@ -529,6 +529,12 @@ namespace ts.pxtc.Util {
     export var localizeLive = false;
 
     /**
+     * Returns the current user language, prepended by "live-" if in live mode
+     */
+    export function localeInfo(): string {
+        return `${localizeLive ? "live-" : ""}${userLanguage()}`;
+    }
+    /**
      * Returns current user language iSO-code. Default is `en`.
      */
     export function userLanguage(): string {

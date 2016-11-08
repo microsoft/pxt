@@ -158,8 +158,14 @@ namespace pxt.github {
             defaultBranch: r.default_branch,
             tag: tag
         }
-        rr.status = isRepoBanned(rr, config) ? GitRepoStatus.Banned : isRepoApproved(rr, config) ? GitRepoStatus.Approved : GitRepoStatus.Unknown
+        rr.status = repoStatus(rr, config);
         return rr;
+    }
+
+    function repoStatus(rr: ParsedRepo, config: pxt.PackagesConfig): GitRepoStatus {
+        return isRepoBanned(rr, config) ? GitRepoStatus.Banned
+            : isRepoApproved(rr, config) ? GitRepoStatus.Approved
+                : GitRepoStatus.Unknown;
     }
 
     function isOrgBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
@@ -202,29 +208,26 @@ namespace pxt.github {
     }
 
     export function repoAsync(id: string, config: pxt.PackagesConfig): Promise<GitRepo> {
-        let rid = parseRepoId(id);
-        if (!rid || isRepoBanned(rid, config)) return Promise.resolve<GitRepo>(undefined);
+        const rid = parseRepoId(id);
+        const status = repoStatus(rid, config);
+        if (status == GitRepoStatus.Banned)
+            return Promise.resolve<GitRepo>(undefined);
 
-        // trusted orgs use proxy
-        if (isOrgApproved(rid, config))
-            return Util.httpGetJsonAsync(`${pxt.appTarget.appTheme.homeUrl}api/gh/${rid.fullName}`)
-                .then(meta => {
-                    if (!meta) return undefined;
-                    return {
-                        github: true,
-                        owner: rid.owner,
-                        fullName: rid.fullName,
-                        name: meta.name,
-                        description: meta.description,
-                        defaultBranch: "master",
-                        tag: rid.tag,
-                        status: GitRepoStatus.Approved
-                    };
-                })
-
-        // user repos
-        return U.httpGetJsonAsync("https://api.github.com/repos/" + rid.fullName)
-            .then((r: Repo) => mkRepo(r, config, rid.tag));
+        // always use proxy
+        return Util.httpGetJsonAsync(`${pxt.appTarget.appTheme.homeUrl}api/gh/${rid.fullName}`)
+            .then(meta => {
+                if (!meta) return undefined;
+                return {
+                    github: true,
+                    owner: rid.owner,
+                    fullName: rid.fullName,
+                    name: meta.name,
+                    description: meta.description,
+                    defaultBranch: "master",
+                    tag: rid.tag,
+                    status
+                };
+            })
     }
 
     export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {

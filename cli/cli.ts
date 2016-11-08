@@ -16,7 +16,6 @@ import Cloud = pxt.Cloud;
 import Map = pxt.Map;
 
 import * as server from './server';
-import * as uploader from './uploader';
 import * as build from './buildengine'
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
@@ -31,10 +30,6 @@ function initTargetCommands() {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
     }
-}
-
-function isNewBackend() {
-    return U.startsWith(Cloud.accessToken, "3.")
 }
 
 let prevExports = (global as any).savedModuleExports
@@ -327,183 +322,6 @@ export function yesNoAsync(msg: string): Promise<boolean> {
         })
 }
 
-function ptrcheckAsync(cmd: string) {
-    let prefixIgnore: string[] = []
-    let exactIgnore: Map<boolean> = {}
-
-    if (fs.existsSync("ptrcheck-ignore")) {
-        let ign = fs.readFileSync("ptrcheck-ignore", "utf8").split(/\r?\n/)
-        for (let line of ign) {
-            line = line.trim()
-            if (line[0] == "#") continue
-            if (line[line.length - 1] == "*") {
-                prefixIgnore.push(line.slice(0, line.length - 1))
-            } else {
-                exactIgnore[line] = true
-            }
-        }
-    }
-
-    let path = "pointers"
-    let isCore = pxt.appTarget.id == "core"
-    if (!isCore)
-        path += "/" + pxt.appTarget.id
-    let elts: Cloud.JsonPointer[] = []
-    let next = (cont: string): Promise<void> =>
-        Cloud.privateGetAsync(path + "?count=500&continuation=" + cont)
-            .then((resp: Cloud.JsonList) => {
-                console.log("Query:", cont)
-                for (let e of resp.items as Cloud.JsonPointer[]) {
-                    if (isCore && /^ptr-([a-z]+)$/.exec(e.id) && e.releaseid) {
-                        let tname = e.id.slice(4)
-                        prefixIgnore.push(tname + "-")
-                        exactIgnore[tname] = true
-                        console.log("Target: " + e.id)
-                    }
-                    elts.push(e)
-                }
-                if (resp.continuation) return next(resp.continuation)
-                else return Promise.resolve()
-            })
-
-
-    let files = U.toDictionary(nodeutil.allFiles("docs", 8)
-        .filter(e => /\.(md|html)$/.test(e))
-        .map(e => {
-            let s = e.slice(5).replace(/\.(md|html)$/, "")
-            let m = /^_locales\/([a-z]+)\/(.*)/.exec(s)
-            if (m) s = m[2] + "@" + m[1]
-            s = s.replace(/\//g, "-")
-            return s
-        }), x => x)
-
-    return next("")
-        .then(() => {
-            let c0 = elts.length
-            elts = elts.filter(e => {
-                if (e.releaseid && /ptr-[a-z]+-v\d+-\d+-\d+$/.test(e.id))
-                    return false
-                let ename = e.id.slice(4)
-                if (U.lookup(exactIgnore, ename))
-                    return false
-                for (let pref of prefixIgnore) {
-                    if (pref == ename.slice(0, pref.length))
-                        return false
-                }
-                if (e.redirect)
-                    return false
-                return true
-            })
-
-            console.log(`Got ${c0} pointers; have ${elts.length} after filtering. Core=${isCore}`)
-            elts.sort((a, b) => U.strcmp(a.id, b.id))
-
-
-            let toDel: string[] = []
-            for (let e of elts) {
-                let fn = e.id.slice(4)
-                if (!isCore) fn = fn.replace(/^[a-z]+-/, "")
-                if (!U.lookup(files, fn)) {
-                    toDel.push(e.id)
-                }
-            }
-
-            if (toDel.length == 0) {
-                console.log("All OK, nothing excessive.")
-                return Promise.resolve()
-            }
-
-            console.log(`Absent in docs/ ${toDel.length} items:`)
-            for (let e of toDel)
-                console.log(e.slice(4))
-
-            if (cmd != "delete") {
-                console.log("Use 'pxt ptrcheck delete' to delete these; you will be prompted")
-                return Promise.resolve()
-            }
-
-            return yesNoAsync("Delete all these pointers?")
-                .then(y => {
-                    if (!y) return Promise.resolve()
-                    return Promise.map(toDel,
-                        e => Cloud.privateDeleteAsync(e)
-                            .then(() => {
-                                console.log("DELETE", e)
-                            }),
-                        { concurrency: 5 })
-                        .then(() => { })
-                })
-        })
-}
-
-export function ptrAsync(path: string, target?: string) {
-    // in MinGW when you say 'pxt ptr /foo/bar' on command line you get C:/MinGW/msys/1.0/foo/bar instead of '/foo/bar'
-    let mingwRx = /^[a-z]:\/.*?MinGW.*?1\.0\//i
-
-    path = path.replace(mingwRx, "/")
-    path = nodeutil.sanitizePath(path)
-
-    if (!target) {
-        return Cloud.privateGetAsync(nodeutil.pathToPtr(path))
-            .then(r => {
-                console.log(r)
-                return r
-            })
-    }
-
-    if (target == "delete") {
-        return Cloud.privateDeleteAsync(nodeutil.pathToPtr(path))
-            .then(() => {
-                console.log("Pointer " + path + " deleted.")
-            })
-    }
-
-    if (target == "refresh") {
-        return Cloud.privatePostAsync(nodeutil.pathToPtr(path), {})
-            .then(r => {
-                console.log(r)
-                return r
-            })
-    }
-
-    let ptr = {
-        path: path,
-        releaseid: "",
-        redirect: "",
-        scriptid: "",
-        artid: "",
-        htmlartid: "",
-        userplatform: ["pxt-cli"],
-    }
-
-    target = target.replace(mingwRx, "/")
-
-    return (/^[a-z]+$/.test(target) ? Cloud.privateGetAsync(target) : Promise.reject(""))
-        .then(r => {
-            if (r.kind == "script")
-                ptr.scriptid = target
-            else if (r.kind == "art")
-                ptr.artid = target
-            else if (r.kind == "release")
-                ptr.releaseid = target
-            else {
-                U.userError("Don't know how to set pointer to this publication type: " + r.kind)
-            }
-        }, e => {
-            if (/^(\/|http)/.test(target)) {
-                console.log("Assuming redirect for: " + target)
-                ptr.redirect = target
-            } else {
-                U.userError("Don't know how to set pointer to: " + target)
-            }
-        })
-        .then(() => Cloud.privatePostAsync("pointers", ptr))
-        .then(r => {
-            console.log(r)
-            return r
-        })
-}
-
 function onlyExts(files: string[], exts: string[]) {
     return files.filter(f => exts.indexOf(path.extname(f)) >= 0)
 }
@@ -555,7 +373,7 @@ function travisAsync() {
         return p;
     } else {
         return buildTargetAsync()
-            .then(() => uploader.checkDocsAsync())
+            .then(() => checkDocsAsync())
             .then(() => testSnippetsAsync())
             .then(() => {
                 if (!process.env.CLOUD_ACCESS_TOKEN) {
@@ -700,18 +518,6 @@ function targetFileList() {
         .concat(forkFiles("sim/public"))
     pxt.debug(`target files: ${lst.join('\r\n    ')}`)
     return lst;
-}
-
-export function staticpkgAsync(label?: string) {
-    let dir = label ? "/" + label + "/" : "/"
-    return Promise.resolve()
-        .then(() => uploadCoreAsync({
-            label: label || "main",
-            pkgversion: "0.0.0",
-            fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-            localDir: dir
-        }))
-        .then(() => renderDocs(dir))
 }
 
 export function uploadTargetAsync(label?: string) {
@@ -1074,29 +880,18 @@ function uploadCoreAsync(opts: UploadOptions) {
                 return writeFileAsync(fn, data)
             }
 
-            if (isNewBackend()) {
-                let req = {
-                    encoding: isText ? "utf8" : "base64",
-                    content,
-                    hash: "",
-                    filename: fileName,
-                    size: 0
-                }
-                let buf = new Buffer(req.content, req.encoding)
-                req.size = buf.length
-                req.hash = gitHash(buf)
-                uplReqs[fileName] = req
-                return Promise.resolve()
-            }
-
-            return Cloud.privatePostAsync(liteId + "/files", {
+            let req = {
                 encoding: isText ? "utf8" : "base64",
-                filename: fileName,
-                contentType: mime,
                 content,
-            }).then(resp => {
-                console.log(fileName, mime)
-            })
+                hash: "",
+                filename: fileName,
+                size: 0
+            }
+            let buf = new Buffer(req.content, req.encoding)
+            req.size = buf.length
+            req.hash = gitHash(buf)
+            uplReqs[fileName] = req
+            return Promise.resolve()
         })
     }
 
@@ -1109,59 +904,8 @@ function uploadCoreAsync(opts: UploadOptions) {
                 console.log("Release files written to", path.resolve(builtPackaged + opts.localDir))
             })
 
-
-    if (isNewBackend())
-        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
-            .then(() => gitUploadAsync(opts, uplReqs))
-
-    let info = travisInfo()
-    return Cloud.privatePostAsync("releases", {
-        pkgversion: opts.pkgversion,
-        commit: info.commitUrl,
-        branch: info.tag || info.branch,
-        buildnumber: process.env['TRAVIS_BUILD_NUMBER'],
-        target: pxt.appTarget ? pxt.appTarget.id : "",
-        type: "fulltarget"
-    })
-        .then(resp => {
-            console.log(resp)
-            liteId = resp.id
-            return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
-        })
-        .then(() => {
-            if (!opts.label) return Promise.resolve()
-            if (!U.startsWith(opts.label, pxt.appTarget.id))
-                opts.label = pxt.appTarget.id + "/" + opts.label
-            if (opts.legacyLabel) return Cloud.privatePostAsync(liteId + "/label", { name: opts.label })
-            else return Cloud.privatePostAsync("pointers", {
-                path: nodeutil.sanitizePath(opts.label),
-                releaseid: liteId
-            }).then(() => {
-                // semver style update, if v0.1.2, setup v0.1
-                let mami = opts.label.replace(/\/v(\d+)\.(\d+)\.(\d+)$/, `/v\$1.\$2`)
-                if (opts.label == mami)
-                    return Promise.resolve();
-                console.log("Also tagging with " + mami)
-                return Cloud.privatePostAsync("pointers", {
-                    path: nodeutil.sanitizePath(mami),
-                    releaseid: liteId
-                })
-            }).then(() => {
-                // tag release/v0.1.2 also as release/beta
-                const betaTag = opts.label.replace(/\/v\d.*$/, "/beta")
-                if (betaTag == opts.label) return Promise.resolve()
-                else {
-                    console.log("Also tagging with " + betaTag)
-                    return Cloud.privatePostAsync("pointers", {
-                        path: nodeutil.sanitizePath(betaTag),
-                        releaseid: liteId
-                    })
-                }
-            })
-        })
-        .then(() => {
-            console.log("All done; tagged with " + opts.label)
-        })
+    return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+        .then(() => gitUploadAsync(opts, uplReqs))
 }
 
 function readLocalPxTarget() {
@@ -1235,61 +979,6 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
             resolve(Buffer.concat(bufs))
         });
     })
-}
-
-function ghpSetupRepoAsync() {
-    function getreponame() {
-        let cfg = fs.readFileSync("built/gh-pages/.git/config", "utf8")
-        let m = /^\s*url\s*=\s*.*github.*\/([^\/\s]+)$/mi.exec(cfg)
-        if (!m) U.userError("cannot determine GitHub repo name")
-        return m[1].replace(/\.git$/, "")
-    }
-    if (fs.existsSync("built/gh-pages")) {
-        console.log("Skipping init of built/gh-pages; you can delete it first to get full re-init")
-        return Promise.resolve(getreponame())
-    }
-
-    nodeutil.cpR(".git", "built/gh-pages/.git")
-    return ghpGitAsync("checkout", "gh-pages")
-        .then(() => getreponame(), (e: any) => {
-            U.userError("No gh-pages branch. Try 'pxt ghpinit' first.")
-        })
-}
-
-function ghpGitAsync(...args: string[]) {
-    return spawnAsync({
-        cmd: "git",
-        cwd: "built/gh-pages",
-        args: args
-    })
-}
-
-export function ghpPushAsync() {
-    let repoName = ""
-    return ghpSetupRepoAsync()
-        .then(name => staticpkgAsync((repoName = name)))
-        .then(() => {
-            nodeutil.cpR(builtPackaged + "/" + repoName, "built/gh-pages")
-        })
-        .then(() => ghpGitAsync("add", "."))
-        .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
-        .then(() => ghpGitAsync("push"))
-}
-
-export function ghpInitAsync() {
-    if (fs.existsSync("built/gh-pages"))
-        U.userError("built/gh-pages already exists")
-    nodeutil.cpR(".git", "built/gh-pages/.git")
-    return ghpGitAsync("checkout", "gh-pages")
-        .then(() => U.userError("gh-pages branch already exists"), (e: any) => { })
-        .then(() => ghpGitAsync("checkout", "--orphan", "gh-pages"))
-        .then(() => ghpGitAsync("rm", "-rf", "."))
-        .then(() => {
-            fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
-            return ghpGitAsync("add", ".")
-        })
-        .then(() => ghpGitAsync("commit", "-m", "Initial."))
-        .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
 }
 
 function maxMTimeAsync(dirs: string[]) {
@@ -3112,7 +2801,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
         console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
     }
 
-    let files = uploader.getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
+    let files = getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
     console.log(`checking ${files.length} documentation files`)
 
     let ignoreCount = 0
@@ -3141,7 +2830,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
     return Promise.map(files, (fname: string) => {
         let pkgName = fname.replace(/\\/g, '-').replace('.md', '')
         let source = fs.readFileSync(fname, 'utf8')
-        let snippets = uploader.getSnippets(source)
+        let snippets = getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
         extraDeps.push("core")
@@ -3478,19 +3167,6 @@ export function testAsync() {
         .then((compileOpts) => { });
 }
 
-export function uploadDocsAsync(...args: string[]): Promise<void> {
-    let info = travisInfo()
-    if (info.tag || (info.branch && info.branch != "master"))
-        return Promise.resolve()
-    if (isNewBackend()) {
-        console.log("No doc upload on new backend.")
-        return Promise.resolve()
-    }
-    let cfg = readLocalPxTarget()
-    uploader.saveThemeJson = () => saveThemeJson(cfg)
-    return uploader.uploadDocsAsync(...args)
-}
-
 export interface SavedProject {
     name: string;
     files: Map<string>;
@@ -3657,6 +3333,89 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     return dirs;
 }
 
+function getFiles(): string[] {
+    let res: string[] = []
+    function loop(path: string) {
+        for (let fn of fs.readdirSync(path)) {
+            if (fn[0] == "." || fn[0] == "_") continue;
+            let fp = path + "/" + fn
+            let st = fs.statSync(fp)
+            if (st.isDirectory()) loop(fp)
+            else if (st.isFile()) res.push(fp.replace(/^docs/, ""))
+        }
+    }
+    loop("docs")
+    if (fs.existsSync("docs/_locales"))
+        loop("docs/_locales")
+    return res
+}
+
+function checkDocsAsync(...args: string[]): Promise<void> {
+    console.log(`checking docs`);
+    let files = getFiles();
+
+    // known urls
+    let urls: Map<string> = {};
+    files.forEach(f => urls[f.replace(/\.md$/i, '')] = f);
+
+    let checked = 0;
+    let broken = 0;
+    let snipCount = 0;
+    files.filter(f => /\.md$/i.test(f)).forEach(f => {
+        let header = false;
+        let contentType = U.getMime(f)
+        if (!contentType || !/^text/.test(contentType))
+            return;
+        checked++;
+        let text = fs.readFileSync("docs" + f).toString("utf8");
+        // look for broken urls
+        text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
+            let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
+            if (!urls[url]) {
+                console.error(`${f}: broken link ${url}`);
+                broken++;
+            }
+            return '';
+        })
+
+        let snippets = getSnippets(text)
+        snipCount += snippets.length
+        for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
+            let dir = "built/docs/snippets/" + snippets[snipIndex].type;
+            let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
+            nodeutil.mkdirP(dir);
+            fs.writeFileSync(fn, snippets[snipIndex].code);
+        }
+    });
+
+    console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
+    return Promise.resolve();
+}
+
+interface SnippetInfo {
+    type: string
+    code: string
+    ignore: boolean
+    index: number
+}
+
+function getSnippets(source: string): SnippetInfo[] {
+    let snippets: SnippetInfo[] = []
+    let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
+    let index = 0
+    source.replace(re, (match, type, code) => {
+        snippets.push({
+            type: type ? type.replace("-ignore", "") : "pre",
+            code: code,
+            ignore: type ? /-ignore/g.test(type) : false,
+            index: index
+        })
+        index++
+        return ''
+    })
+    return snippets
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -3704,14 +3463,9 @@ cmd("update                       - update pxt-core reference and install update
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("bump                         - bump target or package version", bumpAsync)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
-cmd("uploaddoc [docs/foo.md...]   - push/upload docs to server", uploadDocsAsync, 1)
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
-cmd("staticpkg [DIR]              - setup files for serving from simple file server", staticpkgAsync, 1)
-cmd("checkdocs                    - check docs for broken links, typing errors, etc...", uploader.checkDocsAsync, 1)
-
-cmd("ghpinit                      - setup GitHub Pages (create gh-pages branch) hosting for target", ghpInitAsync, 1)
-cmd("ghppush                      - build static package and push to GitHub Pages", ghpPushAsync, 1)
+cmd("checkdocs                    - check docs for broken links, typing errors, etc...", checkDocsAsync, 1)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 cmd("logout                       - clears access token", logoutAsync, 1)
@@ -3723,8 +3477,6 @@ cmd("pkginfo  USER/REPO           - show info about named GitHub packge", pkginf
 cmd("api      PATH [DATA]         - do authenticated API call", apiAsync, 1)
 cmd("pokecloud                    - same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"), 2)
 cmd("pokerepo [-u] REPO           - refresh repo, or generate a URL to do so", pokeRepoAsync, 2)
-cmd("ptr      PATH [TARGET]       - get PATH, or set PATH to TARGET (publication id, redirect, or \"delete\")", ptrAsync, 1)
-cmd("ptrcheck                     - check pointers in the cloud against ones in the repo", ptrcheckAsync, 1)
 cmd("travis                       - upload release and npm package", travisAsync, 1)
 cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadFileAsync, 1)
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)

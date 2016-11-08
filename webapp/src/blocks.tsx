@@ -230,7 +230,7 @@ export class Editor extends srceditor.Editor {
     }
 
     isIncomplete() {
-        return this.editor.isDragging();
+        return this.editor ? this.editor.isDragging() : false;
     }
 
     prepare() {
@@ -312,7 +312,6 @@ export class Editor extends srceditor.Editor {
             }
         })
         this.resize();
-        Blockly.svgResize(this.editor);
 
         this.isReady = true
     }
@@ -320,19 +319,10 @@ export class Editor extends srceditor.Editor {
     resize(e?: Event) {
         let blocklyArea = document.getElementById('blocksArea');
         let blocklyDiv = document.getElementById('blocksEditor');
-
-        // Compute the absolute coordinates and dimensions of blocklyArea.
-        let element = blocklyArea;
-        let x = 0;
-        let y = 0;
-        do {
-            x += element.offsetLeft;
-            y += element.offsetTop;
-            element = element.offsetParent as HTMLElement;
-        } while (element);
         // Position blocklyDiv over blocklyArea.
         blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
         blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+        Blockly.svgResize(this.editor);
     }
 
     undo() {
