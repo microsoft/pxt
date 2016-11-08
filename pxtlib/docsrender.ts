@@ -219,7 +219,8 @@ namespace pxt.docs {
 
     export function renderMarkdown(template: string, src: string,
         theme: AppTheme = {}, pubinfo: Map<string> = null,
-        breadcrumb: BreadcrumbEntry[] = [], filepath: string = null): string {
+        breadcrumb: BreadcrumbEntry[] = [], filepath: string = null,
+        locale: Map<string> = null): string {
 
         let params: Map<string> = pubinfo || {}
 
@@ -229,6 +230,9 @@ namespace pxt.docs {
                 let cont = (theme.htmlDocIncludes || {})[fn] || ""
                 return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
             })
+
+        if (locale)
+            template = translate(template, locale).text
 
         let d: RenderData = {
             html: template,
