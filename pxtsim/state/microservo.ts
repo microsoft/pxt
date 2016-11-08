@@ -8,14 +8,20 @@ namespace pxsim {
         }
     }
 
+    export interface MicroServosProps {
+        [name: string]: number;
+    }
+
     export class MicroServosState {
         public servos: {
-            [index: number]: MicroServoState;
+            [pinid: number]: MicroServoState;
         } = {};
 
-        public servoState(pin: number): MicroServoState {
-            let state = this.servos[pin];
-            if (!state) state = this.servos[pin] = new MicroServoState();
+        constructor(public props: MicroServosProps) {}
+
+        public servoState(pinid: number): MicroServoState {
+            let state = this.servos[pinid];
+            if (!state) state = this.servos[pinid] = new MicroServoState();
             return state;
         }
     }
