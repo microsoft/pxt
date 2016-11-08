@@ -514,24 +514,27 @@ ${files["main.ts"]}
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
-                    return { compileJS: resp };
+                    return Promise.resolve<DecompileResult>({ compileJS: resp });
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(resp.ast);
-                let blocksInfo = pxtc.getBlocksInfo(apis);
-                pxt.blocks.initBlocks(blocksInfo);
-                let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
-                if (bresp.diagnostics && bresp.diagnostics.length > 0)
-                    bresp.diagnostics.forEach(diag => console.error(diag.messageText));
-                if (!bresp.success)
-                    return { compileJS: resp, compileBlocks: bresp };
-                pxt.debug(bresp.outfiles["main.blocks"])
-                return {
-                    compileJS: resp,
-                    compileBlocks: bresp,
-                    blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
-                };
-            })
+                return ts.pxtc.localizeApisAsync(apis, mainPkg)
+                    .then(() => {
+                        let blocksInfo = pxtc.getBlocksInfo(apis);
+                        pxt.blocks.initBlocks(blocksInfo);
+                        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                        if (bresp.diagnostics && bresp.diagnostics.length > 0)
+                            bresp.diagnostics.forEach(diag => console.error(diag.messageText));
+                        if (!bresp.success)
+                            return <DecompileResult>{ compileJS: resp, compileBlocks: bresp };
+                        pxt.debug(bresp.outfiles["main.blocks"])
+                        return <DecompileResult>{
+                            compileJS: resp,
+                            compileBlocks: bresp,
+                            blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                        };
+                    })
+            });
     }
 
     export var initCallbacks: (() => void)[] = [];
