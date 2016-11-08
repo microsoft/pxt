@@ -268,9 +268,16 @@ namespace ts.pxtc {
     add	r25, r0
     eor	r1, r1`
             } else if (name == "asrs" || name == "lsrs") {
+                // shifts only work on single register
                 return `
-    ${this.inst_hi[name]} r25, r23
-    ${this.inst_lo[name]} r24, r22`
+    movw r24, r22
+    ${this.inst_hi[name]} r25
+    ${this.inst_lo[name]} r24`
+            } else if (name == "lsls") {
+                return `
+    movw r24, r22
+    ${this.inst_lo[name]} r24
+    ${this.inst_hi[name]} r25`
             } else if (this.inst_lo[name]) {
                 return `
     ${this.inst_lo[name]} r24, r22
