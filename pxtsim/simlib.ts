@@ -61,7 +61,7 @@ namespace pxsim {
         private process: () => void;
 
         constructor(private runtime: Runtime) {
-            this.process = (anim?: AnimationOptions ) => {
+            this.process = () => {
                 let top = this.queue[0];
                     if (!top) return;
                 if (this.runtime.dead) return;
