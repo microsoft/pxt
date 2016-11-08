@@ -63,7 +63,7 @@ namespace pxsim {
         constructor(private runtime: Runtime) {
             this.process = () => {
                 let top = this.queue[0];
-                    if (!top) return;
+                if (!top) return;
                 if (this.runtime.dead) return;
                 runtime = this.runtime;
                 let res = top.frame();
@@ -73,12 +73,12 @@ namespace pxsim {
                     this.queue.shift();
                     // if there is already something in the queue, start processing
                     if (this.queue[0]) {
-                        this.queue[0].setTimeoutHandle = setTimeout(this.process, this.queue[0].interval, this.queue[0]);
+                        this.queue[0].setTimeoutHandle = setTimeout(this.process, this.queue[0].interval);
                     }
                     // this may push additional stuff
                     top.whenDone(false);
                 } else {
-                    top.setTimeoutHandle = setTimeout(this.process, top.interval, top);
+                    top.setTimeoutHandle = setTimeout(this.process, top.interval);
                 }
             }
         }
