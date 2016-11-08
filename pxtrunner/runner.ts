@@ -266,16 +266,19 @@ namespace pxt.runner {
 
     export var languageMode = LanguageMode.Blocks;
     export var editorLocale = "en";
-    export var editorLocaleLive = false;
-    export var onEditorContextChanged: () => void = undefined;
 
-    export function setEditorContext(mode: LanguageMode, locale: string) {
-        if (mode != languageMode || locale != editorLocale) {
-            languageMode = mode;
-            editorLocale = locale.replace(/^live-/, '');
-            editorLocaleLive = editorLocale != locale;
-            if (onEditorContextChanged) onEditorContextChanged();
+    export function setEditorContextAsync(mode: LanguageMode, locale: string) {
+        languageMode = mode;
+        if (locale != editorLocale) {
+            const localeLiveRx = /^live-/;
+            editorLocale = locale;
+            return pxt.Util.updateLocalizationAsync(pxt.webConfig.pxtCdnUrl,
+                editorLocale.replace(localeLiveRx, ''),
+                localeLiveRx.test(editorLocale)
+            );
         }
+
+        return Promise.resolve();
     }
 
     function receiveDocMessage(e: MessageEvent) {
@@ -285,7 +288,7 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                setEditorContext(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale);
+                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).done();
                 break;
             case "popout":
                 let mp = /#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -345,10 +348,10 @@ namespace pxt.runner {
             let m = /^#(doc|md):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
-                if (m[4]) setEditorContext(
+                const p = m[4] ? setEditorContextAsync(
                     /^blocks$/.test(m[4]) ? LanguageMode.Blocks : LanguageMode.TypeScript,
-                    m[5]);
-                render(m[1], decodeURIComponent(m[2]));
+                    m[5]) : Promise.resolve();
+                p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
 
@@ -378,8 +381,8 @@ ${files["main.ts"]}
         docid = docid.replace(/^\//, "");
         let url = `md/${pxt.appTarget.id}/${docid}`;
         if (editorLocale != "en") {
-            url += `?lang=${encodeURIComponent(editorLocale)}`
-            if (editorLocaleLive) url += "&live=1"
+            url += `?lang=${encodeURIComponent(Util.userLanguage())}`
+            if (pxt.Util.localizeLive) url += "&live=1"
         }
         return pxt.Cloud.privateGetTextAsync(url)
             .then(md => renderMarkdownAsync(content, md, docid))
