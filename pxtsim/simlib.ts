@@ -53,21 +53,15 @@ namespace pxsim {
         // false means last frame
         frame: () => boolean;
         whenDone?: (cancelled: boolean) => void;
-        cancelled?: boolean;
+        setTimeoutHandle?: number;
     }
 
     export class AnimationQueue {
         private queue: AnimationOptions[] = [];
-        private process: (anim?: AnimationOptions ) => void;
+        private process: () => void;
 
         constructor(private runtime: Runtime) {
             this.process = (anim?: AnimationOptions ) => {
-                if (anim && anim.cancelled) {
-                    //This cancels the timeout triggered from old AnimationOptions.
-                    return;
-                }
-                U.assert(!anim || (anim == this.queue[0]));
-
                 let top = this.queue[0];
                     if (!top) return;
                 if (this.runtime.dead) return;
@@ -79,12 +73,12 @@ namespace pxsim {
                     this.queue.shift();
                     // if there is already something in the queue, start processing
                     if (this.queue[0]) {
-                        setTimeout(this.process, this.queue[0].interval, this.queue[0]);
+                        this.queue[0].setTimeoutHandle = setTimeout(this.process, this.queue[0].interval, this.queue[0]);
                     }
                     // this may push additional stuff
                     top.whenDone(false);
                 } else {
-                    setTimeout(this.process, top.interval, top);
+                    top.setTimeoutHandle = setTimeout(this.process, top.interval, top);
                 }
             }
         }
@@ -94,6 +88,9 @@ namespace pxsim {
             this.queue = []
             for (let a of q) {
                 a.whenDone(true)
+                if (a.setTimeoutHandle) {
+                    clearTimeout(a.setTimeoutHandle);
+                }
             }
         }
 
@@ -102,7 +99,10 @@ namespace pxsim {
             if (top) {
                 this.queue.shift();
                 top.whenDone(true);
-            }
+                if (top.setTimeoutHandle) {
+                    clearTimeout(top.setTimeoutHandle);
+                }
+             }
         }
 
         public enqueue(anim: AnimationOptions) {
