@@ -340,10 +340,12 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md):([^&?:]+)(:([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
-                if (m[4]) setEditorContext(languageMode, m[4]);
+                if (m[4]) setEditorContext(
+                    /^blocks$/.test(m[4]) ? LanguageMode.Blocks : LanguageMode.TypeScript,
+                    m[5]);
                 render(m[1], decodeURIComponent(m[2]));
             }
         }
@@ -475,6 +477,7 @@ ${files["main.ts"]}
             snippetReplaceParent: true,
             simulator: true,
             hex: true,
+            showJavaScript: languageMode == LanguageMode.TypeScript,
             hexName: pxt.appTarget.id
         }).then(() => {
             // patch a elements

@@ -600,13 +600,17 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const url = `${docsUrl}#doc:${path}:${pxt.Util.userLanguage()}`;
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.userLanguage()}`;
         this.setUrl(url);
     }
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${pxt.Util.userLanguage()}`;
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.userLanguage()}`;
         this.setUrl(url);
     }
 
