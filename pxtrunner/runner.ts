@@ -266,12 +266,14 @@ namespace pxt.runner {
 
     export var languageMode = LanguageMode.Blocks;
     export var editorLocale = "en";
+    export var editorLocaleLive = false;
     export var onEditorContextChanged: () => void = undefined;
 
     export function setEditorContext(mode: LanguageMode, locale: string) {
         if (mode != languageMode || locale != editorLocale) {
             languageMode = mode;
-            editorLocale = locale;
+            editorLocale = locale.replace(/^live-/, '');
+            editorLocaleLive = editorLocale != locale;
             if (onEditorContextChanged) onEditorContextChanged();
         }
     }
@@ -375,7 +377,10 @@ ${files["main.ts"]}
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
         let url = `md/${pxt.appTarget.id}/${docid}`;
-        if (editorLocale != "en") url += `?lang=${encodeURIComponent(editorLocale)}`
+        if (editorLocale != "en") {
+            url += `?lang=${encodeURIComponent(editorLocale)}`
+            if (editorLocaleLive) url += "&live=1"
+        }
         return pxt.Cloud.privateGetTextAsync(url)
             .then(md => renderMarkdownAsync(content, md, docid))
     }
