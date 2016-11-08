@@ -431,8 +431,9 @@ namespace pxt.docs {
             let text = spm[2].replace(/\s+/g, " ");
             if (text == "" || /^((IE=edge,.*|width=device-width.*|(https?:\/\/|\/)[\w@\/\.]+|@[\-\w]+@|\{[^\{\}]+\}|[^a-zA-Z]*|(&nbsp;)+)\s*)+$/.test(text))
                 return null;
-            if (locale.hasOwnProperty(text))
-                text = locale[text];
+            let v = U.lookup(locale, text)
+            if (v)
+                text = v;
             else
                 missing[text] = "";
             return spm[1] + text + spm[3];
