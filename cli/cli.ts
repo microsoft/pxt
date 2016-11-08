@@ -3427,6 +3427,9 @@ function webstringsJson() {
         let res = pxt.docs.translate(fs.readFileSync(fn, "utf8"), {})
         U.jsonCopyFrom(missing, res.missing)
     }
+    U.iterMap(missing, (k, v) => {
+        missing[k] = k
+    })
     missing = U.sortObjectFields(missing)
     return missing
 }
