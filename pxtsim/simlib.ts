@@ -53,30 +53,38 @@ namespace pxsim {
         // false means last frame
         frame: () => boolean;
         whenDone?: (cancelled: boolean) => void;
+        cancelled?: boolean;
     }
 
     export class AnimationQueue {
         private queue: AnimationOptions[] = [];
-        private process: () => void;
+        private process: (anim?: AnimationOptions ) => void;
 
         constructor(private runtime: Runtime) {
-            this.process = () => {
-                let top = this.queue[0]
-                if (!top) return
-                if (this.runtime.dead) return
-                runtime = this.runtime
-                let res = top.frame()
-                runtime.queueDisplayUpdate()
-                runtime.maybeUpdateDisplay()
+            this.process = (anim?: AnimationOptions ) => {
+                if (anim && anim.cancelled) {
+                    //This cancels the timeout triggered from old AnimationOptions.
+                    return;
+                }
+                U.assert(!anim || (anim == this.queue[0]));
+
+                let top = this.queue[0];
+                    if (!top) return;
+                if (this.runtime.dead) return;
+                runtime = this.runtime;
+                let res = top.frame();
+                runtime.queueDisplayUpdate();
+                runtime.maybeUpdateDisplay();
                 if (res === false) {
                     this.queue.shift();
                     // if there is already something in the queue, start processing
-                    if (this.queue[0])
-                        setTimeout(this.process, this.queue[0].interval)
+                    if (this.queue[0]) {
+                        setTimeout(this.process, this.queue[0].interval, this.queue[0]);
+                    }
                     // this may push additional stuff
                     top.whenDone(false);
                 } else {
-                    setTimeout(this.process, top.interval)
+                    setTimeout(this.process, top.interval, top);
                 }
             }
         }
