@@ -218,11 +218,16 @@ namespace pxt.docs {
     }
 
     export function renderMarkdown(template: string, src: string,
-        theme: AppTheme = {}, pubinfo: Map<string> = null,
-        breadcrumb: BreadcrumbEntry[] = [], filepath: string = null,
+        theme: AppTheme = null, pubinfo: Map<string> = null,
+        breadcrumb: BreadcrumbEntry[] = null, filepath: string = null,
         locale: Map<string> = null): string {
 
         let params: Map<string> = pubinfo || {}
+
+        if (!theme) theme = {}
+
+        if (!breadcrumb)
+            breadcrumb = []
 
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
