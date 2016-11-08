@@ -254,7 +254,6 @@ namespace ts.pxtc {
 
         rt_call(name: string, r0: string, r1: string) {
             assert(r0 == "r0" && r1 == "r1")
-            assert(name == "adds" || name == "subs" || name == "muls")
             if (name == "muls") {
                 // for multiplication, we get result of multiplying r20 x r18 into R0,R1!
                 // need to clear r0 at end - result in r24,r25 
@@ -268,10 +267,17 @@ namespace ts.pxtc {
     mul	r21, r22
     add	r25, r0
     eor	r1, r1`
-            } else {
+            } else if (name == "asrs" || name == "lsrs") {
+                return `
+    ${this.inst_hi[name]} r25, r23
+    ${this.inst_lo[name]} r24, r22`
+            } else if (this.inst_lo[name]) {
                 return `
     ${this.inst_lo[name]} r24, r22
     ${this.inst_hi[name]} r25, r23`
+            } else {
+                oops("avr: rt_call")
+                return ""
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
@@ -332,12 +338,24 @@ namespace ts.pxtc {
 
         inst_lo: pxt.Map<string> = {
             "adds": "add",
-            "subs": "sub"
+            "subs": "sub",
+            "ands": "and",       // case SK.AmpersandToken
+            "orrs": "or",       // case SK.BarToken 
+            "eors": "eor",       // case SK.CaretToken
+            "lsls": "lsl",       // case SK.LessThanLessThanToken
+            "asrs": "ror",       // case SK.GreaterThanGreaterThanToken
+            "lsrs": "ror",       // case SK.GreaterThanGreaterThanGreaterThanToken
         }
 
         inst_hi: pxt.Map<string> = {
             "adds": "adc",
-            "subs": "sbc"
+            "subs": "sbc",
+            "ands": "and",
+            "orrs": "or",
+            "eors": "eor",
+            "lsls": "rol",
+            "asrs": "asr",
+            "lsrs": "lsr",
         }
     }
 }
