@@ -1187,6 +1187,11 @@ function buildSemanticUIAsync() {
     })
 }
 
+function buildWebStringsAsync() {
+    fs.writeFileSync("built/webstrings.json", JSON.stringify(webstringsJson(), null, 4))
+    return Promise.resolve()
+}
+
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
     let defaultProjects = [
         pxt.BLOCKS_PROJECT_NAME,
@@ -3418,6 +3423,19 @@ function getSnippets(source: string): SnippetInfo[] {
     return snippets
 }
 
+function webstringsJson() {
+    let missing: Map<string> = {}
+    for (let fn of onlyExts(nodeutil.allFiles("docfiles"), [".html"])) {
+        let res = pxt.docs.translate(fs.readFileSync(fn, "utf8"), {})
+        U.jsonCopyFrom(missing, res.missing)
+    }
+    U.iterMap(missing, (k, v) => {
+        missing[k] = k
+    })
+    missing = U.sortObjectFields(missing)
+    return missing
+}
+
 interface Command {
     name: string;
     fn: () => void;
@@ -3484,6 +3502,7 @@ cmd("uploadfile PATH              - upload file under <CDN>/files/PATH", uploadF
 cmd("service  OPERATION           - simulate a query to web worker", serviceAsync, 2)
 cmd("time                         - measure performance of the compiler on the current package", timeAsync, 2)
 cmd("buildcss                     - build required css files", buildSemanticUIAsync, 10)
+cmd("buildwebstrings              - build webstrings.json", buildWebStringsAsync, 10)
 
 cmd("crowdin CMD PATH [OUTPUT]    - upload, download files to/from crowdin", execCrowdinAsync, 2);
 
