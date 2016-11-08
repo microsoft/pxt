@@ -1749,9 +1749,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
-                        {compile ? <sui.Button icon='icon download' class={`huge fluid download-button`} text={lf("Download") } disabled={compileDisabled} tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : ""}
-                        {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } tooltip={makeTooltip} tooltipPosition="bottom left" onClick={() => this.openInstructions() } /> : undefined }
-                        <sui.Button key='runbtn' class="play-button" icon={this.state.running ? "stop" : "play"} title={this.state.running ? lf("Stop") : lf("Play") } tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {compile ? <sui.Button icon='icon download' class={`huge fluid download-button`} text={lf("Download") } disabled={compileDisabled} title={compileTooltip} onClick={() => this.compile() } /> : ""}
+                        {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
+                        <sui.Button key='runbtn' class="play-button" icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
