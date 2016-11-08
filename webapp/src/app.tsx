@@ -632,6 +632,10 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
     }
 
+    componentDidUpdate() {
+        this.props.parent.editor.resize();
+    }
+
     renderCore() {
         const state = this.props.parent.state;
         const docsUrl = state.sideDocsLoadUrl;
