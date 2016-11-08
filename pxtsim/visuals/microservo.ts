@@ -4,22 +4,24 @@ namespace pxsim.visuals {
         return { el: null, y: 0, x: 0, w: 0, h: 0 };
     }
 
-    export class MicroServoView implements IBoardPart<MicroServoState> {
+    export class MicroServoView implements IBoardPart<MicroServosState> {
         public style: string = "";
         public overElement: SVGElement = undefined;
         public element: SVGElement;
         public defs: SVGElement[] = [];
-        public state: MicroServoState;
+        public state: MicroServosState;
         public bus: EventBus;
         private currentAngle = 0;
         private targetAngle = 0;
         private lastAngleTime = 0;
+        private pin: string;
 
         private crankEl: SVGGElement;
         private crankTransform: string;
 
-        public init(bus: EventBus, state: MicroServoState) {
+        public init(bus: EventBus, state: MicroServosState, svgEl: SVGSVGElement, otherParams: Map<string>) {
             this.state = state;
+            this.pin = readPin(otherParams["pin"]).toString();
             this.bus = bus;
             this.defs = [];
             this.initDom();
@@ -54,7 +56,7 @@ namespace pxsim.visuals {
             translateEl(this.element, [x, y])
         }
         updateState(): void {
-            this.targetAngle = this.state.angle
+            this.targetAngle = this.state.servoState(this.pin).angle;
             if (this.targetAngle != this.currentAngle) {
                 const now = U.now();
                 const cx = 56.661;

@@ -10,10 +10,10 @@ namespace pxsim {
 
     export class MicroServosState {
         public servos: {
-            [index: number]: MicroServoState;
+            [index: string]: MicroServoState;
         } = {};
 
-        public servoState(pin: number): MicroServoState {
+        public servoState(pin: string): MicroServoState {
             let state = this.servos[pin];
             if (!state) state = this.servos[pin] = new MicroServoState();
             return state;
