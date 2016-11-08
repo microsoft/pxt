@@ -913,7 +913,7 @@ function readLocalPxTarget() {
         console.error("This command requires pxtarget.json in current directory.")
         process.exit(1)
     }
-    nodeutil.targetDir = process.cwd()
+    nodeutil.setTargetDir(process.cwd())
     let cfg: pxt.TargetBundle = readJson("pxtarget.json")
     if (forkPref()) {
         let cfgF: pxt.TargetBundle = readJson(forkPref() + "pxtarget.json")
@@ -1468,7 +1468,8 @@ export function serveAsync(...args: string[]) {
         forceCloudBuild = false
     } else if (hasArg("cloud")) {
         forceCloudBuild = true
-    } else if (hasArg("just")) {
+    }
+    if (hasArg("just")) {
         justServe = true
     } else if (hasArg("pkg")) {
         justServe = true
@@ -1476,7 +1477,8 @@ export function serveAsync(...args: string[]) {
     } else if (hasArg("no-browser")) {
         justServe = true
         globalConfig.noAutoStart = true
-    } else if (hasArg("include-source-maps")) {
+    }
+    if (hasArg("include-source-maps")) {
         includeSourceMaps = true;
     }
     if (!globalConfig.localToken) {
@@ -3587,7 +3589,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         process.exit(30)
     }
 
-    nodeutil.targetDir = targetDir;
+    nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
     pxt.setAppTarget(trg)
