@@ -600,13 +600,17 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const url = `${docsUrl}#doc:${path}`;
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}`;
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
@@ -970,7 +974,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         SideDocs.notify({
             type: "fileloaded",
-            name: this.editorFile.getName()
+            name: this.editorFile.getName(),
+            locale: pxt.Util.localeInfo()
         } as pxsim.SimulatorFileLoadedMessage)
 
         if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
