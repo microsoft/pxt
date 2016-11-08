@@ -21,7 +21,7 @@ namespace pxsim.visuals {
 
         public init(bus: EventBus, state: MicroServosState, svgEl: SVGSVGElement, otherParams: Map<string>) {
             this.state = state;
-            this.pin = readPin(otherParams["pin"]).toString();
+            this.pin = readPin(otherParams["name"] || otherParams["pin"]).toString();
             this.bus = bus;
             this.defs = [];
             this.initDom();
