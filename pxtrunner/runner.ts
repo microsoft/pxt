@@ -264,14 +264,15 @@ namespace pxt.runner {
         TypeScript
     }
 
-    let languageMode = LanguageMode.Blocks;
-    export var onLanguageModeChanged: (mode: LanguageMode) => void = undefined;
+    export var languageMode = LanguageMode.Blocks;
+    export var editorLocale = "en";
+    export var onEditorContextChanged: () => void = undefined;
 
-    export function setLanguageMode(mode: LanguageMode) {
-        if (mode != languageMode) {
-            pxt.debug('language: ' + mode);
+    export function setEditorContext(mode: LanguageMode, locale: string) {
+        if (mode != languageMode || locale != editorLocale) {
             languageMode = mode;
-            if (onLanguageModeChanged) onLanguageModeChanged(languageMode);
+            editorLocale = locale;
+            if (onEditorContextChanged) onEditorContextChanged();
         }
     }
 
@@ -282,8 +283,7 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                if (/\.ts$/i.test(name)) setLanguageMode(LanguageMode.TypeScript);
-                else if (/\.blocks/i.test(name)) setLanguageMode(LanguageMode.Blocks);
+                setEditorContext(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale);
                 break;
             case "popout":
                 let mp = /#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -340,9 +340,10 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md):([^&?:]+)/i.exec(window.location.hash);
+            let m = /^#(doc|md):([^&?:]+)(:([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
+                if (m[4]) setEditorContext(languageMode, m[4]);
                 render(m[1], decodeURIComponent(m[2]));
             }
         }
@@ -371,7 +372,9 @@ ${files["main.ts"]}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
+        let url = `md/${pxt.appTarget.id}/${docid}`;
+        if (editorLocale != "en") url += `?lang=${encodeURIComponent(editorLocale)}`
+        return pxt.Cloud.privateGetTextAsync(url)
             .then(md => renderMarkdownAsync(content, md, docid))
     }
 
