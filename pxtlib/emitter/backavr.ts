@@ -95,6 +95,7 @@ namespace ts.pxtc {
                 res = res + `\npush ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
             });
             res += `
+    @dummystack ${regs.length}
     in r28, 0x3d
     in r29, 0x3e`
             return res
@@ -104,6 +105,8 @@ namespace ts.pxtc {
             regs.forEach(r => {
                 res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
+            res += `
+    @dummystack -${regs.length}`
             return res
         }
         proc_setup(main?: boolean) {
@@ -112,7 +115,8 @@ namespace ts.pxtc {
             return `
     ${set_r1_zero}
     push r28
-    push r29`
+    push r29
+    @dummystack 1`
         }
 
         proc_return() {
@@ -120,6 +124,7 @@ namespace ts.pxtc {
             return `
     pop r29
     pop r28
+    @dummystack -1
     ret`
         }
         debugger_hook(lbl: string) { return "eor r1, r1" }
@@ -130,6 +135,7 @@ namespace ts.pxtc {
             return `
     push ${this.rmap_lo[reg]}
     push ${this.rmap_hi[reg]}
+    @dummystack 1
     in r28, 0x3d
     in r29, 0x3e`
         }
@@ -141,7 +147,7 @@ namespace ts.pxtc {
     adiw	r28, #2*${n}
     out	0x3d, r28
     out	0x3e, r29
-    @dummystack -2*${n}`
+    @dummystack -${n}`
         }
 
         unconditional_branch(lbl: string) { return "jmp " + lbl }
