@@ -300,6 +300,12 @@ namespace ts.pxtc.assembler {
             if (U.endsWith(s, "|1")) {
                 return this.parseOneInt(s.slice(0, s.length - 2)) | 1
             }
+            // allow subtracting 1 too
+            if (U.endsWith(s, "-1")) {
+                return this.parseOneInt(s.slice(0, s.length - 2)) - 1
+            }
+
+
 
             // handle hexadecimal and binary encodings
             if (s[0] == "0") {
@@ -325,7 +331,7 @@ namespace ts.pxtc.assembler {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
                     if (this.stackpointers.hasOwnProperty(m[1]))
-                        v = this.ei.wordSize() * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                        v = this.ei.wordSize() * this.ei.computeStackOffset(this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
                     else
                         this.directiveError(lf("saved stack not found"))
                 }
@@ -951,6 +957,10 @@ namespace ts.pxtc.assembler {
 
         public wordSize() {
             return -1;
+        }
+
+        public computeStackOffset(offset: number) {
+            return offset;
         }
 
         public is32bit(i: Instruction) {

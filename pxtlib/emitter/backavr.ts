@@ -240,11 +240,14 @@ namespace ts.pxtc {
                 }
                 */
             }
-            let [off_lo,off_hi] = [ off, off ]
+            let [off_lo,off_hi] = [ "TBD", "TBD" ]
             if (off.indexOf("@") == -1 ) {
-                // because stack grows down, need to treat stack offsets (for temporaries)
-                // differently than regular memory accesses
+                // in AVR, SP/FP points to next available slot, so need to bump 
                 [off_lo, off_hi] = (tgt_reg == "Y") ? [(parseInt(off) + 2).toString(),(parseInt(off) + 1).toString()] : [off,off + "|1"]
+            } else {
+                // locals@offset and args@offset used in stack context, so also need to handle
+                // the AVR contention around SP/FP
+                [off_lo, off_hi] = [off, off + "-1"]
             }
             if (store) {
                 return `
