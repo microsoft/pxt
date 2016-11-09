@@ -19,16 +19,24 @@ export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
-    pxtCoreDir = path.join(targetDir, "node_modules", "pxt-core");
+    let newPxtCoreDir = path.join(targetDir, "node_modules", "pxt-core");
 
-    if (!fs.existsSync(pxtCoreDir)) {
+    if (!fs.existsSync(newPxtCoreDir)) {
         // Fix for NPM 3: dependencies are flattened, which means pxt-core is not under [target]/node_modules/pxt-core.
         // In that case, use the pxt-core that nodeutil.js script is running in. It's in pxt-core/built/nodeutil.js, so
         // go up once to reach root of pxt-core.
-        pxtCoreDir = path.join(__dirname, "..");
+        newPxtCoreDir = path.join(__dirname, "..");
+
+        let packageJsonFile = path.join(newPxtCoreDir, "package.json");
+        if (!fs.existsSync(packageJsonFile) || JSON.parse(fs.readFileSync(packageJsonFile, "utf8")).name !== "pxt-core") {
+            newPxtCoreDir = null;
+        }
     }
 
-    console.log("Set pxtCoreDir to:" + pxtCoreDir);
+    if (!!newPxtCoreDir && newPxtCoreDir !== pxtCoreDir) {
+        pxtCoreDir = newPxtCoreDir;
+        console.log("Set pxtCoreDir to: " + pxtCoreDir);
+    }
 }
 
 export function readResAsync(g: events.EventEmitter) {
