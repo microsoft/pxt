@@ -18,8 +18,7 @@ export var targetDir: string = process.cwd();
 export var pxtCoreDir: string = path.join(targetDir, "node_modules", "pxt-core");
 
 export function setTargetDir(dir: string) {
-    targetDir = dir;
-    let newPxtCoreDir = path.join(targetDir, "node_modules", "pxt-core");
+    let newPxtCoreDir = path.join(dir, "node_modules", "pxt-core");
 
     if (!fs.existsSync(newPxtCoreDir)) {
         // Fix for NPM 3: dependencies are flattened, which means pxt-core is not under [target]/node_modules/pxt-core.
