@@ -54,10 +54,16 @@ namespace pxt.github {
             .then(v => JSON.parse(v) as pxt.PackageConfig)
     }
 
-    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null): Promise<CachedPackage> {
+    export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig, current: CachedPackage = null): Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
         if (!p) {
             pxt.log('Unknown github syntax');
+            return Promise.resolve<CachedPackage>(undefined);
+        }
+
+        if (!isRepoApproved(p, config)) {
+            pxt.tickEvent("github.download.unauthorized");
+            pxt.log('Github repo not approved');
             return Promise.resolve<CachedPackage>(undefined);
         }
 

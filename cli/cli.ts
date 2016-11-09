@@ -166,24 +166,27 @@ function pkginfoAsync(repopath: string) {
         console.log(`Description: ${cfg.description}`)
     }
 
-    if (parsed.tag)
-        return pxt.github.downloadPackageAsync(repopath)
-            .then(pkg => {
-                let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
-                pkgInfo(cfg)
-                console.log(`Size: ${JSON.stringify(pkg.files).length}`)
-            })
+    return pxt.packagesConfigAsync()
+        .then(config => {
+            if (parsed.tag)
+                return pxt.github.downloadPackageAsync(repopath, config)
+                    .then(pkg => {
+                        let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
+                        pkgInfo(cfg)
+                        console.log(`Size: ${JSON.stringify(pkg.files).length}`)
+                    })
 
-    return pxt.github.pkgConfigAsync(parsed.fullName)
-        .then(cfg => {
-            pkgInfo(cfg)
-            return pxt.github.listRefsAsync(repopath)
-                .then(tags => {
-                    console.log("Tags: " + tags.join(", "))
-                    return pxt.github.listRefsAsync(repopath, "heads")
-                })
-                .then(heads => {
-                    console.log("Branches: " + heads.join(", "))
+            return pxt.github.pkgConfigAsync(parsed.fullName)
+                .then(cfg => {
+                    pkgInfo(cfg)
+                    return pxt.github.listRefsAsync(repopath)
+                        .then(tags => {
+                            console.log("Tags: " + tags.join(", "))
+                            return pxt.github.listRefsAsync(repopath, "heads")
+                        })
+                        .then(heads => {
+                            console.log("Branches: " + heads.join(", "))
+                        })
                 })
         })
 }
