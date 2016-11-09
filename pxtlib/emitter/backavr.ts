@@ -172,18 +172,19 @@ namespace ts.pxtc {
             assert(src != "r1")
             let tgt_reg = ""
             let prelude = ""
+            let _this = this
 
             function spill_it(new_off: number) {
                 prelude += `
-    ${this.reg_gets_imm("r1", new_off)}
+    ${_this.reg_gets_imm("r1", new_off)}
     `
                 if (tgt_reg == "Y") {
                     prelude += `
     movw r30, r28
 `               }
                 prelude += `
-    add r30, ${this.rmap_lo["r1"]}
-    adc r31, ${this.rmap_hi["r1"]}`
+    add r30, ${_this.rmap_lo["r1"]}
+    adc r31, ${_this.rmap_hi["r1"]}`
                 off = "0"
                 tgt_reg = "Z"
             }
@@ -267,24 +268,26 @@ namespace ts.pxtc {
     mul	r21, r22
     add	r25, r0
     eor	r1, r1`
-            } else if (name == "asrs" || name == "lsrs") {
+            } else if (name == "asrs" || name == "lsrs" || name == "lsls") {
+
                 // shifts only work on single register
-                return `
-    movw r24, r22
-    ${this.inst_hi[name]} r25
-    ${this.inst_lo[name]} r24`
-            } else if (name == "lsls") {
-                return `
+                if (name == "lsls")
+                    return `
     movw r24, r22
     ${this.inst_lo[name]} r24
     ${this.inst_hi[name]} r25`
-            } else if (this.inst_lo[name]) {
+                else
+                    return `
+    movw r24, r22
+    ${this.inst_hi[name]} r25
+    ${this.inst_lo[name]} r24`
+
+            } else {
+
                 return `
     ${this.inst_lo[name]} r24, r22
     ${this.inst_hi[name]} r25, r23`
-            } else {
-                oops("avr: rt_call")
-                return ""
+
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
@@ -366,3 +369,4 @@ namespace ts.pxtc {
         }
     }
 }
+
