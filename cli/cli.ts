@@ -169,9 +169,10 @@ function pkginfoAsync(repopath: string) {
 
     return pxt.packagesConfigAsync()
         .then(config => {
+            const status = pxt.github.repoStatus(parsed, config);
             console.log(`github org: ${parsed.owner}`);
             if (parsed.tag) console.log(`github tag: ${parsed.tag}`);
-            console.log(`github status: ${pxt.github.repoStatus(parsed, config)}`)
+            console.log(`package status: ${status == pxt.github.GitRepoStatus.Approved ? "approved" : status == pxt.github.GitRepoStatus.Banned ? "banned" : "neutral" }`)
             if (parsed.tag)
                 return pxt.github.downloadPackageAsync(repopath, config)
                     .then(pkg => {
