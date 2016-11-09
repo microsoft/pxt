@@ -3599,7 +3599,9 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         compileId = trg.compileService.buildEngine || "yotta"
     }
 
-    process.stderr.write(`Using PXT/${trg.id} from ${targetDir} with build engine ${compileId}.\n`)
+    pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
+    pxt.log(`  Target dir:   ${nodeutil.targetDir}`)
+    pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
 
     if (compileId != "none") {
         build.thisBuild = build.buildEngines[compileId]

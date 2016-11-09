@@ -35,7 +35,6 @@ export function setTargetDir(dir: string) {
 
     if (!!newPxtCoreDir && newPxtCoreDir !== pxtCoreDir) {
         pxtCoreDir = newPxtCoreDir;
-        console.log("Set pxtCoreDir to: " + pxtCoreDir);
     }
 }
 
