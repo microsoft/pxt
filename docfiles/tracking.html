@@ -17,7 +17,7 @@
             telemetryItem.properties = telemetryItem.properties || {};
             telemetryItem.properties["target"] = pxtConfig.targetId;
             telemetryItem.properties["version"] = pxtConfig.targetVersion; 
-            telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/^\/([^-]+)--$/, '$1')
+            telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
         });
     });
     appInsights.trackPageView();
