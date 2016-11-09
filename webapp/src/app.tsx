@@ -1424,7 +1424,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
 
         pxt.debug('compiling...')
-        pxt.timeEvent("perf.compile")
         this.clearLog();
         this.editor.beforeCompile();
         let state = this.editor.snapshotState()
