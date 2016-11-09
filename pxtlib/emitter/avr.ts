@@ -81,14 +81,6 @@ namespace ts.pxtc.avr {
             return rel;
         }
 
-        public isPop(opcode: number): boolean {
-            return opcode == 0x900f;
-        }
-
-        public isPush(opcode: number): boolean {
-            return opcode == 0x920f;
-        }
-
         constructor() {
             super();
 

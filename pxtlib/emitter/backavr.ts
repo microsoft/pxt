@@ -95,6 +95,7 @@ namespace ts.pxtc {
                 res = res + `\npush ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
             });
             res += `
+    @dummystack ${regs.length}
     in r28, 0x3d
     in r29, 0x3e`
             return res
@@ -104,6 +105,8 @@ namespace ts.pxtc {
             regs.forEach(r => {
                 res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
+            res += `
+    @dummystack -${regs.length}`
             return res
         }
         proc_setup(main?: boolean) {
@@ -112,7 +115,8 @@ namespace ts.pxtc {
             return `
     ${set_r1_zero}
     push r28
-    push r29`
+    push r29
+    @dummystack 1`
         }
 
         proc_return() {
@@ -120,6 +124,7 @@ namespace ts.pxtc {
             return `
     pop r29
     pop r28
+    @dummystack -1
     ret`
         }
         debugger_hook(lbl: string) { return "eor r1, r1" }
@@ -130,6 +135,7 @@ namespace ts.pxtc {
             return `
     push ${this.rmap_lo[reg]}
     push ${this.rmap_hi[reg]}
+    @dummystack 1
     in r28, 0x3d
     in r29, 0x3e`
         }
@@ -141,7 +147,7 @@ namespace ts.pxtc {
     adiw	r28, #2*${n}
     out	0x3d, r28
     out	0x3e, r29
-    @dummystack -2*${n}`
+    @dummystack -${n}`
         }
 
         unconditional_branch(lbl: string) { return "jmp " + lbl }
@@ -172,18 +178,19 @@ namespace ts.pxtc {
             assert(src != "r1")
             let tgt_reg = ""
             let prelude = ""
+            let _this = this
 
             function spill_it(new_off: number) {
                 prelude += `
-    ${this.reg_gets_imm("r1", new_off)}
+    ${_this.reg_gets_imm("r1", new_off)}
     `
                 if (tgt_reg == "Y") {
                     prelude += `
     movw r30, r28
 `               }
                 prelude += `
-    add r30, ${this.rmap_lo["r1"]}
-    adc r31, ${this.rmap_hi["r1"]}`
+    add r30, ${_this.rmap_lo["r1"]}
+    adc r31, ${_this.rmap_hi["r1"]}`
                 off = "0"
                 tgt_reg = "Z"
             }
@@ -267,24 +274,26 @@ namespace ts.pxtc {
     mul	r21, r22
     add	r25, r0
     eor	r1, r1`
-            } else if (name == "asrs" || name == "lsrs") {
+            } else if (name == "asrs" || name == "lsrs" || name == "lsls") {
+
                 // shifts only work on single register
-                return `
-    movw r24, r22
-    ${this.inst_hi[name]} r25
-    ${this.inst_lo[name]} r24`
-            } else if (name == "lsls") {
-                return `
+                if (name == "lsls")
+                    return `
     movw r24, r22
     ${this.inst_lo[name]} r24
     ${this.inst_hi[name]} r25`
-            } else if (this.inst_lo[name]) {
+                else
+                    return `
+    movw r24, r22
+    ${this.inst_hi[name]} r25
+    ${this.inst_lo[name]} r24`
+
+            } else {
+
                 return `
     ${this.inst_lo[name]} r24, r22
     ${this.inst_hi[name]} r25, r23`
-            } else {
-                oops("avr: rt_call")
-                return ""
+
             }
         }
         call_lbl(lbl: string) { return "call " + lbl }
@@ -366,3 +375,4 @@ namespace ts.pxtc {
         }
     }
 }
+

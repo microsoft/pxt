@@ -80,8 +80,6 @@ namespace ts.pxtc.assembler {
                     if (enc.isRegister) {
                         v = this.ei.registerNo(actual);
                         if (v == null) return emitErr("expecting register name", actual)
-                        // AVR specific code : check for pop/push instruction 
-                        // this doesn't apply in the ARM case 
                         if (this.ei.isPush(this.opcode)) // push
                             stack++;
                         else if (this.ei.isPop(this.opcode)) // pop
@@ -93,6 +91,7 @@ namespace ts.pxtc.assembler {
                             return emitErr("expecting number", actual)
                         } else {
                             // explicit manipulation of stack pointer (SP)
+                            // ARM only
                             if (this.ei.isAddSP(this.opcode))
                                 stack = -(v / this.ei.wordSize());
                             else if (this.ei.isSubSP(this.opcode))
