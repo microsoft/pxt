@@ -1906,88 +1906,8 @@ function enableFeedback() {
 }
 
 function enableAnalytics() {
-    enableAppInsights();
-    enableMixPanel();
+    pxt.analytics.enable();
     pxt.tickEvent("editor.loaded");
-}
-
-function enableAppInsights() {
-    // TODO: use json configuration
-    let ai = (window as any).appInsights;
-    if (!ai) return;
-
-    let rexp = pxt.reportException;
-    pxt.reportException = function (err: any, data: any): void {
-        if (rexp) rexp(err, data);
-        let props: pxt.Map<string> = {
-            target: pxt.appTarget.id,
-            version: pxt.appTarget.versions.target
-        }
-        if (data)
-            for (let k in data)
-                props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
-        ai.trackException(err, 'exception', props)
-    }
-    let re = pxt.reportError;
-    pxt.reportError = function (msg: string, data: any): void {
-        if (re) re(msg, data);
-        try {
-            throw msg
-        }
-        catch (err) {
-            let props: pxt.Map<string> = {
-                target: pxt.appTarget.id,
-                version: pxt.appTarget.versions.target
-            }
-            if (data)
-                for (let k in data)
-                    props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
-            ai.trackException(err, 'error', props)
-        }
-    }
-}
-
-function enableMixPanel() {
-    let mp = (window as any).mixpanel;
-    if (!mp) return;
-
-    mp.register({
-        sandbox: !!sandbox,
-        content: "editor"
-    });
-
-    const report = pxt.reportError;
-    pxt.reportError = function (cat, msg, data): void {
-        if (!data) data = {};
-        data["category"] = cat;
-        data["message"] = msg;
-        mp.track("error", data);
-        report(cat, msg, data);
-    }
-    pxt.timeEvent = function (id): void {
-        if (!id) return;
-        try {
-            mp.time_event(id);
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    pxt.timeEvent = function (id: string): void {
-        if (!id) return;
-        try {
-            mp.time_event(id);
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    pxt.tickEvent = function (id, data): void {
-        if (!id) return;
-        try {
-            mp.track(id.toLowerCase(), data);
-        } catch (e) {
-            console.error(e);
-        }
-    }
 }
 
 function showIcons() {
