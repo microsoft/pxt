@@ -155,29 +155,13 @@ function waitForFirstTypecheckAsync() {
     else return typecheckAsync();
 }
 
-function localizeApis(apis: pxtc.ApisInfo) {
-
-    const lang = pxtc.Util.userLanguage();
-    if (pxtc.Util.userLanguage() != "en") {
-        let loc = pkg.mainPkg.localizationStrings(lang);
-        Util.values(apis.byQName).forEach(fn => {
-            const jsDoc = loc[fn.qName]
-            if (jsDoc) {
-                fn.attributes.jsDoc = jsDoc;
-                fn.attributes.block = loc[`${fn.qName}|block`] || fn.attributes.block;
-                if (fn.parameters)
-                    fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
-            }
-        });
-    }
-}
-
-function ensureApisInfoAsync() {
+function ensureApisInfoAsync(): Promise<void> {
     if (refreshApis || !cachedApis)
         return workerOpAsync("apiInfo", {})
             .then(apis => {
                 refreshApis = false;
-                localizeApis(apis);
+                return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg);
+            }).then(apis => {
                 cachedApis = apis;
             })
     else return Promise.resolve()

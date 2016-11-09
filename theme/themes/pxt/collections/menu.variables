@@ -1,3 +1,6 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+@mainMenuHeight: 3.6rem;
+@mainMenuMinHeight: @minHeight;

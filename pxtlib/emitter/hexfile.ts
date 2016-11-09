@@ -266,6 +266,9 @@ namespace ts.pxtc {
 
             assert(buf.length < 32000)
 
+            // store the size of the program (in 16 bit words)
+            buf[17] = buf.length
+
             let zeros: number[] = []
             for (let i = 0; i < bytecodePaddingSize >> 1; ++i)
                 zeros.push(0)
@@ -400,7 +403,10 @@ ${hex.hexPrelude()}
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
     .short ${bin.globalsWords}   ; num. globals
-    .space 14 ; reserved
+    .short 0 ; patched with number of words resulting from assembly
+    .word 0 ; reserved
+    .word 0 ; reserved
+    .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
         if (opts.target.nativeType == "AVR")
@@ -439,7 +445,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(nativeType)
         b.disablePeepHole = true
         b.emit(src)
-        throwThumbErrors(b)
+        throwAssemblerErrors(b)
 
         let res: number[] = []
         for (let i = 0; i < b.buf.length; i += 2) {
@@ -469,7 +475,7 @@ ${hex.hexPrelude()}
         return b
     }
 
-    function throwThumbErrors(b: assembler.File) {
+    function throwAssemblerErrors(b: assembler.File) {
         if (b.errors.length > 0) {
             let userErrors = ""
             b.errors.forEach(e => {
@@ -501,7 +507,7 @@ ${hex.hexPrelude()}
 
         src = b.getSource(!peepDbg);
 
-        throwThumbErrors(b)
+        throwAssemblerErrors(b)
 
         return {
             src: src,

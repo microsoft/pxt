@@ -66,11 +66,9 @@ namespace pxt.vs {
             mouseWheelZoom: true,
             tabCompletion: true,
             wordBasedSuggestions: true,
-            lineNumbersMinChars: 3
-        });
-
-        window.addEventListener('resize', function () {
-            editor.layout();
+            lineNumbersMinChars: 3,
+            automaticLayout: true,
+            theme: pxt.appTarget.appTheme.invertedMonaco ? 'vs-dark' : 'vs'
         });
 
         editor.layout();

@@ -16,6 +16,8 @@ CACHE:
 /cdn/custom.css
 /cdn/icons.css
 /cdn/fonts/icons.woff2
+@defaultLocaleStrings@
+@cachedHexFiles@
 
 # blockly
 /cdn/blockly/blockly_compressed.js

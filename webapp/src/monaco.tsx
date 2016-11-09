@@ -98,28 +98,6 @@ export class Editor extends srceditor.Editor {
                             if (!resp.success) return failedAsync(blockFile);
                             xml = resp.outfiles[blockFile];
                             Util.assert(!!xml);
-                            // try to convert back to typescript
-                            let workspace = pxt.blocks.loadWorkspaceXml(xml);
-                            if (!workspace) return failedAsync(blockFile);
-
-                            let b2jsr = pxt.blocks.compile(workspace, blocksInfo);
-
-                            const cleanRx = /[\s;]/g;
-                            if (b2jsr.source.replace(cleanRx, '') != js.replace(cleanRx, '')) {
-                                pxt.tickEvent("typescript.conversionFailed");
-                                console.log('js roundtrip failed:')
-                                console.log('-- original:');
-                                console.log(js.replace(cleanRx, ''));
-                                console.log('-- roundtrip:');
-                                console.log(b2jsr.source.replace(cleanRx, ''));
-                                pxt.reportError("compile", "decompilation failure", {
-                                    js: js,
-                                    blockly: xml,
-                                    jsroundtrip: b2jsr.source
-                                })
-                                return failedAsync(blockFile);
-                            }
-
                             return mainPkg.setContentAsync(blockFile, xml)
                                 .then(() => this.parent.setFile(mainPkg.files[blockFile]));
                         })
@@ -143,16 +121,12 @@ export class Editor extends srceditor.Editor {
             disagreeLbl: lf("Stay in JavaScript"),
             disagreeClass: "positive",
             disagreeIcon: "checkmark",
-            deleteLbl: lf("Remove Blocks file"),
             size: "medium",
             hideCancel: !bf
         }).then(b => {
             // discard                
             if (!b) {
                 pxt.tickEvent("typescript.keepText");
-            } else if (b == 2) {
-                pxt.tickEvent("typescript.removeBlocksFile");
-                this.parent.removeFile(bf, true);
             } else {
                 pxt.tickEvent("typescript.discardText");
                 this.parent.setFile(bf);
@@ -170,7 +144,7 @@ export class Editor extends srceditor.Editor {
 
     menu(): JSX.Element {
         if (!this.hasBlocks()) return null
-        return <sui.Item textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
+        return <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
                 tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left"
          />
     }
@@ -390,8 +364,18 @@ export class Editor extends srceditor.Editor {
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (this.currFile.isReadonly()) return;
 
+            // Remove any Highlighted lines
             if (this.highlightDecorations)
                 this.editor.deltaDecorations(this.highlightDecorations, []);
+
+            // Remove any current error shown, as a change has been made.
+            let viewZones = this.editorViewZones || [];
+            (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                viewZones.forEach((id: any) => {
+                    changeAccessor.removeZone(id);
+                });
+            });
+            this.editorViewZones = [];
 
             if (this.lastSet != null) {
                 this.lastSet = null
@@ -407,6 +391,10 @@ export class Editor extends srceditor.Editor {
         this.editorViewZones = [];
 
         this.isReady = true
+    }
+
+    resize(e?: Event) {
+        this.editor.layout();
     }
 
     zoomIn() {
@@ -493,6 +481,8 @@ export class Editor extends srceditor.Editor {
                 this.loadFile(this.currFile);
             }
         });
+
+        this.resize();
     }
 
     snapshotState() {
@@ -538,6 +528,7 @@ export class Editor extends srceditor.Editor {
         let lines: string[] = this.editor.getModel().getLinesContent();
         let fontSize = this.parent.settings.editorFontSize - 3;
         let lineHeight = this.editor.getConfiguration().lineHeight;
+        let borderSize = lineHeight / 10;
 
         let viewZones = this.editorViewZones || [];
         this.annotationLines = [];
@@ -555,15 +546,25 @@ export class Editor extends srceditor.Editor {
                 if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0 || this.errorLines.length > 0) continue;
                 let viewZoneId: any = null;
                 (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                    let wrapper = document.createElement('div');
+                    wrapper.className = `zone-widget error-view-zone`;
+                    let container = document.createElement('div');
+                    container.className = `zone-widget-container marker-widget`;
+                    container.setAttribute('role', 'tooltip');
+                    container.style.setProperty("border", `solid ${borderSize}px rgb(255, 90, 90)`);
+                    container.style.setProperty("border", `solid ${borderSize}px rgb(255, 90, 90)`);
+                    container.style.setProperty("top", `${lineHeight / 4}`);
                     let domNode = document.createElement('div');
-                    domNode.className = d.category == ts.DiagnosticCategory.Error ? "error-view-zone" : "warning-view-zone";
+                    domNode.className = `block descriptioncontainer`;
                     domNode.style.setProperty("font-size", fontSize.toString() + "px");
                     domNode.style.setProperty("line-height", lineHeight.toString() + "px");
                     domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
+                    container.appendChild(domNode);
+                    wrapper.appendChild(container);
                     viewZoneId = changeAccessor.addZone({
                         afterLineNumber: d.line + 1,
                         heightInLines: 1,
-                        domNode: domNode
+                        domNode: wrapper
                     });
                 });
                 this.editorViewZones.push(viewZoneId);

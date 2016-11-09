@@ -23,7 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let tempDir = ""
 let packagedDir = ""
-let localHexDir = path.join("hexcache");
+let localHexDir = path.join("built", "hexcache");
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -343,10 +343,16 @@ export function lookupDocFile(name: string) {
 export function expandHtml(html: string) {
     let theme = U.flatClone(pxt.appTarget.appTheme)
     html = expandDocTemplateCore(html)
-    let params: pxt.Map<string> = {}
-    let m = /<title>([^<>]*)<\/title>/.exec(html)
+    let params: pxt.Map<string> = {
+        name: pxt.appTarget.appTheme.title,
+        description: pxt.appTarget.appTheme.description,
+        locale: pxt.appTarget.appTheme.defaultLocale || "en"
+    };
+
+    // page overrides
+    let m = /<title>([^<>@]*)<\/title>/.exec(html)
     if (m) params["name"] = m[1]
-    m = /<meta name="Description" content="([^"]*)"/.exec(html)
+    m = /<meta name="Description" content="([^"@]*)"/.exec(html)
     if (m) params["description"] = m[1]
     let d: pxt.docs.RenderData = {
         html: html,
@@ -501,7 +507,13 @@ function initSerialMonitor() {
     console.log('serial: monitoring ports...')
     initSocketServer();
 
-    const SerialPort = require("serialport");
+    let SerialPort: any;
+    try {
+        SerialPort = require("serialport");
+    } catch (er) {
+        console.warn('serial: failed to load, skipping...');
+        return;
+    }
 
     function close(info: SerialPortInfo) {
         console.log('serial: closing ' + info.pnpId);

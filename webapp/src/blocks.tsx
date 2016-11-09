@@ -19,8 +19,9 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
-    currentComment: B.Comment;
+    currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
+    currentHelpCardType: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -29,7 +30,7 @@ export class Editor extends srceditor.Editor {
         if (this.isVisible) {
             $(classes).show();
             // Fire a resize event since the toolbox may have changed width and height.
-            Blockly.fireUiEvent(window, 'resize');
+            this.parent.fireResize();
         }
         else $(classes).hide();
     }
@@ -52,6 +53,7 @@ export class Editor extends srceditor.Editor {
 
             let loading = document.createElement("div");
             loading.className = "ui inverted loading";
+            let editorArea = document.getElementById('blocksArea');
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
@@ -64,6 +66,9 @@ export class Editor extends srceditor.Editor {
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
+
+                    this.resize();
+                    Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
                     editorDiv.removeChild(loading);
@@ -100,7 +105,7 @@ export class Editor extends srceditor.Editor {
         try {
             let text = s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(this.editor, xml);
+            Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
@@ -114,7 +119,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private reportDeprecatedBlocks() {
-        const deprecatedMap: {[index: string]: number } = {};
+        const deprecatedMap: { [index: string]: number } = {};
         let deprecatedBlocksFound = false;
 
         this.blockInfo.blocks.forEach(symbolInfo => {
@@ -141,28 +146,33 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    updateHelpCard() {
+    updateHelpCard(clear?: boolean) {
         let selected = Blockly.selected;
-        if (selected && selected.inputList && selected.codeCard) {
-            //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
-            let props: any = {};
-            for (let i = 0; i < selected.inputList.length; i++) {
-                let input = selected.inputList[i];
-                for (let j = 0; j < input.fieldRow.length; j++) {
-                    let field = input.fieldRow[j];
-                    if (field.name != undefined && field.value_ != undefined) {
-                        props[field.name] = field.value_;
+        let selectedType = selected ? selected.type : null;
+        if (selectedType != this.currentHelpCardType || clear) {
+            if (selected && selected.inputList && selected.codeCard && !clear) {
+                this.currentHelpCardType = selectedType;
+                //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
+                let props: any = {};
+                for (let i = 0; i < selected.inputList.length; i++) {
+                    let input = selected.inputList[i];
+                    for (let j = 0; j < input.fieldRow.length; j++) {
+                        let field = input.fieldRow[j];
+                        if (field.name != undefined && field.value_ != undefined) {
+                            props[field.name] = field.value_;
+                        }
                     }
                 }
-            }
 
-            let card: pxt.CodeCard = selected.codeCard;
-            card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-            card.blocksXml = this.updateFields(card.blocksXml, props);
-            this.parent.setHelpCard(card);
-        }
-        else {
-            this.parent.setHelpCard(null);
+                let card: pxt.CodeCard = selected.codeCard;
+                card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
+                card.blocksXml = this.updateFields(card.blocksXml, props);
+                this.parent.setHelpCard(card);
+            }
+            else {
+                this.currentHelpCardType = null;
+                this.parent.setHelpCard(null);
+            }
         }
     }
 
@@ -219,6 +229,10 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    isIncomplete() {
+        return this.editor ? this.editor.isDragging() : false;
+    }
+
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
         let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
@@ -245,7 +259,7 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
-            if (ev.recordUndo) {
+            if (ev.type != 'ui') {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
@@ -257,8 +271,10 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
+                    this.updateHelpCard(ev.newValue != null);
                 }
-                else if (ev.element == 'commentOpen') {
+                else if (ev.element == 'commentOpen' 
+                || ev.element == 'warningOpen') {
                     /*
                      * We override the default selection behavior so that when a block is selected, its
                      * comment is expanded. However, if a user selects a block by clicking on its comment
@@ -271,32 +287,42 @@ export class Editor extends srceditor.Editor {
                         if (ev.newValue) {
                             this.selectedEventGroup = ev.group
                         }
-                        else if (ev.group == this.selectedEventGroup && this.currentComment) {
-                            this.currentComment.setVisible(true)
+                        else if (ev.group == this.selectedEventGroup && this.currentCommentOrWarning) {
+                            this.currentCommentOrWarning.setVisible(true)
                             this.selectedEventGroup = undefined
                         }
                     }
                 }
-            }
-            if (ev.element == 'field' && ev.type == Blockly.Events.CHANGE) {
-                this.updateHelpCard();
+                else if (ev.element == 'selected') {
+                    this.updateHelpCard();
+
+                    if (this.currentCommentOrWarning) {
+                        this.currentCommentOrWarning.setVisible(false)
+                    }
+
+                    const selected = Blockly.selected
+                    if (selected && selected.warning && typeof (selected.warning) !== "string") {
+                        (selected.warning as Blockly.Icon).setVisible(true)
+                        this.currentCommentOrWarning = selected.warning
+                    } else if (selected && selected.comment && typeof (selected.comment) !== "string") {
+                        (selected.comment as Blockly.Icon).setVisible(true)
+                        this.currentCommentOrWarning = selected.comment
+                    }
+                }
             }
         })
-        Blockly.bindEvent_(this.editor.getCanvas(), 'blocklySelectChange', this, () => {
-            this.updateHelpCard();
-
-            if (this.currentComment) {
-                this.currentComment.setVisible(false)
-            }
-
-            const selected = Blockly.selected
-            if (selected && selected.comment && typeof (selected.comment) !== "string") {
-                (selected.comment as Blockly.Comment).setVisible(true)
-                this.currentComment = selected.comment
-            }
-        })
+        this.resize();
 
         this.isReady = true
+    }
+
+    resize(e?: Event) {
+        let blocklyArea = document.getElementById('blocksArea');
+        let blocklyDiv = document.getElementById('blocksEditor');
+        // Position blocklyDiv over blocklyArea.
+        blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+        blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+        Blockly.svgResize(this.editor);
     }
 
     undo() {
@@ -304,7 +330,15 @@ export class Editor extends srceditor.Editor {
     }
 
     getId() {
-        return "blocksEditor"
+        return "blocksArea"
+    }
+
+    display() {
+        return (
+            <div>
+                <div id="blocksEditor"></div>
+            </div>
+        )
     }
 
     getViewState() {
@@ -369,9 +403,9 @@ export class Editor extends srceditor.Editor {
 
     menu() {
         return (
-            <sui.Item text={lf("JavaScript") } textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
-                tooltip={lf("Convert code to JavaScript")} tooltipPosition="bottom left"
-            />
+            <sui.Item text={lf("JavaScript") } class="javascript-menuitem" textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
+                tooltip={lf("Convert code to JavaScript") } tooltipPosition="bottom left"
+                />
         )
     }
 

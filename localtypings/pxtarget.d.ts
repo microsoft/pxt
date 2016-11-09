@@ -3,6 +3,18 @@
 /// <reference path="blockly.d.ts" />
 
 declare namespace pxt {
+    // targetconfig.json
+    interface TargetConfig {
+        packages?: PackagesConfig;
+    }
+
+    interface PackagesConfig {
+        approvedOrgs?: string[];
+        approvedRepos?: string[];
+        bannedOrgs?: string[];
+        bannedRepos?: string[];
+    }
+
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
         forkof?: string; // id of a target we're based on
@@ -98,6 +110,7 @@ declare namespace pxt {
         name?: string;
         title?: string;
         description?: string;
+        twitter?: string;
         defaultLocale?: string;
         logoUrl?: string;
         logo?: string;
@@ -110,13 +123,12 @@ declare namespace pxt {
         homeUrl?: string;
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
-        sideDoc?: string;
+        hideSideDocs?: boolean;
         boardName?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        downloadClass?: string;
         invertedMenu?: boolean;
         locales?: Map<AppTheme>;
         cardLogo?: string;
@@ -127,8 +139,12 @@ declare namespace pxt {
         usbHelp?: SpecializedResource[];
         usbDocs?: string;
         exportVsCode?: boolean;
-        browserSupport?: SpecializedResource[];        
+        browserSupport?: SpecializedResource[];
+        invertedToolbox?: boolean;
+        invertedMonaco?: boolean;
         blocklyOptions?: Blockly.Options;
+        simAnimationEnter?: string;
+        simAnimationExit?: string;
     }
 
     interface DocMenuEntry {

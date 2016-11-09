@@ -157,10 +157,10 @@ namespace pxsim {
     function merge3<A, B, C>(a: A, b: B, c: C): A & B & C {
         return merge2(merge2(a, b), c);
     }
-    function readPin(arg: string): MicrobitPin {
+    export function readPin(arg: string): MicrobitPin {
         U.assert(!!arg, "Invalid pin: " + arg);
-        let pin = arg.split("DigitalPin.")[1];
-        return <MicrobitPin>pin;
+        const pin = /^([A-Z]\w+)Pin\.(P\d+)$/.exec(arg);
+        return pin ? <MicrobitPin>pin[2] : undefined;
     }
     function mkReverseMap(map: { [key: string]: string }) {
         let origKeys: string[] = [];

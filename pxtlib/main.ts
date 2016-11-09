@@ -286,10 +286,10 @@ namespace pxt {
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
                 U.userError("Invalid package name: " + this.config.name)
-            let minVer = this.config.minTargetVersion
-            if (minVer && semver.strcmp(minVer, appTarget.versions.target) > 0)
+            const targetVersion = this.config.targetVersion
+            if (targetVersion && semver.strcmp(targetVersion, appTarget.versions.target) > 0)
                 U.userError(lf("Package {0} requires target version {1} (you are running {2})",
-                    this.config.name, minVer, appTarget.versions.target))
+                    this.config.name, targetVersion, appTarget.versions.target))
         }
 
         upgradePackage(pkg: string, val: string): string {
@@ -369,7 +369,7 @@ namespace pxt {
                         let mod = this.resolveDep(id)
                         ver = ver || "*"
                         if (mod) {
-                            if (mod._verspec != ver)
+                            if (mod._verspec != ver && (!/^file:/.test(mod._verspec) || !/^file:/.test(ver)))
                                 U.userError("Version spec mismatch on " + id)
                             mod.level = Math.min(mod.level, this.level + 1)
                             return Promise.resolve()
@@ -401,11 +401,22 @@ namespace pxt {
         /**
          * Returns localized strings qName -> translation
          */
-        packageLocalizationStrings(lang: string): Map<string> {
-            let r: Map<string> = {};
-            let files = this.config.files;
+        packageLocalizationStringsAsync(lang: string): Promise<Map<string>> {
+            const targetId = pxt.appTarget.id;
+            const filenames = [this.id + "-jsdoc", this.id];
+            const r: Map<string> = {};
+            if (pxt.Util.localizeLive && this.id != "this") {
+                pxt.log(`loading live translations for ${this.id}`)
+                const code = pxt.Util.userLanguage();
+                return Promise.all(filenames.map(
+                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`)
+                        .then(tr => Util.jsonMergeFrom(r, tr))
+                        .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
+                ).then(() => r);
+            }
 
-            [this.id + "-jsdoc", this.id].map(name => {
+            const files = this.config.files;
+            filenames.map(name => {
                 let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     return JSON.parse(this.readFile(fn)) as Map<string>;
@@ -417,7 +428,7 @@ namespace pxt {
                 return undefined;
             }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
 
-            return r;
+            return Promise.resolve(r);
         }
     }
 
@@ -451,15 +462,16 @@ namespace pxt {
             return ids.map(id => this.resolveDep(id))
         }
 
-        localizationStrings(lang: string): Map<string> {
-            let loc: Map<string> = {};
-            Util.values(this.deps).forEach(dep => {
-                let depLoc = dep.packageLocalizationStrings(lang);
-                if (depLoc) // merge data
-                    for (let k in depLoc)
-                        if (!loc[k]) loc[k] = depLoc[k];
-            })
-            return loc;
+        localizationStringsAsync(lang: string): Promise<Map<string>> {
+            const loc: Map<string> = {};
+            return Promise.all(Util.values(this.deps).map(dep =>
+                dep.packageLocalizationStringsAsync(lang)
+                    .then(depLoc => {
+                        if (depLoc) // merge data
+                            for (let k in depLoc)
+                                if (!loc[k]) loc[k] = depLoc[k];
+                    })))
+                .then(() => loc);
         }
 
         getTargetOptions(): CompileTarget {
@@ -626,6 +638,17 @@ namespace pxt {
             return res;
         }
 
+    }
+
+
+    let _targetConfig: pxt.TargetConfig = undefined;
+    export function targetConfigAsync(): Promise<pxt.TargetConfig> {
+        return _targetConfig ? Promise.resolve(_targetConfig)
+            : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
+                .then(js => { _targetConfig = js; return _targetConfig; });
+    }
+    export function packagesConfigAsync(): Promise<pxt.PackagesConfig> {
+        return targetConfigAsync().then(config => config ? config.packages : undefined);
     }
 
     export const CONFIG_NAME = "pxt.json"

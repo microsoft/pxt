@@ -1,7 +1,6 @@
 /*******************************
      User Global Variables
 *******************************/
-@importGoogleFonts: false;
 
 @primaryColor: @pink;
 @secondaryColor: @grey;
@@ -18,6 +17,37 @@
 @brown:#00BCF2;
 @grey:#505050;
 
+@pageBackground: #ffffff;
+
+
+/*-------------------
+     Fonts
+--------------------*/
+
+
+@importGoogleFonts: false;
+
+/*-------------------
+   Breakpoints
+--------------------*/
+
+@mobileBreakpoint            : 320px;
+@tabletBreakpoint            : 768px;
+@computerBreakpoint          : 992px;
+@largeMonitorBreakpoint      : 1400px;
+@widescreenMonitorBreakpoint : 1920px;
+
+/*******************************
+     PXT Variables
+*******************************/
+
+@mainMenuHeight: 3.6rem;
+@mobileMenuHeight: 4.4rem;
+
+@sideBarWidth: 22rem;
+@simulatorWidth: 27rem;
+@simulatorWidthSmall: 20rem;
 
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
 @blocklySvgColor: #fff;
+@trashIconColor: @primaryColor;

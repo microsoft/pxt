@@ -17,7 +17,6 @@ import * as tdlegacy from "./tdlegacy"
 import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
-import {LoginBox} from "./login"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -57,6 +56,7 @@ interface IAppState {
     showFiles?: boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
+    sideDocsLoadUrl?: string; // set once to load the side docs frame
     sideDocsCollapsed?: boolean;
 
     running?: boolean;
@@ -112,7 +112,7 @@ interface ScriptSearchState {
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     private prevData: Cloud.JsonPointer[] = [];
-    private prevGhData: pxt.github.Repo[] = [];
+    private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
 
     constructor(props: ISettingsProps) {
@@ -135,21 +135,21 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         this.setState({ visible: true, packages: false, searchFor: '' })
     }
 
-    fetchGhData(): pxt.github.Repo[] {
+    fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages) return [];
+        if (!cloud.packages || !this.state.packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let res: pxt.github.SearchResults =
+        let res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
                 ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
                 : null
-        if (res) this.prevGhData = res.items
-        return this.prevGhData
+        if (res) this.prevGhData = res
+        return this.prevGhData || []
     }
 
     fetchCloudData(): Cloud.JsonPointer[] {
         let cloud = pxt.appTarget.cloud || {};
-        if (cloud.packages) return [] // now handled on GitHub
+        if (cloud.packages || !this.state.packages) return [] // now handled on GitHub
         if (!cloud.workspaces && !cloud.packages) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor
@@ -245,14 +245,15 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     .done(() => core.hideLoading())
             }
         }
-        const installGh = (scr: pxt.github.Repo) => {
+        const installGh = (scr: pxt.github.GitRepo) => {
             this.hide();
             if (this.state.packages) {
                 let p = pkg.mainEditorPkg();
                 core.showLoading(lf("downloading package..."));
-                pxt.github.latestVersionAsync(scr.full_name)
-                    .then(tag => pxt.github.pkgConfigAsync(scr.full_name, tag)
-                        .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.full_name + "#" + tag))
+                pxt.packagesConfigAsync()
+                    .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
+                    .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
+                        .then(cfg => p.addDepAsync(cfg.name, "github:" + scr.fullName + "#" + tag))
                         .then(r => this.props.parent.reloadHeaderAsync()))
                     .catch(core.handleNetworkError)
                     .finally(() => core.hideLoading());
@@ -329,15 +330,26 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="blue"
                             />
                     ) }
-                    {ghdata.map(scr =>
+                    {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                         <codecard.CodeCardView
                             name={scr.name.replace(/^pxt-/, "") }
-                            header={scr.full_name}
+                            header={scr.fullName}
                             description={scr.description}
-                            key={'gh' + scr.full_name}
+                            key={'gh' + scr.fullName}
                             onClick={() => installGh(scr) }
-                            url={'github:' + scr.full_name}
+                            url={'github:' + scr.fullName}
                             color="blue"
+                            />
+                    ) }
+                    {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
+                        <codecard.CodeCardView
+                            name={scr.name.replace(/^pxt-/, "") }
+                            header={scr.fullName}
+                            description={scr.description}
+                            key={'gh' + scr.fullName}
+                            onClick={() => installGh(scr) }
+                            url={'github:' + scr.fullName}
+                            color="red"
                             />
                     ) }
                     {urldata.map(scr =>
@@ -568,8 +580,8 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        const sideDocs = !pxt.options.light;
-        return <sui.DropdownMenuItem icon="help" title={lf("Help") }>
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
+        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" title={lf("Help") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
@@ -588,17 +600,24 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el)
-            el.src = `${docsUrl}#doc:${path}`;
-        this.props.parent.setState({ sideDocsCollapsed: false });
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
+        this.setUrl(url);
     }
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
+        this.setUrl(url);
+    }
+
+    private setUrl(url: string) {
         let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el)
-            el.src = `${docsUrl}#md:${encodeURIComponent(md)}`;
+        if (el) el.src = url;
+        else this.props.parent.setState({ sideDocsLoadUrl: url });
         this.props.parent.setState({ sideDocsCollapsed: false });
     }
 
@@ -614,13 +633,15 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     componentDidUpdate() {
-        Blockly.fireUiEvent(window, 'resize');
+        this.props.parent.editor.resize();
     }
 
     renderCore() {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const state = this.props.parent.state;
-        const icon = state.sideDocsCollapsed ? "expand" : "compress";
+        const docsUrl = state.sideDocsLoadUrl;
+        if (!docsUrl) return null;
+
+        const icon = !docsUrl || state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
             <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
             <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
@@ -745,6 +766,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     scriptSearch: ScriptSearch;
     shareEditor: ShareEditor;
 
+    private lastChangeTime: number;
+
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -800,6 +823,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         simulator.setState(this.state.header ? this.state.header.editor : '')
     }
 
+    fireResize() {
+        if (document.createEvent) { // W3C
+            let event = document.createEvent('Event');
+            event.initEvent('resize', true, true);
+            window.dispatchEvent(event);
+        } else { // IE
+            (document as any).fireEvent('onresize');
+        }
+    }
+
     saveFile() {
         simulator.makeDirty();
         this.saveFileAsync().done()
@@ -831,36 +864,51 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.typecheck()
     }
 
-    private autoRunSimulator = pxtc.Util.debounce(
+    private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
+            if (Util.now() - this.lastChangeTime < 1000) return;
             if (!this.state.active)
                 return;
             this.runSimulator({ background: true });
         },
-        2000, false);
-    private typecheck() {
-        let state = this.editor.snapshotState()
-        compiler.typecheckAsync()
+        1000, true);
+
+    private autoRunSimulator = pxtc.Util.debounce(
+        () => {
+            if (Util.now() - this.lastChangeTime < 1000) return;
+            if (!this.state.active)
+                return;
+            this.runSimulator({ background: true });
+        },
+        2000, true);
+
+    private typecheck = pxtc.Util.debounce(
+        () => {
+            let state = this.editor.snapshotState()
+            compiler.typecheckAsync()
             .done(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                     let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
                         && !simulator.driver.runOptions.debug
-                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded))
-                        this.autoRunSimulator();
+                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
+                        if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
+                        else this.autoRunSimulator();
+                    }
                 }
             });
-    }
+        }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
         if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
             this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 2000, false);
+    }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
-        this.saveFile();
-        if (!this.editor.isIncomplete())
+        if (!this.editor.isIncomplete()) {
+            this.saveFile();
             this.typecheck();
+        }
         this.markdownChangeHandler();
     }, 1000, false);
     private initEditors() {
@@ -874,6 +922,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
                 this.editorFile.markDirty();
             }
+            this.lastChangeTime = Util.now();
             this.editorChangeHandler();
         }
         this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.textEditor]
@@ -929,7 +978,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         SideDocs.notify({
             type: "fileloaded",
-            name: this.editorFile.getName()
+            name: this.editorFile.getName(),
+            locale: pxt.Util.localeInfo()
         } as pxsim.SimulatorFileLoadedMessage)
 
         if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
@@ -941,7 +991,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        Blockly.fireUiEvent(window, 'resize');
+        this.fireResize();
     }
 
     setSideFile(fn: pkg.File) {
@@ -1084,7 +1134,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
-                else this.setSideDoc(pxt.appTarget.appTheme.sideDoc);
             })
     }
 
@@ -1343,6 +1392,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         } else {
             return promise;
         }
+    }
+
+    reset() {
+        pxt.tickEvent("reset");
+        core.confirmAsync({
+            header: lf("Reset"),
+            body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
+            agreeLbl: lf("Reset"),
+            agreeClass: "red",
+            agreeIcon: "sign out",
+            disagreeLbl: lf("Cancel")
+        }).then(r => {
+            if (!r) return;
+            workspace.resetAsync()
+                .catch((e: any) => { })
+                .done(() => {
+                    window.location.reload()
+                })
+        });
     }
 
     compile() {
@@ -1612,10 +1680,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
-        const downloadClass = targetTheme.downloadClass || "green";
+        const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox || pxt.options.light || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -1627,9 +1697,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </span> }
                         <div className="ui item portrait only">
                             <div className="ui">
-                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class={downloadClass} icon="download" tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : "" }
-                                {make ? <sui.Button role="menuitem" icon='configure' class="secondary" tooltip={makeTooltip} tooltipPosition="bottom left"  onClick={() => this.openInstructions() } /> : undefined }
-                                <sui.Button role="menuitem" key='runmenubtn' icon={this.state.running ? "stop" : "play"} tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.startStopSimulator() } />
+                                {pxt.appTarget.compile ? <sui.Button role="menuitem" class="download-button download-button-full" icon="download" onClick={() => this.compile() } /> : "" }
+                                {make ? <sui.Button role="menuitem" icon='configure' class="secondary" onClick={() => this.openInstructions() } /> : undefined }
+                                <sui.Button role="menuitem" class="play-button play-button-full" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
                             </div>
                         </div>
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
@@ -1648,7 +1718,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div>
                         {this.editor.menu() }
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar'>
+                        {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
                             <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header ? <div className="ui divider"></div> : undefined }
@@ -1662,13 +1732,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {
                                 // we always need a way to clear local storage, regardless if signed in or not
                             }
-                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => LoginBox.signout() } />
+                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } />
                             <div className="ui divider"></div>
                             { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                             { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                         </sui.DropdownMenuItem>}
-                        {sandbox ? undefined : <DocsMenuItem parent={this} />}
+                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item link logo"><a className="ui image" target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a></span>
@@ -1679,9 +1749,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
-                        {compile ? <sui.Button icon='icon download' class={`huge fluid ${downloadClass}`} text={lf("Download") } disabled={compileDisabled} tooltip={compileTooltip} tooltipPosition="bottom left" onClick={() => this.compile() } /> : ""}
-                        {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } tooltip={makeTooltip} tooltipPosition="bottom left" onClick={() => this.openInstructions() } /> : undefined }
-                        <sui.Button key='runbtn' icon={this.state.running ? "stop" : "play"} title={this.state.running ? lf("Stop") : lf("Play") } tooltip={runTooltip} tooltipPosition="bottom right" onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {compile ? <sui.Button icon='icon download' class={`huge fluid download-button`} text={lf("Download") } disabled={compileDisabled} title={compileTooltip} onClick={() => this.compile() } /> : ""}
+                        {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
+                        <sui.Button key='runbtn' class="play-button" icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1690,13 +1760,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
                     </div>
-                    {sandbox ? undefined : <FileList parent={this} />}
+                    {sandbox || isBlocks ? undefined : <FileList parent={this} />}
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                {sandbox || pxt.options.light ? undefined : <SideDocs ref="sidedoc" parent={this} />}
+                {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
@@ -1989,9 +2059,17 @@ function initTheme() {
         document.body.style.direction = "rtl";
     }
 
-    for (let u of pxt.appTarget.appTheme.usbHelp || []) {
-        u.path = u.path.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
+    function patchCdn(url: string): string {
+        if (!url) return url;
+        return url.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
+            .replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
+
+    theme.appLogo = patchCdn(theme.appLogo)
+    theme.cardLogo = patchCdn(theme.cardLogo)
+    for (const u of theme.usbHelp || [])
+        u.path = patchCdn(u.path)
+
 }
 
 function parseHash(): { cmd: string; arg: string } {
@@ -2025,10 +2103,6 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
-            break;
-        case "uploader": // editor launched by the uploader
-            pxt.tickEvent("hash.uploader")
-            pxt.storage.setLocal("uploader", "1");
             break;
         case "sandbox":
         case "pub":
@@ -2065,7 +2139,7 @@ $(document).ready(() => {
         // in iframe
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
-    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM();
+    pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
 
     enableAnalytics()
     appcache.init();
@@ -2097,10 +2171,11 @@ $(document).ready(() => {
 
     Promise.resolve()
         .then(() => {
-            const mlang = /lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            const lang = mlang ? mlang[1] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
-            if (lang) pxt.tickEvent("locale." + lang);
-            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang);
+            const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const live = mlang && !!mlang[1];
+            if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
+            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
@@ -2153,9 +2228,13 @@ $(document).ready(() => {
     });
 
     window.addEventListener("unload", ev => {
-        if (theEditor && !LoginBox.signingOut)
+        if (theEditor)
             theEditor.saveSettings()
     });
+    window.addEventListener("resize", ev => {
+        if (theEditor && theEditor.editor)
+            theEditor.editor.resize(ev)
+    }, false);
     window.addEventListener("message", ev => {
         let m = ev.data as pxsim.SimulatorMessage;
         if (!m) {

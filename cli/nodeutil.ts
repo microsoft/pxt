@@ -17,6 +17,11 @@ export var targetDir: string = process.cwd();
 //When running the Electron app, this will be based on the initial value
 export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
 
+export function setTargetDir(dir: string) {
+    targetDir = dir;
+    pxtCoreDir = path.join(targetDir, "node_modules/pxt-core");
+}
+
 export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
         let bufs: Buffer[] = []
@@ -117,7 +122,7 @@ function sha256(hashData: string): string {
 }
 
 
-export function init() {
+function init() {
     // no, please, I want to handle my errors myself
     let async = (<any>Promise)._async
     async.fatalError = (e: any) => async.throwLater(e);
@@ -166,19 +171,44 @@ export function mkdirP(thePath: string) {
     }
 }
 
-export function deleteFolderRecursive(thePath: string) {
-    if (!path || !fs.existsSync(thePath)) {
-        return;
-    }
-
-    fs.readdirSync(thePath).forEach((f) => {
-        let currentPath = path.join(thePath, f);
-
-        if (fs.lstatSync(currentPath).isDirectory()) {
-            deleteFolderRecursive(currentPath);
-        } else {
-            fs.unlinkSync(currentPath);
+export function cpR(src: string, dst: string, maxDepth = 8) {
+    src = path.resolve(src)
+    let files = allFiles(src, maxDepth)
+    let dirs: pxt.Map<boolean> = {}
+    for (let f of files) {
+        let bn = f.slice(src.length)
+        let dd = path.join(dst, bn)
+        let dir = path.dirname(dd)
+        if (!Util.lookup(dirs, dir)) {
+            mkdirP(dir)
+            dirs[dir] = true
         }
-    });
-    fs.rmdirSync(thePath);
+        let buf = fs.readFileSync(f)
+        fs.writeFileSync(dd, buf)
+    }
 }
+
+export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false): string[] {
+    let res: string[] = []
+    if (allowMissing && !fs.existsSync(top)) return res
+    for (const p of fs.readdirSync(top)) {
+        if (p[0] == ".") continue;
+        const inner = path.join(top, p)
+        const st = fs.statSync(inner)
+        if (st.isDirectory()) {
+            if (maxDepth > 1)
+                Util.pushRange(res, allFiles(inner, maxDepth - 1))
+            if (includeDirs)
+                res.push(inner);
+        } else {
+            res.push(inner)
+        }
+    }
+    return res
+}
+
+export function existDirSync(name: string): boolean {
+    return fs.existsSync(name) && fs.statSync(name).isDirectory();
+}
+
+init();

@@ -34,7 +34,7 @@ npm link ../pxt
 
 ## Build
 
-First, install Node (http://nodejs.org/). Then install the following:
+First, install (Node)[http://nodejs.org/]: minimum version 5.7. Then install the following:
 ```
 npm install -g jake
 npm install -g tsd

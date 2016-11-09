@@ -30,10 +30,10 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
-    function fireUiEvent(node: any, eventName: string): void;
     function genUid(): string;
     function terminateDrag_(): void;
     function mouseToSvg(e: Event, svg: Element): any;
+    function svgResize(workspace: Blockly.Workspace): void;
 
     let ALIGN_RIGHT: number;
 
@@ -158,8 +158,9 @@ declare namespace Blockly {
         getText(): string;
         setBubbleSize(width: number, height: number): void;
         setText(text: string): void;
-        setVisible(visible: boolean): void;
+    }
 
+    class Warning extends Icon {
     }
 
     class Icon {
@@ -172,6 +173,7 @@ declare namespace Blockly {
         dispose(): void;
         getIconLocation(): goog.math.Coordinate;
         isVisible(): boolean;
+        setVisible(visible: boolean): void;
         renderIcon(cursorX: number): number;
         setIconLocation(xy: goog.math.Coordinate): void;
         updateColour(): void;
@@ -246,7 +248,7 @@ declare namespace Blockly {
     }
 
     class Scrollbar {
-        svgKnob_: Element;
+        svgHandle_: Element;
         ratio_: number;
         set(x: number): void;
     }
@@ -274,6 +276,7 @@ declare namespace Blockly {
         undo(): void;
         redo(): void;
         clearUndo(): void;
+        isDragging(): boolean;
         getMetrics(): {
             absoluteLeft: number;
             absoluteTop: number;
@@ -296,7 +299,7 @@ declare namespace Blockly {
     namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;
-        function domToWorkspace(workspace: Workspace, dom: Element): void;
+        function domToWorkspace(dom: Element, workspace: Workspace): void;
         function textToDom(text: string): Element;
         function workspaceToDom(workspace: Workspace): Element;
     }

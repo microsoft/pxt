@@ -2,6 +2,24 @@
          Site Overrides
 *******************************/
 
-.ui.inverted.menu {
-    border: 1px solid transparent;
+#menubar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+}
+
+#menubar .ui.menu {
+    height: @mainMenuHeight;
+    min-height: @mainMenuMinHeight !important;
+}
+
+#menubar .item > .button {
+    margin-right: 0.25rem;
+}
+
+@media only screen and (max-width:55em) {
+    #menubar .ui.menu {
+        height: @mobileMenuHeight !important;
+    }
 }
