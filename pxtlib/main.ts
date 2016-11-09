@@ -211,7 +211,8 @@ namespace pxt {
             if (proto == "pub") {
                 return Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
-                return pxt.github.downloadPackageAsync(this.verArgument())
+                return pxt.packagesConfigAsync()
+                    .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
                     .then(resp => resp.files)
             } else if (proto == "embed") {
                 let resp = pxt.getEmbeddedScript(this.verArgument())
