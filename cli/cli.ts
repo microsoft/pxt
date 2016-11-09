@@ -161,19 +161,23 @@ function pkginfoAsync(repopath: string) {
         return Promise.resolve();
     }
 
-    let pkgInfo = (cfg: pxt.PackageConfig) => {
-        console.log(`Name: ${cfg.name}`)
-        console.log(`Description: ${cfg.description}`)
+    const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
+        console.log(`name: ${cfg.name}`)
+        console.log(`description: ${cfg.description}`)
+        console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
     return pxt.packagesConfigAsync()
         .then(config => {
+            console.log(`github org: ${parsed.owner}`);
+            if (parsed.tag) console.log(`github tag: ${parsed.tag}`);
+            console.log(`github status: ${pxt.github.repoStatus(parsed, config)}`)
             if (parsed.tag)
                 return pxt.github.downloadPackageAsync(repopath, config)
                     .then(pkg => {
                         let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
-                        pkgInfo(cfg)
-                        console.log(`Size: ${JSON.stringify(pkg.files).length}`)
+                        pkgInfo(cfg, parsed.tag)
+                        console.log(`size: ${JSON.stringify(pkg.files).length}`)
                     })
 
             return pxt.github.pkgConfigAsync(parsed.fullName)
@@ -181,11 +185,11 @@ function pkginfoAsync(repopath: string) {
                     pkgInfo(cfg)
                     return pxt.github.listRefsAsync(repopath)
                         .then(tags => {
-                            console.log("Tags: " + tags.join(", "))
+                            console.log("tags: " + tags.join(", "))
                             return pxt.github.listRefsAsync(repopath, "heads")
                         })
                         .then(heads => {
-                            console.log("Branches: " + heads.join(", "))
+                            console.log("branches: " + heads.join(", "))
                         })
                 })
         })

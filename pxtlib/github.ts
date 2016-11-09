@@ -168,7 +168,7 @@ namespace pxt.github {
         return rr;
     }
 
-    function repoStatus(rr: ParsedRepo, config: pxt.PackagesConfig): GitRepoStatus {
+    export function repoStatus(rr: ParsedRepo, config: pxt.PackagesConfig): GitRepoStatus {
         return isRepoBanned(rr, config) ? GitRepoStatus.Banned
             : isRepoApproved(rr, config) ? GitRepoStatus.Approved
                 : GitRepoStatus.Unknown;
