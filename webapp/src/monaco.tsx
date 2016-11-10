@@ -143,10 +143,15 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        if (!this.hasBlocks()) return null
-        return <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
-                tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left"
-         />
+        let editor = pkg.mainEditorPkg(); 
+        if (this.currFile != editor.files["main.ts"]) {
+            return (<sui.Item text={lf("Back to Code") } icon={"align left"} onClick={() => this.parent.setFile(editor.files["main.ts"]) } />);
+        }
+        else if (editor.files["main.blocks"]) { //if main.blocks file present
+            return ( <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
+                    tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left" /> );
+        }
+        return null;
     }
 
     undo() {
