@@ -74,6 +74,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
+                {card.imageUrl ? <img src={card.imageUrl} className="ui image" /> : null}
             </div>
             <div className="content">
                 {card.name ? <div className="header">{card.name}</div> : null}

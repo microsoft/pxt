@@ -105,10 +105,18 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     }
 }
 
+enum ScriptSearchMode {
+    Packages,
+    Projects,
+    Gallery
+}
+
 interface ScriptSearchState {
     searchFor?: string;
-    packages?: boolean;
+    mode?: ScriptSearchMode;
     visible?: boolean;
+    search?: boolean;
+    galleries?: gallery.Gallery[];
 }
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
@@ -120,6 +128,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         super(props)
         this.state = {
             searchFor: '',
+            mode: ScriptSearchMode.Packages,
             visible: false
         }
     }
@@ -129,16 +138,20 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     showAddPackages() {
-        this.setState({ visible: true, packages: true, searchFor: '' })
+        this.setState({ visible: true, mode: ScriptSearchMode.Packages, galleries: undefined, searchFor: '', search: true })
     }
 
     showOpenProject() {
-        this.setState({ visible: true, packages: false, searchFor: '' })
+        this.setState({ visible: true, mode: ScriptSearchMode.Projects, galleries: undefined, searchFor: '', search: true })
+    }
+
+    showGallery(galleries: gallery.Gallery[]) {
+        this.setState({ visible: true, mode: ScriptSearchMode.Gallery, galleries: galleries, searchFor: '', search: false })
     }
 
     fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages || !this.state.packages) return [];
+        if (!cloud.packages || this.state.mode != ScriptSearchMode.Packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
         let res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
@@ -150,7 +163,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
     fetchCloudData(): Cloud.JsonPointer[] {
         let cloud = pxt.appTarget.cloud || {};
-        if (cloud.packages || !this.state.packages) return [] // now handled on GitHub
+        if (cloud.packages || this.state.mode != ScriptSearchMode.Packages) return [] // now handled on GitHub
         if (!cloud.workspaces && !cloud.packages) return [];
         let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
         let res = this.state.searchFor
@@ -161,7 +174,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
-        if (this.state.packages) return []
+        if (this.state.mode != ScriptSearchMode.Projects) return []
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (scriptid) {
@@ -175,15 +188,20 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchBundled(): pxt.PackageConfig[] {
-        if (!this.state.packages || !!this.state.searchFor) return [];
+        if (this.state.mode != ScriptSearchMode.Packages || !!this.state.searchFor) return [];
 
         const bundled = pxt.appTarget.bundledpkgs;
         return Util.values(bundled)
             .map(bundle => JSON.parse(bundle["pxt.json"]) as pxt.PackageConfig)
     }
 
+    fetchGalleries(): pxt.CodeCard[] {
+        const gals = this.state.galleries || [];
+        return Util.concat(gals.map(gal => gal.cards));
+    }
+
     fetchLocalData(): Header[] {
-        if (this.state.packages) return [];
+        if (this.state.mode != ScriptSearchMode.Projects) return [];
 
         let headers: Header[] = this.getData("header:*")
         if (this.state.searchFor)
@@ -194,7 +212,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.searchFor != nextState.searchFor
-            || this.state.packages != nextState.packages;
+            || this.state.mode != nextState.mode;
     }
 
     renderCore() {
@@ -205,6 +223,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
+        const galleries = this.fetchGalleries();
 
         const chgHeader = (hdr: Header) => {
             this.hide();
@@ -217,6 +236,10 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 .then(r => this.props.parent.reloadHeaderAsync())
                 .done();
         }
+        const chgGallery = (scr: pxt.CodeCard) => {
+            this.hide();
+            document.location.hash = scr.url;
+        }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
             this.setState({ searchFor: str })
@@ -226,7 +249,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
         const install = (scr: Cloud.JsonPointer) => {
             this.hide();
-            if (this.state.packages) {
+            if (this.state.mode == ScriptSearchMode.Packages) {
                 let p = pkg.mainEditorPkg();
                 p.addDepAsync(scr.scriptname, "*")
                     .then(r => this.props.parent.reloadHeaderAsync())
@@ -239,7 +262,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
         const installScript = (scr: Cloud.JsonScript) => {
             this.hide();
-            if (!this.state.packages) {
+            if (this.state.mode == ScriptSearchMode.Projects) {
                 core.showLoading(lf("loading project..."));
                 workspace.installByIdAsync(scr.id)
                     .then(r => this.props.parent.loadHeaderAsync(r))
@@ -248,7 +271,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
         const installGh = (scr: pxt.github.GitRepo) => {
             this.hide();
-            if (this.state.packages) {
+            if (this.state.mode == ScriptSearchMode.Packages) {
                 let p = pkg.mainEditorPkg();
                 core.showLoading(lf("downloading package..."));
                 pxt.packagesConfigAsync()
@@ -280,10 +303,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             return false;
         }
 
+        const headerText = this.state.mode == ScriptSearchMode.Packages ? lf("Add Package...")
+            : lf("Open Project...");
         return (
-            <sui.Modal visible={this.state.visible} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog"
+            <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
-                <div className="ui search">
+                {this.state.search ? <div className="ui search">
                     <div className="ui fluid action input" role="search">
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
                         <button title={lf("Search") } className="ui right primary labeled icon button" onClick={upd}>
@@ -291,9 +316,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             {lf("Search") }
                         </button>
                     </div>
-                </div>
+                </div> : undefined }
                 <div className="ui cards">
-                    {pxt.appTarget.compile && !this.state.packages ?
+                    {pxt.appTarget.compile && this.state.mode == ScriptSearchMode.Projects ?
                         <codecard.CodeCardView
                             color="pink"
                             key="importhex"
@@ -301,6 +326,14 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
+                    {galleries.map(scr => <codecard.CodeCardView
+                        key={'gal' + scr.name}
+                        name={scr.name}
+                        url={scr.url}
+                        imageUrl={scr.imageUrl}
+                        onClick={() => chgGallery(scr)}
+                        />
+                    )}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
                             key={'bundled' + scr.name}
@@ -369,7 +402,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 { isEmpty() ?
                     <div className="ui items">
                         <div className="ui item">
-                            {this.state.packages ?
+                            {this.state.mode == ScriptSearchMode.Packages ?
                                 lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
                                 lf("We couldn't find any projects matching '{0}'", this.state.searchFor) }
                         </div>
@@ -887,18 +920,18 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         () => {
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
-            .done(resp => {
-                this.editor.setDiagnostics(this.editorFile, state)
-                if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
-                    let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
-                    if (output && !output.numDiagnosticsOverride
-                        && !simulator.driver.runOptions.debug
-                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
-                        if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
-                        else this.autoRunSimulator();
+                .done(resp => {
+                    this.editor.setDiagnostics(this.editorFile, state)
+                    if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
+                        let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
+                        if (output && !output.numDiagnosticsOverride
+                            && !simulator.driver.runOptions.debug
+                            && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
+                            if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
+                            else this.autoRunSimulator();
+                        }
                     }
-                }
-            });
+                });
         }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
@@ -2024,7 +2057,8 @@ function handleHash(hash: { cmd: string; arg: string }) {
             return;
         case "gallery":
             pxt.tickEvent("gallery." + hash.cmd);
-            gallery.showGalleryAsync(hash.cmd).done();
+            gallery.loadGalleryAsync(hash.arg)
+                .done(gal => theEditor ? theEditor.scriptSearch.showGallery(gal) : undefined)
             break;
     }
 }

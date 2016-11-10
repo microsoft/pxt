@@ -1,6 +1,11 @@
 import * as core from "./core";
 
-function parseMardown(md: string): { name: string; cards: pxt.CodeCard[] }[] {
+export interface Gallery {
+    name: string;
+    cards: pxt.CodeCard[];
+}
+
+function parseMardown(md: string): Gallery[] {
     if (!md) return [];
 
     // second level titles are categories
@@ -8,29 +13,37 @@ function parseMardown(md: string): { name: string; cards: pxt.CodeCard[] }[] {
     // fenced code ```cards are sections of cards
     let galleries: { name: string; cards: pxt.CodeCard[] }[] = [];
     let incard = false;
-    let cards: string = undefined;
+    let name: string = undefined;
+    let cards: string = "";
     md.split('\n').forEach(line => {
         // new category
         if (/^##/.test(line)) {
-            galleries.push({ name: line.substr(2).trim(), cards: undefined });
-        } else if (/^```cards$/.test(line)) {
+            name = line.substr(2).trim();
+        } else if (/^```codecard$/.test(line)) {
             incard = true;
         } else if (/^```$/.test(line)) {
             incard = false;
-            if (cards) {
-                galleries[galleries.length - 1].cards = JSON.parse(cards);
-                cards = undefined;
+            if (name && cards) {
+                try {
+                    const cardsJSON = JSON.parse(cards) as pxt.CodeCard[];
+                    if (cardsJSON && cardsJSON.length > 0)
+                        galleries.push({ name, cards: cardsJSON });
+                } catch (e) {
+                    pxt.log('invalid card format in gallery');
+                }
             }
+            cards = "";
+            name = undefined;
         } else if (incard)
             cards += line + '\n';
     })
     return galleries;
 }
 
-export function showGalleryAsync(name: string): Promise<void> {
+export function loadGalleryAsync(name: string): Promise<Gallery[]> {
     return pxt.Cloud.downloadMarkdownAsync(name, pxt.Util.userLanguage(), pxt.Util.localizeLive)
         .then(md => {
             const galleries = parseMardown(md);
-
+            return galleries;
         })
 }
