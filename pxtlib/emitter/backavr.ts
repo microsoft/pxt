@@ -106,6 +106,8 @@ namespace ts.pxtc {
                 res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
             res += `
+    in r28, 0x3d
+    in r29, 0x3e
     @dummystack -${regs.length}`
             return res
         }
@@ -126,6 +128,8 @@ namespace ts.pxtc {
             return `
     pop r29
     pop r28
+    in r28, 0x3d
+    in r29, 0x3e
     @dummystack -1
     ret`
         }
