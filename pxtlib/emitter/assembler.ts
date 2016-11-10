@@ -330,8 +330,11 @@ namespace ts.pxtc.assembler {
                 if (m) {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
-                    if (this.stackpointers.hasOwnProperty(m[1]))
-                        v = this.ei.wordSize() * this.ei.computeStackOffset(this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                    if (this.stackpointers.hasOwnProperty(m[1])) {
+                        // console.log(m[1] + ": " + this.stack + " " + this.stackpointers[m[1]] + " " + m[2])
+                        v = this.ei.wordSize() * this.ei.computeStackOffset(m[1], this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                        // console.log(v)
+                    }
                     else
                         this.directiveError(lf("saved stack not found"))
                 }
@@ -959,7 +962,7 @@ namespace ts.pxtc.assembler {
             return -1;
         }
 
-        public computeStackOffset(offset: number) {
+        public computeStackOffset(kind: string, offset: number) {
             return offset;
         }
 

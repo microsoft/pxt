@@ -106,6 +106,8 @@ namespace ts.pxtc {
                 res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
             res += `
+    in r28, 0x3d
+    in r29, 0x3e
     @dummystack -${regs.length}`
             return res
         }
@@ -116,7 +118,9 @@ namespace ts.pxtc {
     ${set_r1_zero}
     push r28
     push r29
-    @dummystack 1`
+    @dummystack 1
+    in r28, 0x3d
+    in r29, 0x3e`
         }
 
         proc_return() {
@@ -124,6 +128,8 @@ namespace ts.pxtc {
             return `
     pop r29
     pop r28
+    in r28, 0x3d
+    in r29, 0x3e
     @dummystack -1
     ret`
         }
@@ -179,6 +185,7 @@ namespace ts.pxtc {
             let tgt_reg = ""
             let prelude = ""
             let _this = this
+
 
             function spill_it(new_off: number) {
                 prelude += `
@@ -246,7 +253,6 @@ namespace ts.pxtc {
                 [off_lo, off_hi] = (tgt_reg == "Y") ? [(parseInt(off) + 2).toString(),(parseInt(off) + 1).toString()] : [off,off + "|1"]
             } else {
                 // locals@offset and args@offset used in stack context, so also need to handle
-                // the AVR contention around SP/FP
                 [off_lo, off_hi] = [off, off + "-1"]
             }
             if (store) {
@@ -320,7 +326,7 @@ namespace ts.pxtc {
         lambda_epilogue() {
             return `
     call pxtrt::getGlobalsPtr
-    movw r30, r24
+    movw r2, r24
     ${this.proc_return()}
     @stackempty args`
         }
@@ -343,7 +349,7 @@ namespace ts.pxtc {
             "r2": "r20",
             "r3": "r18",
             "r5": "r26",  // X
-            "r6": "r30"   // Z
+            "r6": "r2"   // Z - we really mean r2 YES, because r30 is used as Z
         }
 
         rmap_hi: pxt.Map<string> = {
@@ -352,7 +358,7 @@ namespace ts.pxtc {
             "r2": "r21",
             "r3": "r19",
             "r5": "r27",
-            "r6": "r31"
+            "r6": "r3"
         }
 
         inst_lo: pxt.Map<string> = {
