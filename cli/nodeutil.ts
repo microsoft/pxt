@@ -14,27 +14,29 @@ import Util = pxt.Util;
 //This should be correct at startup when running from command line
 //When running inside Electron it gets updated to the correct path
 export var targetDir: string = process.cwd();
-//When running the Electron app, this will be based on the initial value
-export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
+//When running the Electron app, this will be updated based on targetDir
+export var pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
-    let newPxtCoreDir = path.join(targetDir, "node_modules", "pxt-core");
 
-    if (!fs.existsSync(newPxtCoreDir)) {
-        // Fix for NPM 3: dependencies are flattened, which means pxt-core is not under [target]/node_modules/pxt-core.
-        // In that case, use the pxt-core that nodeutil.js script is running in. It's in pxt-core/built/nodeutil.js, so
-        // go up once to reach root of pxt-core.
-        newPxtCoreDir = path.join(__dirname, "..");
+    // The target should expose the path to its bundled pxt-core
+    let fallback = false;
+    let target: any;
 
-        let packageJsonFile = path.join(newPxtCoreDir, "package.json");
-        if (!fs.existsSync(packageJsonFile) || JSON.parse(fs.readFileSync(packageJsonFile, "utf8")).name !== "pxt-core") {
-            newPxtCoreDir = null;
-        }
+    try {
+        target = require(targetDir);
+    }
+    catch (e) {
+        // If we can't require the target, fallback to default location
+        fallback = true;
     }
 
-    if (!!newPxtCoreDir && newPxtCoreDir !== pxtCoreDir) {
-        pxtCoreDir = newPxtCoreDir;
+    if (fallback || !target.pxtCoreDir || !fs.existsSync(target.pxtCoreDir)) {
+        pxt.log("Could not determine target's pxt-core location, falling back to default location");
+        pxtCoreDir = path.join(__dirname, "..");
+    } else {
+        pxtCoreDir = target.pxtCoreDir;
     }
 }
 
