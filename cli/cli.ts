@@ -1286,7 +1286,7 @@ function buildTargetCoreAsync() {
 
         return pkg.filesToBePublishedAsync(true)
             .then(res => {
-                cfg.bundledpkgs[pkg.config.name] = res
+                cfg.bundledpkgs[path.basename(dirname)] = res
             })
             .then(testForBuildTargetAsync)
             .then((compileOpts) => {
