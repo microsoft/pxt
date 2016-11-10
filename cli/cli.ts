@@ -666,7 +666,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         mode: '600'
     })
 
-    let cuser = process.env["USER"] || "someone"
+    let cuser = process.env["USER"] || "travis"
     let cred = [
         "-c", "credential.helper=",
         "-c", "user.name=" + user + "-" + cuser,
