@@ -14,19 +14,29 @@ import Util = pxt.Util;
 //This should be correct at startup when running from command line
 //When running inside Electron it gets updated to the correct path
 export var targetDir: string = process.cwd();
-//When running the Electron app, this will be based on the initial value
-export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
+//When running the Electron app, this will be updated based on targetDir
+export var pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
 
     // The target should expose the path to its bundled pxt-core
+    let fallback = false;
+    let target: any;
+
     try {
-        pxtCoreDir = require(targetDir).pxtCoreDir();
+        target = require(targetDir);
     }
     catch (e) {
-        // If not, fallback to default location
-        pxtCoreDir = path.join(targetDir, "node_modules", "pxt-core");
+        // If we can't require the target, fallback to default location
+        fallback = true;
+    }
+
+    if (fallback || !target.pxtCoreDir || !fs.existsSync(target.pxtCoreDir)) {
+        pxt.log("Could not determine target's pxt-core location, falling back to default location");
+        pxtCoreDir = path.join(__dirname, "..");
+    } else {
+        pxtCoreDir = target.pxtCoreDir;
     }
 }
 
