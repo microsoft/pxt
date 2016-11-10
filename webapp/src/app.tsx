@@ -17,6 +17,7 @@ import * as tdlegacy from "./tdlegacy"
 import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
+import * as gallery from "./gallery";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1878,30 +1879,7 @@ function getsrc() {
     pxt.log(theEditor.editor.getCurrentSource())
 }
 
-function enableUserVoice() {
-    if (sandbox) return;
-
-    const analytics = (pxt.appTarget.analytics || {} as pxt.AppAnalytics);
-    if (!analytics.userVoiceApiKey) return;
-
-    let userVoice = (window as any).UserVoice = (window as any).UserVoice || []; (function () {
-        let uv = document.createElement('script'); uv.type = 'text/javascript'; uv.async = true; uv.src = `//widget.uservoice.com/${analytics.userVoiceApiKey}.js`;
-        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(uv, s)
-    })();
-
-    userVoice.push(['set', {
-        accent_color: '#B4009E',
-        trigger_color: 'white',
-        trigger_background_color: '#B4009E',
-        forum_id: analytics.userVoiceForumId || undefined,
-        screenshot_enabled: true
-    }]);
-    userVoice.push(['addTrigger', { trigger_position: 'bottom-right' }]);
-    userVoice.push(['autoprompt', {}]);
-}
-
 function enableFeedback() {
-    enableUserVoice();
 }
 
 function enableAnalytics() {
@@ -2029,19 +2007,25 @@ function handleHash(hash: { cmd: string; arg: string }) {
             pxt.tickEvent("hash." + hash.cmd);
             let existing = workspace.getHeaders()
                 .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
-            core.showLoading(lf("loading project..."))
-            return (existing
+            core.showLoading(lf("loading project..."));
+            (existing
                 ? theEditor.loadHeaderAsync(existing)
                 : workspace.installByIdAsync(hash.arg)
                     .then(hd => theEditor.loadHeaderAsync(hd)))
                 .done(() => core.hideLoading())
+            return;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
             let fileContents = Util.stringToUint8Array(atob(hash.arg));
-            core.showLoading(lf("loading project..."))
-            return theEditor.importProjectFromFileAsync(fileContents)
+            core.showLoading(lf("loading project..."));
+            theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading())
+            return;
+        case "gallery":
+            pxt.tickEvent("gallery." + hash.cmd);
+            gallery.showGalleryAsync(hash.cmd).done();
+            break;
     }
 }
 
