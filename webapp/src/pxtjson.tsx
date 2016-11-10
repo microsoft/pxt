@@ -66,7 +66,6 @@ export class Editor extends srceditor.Editor {
                     <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
                     <sui.Field>
                         <sui.Button text={lf("Edit Settings As text") } onClick={() => this.parent.editText() } />
-                        <sui.Button class="red" text={lf("Delete Project") } onClick={() => this.parent.removeProject() } />
                     </sui.Field>
                 </div>
             </div>

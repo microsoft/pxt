@@ -17,6 +17,7 @@ import * as tdlegacy from "./tdlegacy"
 import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
+import * as gallery from "./gallery";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -104,21 +105,28 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     }
 }
 
+enum ScriptSearchMode {
+    Packages,
+    Projects
+}
+
 interface ScriptSearchState {
     searchFor?: string;
-    packages?: boolean;
+    mode?: ScriptSearchMode;
     visible?: boolean;
+    search?: boolean;
 }
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
-    private prevData: Cloud.JsonPointer[] = [];
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
+    private prevGalleries: pxt.CodeCard[] = [];
 
     constructor(props: ISettingsProps) {
         super(props)
         this.state = {
             searchFor: '',
+            mode: ScriptSearchMode.Packages,
             visible: false
         }
     }
@@ -128,16 +136,16 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     showAddPackages() {
-        this.setState({ visible: true, packages: true, searchFor: '' })
+        this.setState({ visible: true, mode: ScriptSearchMode.Packages, searchFor: '', search: true })
     }
 
     showOpenProject() {
-        this.setState({ visible: true, packages: false, searchFor: '' })
+        this.setState({ visible: true, mode: ScriptSearchMode.Projects, searchFor: '', search: true })
     }
 
     fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages || !this.state.packages) return [];
+        if (!cloud.packages || this.state.mode != ScriptSearchMode.Packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
         let res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
@@ -147,20 +155,18 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return this.prevGhData || []
     }
 
-    fetchCloudData(): Cloud.JsonPointer[] {
-        let cloud = pxt.appTarget.cloud || {};
-        if (cloud.packages || !this.state.packages) return [] // now handled on GitHub
-        if (!cloud.workspaces && !cloud.packages) return [];
-        let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
-        let res = this.state.searchFor
-            ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${pxt.appTarget.id}`)
-            : null
-        if (res) this.prevData = res.items
-        return this.prevData
+    fetchGalleries(): pxt.CodeCard[] {
+        if (this.state.mode != ScriptSearchMode.Projects
+            || sandbox
+            || this.state.searchFor
+            || !pxt.appTarget.appTheme.projectGallery) return [];
+        let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.projectGallery)}`) as gallery.Gallery[];
+        if (res) this.prevGalleries = Util.concat(res.map(g => g.cards));
+        return this.prevGalleries;
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
-        if (this.state.packages) return []
+        if (this.state.mode != ScriptSearchMode.Projects) return []
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (scriptid) {
@@ -174,15 +180,15 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     fetchBundled(): pxt.PackageConfig[] {
-        if (!this.state.packages || !!this.state.searchFor) return [];
+        if (this.state.mode != ScriptSearchMode.Packages || !!this.state.searchFor) return [];
 
         const bundled = pxt.appTarget.bundledpkgs;
-        return Util.values(bundled)
-            .map(bundle => JSON.parse(bundle["pxt.json"]) as pxt.PackageConfig)
+        return Object.keys(bundled).filter(k => !/prj$/.test(k))
+            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig);
     }
 
     fetchLocalData(): Header[] {
-        if (this.state.packages) return [];
+        if (this.state.mode != ScriptSearchMode.Projects) return [];
 
         let headers: Header[] = this.getData("header:*")
         if (this.state.searchFor)
@@ -193,28 +199,36 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.searchFor != nextState.searchFor
-            || this.state.packages != nextState.packages;
+            || this.state.mode != nextState.mode;
     }
 
     renderCore() {
         if (!this.state.visible) return null;
 
         const headers = this.fetchLocalData();
-        const data = this.fetchCloudData();
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
+        const galleries = this.fetchGalleries();
 
         const chgHeader = (hdr: Header) => {
+            pxt.tickEvent("projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
         const chgBundle = (scr: pxt.PackageConfig) => {
+            pxt.tickEvent("packages.bundled", { name: scr.name });
             this.hide();
             let p = pkg.mainEditorPkg();
             p.addDepAsync(scr.name, "*")
                 .then(r => this.props.parent.reloadHeaderAsync())
                 .done();
+        }
+        const chgGallery = (scr: pxt.CodeCard) => {
+            pxt.tickEvent("projects.gallery", { name: scr.name });
+            this.hide();
+            this.props.parent.setSideDoc(scr.url);
+            this.props.parent.newEmptyProject(scr.name.toLowerCase());
         }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
@@ -223,22 +237,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const kupd = (ev: __React.KeyboardEvent) => {
             if (ev.keyCode == 13) upd(ev);
         }
-        const install = (scr: Cloud.JsonPointer) => {
-            this.hide();
-            if (this.state.packages) {
-                let p = pkg.mainEditorPkg();
-                p.addDepAsync(scr.scriptname, "*")
-                    .then(r => this.props.parent.reloadHeaderAsync())
-                    .done();
-            } else {
-                workspace.installByIdAsync(scr.scriptid)
-                    .then(r => this.props.parent.loadHeaderAsync(r))
-                    .done()
-            }
-        }
         const installScript = (scr: Cloud.JsonScript) => {
             this.hide();
-            if (!this.state.packages) {
+            if (this.state.mode == ScriptSearchMode.Projects) {
                 core.showLoading(lf("loading project..."));
                 workspace.installByIdAsync(scr.id)
                     .then(r => this.props.parent.loadHeaderAsync(r))
@@ -246,8 +247,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const installGh = (scr: pxt.github.GitRepo) => {
+            pxt.tickEvent("packages.github");
             this.hide();
-            if (this.state.packages) {
+            if (this.state.mode == ScriptSearchMode.Packages) {
                 let p = pkg.mainEditorPkg();
                 core.showLoading(lf("downloading package..."));
                 pxt.packagesConfigAsync()
@@ -262,6 +264,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const importHex = () => {
+            pxt.tickEvent("projects.import");
             this.hide();
             this.props.parent.importFileDialog();
         }
@@ -269,7 +272,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const isEmpty = () => {
             if (this.state.searchFor) {
                 if (headers.length > 0
-                    || data.length > 0
                     || bundles.length > 0
                     || ghdata.length > 0
                     || urldata.length > 0)
@@ -279,10 +281,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             return false;
         }
 
+        const headerText = this.state.mode == ScriptSearchMode.Packages ? lf("Add Package...")
+            : lf("Open Project...");
         return (
-            <sui.Modal visible={this.state.visible} header={this.state.packages ? lf("Add Package...") : lf("Open Project...") } addClass="large searchdialog"
+            <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
-                <div className="ui search">
+                {this.state.search ? <div className="ui search">
                     <div className="ui fluid action input" role="search">
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
                         <button title={lf("Search") } className="ui right primary labeled icon button" onClick={upd}>
@@ -290,9 +294,9 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             {lf("Search") }
                         </button>
                     </div>
-                </div>
+                </div> : undefined }
                 <div className="ui cards">
-                    {pxt.appTarget.compile && !this.state.packages ?
+                    {pxt.appTarget.compile && this.state.mode == ScriptSearchMode.Projects ?
                         <codecard.CodeCardView
                             color="pink"
                             key="importhex"
@@ -318,17 +322,13 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             onClick={() => chgHeader(scr) }
                             />
                     ) }
-                    {data.map(scr =>
-                        <codecard.CodeCardView
-                            name={scr.scriptname}
-                            time={scr.time}
-                            header={scr.username}
-                            description={scr.description}
-                            key={'cloud' + scr.id}
-                            onClick={() => install(scr) }
-                            url={'/' + scr.scriptid}
-                            color="blue"
-                            />
+                    {galleries.map(scr => <codecard.CodeCardView
+                        key={'gal' + scr.name}
+                        name={scr.name}
+                        url={scr.url}
+                        imageUrl={scr.imageUrl}
+                        onClick={() => chgGallery(scr) }
+                        />
                     ) }
                     {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                         <codecard.CodeCardView
@@ -368,7 +368,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 { isEmpty() ?
                     <div className="ui items">
                         <div className="ui item">
-                            {this.state.packages ?
+                            {this.state.mode == ScriptSearchMode.Packages ?
                                 lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
                                 lf("We couldn't find any projects matching '{0}'", this.state.searchFor) }
                         </div>
@@ -575,6 +575,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     openDoc(path: string) {
+        pxt.tickEvent(`docs`, { path });
         this.props.parent.setSideDoc(path);
     }
 
@@ -886,18 +887,21 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         () => {
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
-            .done(resp => {
-                this.editor.setDiagnostics(this.editorFile, state)
-                if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
-                    let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
-                    if (output && !output.numDiagnosticsOverride
-                        && !simulator.driver.runOptions.debug
-                        && (simulator.driver.state == pxsim.SimulatorState.Running || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
-                        if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
-                        else this.autoRunSimulator();
+                .done(resp => {
+                    this.editor.setDiagnostics(this.editorFile, state)
+                    if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
+                        let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
+                        if (output && !output.numDiagnosticsOverride
+                            && !simulator.driver.runOptions.debug
+                            && (simulator.driver.state == pxsim.SimulatorState.Running
+                                || simulator.driver.state == pxsim.SimulatorState.Unloaded
+                                || simulator.driver.state == pxsim.SimulatorState.Stopped)) {
+                            if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
+                            else if (simulator.driver.state != pxsim.SimulatorState.Stopped)
+                                this.autoRunSimulator();
+                        }
                     }
-                }
-            });
+                });
         }, 1000, false);
 
     private markdownChangeHandler = Util.debounce(() => {
@@ -1329,16 +1333,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.scriptSearch.showAddPackages();
     }
 
-    newEmptyProject() {
+    newEmptyProject(name?: string) {
         this.newProject({
             "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>"
-        })
+        }, name)
     }
 
-    newProject(filesOverride?: pxt.Map<string>) {
+    newProject(filesOverride?: pxt.Map<string>, name?: string) {
         pxt.tickEvent("menu.newproject");
         core.showLoading(lf("creating new project..."));
-        this.newBlocksProjectAsync(filesOverride)
+        this.newBlocksProjectAsync(filesOverride, name)
             .then(() => Promise.delay(1500))
             .done(() => core.hideLoading());
     }
@@ -1682,6 +1686,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
+        const run = !pxt.appTarget.simulator.autoRun || !isBlocks;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1698,7 +1703,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className="ui">
                                 {pxt.appTarget.compile ? <sui.Button role="menuitem" class="download-button download-button-full" icon="download" onClick={() => this.compile() } /> : "" }
                                 {make ? <sui.Button role="menuitem" icon='configure' class="secondary" onClick={() => this.openInstructions() } /> : undefined }
-                                <sui.Button role="menuitem" class="play-button play-button-full" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } />
+                                {run ? <sui.Button role="menuitem" class="play-button play-button-full" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } /> : undefined }
                             </div>
                         </div>
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
@@ -1723,6 +1728,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {this.state.header ? <div className="ui divider"></div> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
+                            {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
                             <div className="ui divider"></div>
                             <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
                                 <i className="help icon"></i>
@@ -1750,7 +1756,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui item landscape only">
                         {compile ? <sui.Button icon='icon download' class={`huge fluid download-button`} text={lf("Download") } disabled={compileDisabled} title={compileTooltip} onClick={() => this.compile() } /> : ""}
                         {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
-                        <sui.Button key='runbtn' class="play-button" icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } />
+                        {run ? <sui.Button key='runbtn' class="play-button" icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1878,30 +1884,7 @@ function getsrc() {
     pxt.log(theEditor.editor.getCurrentSource())
 }
 
-function enableUserVoice() {
-    if (sandbox) return;
-
-    const analytics = (pxt.appTarget.analytics || {} as pxt.AppAnalytics);
-    if (!analytics.userVoiceApiKey) return;
-
-    let userVoice = (window as any).UserVoice = (window as any).UserVoice || []; (function () {
-        let uv = document.createElement('script'); uv.type = 'text/javascript'; uv.async = true; uv.src = `//widget.uservoice.com/${analytics.userVoiceApiKey}.js`;
-        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(uv, s)
-    })();
-
-    userVoice.push(['set', {
-        accent_color: '#B4009E',
-        trigger_color: 'white',
-        trigger_background_color: '#B4009E',
-        forum_id: analytics.userVoiceForumId || undefined,
-        screenshot_enabled: true
-    }]);
-    userVoice.push(['addTrigger', { trigger_position: 'bottom-right' }]);
-    userVoice.push(['autoprompt', {}]);
-}
-
 function enableFeedback() {
-    enableUserVoice();
 }
 
 function enableAnalytics() {
@@ -2029,19 +2012,21 @@ function handleHash(hash: { cmd: string; arg: string }) {
             pxt.tickEvent("hash." + hash.cmd);
             let existing = workspace.getHeaders()
                 .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
-            core.showLoading(lf("loading project..."))
-            return (existing
+            core.showLoading(lf("loading project..."));
+            (existing
                 ? theEditor.loadHeaderAsync(existing)
                 : workspace.installByIdAsync(hash.arg)
                     .then(hd => theEditor.loadHeaderAsync(hd)))
                 .done(() => core.hideLoading())
+            break;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
             let fileContents = Util.stringToUint8Array(atob(hash.arg));
-            core.showLoading(lf("loading project..."))
-            return theEditor.importProjectFromFileAsync(fileContents)
+            core.showLoading(lf("loading project..."));
+            theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading())
+            break;
     }
 }
 

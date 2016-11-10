@@ -1286,7 +1286,7 @@ function buildTargetCoreAsync() {
 
         return pkg.filesToBePublishedAsync(true)
             .then(res => {
-                cfg.bundledpkgs[pkg.config.name] = res
+                cfg.bundledpkgs[path.basename(dirname)] = res
             })
             .then(testForBuildTargetAsync)
             .then((compileOpts) => {
@@ -1524,27 +1524,6 @@ export function serveAsync(...args: string[]) {
             electron: hasArg("electron"),
             browser
         }))
-}
-
-function extensionAsync(add: string) {
-    let dat = {
-        "config": "ws",
-        "tag": "v0",
-        "replaceFiles": {
-            "/generated/xtest.cpp": "namespace xtest {\n    GLUE void hello()\n    {\n        uBit.panic(123);\n " + add + "   }\n}\n",
-            "/generated/extpointers.inc": "(uint32_t)(void*)::xtest::hello,\n",
-            "/generated/extensions.inc": "#include \"xtest.cpp\"\n"
-        },
-        "dependencies": {}
-    }
-    let dat2 = { data: new Buffer(JSON.stringify(dat), "utf8").toString("base64") }
-    return Cloud.privateRequestAsync({
-        url: "compile/extension",
-        data: dat2
-    })
-        .then(resp => {
-            console.log(resp.json)
-        })
 }
 
 let readFileAsync: any = Promise.promisify(fs.readFile)
@@ -3513,8 +3492,6 @@ cmd("buildcss                     - build required css files", buildSemanticUIAs
 cmd("buildwebstrings              - build webstrings.json", buildWebStringsAsync, 10)
 
 cmd("crowdin CMD PATH [OUTPUT]    - upload, download files to/from crowdin", execCrowdinAsync, 2);
-
-cmd("extension ADD_TEXT           - try compile extension", extensionAsync, 10)
 
 function showHelp(showAll = true) {
     let f = (s: string, n: number) => {
