@@ -19,7 +19,9 @@ namespace ts.pxtc.avr {
         }
 
         // return offset+1 because stack points to next available slot
-        public computeStackOffset(offset: number) {
+        public computeStackOffset(kind: string, offset: number) {
+            if (kind == "args")
+                return offset + 2   // the return pointer is stored on the stack, skip it to get to args
             return offset + 1
         }
 
