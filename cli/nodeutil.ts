@@ -15,11 +15,10 @@ import Util = pxt.Util;
 //When running inside Electron it gets updated to the correct path
 export var targetDir: string = process.cwd();
 //When running the Electron app, this will be based on the initial value
-export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
+export var pxtCoreDir: string = path.join(targetDir, "node_modules", "pxt-core");
 
 export function setTargetDir(dir: string) {
-    targetDir = dir;
-    let newPxtCoreDir = path.join(targetDir, "node_modules", "pxt-core");
+    let newPxtCoreDir = path.join(dir, "node_modules", "pxt-core");
 
     if (!fs.existsSync(newPxtCoreDir)) {
         // Fix for NPM 3: dependencies are flattened, which means pxt-core is not under [target]/node_modules/pxt-core.
