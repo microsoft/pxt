@@ -53,6 +53,7 @@ export class Editor extends srceditor.Editor {
 
             let loading = document.createElement("div");
             loading.className = "ui inverted loading";
+            let editorArea = document.getElementById('blocksArea');
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
@@ -65,6 +66,9 @@ export class Editor extends srceditor.Editor {
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
+
+                    this.resize();
+                    Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
                     editorDiv.removeChild(loading);
@@ -225,6 +229,10 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    isIncomplete() {
+        return this.editor ? this.editor.isDragging() : false;
+    }
+
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
         let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
@@ -251,7 +259,7 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
-            if (ev.recordUndo) {
+            if (ev.type != 'ui') {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
@@ -303,8 +311,18 @@ export class Editor extends srceditor.Editor {
                 }
             }
         })
+        this.resize();
 
         this.isReady = true
+    }
+
+    resize(e?: Event) {
+        let blocklyArea = document.getElementById('blocksArea');
+        let blocklyDiv = document.getElementById('blocksEditor');
+        // Position blocklyDiv over blocklyArea.
+        blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+        blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+        Blockly.svgResize(this.editor);
     }
 
     undo() {
@@ -312,7 +330,15 @@ export class Editor extends srceditor.Editor {
     }
 
     getId() {
-        return "blocksEditor"
+        return "blocksArea"
+    }
+
+    display() {
+        return (
+            <div>
+                <div id="blocksEditor"></div>
+            </div>
+        )
     }
 
     getViewState() {

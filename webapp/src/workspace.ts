@@ -159,18 +159,20 @@ export function getPublishedScriptAsync(id: string) {
     if (pxt.github.isGithubId(id))
         id = pxt.github.noramlizeRepoId(id)
     let eid = encodeURIComponent(id)
-    return scriptDlQ.enqueue(id, () => scripts.getAsync(eid)
-        .then(v => v.files, e =>
-            (pxt.github.isGithubId(id) ?
-                pxt.github.downloadPackageAsync(id).then(v => v.files) :
-                Cloud.downloadScriptFilesAsync(id))
-                .catch(core.handleNetworkError)
-                .then(files => scripts.setAsync({ id: eid, files: files })
-                    .then(() => {
-                        //return (scriptCache[id] = files)
-                        return files
-                    })))
-        .then(fixupFileNames))
+    return pxt.packagesConfigAsync()
+        .then(config => scriptDlQ.enqueue(id, () => scripts.getAsync(eid)
+            .then(v => v.files, e =>
+                (pxt.github.isGithubId(id) ?
+                    pxt.github.downloadPackageAsync(id, config).then(v => v.files) :
+                    Cloud.downloadScriptFilesAsync(id))
+                    .catch(core.handleNetworkError)
+                    .then(files => scripts.setAsync({ id: eid, files: files })
+                        .then(() => {
+                            //return (scriptCache[id] = files)
+                            return files
+                        })))
+            .then(fixupFileNames))
+        );
 }
 
 export function installByIdAsync(id: string) {

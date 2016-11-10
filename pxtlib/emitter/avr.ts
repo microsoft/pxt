@@ -81,14 +81,6 @@ namespace ts.pxtc.avr {
             return rel;
         }
 
-        public isPop(opcode: number): boolean {
-            return opcode == 0x900f;
-        }
-
-        public isPush(opcode: number): boolean {
-            return opcode == 0x920f;
-        }
-
         constructor() {
             super();
 
@@ -242,7 +234,7 @@ namespace ts.pxtc.avr {
             this.addInst("reti", 0x9518, 0xffff);
             this.addInst("rjmp $ld", 0xc000, 0xf000);
             this.addInst("rol $r6", 0x1c00, 0xfc00);
-            this.addInst("lor $r0", 0x9407, 0xfe0f);
+            this.addInst("ror $r0", 0x9407, 0xfe0f);
             this.addInst("sbc   $r0, $r1", 0x0800, 0xfC00);
             this.addInst("sbci  $r3, $i1", 0x4000, 0xf000);
             this.addInst("sbi   $r7, $i9", 0x9a00, 0xff00);

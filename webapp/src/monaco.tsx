@@ -143,10 +143,15 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        if (!this.hasBlocks()) return null
-        return <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
-                tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left"
-         />
+        let editor = pkg.mainEditorPkg(); 
+        if (this.currFile != editor.files["main.ts"]) {
+            return (<sui.Item text={lf("Back to Code") } icon={"align left"} onClick={() => this.parent.setFile(editor.files["main.ts"]) } />);
+        }
+        else if (editor.files["main.blocks"]) { //if main.blocks file present
+            return ( <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
+                    tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left" /> );
+        }
+        return null;
     }
 
     undo() {
@@ -364,8 +369,18 @@ export class Editor extends srceditor.Editor {
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
             if (this.currFile.isReadonly()) return;
 
+            // Remove any Highlighted lines
             if (this.highlightDecorations)
                 this.editor.deltaDecorations(this.highlightDecorations, []);
+
+            // Remove any current error shown, as a change has been made.
+            let viewZones = this.editorViewZones || [];
+            (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                viewZones.forEach((id: any) => {
+                    changeAccessor.removeZone(id);
+                });
+            });
+            this.editorViewZones = [];
 
             if (this.lastSet != null) {
                 this.lastSet = null
@@ -381,6 +396,10 @@ export class Editor extends srceditor.Editor {
         this.editorViewZones = [];
 
         this.isReady = true
+    }
+
+    resize(e?: Event) {
+        this.editor.layout();
     }
 
     zoomIn() {
@@ -467,6 +486,8 @@ export class Editor extends srceditor.Editor {
                 this.loadFile(this.currFile);
             }
         });
+
+        this.resize();
     }
 
     snapshotState() {

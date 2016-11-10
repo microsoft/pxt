@@ -19,6 +19,7 @@ interface CacheEntry {
 }
 
 const virtualApis: pxt.Map<VirtualApi> = {}
+let targetConfig: pxt.TargetConfig = undefined;
 
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
@@ -34,8 +35,9 @@ mountVirtualApi("td-cloud", {
 })
 
 mountVirtualApi("gh-search", {
-    getAsync: query =>
-        pxt.github.searchAsync(stripProtocol(query)).catch(core.handleNetworkError),
+    getAsync: query => pxt.targetConfigAsync()
+            .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
+            .catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })

@@ -3,6 +3,18 @@
 /// <reference path="blockly.d.ts" />
 
 declare namespace pxt {
+    // targetconfig.json
+    interface TargetConfig {
+        packages?: PackagesConfig;
+    }
+
+    interface PackagesConfig {
+        approvedOrgs?: string[];
+        approvedRepos?: string[];
+        bannedOrgs?: string[];
+        bannedRepos?: string[];
+    }
+
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
         forkof?: string; // id of a target we're based on

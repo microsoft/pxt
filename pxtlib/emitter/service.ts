@@ -68,6 +68,44 @@ namespace ts.pxtc {
 . . . . .
 `
 
+    export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
+        const lang = pxtc.Util.userLanguage();
+        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
+
+        return mainPkg.localizationStringsAsync(lang)
+            .then(loc => Util.values(apis.byQName).forEach(fn => {
+                const jsDoc = loc[fn.qName]
+                if (jsDoc) {
+                    fn.attributes.jsDoc = jsDoc;
+                    if (fn.parameters)
+                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+                }
+                if (fn.attributes.block) {
+                    const locBlock = loc[`${fn.qName}|block`];
+                    if (locBlock) {
+                        try {
+                            if (pxt.blocks.areFieldsEquivalent(fn.attributes.block, locBlock))
+                                fn.attributes.block = locBlock;
+                            else {
+                                const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
+                                const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
+                                console.error(`localized block description of ${fn.attributes.block} invalid`);
+                                console.debug(`original: `, fields);
+                                console.debug(`loc: `, locFields);
+                            }
+                        } catch (e) {
+                            console.error(`error while parsing localized block of ${fn.attributes.block}`);
+                        }
+                    }
+                }
+                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
+                if (nsDoc) {
+                    fn.attributes.block = nsDoc;
+                }
+            }))
+            .then(() => apis);
+    }
+
     /**
      * Unlocalized category name for a symbol
      */
@@ -301,7 +339,7 @@ namespace ts.pxtc {
         for (let ns of namespaces) {
             let nsHelpPages: pxt.Map<string> = {};
             let syms = infos
-                .filter(si => si.namespace == ns.name && !!si.attributes.help)
+                .filter(si => si.namespace == ns.name && !!si.attributes.jsDoc)
                 .sort(compareSymbol)
             if (!syms.length) continue;
 

@@ -108,8 +108,7 @@ task("travis", ["lint", "test", "upload"])
 task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
     jake.exec([
         "node built/pxt.js travis",
-        "node built/pxt.js buildtarget",
-        "node built/pxt.js uploaddoc"
+        "node built/pxt.js buildtarget"
     ], { printStdout: true }, complete.bind(this));
 })
 
@@ -249,6 +248,7 @@ file("built/web/pxtlib.js", [
     jake.cpR("built/pxtrunner.js", "built/web/")
     jake.cpR("built/pxteditor.js", "built/web/")
     jake.cpR("external/tdast.js", "built/web/")
+    jake.cpR("external/ai.min.js", "built/web/")
 
     let additionalExports = [
         "getCompletionData"

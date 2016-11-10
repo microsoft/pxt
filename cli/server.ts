@@ -23,7 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let tempDir = ""
 let packagedDir = ""
-let localHexDir = path.join("hexcache");
+let localHexDir = path.join("built", "hexcache");
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -345,7 +345,8 @@ export function expandHtml(html: string) {
     html = expandDocTemplateCore(html)
     let params: pxt.Map<string> = {
         name: pxt.appTarget.appTheme.title,
-        description: pxt.appTarget.appTheme.description
+        description: pxt.appTarget.appTheme.description,
+        locale: pxt.appTarget.appTheme.defaultLocale || "en"
     };
 
     // page overrides

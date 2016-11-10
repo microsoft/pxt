@@ -32,9 +32,6 @@ body {
 .ui.item.logo img {
     height: 2.5rem;
 }
-#monacoEditor {
-    direction:ltr;
-}
 
 #cookiemsg {
    position: absolute;
@@ -447,7 +444,7 @@ html {
         right:0;
     }
     #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
-        bottom:2rem;
+        bottom:2.3rem;
     }
     .ui.landscape.only {
         display:none !important;
@@ -509,9 +506,6 @@ html {
         font-size: 0rem;
         padding-right: 0;
     }
-    .blocklyCheckbox {
-        font-size: 17pt !important;
-    }
     div.simframe {
         display:inline-block;
         width: 10rem;
@@ -540,8 +534,7 @@ html {
 *******************************/
 
 #blocksEditor {
-    right:0rem;
-    bottom:0rem;
+    position: absolute;
 }
 
 #blocksEditor > div.loading {
