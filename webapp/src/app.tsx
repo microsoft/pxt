@@ -239,7 +239,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const chgGallery = (scr: pxt.CodeCard) => {
             this.hide();
             this.props.parent.setSideDoc(scr.url);
-            this.props.parent.newEmptyProject();
+            this.props.parent.newEmptyProject(scr.name.toLowerCase());
         }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
@@ -1364,16 +1364,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.scriptSearch.showAddPackages();
     }
 
-    newEmptyProject() {
+    newEmptyProject(name?: string) {
         this.newProject({
             "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>"
-        })
+        }, name)
     }
 
-    newProject(filesOverride?: pxt.Map<string>) {
+    newProject(filesOverride?: pxt.Map<string>, name?: string) {
         pxt.tickEvent("menu.newproject");
         core.showLoading(lf("creating new project..."));
-        this.newBlocksProjectAsync(filesOverride)
+        this.newBlocksProjectAsync(filesOverride, name)
             .then(() => Promise.delay(1500))
             .done(() => core.hideLoading());
     }
