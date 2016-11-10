@@ -118,7 +118,6 @@ interface ScriptSearchState {
 }
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
-    private prevData: Cloud.JsonPointer[] = [];
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
     private prevGalleries: pxt.CodeCard[] = [];
@@ -213,10 +212,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const galleries = this.fetchGalleries();
 
         const chgHeader = (hdr: Header) => {
+            pxt.tickEvent("projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
         const chgBundle = (scr: pxt.PackageConfig) => {
+            pxt.tickEvent("packages.bundled", { name: scr.name });
             this.hide();
             let p = pkg.mainEditorPkg();
             p.addDepAsync(scr.name, "*")
@@ -224,6 +225,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 .done();
         }
         const chgGallery = (scr: pxt.CodeCard) => {
+            pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
             this.props.parent.setSideDoc(scr.url);
             this.props.parent.newEmptyProject(scr.name.toLowerCase());
@@ -235,19 +237,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const kupd = (ev: __React.KeyboardEvent) => {
             if (ev.keyCode == 13) upd(ev);
         }
-        const install = (scr: Cloud.JsonPointer) => {
-            this.hide();
-            if (this.state.mode == ScriptSearchMode.Packages) {
-                let p = pkg.mainEditorPkg();
-                p.addDepAsync(scr.scriptname, "*")
-                    .then(r => this.props.parent.reloadHeaderAsync())
-                    .done();
-            } else {
-                workspace.installByIdAsync(scr.scriptid)
-                    .then(r => this.props.parent.loadHeaderAsync(r))
-                    .done()
-            }
-        }
         const installScript = (scr: Cloud.JsonScript) => {
             this.hide();
             if (this.state.mode == ScriptSearchMode.Projects) {
@@ -258,6 +247,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const installGh = (scr: pxt.github.GitRepo) => {
+            pxt.tickEvent("packages.github");
             this.hide();
             if (this.state.mode == ScriptSearchMode.Packages) {
                 let p = pkg.mainEditorPkg();
@@ -274,6 +264,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const importHex = () => {
+            pxt.tickEvent("projects.import");
             this.hide();
             this.props.parent.importFileDialog();
         }
@@ -584,6 +575,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     openDoc(path: string) {
+        pxt.tickEvent(`docs`, { path });
         this.props.parent.setSideDoc(path);
     }
 
