@@ -1732,6 +1732,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {this.state.header ? <div className="ui divider"></div> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
+                            {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
                             <div className="ui divider"></div>
                             <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
                                 <i className="help icon"></i>
