@@ -238,7 +238,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
         const chgGallery = (scr: pxt.CodeCard) => {
             this.hide();
-            document.location.hash = scr.url;
+            this.props.parent.setSideDoc(scr.url);
+            this.props.parent.newEmptyProject();
         }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
@@ -2046,7 +2047,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
                 : workspace.installByIdAsync(hash.arg)
                     .then(hd => theEditor.loadHeaderAsync(hd)))
                 .done(() => core.hideLoading())
-            return;
+            break;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
@@ -2054,11 +2055,11 @@ function handleHash(hash: { cmd: string; arg: string }) {
             core.showLoading(lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading())
-            return;
+            break;
         case "gallery":
             pxt.tickEvent("gallery." + hash.cmd);
             gallery.loadGalleryAsync(hash.arg)
-                .done(gal => theEditor ? theEditor.scriptSearch.showGallery(gal) : undefined)
+                .done(gal => editor.scriptSearch.showGallery(gal))
             break;
     }
 }
