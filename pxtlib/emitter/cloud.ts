@@ -61,6 +61,16 @@ namespace pxt.Cloud {
         })
     }
 
+    export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean) {
+        docid = docid.replace(/^\//, "");
+        let url = `md/${pxt.appTarget.id}/${docid}`;
+        if (locale != "en") {
+            url += `?lang=${encodeURIComponent(Util.userLanguage())}`
+            if (live) url += "&live=1"
+        }
+        return privateGetTextAsync(url);
+    }
+
     export function privateDeleteAsync(path: string) {
         return privateRequestAsync({ url: path, method: "DELETE" }).then(resp => resp.json)
     }

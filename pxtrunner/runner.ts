@@ -379,12 +379,7 @@ ${files["main.ts"]}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        let url = `md/${pxt.appTarget.id}/${docid}`;
-        if (editorLocale != "en") {
-            url += `?lang=${encodeURIComponent(Util.userLanguage())}`
-            if (pxt.Util.localizeLive) url += "&live=1"
-        }
-        return pxt.Cloud.privateGetTextAsync(url)
+        return pxt.Cloud.downloadMarkdownAsync(docid, editorLocale, pxt.Util.localizeLive)
             .then(md => renderMarkdownAsync(content, md, docid))
     }
 

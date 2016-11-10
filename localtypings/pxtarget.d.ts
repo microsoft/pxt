@@ -145,6 +145,7 @@ declare namespace pxt {
         blocklyOptions?: Blockly.Options;
         simAnimationEnter?: string;
         simAnimationExit?: string;
+        projectGallery?: string;
     }
 
     interface DocMenuEntry {
