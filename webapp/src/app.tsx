@@ -183,8 +183,8 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         if (this.state.mode != ScriptSearchMode.Packages || !!this.state.searchFor) return [];
 
         const bundled = pxt.appTarget.bundledpkgs;
-        return Util.values(bundled)
-            .map(bundle => JSON.parse(bundle["pxt.json"]) as pxt.PackageConfig)
+        return Object.keys(bundled).filter(k => !/prj$/.test(k))
+            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig);
     }
 
     fetchLocalData(): Header[] {
