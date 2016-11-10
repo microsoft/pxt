@@ -18,6 +18,13 @@ namespace ts.pxtc.avr {
             return 2
         }
 
+        // return offset+1 because stack points to next available slot
+        public computeStackOffset(kind: string, offset: number) {
+            if (kind == "args")
+                return offset + 2   // the return pointer is stored on the stack, skip it to get to args
+            return offset + 1
+        }
+
         public is32bit(i: assembler.Instruction) {
             return i.is32bit;
         }
