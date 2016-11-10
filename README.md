@@ -26,11 +26,18 @@ Please follow the [instructions here](https://www.pxt.io/cli).
 
 ## Linking a target to PXT
 
-If you are modifying your own instance of PXT and want a target (such as pxt-microbit) to use your local version, cd to the directory of the target (pxt-microbit, in our example, which should be a directory sibling of pxt) and perform
+If you are modifying your own instance of PXT and want a target (such as pxt-microbit) to use your local version, 
+cd to the directory of pxt
 
 ```
-npm link ../pxt
+npm link
 ```
+cd to the directory of the requiring software
+```
+npm link pxt
+```
+
+Note that a link will be made from the node_modules\pxt to global modules and the global module will link to your instance of pxt.
 
 ## Build
 
