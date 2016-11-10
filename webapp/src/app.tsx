@@ -107,8 +107,7 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
 
 enum ScriptSearchMode {
     Packages,
-    Projects,
-    Gallery
+    Projects
 }
 
 interface ScriptSearchState {
@@ -116,13 +115,13 @@ interface ScriptSearchState {
     mode?: ScriptSearchMode;
     visible?: boolean;
     search?: boolean;
-    galleries?: gallery.Gallery[];
 }
 
 class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     private prevData: Cloud.JsonPointer[] = [];
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
+    private prevGalleries: pxt.CodeCard[] = [];
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -138,15 +137,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 
     showAddPackages() {
-        this.setState({ visible: true, mode: ScriptSearchMode.Packages, galleries: undefined, searchFor: '', search: true })
+        this.setState({ visible: true, mode: ScriptSearchMode.Packages, searchFor: '', search: true })
     }
 
     showOpenProject() {
-        this.setState({ visible: true, mode: ScriptSearchMode.Projects, galleries: undefined, searchFor: '', search: true })
-    }
-
-    showGallery(galleries: gallery.Gallery[]) {
-        this.setState({ visible: true, mode: ScriptSearchMode.Gallery, galleries: galleries, searchFor: '', search: false })
+        this.setState({ visible: true, mode: ScriptSearchMode.Projects, searchFor: '', search: true })
     }
 
     fetchGhData(): pxt.github.GitRepo[] {
@@ -161,16 +156,14 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return this.prevGhData || []
     }
 
-    fetchCloudData(): Cloud.JsonPointer[] {
-        let cloud = pxt.appTarget.cloud || {};
-        if (cloud.packages || this.state.mode != ScriptSearchMode.Packages) return [] // now handled on GitHub
-        if (!cloud.workspaces && !cloud.packages) return [];
-        let kind = cloud.packages ? 'ptr-pkg' : 'ptr-samples';
-        let res = this.state.searchFor
-            ? this.getData(`cloud:pointers?q=${encodeURIComponent(this.state.searchFor)}+feature:@${kind}+feature:@target-${pxt.appTarget.id}`)
-            : null
-        if (res) this.prevData = res.items
-        return this.prevData
+    fetchGalleries(): pxt.CodeCard[] {
+        if (this.state.mode != ScriptSearchMode.Projects
+            || sandbox
+            || this.state.searchFor
+            || !pxt.appTarget.appTheme.projectGallery) return [];
+        let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.projectGallery)}`) as gallery.Gallery[];
+        if (res) this.prevGalleries = Util.concat(res.map(g => g.cards));
+        return this.prevGalleries;
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
@@ -195,11 +188,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             .map(bundle => JSON.parse(bundle["pxt.json"]) as pxt.PackageConfig)
     }
 
-    fetchGalleries(): pxt.CodeCard[] {
-        const gals = this.state.galleries || [];
-        return Util.concat(gals.map(gal => gal.cards));
-    }
-
     fetchLocalData(): Header[] {
         if (this.state.mode != ScriptSearchMode.Projects) return [];
 
@@ -219,7 +207,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         if (!this.state.visible) return null;
 
         const headers = this.fetchLocalData();
-        const data = this.fetchCloudData();
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
@@ -294,7 +281,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const isEmpty = () => {
             if (this.state.searchFor) {
                 if (headers.length > 0
-                    || data.length > 0
                     || bundles.length > 0
                     || ghdata.length > 0
                     || urldata.length > 0)
@@ -327,14 +313,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
-                    {galleries.map(scr => <codecard.CodeCardView
-                        key={'gal' + scr.name}
-                        name={scr.name}
-                        url={scr.url}
-                        imageUrl={scr.imageUrl}
-                        onClick={() => chgGallery(scr)}
-                        />
-                    )}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
                             key={'bundled' + scr.name}
@@ -353,17 +331,13 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             onClick={() => chgHeader(scr) }
                             />
                     ) }
-                    {data.map(scr =>
-                        <codecard.CodeCardView
-                            name={scr.scriptname}
-                            time={scr.time}
-                            header={scr.username}
-                            description={scr.description}
-                            key={'cloud' + scr.id}
-                            onClick={() => install(scr) }
-                            url={'/' + scr.scriptid}
-                            color="blue"
-                            />
+                    {galleries.map(scr => <codecard.CodeCardView
+                        key={'gal' + scr.name}
+                        name={scr.name}
+                        url={scr.url}
+                        imageUrl={scr.imageUrl}
+                        onClick={() => chgGallery(scr) }
+                        />
                     ) }
                     {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                         <codecard.CodeCardView
@@ -2055,11 +2029,6 @@ function handleHash(hash: { cmd: string; arg: string }) {
             core.showLoading(lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading())
-            break;
-        case "gallery":
-            pxt.tickEvent("gallery." + hash.cmd);
-            gallery.loadGalleryAsync(hash.arg)
-                .done(gal => editor.scriptSearch.showGallery(gal))
             break;
     }
 }
