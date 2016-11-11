@@ -939,8 +939,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             highlightStatement: stmt => {
                 if (this.editor) this.editor.highlightStatement(stmt)
             },
-            onCompile: (name, content, contentType) => {
-            },
             editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
