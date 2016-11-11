@@ -1666,10 +1666,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     gettingStarted() {
-        Util.assert(!this.state.sideDocsLoadUrl);
         const targetTheme = pxt.appTarget.appTheme;
-        const gettingStartedUrl = targetTheme.gettingStarted || 'getting-started';
-        this.setSideDoc(gettingStartedUrl);
+        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && targetTheme.gettingStarted != undefined);
+        this.setSideDoc(targetTheme.gettingStarted);
         this.setState({sideDocsCollapsed: false})
     }
 
@@ -1762,11 +1761,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
-                {this.state.sideDocsLoadUrl && targetTheme.gettingStarted ? undefined : 
+                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.gettingStarted != undefined ? 
                     <div id="getting-started-btn">
                         <div className="ui bottom attached button green" onClick={() => this.gettingStarted() }>Getting Started</div>
                     </div>
-                }
+                    : undefined }
                 <div id="filelist" className="ui items" role="complementary">
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
