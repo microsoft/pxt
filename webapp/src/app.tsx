@@ -1666,6 +1666,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     gettingStarted() {
+        pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
         Util.assert(!this.state.sideDocsLoadUrl && targetTheme && targetTheme.gettingStarted != undefined);
         this.setSideDoc(targetTheme.gettingStarted);
@@ -1763,7 +1764,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 </div>
                 {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.gettingStarted != undefined ? 
                     <div id="getting-started-btn">
-                        <div className="ui bottom attached button green" onClick={() => this.gettingStarted() }>Getting Started</div>
+                        <sui.Button class="bottom attached green" title={lf("Getting Started")} text={lf("Getting Started")} onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined }
                 <div id="filelist" className="ui items" role="complementary">
