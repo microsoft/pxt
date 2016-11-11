@@ -21,7 +21,6 @@ let simdirs = [""]
 let docfilesdirs = [""]
 let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
-let tempDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
 
@@ -61,7 +60,6 @@ function setupRootDir() {
     ]
     simdirs = [path.join(nodeutil.targetDir, "built"), path.join(nodeutil.targetDir, "sim/public")]
     docsDir = path.join(root, "docs")
-    tempDir = path.join(root, "built/docstmp")
     packagedDir = path.join(root, "built/packaged")
     setupDocfilesdirs()
     setupProjectsDir()
@@ -655,12 +653,8 @@ export interface ServeOptions {
 let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
-
     setupRootDir();
-
-    nodeutil.mkdirP(tempDir)
-
-    initTargetCommands()
+    initTargetCommands();
     initSerialMonitor();
 
     let server = http.createServer((req, res) => {
