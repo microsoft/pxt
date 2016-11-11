@@ -28,12 +28,6 @@ namespace pxsim {
         content?: string;
     }
 
-    export interface SimulatorCompilationMessage extends SimulatorMessage {
-        name: string;
-        content: string;
-        contentType: string;
-    }
-
     export interface SimulatorReadyMessage extends SimulatorMessage {
         frameid: string;
     }
