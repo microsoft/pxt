@@ -1666,7 +1666,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
-        const run = !pxt.appTarget.simulator.autoRun || !isBlocks;
+        const run = !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
