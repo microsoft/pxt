@@ -11,6 +11,7 @@ declare namespace pxt {
         version?: string;
         installedVersion?: string;
         // semver description for support target version
+        documentation?: string; // doc page to open when loading project
         targetVersion?: string;
         description?: string;
         dependencies: Map<string>;
@@ -28,7 +29,7 @@ declare namespace pxt {
     }
 
     interface PlatformIOConfig {
-        dependencies?: Map<string>;        
+        dependencies?: Map<string>;
     }
 
     interface YottaConfig {
