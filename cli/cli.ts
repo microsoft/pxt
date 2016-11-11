@@ -235,7 +235,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
                         console.log(`writing ${outf}`)
                         fs.writeFileSync(
                             outf,
-                            JSON.stringify(r[k], null, 2),
+                            stringifyTranslations(r[k]),
                             "utf8");
                     })
                 })
@@ -3112,12 +3112,21 @@ export function downloadTargetTranslationsAsync(...args: string[]) {
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, JSON.stringify(data[lang], null, 2), "utf8");
+                        fs.writeFile(tf, stringifyTranslations(data[lang]), "utf8");
                     })
                 return nextFileAsync()
             });
     }
     return nextFileAsync();
+}
+
+function stringifyTranslations(strings: pxt.Map<string>): string {
+    const trg: pxt.Map<string> = {};
+    Object.keys(strings).sort().forEach(k => {
+        const v = strings[k].trim();
+        if (v) trg[k] = v;
+    })
+    return JSON.stringify(trg, null, 2);
 }
 
 export function buildAsync(arg?: string) {
