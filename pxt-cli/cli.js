@@ -1,10 +1,5 @@
 "use strict";
 
-if (/^v[0-3]\./.test(process.version)) {
-    console.error("Please upgrade your node.js to at least v4.x.x.")
-    process.exit(1)
-}
-
 var fs = require("fs")
 var path = require("path")
 var child_process = require("child_process")
