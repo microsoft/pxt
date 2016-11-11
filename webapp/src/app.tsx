@@ -221,8 +221,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const chgGallery = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
-            this.props.parent.setSideDoc(scr.url);
-            this.props.parent.newEmptyProject(scr.name.toLowerCase());
+            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
         }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
@@ -616,6 +615,10 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
         this.props.parent.setState({ sideDocsCollapsed: false });
     }
 
+    collapse() {
+        this.props.parent.setState({ sideDocsCollapsed: true });
+    }
+
     popOut() {
         SideDocs.notify({
             type: "popout"
@@ -749,6 +752,14 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         </div>;
     }
 }
+
+interface ProjectCreationOptions {
+    prj?: pxt.ProjectTemplate;
+    name?: string;
+    documentation?: string;
+    filesOverride?: pxt.Map<string>;
+}
+
 
 export class ProjectView extends data.Component<IAppProps, IAppState> {
     editor: srceditor.Editor;
@@ -1051,7 +1062,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     setSideDoc(path: string) {
         let sd = this.refs["sidedoc"] as SideDocs;
         if (!sd) return;
-        sd.setPath(path);
+        if (path) sd.setPath(path);
+        else sd.collapse();
     }
 
     reloadHeaderAsync() {
@@ -1127,6 +1139,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
+                else if (pkg.mainPkg.config.documentation)
+                    this.setSideDoc(pkg.mainPkg.config.documentation);
             })
     }
 
@@ -1158,7 +1172,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         fileReadAsTextAsync(file)
             .done(contents => {
-                return this.newBlocksProjectAsync({ "main.blocks": contents, "main.ts": "  " }, lf("Untitled"))
+                this.newProject({
+                    filesOverride: { "main.blocks": contents, "main.ts": "  " },
+                    name: file.name.replace(/\.blocks$/i, '') || lf("Untitled")
+                })
             })
     }
 
@@ -1172,22 +1189,29 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
             pxt.tickEvent("import.blocks")
             pxt.debug('importing microbit.co.uk blocks project')
+            core.showLoading(lf("loading project..."))
             compiler.getBlocksAsync()
-                .then(info => this.newBlocksProjectAsync({
-                    "main.blocks": pxt.blocks.importXml(info, data.source)
-                }, data.meta.name)).done();
+                .then(info => this.createProjectAsync({
+                    filesOverride: {
+                        "main.blocks": pxt.blocks.importXml(info, data.source)
+                    }, name: data.meta.name
+                })).done(() => core.hideLoading);
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             pxt.tickEvent("import.td")
             pxt.debug('importing microbit.co.uk TD project')
-            this.newBlocksProjectAsync({ "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">", "main.ts": "  " }, data.meta.name)
+            core.showLoading("loading project...")
+            this.createProjectAsync({
+                filesOverride: { "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">", "main.ts": "  " },
+                name: data.meta.name
+            })
                 .then(() => this.openTypeScriptAsync())
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
                     // this is somewhat hacky...
                     this.textEditor.overrideFile(text);
                     this.textEditor.formatCode();
-                })
+                }).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
             || (!forkid && Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
@@ -1322,35 +1346,35 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.scriptSearch.showAddPackages();
     }
 
-    newEmptyProject(name?: string) {
+    newEmptyProject(name?: string, documentation?: string) {
         this.newProject({
-            "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>"
-        }, name)
+            filesOverride: { "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>" },
+            name, documentation
+        })
     }
 
-    newProject(filesOverride?: pxt.Map<string>, name?: string) {
+    newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("menu.newproject");
         core.showLoading(lf("creating new project..."));
-        this.newBlocksProjectAsync(filesOverride, name)
-            .then(() => Promise.delay(1500))
+        this.createProjectAsync(options)
+            .then(() => Promise.delay(500))
             .done(() => core.hideLoading());
     }
 
-    newBlocksProjectAsync(fileOverrides?: pxt.Map<string>, nameOverride?: string) {
-        return this.newProjectFromIdAsync(pxt.appTarget.blocksprj, fileOverrides, nameOverride);
-    }
-
-    newProjectFromIdAsync(prj: pxt.ProjectTemplate, fileOverrides?: pxt.Map<string>, nameOverride?: string): Promise<void> {
-        let cfg = pxt.U.clone(prj.config);
-        cfg.name = nameOverride || lf("Untitled") // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
-        let files: ScriptText = Util.clone(prj.files)
-        if (fileOverrides)
-            Util.jsonCopyFrom(files, fileOverrides)
+    createProjectAsync(options: ProjectCreationOptions): Promise<void> {
+        this.setSideDoc(undefined);
+        if (!options.prj) options.prj = pxt.appTarget.blocksprj;
+        let cfg = pxt.U.clone(options.prj.config);
+        cfg.name = options.name || lf("Untitled") // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
+        cfg.documentation = options.documentation;
+        let files: ScriptText = Util.clone(options.prj.files)
+        if (options.filesOverride)
+            Util.jsonCopyFrom(files, options.filesOverride)
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
-            editor: prj.id,
+            editor: options.prj.id,
             pubId: "",
             pubCurrent: false,
             target: pxt.appTarget.id
@@ -1736,7 +1760,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div className="ui item landscape only">
                         {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : ""}
                         {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
-                        {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Start")} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
+                        {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Start") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
                     </div>
                     <div className="ui item landscape only">
                         {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -1975,8 +1999,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
             break;
         case "follow":
             pxt.tickEvent("hash.follow")
-            editor.setSideDoc(hash.arg);
-            editor.newEmptyProject();
+            editor.newEmptyProject(undefined, hash.arg);
             break;
         case "newproject":
             pxt.tickEvent("hash.newproject")
