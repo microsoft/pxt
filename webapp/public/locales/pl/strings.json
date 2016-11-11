@@ -1,7 +1,7 @@
 {
-  "%1 of %2 and %3": "%1 %2 i %3",
-  "'{0}' doesn't look like a semantic version number": "'{0}' nie wygląda jak numer wersji semantycznej",
-  ".hex file upload, please try again.": "plik .hex przesłać, Proszę spróbować ponownie.",
+  "%1 of %2 and %3": "%1 z %2 i %3",
+  "'{0}' doesn't look like a semantic version number": "'{0}' nie wygląda jak semantyczny numer wersji",
+  ".hex file upload, please try again.": "przesyłanie pliku .hex. Proszę spróbować ponownie.",
   "A letter, word, or line of text.": "List, słowo lub wiersz tekstu.",
   "About {0}": "O {0}",
   "About...": "O...",
@@ -111,7 +111,6 @@
   "Pause execution on the next instruction": "Wstrzymaj wykonanie na następnej instrukcji",
   "Pick a name for your project": "",
   "Pick a name...": "Wybierz nazwę...",
-  "Play": "Zagraj",
   "Please connect your {0} to your computer and try again": "",
   "Please wait": "Czekaj",
   "Powered by {0}": "",
