@@ -1,8 +1,8 @@
 "use strict";
 
-var fs = require("fs")
-var path = require("path")
-var child_process = require("child_process")
+const fs = require("fs")
+const path = require("path")
+const child_process = require("child_process")
 
 var targetdir = ""
 
