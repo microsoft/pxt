@@ -226,7 +226,7 @@ namespace ts.pxtc.avr {
             this.addInst("lsr   $r0", 0x9406, 0xfe0f);
             this.addInst("mov   $r0, $r1", 0x2C00, 0xfC00);
             this.addInst("movw  $r8, $r9", 0x0100, 0xff00);
-            this.addInst("mul   $r0, $r1", 0x9400, 0xfC00);
+            this.addInst("mul   $r0, $r1", 0x9c00, 0xfC00);
             this.addInst("muls  $r3, $r12", 0x0200, 0xff00);
             this.addInst("mulsu $r10, $r11", 0x0300, 0xff88);
             this.addInst("neg $r0", 0x9401, 0xfe0f);
