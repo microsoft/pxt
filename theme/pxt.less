@@ -10,7 +10,7 @@
              Layout
 *******************************/
 
-
+/* Main Layout */
 #filelist,
 #maineditor,
 #sidedocs {
@@ -18,6 +18,64 @@
   top:@mainMenuHeight;
   bottom: 0rem;
 }
+
+/* Main Editor layout */
+#maineditor {
+  left: @simulatorWidth;
+  right: 0;
+  overflow: hidden;
+}
+.rtl #maineditor {
+    left:0;
+    right:@simulatorWidth;
+}
+
+/* File list / Simulator layout */
+#filelist {
+  left: 0;
+  min-width: @simulatorWidth;
+  max-width: @simulatorWidth;
+  background-color: @simulatorBackground;
+}
+.rtl #filelist {
+    left: auto;
+    right: 0;
+}
+
+#filelist {
+  padding: 1em 2em 1em 1.5em;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.filemenu {
+  direction:ltr;
+}
+
+#filelist .menu {
+  width: 100%;
+}
+
+#filelist .nested.item {
+    padding-left: 4rem;
+}
+
+#filelist .header {
+    background: rgba(0,0,0,0.05);
+}
+
+/* Getting started button */
+#getting-started-btn {
+    display:none;
+    z-index:9;
+    position: absolute;
+    top: @mainMenuHeight;
+    right: 2rem;
+}
+
+/* Side Docs layout */
 #sidedocs {
   display:none;
   overflow-y: auto;
@@ -51,15 +109,20 @@
     left:1.25rem;
 }
 
-/* default layout */
-#filelist {
-  left: 0;
-  min-width: @simulatorWidth;
-  max-width: @simulatorWidth;
+/* Cookie Message */
+#cookiemsg {
+   position: absolute;
+   left: 1rem;
+   bottom: 0.5rem;
+   width: 18rem;
+   text-align: left;
+   display:none;
+   z-index:1000;
 }
-.rtl #filelist {
-    left: auto;
-    right: 0;
+
+#cookiemsg > a {
+   color:white;
+   text-decoration: underline;
 }
 
 .rtl #cookiemsg {
@@ -67,15 +130,6 @@
     right:1rem;
 }
 
-#maineditor {
-  right: 0;
-  left: @simulatorWidth;
-  overflow: hidden;
-}
-.rtl #maineditor {
-    left:0;
-    right:@simulatorWidth;
-}
 
 /*******************************
              Blockly
@@ -227,7 +281,6 @@
     }
 }
 
-
 /* extra-large desktop screen */
 @media only screen and (min-width: 92em) and (min-height:30em) {
     .sideDocs #maineditor {
@@ -240,6 +293,9 @@
     .sideDocs #sidedocs {
         display:block;
         width:@sideBarWidth;
+    }
+    #sidedocspopout, #sidedocsexpand {
+        display:block;
     }
 }
 
@@ -256,5 +312,39 @@
     .rtl #maineditor {
         right:@simulatorWidthSmall;
         left:0;
+    }
+}
+
+/* thin desktop portrait mode */
+@media only screen and (max-width: 55em), only screen and (max-aspect-ratio: 7/10) {
+    #filelist {
+        position:absolute;
+        z-index:5;
+        bottom:3rem;
+        left:1rem;
+        top:auto;
+        width:auto;
+        min-width: inherit;
+        max-width: inherit;
+        background-color: transparent;
+    }
+    .rtl #filelist {
+        left:auto;
+        right:1rem;
+    }
+    #maineditor, .rtl #maineditor {
+        left: 0;
+        right:0;
+    }
+    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
+        bottom:2.3rem;
+    }
+}
+
+/* Large Monitor */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    /* Getting started button */
+    #getting-started-btn:not(.sideDocs) {
+        display: block;
     }
 }

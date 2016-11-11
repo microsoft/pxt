@@ -1665,6 +1665,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.shareEditor.show(header);
     }
 
+    gettingStarted() {
+        Util.assert(!this.state.sideDocsLoadUrl);
+        const targetTheme = pxt.appTarget.appTheme;
+        const gettingStartedUrl = targetTheme.gettingStarted || 'getting-started';
+        this.setSideDoc(gettingStartedUrl);
+        this.setState({sideDocsCollapsed: false})
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1687,7 +1695,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
-        const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
         const run = !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
@@ -1754,6 +1762,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
+                {this.state.sideDocsLoadUrl && targetTheme.gettingStarted ? undefined : 
+                    <div id="getting-started-btn">
+                        <div className="ui bottom attached button green" onClick={() => this.gettingStarted() }>Getting Started</div>
+                    </div>
+                }
                 <div id="filelist" className="ui items" role="complementary">
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>

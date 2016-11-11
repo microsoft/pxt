@@ -146,6 +146,7 @@ declare namespace pxt {
         simAnimationEnter?: string;
         simAnimationExit?: string;
         projectGallery?: string;
+        gettingStarted?: string;
     }
 
     interface DocMenuEntry {
