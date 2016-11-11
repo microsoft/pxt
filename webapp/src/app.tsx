@@ -317,6 +317,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     ) }
                     {galleries.map(scr => <codecard.CodeCardView
                         key={'gal' + scr.name}
+                        className="widedesktop only"
                         name={scr.name}
                         url={scr.url}
                         imageUrl={scr.imageUrl}
