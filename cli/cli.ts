@@ -3130,7 +3130,7 @@ export function downloadTargetTranslationsAsync(...args: string[]) {
                 const pxtJsons = fs.readFileSync(pxtJsonf, "utf8");
                 const pxtJson = JSON.parse(pxtJsons) as pxt.PackageConfig;
                 Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0).forEach(f => pxtJson.files.push(f));
-                const pxtJsonn = JSON.stringify(pxtJson, null, 2);
+                const pxtJsonn = JSON.stringify(pxtJson, null, 4);
                 if (pxtJsons != pxtJsonn) {
                     pxt.log(`writing ${pxtJsonf}`);
                     fs.writeFileSync(pxtJsonf, pxtJsonn, "utf8");
