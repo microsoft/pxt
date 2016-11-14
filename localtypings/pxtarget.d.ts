@@ -124,12 +124,12 @@ declare namespace pxt {
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
         hideSideDocs?: boolean;
+        sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
         boardName?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        invertedMenu?: boolean;
         locales?: Map<AppTheme>;
         cardLogo?: string;
         appLogo?: string;
@@ -140,11 +140,12 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
-        invertedToolbox?: boolean;
-        invertedMonaco?: boolean;
-        blocklyOptions?: Blockly.Options;
-        simAnimationEnter?: string;
-        simAnimationExit?: string;
+        invertedMenu?: boolean; // if true: apply the inverted class to the menu
+        invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
+        invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
+        blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        simAnimationEnter?: string; // Simulator enter animation
+        simAnimationExit?: string; // Simulator exit animation
         projectGallery?: string;
     }
 

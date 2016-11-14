@@ -1666,6 +1666,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.shareEditor.show(header);
     }
 
+    gettingStarted() {
+        pxt.tickEvent("btn.gettingstarted");
+        const targetTheme = pxt.appTarget.appTheme;
+        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
+        this.setSideDoc(targetTheme.sideDoc);
+        this.setState({sideDocsCollapsed: false})
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1688,7 +1696,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
-        const isBlocks = this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const gettingStartedTooltip = lf("Open Getting Started help");
+        const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
         const run = !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
@@ -1755,6 +1764,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
+                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc ? 
+                    <div id="getting-started-btn">
+                        <sui.Button class="bottom attached green" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted() } />
+                    </div>
+                    : undefined }
                 <div id="filelist" className="ui items" role="complementary">
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
