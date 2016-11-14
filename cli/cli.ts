@@ -404,7 +404,7 @@ function travisAsync() {
     }
 }
 
-function bumpKsDepAsync() {
+function bumpPxtCoreDepAsync() {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") return Promise.resolve(pkg)
 
@@ -442,7 +442,7 @@ function bumpKsDepAsync() {
 function updateAsync() {
     return Promise.resolve()
         .then(() => runGitAsync("pull"))
-        .then(() => bumpKsDepAsync())
+        .then(() => bumpPxtCoreDepAsync())
         .then(() => runNpmAsync("install"));
 }
 
@@ -472,7 +472,8 @@ function justBumpPkgAsync() {
         .then(() => runGitAsync("tag", "v" + mainPkg.config.version))
 }
 
-function bumpAsync() {
+function bumpAsync(...args: string[]) {
+    const bumpPxt = args.indexOf("--noupdate") < 0;
     if (fs.existsSync(pxt.CONFIG_NAME))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
@@ -482,7 +483,7 @@ function bumpAsync() {
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
-            .then(() => bumpKsDepAsync())
+            .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
             .then(() => runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
@@ -3503,7 +3504,7 @@ cmd("snippets [--re NAME] [--i]     - verifies that all documentation snippets c
 cmd("serve [-yt] [-browser NAME]  - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
-cmd("bump                         - bump target or package version", bumpAsync)
+cmd("bump [--noupdate]            - bump target or package version", bumpAsync)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
