@@ -1764,8 +1764,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Start") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
                     </div>
                     <div className="ui item landscape only">
-                        {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={lf("Sim Debug") } onClick={() => this.runSimulator({ debug: true }) } /> : ''}
-                        {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={lf("Dev Debug") } onClick={() => this.hwDebug() } /> : ''}
+                        {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
+                        {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
                     </div>
                     <div className="ui editorFloat landscape only">
                         <logview.LogView ref="logs" />
