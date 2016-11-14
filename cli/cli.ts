@@ -230,12 +230,15 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
             return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0], { translatedOnly: true, validatedOnly: false })
                 .then(r => {
                     Object.keys(r).forEach(k => {
+                        const rtranslations = stringifyTranslations(r[k]);
+                        if (!rtranslations) return;
+
                         nodeutil.mkdirP(path.join(args[1], k));
                         const outf = path.join(args[1], k, fn);
                         console.log(`writing ${outf}`)
                         fs.writeFileSync(
                             outf,
-                            stringifyTranslations(r[k]),
+                            rtranslations,
                             "utf8");
                     })
                 })
@@ -3102,18 +3105,36 @@ export function downloadTargetTranslationsAsync(...args: string[]) {
         const fn = path.basename(f);
         const crowdf = path.join(crowdinDir, fn);
         const locdir = path.dirname(f);
+        const projectdir = path.dirname(locdir);
         pxt.log(`downloading ${crowdf}`);
+        pxt.log(`projectdir: ${projectdir}`)
+        const locFiles: Map<string> = {};
         return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf, { translatedOnly: true, validatedOnly: true })
             .then(data => {
                 Object.keys(data)
                     .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
                     .forEach(lang => {
+                        const langTranslations = stringifyTranslations(data[lang]);
+                        if (!langTranslations) return;
+
                         const tfdir = path.join(locdir, lang);
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, stringifyTranslations(data[lang]), "utf8");
+                        fs.writeFile(tf, langTranslations, "utf8");
+
+                        locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
+                // update pxt.json
+                const pxtJsonf = path.join(projectdir, "pxt.json");
+                const pxtJsons = fs.readFileSync(pxtJsonf, "utf8");
+                const pxtJson = JSON.parse(pxtJsons) as pxt.PackageConfig;
+                Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0).forEach(f => pxtJson.files.push(f));
+                const pxtJsonn = JSON.stringify(pxtJson, null, 2);
+                if (pxtJsons != pxtJsonn) {
+                    pxt.log(`writing ${pxtJsonf}`);
+                    fs.writeFileSync(pxtJsonf, pxtJsonn, "utf8");
+                }
                 return nextFileAsync()
             });
     }
@@ -3126,7 +3147,8 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
         const v = strings[k].trim();
         if (v) trg[k] = v;
     })
-    return JSON.stringify(trg, null, 2);
+    if (Object.keys(trg).length == 0) return undefined;
+    else return JSON.stringify(trg, null, 2);
 }
 
 export function buildAsync(arg?: string) {
