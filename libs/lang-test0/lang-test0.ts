@@ -4,7 +4,7 @@
 //
 
 function msg(s: string): void {
-    //console.log(s)
+    console.log(s)
     //basic.pause(50);
 }
 
@@ -1481,5 +1481,13 @@ testClass()
 
 basic.showNumber(1)
 
+/*
+msg('test rest')
 
+function rest(...args: number[]): number[] {
+    return args;
+}
+
+control.assert(rest(0,10,20,30)[1] == 10, "rest");
+*/
 console.log("ALL TESTS OK")

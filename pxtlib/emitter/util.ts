@@ -21,6 +21,18 @@ namespace ts.pxtc.Util {
         return r;
     }
 
+    export function listsEqual<T>(a: T[], b: T[]): boolean {
+        if (!a || !b || a.length !== b.length) {
+            return false;
+        }
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     export function oops(msg = "OOPS"): Error {
         debugger
         throw new Error(msg)
@@ -735,7 +747,7 @@ namespace ts.pxtc.Util {
         // weed out urls
         if (/^https?:/i.test(data)) return data;
 
-        // already a data uri?       
+        // already a data uri?
         if (/^data:/i.test(data)) return data;
 
         // infer mimetype

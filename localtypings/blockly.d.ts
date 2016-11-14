@@ -91,6 +91,7 @@ declare namespace Blockly {
         nextConnection: Connection;
         outputConnection: Connection;
         previousConnection: Connection;
+        workspace: Workspace;
 
 
         // Returns null if the field does not exist on the specified block.
