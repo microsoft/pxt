@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -23,39 +23,17 @@ define("vs/editor/editor.main.nls.fr", {
 		"Avertissement : {0}",
 		"Information : {0}",
 	],
-	"vs/base/common/errors": [
-		"{0}. Code d\'erreur : {1}",
-		"Permission refusée (HTTP {0})",
-		"Permission refusée",
-		"{0} (HTTP {1} : {2})",
-		"{0} (HTTP {1})",
-		"Erreur de connexion inconnue ({0})",
-		"Une erreur de connexion inconnue s\'est produite. Soit vous n\'êtes plus connecté à Internet, soit le serveur auquel vous êtes connecté est hors connexion.",
-		"{0} : {1}",
-		"Une erreur inconnue s’est produite. Veuillez consulter le journal pour plus de détails.",
-		"Une erreur système s\'est produite ({0})",
-		"Une erreur inconnue s’est produite. Veuillez consulter le journal pour plus de détails.",
-		"{0} ({1} erreurs au total)",
-		"Une erreur inconnue s’est produite. Veuillez consulter le journal pour plus de détails.",
-		"Non implémenté",
-		"Argument incorrect : {0}",
-		"Argument incorrect",
-		"État incorrect : {0}",
-		"État incorrect",
-		"Échec du chargement d\'un fichier requis. Soit vous n\'êtes plus connecté à Internet, soit le serveur auquel vous êtes connecté est hors connexion. Actualisez le navigateur pour réessayer.",
-		"Échec du chargement d\'un fichier obligatoire. Redémarrez l\'application pour réessayer. Détails : {0}",
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
 		"Windows",
-		"Contrôle",
-		"Maj",
+		"Control",
+		"Shift",
 		"Alt",
-		"Commande",
+		"Command",
 		"Windows",
 		"Ctrl",
-		"Maj",
+		"Shift",
 		"Alt",
-		"Commande",
+		"Command",
 		"Windows",
 	],
 	"vs/base/common/severity": [
@@ -78,10 +56,9 @@ define("vs/editor/editor.main.nls.fr", {
 		"Éditeur",
 		"Contrôle la famille de polices.",
 		"Contrôle l\'épaisseur de police.",
-		"Contrôle la taille de police.",
+		"Contrôle la taille de police en pixels.",
 		"Contrôle la hauteur de ligne. Utilisez 0 pour calculer lineHeight à partir de fontSize.",
 		"Contrôle la visibilité des numéros de ligne",
-		"Contrôle la visibilité de la marge des glyphes",
 		"Colonnes où afficher les règles verticales",
 		"Caractères utilisés comme séparateurs de mots durant la navigation ou les opérations basées sur les mots",
 		"Nombre d\'espaces correspondant à une tabulation. Ce paramètre est remplacé en fonction du contenu du fichier quand \'editor.detectIndentation\' est activé.",
@@ -92,7 +69,7 @@ define("vs/editor/editor.main.nls.fr", {
 		"Contrôle si les sélections ont des angles arrondis",
 		"Contrôle si l\'éditeur défile au-delà de la dernière ligne",
 		"Contrôle le nombre de caractères après lesquels l\'éditeur effectue un retour automatique à la ligne suivante. Si vous affectez la valeur 0, le retour automatique à la ligne s\'effectue en fonction de la largeur de la fenêtre d\'affichage (retour automatique à la ligne). Si vous affectez la valeur -1, l\'éditeur n\'effectue jamais de retour automatique à la ligne.",
-		"Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).",
+		"Contrôle le retour automatique à la ligne. Le retour automatique à la ligne s\'effectue à min(editor.wrappingColumn, viewportWidthInColumns).",
 		"Contrôle le retrait des lignes renvoyées. La valeur peut être \'none\', \'same\' ou \'indent\'.",
 		"Multiplicateur à utiliser pour le \'deltaX\' et le \'deltaY\' des événements de défilement de la roulette de la souris",
 		"Contrôle si les suggestions rapides doivent s\'afficher ou non pendant la saisie",
@@ -115,7 +92,7 @@ define("vs/editor/editor.main.nls.fr", {
 		"Contrôle si l\'éditeur doit restituer des espaces",
 		"Contrôle si l\'éditeur doit afficher les caractères de contrôle",
 		"Contrôle si l\'éditeur doit afficher les repères de mise en retrait",
-		"Controls whether the editor should render the current line highlight",
+		"Contrôle si l\'éditeur doit afficher la surbrillance de la ligne active",
 		"Contrôle si l\'éditeur affiche les indicateurs CodeLens",
 		"Contrôle si le pliage de code est activé dans l\'éditeur",
 		"L\'insertion et la suppression d\'un espace blanc suit les taquets de tabulation",
@@ -136,6 +113,9 @@ define("vs/editor/editor.main.nls.fr", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"Texte brut",
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}",
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"Ces fichiers ont changé pendant ce temps : {0}",
@@ -238,7 +218,6 @@ define("vs/editor/editor.main.nls.fr", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"Corrections suggérées : ",
 		"Correction suggérée : ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"Accéder à l\'erreur ou l\'avertissement suivant",
 		"Accéder à l\'erreur ou l\'avertissement précédent",
@@ -299,12 +278,10 @@ define("vs/editor/editor.main.nls.fr", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"Correctif rapide",
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}, suggestion de correction rapide",
-		"Chargement en cours...",
-		"Pas de suggestions de correctif.",
-		"Correctif rapide",
-		"{0}, accepté",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
+		"Loading...",
+		"No fix suggestions.",
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"Atteindre la ligne {0} et la colonne {1}",
@@ -370,7 +347,7 @@ define("vs/editor/editor.main.nls.fr", {
 		"Réduire la sélection",
 	],
 	"vs/editor/contrib/suggest/browser/suggestController": [
-		"Trigger Suggest",
+		"Suggestions pour Trigger",
 	],
 	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"En savoir plus...{0}",
@@ -391,20 +368,6 @@ define("vs/editor/editor.main.nls.fr", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"Fermer",
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"Nombre maximal de caractères par ligne (0 = désactiver).",
-		"Liste des balises, séparées par des virgules, qui ne doivent pas être remises en forme. \'null\' correspond par défaut à toutes les balises répertoriées à l\'adresse https://www.w3.org/TR/html5/dom.html#phrasing-content.",
-		"Mettez en retrait les sections <head> et <body>.",
-		"Spécifie si les sauts de ligne existants qui précèdent les éléments doivent être conservés. Fonctionne uniquement devant les éléments, pas dans les balises, ni pour du texte.",
-		"Nombre maximal de sauts de ligne à conserver dans un bloc. Utilisez \'null\' pour indiquer une valeur illimitée.",
-		"Mettez en forme et en retrait {{#foo}}, ainsi que {{/foo}}.",
-		"Finissez par un caractère de nouvelle ligne.",
-		"Liste de balises, séparées par une virgule, qui doivent être précédées d\'une nouvelle ligne. \'null\' prend par défaut la valeur \"head, body, /html\".",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values.",
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"Ajoute des paramètres de configuration.",

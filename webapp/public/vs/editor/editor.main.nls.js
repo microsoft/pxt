@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -26,29 +26,7 @@ define("vs/editor/editor.main.nls", {
 		"Warning: {0}",
 		"Info: {0}"
 	],
-	"vs/base/common/errors": [
-		"{0}. Error code: {1}",
-		"Permission Denied (HTTP {0})",
-		"Permission Denied",
-		"{0} (HTTP {1}: {2})",
-		"{0} (HTTP {1})",
-		"Unknown Connection Error ({0})",
-		"An unknown connection error occurred. Either you are no longer connected to the internet or the server you are connected to is offline.",
-		"{0}: {1}",
-		"An unknown error occurred. Please consult the log for more details.",
-		"A system error occured ({0})",
-		"An unknown error occurred. Please consult the log for more details.",
-		"{0} ({1} errors in total)",
-		"An unknown error occurred. Please consult the log for more details.",
-		"Not Implemented",
-		"Illegal argument: {0}",
-		"Illegal argument",
-		"Illegal state: {0}",
-		"Illegal state",
-		"Failed to load a required file. Either you are no longer connected to the internet or the server you are connected to is offline. Please refresh the browser to try again.",
-		"Failed to load a required file. Please restart the application to try again. Details: {0}"
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
 		"Windows",
 		"Control",
 		"Shift",
@@ -84,7 +62,6 @@ define("vs/editor/editor.main.nls", {
 		"Controls the font size in pixels.",
 		"Controls the line height. Use 0 to compute the lineHeight from the fontSize.",
 		"Controls visibility of line numbers",
-		"Controls visibility of the glyph margin",
 		"Columns at which to show vertical rulers",
 		"Characters that will be used as word separators when doing word related navigations or operations",
 		"The number of spaces a tab is equal to. This setting is overriden based on the file contents when `editor.detectIndentation` is on.",
@@ -115,7 +92,7 @@ define("vs/editor/editor.main.nls", {
 		"Controls the cursor style, accepted values are 'block', 'line' and 'underline'",
 		"Enables font ligatures",
 		"Controls if the cursor should be hidden in the overview ruler.",
-		"Controls whether the editor should render whitespace characters",
+		"Controls how the editor should render whitespace characters, posibilties are 'none', 'boundary', and 'all'. The 'boundary' option does not render single spaces between words.",
 		"Controls whether the editor should render control characters",
 		"Controls whether the editor should render indent guides",
 		"Controls whether the editor should render the current line highlight",
@@ -139,6 +116,9 @@ define("vs/editor/editor.main.nls", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"Plain Text"
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}"
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"These files have changed in the meantime: {0}"
@@ -241,7 +221,6 @@ define("vs/editor/editor.main.nls", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"Suggested fixes: ",
 		"Suggested fix: ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"Go to Next Error or Warning",
 		"Go to Previous Error or Warning"
@@ -302,12 +281,10 @@ define("vs/editor/editor.main.nls", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"Quick Fix"
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}, quick fix suggestion",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
 		"Loading...",
-		"No fix suggestions.",
-		"Quick Fix",
-		"{0}, accepted"
+		"No fix suggestions."
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"Go to line {0} and column {1}",
@@ -394,20 +371,6 @@ define("vs/editor/editor.main.nls", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"Close"
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"Maximum amount of characters per line (0 = disable).",
-		"List of tags, comma separated, that shouldn't be reformatted. 'null' defaults to all tags listed at https://www.w3.org/TR/html5/dom.html#phrasing-content.",
-		"Indent <head> and <body> sections.",
-		"Whether existing line breaks before elements should be preserved. Only works before elements, not inside tags or for text.",
-		"Maximum number of line breaks to be preserved in one chunk. Use 'null' for unlimited.",
-		"Format and indent {{#foo}} and {{/foo}}.",
-		"End with a newline.",
-		"List of tags, comma separated, that should have an extra newline before them. 'null' defaults to \"head, body, /html\".",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values."
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"Contributes configuration settings.",

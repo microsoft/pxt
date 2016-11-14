@@ -1,5 +1,5 @@
-/// <reference path="../node_modules/monaco-editor/monaco.d.ts" />
 /// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../built/monaco.d.ts" />
 /// <reference path="../built/pxtlib.d.ts"/>
 
 namespace pxt.vs {
@@ -68,6 +68,8 @@ namespace pxt.vs {
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
             automaticLayout: true,
+            mouseWheelScrollSensitivity: 0.5,
+            quickSuggestionsDelay: 200,
             theme: pxt.appTarget.appTheme.invertedMonaco ? 'vs-dark' : 'vs'
         });
 

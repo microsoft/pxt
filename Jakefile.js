@@ -91,6 +91,7 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
 })
 
 file('built/blockly.d.ts', ['localtypings/blockly.d.ts'], function () { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
+file('built/monaco.d.ts', ['localtypings/monaco.d.ts'], function () { ju.cpR('localtypings/monaco.d.ts', 'built/monaco.d.ts') })
 file('built/pxtparts.d.ts', ['localtypings/pxtparts.d.ts'], function () { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
 file('built/pxtarget.d.ts', ['built/blockly.d.ts', 'built/pxtpackage.d.ts', 'built/pxtparts.d.ts', 'localtypings/pxtarget.d.ts'], function () { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
 file('built/pxtpackage.d.ts', ['localtypings/pxtpackage.d.ts'], function () { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
@@ -99,7 +100,7 @@ compileDir("pxtlib", ["built/pxtarget.d.ts", "built/pxtparts.d.ts", "built/pxtpa
 compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
-compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
+compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js", "built/monaco.d.ts"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ["built/pxtarget.d.ts", 'pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
 
@@ -300,13 +301,9 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
 
     let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
-    monacoeditor = monacoeditor.replace("var FocusHeight = 35", "var FocusHeight = 45");
-    monacoeditor = monacoeditor.replace("var UnfocusedHeight = 19", "var UnfocusedHeight = 29");
+    // Remove certain actions from the context menu
+    monacoeditor = monacoeditor.replace(/((GoToDefinitionAction.ID|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
     monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
-    monacoeditor = monacoeditor.replace("this._container.focus()", "//this._container.focus()");
-    monacoeditor = monacoeditor.replace("this.editor.revealPosition(position);", "//this.editor.revealPosition(position);");
-    monacoeditor = monacoeditor.replace("this.editor.setSelection(where);", "//this.editor.setSelection(where);");
-    monacoeditor = monacoeditor.replace("this.editor.revealLine(revealLineNumber);", "//this.editor.revealLine(revealLineNumber);");
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")
@@ -314,9 +311,7 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     jake.cpR("node_modules/monaco-editor/dev/vs/editor", "webapp/public/vs/")
     fs.unlinkSync("webapp/public/vs/editor/editor.main.js")
 
-    jake.cpR("node_modules/monaco-editor/dev/vs/css.js", "webapp/public/vs/")
     jake.cpR("node_modules/monaco-editor/dev/vs/loader.js", "webapp/public/vs/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/nls.js", "webapp/public/vs/")
     jake.mkdirP("webapp/public/vs/basic-languages/src")
     jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/bat.js", "webapp/public/vs/basic-languages/src/")
     jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/cpp.js", "webapp/public/vs/basic-languages/src/")

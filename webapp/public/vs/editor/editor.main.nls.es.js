@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -23,39 +23,17 @@ define("vs/editor/editor.main.nls.es", {
 		"Advertencia: {0}",
 		"Información: {0}",
 	],
-	"vs/base/common/errors": [
-		"{0}. Código de error: {1}",
-		"Permiso denegado (HTTP {0})",
-		"Permiso denegado",
-		"{0} (HTTP {1}: {2})",
-		"{0} (HTTP {1})",
-		"Error de conexión desconocido ({0})",
-		"Error de conexión desconocido. Es posible que ya no esté conectado a Internet o que el servidor al que se había conectado esté sin conexión.",
-		"{0}:{1}",
-		"Se ha producido un error desconocido. Consulte el registro para obtener más detalles.",
-		"Se produjo un error del sistema ({0})",
-		"Se ha producido un error desconocido. Consulte el registro para obtener más detalles.",
-		"{0} ({1} errores en total)",
-		"Se ha producido un error desconocido. Consulte el registro para obtener más detalles.",
-		"Sin implementar",
-		"Argumento no válido: {0}",
-		"Argumento no válido",
-		"Estado no válido: {0}",
-		"Estado no válido",
-		"No se pudo cargar un archivo necesario. O bien no está conectado a Internet o el servidor al que se había conectado está sin conexión. Actualice el explorador y vuelva a intentarlo.",
-		"No se pudo cargar un archivo requerido. Reinicie la aplicación para intentarlo de nuevo. Detalles: {0}",
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
 		"Windows",
 		"Control",
-		"Mayús",
+		"Shift",
 		"Alt",
-		"Cmd",
+		"Command",
 		"Windows",
 		"Ctrl",
-		"Mayús",
+		"Shift",
 		"Alt",
-		"Cmd",
+		"Command",
 		"Windows",
 	],
 	"vs/base/common/severity": [
@@ -78,10 +56,9 @@ define("vs/editor/editor.main.nls.es", {
 		"Editor",
 		"Controla la familia de fuentes.",
 		"Controla el grosor de la fuente.",
-		"Controla el tamaño de la fuente.",
+		"Controla el tamaño de fuente en píxeles.",
 		"Controla la altura de línea. Utilice 0 para calcular el valor de lineHeight a partir de fontSize.",
 		"Controla la visibilidad de los números de línea",
-		"Controla la visibilidad del margen del glifo",
 		"Columnas en las que mostrar reglas verticales",
 		"Caracteres que se usarán como separadores de palabras al realizar operaciones o navegaciones relacionadas con palabras.",
 		"El número de espacios a los que equivale una tabulación. Este valor se invalida según el contenido del archivo cuando `editor.detectIndentation` está activado.",
@@ -92,7 +69,7 @@ define("vs/editor/editor.main.nls.es", {
 		"Controla si las selecciones tienen esquinas redondeadas",
 		"Controla si el editor se seguirá desplazando después de la última línea",
 		"Controla el número de caracteres tras los cuales el editor salta a la línea siguiente. Si el valor se establece en 0, se activa el ajuste del ancho de la ventanilla (ajuste de línea). Si se establece en -1, hace que el editor no ajuste las líneas nunca.",
-		"Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).",
+		"Controla si las líneas deben ajustarse. Las líneas se ajustarán en min(editor.wrappingColumn, viewportWidthInColumns).",
 		"Controla el sangrado de las líneas ajustadas. Puede ser uno los valores \'none\', \'same\' o \'indent\'.",
 		"Se utilizará un multiplicador en los eventos de desplazamiento de la rueda del mouse `deltaX` y `deltaY`",
 		"Controla si van a aparecer sugerencias rápidas mientras se escribe",
@@ -115,7 +92,7 @@ define("vs/editor/editor.main.nls.es", {
 		"Controla si el editor debe representar los espacios en blanco",
 		"Controla si el editor debe representar caracteres de control",
 		"Controla si el editor debe representar guías de sangría.",
-		"Controls whether the editor should render the current line highlight",
+		"Controla si el editor debe representar el resaltado de línea actual",
 		"Controla si el editor muestra lentes de código",
 		"Controla si el editor tiene habilitado el plegado de código.",
 		"La inserción y eliminación del espacio en blanco sigue a las tabulaciones.",
@@ -136,6 +113,9 @@ define("vs/editor/editor.main.nls.es", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"Texto sin formato",
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}",
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"Estos archivos han cambiado durante el proceso: {0}",
@@ -238,7 +218,6 @@ define("vs/editor/editor.main.nls.es", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"Correcciones recomendadas: ",
 		"Corrección recomendada: ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"Ir al error o la advertencia siguiente",
 		"Ir al error o la advertencia anterior",
@@ -299,12 +278,10 @@ define("vs/editor/editor.main.nls.es", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"Corrección rápida",
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}, sugerencia de corrección rápida",
-		"Cargando...",
-		"No hay sugerencias de correcciones.",
-		"Corrección rápida",
-		"{0}, aceptada",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
+		"Loading...",
+		"No fix suggestions.",
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"Ir a la línea {0} y la columna {1}",
@@ -370,7 +347,7 @@ define("vs/editor/editor.main.nls.es", {
 		"Reducir selección",
 	],
 	"vs/editor/contrib/suggest/browser/suggestController": [
-		"Trigger Suggest",
+		"Sugerencias para Trigger",
 	],
 	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"Leer más...{0}",
@@ -391,20 +368,6 @@ define("vs/editor/editor.main.nls.es", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"Cerrar",
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"Cantidad máxima de caracteres por línea (0 = deshabilitar).",
-		"Lista de etiquetas, separadas por comas, a las que no se debe volver a aplicar formato. El valor predeterminado de \"null\" son todas las etiquetas mostradas en https://www.w3.org/TR/html5/dom.html#phrasing-content.",
-		"Aplicar sangría a las secciones <head> y <body>.",
-		"Indica si los saltos de línea existentes delante de los elementos deben conservarse. Solo funciona delante de los elementos, no dentro de las etiquetas o con texto.",
-		"Número máximo de saltos de línea que deben conservarse en un fragmento. Use \"null\" para que el número sea ilimitado.",
-		"Formato y sangría {{#foo}} y {{/foo}}.",
-		"Finalizar con una nueva línea.",
-		"Lista de etiquetas, separadas por comas, que deben tener una nueva línea adicional delante. \"null\" tiene como valores predeterminados \"head, body, /html\".",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values.",
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"Aporta opciones de configuración.",
