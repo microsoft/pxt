@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/monaco-editor/monaco.d.ts" />
+/// <reference path="../../built/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 
 
@@ -279,39 +279,16 @@ export class Editor extends srceditor.Editor {
 
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
-        let removeFromContextMenu = ["editor.action.changeAll",
-            "editor.action.quickOutline",
-            "editor.action.goToDeclaration",
-            "editor.action.previewDeclaration",
-            "editor.action.referenceSearch.trigger"]
-
-        let disabledFromCommands = ["editor.unfold",
-            "editor.unFoldRecursively",
-            "editor.fold",
-            "editor.foldRecursively",
-            "editor.foldAll",
-            "editor.unFoldAll",
-            "editor.foldLevel1",
-            "editor.foldLevel2",
-            "editor.foldLevel3",
-            "editor.foldLevel4",
-            "editor.foldLevel5"]
-
-        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._actual.menuOpts = undefined : null);
-
-        this.editor.getActions().forEach(action => disabledFromCommands.indexOf(action.id) > -1 ? (action as any)._enabled = false : null);
-
         this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
             .run = () => Promise.resolve(this.beforeCompile());
-
-        this.editor.getActions().filter(action => action.id == "editor.action.quickCommand")[0]
-            .label = lf("Show Commands");
 
         this.editor.addAction({
             id: "save",
             label: lf("Save"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
             keybindingContext: "!editorReadonly",
+            contextMenuGroupId: "0_pxtnavigation",
+            contextMenuOrder: 0.1,
             run: () => Promise.resolve(this.parent.typecheckNow())
         });
 
@@ -320,6 +297,8 @@ export class Editor extends srceditor.Editor {
             label: lf("Run Simulator"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
             keybindingContext: "!editorReadonly",
+            contextMenuGroupId: "0_pxtnavigation",
+            contextMenuOrder: 0.11,
             run: () => Promise.resolve(this.parent.runSimulator())
         });
 
@@ -329,6 +308,8 @@ export class Editor extends srceditor.Editor {
                 label: lf("Download"),
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
+                contextMenuGroupId: "0_pxtnavigation",
+                contextMenuOrder: 0.12,
                 run: () => Promise.resolve(this.parent.compile())
             });
         }

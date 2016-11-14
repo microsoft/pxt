@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -23,39 +23,17 @@ define("vs/editor/editor.main.nls.it", {
 		"Avviso: {0}",
 		"Info: {0}",
 	],
-	"vs/base/common/errors": [
-		"{0}. Codice errore: {1}",
-		"Autorizzazione negata (HTTP {0})",
-		"Autorizzazione negata",
-		"{0} (HTTP {1}: {2})",
-		"{0} (HTTP {1})",
-		"Errore di connessione sconosciuto ({0})",
-		"Si è verificato un errore di connessione sconosciuto. La connessione a Internet è stata interrotta oppure il server al quale si è connessi è offline.",
-		"{0}: {1}",
-		"Si è verificato un errore sconosciuto. Per altri dettagli, vedere il log.",
-		"Si è verificato un errore di sistema ({0})",
-		"Si è verificato un errore sconosciuto. Per altri dettagli, vedere il log.",
-		"{0} ({1} errori in totale)",
-		"Si è verificato un errore sconosciuto. Per altri dettagli, vedere il log.",
-		"Non implementato",
-		"Argomento non valido: {0}",
-		"Argomento non valido",
-		"Stato non valido: {0}",
-		"Stato non valido",
-		"Non è stato possibile caricare un file obbligatorio. Non si è più connessi a Internet oppure il server a cui si è connessi è offline. Per riprovare, aggiornare il browser.",
-		"Non è stato possibile caricare un file obbligatorio. Riavviare l\'applicazione e riprovare. Dettagli: {0}",
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
 		"Windows",
-		"CTRL",
-		"Maiusc",
+		"Control",
+		"Shift",
 		"Alt",
-		"Comando",
+		"Command",
 		"Windows",
 		"Ctrl",
-		"Maiusc",
+		"Shift",
 		"Alt",
-		"Comando",
+		"Command",
 		"Windows",
 	],
 	"vs/base/common/severity": [
@@ -78,10 +56,9 @@ define("vs/editor/editor.main.nls.it", {
 		"Editor",
 		"Controlla la famiglia di caratteri.",
 		"Controlla lo spessore del carattere.",
-		"Controlla le dimensioni del carattere.",
+		"Controlla le dimensioni del carattere in pixel.",
 		"Controlla l\'altezza della riga. Usare 0 per calcolare l\'altezza della riga dalle dimensioni del carattere.",
 		"Controlla la visibilità dei numeri di riga",
-		"Controlla la visibilità del margine del glifo",
 		"Colonne in corrispondenza delle quali visualizzare i righelli verticali",
 		"Caratteri che verranno usati come separatori di parola quando si eseguono operazioni o spostamenti correlati a parole",
 		"Numero di spazi a cui equivale una tabulazione. Quando `editor.detectIndentation` è attivo, questa impostazione viene sostituita in base al contenuto del file.",
@@ -92,7 +69,7 @@ define("vs/editor/editor.main.nls.it", {
 		"Controlla se gli angoli delle selezioni sono arrotondati",
 		"Controlla se l\'editor scorrerà oltre l\'ultima riga",
 		"Controlla il numero di caratteri dopo i quali l\'editor attiverà l\'a capo automatico alla riga successiva. Se è impostato su 0, verrà attivato l\'a capo automatico in base alla larghezza del viewport (ritorno a capo automatico). Se è impostato su -1, forzerà l\'editor a non eseguire mai il wrapping.",
-		"Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).",
+		"Controlla se le righe devono andare a capo. Le righe andranno a capo alla posizione definita da min(editor.wrappingColumn, viewportWidthInColumns).",
 		"Controlla il rientro delle righe con ritorno a capo. Può essere uno dei valori seguenti: \'none\', \'same\' o \'indent\'.",
 		"Moltiplicatore da usare sui valori `deltaX` e `deltaY` degli eventi di scorrimento della rotellina del mouse",
 		"Controlla se durante la digitazione verranno o meno visualizzati i suggerimenti rapidi",
@@ -112,10 +89,10 @@ define("vs/editor/editor.main.nls.it", {
 		"Controlla lo stile del cursore. I valori accettati sono \'block\', \'line\' e \'underline\'",
 		"Abilita i caratteri legatura",
 		"Controlla se il cursore deve essere nascosto nel righello delle annotazioni.",
-		"Controlla se l\'editor deve eseguire il rendering dei spazi vuoti",
+		"Consente di controllare in che modo l\'editor deve eseguire il rendering dei caratteri di spazio vuoto. Le opzioni possibili sono: \'none\', \'boundary\' e \'all\'. Con l\'opzione \'boundary\' non viene eseguito il rendering di singoli spazi tra le parole.",
 		"Controlla se l\'editor deve eseguire il rendering dei caratteri di controllo",
 		"Controlla se l\'editor deve eseguire il rendering delle guide con rientro",
-		"Controls whether the editor should render the current line highlight",
+		"Controlla se l\'editor deve eseguire il rendering dell\'evidenziazione riga corrente",
 		"Controlla se nell\'editor sono visualizzate le finestre di CodeLens",
 		"Controlla se per l\'editor è abilitata la riduzione del codice",
 		"Inserimento ed eliminazione dello spazio vuoto dopo le tabulazioni",
@@ -136,6 +113,9 @@ define("vs/editor/editor.main.nls.it", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"Testo normale",
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}",
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"Nel frattempo questi file sono stati modificati: {0}",
@@ -238,7 +218,6 @@ define("vs/editor/editor.main.nls.it", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"Correzioni suggerite: ",
 		"Correzione suggerita: ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"Vai a errore o avviso successivo",
 		"Vai a errore o avviso precedente",
@@ -299,12 +278,10 @@ define("vs/editor/editor.main.nls.it", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"Correzione rapida",
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}, suggerimento per correzione rapida",
-		"Caricamento...",
-		"Non sono disponibili suggerimenti per la correzione.",
-		"Correzione rapida",
-		"{0}, accettata",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
+		"Loading...",
+		"No fix suggestions.",
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"Vai alla riga {0} e alla colonna {1}",
@@ -370,7 +347,7 @@ define("vs/editor/editor.main.nls.it", {
 		"Comprimi SELECT",
 	],
 	"vs/editor/contrib/suggest/browser/suggestController": [
-		"Trigger Suggest",
+		"Attiva suggerimento",
 	],
 	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"Altre informazioni...{0}",
@@ -391,20 +368,6 @@ define("vs/editor/editor.main.nls.it", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"Chiudi",
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"Numero massimo di caratteri per riga (0 = disabilita).",
-		"Elenco di tag, separati da virgole, che non devono essere riformattati. Con \'null\' viene usata l\'impostazione predefinita che prevede l\'uso di tutti i tag elencati in https://www.w3.org/TR/html5/dom.html#phrasing-content.",
-		"Imposta un rientro per le sezioni <head> e <body>.",
-		"Indica se è necessario mantenere interruzioni di riga esistenti prima degli elementi. Funziona solo prima degli elementi e non all\'interno di tag o per il testo.",
-		"Numero massimo di interruzioni di riga da mantenere in un unico blocco. Per non impostare un numero massimo, usare \'null\'.",
-		"Applica la formattazione e imposta un rientro per {{#foo}} e {{/foo}}.",
-		"Termina con un carattere di nuova riga.",
-		"Elenco di tag, separati da virgole, che devono essere preceduti da un carattere di nuova riga. Con \'null\' viene usata l\'impostazione predefinita \"head, body, /html\".",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values.",
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"Impostazioni di configurazione di contributes.",

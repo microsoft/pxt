@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -23,29 +23,7 @@ define("vs/editor/editor.main.nls.zh-tw", {
 		"警告: {0}",
 		"資訊: {0}",
 	],
-	"vs/base/common/errors": [
-		"{0}。錯誤碼: {1}",
-		"權限被拒絕 (HTTP {0})",
-		"權限被拒絕",
-		"{0} (HTTP {1}: {2})",
-		"{0} (HTTP {1})",
-		"未知的連接錯誤 ({0})",
-		"發生未知的連接錯誤。可能是您已經沒有連線到網際網路，或是您連接的伺服器已離線。",
-		"{0}: {1}",
-		"發生未知的錯誤。如需詳細資訊，請參閱記錄檔。",
-		"發生系統錯誤 ({0})",
-		"發生未知的錯誤。如需詳細資訊，請參閱記錄檔。",
-		"{0} (總計 {1} 個錯誤)",
-		"發生未知的錯誤。如需詳細資訊，請參閱記錄檔。",
-		"未實作",
-		"不合法的狀態: {0}",
-		"不合法的引數",
-		"不合法的狀態: {0}",
-		"不合法的狀態",
-		"無法載入需要的檔案。可能是您已經沒有連線到網際網路，或是您連接的伺服器已離線。請重新整理瀏覽器，再試一次。",
-		"無法載入必要的檔案。請重新啟動該應用程式，然後再試一次。詳細資料: {0}",
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
 		"Windows",
 		"Control",
 		"Shift",
@@ -78,10 +56,9 @@ define("vs/editor/editor.main.nls.zh-tw", {
 		"編輯器",
 		"控制字型家族。",
 		"控制字型寬度。",
-		"控制字型大小。",
+		"控制字型大小 (以像素為單位)。",
 		"控制行高。使用 0 會從 fontSize 計算 lineHeight。",
 		"控制是否顯示行號",
-		"控制是否顯示字符邊界",
 		"要在其中顯示垂直尺規的資料行",
 		"執行文字相關導覽或作業時將作為文字分隔符號的字元",
 		"與 Tab 相等的空格數量。當 `editor.detectIndentation` 已開啟時，會根據檔案內容覆寫此設定。",
@@ -92,7 +69,7 @@ define("vs/editor/editor.main.nls.zh-tw", {
 		"控制選取範圍是否有圓角",
 		"控制編輯器是否會捲動到最後一行之後",
 		"控制編輯器換行到下一行的字元數。若將此項目設為 0，將會開啟檢視區寬度換行 (自動換行)。若將此項目設為 -1，將會強制編輯器永不換行。",
-		"Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).",
+		"控制是否應該自動換行。將於 min(editor.wrappingColumn, viewportWidthInColumns) 自動換行。",
 		"控制換行的縮排。可以是 [無]、[相同] 或 [縮排]。",
 		"滑鼠滾輪捲動事件的 \'deltaX\' 與 \'deltaY\' 所使用的乘數",
 		"控制輸入時是否應顯示快速建議",
@@ -115,7 +92,7 @@ define("vs/editor/editor.main.nls.zh-tw", {
 		"控制編輯器是否應顯示空白字元",
 		"控制編輯器是否應顯示控制字元",
 		"控制編輯器是否應顯示縮排輔助線",
-		"Controls whether the editor should render the current line highlight",
+		"控制編輯器是否應該轉譯目前反白的行",
 		"控制編輯器是否顯示程式碼濾鏡",
 		"控制編輯器是否已啟用程式碼摺疊功能",
 		"插入和刪除接在定位停駐點後的空白字元",
@@ -136,6 +113,9 @@ define("vs/editor/editor.main.nls.zh-tw", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"純文字",
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}",
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"這些檔案已同時變更: {0}",
@@ -238,7 +218,6 @@ define("vs/editor/editor.main.nls.zh-tw", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"建議的修正程式: ",
 		"建議的修正程式: ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"移至下一個錯誤或警告",
 		"移至上一個錯誤或警告",
@@ -299,12 +278,10 @@ define("vs/editor/editor.main.nls.zh-tw", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"Quick Fix",
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}，快速檢修建議",
-		"正在載入...",
-		"沒有修正建議。",
-		"Quick Fix",
-		"{0}，接受",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
+		"Loading...",
+		"No fix suggestions.",
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"移至行 {0} 和資料行 {1}",
@@ -370,7 +347,7 @@ define("vs/editor/editor.main.nls.zh-tw", {
 		"縮小選取",
 	],
 	"vs/editor/contrib/suggest/browser/suggestController": [
-		"Trigger Suggest",
+		"觸發建議",
 	],
 	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"進一步了解...{0}",
@@ -391,20 +368,6 @@ define("vs/editor/editor.main.nls.zh-tw", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"關閉",
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"每行的字元數上限 (0 = 停用)。",
-		"不應重新格式化的逗號分隔標記清單。\'null\' 預設為 https://www.w3.org/TR/html5/dom.html#phrasing-content 中列出的所有標記。",
-		"縮排 <head> 及 <body> 區段。",
-		"是否應保留項目前方現有的分行符號。僅適用於項目前方，而不適用於標記內或文字。",
-		"一個區塊要保留的最大分行符號數。使用 \'null\' 表示無限制。",
-		"格式化並縮排 {{#foo}} 及 {{/foo}}。",
-		"以新行字元結尾。",
-		"前方應有額外新行字元的標記清單，須以逗號分隔。\'null\' 的預設值為 \"head, body, /html\"。",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values.",
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"提供組態設定。",

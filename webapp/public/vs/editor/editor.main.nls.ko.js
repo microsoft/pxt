@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -23,39 +23,17 @@ define("vs/editor/editor.main.nls.ko", {
 		"경고: {0}",
 		"정보: {0}",
 	],
-	"vs/base/common/errors": [
-		"{0}. 오류 코드: {1}",
-		"사용 권한이 거부되었습니다(HTTP {0}).",
-		"사용 권한이 거부되었습니다.",
-		"{0}(HTTP {1}: {2})",
-		"{0}(HTTP {1})",
-		"알 수 없는 연결 오류({0})",
-		"알 수 없는 연결 오류가 발생했습니다. 인터넷에 연결되지 않았거나 연결된 서버가 오프라인 상태입니다.",
-		"{0}: {1}",
-		"알 수 없는 오류가 발생했습니다. 자세한 내용은 로그를 참조하세요.",
-		"시스템 오류가 발생했습니다({0}).",
-		"알 수 없는 오류가 발생했습니다. 자세한 내용은 로그를 참조하세요.",
-		"{0}(총 {1}개의 오류)",
-		"알 수 없는 오류가 발생했습니다. 자세한 내용은 로그를 참조하세요.",
-		"구현 안 됨",
-		"잘못된 인수: {0}",
-		"잘못된 인수",
-		"잘못된 상태: {0}",
-		"잘못된 상태",
-		"필요한 파일을 로드하지 못했습니다. 인터넷에 연결되지 않았거나 연결된 서버가 오프라인 상태입니다. 브라우저를 새로 고친 후 다시 시도해 보세요.",
-		"필요한 파일을 로드하지 못했습니다. 응용 프로그램을 다시 시작하여 다시 시도하세요. 세부 정보: {0}",
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
+		"Windows",
+		"Control",
+		"Shift",
+		"Alt",
+		"Command",
 		"Windows",
 		"Ctrl",
 		"Shift",
 		"Alt",
-		"명령",
-		"Windows",
-		"Ctrl",
-		"Shift",
-		"Alt",
-		"명령",
+		"Command",
 		"Windows",
 	],
 	"vs/base/common/severity": [
@@ -78,10 +56,9 @@ define("vs/editor/editor.main.nls.ko", {
 		"편집기",
 		"글꼴 패밀리를 제어합니다.",
 		"글꼴 두께를 제어합니다.",
-		"글꼴 크기를 제어합니다.",
+		"글꼴 크기(픽셀)를 제어합니다.",
 		"줄 높이를 제어합니다. fontSize의 lineHeight를 계산하려면 0을 사용합니다.",
 		"줄 번호의 표시 여부를 제어합니다.",
-		"문자 모양 여백의 표시 여부를 제어합니다.",
 		"세로 눈금자를 표시할 열",
 		"단어 관련 탐색 또는 작업을 수행할 때 단어 구분 기호로 사용되는 문자입니다.",
 		"탭 한 개에 해당하는 공백 수입니다. `editor.detectIndentation`이 켜져 있는 경우 이 설정은 파일 콘텐츠에 따라 재정의됩니다.",
@@ -92,7 +69,7 @@ define("vs/editor/editor.main.nls.ko", {
 		"선택 항목의 모서리를 둥글게 할지 여부를 제어합니다.",
 		"편집기에서 마지막 줄 이후로 스크롤할지 여부를 제어합니다.",
 		"편집기에서 몇 개의 문자 이후에 줄을 바꿀지를 제어합니다. 이 값을 0으로 설정하면 뷰포트 너비 줄 바꿈이 설정됩니다(자동 줄바꿈). -1로 설정하면 편집기에서 줄바꿈을 하지 않습니다.",
-		"Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).",
+		"줄 바꿈 여부를 제어합니다. 줄 바꿈은 min(editor.wrappingColumn, viewportWidthInColumns)에서 수행됩니다.",
 		"줄 바꿈 행의 들여쓰기를 제어합니다. \'none\', \'same\' 또는 \'indent\' 중 하나일 수 있습니다.",
 		"마우스 휠 스크롤 이벤트의 `deltaX` 및 `deltaY`에서 사용할 승수",
 		"입력하는 동안 빠른 제안을 표시할지 여부를 제어합니다.",
@@ -115,7 +92,7 @@ define("vs/editor/editor.main.nls.ko", {
 		"편집기에서 공백 문자를 렌더링할지 여부를 제어합니다.",
 		"편집기에서 제어 문자를 렌더링할지를 제어합니다.",
 		"편집기에서 들여쓰기 가이드를 렌더링할지를 제어합니다.",
-		"Controls whether the editor should render the current line highlight",
+		"편집기가 현재 줄 강조 표시를 렌더링하는지 여부를 제어합니다.",
 		"편집기에서 코드 필터를 표시하는지 여부를 제어합니다.",
 		"편집기에서 코드 접기를 사용할지 여부를 제어합니다.",
 		"탭 정지 뒤에 공백 삽입 및 삭제",
@@ -136,6 +113,9 @@ define("vs/editor/editor.main.nls.ko", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"일반 텍스트",
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}",
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"이러한 파일이 동시에 변경되었습니다. {0}",
@@ -238,7 +218,6 @@ define("vs/editor/editor.main.nls.ko", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"제안 수정:",
 		"제안 수정: ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"다음 오류 또는 경고로 이동",
 		"이전 오류 또는 경고로 이동",
@@ -254,8 +233,8 @@ define("vs/editor/editor.main.nls.ko", {
 		"다음 값으로 바꾸기",
 	],
 	"vs/editor/contrib/indentation/common/indentation": [
-		"ID를 공백으로 변환",
-		"ID를 탭으로 변환",
+		"들여쓰기를 공백으로 변환",
+		"들여쓰기를 탭으로 변환",
 		"구성된 탭 크기",
 		"현재 파일의 탭 크기 선택",
 		"탭을 사용한 들여쓰기",
@@ -299,12 +278,10 @@ define("vs/editor/editor.main.nls.ko", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"빠른 수정",
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}, 빠른 수정 제안",
-		"로드 중...",
-		"수정 제안 사항이 없습니다.",
-		"빠른 수정",
-		"{0}, 수락됨",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
+		"Loading...",
+		"No fix suggestions.",
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"줄 {0} 및 열 {1}(으)로 이동",
@@ -370,7 +347,7 @@ define("vs/editor/editor.main.nls.ko", {
 		"선택 축소",
 	],
 	"vs/editor/contrib/suggest/browser/suggestController": [
-		"Trigger Suggest",
+		"제안 항목 트리거",
 	],
 	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"자세히 알아보기...{0}",
@@ -391,20 +368,6 @@ define("vs/editor/editor.main.nls.ko", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"닫기",
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"한 줄당 최대 문자 수입니다(0 = 사용 안 함).",
-		"쉼표로 분리된 태그 목록으로, 서식을 다시 지정해서는 안 됩니다. https://www.w3.org/TR/html5/dom.html#phrasing-content에 나열된 모든 태그의 기본값은 \'null\'로 설정됩니다.",
-		"<head> 및 <body> 섹션을 들여쓰기합니다.",
-		"요소 앞에 있는 기존 줄 바꿈의 유지 여부입니다. 요소 앞에만 적용되며 태그 안이나 텍스트에는 적용되지 않습니다.",
-		"청크 한 개에 유지할 수 있는 최대 줄 바꿈 수입니다. 무제한일 때는 \'null\'을 사용합니다.",
-		"{{#foo}} 및 {{/foo}}를 서식 지정하고 들여쓰기합니다.",
-		"줄 바꿈으로 끝납니다.",
-		"쉼표로 분리된 태그 목록으로 앞에 줄 바꿈을 추가로 넣어야 합니다. \"head, body, /html\"의 기본값은 \'null\'로 설정됩니다.",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values.",
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"구성 설정을 적용합니다.",
