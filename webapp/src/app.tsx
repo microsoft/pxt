@@ -1668,8 +1668,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     gettingStarted() {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
-        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && targetTheme.gettingStarted != undefined);
-        this.setSideDoc(targetTheme.gettingStarted);
+        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
+        this.setSideDoc(targetTheme.sideDoc);
         this.setState({sideDocsCollapsed: false})
     }
 
@@ -1763,7 +1763,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
-                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.gettingStarted ? 
+                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc ? 
                     <div id="getting-started-btn">
                         <sui.Button class="bottom attached green" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted() } />
                     </div>
