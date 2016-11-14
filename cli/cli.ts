@@ -230,12 +230,15 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
             return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0], { translatedOnly: true, validatedOnly: false })
                 .then(r => {
                     Object.keys(r).forEach(k => {
+                        const rtranslations = stringifyTranslations(r[k]);
+                        if (!rtranslations) return;
+
                         nodeutil.mkdirP(path.join(args[1], k));
                         const outf = path.join(args[1], k, fn);
                         console.log(`writing ${outf}`)
                         fs.writeFileSync(
                             outf,
-                            stringifyTranslations(r[k]),
+                            rtranslations,
                             "utf8");
                     })
                 })
@@ -401,7 +404,7 @@ function travisAsync() {
     }
 }
 
-function bumpKsDepAsync() {
+function bumpPxtCoreDepAsync() {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") return Promise.resolve(pkg)
 
@@ -439,7 +442,7 @@ function bumpKsDepAsync() {
 function updateAsync() {
     return Promise.resolve()
         .then(() => runGitAsync("pull"))
-        .then(() => bumpKsDepAsync())
+        .then(() => bumpPxtCoreDepAsync())
         .then(() => runNpmAsync("install"));
 }
 
@@ -469,7 +472,8 @@ function justBumpPkgAsync() {
         .then(() => runGitAsync("tag", "v" + mainPkg.config.version))
 }
 
-function bumpAsync() {
+function bumpAsync(...args: string[]) {
+    const bumpPxt = args.indexOf("--noupdate") < 0;
     if (fs.existsSync(pxt.CONFIG_NAME))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
@@ -479,7 +483,7 @@ function bumpAsync() {
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
-            .then(() => bumpKsDepAsync())
+            .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
             .then(() => runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
@@ -3102,18 +3106,36 @@ export function downloadTargetTranslationsAsync(...args: string[]) {
         const fn = path.basename(f);
         const crowdf = path.join(crowdinDir, fn);
         const locdir = path.dirname(f);
+        const projectdir = path.dirname(locdir);
         pxt.log(`downloading ${crowdf}`);
+        pxt.log(`projectdir: ${projectdir}`)
+        const locFiles: Map<string> = {};
         return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf, { translatedOnly: true, validatedOnly: true })
             .then(data => {
                 Object.keys(data)
                     .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
                     .forEach(lang => {
+                        const langTranslations = stringifyTranslations(data[lang]);
+                        if (!langTranslations) return;
+
                         const tfdir = path.join(locdir, lang);
                         const tf = path.join(tfdir, fn);
                         nodeutil.mkdirP(tfdir)
                         pxt.log(`writing ${tf}`);
-                        fs.writeFile(tf, stringifyTranslations(data[lang]), "utf8");
+                        fs.writeFile(tf, langTranslations, "utf8");
+
+                        locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                     })
+                // update pxt.json
+                const pxtJsonf = path.join(projectdir, "pxt.json");
+                const pxtJsons = fs.readFileSync(pxtJsonf, "utf8");
+                const pxtJson = JSON.parse(pxtJsons) as pxt.PackageConfig;
+                Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0).forEach(f => pxtJson.files.push(f));
+                const pxtJsonn = JSON.stringify(pxtJson, null, 4);
+                if (pxtJsons != pxtJsonn) {
+                    pxt.log(`writing ${pxtJsonf}`);
+                    fs.writeFileSync(pxtJsonf, pxtJsonn, "utf8");
+                }
                 return nextFileAsync()
             });
     }
@@ -3126,7 +3148,8 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
         const v = strings[k].trim();
         if (v) trg[k] = v;
     })
-    return JSON.stringify(trg, null, 2);
+    if (Object.keys(trg).length == 0) return undefined;
+    else return JSON.stringify(trg, null, 2);
 }
 
 export function buildAsync(arg?: string) {
@@ -3481,7 +3504,7 @@ cmd("snippets [--re NAME] [--i]     - verifies that all documentation snippets c
 cmd("serve [-yt] [-browser NAME]  - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
-cmd("bump                         - bump target or package version", bumpAsync)
+cmd("bump [--noupdate]            - bump target or package version", bumpAsync)
 cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1)
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
