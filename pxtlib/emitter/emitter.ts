@@ -2525,12 +2525,12 @@ ${lbl}: .short 0xffff
         function emitBlock(node: Block) {
             node.statements.forEach(emit)
         }
-        function checkForLetOrConst(declList: VariableDeclarationList) : Boolean  {
+        function checkForLetOrConst(declList: VariableDeclarationList): boolean  {
             if ((declList.flags & NodeFlags.Let) || (declList.flags & NodeFlags.Const)) {
                 return true;
             }
             throw userError(9203, lf("variable needs to be defined using let or const"));
-        } 
+        }
         function emitVariableStatement(node: VariableStatement) {
             if (node.flags & NodeFlags.Ambient)
                 return;
