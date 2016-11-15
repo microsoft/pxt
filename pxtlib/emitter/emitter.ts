@@ -2525,9 +2525,16 @@ ${lbl}: .short 0xffff
         function emitBlock(node: Block) {
             node.statements.forEach(emit)
         }
+        function checkForLetOrConst(declList: VariableDeclarationList) : Boolean  {
+            if ((declList.flags & NodeFlags.Let) || (declList.flags & NodeFlags.Const)) {
+                return true;
+            }
+            throw userError(9203, lf("variable needs to be defined using let or const"));
+        } 
         function emitVariableStatement(node: VariableStatement) {
             if (node.flags & NodeFlags.Ambient)
                 return;
+            checkForLetOrConst(node.declarationList);
             node.declarationList.declarations.forEach(emit);
         }
         function emitExpressionStatement(node: ExpressionStatement) {
@@ -2619,10 +2626,13 @@ ${lbl}: .short 0xffff
         }
 
         function emitForStatement(node: ForStatement) {
-            if (node.initializer && node.initializer.kind == SK.VariableDeclarationList)
+            if (node.initializer && node.initializer.kind == SK.VariableDeclarationList) {
+                checkForLetOrConst(<VariableDeclarationList>node.initializer);
                 (<VariableDeclarationList>node.initializer).declarations.forEach(emit);
-            else
+            }
+            else {
                 emitExprAsStmt(<Expression>node.initializer);
+            }
             emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.fortop);
@@ -2646,6 +2656,7 @@ ${lbl}: .short 0xffff
                 unhandled(node, "only a single variable may be used to iterate a collection")
                 return
             }
+            checkForLetOrConst(declList);
 
             //Typecheck the expression being iterated over
             let t = typeOf(node.expression)
