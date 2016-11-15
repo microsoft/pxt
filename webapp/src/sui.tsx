@@ -25,7 +25,7 @@ export interface DropdownProps extends WithPopupProps {
 }
 
 function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = false): string {
-    return `${cls} ${props.icon && !ignoreIcon ? "icon" : ""} ${props.class || ""}`;
+    return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon-and-text' : props.icon ? 'icon' : ""} ${props.class || ""}`;
 }
 
 function genericContent(props: UiProps) {
