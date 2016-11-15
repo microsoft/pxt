@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# Otevřete shell a spusťte tyto příkazy pxt extrahovat https:\/\/codethemicrobit.com\/@id@ cd @title @ kódu.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). Zkušenosti má vestavěný postup od jednoduchého editoru blocích, prostřednictvím prohlížeče textový editor s robustní auto dokončení a auto upevnění, až po profesionální integrovaného rozvoje environemnt (",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). Zkušenosti má vestavěný postup od jednoduchého editoru blocích, prostřednictvím prohlížeče textový editor s robustní auto dokončení a auto upevnění, až po profesionální integrovaného rozvoje environment (",
   ", or":", nebo",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/Thumbnail\/1024\/Vimeo\/@args @",

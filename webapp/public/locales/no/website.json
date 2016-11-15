@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# Åpne et skall og kjøre disse kommandoene pxt pakke https:\/\/codethemicrobit.com\/@id@ cd @title @ koden.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). Erfaring har en innebygd progresjon fra enkel blokk-basert editor, gjennom i nettleseren tekstredigeringsprogram med robust autofullføring og auto-innfesting, helt til en profesjonell integrert utvikling environemnt (",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). Erfaring har en innebygd progresjon fra enkel blokk-basert editor, gjennom i nettleseren tekstredigeringsprogram med robust autofullføring og auto-innfesting, helt til en profesjonell integrert utvikling environment (",
   ", or":", eller",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/Thumbnail\/1024\/Vimeo\/@ARGS @",

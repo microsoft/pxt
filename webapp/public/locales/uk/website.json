@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# відкрити оболонки і виконання цих команд, pxt екстракт https:\/\/codethemicrobit.com\/@id@ cd @title @ код.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). Досвід має вбудований прогресії від простий блок основаних редактор, через в браузері текстовий редактор з надійною авто доповнення та авто закріплення, аж до професійних комплексного розвитку environemnt (",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). Досвід має вбудований прогресії від простий блок основаних редактор, через в браузері текстовий редактор з надійною авто доповнення та авто закріплення, аж до професійних комплексного розвитку environment (",
   ", or":", або",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/thumbnail\/1024\/Vimeo\/@ARGS @",

@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# 打開外殼程式並運行這些命令 pxt 提取 HTTPs:\/\/codethemicrobit.com\/@id@ cd @title @ 代碼。",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":").經歷了從簡單的基於資料塊編輯器中，通過在瀏覽器中的文字編輯器中魯棒的自動完成功能和自動修復，一直到一個專業的集成的開發環境 （內置進展",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":").經歷了從簡單的基於資料塊編輯器中，通過在瀏覽器中的文字編輯器中魯棒的自動完成功能和自動修復，一直到一個專業的集成的開發環境 （內置進展",
   ", or":"或",
   "\/@id@":"@ 的 \/@id",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"@ 的 \/thumbnail\/1024\/vimeo\/@ARGS",

@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# は、シェルを開き、pxt 抽出 https:\/\/codethemicrobit.com\/@id@ cd @title @ コードこれらのコマンドを実行します。",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":").経験は、わざわざプロの統合開発環境 (堅牢な自動完了、自動修正、ブラウザーでテキスト ・ エディターを通して、単純なブロック ・ ベースのエディターから組み込み進行",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":").経験は、わざわざプロの統合開発環境 (堅牢な自動完了、自動修正、ブラウザーでテキスト ・ エディターを通して、単純なブロック ・ ベースのエディターから組み込み進行",
   ", or":"、または",
   "\/@id@":"@\/@id",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"@\/thumbnail\/1024\/vimeo\/@ARGS",

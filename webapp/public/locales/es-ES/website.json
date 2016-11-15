@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# abre una shell y ejecutar estos comandos pxt extracto https:\/\/codethemicrobit.com\/@id@ cd @title @ código.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). La experiencia tiene una progresión incorporada desde el simple editor basado en bloques, a través del editor de texto en el navegador con finalización automática robusta y fijación automática, hasta un (entornos de desarrollo profesional integrado",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). La experiencia tiene una progresión incorporada desde el simple editor basado en bloques, a través del editor de texto en el navegador con finalización automática robusta y fijación automática, hasta un (entornos de desarrollo profesional integrado",
   ", or":", o",
   "\/@id@":"\/@id a",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/thumbnail\/1024\/Vimeo\/@args a",

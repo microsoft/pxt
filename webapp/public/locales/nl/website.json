@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# open een shell en voer deze commando's jleavitt extract https:\/\/codethemicrobit.com\/@id@ cd @title @ code.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). De ervaring heeft een ingebouwde progressie van eenvoudige blok-gebaseerde editor, via in-browser text editor met robuuste auto-voltooiing en auto-vaststelling, helemaal naar een professionele geïntegreerd ontwikkeling omgeving (",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). De ervaring heeft een ingebouwde progressie van eenvoudige blok-gebaseerde editor, via in-browser text editor met robuuste auto-voltooiing en auto-vaststelling, helemaal naar een professionele geïntegreerd ontwikkeling omgeving (",
   ", or":", of",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/thumbnail\/1024\/Vimeo\/@args @",

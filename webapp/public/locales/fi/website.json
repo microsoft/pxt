@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# Avaa shell ja ajelu nämä herruus pxt Pura https:\/\/codethemicrobit.com\/@id@ cd @title @ koodi.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). Kokemus on sisäänrakennettu etenemistä yksinkertainen block-pohjaisen editorin kautta-selaimen tekstieditori, vankka automaattinen täydennys ja auto vahvistamista, ammatillinen kokonaisvaltaisten environemnt (saakka",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). Kokemus on sisäänrakennettu etenemistä yksinkertainen block-pohjaisen editorin kautta-selaimen tekstieditori, vankka automaattinen täydennys ja auto vahvistamista, ammatillinen kokonaisvaltaisten environment (saakka",
   ", or":", tai",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/thumbnail\/1024\/Vimeo\/@ARGS @",

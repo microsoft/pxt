@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# Ανοίξτε ένα κέλυφος και να εκτελέσετε αυτές τις εντολές pxt εκχύλισμα https:\/\/codethemicrobit.com\/@id@ cd @title @ κώδικα.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). Η εμπειρία έχει μια ενσωματωμένη εξέλιξη από απλή μπλοκ-που βασίζεται επεξεργαστή, μέσα από πρόγραμμα επεξεργασίας κειμένου σε πρόγραμμα περιήγησης με ισχυρή αυτόματη συμπλήρωση και αυτόματη-στερέωση, όλος ο τρόπος σε μια επαγγελματική ολοκληρωμένης ανάπτυξης (environemnt",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). Η εμπειρία έχει μια ενσωματωμένη εξέλιξη από απλή μπλοκ-που βασίζεται επεξεργαστή, μέσα από πρόγραμμα επεξεργασίας κειμένου σε πρόγραμμα περιήγησης με ισχυρή αυτόματη συμπλήρωση και αυτόματη-στερέωση, όλος ο τρόπος σε μια επαγγελματική ολοκληρωμένης ανάπτυξης (environment",
   ", or":", ή",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/thumbnail\/1024\/Vimeo\/@ARGS @",
