@@ -3218,6 +3218,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
+            opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
             return pxtc.compile(opts);
         })
         .then((res): Promise<void | pxtc.CompileOptions> => {
@@ -3238,7 +3239,8 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
             if (buildOpts.mode === BuildOption.DebugSim) {
                 mainPkg.host().writeFile(mainPkg, "built/debug/debugInfo.json", JSON.stringify({
                     usedParts: pxtc.computeUsedParts(res, true),
-                    usedArguments: res.usedArguments
+                    usedArguments: res.usedArguments,
+                    breakpoints: res.breakpoints
                 }));
             }
 

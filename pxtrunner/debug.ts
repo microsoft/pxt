@@ -1,11 +1,25 @@
+/// <reference path="./protocol.d.ts" />
+
 namespace pxt.runner {
+
+    export function startDebuggerAsync(container: HTMLElement) {
+        const debugRunner = new DebugRunner(container);
+    }
+
+
     export class DebugRunner {
         private driver: pxsim.SimulatorDriver;
         private ws: WebSocket;
         private pkgLoaded = false;
 
         constructor(container: HTMLElement) {
-            let options: pxsim.SimulatorDriverOptions = {};
+            let options: pxsim.SimulatorDriverOptions = {
+                onDebuggerBreakpoint: b => this.onDebuggerBreakpoint(b),
+                onDebuggerWarning: w => this.onDebuggerWarning(w),
+                onDebuggerResume: () => this.onDebuggerResume(),
+                onStateChanged: s => this.onStateChanged(s)
+            };
+
             this.driver = new pxsim.SimulatorDriver(container, options);
 
             this.initializeWebsocket();
@@ -20,7 +34,7 @@ namespace pxt.runner {
 
             this.ws.onopen = (ev) => {
                 pxt.debug('debug: socket opened');
-                this.trySendSimpleMessage(DebugMessageType.ready);
+                this.trySendMessage({ type: "ready" });
             }
 
             this.ws.onclose = (ev) => {
@@ -35,13 +49,13 @@ namespace pxt.runner {
 
             this.ws.onmessage = (ev) => {
                 const m = parseMessage(ev.data);
-                if (m && "id" in m) {
+                if (m && m.type) {
                     this.handleMessage(m);
                 }
             }
         }
 
-        private runCode(m: BuildResult) {
+        private runCode(m: Commands.Sim.CompiledJsInfo) {
             if (m.code) {
                 const runOptions: pxsim.SimulatorRunOptions = {
                     boardDefinition: pxt.appTarget.simulator.boardDefinition,
@@ -56,49 +70,77 @@ namespace pxt.runner {
                 }
 
                 this.driver.run(m.code, runOptions);
-                this.trySendMessage({
-                    id: DebugMessageType.simstate,
-                    state: SimulatorState.Running
-                } as SimStateMessage);
             }
             else {
                 this.driver.stop();
-                this.trySendMessage({
-                    id: DebugMessageType.simstate,
-                    state: SimulatorState.Paused
-                } as SimStateMessage);
             }
         }
 
-        private handleMessage(m: DebugMessage) {
-            switch (m.id) {
-                case DebugMessageType.ready:
+        private handleMessage(m: SimulatorMessage) {
+            switch (m.type) {
+                case "ready":
                     if (this.pkgLoaded) {
-                        this.trySendSimpleMessage(DebugMessageType.ready);
+                        this.trySendMessage({ type: "ready" });
                     }
                     break;
-                case DebugMessageType.runcode:
-                    this.runCode(m as RuncodeMessage);
+                case "setcode":
+                    this.runCode(m as Commands.Sim.SetCodeMessage);
+                    break;
+                case "debugger":
+                    this.handleDebuggerMessage(m as DebuggerMessage);
                     break;
             }
         }
 
-        private trySendSimpleMessage(id: DebugMessageType): boolean {
-            return this.trySendMessage({ id });
+        private handleDebuggerMessage(m: DebuggerMessage) {
+            switch (m.subtype) {
+                case "config":
+                    const configMsg = m as Commands.Debug.DebuggerConfigMessage;
+                    this.driver.setBreakpoints(configMsg.setBreakpoints);
+                    this.trySendDebugResponse("breakpointsset", configMsg.messageId);
+                    break;
+            }
         }
 
-        private trySendMessage(msg: DebugMessage): boolean {
+        private trySendDebugResponse(subtype: string, id: number): boolean {
+            if (id !== undefined) {
+                return this.trySendMessage({
+                    type: "debugger",
+                    messageId: id,
+                    subtype
+                } as DebuggerMessage);
+            }
+
+            return false;
+        }
+
+        private trySendMessage(msg: SimulatorMessage): boolean {
             if (!this.ws) return false;
             this.ws.send(JSON.stringify(msg));
             return true;
         }
+
+        private onDebuggerBreakpoint(breakMsg: pxsim.DebuggerBreakpointMessage) {
+            this.trySendMessage(breakMsg);
+        }
+
+        private onDebuggerWarning(warnMsg: pxsim.DebuggerWarningMessage) {
+            this.trySendMessage(warnMsg);
+        }
+
+        private onDebuggerResume() {
+
+        }
+
+        private onStateChanged(state: SimulatorState) {
+            this.trySendMessage({
+                type: "simstate",
+                state
+            } as Events.Sim.StateChanged);
+        }
     }
 
-    export function startDebuggerAsync(container: HTMLElement) {
-        const debugRunner = new DebugRunner(container);
-    }
-
-    function parseMessage(m: string): DebugMessage {
+    function parseMessage(m: string): DebuggerMessage {
         if (m) {
             try {
                 return JSON.parse(m);

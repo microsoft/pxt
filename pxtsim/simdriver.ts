@@ -204,7 +204,7 @@ namespace pxsim {
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
-            // first frame            
+            // first frame
             let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
@@ -299,7 +299,10 @@ namespace pxsim {
                     return;
             }
 
-            this.postDebuggerMessage(msg)
+        }
+
+        public setBreakpoints(breakPoints: number[]) {
+            this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
         }
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
