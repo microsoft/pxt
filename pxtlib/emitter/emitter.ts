@@ -50,7 +50,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9260
+    // next free error 9261
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -2529,7 +2529,7 @@ ${lbl}: .short 0xffff
             if ((declList.flags & NodeFlags.Let) || (declList.flags & NodeFlags.Const)) {
                 return true;
             }
-            throw userError(9203, lf("variable needs to be defined using 'let' or 'const'"));
+            throw userError(9260, lf("variable needs to be defined using 'let' or 'const'"));
         }
         function emitVariableStatement(node: VariableStatement) {
             if (node.flags & NodeFlags.Ambient)
