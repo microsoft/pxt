@@ -54,7 +54,7 @@ namespace pxt.blocks.layout {
                 resolve(canvasdata);
             };
             img.onerror = ev => {
-                pxt.reportError("blocks", "blocks screenshot failed", { "xml": data });
+                pxt.reportError("blocks", "blocks screenshot failed");
                 resolve(undefined)
             }
             img.src = data;
