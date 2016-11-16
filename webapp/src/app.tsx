@@ -1671,7 +1671,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const targetTheme = pxt.appTarget.appTheme;
         Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
         this.setSideDoc(targetTheme.sideDoc);
-        this.setState({sideDocsCollapsed: false})
+        this.setState({ sideDocsCollapsed: false })
     }
 
     renderCore() {
@@ -1760,13 +1760,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
-                            <span className="ui item link logo"><a className="ui image" target="_blank" id="rightlogo" href={targetTheme.logoUrl}><img src={Util.toDataUri(rightLogo) } /></a></span>
+                            <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span>
                         </div> : undefined }
                     </div>
                 </div>
-                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc ? 
+                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks ?
                     <div id="getting-started-btn">
-                        <sui.Button class="bottom attached green" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted() } />
+                        <sui.Button class="bottom attached green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined }
                 <div id="filelist" className="ui items" role="complementary">
