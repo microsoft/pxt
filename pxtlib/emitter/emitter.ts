@@ -2529,7 +2529,7 @@ ${lbl}: .short 0xffff
             if ((declList.flags & NodeFlags.Let) || (declList.flags & NodeFlags.Const)) {
                 return true;
             }
-            throw userError(9203, lf("variable needs to be defined using let or const"));
+            throw userError(9203, lf("variable needs to be defined using 'let' or 'const'"));
         }
         function emitVariableStatement(node: VariableStatement) {
             if (node.flags & NodeFlags.Ambient)
