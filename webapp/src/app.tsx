@@ -1448,10 +1448,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload, please try again."));
-                        pxt.reportException(e, resp);
+                        pxt.reportException(e, resp.outfiles);
                     })
-            }).catch(e => {
-                pxt.reportError("compile", "compile failed", e);
+            }).catch((e: Error) => {
+                pxt.reportException(e);
+                core.errorNotification(lf("Compilation failed, please contact support."));
             }).finally(() => pxt.tickEvent("perf.compile"))
             .done();
     }

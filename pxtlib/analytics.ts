@@ -20,31 +20,29 @@ namespace pxt.analytics {
         }
 
         const rexp = pxt.reportException;
-        pxt.reportException = function (err: any, data: any): void {
+        pxt.reportException = function (err: any, data: pxt.Map<string>): void {
             if (rexp) rexp(err, data);
             const props: pxt.Map<string> = {
                 target: pxt.appTarget.id,
                 version: pxt.appTarget.versions.target
             }
-            if (data)
-                for (let k in data)
-                    props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
+            if (data) Util.jsonMergeFrom(props, data);
             ai.trackException(err, 'exception', props)
         }
         const re = pxt.reportError;
-        pxt.reportError = function (msg: string, data: any): void {
-            if (re) re(msg, data);
+        pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string>): void {
+            if (re) re(cat, msg, data);
             try {
                 throw msg
             }
             catch (err) {
-                let props: pxt.Map<string> = {
+                const props: pxt.Map<string> = {
                     target: pxt.appTarget.id,
-                    version: pxt.appTarget.versions.target
+                    version: pxt.appTarget.versions.target,
+                    category: cat,
+                    message: msg
                 }
-                if (data)
-                    for (let k in data)
-                        props[k] = typeof data[k] === "string" ? data[k] : JSON.stringify(data[k]);
+                if (data) Util.jsonMergeFrom(props, data);
                 ai.trackException(err, 'error', props)
             }
         }
