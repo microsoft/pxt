@@ -40,7 +40,7 @@ export class Editor extends srceditor.Editor {
             this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
             return this.compilationResult.source;
         } catch (e) {
-            pxt.reportException(e, { blocks: this.serializeBlocks() })
+            pxt.reportException(e, { blocks: this.serializeBlocks(true) })
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
             return '';
         }
@@ -89,8 +89,10 @@ export class Editor extends srceditor.Editor {
         return this.serializeBlocks();
     }
 
-    serializeBlocks(): string {
+    serializeBlocks(normalize?: boolean): string {
         let xml = pxt.blocks.saveWorkspaceXml(this.editor);
+        // strip out id, x, y attributes
+        if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
         return xml;
     }
@@ -291,7 +293,7 @@ export class Editor extends srceditor.Editor {
                     this.updateHelpCard(ev.newValue != null);
                 }
                 else if (ev.element == 'commentOpen'
-                || ev.element == 'warningOpen') {
+                    || ev.element == 'warningOpen') {
                     /*
                      * We override the default selection behavior so that when a block is selected, its
                      * comment is expanded. However, if a user selects a block by clicking on its comment

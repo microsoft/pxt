@@ -81,7 +81,7 @@ function htmlmsg(kind: string, msg: string) {
 }
 
 export function errorNotification(msg: string) {
-    pxt.reportError("notification", msg)
+    pxt.tickEvent("notification.error", { message : msg })
     htmlmsg("err", msg)
 }
 

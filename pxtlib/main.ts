@@ -46,7 +46,7 @@ namespace pxt {
             console.log(msg);
         } : () => { };
 
-    export var reportException: (err: any, data: any) => void = function (e, d) {
+    export var reportException: (err: any, data?: Map<string>) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
@@ -56,7 +56,7 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (cat: string, msg: string, data?: Map<number | string>) => void = function (cat, msg, data) {
+    export var reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
         if (console) {
             console.error(`${cat}: ${msg}`);
             if (data) {
@@ -627,7 +627,7 @@ namespace pxt {
                             }
                         }
                     } catch (e) {
-                        pxt.reportError(lf("invalid pxtparts.json file"), undefined);
+                        pxt.reportError("parts", "invalid pxtparts.json file");
                     }
                 }
             })

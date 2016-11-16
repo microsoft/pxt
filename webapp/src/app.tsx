@@ -1448,10 +1448,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload, please try again."));
-                        pxt.reportException(e, resp);
+                        pxt.reportException(e, resp.outfiles);
                     })
-            }).catch(e => {
-                pxt.reportError("compile", "compile failed", e);
+            }).catch((e: Error) => {
+                pxt.reportException(e);
+                core.errorNotification(lf("Compilation failed, please contact support."));
             }).finally(() => pxt.tickEvent("perf.compile"))
             .done();
     }
@@ -1671,7 +1672,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const targetTheme = pxt.appTarget.appTheme;
         Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
         this.setSideDoc(targetTheme.sideDoc);
-        this.setState({sideDocsCollapsed: false})
+        this.setState({ sideDocsCollapsed: false })
     }
 
     renderCore() {
@@ -1764,9 +1765,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
-                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc ? 
+                {!this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc ?
                     <div id="getting-started-btn">
-                        <sui.Button class="bottom attached green" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted() } />
+                        <sui.Button class="bottom attached green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined }
                 <div id="filelist" className="ui items" role="complementary">
