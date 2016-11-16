@@ -51,7 +51,7 @@ CACHE:
 /cdn/monacoworker.js
 
 # ai
-/cdn/ai.min.js
+https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 
 @workerjs@
 
