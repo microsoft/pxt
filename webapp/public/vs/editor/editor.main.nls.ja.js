@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -23,39 +23,17 @@ define("vs/editor/editor.main.nls.ja", {
 		"警告: {0}",
 		"情報: {0}",
 	],
-	"vs/base/common/errors": [
-		"{0}。エラー コード: {1}",
-		"アクセス許可が拒否されました (HTTP {0})",
-		"アクセス許可が拒否されました",
-		"{0} (HTTP {1}: {2})",
-		"{0} (HTTP {1})",
-		"不明な接続エラー ({0})",
-		"不明な接続エラーが発生しました。インターネット接続が切れたか、接続先のサーバーがオフラインです。",
-		"{0}: {1}",
-		"不明なエラーが発生しました。ログで詳細を確認してください。",
-		"システム エラーが発生しました ({0})",
-		"不明なエラーが発生しました。ログで詳細を確認してください。",
-		"{0} (合計 {1} エラー)",
-		"不明なエラーが発生しました。ログで詳細を確認してください。",
-		"実装されていません",
-		"無効な引数: {0}",
-		"無効な引数",
-		"無効な状態: {0}",
-		"無効な状態",
-		"必要なファイルを読み込みに失敗しました。インターネット接続が切れたか、接続先のサーバーがオフラインです。ブラウザーを更新して、もう一度やり直してください。",
-		"必要なファイルの読み込みに失敗しました。アプリケーションを再起動してもう一度試してください。詳細: {0}",
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
 		"Windows",
-		"コントロール",
+		"Control",
 		"Shift",
 		"Alt",
-		"コマンド",
+		"Command",
 		"Windows",
 		"Ctrl",
 		"Shift",
 		"Alt",
-		"コマンド",
+		"Command",
 		"Windows",
 	],
 	"vs/base/common/severity": [
@@ -78,10 +56,9 @@ define("vs/editor/editor.main.nls.ja", {
 		"エディター",
 		"フォント ファミリを制御します。",
 		"フォントの太さを制御します。",
-		"フォント サイズを制御します。",
+		"フォント サイズをピクセル単位で制御します。",
 		"行の高さを制御します。fontSize に基づいて lineHeight を計算する場合には、0 を使用します。",
 		"行番号の表示を制御します",
-		"グリフ余白の表示を制御します",
 		"垂直ルーラーを表示する列",
 		"単語に関連したナビゲーションまたは操作を実行するときに、単語の区切り文字として使用される文字",
 		"1 つのタブに相当するスペースの数。`editor.detectIndentation` がオンの場合、この設定はファイル コンテンツに基づいて上書きされます。",
@@ -92,7 +69,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"選択範囲の角を丸くするかどうかを制御します",
 		"エディターで最後の行を越えてスクロールするかどうかを制御します",
 		"エディターで次の行に折り返される文字数を制御します。これを 0 に設定すると、ビューポートの幅での折り返しがオンになります (ワード ラップ)。これを -1 に設定するとエディターによる折り返しが禁止されます。",
-		"Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).",
+		"行を折り返すかどうかを制御します。行は min(editor.wrappingColumn, viewportWidthInColumns) で折り返します。",
 		"折り返し行のインデントを制御します。\'none\'、\'same\'、または \'indent\' のいずれかを指定できます。",
 		"マウス ホイール スクロール イベントの `deltaX` と `deltaY` で使用される乗数",
 		"入力中にクイック候補を表示するかどうかを制御します",
@@ -115,7 +92,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"エディターで空白文字を表示するかどうかを制御します",
 		"エディターで制御文字を表示する必要があるかどうかを制御します",
 		"エディターでインデントのガイドを表示する必要があるかどうかを制御します",
-		"Controls whether the editor should render the current line highlight",
+		"エディターが現在の行を強調表示するかどうかを制御します",
 		"エディターでコード レンズを表示するかをどうかを制御する",
 		"エディターでコードの折りたたみを有効にするかどうかを制御します",
 		"空白の挿入や削除はタブ位置に従って行われます",
@@ -136,6 +113,9 @@ define("vs/editor/editor.main.nls.ja", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"プレーンテキスト",
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}",
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"この間に次のファイルが変更されました: {0}",
@@ -238,7 +218,6 @@ define("vs/editor/editor.main.nls.ja", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"修正候補: ",
 		"修正候補: ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"次のエラーまたは警告へ移動",
 		"前のエラーまたは警告へ移動",
@@ -299,12 +278,10 @@ define("vs/editor/editor.main.nls.ja", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"クイック修正",
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}、クイック修正候補",
-		"読み込んでいます...",
-		"修正候補はありません。",
-		"クイック修正",
-		"{0}、受け入れ済み",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
+		"Loading...",
+		"No fix suggestions.",
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"行 {0} 列 {1} へ移動",
@@ -370,7 +347,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"選択範囲を縮小",
 	],
 	"vs/editor/contrib/suggest/browser/suggestController": [
-		"Trigger Suggest",
+		"候補をトリガー",
 	],
 	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"詳細を表示...{0}",
@@ -391,20 +368,6 @@ define("vs/editor/editor.main.nls.ja", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"閉じる",
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"1 行あたりの最大文字数 (0 = 無効にする)。",
-		"再フォーマットしてはならないタグの、コンマ区切りの一覧。\'null\' の場合、既定で https://www.w3.org/TR/html5/dom.html#phrasing-content にリストされているすべてのタグになります。",
-		"<head> セクションと <body> セクションをインデントします。",
-		"要素の前にある既存の改行を保持するかどうか。要素の前でのみ機能し、タグの内側やテキストに対しては機能しません。",
-		"1 つのチャンク内に保持できる改行の最大数。無制限にするには、\'null\' を使います。",
-		"書式設定とインデント {{#foo}} および {{/foo}}。",
-		"末尾に改行を入れます。",
-		"直前に改行を 1 つ入れるタグの、コンマで区切られたリストです。\'null\' は、既定値の \"head, body, /html\" を表します。",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values.",
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"構成の設定を提供します。",

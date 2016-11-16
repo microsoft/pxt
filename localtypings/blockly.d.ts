@@ -33,6 +33,7 @@ declare namespace Blockly {
     function genUid(): string;
     function terminateDrag_(): void;
     function mouseToSvg(e: Event, svg: Element): any;
+    function svgResize(workspace: Blockly.Workspace): void;
 
     let ALIGN_RIGHT: number;
 
@@ -90,6 +91,7 @@ declare namespace Blockly {
         nextConnection: Connection;
         outputConnection: Connection;
         previousConnection: Connection;
+        workspace: Workspace;
 
 
         // Returns null if the field does not exist on the specified block.
@@ -275,6 +277,7 @@ declare namespace Blockly {
         undo(): void;
         redo(): void;
         clearUndo(): void;
+        isDragging(): boolean;
         getMetrics(): {
             absoluteLeft: number;
             absoluteTop: number;

@@ -95,6 +95,7 @@ namespace ts.pxtc {
                 res = res + `\npush ${this.rmap_lo[r]}\npush ${this.rmap_hi[r]}`
             });
             res += `
+    @dummystack ${regs.length}
     in r28, 0x3d
     in r29, 0x3e`
             return res
@@ -104,6 +105,10 @@ namespace ts.pxtc {
             regs.forEach(r => {
                 res = res + `\npop ${this.rmap_hi[r]}\npop ${this.rmap_lo[r]}`
             });
+            res += `
+    in r28, 0x3d
+    in r29, 0x3e
+    @dummystack -${regs.length}`
             return res
         }
         proc_setup(main?: boolean) {
@@ -112,7 +117,10 @@ namespace ts.pxtc {
             return `
     ${set_r1_zero}
     push r28
-    push r29`
+    push r29
+    @dummystack 1
+    in r28, 0x3d
+    in r29, 0x3e`
         }
 
         proc_return() {
@@ -120,6 +128,9 @@ namespace ts.pxtc {
             return `
     pop r29
     pop r28
+    in r28, 0x3d
+    in r29, 0x3e
+    @dummystack -1
     ret`
         }
         debugger_hook(lbl: string) { return "eor r1, r1" }
@@ -130,6 +141,7 @@ namespace ts.pxtc {
             return `
     push ${this.rmap_lo[reg]}
     push ${this.rmap_hi[reg]}
+    @dummystack 1
     in r28, 0x3d
     in r29, 0x3e`
         }
@@ -141,7 +153,7 @@ namespace ts.pxtc {
     adiw	r28, #2*${n}
     out	0x3d, r28
     out	0x3e, r29
-    @dummystack -2*${n}`
+    @dummystack -${n}`
         }
 
         unconditional_branch(lbl: string) { return "jmp " + lbl }
@@ -172,18 +184,20 @@ namespace ts.pxtc {
             assert(src != "r1")
             let tgt_reg = ""
             let prelude = ""
+            let _this = this
+
 
             function spill_it(new_off: number) {
                 prelude += `
-    ${this.reg_gets_imm("r1", new_off)}
+    ${_this.reg_gets_imm("r1", new_off)}
     `
                 if (tgt_reg == "Y") {
                     prelude += `
     movw r30, r28
 `               }
                 prelude += `
-    add r30, ${this.rmap_lo["r1"]}
-    adc r31, ${this.rmap_hi["r1"]}`
+    add r30, ${_this.rmap_lo["r1"]}
+    adc r31, ${_this.rmap_hi["r1"]}`
                 off = "0"
                 tgt_reg = "Z"
             }
@@ -233,11 +247,13 @@ namespace ts.pxtc {
                 }
                 */
             }
-            let [off_lo,off_hi] = [ off, off ]
+            let [off_lo,off_hi] = [ "TBD", "TBD" ]
             if (off.indexOf("@") == -1 ) {
-                // because stack grows down, need to treat stack offsets (for temporaries)
-                // differently than regular memory accesses
+                // in AVR, SP/FP points to next available slot, so need to bump 
                 [off_lo, off_hi] = (tgt_reg == "Y") ? [(parseInt(off) + 2).toString(),(parseInt(off) + 1).toString()] : [off,off + "|1"]
+            } else {
+                // locals@offset and args@offset used in stack context, so also need to handle
+                [off_lo, off_hi] = [off, off + "-1"]
             }
             if (store) {
                 return `
@@ -254,26 +270,15 @@ namespace ts.pxtc {
 
         rt_call(name: string, r0: string, r1: string) {
             assert(r0 == "r0" && r1 == "r1")
-            assert(name == "adds" || name == "subs" || name == "muls")
-            if (name == "muls") {
-                // for multiplication, we get result of multiplying r20 x r18 into R0,R1!
-                // need to clear r0 at end - result in r24,r25 
-                // can we make this a procedure call??
-                return `
-    movw r20, r24 ; r24 will hold result
-    mul r20, r22
-    movw r24, r0
-    mul	r20, r23
-    add	r25, r0
-    mul	r21, r22
-    add	r25, r0
-    eor	r1, r1`
+            if (this.inst_lo[name] == "Number_::") {
+                return this.call_lbl("Number_::" + name)
             } else {
                 return `
     ${this.inst_lo[name]} r24, r22
     ${this.inst_hi[name]} r25, r23`
             }
         }
+
         call_lbl(lbl: string) { return "call " + lbl }
         call_reg(reg: string) {
             return `
@@ -318,7 +323,7 @@ namespace ts.pxtc {
             "r2": "r20",
             "r3": "r18",
             "r5": "r26",  // X
-            "r6": "r2"   // Z
+            "r6": "r2"   // Z - we really mean r2 YES, because r30 is used as Z
         }
 
         rmap_hi: pxt.Map<string> = {
@@ -332,12 +337,23 @@ namespace ts.pxtc {
 
         inst_lo: pxt.Map<string> = {
             "adds": "add",
-            "subs": "sub"
+            "subs": "sub",
+            "ands": "and",          // case SK.AmpersandToken
+            "orrs": "or",           // case SK.BarToken 
+            "eors": "eor",
+            "muls": "Number_::",    // case SK.CaretToken
+            "lsls": "Number_::",    // case SK.LessThanLessThanToken
+            "asrs": "Number_::",    // case SK.GreaterThanGreaterThanToken
+            "lsrs": "Number_::"     // case SK.GreaterThanGreaterThanGreaterThanToken
         }
 
         inst_hi: pxt.Map<string> = {
             "adds": "adc",
-            "subs": "sbc"
+            "subs": "sbc",
+            "ands": "and",
+            "orrs": "or",
+            "eors": "eor"
         }
     }
 }
+

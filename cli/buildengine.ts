@@ -285,7 +285,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
         let consts = "// Auto-generated. Do not edit.\ndeclare const enum DAL {\n"
         for (let fn of files) {
-            consts += "    // " + fn + "\n"
+            consts += "    // " + fn.replace(/\\/g, "/") + "\n"
             consts += extractConstants(fn, fc[fn], true)
         }
         consts += "}\n"

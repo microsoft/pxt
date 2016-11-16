@@ -53,6 +53,7 @@ export class Editor extends srceditor.Editor {
 
             let loading = document.createElement("div");
             loading.className = "ui inverted loading";
+            let editorArea = document.getElementById('blocksArea');
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
@@ -65,6 +66,9 @@ export class Editor extends srceditor.Editor {
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
                     this.loadBlockly(xml);
+
+                    this.resize();
+                    Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
                     editorDiv.removeChild(loading);
@@ -162,7 +166,12 @@ export class Editor extends srceditor.Editor {
 
                 let card: pxt.CodeCard = selected.codeCard;
                 card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-                card.blocksXml = this.updateFields(card.blocksXml, props);
+                if (!selected.mutation) {
+                    card.blocksXml = this.updateFields(card.blocksXml, props);
+                }
+                else {
+                    card.blocksXml = this.updateFields(card.blocksXml, undefined, selected.mutation.mutationToDom());
+                }
                 this.parent.setHelpCard(card);
             }
             else {
@@ -183,7 +192,7 @@ export class Editor extends srceditor.Editor {
      * Takes the XML definition of the block that will be shown on the help card and modifies the XML
      * so that the field names are updated to match any field names of dropdowns on the selected block
      */
-    private updateFields(originalXML: string, newFieldValues: any): string {
+    private updateFields(originalXML: string, newFieldValues?: any, mutation?: Element): string {
         let parser = new DOMParser();
         let doc = parser.parseFromString(originalXML, "application/xml");
         let blocks = doc.getElementsByTagName("block");
@@ -199,22 +208,34 @@ export class Editor extends srceditor.Editor {
             };
 
             let block = blocks[0];
-            //Depending on the source, the nodeName may be capitalised
-            let fieldNodes = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'field' || c.nodeName == 'FIELD');
 
-            for (let i = 0; i < fieldNodes.length; i++) {
-                if (newFieldValues.hasOwnProperty(fieldNodes[i].getAttribute('name'))) {
-                    setInnerText(fieldNodes[i], newFieldValues[fieldNodes[i].getAttribute('name')]);
-                    delete newFieldValues[fieldNodes[i].getAttribute('name')];
+            if (newFieldValues) {
+                //Depending on the source, the nodeName may be capitalised
+                let fieldNodes = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'field' || c.nodeName == 'FIELD');
+
+                for (let i = 0; i < fieldNodes.length; i++) {
+                    if (newFieldValues.hasOwnProperty(fieldNodes[i].getAttribute('name'))) {
+                        setInnerText(fieldNodes[i], newFieldValues[fieldNodes[i].getAttribute('name')]);
+                        delete newFieldValues[fieldNodes[i].getAttribute('name')];
+                    }
+                }
+
+                //Now that existing field values have been reset, we can create new field values as appropriate
+                for (let p in newFieldValues) {
+                    let c = doc.createElement('field');
+                    c.setAttribute('name', p);
+                    setInnerText(c, newFieldValues[p]);
+                    block.appendChild(c);
                 }
             }
-
-            //Now that existing field values have been reset, we can create new field values as appropriate
-            for (let p in newFieldValues) {
-                let c = doc.createElement('field');
-                c.setAttribute('name', p);
-                setInnerText(c, newFieldValues[p]);
-                block.appendChild(c);
+            else if (mutation) {
+                const existingMutation = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'mutation' || c.nodeName == 'MUTATION');
+                if (existingMutation.length) {
+                    block.replaceChild(mutation, existingMutation[0]);
+                }
+                else {
+                    block.appendChild(mutation);
+                }
             }
 
             let serializer = new XMLSerializer();
@@ -223,6 +244,10 @@ export class Editor extends srceditor.Editor {
         else {
             return originalXML;
         }
+    }
+
+    isIncomplete() {
+        return this.editor ? this.editor.isDragging() : false;
     }
 
     prepare() {
@@ -251,7 +276,7 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
-            if (ev.recordUndo) {
+            if (ev.type != 'ui') {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
@@ -265,7 +290,7 @@ export class Editor extends srceditor.Editor {
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                     this.updateHelpCard(ev.newValue != null);
                 }
-                else if (ev.element == 'commentOpen' 
+                else if (ev.element == 'commentOpen'
                 || ev.element == 'warningOpen') {
                     /*
                      * We override the default selection behavior so that when a block is selected, its
@@ -303,8 +328,18 @@ export class Editor extends srceditor.Editor {
                 }
             }
         })
+        this.resize();
 
         this.isReady = true
+    }
+
+    resize(e?: Event) {
+        let blocklyArea = document.getElementById('blocksArea');
+        let blocklyDiv = document.getElementById('blocksEditor');
+        // Position blocklyDiv over blocklyArea.
+        blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+        blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+        Blockly.svgResize(this.editor);
     }
 
     undo() {
@@ -312,7 +347,15 @@ export class Editor extends srceditor.Editor {
     }
 
     getId() {
-        return "blocksEditor"
+        return "blocksArea"
+    }
+
+    display() {
+        return (
+            <div>
+                <div id="blocksEditor"></div>
+            </div>
+        )
     }
 
     getViewState() {

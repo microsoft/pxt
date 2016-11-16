@@ -18,6 +18,13 @@ namespace ts.pxtc.avr {
             return 2
         }
 
+        // return offset+1 because stack points to next available slot
+        public computeStackOffset(kind: string, offset: number) {
+            if (kind == "args")
+                return offset + 2   // the return pointer is stored on the stack, skip it to get to args
+            return offset + 1
+        }
+
         public is32bit(i: assembler.Instruction) {
             return i.is32bit;
         }
@@ -79,14 +86,6 @@ namespace ts.pxtc.avr {
             let rel = l - pc
             // console.log("lookup =", l, " pc+2 =", pc, " rel = ", rel);
             return rel;
-        }
-
-        public isPop(opcode: number): boolean {
-            return opcode == 0x900f;
-        }
-
-        public isPush(opcode: number): boolean {
-            return opcode == 0x920f;
         }
 
         constructor() {
@@ -227,7 +226,7 @@ namespace ts.pxtc.avr {
             this.addInst("lsr   $r0", 0x9406, 0xfe0f);
             this.addInst("mov   $r0, $r1", 0x2C00, 0xfC00);
             this.addInst("movw  $r8, $r9", 0x0100, 0xff00);
-            this.addInst("mul   $r0, $r1", 0x9400, 0xfC00);
+            this.addInst("mul   $r0, $r1", 0x9c00, 0xfC00);
             this.addInst("muls  $r3, $r12", 0x0200, 0xff00);
             this.addInst("mulsu $r10, $r11", 0x0300, 0xff88);
             this.addInst("neg $r0", 0x9401, 0xfe0f);
@@ -242,7 +241,7 @@ namespace ts.pxtc.avr {
             this.addInst("reti", 0x9518, 0xffff);
             this.addInst("rjmp $ld", 0xc000, 0xf000);
             this.addInst("rol $r6", 0x1c00, 0xfc00);
-            this.addInst("lor $r0", 0x9407, 0xfe0f);
+            this.addInst("ror $r0", 0x9407, 0xfe0f);
             this.addInst("sbc   $r0, $r1", 0x0800, 0xfC00);
             this.addInst("sbci  $r3, $i1", 0x4000, 0xf000);
             this.addInst("sbi   $r7, $i9", 0x9a00, 0xff00);

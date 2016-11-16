@@ -68,11 +68,6 @@ namespace pxt {
     }
 
     /**
-     * Time an event by including the time between this call
-     * and a later 'tickEvent' call for the same event in the properties sent with the event.
-     */
-    export var timeEvent: (id: string) => void = function (id) { }
-    /**
      * Track an event.
      */
     export var tickEvent: (id: string, data?: Map<string | number>) => void = function (id) { }
@@ -216,7 +211,8 @@ namespace pxt {
             if (proto == "pub") {
                 return Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
-                return pxt.github.downloadPackageAsync(this.verArgument())
+                return pxt.packagesConfigAsync()
+                    .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
                     .then(resp => resp.files)
             } else if (proto == "embed") {
                 let resp = pxt.getEmbeddedScript(this.verArgument())
@@ -286,10 +282,10 @@ namespace pxt {
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
                 U.userError("Invalid package name: " + this.config.name)
-            let minVer = this.config.minTargetVersion
-            if (minVer && semver.strcmp(minVer, appTarget.versions.target) > 0)
+            const targetVersion = this.config.targetVersion
+            if (targetVersion && semver.strcmp(targetVersion, appTarget.versions.target) > 0)
                 U.userError(lf("Package {0} requires target version {1} (you are running {2})",
-                    this.config.name, minVer, appTarget.versions.target))
+                    this.config.name, targetVersion, appTarget.versions.target))
         }
 
         upgradePackage(pkg: string, val: string): string {
@@ -369,7 +365,7 @@ namespace pxt {
                         let mod = this.resolveDep(id)
                         ver = ver || "*"
                         if (mod) {
-                            if (mod._verspec != ver)
+                            if (mod._verspec != ver && (!/^file:/.test(mod._verspec) || !/^file:/.test(ver)))
                                 U.userError("Version spec mismatch on " + id)
                             mod.level = Math.min(mod.level, this.level + 1)
                             return Promise.resolve()
@@ -412,7 +408,7 @@ namespace pxt {
                     fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`)
                         .then(tr => Util.jsonMergeFrom(r, tr))
                         .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
-                    ).then(() => r);
+                ).then(() => r);
             }
 
             const files = this.config.files;
@@ -638,6 +634,17 @@ namespace pxt {
             return res;
         }
 
+    }
+
+
+    let _targetConfig: pxt.TargetConfig = undefined;
+    export function targetConfigAsync(): Promise<pxt.TargetConfig> {
+        return _targetConfig ? Promise.resolve(_targetConfig)
+            : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
+                .then(js => { _targetConfig = js; return _targetConfig; });
+    }
+    export function packagesConfigAsync(): Promise<pxt.PackagesConfig> {
+        return targetConfigAsync().then(config => config ? config.packages : undefined);
     }
 
     export const CONFIG_NAME = "pxt.json"

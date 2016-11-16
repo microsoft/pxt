@@ -24,13 +24,8 @@ namespace pxsim {
 
     export interface SimulatorFileLoadedMessage extends SimulatorMessage {
         name: string;
+        locale: string;
         content?: string;
-    }
-
-    export interface SimulatorCompilationMessage extends SimulatorMessage {
-        name: string;
-        content: string;
-        contentType: string;
     }
 
     export interface SimulatorReadyMessage extends SimulatorMessage {

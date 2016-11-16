@@ -9,16 +9,16 @@
 import B = Blockly;
 
 namespace pxt.blocks {
-    enum NT {
+    export enum NT {
         Prefix, // op + map(children)
         Infix, // children.length == 2, child[0] op child[1]
         Block, // { } are implicit
         NewLine
     }
 
-    interface Node {
+    export interface JsNode {
         type: NT;
-        children: Node[];
+        children: JsNode[];
         op: string;
         id?: string;
         glueToBlock?: boolean;
@@ -35,7 +35,7 @@ namespace pxt.blocks {
         else return JSON.stringify(s)
     }
 
-    function mkNode(tp: NT, pref: string, children: Node[]): Node {
+    function mkNode(tp: NT, pref: string, children: JsNode[]): JsNode {
         return {
             type: tp,
             op: pref,
@@ -47,32 +47,32 @@ namespace pxt.blocks {
         return mkNode(NT.NewLine, "", [])
     }
 
-    function mkPrefix(pref: string, children: Node[]) {
+    function mkPrefix(pref: string, children: JsNode[]) {
         return mkNode(NT.Prefix, pref, children)
     }
 
-    function mkInfix(child0: Node, op: string, child1: Node) {
+    function mkInfix(child0: JsNode, op: string, child1: JsNode) {
         return mkNode(NT.Infix, op, [child0, child1])
     }
 
-    function mkText(s: string) {
+    export function mkText(s: string) {
         return mkPrefix(s, [])
     }
-    function mkBlock(nodes: Node[]) {
+    function mkBlock(nodes: JsNode[]) {
         return mkNode(NT.Block, "", nodes)
     }
 
-    function mkGroup(nodes: Node[]) {
+    export function mkGroup(nodes: JsNode[]) {
         return mkPrefix("", nodes)
     }
 
-    function mkStmt(...nodes: Node[]) {
+    function mkStmt(...nodes: JsNode[]) {
         nodes.push(mkNewLine())
         return mkGroup(nodes)
     }
 
-    function mkCommaSep(nodes: Node[]) {
-        let r: Node[] = []
+    function mkCommaSep(nodes: JsNode[]) {
+        let r: JsNode[] = []
         for (let n of nodes) {
             if (r.length > 0)
                 r.push(mkText(", "))
@@ -84,7 +84,7 @@ namespace pxt.blocks {
     // A series of utility functions for constructing various J* AST nodes.
     namespace Helpers {
 
-        export function mkArrayLiteral(args: Node[]) {
+        export function mkArrayLiteral(args: JsNode[]) {
             return mkGroup([
                 mkText("["),
                 mkCommaSep(args),
@@ -104,7 +104,7 @@ namespace pxt.blocks {
             return mkText(stringLit(x))
         }
 
-        export function mkCall(name: string, args: Node[], property = false) {
+        export function mkCall(name: string, args: JsNode[], property = false) {
             if (property)
                 return mkGroup([
                     mkInfix(args[0], ".", mkText(name)),
@@ -124,22 +124,22 @@ namespace pxt.blocks {
 
         // Call function [name] from the standard device library with arguments
         // [args].
-        export function stdCall(name: string, args: Node[]) {
+        export function stdCall(name: string, args: JsNode[]) {
             return mkCall(name, args);
         }
 
         // Call extension method [name] on the first argument
-        export function extensionCall(name: string, args: Node[]) {
+        export function extensionCall(name: string, args: JsNode[]) {
             return mkCall(name, args, true);
         }
 
         // Call function [name] from the specified [namespace] in the micro:bit
         // library.
-        export function namespaceCall(namespace: string, name: string, args: Node[]) {
+        export function namespaceCall(namespace: string, name: string, args: JsNode[]) {
             return mkCall(namespace + "." + name, args);
         }
 
-        export function mathCall(name: string, args: Node[]) {
+        export function mathCall(name: string, args: JsNode[]) {
             return namespaceCall("Math", name, args)
         }
 
@@ -147,12 +147,12 @@ namespace pxt.blocks {
             return mkText(name)
         }
 
-        export function mkSimpleCall(p: string, args: Node[]): Node {
+        export function mkSimpleCall(p: string, args: JsNode[]): JsNode {
             assert(args.length == 2);
             return mkInfix(args[0], p, args[1])
         }
 
-        export function mkWhile(condition: Node, body: Node[]): Node {
+        export function mkWhile(condition: JsNode, body: JsNode[]): JsNode {
             return mkGroup([
                 mkText("while ("),
                 condition,
@@ -165,11 +165,11 @@ namespace pxt.blocks {
             return mkStmt(mkText("// " + text))
         }
 
-        export function mkAssign(x: Node, e: Node): Node {
+        export function mkAssign(x: JsNode, e: JsNode): JsNode {
             return mkStmt(mkSimpleCall("=", [x, e]))
         }
 
-        export function mkParenthesizedExpression(expression: Node): Node {
+        export function mkParenthesizedExpression(expression: JsNode): JsNode {
             return mkGroup([
                 mkText("("),
                 expression,
@@ -252,7 +252,7 @@ namespace pxt.blocks {
     // type doesn't match the inferred type, it's an error. If the type was
     // undetermined as of yet, the type of the variable becomes the expected type.
 
-    class Point {
+    export class Point {
         constructor(
             public link: Point,
             public type: string
@@ -502,7 +502,7 @@ namespace pxt.blocks {
         return parseFloat(v);
     }
 
-    function compileNumber(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileNumber(e: Environment, b: B.Block, comments: string[]): JsNode {
         return H.mkNumberLiteral(extractNumber(b));
     }
 
@@ -523,7 +523,7 @@ namespace pxt.blocks {
         "NEQ": "!=",
     };
 
-    function compileArithmetic(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileArithmetic(e: Environment, b: B.Block, comments: string[]): JsNode {
         let bOp = b.getFieldValue("OP");
         let left = b.getInputTargetBlock("A");
         let right = b.getInputTargetBlock("B");
@@ -544,45 +544,45 @@ namespace pxt.blocks {
         }
     }
 
-    function compileModulo(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileModulo(e: Environment, b: B.Block, comments: string[]): JsNode {
         let left = b.getInputTargetBlock("DIVIDEND");
         let right = b.getInputTargetBlock("DIVISOR");
         let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
         return H.mkSimpleCall("%", args);
     }
 
-    function compileMathOp2(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileMathOp2(e: Environment, b: B.Block, comments: string[]): JsNode {
         let op = b.getFieldValue("op");
         let x = compileExpression(e, b.getInputTargetBlock("x"), comments);
         let y = compileExpression(e, b.getInputTargetBlock("y"), comments);
         return H.mathCall(op, [x, y])
     }
 
-    function compileMathOp3(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileMathOp3(e: Environment, b: B.Block, comments: string[]): JsNode {
         let x = compileExpression(e, b.getInputTargetBlock("x"), comments);
         return H.mathCall("abs", [x]);
     }
 
-    function compileText(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileText(e: Environment, b: B.Block, comments: string[]): JsNode {
         return H.mkStringLiteral(b.getFieldValue("TEXT"));
     }
 
-    function compileBoolean(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileBoolean(e: Environment, b: B.Block, comments: string[]): JsNode {
         return H.mkBooleanLiteral(b.getFieldValue("BOOL") == "TRUE");
     }
 
-    function compileNot(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileNot(e: Environment, b: B.Block, comments: string[]): JsNode {
         let expr = compileExpression(e, b.getInputTargetBlock("BOOL"), comments);
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
-    function extractNumberLit(e: Node): number {
+    function extractNumberLit(e: JsNode): number {
         if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
             return null
         return parseInt(e.op)
     }
 
-    function compileRandom(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
         let expr = compileExpression(e, b.getInputTargetBlock("limit"), comments);
         let v = extractNumberLit(expr)
         if (v != null)
@@ -591,7 +591,7 @@ namespace pxt.blocks {
             return H.mathCall("random", [H.mkSimpleCall(opToTok["ADD"], [expr, H.mkNumberLiteral(1)])])
     }
 
-    function compileCreateList(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileCreateList(e: Environment, b: B.Block, comments: string[]): JsNode {
         // collect argument
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
             .filter(e => !!e);
@@ -603,7 +603,7 @@ namespace pxt.blocks {
         return H.mkArrayLiteral(args);
     }
 
-    function defaultValueForType(t: Point): Node {
+    function defaultValueForType(t: Point): JsNode {
         if (t.type == null) {
             union(t, ground(pNumber.type));
             t = find(t);
@@ -624,10 +624,10 @@ namespace pxt.blocks {
     // [t] is the expected type; we assume that we never null block children
     // (because placeholder blocks have been inserted by the type-checking phase
     // whenever a block was actually missing).
-    function compileExpression(e: Environment, b: B.Block, comments: string[]): Node {
+    export function compileExpression(e: Environment, b: B.Block, comments: string[]): JsNode {
         assert(b != null);
         maybeAddComment(b, comments);
-        let expr: Node;
+        let expr: JsNode;
         if (b.disabled || b.type == "placeholder")
             expr = defaultValueForType(returnType(e, b));
         else switch (b.type) {
@@ -681,29 +681,24 @@ namespace pxt.blocks {
 
     // Environments are persistent.
 
-    interface Environment {
+    export interface Environment {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
     }
 
-    enum VarUsage {
+    export enum VarUsage {
         Unknown,
         Read,
         Assign
     }
 
-    interface Binding {
+    export interface Binding {
         name: string;
         type: Point;
         declaredInLocalScope: number;
         assigned?: VarUsage; // records the first usage of this variable (read/assign)
         mustBeGlobal?: boolean;
-    }
-
-    export interface NamedProperty {
-        property: string;
-        newName: string;
     }
 
     function isCompiledAsLocalVariable(b: Binding) {
@@ -746,8 +741,8 @@ namespace pxt.blocks {
     // Statements
     ///////////////////////////////////////////////////////////////////////////////
 
-    function compileControlsIf(e: Environment, b: B.IfBlock, comments: string[]): Node[] {
-        let stmts: Node[] = [];
+    function compileControlsIf(e: Environment, b: B.IfBlock, comments: string[]): JsNode[] {
+        let stmts: JsNode[] = [];
         // Notice the <= (if there's no else-if, we still compile the primary if).
         for (let i = 0; i <= b.elseifCount_; ++i) {
             let cond = compileExpression(e, b.getInputTargetBlock("IF" + i), comments);
@@ -775,7 +770,7 @@ namespace pxt.blocks {
         return stmts;
     }
 
-    function compileControlsFor(e: Environment, b: B.Block, comments: string[]): Node[] {
+    function compileControlsFor(e: Environment, b: B.Block, comments: string[]): JsNode[] {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bTo = b.getInputTargetBlock("TO");
         let bDo = b.getInputTargetBlock("DO");
@@ -798,7 +793,7 @@ namespace pxt.blocks {
         ]
     }
 
-    function compileControlsRepeat(e: Environment, b: B.Block, comments: string[]): Node[] {
+    function compileControlsRepeat(e: Environment, b: B.Block, comments: string[]): JsNode[] {
         let bound = compileExpression(e, b.getInputTargetBlock("TIMES"), comments);
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
         let valid = (x: string) => !lookup(e, x)
@@ -813,7 +808,7 @@ namespace pxt.blocks {
         ]
     }
 
-    function compileWhile(e: Environment, b: B.Block, comments: string[]): Node[] {
+    function compileWhile(e: Environment, b: B.Block, comments: string[]): JsNode[] {
         let cond = compileExpression(e, b.getInputTargetBlock("COND"), comments);
         let body = compileStatements(e, b.getInputTargetBlock("DO"));
         return [
@@ -824,14 +819,14 @@ namespace pxt.blocks {
         ]
     }
 
-    function compileForever(e: Environment, b: B.Block): Node {
+    function compileForever(e: Environment, b: B.Block): JsNode {
         let bBody = b.getInputTargetBlock("HANDLER");
         let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
 
     // convert to javascript friendly name
-    function escapeVarName(name: string): string {
+    export function escapeVarName(name: string): string {
         if (!name) return '_';
         let n = name.split(/[^a-zA-Z0-9_$]+/)
             //.map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1)) breaks roundtrip...
@@ -839,7 +834,7 @@ namespace pxt.blocks {
         return n;
     }
 
-    function compileVariableGet(e: Environment, b: B.Block): Node {
+    function compileVariableGet(e: Environment, b: B.Block): JsNode {
         let name = escapeVarName(b.getFieldValue("VAR"));
         let binding = lookup(e, name);
         if (!binding.assigned)
@@ -848,7 +843,7 @@ namespace pxt.blocks {
         return mkText(name);
     }
 
-    function compileSet(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileSet(e: Environment, b: B.Block, comments: string[]): JsNode {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
@@ -868,7 +863,7 @@ namespace pxt.blocks {
             expr)
     }
 
-    function compileChange(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileChange(e: Environment, b: B.Block, comments: string[]): JsNode {
         let bVar = escapeVarName(b.getFieldValue("VAR"));
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
@@ -879,7 +874,7 @@ namespace pxt.blocks {
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
-    function compileCall(e: Environment, b: B.Block, comments: string[]): Node {
+    function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
         let call = e.stdCallTable[b.type];
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
@@ -889,7 +884,7 @@ namespace pxt.blocks {
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
 
-    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[]): Node {
+    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[]): JsNode {
         let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
@@ -900,8 +895,15 @@ namespace pxt.blocks {
             return compileExpression(e, b.getInputTargetBlock(p.field), comments)
     }
 
-    function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): Node {
-        let args = func.args.map((p: StdArg) => compileArgument(e, b, p, comments));
+    function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): JsNode {
+        let args: JsNode[]
+        if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.RestParameterMutator) {
+            args = b.mutation.compileMutation(e, comments).children;
+        }
+        else {
+            args = func.args.map((p: StdArg) => compileArgument(e, b, p, comments));
+        }
+
         if (func.isIdentity)
             return args[0];
         else if (func.isExtensionMethod) {
@@ -917,12 +919,11 @@ namespace pxt.blocks {
         return mkStmt(compileStdCall(e, b, f, comments))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: Node[], body: Node, callbackProperties?: NamedProperty[]): Node {
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: JsNode[], body: JsNode, argumentDeclaration?: JsNode): JsNode {
         body.noFinalNewline = true
-        let callback: Node;
-        if (callbackProperties && callbackProperties.length) {
-            const declarations = callbackProperties.map(prop => prop.newName ? `${prop.property}: ${prop.newName}` : prop.property);
-            callback = mkGroup([mkText(`({${declarations.join(", ")}}) =>`), body]);
+        let callback: JsNode;
+        if (argumentDeclaration) {
+            callback = mkGroup([argumentDeclaration, body]);
         }
         else {
             callback = mkGroup([mkText("() =>"), body]);
@@ -930,9 +931,9 @@ namespace pxt.blocks {
         return mkStmt(H.namespaceCall(n, f, args.concat([ callback ])))
     }
 
-    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): Node {
+    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
         let bBody = b.getInputTargetBlock("HANDLER");
-        let compiledArgs: Node[] = args.map((arg: string) => {
+        let compiledArgs: JsNode[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
             let argb = b.getInputTargetBlock(arg);
             if (argb) return compileExpression(e, argb, comments);
@@ -940,26 +941,20 @@ namespace pxt.blocks {
         });
         let body = compileStatements(e, bBody);
 
-        let callbackProperties: NamedProperty[];
+        let argumentDeclaration: JsNode;
 
-        if (isMutatingBlock(b)) {
-            callbackProperties = b.parameters.map(param => {
-                const varName = b.getFieldValue(param);
-                return {
-                    property: escapeVarName(param),
-                    newName: varName !== param ? escapeVarName(varName) : undefined
-                };
-            });
+        if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
+            argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
 
-        return mkCallWithCallback(e, ns, event, compiledArgs, body, callbackProperties);
+        return mkCallWithCallback(e, ns, event, compiledArgs, body, argumentDeclaration);
     }
 
     function isMutatingBlock(b: B.Block): b is MutatingBlock {
-        return !!(b as MutatingBlock).parameters;
+        return !!(b as MutatingBlock).mutation;
     }
 
-    function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: Node[]): Node {
+    function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: JsNode[]): JsNode {
         args = args === undefined ? [] : args;
         let state = "\n";
         let rows = 5;
@@ -981,7 +976,7 @@ namespace pxt.blocks {
     // or a string|number literal.
     // The literal is used to hide argument in blocks
     // that are available in TD.
-    interface StdArg {
+    export interface StdArg {
         field?: string;
         literal?: string | number;
     }
@@ -997,7 +992,7 @@ namespace pxt.blocks {
     //   call like [f(x, y...)], we generate the more "natural" [x → f (y...)]
     // - [namespace] is also an optional flag to generate a "namespace" call, that
     //   is, "basic -> show image" instead of "micro:bit -> show image".
-    interface StdFunc {
+    export interface StdFunc {
         f: string;
         args: StdArg[];
         isExtensionMethod?: boolean;
@@ -1008,8 +1003,8 @@ namespace pxt.blocks {
         isIdentity?: boolean; // TD_ID shim
     }
 
-    function compileStatementBlock(e: Environment, b: B.Block): Node[] {
-        let r: Node[];
+    function compileStatementBlock(e: Environment, b: B.Block): JsNode[] {
+        let r: JsNode[];
         const comments: string[] = [];
         maybeAddComment(b, comments);
         switch (b.type) {
@@ -1051,8 +1046,8 @@ namespace pxt.blocks {
         return r;
     }
 
-    function compileStatements(e: Environment, b: B.Block): Node {
-        let stmts: Node[] = [];
+    function compileStatements(e: Environment, b: B.Block): JsNode {
+        let stmts: JsNode[] = [];
         while (b) {
             if (!b.disabled) append(stmts, compileStatementBlock(e, b));
             b = b.getNextBlock();
@@ -1111,15 +1106,11 @@ namespace pxt.blocks {
             else if ((b.type == "controls_for" || b.type == "controls_simple_for")
                 && escapeVarName(b.getFieldValue("VAR")) == name)
                 return true;
-            else if (isMutatingBlock(b) && isCallbackParameter(b, name))
+            else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
             else
                 return variableIsScoped(b.getSurroundParent(), name);
         };
-
-        function isCallbackParameter(b: MutatingBlock, name: string) {
-            return b.parameters.some(param => b.getFieldValue(param) === name)
-        }
 
         function trackLocalDeclaration(name: string, type: string) {
             // It's ok for two loops to share the same variable.
@@ -1140,7 +1131,12 @@ namespace pxt.blocks {
                 trackLocalDeclaration(x, pNumber.type);
             }
             else if (isMutatingBlock(b)) {
-                b.parameters.forEach(parameter => trackLocalDeclaration(escapeVarName(b.getFieldValue(parameter)), b.parameterTypes[parameter]))
+                const declarations = b.mutation.getDeclaredVariables();
+                if (declarations) {
+                    for (const varName in declarations) {
+                        trackLocalDeclaration(escapeVarName(varName), declarations[varName]);
+                    }
+                }
             }
         });
 
@@ -1162,7 +1158,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): Node[] {
+    function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
             let e = mkEnv(w, blockInfo);
             infer(e, w);
@@ -1170,7 +1166,7 @@ namespace pxt.blocks {
             // [stmtsHandlers] contains calls to register event handlers. They must be
             // executed before the code that goes in the main function, as that latter
             // code may block, and prevent the event handler from being registered.
-            let stmtsMain: Node[] = [];
+            let stmtsMain: JsNode[] = [];
             w.getTopBlocks(true).map(b => {
                 let compiled = compileStatements(e, b)
                 if (compiled.type == NT.Block)
@@ -1224,7 +1220,7 @@ namespace pxt.blocks {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
-    function tdASTtoTS(app: Node[]): BlockCompilationResult {
+    function tdASTtoTS(app: JsNode[]): BlockCompilationResult {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
@@ -1268,15 +1264,15 @@ namespace pxt.blocks {
         }
 
 
-        function flatten(e0: Node) {
-            function rec(e: Node, outPrio: number) {
+        function flatten(e0: JsNode) {
+            function rec(e: JsNode, outPrio: number) {
                 if (e.type != NT.Infix) {
                     for (let c of e.children)
                         rec(c, -1)
                     return
                 }
 
-                let r: Node[] = []
+                let r: JsNode[] = []
 
                 function pushOp(c: string) {
                     r.push(mkText(c))
@@ -1339,7 +1335,7 @@ namespace pxt.blocks {
             sourceMap: sourceMap
         };
 
-        function emit(n: Node) {
+        function emit(n: JsNode) {
             if (n.glueToBlock) {
                 removeLastIndent()
                 output += " "
@@ -1384,7 +1380,7 @@ namespace pxt.blocks {
             output = output.replace(/\n *$/, "")
         }
 
-        function block(n: Node) {
+        function block(n: JsNode) {
             let finalNl = n.noFinalNewline ? "" : "\n";
             if (n.children.length == 0) {
                 write(" {\n\t\n}" + finalNl)
@@ -1415,8 +1411,8 @@ namespace pxt.blocks {
         }
     }
 
-    function addCommentNodes(comments: string[], r: Node[]) {
-        const commentNodes: Node[] = []
+    function addCommentNodes(comments: string[], r: JsNode[]) {
+        const commentNodes: JsNode[] = []
         const paragraphs: string[] = []
 
         for (const comment of comments) {

@@ -54,16 +54,22 @@ namespace pxt.github {
             .then(v => JSON.parse(v) as pxt.PackageConfig)
     }
 
-    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null): Promise<CachedPackage> {
+    export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig, current: CachedPackage = null): Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
         if (!p) {
             pxt.log('Unknown github syntax');
             return Promise.resolve<CachedPackage>(undefined);
         }
 
-        return tagToShaAsync(p.repo, p.tag)
+        if (!isRepoApproved(p, config)) {
+            pxt.tickEvent("github.download.unauthorized");
+            pxt.log('Github repo not approved');
+            return Promise.resolve<CachedPackage>(undefined);
+        }
+
+        return tagToShaAsync(p.fullName, p.tag)
             .then(sha => {
-                let pref = "https://raw.githubusercontent.com/" + p.repo + "/" + sha + "/"
+                let pref = "https://raw.githubusercontent.com/" + p.fullName + "/" + sha + "/"
                 if (!current) current = { sha: "", files: {} }
                 if (current.sha === sha) return Promise.resolve(current)
                 else {
@@ -88,7 +94,7 @@ namespace pxt.github {
             })
     }
 
-    export interface Repo {
+    interface Repo {
         id: number;
         name: string; // "pxt-microbit-cppsample",
         full_name: string; // "Microsoft/pxt-microbit-cppsample",
@@ -123,40 +129,124 @@ namespace pxt.github {
         tag?: string;
     }
 
-    export interface SearchResults {
+    interface SearchResults {
         total_count: number;
         incomplete_results: boolean;
         items: Repo[];
     }
 
-    export function repoAsync(id: string): Promise<Repo> {
-        let rid = parseRepoId(id);
-        if (rid && rid.repo)
-            return U.httpGetJsonAsync("https://api.github.com/repos/" + rid.repo)
-                .then(r => {
-                    let rr = r as Repo
-                    if (rr && rid.tag) rr.tag = rid.tag;
-                    return rr;
-                });
-        return undefined;
+    export interface ParsedRepo {
+        owner?: string;
+        fullName: string;
+        tag?: string;
     }
 
-    export function searchAsync(query: string): Promise<SearchResults> {
+    export enum GitRepoStatus {
+        Unknown,
+        Approved,
+        Banned
+    }
+
+    export interface GitRepo extends ParsedRepo {
+        name: string;
+        description: string;
+        defaultBranch: string;
+        status?: GitRepoStatus
+    }
+
+    function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
+        if (!r) return undefined;
+        const rr: GitRepo = {
+            owner: r.owner.login.toLowerCase(),
+            fullName: r.full_name.toLowerCase(),
+            name: r.name,
+            description: r.description,
+            defaultBranch: r.default_branch,
+            tag: tag
+        }
+        rr.status = repoStatus(rr, config);
+        return rr;
+    }
+
+    export function repoStatus(rr: ParsedRepo, config: pxt.PackagesConfig): GitRepoStatus {
+        return isRepoBanned(rr, config) ? GitRepoStatus.Banned
+            : isRepoApproved(rr, config) ? GitRepoStatus.Approved
+                : GitRepoStatus.Unknown;
+    }
+
+    function isOrgBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        if (!repo || !config || !repo.owner) return true;
+        if (config.bannedOrgs
+            && config.bannedOrgs.some(org => org.toLowerCase() == repo.owner.toLowerCase()))
+            return true;
+        return false;
+    }
+
+    function isRepoBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        if (isOrgBanned(repo, config))
+            return true;
+        if (!repo || !config || !repo.fullName) return true;
+        if (config.bannedRepos
+            && config.bannedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
+            return true;
+        return false;
+    }
+
+    function isOrgApproved(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        if (!repo || !config) return false;
+        if (repo.owner
+            && config.approvedOrgs
+            && config.approvedOrgs.some(org => org.toLowerCase() == repo.owner.toLowerCase()))
+            return true;
+        return false;
+    }
+
+    function isRepoApproved(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        if (isOrgApproved(repo, config))
+            return true;
+
+        if (!repo || !config) return false;
+        if (repo.fullName
+            && config.approvedRepos
+            && config.approvedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
+            return true;
+        return false;
+    }
+
+    export function repoAsync(id: string, config: pxt.PackagesConfig): Promise<GitRepo> {
+        const rid = parseRepoId(id);
+        const status = repoStatus(rid, config);
+        if (status == GitRepoStatus.Banned)
+            return Promise.resolve<GitRepo>(undefined);
+
+        // always use proxy
+        return Util.httpGetJsonAsync(`${pxt.appTarget.appTheme.homeUrl}api/gh/${rid.fullName}`)
+            .then(meta => {
+                if (!meta) return undefined;
+                return {
+                    github: true,
+                    owner: rid.owner,
+                    fullName: rid.fullName,
+                    name: meta.name,
+                    description: meta.description,
+                    defaultBranch: "master",
+                    tag: rid.tag,
+                    status
+                };
+            })
+    }
+
+    export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {
+        if (!config) return Promise.resolve([]);
+
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
-            return Promise.all(repos.map(id => repoAsync(id.path)))
-                .then(rs => {
-                    rs = rs.filter(r => !!r);
-                    return <SearchResults>{
-                        total_count: rs.length,
-                        incomplete_results: false,
-                        items: rs
-                    }
-                })
+            return Promise.all(repos.map(id => repoAsync(id.path, config)))
+                .then(rs => rs.filter(r => r.status == GitRepoStatus.Approved));
 
         query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
-            .then(r => r as SearchResults)
+            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item, config)).filter(r => r.status == GitRepoStatus.Approved));
     }
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
@@ -173,19 +263,16 @@ namespace pxt.github {
         return r;
     }
 
-    export interface ParsedRepo {
-        repo: string;
-        tag: string;
-    }
-
     export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
 
         repo = repo.replace(/^github:/i, "")
-        let m = /([^#]+)#(.*)/.exec(repo)
+        let m = /([^#]+)(#(.*))?/.exec(repo)
+        let owner = m ? m[1].split('/')[0].toLowerCase() : undefined;
         return {
-            repo: m ? m[1].toLowerCase() : repo.toLowerCase(),
-            tag: m ? m[2] : null
+            owner,
+            fullName: m ? m[1].toLowerCase() : repo.toLowerCase(),
+            tag: m ? m[3] : null
         }
     }
 
@@ -194,29 +281,29 @@ namespace pxt.github {
     }
 
     export function stringifyRepo(p: ParsedRepo) {
-        return p ? "github:" + p.repo.toLowerCase() + "#" + (p.tag || "master") : undefined;
+        return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
     }
 
     export function noramlizeRepoId(id: string) {
         return stringifyRepo(parseRepoId(id))
     }
 
-    export function latestVersionAsync(path: string): Promise<string> {
+    export function latestVersionAsync(path: string, config: TargetConfig): Promise<string> {
         let parsed = parseRepoId(path)
 
         if (!parsed) return Promise.resolve<string>(null);
 
-        return repoAsync(parsed.repo)
+        return repoAsync(parsed.fullName, config)
             .then(scr => {
                 if (!scr) return undefined;
-                return listRefsAsync(scr.full_name, "tags")
+                return listRefsAsync(scr.fullName, "tags")
                     .then((tags: string[]) => {
                         tags.sort(pxt.semver.strcmp)
                         tags.reverse()
                         if (tags[0])
                             return Promise.resolve(tags[0])
                         else
-                            return tagToShaAsync(scr.full_name, scr.default_branch)
+                            return tagToShaAsync(scr.fullName, scr.defaultBranch)
                     })
             });
     }

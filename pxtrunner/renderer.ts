@@ -19,6 +19,7 @@ namespace pxt.runner {
         pxtUrl?: string;
         packageClass?: string;
         package?: string;
+        showJavaScript?: boolean; // default is to show blocks first
         downloadScreenshots?: boolean
     }
 
@@ -30,9 +31,13 @@ namespace pxt.runner {
         hex?: string;
     }
 
+    function appendBlocks($parent: JQuery, $svg: JQuery) {
+        $parent.append($('<div class="ui content blocks"/>').append($svg));
+    }
+
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
         $parent.append($('<div class="ui content js"/>').append($js));
-        $('code.highlight').each(function(i, block) {
+        $('code.highlight').each(function (i, block) {
             let hljs = pxt.docs.requireHighlightJs();
             if (hljs) hljs.highlightBlock(block);
         });
@@ -59,22 +64,40 @@ namespace pxt.runner {
         let $c = $('<div class="ui top attached segment"></div>');
         let $menu = $h.find('.right.menu');
 
-        // blocks
-        $c.append($svg);
+        if (options.showJavaScript) {
+            // blocks
+            $c.append($js);
 
-        // js menu
-        if (woptions.showJs) {
-            appendJs($c, $js, woptions);
+            // js menu
+            if ($svg) {
+                const $svgBtn = $('<a class="item blocks"><i aria-label="Blocks" class="puzzle icon"></i></a>').click(() => {
+                    if ($c.find('.blocks')[0])
+                        $c.find('.blocks').remove();
+                    else {
+                        if ($js) appendBlocks($js.parent(), $svg);
+                        else appendBlocks($c, $svg);
+                    }
+                })
+                $menu.append($svgBtn);
+            }
         } else {
-            let $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="align left icon"></i></a>').click(() => {
-                if ($c.find('.js')[0])
-                    $c.find('.js').remove(); // remove previous simulators
-                else {
-                    if ($svg) appendJs($svg.parent(), $js, woptions);
-                    else appendJs($c, $js, woptions);
-                }
-            })
-            $menu.append($jsBtn);
+            // blocks
+            $c.append($svg);
+
+            // js menu
+            if (woptions.showJs) {
+                appendJs($c, $js, woptions);
+            } else {
+                const $jsBtn = $('<a class="item js"><i aria-label="JavaScript" class="align left icon"></i></a>').click(() => {
+                    if ($c.find('.js')[0])
+                        $c.find('.js').remove();
+                    else {
+                        if ($svg) appendJs($svg.parent(), $js, woptions);
+                        else appendJs($c, $js, woptions);
+                    }
+                })
+                $menu.append($jsBtn);
+            }
         }
 
         // runner menu

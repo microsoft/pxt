@@ -585,18 +585,26 @@ ${output}</xml>`;
                     return;
                 }
 
+                if (ts.isFunctionLike(info.decl)) {
+                    const decl = info.decl as FunctionLikeDeclaration;
+                    if (decl.parameters && decl.parameters.length === 1 && ts.isRestParameter(decl.parameters[0])) {
+                        openCallExpressionBlockWithRestParameter(node, info);
+                        return;
+                    }
+                }
+
                 const argNames: string[] = []
                 info.attrs.block.replace(/%(\w+)/g, (f, n) => {
                     argNames.push(n)
                     return ""
-                })
+                });
 
                 openBlockTag(info.attrs.blockId);
                 if (extraArgs) write(extraArgs);
                 info.args.forEach((e, i) => {
                     switch (e.kind) {
                         case SK.ArrowFunction:
-                            emitMutation(e as ArrowFunction);
+                            emitDestructuringMutation(e as ArrowFunction);
                             emitStatementTag("HANDLER", e);
                             break;
                         case SK.PropertyAccessExpression:
@@ -624,7 +632,15 @@ ${output}</xml>`;
                 });
             }
 
-            function emitMutation(callback: ArrowFunction) {
+            function openCallExpressionBlockWithRestParameter(call: ts.CallExpression, info: pxtc.CallInfo) {
+                openBlockTag(info.attrs.blockId);
+                write(`<mutation count="${info.args.length}" />`)
+                info.args.forEach((expression, index) => {
+                    emitValue("value_input_" + index, expression, ShadowType.Number);
+                });
+            }
+
+            function emitDestructuringMutation(callback: ts.ArrowFunction) {
                 if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
                     const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
                     const names = elements.map(e => {

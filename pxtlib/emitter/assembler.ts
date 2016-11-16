@@ -80,8 +80,6 @@ namespace ts.pxtc.assembler {
                     if (enc.isRegister) {
                         v = this.ei.registerNo(actual);
                         if (v == null) return emitErr("expecting register name", actual)
-                        // AVR specific code : check for pop/push instruction 
-                        // this doesn't apply in the ARM case 
                         if (this.ei.isPush(this.opcode)) // push
                             stack++;
                         else if (this.ei.isPop(this.opcode)) // pop
@@ -93,6 +91,7 @@ namespace ts.pxtc.assembler {
                             return emitErr("expecting number", actual)
                         } else {
                             // explicit manipulation of stack pointer (SP)
+                            // ARM only
                             if (this.ei.isAddSP(this.opcode))
                                 stack = -(v / this.ei.wordSize());
                             else if (this.ei.isSubSP(this.opcode))
@@ -301,6 +300,12 @@ namespace ts.pxtc.assembler {
             if (U.endsWith(s, "|1")) {
                 return this.parseOneInt(s.slice(0, s.length - 2)) | 1
             }
+            // allow subtracting 1 too
+            if (U.endsWith(s, "-1")) {
+                return this.parseOneInt(s.slice(0, s.length - 2)) - 1
+            }
+
+
 
             // handle hexadecimal and binary encodings
             if (s[0] == "0") {
@@ -325,8 +330,11 @@ namespace ts.pxtc.assembler {
                 if (m) {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
-                    if (this.stackpointers.hasOwnProperty(m[1]))
-                        v = this.ei.wordSize() * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                    if (this.stackpointers.hasOwnProperty(m[1])) {
+                        // console.log(m[1] + ": " + this.stack + " " + this.stackpointers[m[1]] + " " + m[2])
+                        v = this.ei.wordSize() * this.ei.computeStackOffset(m[1], this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                        // console.log(v)
+                    }
                     else
                         this.directiveError(lf("saved stack not found"))
                 }
@@ -952,6 +960,10 @@ namespace ts.pxtc.assembler {
 
         public wordSize() {
             return -1;
+        }
+
+        public computeStackOffset(kind: string, offset: number) {
+            return offset;
         }
 
         public is32bit(i: Instruction) {

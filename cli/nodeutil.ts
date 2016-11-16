@@ -14,8 +14,31 @@ import Util = pxt.Util;
 //This should be correct at startup when running from command line
 //When running inside Electron it gets updated to the correct path
 export var targetDir: string = process.cwd();
-//When running the Electron app, this will be based on the initial value
-export var pxtCoreDir: string = path.join(targetDir, "node_modules/pxt-core")
+//When running the Electron app, this will be updated based on targetDir
+export var pxtCoreDir: string = path.join(__dirname, "..");
+
+export function setTargetDir(dir: string) {
+    targetDir = dir;
+
+    // The target should expose the path to its bundled pxt-core
+    let fallback = false;
+    let target: any;
+
+    try {
+        target = require(targetDir);
+    }
+    catch (e) {
+        // If we can't require the target, fallback to default location
+        fallback = true;
+    }
+
+    if (fallback || !target.pxtCoreDir || !fs.existsSync(target.pxtCoreDir)) {
+        pxt.log("Could not determine target's pxt-core location, falling back to default location");
+        pxtCoreDir = path.join(__dirname, "..");
+    } else {
+        pxtCoreDir = target.pxtCoreDir;
+    }
+}
 
 export function readResAsync(g: events.EventEmitter) {
     return new Promise<Buffer>((resolve, reject) => {
@@ -183,7 +206,7 @@ export function cpR(src: string, dst: string, maxDepth = 8) {
     }
 }
 
-export function allFiles(top: string, maxDepth = 8, allowMissing = false): string[] {
+export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false): string[] {
     let res: string[] = []
     if (allowMissing && !fs.existsSync(top)) return res
     for (const p of fs.readdirSync(top)) {
@@ -193,6 +216,8 @@ export function allFiles(top: string, maxDepth = 8, allowMissing = false): strin
         if (st.isDirectory()) {
             if (maxDepth > 1)
                 Util.pushRange(res, allFiles(inner, maxDepth - 1))
+            if (includeDirs)
+                res.push(inner);
         } else {
             res.push(inner)
         }
@@ -202,23 +227,6 @@ export function allFiles(top: string, maxDepth = 8, allowMissing = false): strin
 
 export function existDirSync(name: string): boolean {
     return fs.existsSync(name) && fs.statSync(name).isDirectory();
-}
-
-export function deleteFolderRecursive(thePath: string) {
-    if (!path || !fs.existsSync(thePath)) {
-        return;
-    }
-
-    fs.readdirSync(thePath).forEach((f) => {
-        let currentPath = path.join(thePath, f);
-
-        if (fs.lstatSync(currentPath).isDirectory()) {
-            deleteFolderRecursive(currentPath);
-        } else {
-            fs.unlinkSync(currentPath);
-        }
-    });
-    fs.rmdirSync(thePath);
 }
 
 init();

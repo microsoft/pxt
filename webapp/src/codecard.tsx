@@ -57,8 +57,8 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
-
-        let cardDiv = <div className={"ui card " + color + (card.onClick ? " link" : '') + (card.className ? (' ' + card.className) : '') } onClick={e => card.onClick ? card.onClick(e) : undefined } >
+        const className = card.className;
+        const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} onClick={e => card.onClick ? card.onClick(e) : undefined } >
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "") }>
                     <div className="right floated meta">
@@ -74,6 +74,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
+                {card.imageUrl ? <img src={card.imageUrl} className="ui image" /> : null}
             </div>
             <div className="content">
                 {card.name ? <div className="header">{card.name}</div> : null}

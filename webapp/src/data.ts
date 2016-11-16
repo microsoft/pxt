@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as workspace from "./workspace";
 import * as core from "./core";
+import * as gallery from "./gallery";
 
 export type Action = () => void;
 export type AnyComponent = Component<any, any>;
@@ -19,11 +20,18 @@ interface CacheEntry {
 }
 
 const virtualApis: pxt.Map<VirtualApi> = {}
+let targetConfig: pxt.TargetConfig = undefined;
 
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
+})
+
+mountVirtualApi("gallery", {
+    getAsync: p => gallery.loadGalleryAsync(stripProtocol(p)).catch(core.handleNetworkError),
+    expirationTime: p => 3600 * 1000,
+    isOffline: () => !Cloud.isOnline()
 })
 
 mountVirtualApi("td-cloud", {
@@ -34,8 +42,9 @@ mountVirtualApi("td-cloud", {
 })
 
 mountVirtualApi("gh-search", {
-    getAsync: query =>
-        pxt.github.searchAsync(stripProtocol(query)).catch(core.handleNetworkError),
+    getAsync: query => pxt.targetConfigAsync()
+        .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
+        .catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })

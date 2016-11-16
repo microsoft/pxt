@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.6.1(8f43cf5d0d3d233c9ba1c9085f2bb529f834c841)
+ * Version: 0.7.3(14ab24ad53d8d969e86bae0096ecc3b954d0faa0)
  * Released under the MIT license
  * https://github.com/Microsoft/vscode/blob/master/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -23,39 +23,17 @@ define("vs/editor/editor.main.nls.de", {
 		"Warnung: {0}",
 		"Info: {0}",
 	],
-	"vs/base/common/errors": [
-		"{0}. Fehlercode: {1}",
-		"Berechtigung verweigert (HTTP {0})",
-		"Berechtigung verweigert",
-		"{0} (HTTP {1}: {2})",
-		"{0} (HTTP {1})",
-		"Unbekannter Verbindungsfehler ({0})",
-		"Es ist ein unbekannter Verbindungsfehler aufgetreten. Entweder besteht keine Internetverbindung mehr, oder der verbundene Server ist offline.",
-		"{0}: {1}",
-		"Ein unbekannter Fehler ist aufgetreten. Weitere Details dazu finden Sie im Protokoll.",
-		"Systemfehler ({0})",
-		"Ein unbekannter Fehler ist aufgetreten. Weitere Details dazu finden Sie im Protokoll.",
-		"{0} ({1} Fehler gesamt)",
-		"Ein unbekannter Fehler ist aufgetreten. Weitere Details dazu finden Sie im Protokoll.",
-		"Nicht implementiert",
-		"ungültiges Argument: {0}",
-		"ungültiges Argument",
-		"ungültiger Status: {0}",
-		"ungültiger Status",
-		"Eine erforderliche Datei konnte nicht geladen werden. Entweder sind Sie nicht mehr mit dem Internet verbunden oder der verbundene Server ist offline. Aktualisieren Sie den Browser, und wiederholen Sie den Vorgang.",
-		"Fehler beim Laden einer erforderlichen Datei. Bitte starten Sie die Anwendung neu, und versuchen Sie es dann erneut. Details: {0}",
-	],
-	"vs/base/common/keyCodes": [
+	"vs/base/common/keybinding": [
 		"Windows",
-		"Steuerelement",
-		"Umschalttaste",
+		"Control",
+		"Shift",
 		"Alt",
-		"Befehl",
+		"Command",
 		"Windows",
-		"Strg",
-		"Umschalttaste",
+		"Ctrl",
+		"Shift",
 		"Alt",
-		"Befehl",
+		"Command",
 		"Windows",
 	],
 	"vs/base/common/severity": [
@@ -78,10 +56,9 @@ define("vs/editor/editor.main.nls.de", {
 		"Editor",
 		"Steuert die Schriftfamilie.",
 		"Steuert die Schriftbreite.",
-		"Steuert den Schriftgrad.",
+		"Steuert den Schriftgrad in Pixeln.",
 		"Steuert die Zeilenhöhe. Verwenden Sie 0, um LineHeight aus der FontSize-Angabe zu berechnen.",
 		"Steuert die Sichtbarkeit der Zeilennummern.",
-		"Steuert die Sichtbarkeit des Glyphenrands.",
 		"Spalten, an denen vertikale Lineale angezeigt werden sollen",
 		"Zeichen, die als Worttrennzeichen verwendet werden, wenn wortbezogene Navigationen oder Vorgänge ausgeführt werden.",
 		"Die Anzahl der Leerzeichen, denen ein Tabstopp entspricht. Diese Einstellung wird basierend auf dem Inhalt der Datei überschrieben, wenn \"editor.detectIndentation\" aktiviert ist.",
@@ -92,7 +69,7 @@ define("vs/editor/editor.main.nls.de", {
 		"Steuert, ob die Auswahl runde Ecken aufweist.",
 		"Legt fest, ob der Editor Bildläufe über die letzte Zeile hinaus ausführt.",
 		"Steuert, nach wie vielen Zeichen der Editor einen Umbruch in die nächste Zeile ausführt. Durch das Festlegen auf 0 wird der Umbruch auf Viewportbreite aktiviert (Zeilenumbruch). Wenn diese Einstellung auf -1 festgelegt wird, führt der Editor nie einen Umbruch aus.",
-		"Controls if lines should wrap. The lines will wrap at min(editor.wrappingColumn, viewportWidthInColumns).",
+		"Steuert, ob Zeilen umbrochen werden sollen. Der Zeilenumbruch erfolgt bei \"min(editor.wrappingColumn, ViewportWidthInColumns)\".",
 		"Steuert den Einzug der umbrochenen Zeilen. Der Wert kann \"none\", \"same\" oder \"indent\" sein.",
 		"Ein Multiplikator, der für die Mausrad-Bildlaufereignisse \"deltaX\" und \"deltaY\" verwendet werden soll.",
 		"Steuert, ob Schnellvorschläge während der Eingabe angezeigt werden.",
@@ -112,10 +89,10 @@ define("vs/editor/editor.main.nls.de", {
 		"Steuert den Cursorstil. Gültige Werte sind \"block\", \"line\" und \"underline\".",
 		"Aktiviert Schriftartligaturen.",
 		"Steuert die Sichtbarkeit des Cursors im Übersichtslineal.",
-		"Steuert, ob der Editor Leerzeichen rendert.",
+		"Steuert, wie der Editor Leerzeichen rendert. Mögliche Optionen: \"none\", \"boundary\" und \"all\". Die Option \"boundary\" rendert keine einzelnen Leerzeichen zwischen Wörtern.",
 		"Steuert, ob der Editor Steuerzeichen rendern soll.",
 		"Steuert, ob der Editor Einzugsführungslinien rendern soll.",
-		"Controls whether the editor should render the current line highlight",
+		"Steuert, ob der Editor die aktuelle Zeilenhervorhebung rendern soll.",
 		"Steuert, ob der Editor CodeLenses anzeigt.",
 		"Steuert, ob für den Editor Codefaltung aktiviert ist.",
 		"Das Einfügen und Löschen von Leerzeichen folgt auf Tabstopps.",
@@ -136,6 +113,9 @@ define("vs/editor/editor.main.nls.de", {
 	],
 	"vs/editor/common/modes/modesRegistry": [
 		"Nur-Text",
+	],
+	"vs/editor/common/modes/snippetsRegistry": [
+		"{0}, {1}",
 	],
 	"vs/editor/common/services/bulkEdit": [
 		"Die folgenden Dateien wurden in der Zwischenzeit geändert: {0}",
@@ -238,7 +218,6 @@ define("vs/editor/editor.main.nls.de", {
 	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"Empfohlene Fehlerbehebungen: ",
 		"Empfohlene Fehlerbehebung: ",
-		"({0}/{1}) [{2}]",
 		"({0}/{1})",
 		"Gehe zum nächsten Fehler oder zur nächsten Warnung",
 		"Gehe zum vorherigen Fehler oder zur vorherigen Warnung",
@@ -299,12 +278,10 @@ define("vs/editor/editor.main.nls.de", {
 	"vs/editor/contrib/quickFix/browser/quickFix": [
 		"Schnelle Problembehebung",
 	],
-	"vs/editor/contrib/quickFix/browser/quickFixSelectionWidget": [
-		"{0}, Vorschlag für Quick Fix",
-		"Wird geladen...",
-		"Keine Problembehebungsvorschläge.",
-		"Schneller Fix",
-		"{0}, angenommen",
+	"vs/editor/contrib/quickFix/browser/quickFixWidget": [
+		"{0}, accepted",
+		"Loading...",
+		"No fix suggestions.",
 	],
 	"vs/editor/contrib/quickOpen/browser/gotoLine": [
 		"Gehe zur Zeile {0} und Spalte {1}",
@@ -370,7 +347,7 @@ define("vs/editor/editor.main.nls.de", {
 		"Auswahl verkleinern",
 	],
 	"vs/editor/contrib/suggest/browser/suggestController": [
-		"Trigger Suggest",
+		"Vorschlag auslösen",
 	],
 	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"Mehr anzeigen...{0}",
@@ -391,20 +368,6 @@ define("vs/editor/editor.main.nls.de", {
 	],
 	"vs/editor/contrib/zoneWidget/browser/peekViewWidget": [
 		"Schließen",
-	],
-	"vs/languages/html/common/html.contribution": [
-		"HTML",
-		"Die maximale Anzahl von Zeichen pro Zeile (0 = deaktiviert).",
-		"Die Liste der Tags (durch Kommas getrennt), die nicht erneut formatiert werden sollen. \"null\" bezieht sich standardmäßig auf alle Tags, die unter https://www.w3.org/TR/html5/dom.html#phrasing-content aufgeführt werden.",
-		"Nimmt einen Einzug für <head>- und <body>-Abschnitte vor.",
-		"Gibt an, ob vorhandene Zeilenumbrüche vor Elemente beibehalten werden sollen. Funktioniert nur vor Elementen, nicht in Tags oder für Text.",
-		"Die maximale Anzahl von Zeilenumbrüchen, die in einem Block beibehalten werden soll. Verwenden Sie \"null\" für eine unbegrenzte Anzahl.",
-		"Formatiert {{#foo}} und {{/foo}} und nimmt einen Einzug vor.",
-		"Endet mit einer neuen Zeile.",
-		"Die Liste der Tags (durch Kommas getrennt), vor denen eine zusätzliche neue Zeile eingefügt werden soll. \"null\" verwendet standardmäßig \"head, body, /HTML\".",
-		"Configures if the built-in HTML language support suggests Angular V1 tags and properties.",
-		"Configures if the built-in HTML language support suggests Ionic tags, properties and values.",
-		"Configures if the built-in HTML language support suggests HTML5 tags, properties and values.",
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"Trägt Konfigurationseigenschaften bei.",
