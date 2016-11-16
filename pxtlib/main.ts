@@ -524,7 +524,7 @@ namespace pxt {
                 })
                 .then(() => this.config.binaryonly || appTarget.compile.shortPointers ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
-                    if (files) {
+                    if (files && opts.target.isNative) {
                         files = U.mapMap(files, upgradeFile);
                         let headerString = JSON.stringify({
                             name: this.config.name,
@@ -545,7 +545,7 @@ namespace pxt {
                                     name: this.config.name,
                                 })
                                 opts.embedBlob = btoa(U.uint8ArrayToString(buf))
-                            })
+                            });
                     } else {
                         return Promise.resolve()
                     }
