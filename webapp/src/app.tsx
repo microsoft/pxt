@@ -261,7 +261,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             this.hide();
             this.props.parent.importFileDialog();
         }
-
+        const newProject = () => {
+            pxt.tickEvent("projects.import");
+            this.hide();
+            this.props.parent.newEmptyProject();
+        }
         const isEmpty = () => {
             if (this.state.searchFor) {
                 if (headers.length > 0
@@ -289,13 +293,21 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                     </div>
                 </div> : undefined }
                 <div className="ui cards">
-                    {pxt.appTarget.compile && this.state.mode == ScriptSearchMode.Projects ?
+                    {pxt.appTarget.compile && !this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
                         <codecard.CodeCardView
                             color="pink"
                             key="importhex"
                             name={lf("My Computer...") }
                             description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
+                            /> : undefined}
+                    {pxt.appTarget.compile && !this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                        <codecard.CodeCardView
+                            color="pink"
+                            key="newproject"
+                            name={lf("New Project...") }
+                            description={lf("Creates a new empty project") }
+                            onClick={() => newProject() }
                             /> : undefined}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
@@ -1738,9 +1750,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {this.editor.menu() }
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Open Project") } onClick={() => this.openProject() } />}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
-                            <sui.Item role="menuitem" icon="file outline" text={lf("New Project...") } onClick={() => this.newEmptyProject() } />
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
-                            {this.state.header ? <div className="ui divider"></div> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }

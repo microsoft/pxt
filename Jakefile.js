@@ -249,7 +249,6 @@ file("built/web/pxtlib.js", [
     jake.cpR("built/pxtrunner.js", "built/web/")
     jake.cpR("built/pxteditor.js", "built/web/")
     jake.cpR("external/tdast.js", "built/web/")
-    jake.cpR("external/ai.min.js", "built/web/")
 
     let additionalExports = [
         "getCompletionData"
