@@ -522,9 +522,9 @@ namespace pxt {
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly || appTarget.compile.shortPointers ? null : this.filesToBePublishedAsync(true))
+                .then(() => this.config.binaryonly || appTarget.compile.shortPointers || opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
-                    if (files && opts.target.isNative) {
+                    if (files) {
                         files = U.mapMap(files, upgradeFile);
                         let headerString = JSON.stringify({
                             name: this.config.name,
