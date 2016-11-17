@@ -187,7 +187,7 @@ namespace ts.pxtc.assembler {
         public lineNo: number;
         public words: string[]; // the tokens in this line 
         public scope: string;
-        public location: number; 
+        public location: number;
         public instruction: Instruction;
         public numArgs: number[];
 
