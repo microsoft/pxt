@@ -23,6 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
+let externalMessageHandlers: ExternalMessageHandlerDictionary = {};
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -305,6 +306,31 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
 
                 return res;
             });
+    else if (cmd == "POST externalmsg") {
+        return readJsonAsync()
+            .then((data: ExternalMessageData) => {
+                if (!data || !data.messageType) {
+                    throw throwError(400);
+                }
+
+                let resultDeferred = Promise.defer<ExternalMessageResult>();
+
+                if (!externalMessageHandlers[data.messageType]) {
+                    resultDeferred.resolve({
+                        error: "noHandler"
+                    });
+                } else {
+                    externalMessageHandlers[data.messageType]((res) => {
+                        resultDeferred.resolve({
+                            error: res.error,
+                            result: res.result
+                        });
+                    }, data.args);
+                }
+
+                return resultDeferred.promise;
+            });
+    }
     else throw throwError(400)
 }
 
@@ -642,12 +668,25 @@ function getBrowserLocation(browser: string) {
     return browser;
 }
 
+export interface ExternalMessageData {
+    messageType: string;
+    args: any
+}
+export interface ExternalMessageResult {
+    error?: any;
+    result?: any;
+}
+export interface ExternalCallback { (res: ExternalMessageResult): void }
+export interface ExternalMessageHandler { (cb: ExternalCallback, data?: ExternalMessageData): void }
+export interface ExternalMessageHandlerDictionary { [messageType: string]: ExternalMessageHandler }
+
 export interface ServeOptions {
     localToken: string;
     autoStart: boolean;
     packaged?: boolean;
     electron?: boolean;
     browser?: string;
+    externalHandlers?: ExternalMessageHandlerDictionary;
 }
 
 let serveOptions: ServeOptions;
@@ -656,6 +695,10 @@ export function serveAsync(options: ServeOptions) {
     setupRootDir();
     initTargetCommands();
     initSerialMonitor();
+
+    if (serveOptions.externalHandlers) {
+        externalMessageHandlers = serveOptions.externalHandlers;
+    }
 
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
