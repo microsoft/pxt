@@ -814,12 +814,10 @@ namespace pxt.blocks {
                     let nextElement = element.parentNode.nextSibling;
                     let previousElement = element.parentNode.previousSibling;
                     if (!nextElement && !onlyChild) {
-                        element.style.borderBottomLeftRadius = "10px";
-                        element.style.borderBottomRightRadius = "10px";
+                        element.className += ' blocklyTreeRowBottom';
                     }
                     if (!previousElement && !onlyChild) {
-                        element.style.borderTopLeftRadius = "10px";
-                        element.style.borderTopRightRadius = "10px";
+                        element.className += ' blocklyTreeRowTop';
                     }
                     if (this.hasColours_) {
                         element.style.color = '#fff';
