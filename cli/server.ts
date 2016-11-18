@@ -23,7 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
-let externalMessageHandlers: ExternalMessageHandlerDictionary = {};
+let externalMessageHandlers: pxt.Map<ExternalMessageHandler> = {};
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -678,7 +678,6 @@ export interface ExternalMessageResult {
 }
 export interface ExternalCallback { (res: ExternalMessageResult): void }
 export interface ExternalMessageHandler { (cb: ExternalCallback, data?: ExternalMessageData): void }
-export interface ExternalMessageHandlerDictionary { [messageType: string]: ExternalMessageHandler }
 
 export interface ServeOptions {
     localToken: string;
@@ -686,7 +685,7 @@ export interface ServeOptions {
     packaged?: boolean;
     electron?: boolean;
     browser?: string;
-    externalHandlers?: ExternalMessageHandlerDictionary;
+    externalHandlers?: pxt.Map<ExternalMessageHandler>;
 }
 
 let serveOptions: ServeOptions;

@@ -3620,8 +3620,8 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-let externalMessageHandlers: server.ExternalMessageHandlerDictionary;
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), externalHandlers?: server.ExternalMessageHandlerDictionary) {
+let externalMessageHandlers: pxt.Map<server.ExternalMessageHandler>;
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), externalHandlers?: pxt.Map<server.ExternalMessageHandler>) {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
