@@ -1530,6 +1530,7 @@ export function serveAsync(...args: string[]) {
             autoStart: !globalConfig.noAutoStart,
             packaged: packaged,
             electron: hasArg("electron"),
+            externalHandlers: externalMessageHandlers || void 0,
             browser
         }))
 }
@@ -3619,7 +3620,8 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2)) {
+let externalMessageHandlers: pxt.Map<server.ExternalMessageHandler>;
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), externalHandlers?: pxt.Map<server.ExternalMessageHandler>) {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3627,6 +3629,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         console.error("Please upgrade your pxt CLI module.")
         console.error("   npm update -g pxt")
         process.exit(30)
+    }
+
+    if (externalHandlers) {
+        externalMessageHandlers = externalHandlers;
     }
 
     nodeutil.setTargetDir(targetDir);
