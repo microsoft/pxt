@@ -816,7 +816,7 @@ export function serveAsync(options: ServeOptions) {
     });
 
     // if user has a server.js file, require it
-    let serverjs = path.resolve(path.join(root, 'server.js'))
+    const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
         require(serverjs);
