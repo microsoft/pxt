@@ -117,7 +117,6 @@ function strpSrcMap(task, dir) {
         }
         files.forEach((file, index) => {
             file = path.resolve(dir, file) + '';
-            console.log(file);
             let isDirectory = fs.statSync(file).isDirectory();
             if (isDirectory) {
                 strpSrcMap(this, file);
