@@ -76,7 +76,6 @@ declare namespace pxt {
         publishing?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages
-        apiRoot?: string; // url of cloud API
     }
 
     interface AppSimulator {

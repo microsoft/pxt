@@ -220,7 +220,7 @@ namespace pxt.github {
             return Promise.resolve<GitRepo>(undefined);
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.appTarget.cloud.apiRoot}/gh/${rid.fullName}`)
+        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}/gh/${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
