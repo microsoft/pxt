@@ -3425,15 +3425,12 @@ function checkDocsAsync(...args: string[]): Promise<void> {
 
 function publishGistCoreAsync(): Promise<void> {
     console.log("Publishing project to gist anonymously.");
-    return Promise.resolve()
-        .then(() => {
-            return mainPkg.loadAsync()
-        })
+    return mainPkg.loadAsync()
         .then(() => {
             console.log("Uploading....")
             let files: string[] = mainPkg.getFiles()
             let pxtConfig = mainPkg.config;
-            let filesMap: Map<{}> = {};
+            let filesMap: Map<{content: string;}> = {};
 
             files.forEach((fn) => {
                 let fileContent = fs.readFileSync(fn, "utf8");
@@ -3442,7 +3439,7 @@ function publishGistCoreAsync(): Promise<void> {
                         "content": fileContent
                     }
                 } else {
-                    // Cannot publish empty files, go through and remove empty file references form pxt.json
+                    // Cannot publish empty files, go through and remove empty file references from pxt.json
                     if (pxtConfig.files && pxtConfig.files.indexOf(fn) > -1) {
                         pxtConfig.files.splice(pxtConfig.files.indexOf(fn), 1);
                     } else if (pxtConfig.testFiles && pxtConfig.testFiles.indexOf(fn) > -1) {
@@ -3452,7 +3449,7 @@ function publishGistCoreAsync(): Promise<void> {
             })
             // Add pxt.json
             filesMap['pxt.json'] = {
-                "content": JSON.stringify(pxtConfig)
+                "content": JSON.stringify(pxtConfig, null, 4)
             }
             return pxt.github.publishGist(filesMap, pxtConfig.description, false)
         })
