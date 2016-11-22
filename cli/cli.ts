@@ -3423,6 +3423,49 @@ function checkDocsAsync(...args: string[]): Promise<void> {
     return Promise.resolve();
 }
 
+function publishGistCoreAsync(): Promise<void> {
+    console.log("Publishing project to gist anonymously.");
+    return mainPkg.loadAsync()
+        .then(() => {
+            console.log("Uploading....")
+            let files: string[] = mainPkg.getFiles()
+            let pxtConfig = mainPkg.config;
+            let filesMap: Map<{content: string;}> = {};
+
+            files.forEach((fn) => {
+                let fileContent = fs.readFileSync(fn, "utf8");
+                if (fileContent) {
+                    filesMap[fn] = {
+                        "content": fileContent
+                    }
+                } else {
+                    // Cannot publish empty files, go through and remove empty file references from pxt.json
+                    if (pxtConfig.files && pxtConfig.files.indexOf(fn) > -1) {
+                        pxtConfig.files.splice(pxtConfig.files.indexOf(fn), 1);
+                    } else if (pxtConfig.testFiles && pxtConfig.testFiles.indexOf(fn) > -1) {
+                        pxtConfig.testFiles.splice(pxtConfig.testFiles.indexOf(fn), 1);
+                    }
+                }
+            })
+            // Add pxt.json
+            filesMap['pxt.json'] = {
+                "content": JSON.stringify(pxtConfig, null, 4)
+            }
+            return pxt.github.publishGist(filesMap, pxtConfig.description, false)
+        })
+        .then((published_id) => {
+            console.log(`Success, your gist url is https://gist.github.com/${published_id}`);
+            console.log(`You can load your published project at ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+        })
+        .catch((e) => {
+            console.error(e);
+        });
+}
+
+export function publishGistAsync(arg?: string) {
+    return publishGistCoreAsync();
+}
+
 interface SnippetInfo {
     type: string
     code: string
@@ -3487,7 +3530,7 @@ cmd("help     [all]               - display this message", helpAsync)
 cmd("init                         - start new package (library) in current directory", initAsync)
 cmd("install  [PACKAGE...]        - install new packages, or all packages", installAsync)
 
-cmd("build    [--cloud]            - build current package, --cloud forces a build in the cloud", buildAsync)
+cmd("build    [--cloud]           - build current package, --cloud forces a build in the cloud", buildAsync)
 cmd("deploy                       - build and deploy current package", deployAsync)
 cmd("run                          - build and run current package in the simulator", runAsync)
 cmd("extract [--code] [--out DIRNAME]  [FILENAME] - extract sources from .hex file, folder of .hex files, stdin (-), or URL", extractAsync)
@@ -3500,7 +3543,7 @@ cmd("testdecompiler  DIR          - decompile files from DIR one-by-one and comp
 cmd("testdecompilererrors  DIR    - decompile unsupported files from DIR one-by-one and check for errors", testDecompilerErrorsAsync, 1)
 cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirAsync, 1)
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
-cmd("snippets [--re NAME] [--i]     - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
+cmd("snippets [--re NAME] [--i]   - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
 cmd("serve [-yt] [-browser NAME]  - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
@@ -3510,6 +3553,7 @@ cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", checkDocsAsync, 1)
+cmd("gist                         - publish current package to an anonymous gist", publishGistAsync)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 cmd("logout                       - clears access token", logoutAsync, 1)

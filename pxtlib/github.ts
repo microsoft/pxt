@@ -220,7 +220,7 @@ namespace pxt.github {
             return Promise.resolve<GitRepo>(undefined);
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.appTarget.appTheme.homeUrl}api/gh/${rid.fullName}`)
+        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}/gh/${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -305,6 +305,24 @@ namespace pxt.github {
                         else
                             return tagToShaAsync(scr.fullName, scr.defaultBranch)
                     })
+            });
+    }
+
+    export function publishGist(files: any, description: string, publishPublicly: boolean = false): Promise<string> {
+        let data = {
+            "description": description,
+            "public": publishPublicly,
+            "files": files
+        };
+        return U.requestAsync({
+                url: "https://api.github.com/gists",
+                allowHttpErrors: true,
+                data: data || {} })
+            .then((resp) => {
+                if (resp.statusCode == 201 && resp.json.id) {
+                    return Promise.resolve<string>(resp.json.id);
+                }
+                return Promise.reject(resp.text);
             });
     }
 
