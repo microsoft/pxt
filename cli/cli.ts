@@ -3459,9 +3459,11 @@ function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false,
                 console.log("Warning: You're trying to update an existing project but no github token was provided, publishing a new anonymous project instead.")
                 forceNewGist = true;
             }
+            let gistId = pxtConfig.gistId;
+            let publicGist = publishPublicly || pxtConfig.publicGist;
             console.log(`${forceNewGist || !pxtConfig.gistId ? 
-                `Publishing a ${publishPublicly ? `public` : `secret`} project to gist` :
-                `Updating existing ${publishPublicly ? `public` : `secret`} gist project`} ${token ? `using token: ${token}` : `anonymously`}.`);
+                `Publishing a ${publicGist ? `public` : `secret`} project to gist` :
+                `Updating existing ${publicGist ? `public` : `secret`} gist project`} ${token ? `using token: ${token}` : `anonymously`}.`);
 
             let files: string[] = mainPkg.getFiles()
             let filesMap: Map<{content: string;}> = {};
@@ -3481,12 +3483,15 @@ function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false,
                     }
                 }
             })
+            // Strip gist fields from config
+            delete pxtConfig.gistId;
+            delete pxtConfig.publicGist;
             // Add pxt.json
             filesMap['pxt.json'] = {
                 "content": JSON.stringify(pxtConfig, null, 4)
             }
             console.log("Uploading....")
-            return pxt.github.publishGist(token, forceNewGist, filesMap, pxtConfig.description, pxtConfig.gistId, publishPublicly)
+            return pxt.github.publishGist(token, forceNewGist, filesMap, pxtConfig.description, gistId, publicGist)
         })
         .then((published_id) => {
             console.log(`Success, view your gist at https://gist.github.com/${published_id}`);
