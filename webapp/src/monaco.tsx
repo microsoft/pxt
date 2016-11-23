@@ -342,7 +342,7 @@ export class Editor extends srceditor.Editor {
             let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
             this.editor.addAction({
                 id: "reference",
-                label: lf("Show Definition"),
+                label: lf("Help"),
                 keybindingContext: "!editorReadonly && editorHasReference",
                 contextMenuGroupId: "navigation",
                 contextMenuOrder: 0.1,
