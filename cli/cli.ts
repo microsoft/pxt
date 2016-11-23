@@ -43,6 +43,7 @@ export interface UserConfig {
     noAutoBuild?: boolean;
     noAutoStart?: boolean;
     localBuild?: boolean;
+    githubAccessToken?: string; // Github Access Token used for gist publishing
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -120,13 +121,34 @@ function initConfig() {
     }
 }
 
-export function loginAsync(access_token: string) {
-    if (/^http/.test(access_token)) {
+export function loginAsync(...args: string[]) {
+    let access_token: string;
+    let hasAccessToken = false;
+    let hasGithubToken = false;
+    for (let i = 0; i < args.length; i++) {
+        if (i == 0) {
+            hasAccessToken = /^http/.test(args[0]);
+            if (hasAccessToken) access_token = args[0];
+        }
+        if (args[i] == "--github" && i < args.length - 1) {
+            try {
+                globalConfig.githubAccessToken = args[i + 1]
+                saveConfig()
+                hasGithubToken = true;
+                i++
+            }
+            catch (e) {
+                console.log(`"${args[0]}" could not extract github token from command`);
+            }
+        }
+    }
+    if (hasAccessToken) {
         globalConfig.accessToken = access_token
         saveConfig()
         if (process.env["CLOUD_ACCESS_TOKEN"])
             console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
-    } else {
+    }
+    if (!hasAccessToken && !hasGithubToken) {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
         console.log(`  pxt login https://example.com/?access_token=...`)
@@ -139,6 +161,7 @@ export function loginAsync(access_token: string) {
 
 export function logoutAsync() {
     globalConfig.accessToken = undefined;
+    globalConfig.githubAccessToken = undefined;
     saveConfig();
     console.log('access token removed');
     return Promise.resolve();
@@ -3424,11 +3447,16 @@ function checkDocsAsync(...args: string[]): Promise<void> {
 }
 
 function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false, publishPublicly: boolean = false): Promise<void> {
+    if (!token && globalConfig.githubAccessToken) token = globalConfig.githubAccessToken;
     return mainPkg.loadAsync()
         .then(() => {
-            let pxtConfig = mainPkg.config;
+            let pxtConfig = U.clone(mainPkg.config);
             if (publishPublicly && pxtConfig.gistId && !pxtConfig.publicGist) {
                 console.log("Warning: You're trying to update an existing project but the current project is secret, publishing a new public project instead.")
+                forceNewGist = true;
+            }
+            if (pxtConfig.gistId && !token && !forceNewGist) {
+                console.log("Warning: You're trying to update an existing project but no github token was provided, publishing a new anonymous project instead.")
                 forceNewGist = true;
             }
             console.log(`${forceNewGist || !pxtConfig.gistId ? 
@@ -3465,7 +3493,7 @@ function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false,
             console.log(`You can load your published project at ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
 
             // Save gist id to pxt.json
-            mainPkg.config.gistId = published_id;
+            if (token) mainPkg.config.gistId = published_id;
             if (publishPublicly) mainPkg.config.publicGist = true;
             mainPkg.saveConfig();
         })
@@ -3589,7 +3617,7 @@ cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled proj
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", checkDocsAsync, 1)
 cmd("gist [--new] [--public] [--token TOKEN]  - publish current package to a gist, --token to create a gist under your github account (otherwise anonymous), --new to force create a new gist, --public to create a public gist (otherwise secret)", publishGistAsync)
 
-cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
+cmd("login [ACCESS_TOKEN] [--github TOKEN]  - set access token config variable", loginAsync, 1)
 cmd("logout                       - clears access token", logoutAsync, 1)
 
 cmd("add      ARGUMENTS...        - add a feature (.asm, C++ etc) to package", addAsync)
