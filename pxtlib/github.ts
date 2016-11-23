@@ -308,18 +308,31 @@ namespace pxt.github {
             });
     }
 
-    export function publishGist(files: any, description: string, publishPublicly: boolean = false): Promise<string> {
+    export function publishGist(token: string, forceNew: boolean, files: any, description: string, currentGistId: string, publishPublicly: boolean = false): Promise<string> {
         let data = {
             "description": description,
             "public": publishPublicly,
             "files": files
         };
+        let headers: Map<string> = {};
+        let method: string, url: string = "https://api.github.com/gists";
+        if (token) headers['Authorization'] = `token ${token}`;
+        if (currentGistId && token && !forceNew) {
+            // Patch existing gist
+            method = 'PATCH';
+            url += `/${currentGistId}`;
+        } else {
+            // Create new gist
+            method = 'POST';
+        }
         return U.requestAsync({
-                url: "https://api.github.com/gists",
+                url: url,
                 allowHttpErrors: true,
+                headers: headers,
+                method: method,
                 data: data || {} })
             .then((resp) => {
-                if (resp.statusCode == 201 && resp.json.id) {
+                if ((resp.statusCode == 200 || resp.statusCode == 201) && resp.json.id) {
                     return Promise.resolve<string>(resp.json.id);
                 }
                 return Promise.reject(resp.text);

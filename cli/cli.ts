@@ -3423,13 +3423,19 @@ function checkDocsAsync(...args: string[]): Promise<void> {
     return Promise.resolve();
 }
 
-function publishGistCoreAsync(): Promise<void> {
-    console.log("Publishing project to gist anonymously.");
+function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false, publishPublicly: boolean = false): Promise<void> {
     return mainPkg.loadAsync()
         .then(() => {
-            console.log("Uploading....")
-            let files: string[] = mainPkg.getFiles()
             let pxtConfig = mainPkg.config;
+            if (publishPublicly && pxtConfig.gistId && !pxtConfig.publicGist) {
+                console.log("Warning: You're trying to update an existing project but the current project is secret, publishing a new public project instead.")
+                forceNewGist = true;
+            }
+            console.log(`${forceNewGist || !pxtConfig.gistId ? 
+                `Publishing a ${publishPublicly ? `public` : `secret`} project to gist` :
+                `Updating existing ${publishPublicly ? `public` : `secret`} gist project`} ${token ? `using token: ${token}` : `anonymously`}.`);
+
+            let files: string[] = mainPkg.getFiles()
             let filesMap: Map<{content: string;}> = {};
 
             files.forEach((fn) => {
@@ -3451,19 +3457,47 @@ function publishGistCoreAsync(): Promise<void> {
             filesMap['pxt.json'] = {
                 "content": JSON.stringify(pxtConfig, null, 4)
             }
-            return pxt.github.publishGist(filesMap, pxtConfig.description, false)
+            console.log("Uploading....")
+            return pxt.github.publishGist(token, forceNewGist, filesMap, pxtConfig.description, pxtConfig.gistId, publishPublicly)
         })
         .then((published_id) => {
-            console.log(`Success, your gist url is https://gist.github.com/${published_id}`);
+            console.log(`Success, view your gist at https://gist.github.com/${published_id}`);
             console.log(`You can load your published project at ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+
+            // Save gist id to pxt.json
+            mainPkg.config.gistId = published_id;
+            if (publishPublicly) mainPkg.config.publicGist = true;
+            mainPkg.saveConfig();
         })
         .catch((e) => {
             console.error(e);
         });
 }
 
-export function publishGistAsync(arg?: string) {
-    return publishGistCoreAsync();
+export function publishGistAsync(...args: string[]) {
+    let token = "";
+    let forceNewGist = false;
+    let publishPublicly = false;
+
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] == "--new") {
+            forceNewGist = true
+        }
+        else if (args[i] == "--public") {
+            publishPublicly = true
+        }
+        else if (args[i] == "--token" && i < args.length - 1) {
+            try {
+                token = args[i + 1]
+                i++
+            }
+            catch (e) {
+                console.log(`"${args[0]}" could not extract token from command, publishing as anonymous`);
+            }
+        }
+    }
+
+    return publishGistCoreAsync(token, forceNewGist, publishPublicly);
 }
 
 interface SnippetInfo {
@@ -3553,7 +3587,7 @@ cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", checkDocsAsync, 1)
-cmd("gist                         - publish current package to an anonymous gist", publishGistAsync)
+cmd("gist [--new] [--public] [--token TOKEN]  - publish current package to a gist, --token to create a gist under your github account (otherwise anonymous), --new to force create a new gist, --public to create a public gist (otherwise secret)", publishGistAsync)
 
 cmd("login    ACCESS_TOKEN        - set access token config variable", loginAsync, 1)
 cmd("logout                       - clears access token", logoutAsync, 1)
