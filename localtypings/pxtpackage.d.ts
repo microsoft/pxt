@@ -26,6 +26,8 @@ declare namespace pxt {
         yotta?: YottaConfig;
         card?: CodeCard;
         additionalFilePath?: string;
+        gistId?: string;
+        publicGist?: boolean;
     }
 
     interface PlatformIOConfig {
