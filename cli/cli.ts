@@ -3503,7 +3503,11 @@ function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false,
             mainPkg.saveConfig();
         })
         .catch((e) => {
-            console.error(e);
+            if (e == '404') {
+                console.error("Unable to access the existing project. --new to publish a new gist.")
+            } else {
+                console.error(e);
+            }
         });
 }
 

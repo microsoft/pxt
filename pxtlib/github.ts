@@ -308,7 +308,7 @@ namespace pxt.github {
             });
     }
 
-    export function publishGist(token: string, forceNew: boolean, files: any, description: string, currentGistId: string, publishPublicly: boolean = false): Promise<string> {
+    export function publishGist(token: string, forceNew: boolean, files: any, description: string, currentGistId: string, publishPublicly: boolean = false): Promise<any> {
         let data = {
             "description": description,
             "public": publishPublicly,
@@ -334,6 +334,8 @@ namespace pxt.github {
             .then((resp) => {
                 if ((resp.statusCode == 200 || resp.statusCode == 201) && resp.json.id) {
                     return Promise.resolve<string>(resp.json.id);
+                } else if (resp.statusCode == 404 && method == 'PATCH') {
+                    return Promise.reject(resp.statusCode);
                 }
                 return Promise.reject(resp.text);
             });
