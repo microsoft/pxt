@@ -288,7 +288,7 @@ export class Editor extends srceditor.Editor {
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
             keybindingContext: "!editorReadonly",
             contextMenuGroupId: "0_pxtnavigation",
-            contextMenuOrder: 0.1,
+            contextMenuOrder: 0.2,
             run: () => Promise.resolve(this.parent.typecheckNow())
         });
 
@@ -298,7 +298,7 @@ export class Editor extends srceditor.Editor {
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
             keybindingContext: "!editorReadonly",
             contextMenuGroupId: "0_pxtnavigation",
-            contextMenuOrder: 0.11,
+            contextMenuOrder: 0.21,
             run: () => Promise.resolve(this.parent.runSimulator())
         });
 
@@ -309,7 +309,7 @@ export class Editor extends srceditor.Editor {
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
                 contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.12,
+                contextMenuOrder: 0.22,
                 run: () => Promise.resolve(this.parent.compile())
             });
         }
@@ -337,6 +337,27 @@ export class Editor extends srceditor.Editor {
                 monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: false});
             }
         })
+
+        if (pxt.appTarget.appTheme.hasReferenceDocs) {
+            let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
+            this.editor.addAction({
+                id: "reference",
+                label: lf("Help"),
+                keybindingContext: "!editorReadonly && editorHasReference",
+                contextMenuGroupId: "navigation",
+                contextMenuOrder: 0.1,
+                run: () => Promise.resolve(this.loadReference())
+            });
+
+            this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
+                let word = this.editor.getModel().getWordAtPosition(e.position);
+                if (word) {
+                    referenceContextKey.set(true);
+                } else {
+                    referenceContextKey.reset()
+                }
+            })
+        }
 
         this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
             // Update editor font size in settings after a ctrl+scroll zoom
@@ -397,6 +418,20 @@ export class Editor extends srceditor.Editor {
         this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
+    }
+
+    loadReference() {
+        let currentPosition = this.editor.getPosition();
+        let wordInfo = this.editor.getModel().getWordAtPosition(currentPosition);
+        let prevWordInfo = this.editor.getModel().getWordUntilPosition(new monaco.Position(currentPosition.lineNumber, wordInfo.startColumn - 1));
+        if (prevWordInfo && wordInfo) {
+            let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
+            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
+            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`);
+        } else if (wordInfo) {
+            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
+            this.parent.setSideDoc(`/reference/${methodName}`);
+        }
     }
 
     getId() {

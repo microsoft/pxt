@@ -548,3 +548,9 @@ body.blocklyMinimalBody {
     padding-left: 10px !important;
     padding-right: 20px !important;
 }
+
+
+/* Fix for monaco editor Signature bug in Safari */
+.monaco-editor .parameter-hints-widget {
+    flex-direction: row !important;
+}
