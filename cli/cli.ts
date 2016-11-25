@@ -122,48 +122,36 @@ function initConfig() {
 }
 
 export function loginAsync(...args: string[]) {
-    let access_token: string;
-    let hasAccessToken = false;
-    let hasGithubToken = false;
-    for (let i = 0; i < args.length; i++) {
-        if (i == 0) {
-            hasAccessToken = /^http/.test(args[0]);
-            if (hasAccessToken) access_token = args[0];
-        }
-        if (args[i] == "--github" && i < args.length - 1) {
-            try {
-                globalConfig.githubAccessToken = args[i + 1]
-                saveConfig()
-                hasGithubToken = true;
-                i++
-            }
-            catch (e) {
-                console.log(`"${args[0]}" could not extract github token from command`);
-            }
-        }
-    }
-    if (hasAccessToken) {
-        globalConfig.accessToken = access_token
-        saveConfig()
+    const token = args[0];
+    if (/^https:\/\//.test(token)) {
+        globalConfig.accessToken = token
+        saveConfig();
         if (process.env["CLOUD_ACCESS_TOKEN"])
             console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
+        console.log("PXT token saved.")
     }
-    if (!hasAccessToken && !hasGithubToken) {
+    else if (/^[a-z0-9]{40,}$/.test(token)) {
+        globalConfig.githubAccessToken = token
+        saveConfig();
+        console.log("GitHub token saved.")
+    }
+    else {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
-        console.log(`  pxt login https://example.com/?access_token=...`)
-        console.log(`Go to ${root}oauth/gettoken to obtain the token.`)
+        console.log(`  pxt login TOKEN`)
+        console.log(`where TOKEN can be a GitHub token or PXT token.`)
+        console.log(`* go to https://github.com/settings/tokens/new to obtain the GitHub token for gists.`);
+        console.log(`* go to ${root}oauth/gettoken to obtain the PXT token.`)
         return fatal("Bad usage")
     }
-
     return Promise.resolve()
 }
 
 export function logoutAsync() {
-    globalConfig.accessToken = undefined;
-    globalConfig.githubAccessToken = undefined;
+    delete globalConfig.accessToken;
+    delete globalConfig.githubAccessToken;
     saveConfig();
-    console.log('access token removed');
+    console.log('access tokens removed');
     return Promise.resolve();
 }
 
@@ -3446,27 +3434,27 @@ function checkDocsAsync(...args: string[]): Promise<void> {
     return Promise.resolve();
 }
 
-function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false, publishPublicly: boolean = false): Promise<void> {
-    if (!token && globalConfig.githubAccessToken) token = globalConfig.githubAccessToken;
+function publishGistCoreAsync(forceNewGist: boolean = false, publishPublicly: boolean = false): Promise<void> {
+    const token = globalConfig.githubAccessToken;
     return mainPkg.loadAsync()
         .then(() => {
             let pxtConfig = U.clone(mainPkg.config);
             if (publishPublicly && pxtConfig.gistId && !pxtConfig.publicGist) {
-                console.log("Warning: You're trying to update an existing project but the current project is secret, publishing a new public project instead.")
+                console.warn("You are trying to update an existing project but the current project is secret, publishing a new public project instead.")
                 forceNewGist = true;
             }
             if (pxtConfig.gistId && !token && !forceNewGist) {
-                console.log("Warning: You're trying to update an existing project but no github token was provided, publishing a new anonymous project instead.")
+                console.warn("You are trying to update an existing project but no github token was provided, publishing a new anonymous project instead.")
                 forceNewGist = true;
             }
             let gistId = pxtConfig.gistId;
             let publicGist = publishPublicly || pxtConfig.publicGist;
-            console.log(`${forceNewGist || !pxtConfig.gistId ? 
+            console.log(`${forceNewGist || !pxtConfig.gistId ?
                 `Publishing a ${publicGist ? `public` : `secret`} project to gist` :
-                `Updating existing ${publicGist ? `public` : `secret`} gist project`} ${token ? `using token: ${token}` : `anonymously`}.`);
+                `Updating existing ${publicGist ? `public` : `secret`} gist project`} ${token ? `` : `anonymously`}.`);
 
             let files: string[] = mainPkg.getFiles()
-            let filesMap: Map<{content: string;}> = {};
+            let filesMap: Map<{ content: string; }> = {};
 
             files.forEach((fn) => {
                 let fileContent = fs.readFileSync(fn, "utf8");
@@ -3496,6 +3484,7 @@ function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false,
         .then((published_id) => {
             console.log(`Success, view your gist at https://gist.github.com/${published_id}`);
             console.log(`You can load your published project at ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+            if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
 
             // Save gist id to pxt.json
             if (token) mainPkg.config.gistId = published_id;
@@ -3512,7 +3501,6 @@ function publishGistCoreAsync(token: string = "", forceNewGist: boolean = false,
 }
 
 export function publishGistAsync(...args: string[]) {
-    let token = "";
     let forceNewGist = false;
     let publishPublicly = false;
 
@@ -3523,18 +3511,9 @@ export function publishGistAsync(...args: string[]) {
         else if (args[i] == "--public") {
             publishPublicly = true
         }
-        else if (args[i] == "--token" && i < args.length - 1) {
-            try {
-                token = args[i + 1]
-                i++
-            }
-            catch (e) {
-                console.log(`"${args[0]}" could not extract token from command, publishing as anonymous`);
-            }
-        }
     }
 
-    return publishGistCoreAsync(token, forceNewGist, publishPublicly);
+    return publishGistCoreAsync(forceNewGist, publishPublicly);
 }
 
 interface SnippetInfo {
@@ -3624,10 +3603,10 @@ cmd("uploadtrg [LABEL]            - upload target release", uploadTargetAsync, 1
 cmd("uploadtrgtranslations [--docs] - upload translations for target, --docs uploads markdown as well", uploadTargetTranslationsAsync, 1)
 cmd("downloadtrgtranslations [PACKAGE] - download translations from bundled projects", downloadTargetTranslationsAsync, 1)
 cmd("checkdocs                    - check docs for broken links, typing errors, etc...", checkDocsAsync, 1)
-cmd("gist [--new] [--public] [--token TOKEN]  - publish current package to a gist, --token to create a gist under your github account (otherwise anonymous), --new to force create a new gist, --public to create a public gist (otherwise secret)", publishGistAsync)
+cmd("gist [--new] [--public]      - publish current package to a gist, use 'pxt login' to create a gist under your GitHub account (otherwise anonymous), --new to force create a new gist, --public to create a public gist (otherwise secret)", publishGistAsync)
 
-cmd("login [ACCESS_TOKEN] [--github TOKEN]  - set access token config variable", loginAsync, 1)
-cmd("logout                       - clears access token", logoutAsync, 1)
+cmd("login TOKEN                  - stores the PXT or GitHub access token", loginAsync, 1)
+cmd("logout                       - clears access tokens", logoutAsync, 1)
 
 cmd("add      ARGUMENTS...        - add a feature (.asm, C++ etc) to package", addAsync)
 cmd("search   QUERY...            - search GitHub for a published package", searchAsync)
