@@ -308,13 +308,13 @@ namespace pxt.github {
             });
     }
 
-    export function publishGist(token: string, forceNew: boolean, files: any, description: string, currentGistId: string, publishPublicly: boolean = false): Promise<any> {
-        let data = {
-            "description": description,
+    export function publishGistAsync(token: string, forceNew: boolean, files: any, name: string, currentGistId: string, publishPublicly: boolean = false): Promise<any> {
+        const data = {
+            "description": name,
             "public": publishPublicly,
             "files": files
         };
-        let headers: Map<string> = {};
+        const headers: Map<string> = {};
         let method: string, url: string = "https://api.github.com/gists";
         if (token) headers['Authorization'] = `token ${token}`;
         if (currentGistId && token && !forceNew) {

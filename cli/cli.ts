@@ -3438,7 +3438,7 @@ function publishGistCoreAsync(forceNewGist: boolean = false, publishPublicly: bo
     const token = globalConfig.githubAccessToken;
     return mainPkg.loadAsync()
         .then(() => {
-            let pxtConfig = U.clone(mainPkg.config);
+            const pxtConfig = U.clone(mainPkg.config);
             if (publishPublicly && pxtConfig.gistId && !pxtConfig.publicGist) {
                 console.warn("You are trying to update an existing project but the current project is secret, publishing a new public project instead.")
                 forceNewGist = true;
@@ -3447,14 +3447,14 @@ function publishGistCoreAsync(forceNewGist: boolean = false, publishPublicly: bo
                 console.warn("You are trying to update an existing project but no github token was provided, publishing a new anonymous project instead.")
                 forceNewGist = true;
             }
-            let gistId = pxtConfig.gistId;
-            let publicGist = publishPublicly || pxtConfig.publicGist;
+            const gistId = pxtConfig.gistId;
+            const publicGist = publishPublicly || pxtConfig.publicGist;
             console.log(`${forceNewGist || !pxtConfig.gistId ?
                 `Publishing a ${publicGist ? `public` : `secret`} project to gist` :
                 `Updating existing ${publicGist ? `public` : `secret`} gist project`} ${token ? `` : `anonymously`}.`);
 
-            let files: string[] = mainPkg.getFiles()
-            let filesMap: Map<{ content: string; }> = {};
+            const files: string[] = mainPkg.getFiles()
+            const filesMap: Map<{ content: string; }> = {};
 
             files.forEach((fn) => {
                 let fileContent = fs.readFileSync(fn, "utf8");
@@ -3479,7 +3479,7 @@ function publishGistCoreAsync(forceNewGist: boolean = false, publishPublicly: bo
                 "content": JSON.stringify(pxtConfig, null, 4)
             }
             console.log("Uploading....")
-            return pxt.github.publishGist(token, forceNewGist, filesMap, pxtConfig.description, gistId, publicGist)
+            return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId, publicGist)
         })
         .then((published_id) => {
             console.log(`Success, view your gist at https://gist.github.com/${published_id}`);
