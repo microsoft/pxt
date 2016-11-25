@@ -27,7 +27,6 @@ declare namespace pxt {
         card?: CodeCard;
         additionalFilePath?: string;
         gistId?: string;
-        publicGist?: boolean;
     }
 
     interface PlatformIOConfig {

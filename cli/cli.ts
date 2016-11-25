@@ -1974,7 +1974,8 @@ export function initAsync() {
     let config = U.clone(prj.config);
 
     config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
-    config.public = true
+    // by default, projects are not public
+    config.public = false
 
     let configMap: Map<string> = config as any
 
@@ -1982,9 +1983,6 @@ export function initAsync() {
         config.license = "MIT"
     if (!config.version)
         config.version = "0.0.0"
-
-    // hack: remove microbit-radio, as we don't want it in all libraries
-    delete config.dependencies["microbit-radio"]
 
     return Promise.mapSeries(["name", "description", "license"], f =>
         queryAsync(f, configMap[f])
@@ -3434,25 +3432,16 @@ function checkDocsAsync(...args: string[]): Promise<void> {
     return Promise.resolve();
 }
 
-function publishGistCoreAsync(forceNewGist: boolean = false, publishPublicly: boolean = false): Promise<void> {
+function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
     const token = globalConfig.githubAccessToken;
     return mainPkg.loadAsync()
         .then(() => {
             const pxtConfig = U.clone(mainPkg.config);
-            if (publishPublicly && pxtConfig.gistId && !pxtConfig.publicGist) {
-                console.warn("You are trying to update an existing project but the current project is secret, publishing a new public project instead.")
-                forceNewGist = true;
-            }
             if (pxtConfig.gistId && !token && !forceNewGist) {
-                console.warn("You are trying to update an existing project but no github token was provided, publishing a new anonymous project instead.")
+                console.warn("You are trying to update an existing project but no GitHub token was provided, publishing a new anonymous project instead.")
                 forceNewGist = true;
             }
             const gistId = pxtConfig.gistId;
-            const publicGist = publishPublicly || pxtConfig.publicGist;
-            console.log(`${forceNewGist || !pxtConfig.gistId ?
-                `Publishing a ${publicGist ? `public` : `secret`} project to gist` :
-                `Updating existing ${publicGist ? `public` : `secret`} gist project`} ${token ? `` : `anonymously`}.`);
-
             const files: string[] = mainPkg.getFiles()
             const filesMap: Map<{ content: string; }> = {};
 
@@ -3473,22 +3462,23 @@ function publishGistCoreAsync(forceNewGist: boolean = false, publishPublicly: bo
             })
             // Strip gist fields from config
             delete pxtConfig.gistId;
-            delete pxtConfig.publicGist;
             // Add pxt.json
             filesMap['pxt.json'] = {
                 "content": JSON.stringify(pxtConfig, null, 4)
             }
             console.log("Uploading....")
-            return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId, publicGist)
+            return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
         })
         .then((published_id) => {
-            console.log(`Success, view your gist at https://gist.github.com/${published_id}`);
-            console.log(`You can load your published project at ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+            console.log(`Success, view your gist at`);
+            console.log(``)
+            console.log(`    https://gist.github.com/${published_id}`);
+            console.log(``)
+            console.log(`To share your project, make your gist public and go to ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
             if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
 
             // Save gist id to pxt.json
             if (token) mainPkg.config.gistId = published_id;
-            if (publishPublicly) mainPkg.config.publicGist = true;
             mainPkg.saveConfig();
         })
         .catch((e) => {
@@ -3502,18 +3492,13 @@ function publishGistCoreAsync(forceNewGist: boolean = false, publishPublicly: bo
 
 export function publishGistAsync(...args: string[]) {
     let forceNewGist = false;
-    let publishPublicly = false;
-
     for (let i = 0; i < args.length; i++) {
         if (args[i] == "--new") {
             forceNewGist = true
         }
-        else if (args[i] == "--public") {
-            publishPublicly = true
-        }
     }
 
-    return publishGistCoreAsync(forceNewGist, publishPublicly);
+    return publishGistCoreAsync(forceNewGist);
 }
 
 interface SnippetInfo {
