@@ -309,6 +309,7 @@ namespace pxt.github {
     }
 
     export function publishGistAsync(token: string, forceNew: boolean, files: any, name: string, currentGistId: string): Promise<any> {
+        // Github gist API: https://developer.github.com/v3/gists/
         const data = {
             "description": name,
             "public": false, /* there is no API to make a gist public or private, so it's easier/safer to always make it private and let the user make it public from the UI */
