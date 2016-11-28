@@ -20,7 +20,7 @@ pxt target microbit
 pxt serve
 ```
 
-The last command will open default browser and point it to http://localhost:3232/
+The last command will open the editor in your default browser.
 
 The `pxt target microbit` is conceptually the same as ``npm install pxt-microbit``
 plus some housekeeping, like setting up `pxtcli.json` file to point to the target.

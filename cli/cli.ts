@@ -1542,6 +1542,7 @@ export function serveAsync(...args: string[]) {
             packaged: packaged,
             electron: hasArg("electron"),
             externalHandlers: externalMessageHandlers || void 0,
+            port: parseInt(argValue("port") || "0"),
             browser
         }))
 }
@@ -3580,7 +3581,7 @@ cmd("testdir  DIR                 - compile files from DIR one-by-one", testDirA
 cmd("testconv JSONURL             - test TD->TS converter", testConverterAsync, 2)
 cmd("snippets [--re NAME] [--i]   - verifies that all documentation snippets compile to blocks", testSnippetsAsync)
 
-cmd("serve [-yt] [-browser NAME]  - start web server for your local target; -yt = use local yotta build", serveAsync)
+cmd("serve [--yt] [--browser NAME] [--port PORT]  - start web server for your local target; -yt = use local yotta build", serveAsync)
 cmd("update                       - update pxt-core reference and install updated version", updateAsync)
 cmd("buildtarget                  - build pxtarget.json", () => buildTargetAsync().then(() => { }), 1)
 cmd("bump [--noupdate]            - bump target or package version", bumpAsync)
