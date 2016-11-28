@@ -57,7 +57,7 @@ npm install -g pxt
 After this you can run `pxt` from anywhere within the build tree.
 
 To start the local web server, run `pxt serve` from within the root
-of an app target (e.g. pxt-microbit) and then browse to http://localhost:3232
+of an app target (e.g. pxt-microbit). PXT will open the editor in your default web browser.
 
 Alternatively, if you clone your pxt and pxt-microbit directories next to each
 other, you can serve your local pxt-microbit repo from within the pxt repo by

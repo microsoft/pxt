@@ -19,7 +19,7 @@ namespace pxt.Cloud {
 
     export function isLocalHost(): boolean {
         try {
-            return /^http:\/\/(localhost|127\.0\.0\.1):3232\//.test(window.location.href) && !/nolocalhost=1/.test(window.location.href);
+            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href) && !/nolocalhost=1/.test(window.location.href);
         } catch (e) { return false; }
     }
 

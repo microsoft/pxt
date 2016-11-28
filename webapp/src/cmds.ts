@@ -104,7 +104,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
     let deploy = () => Util.requestAsync({
-        url: "http://localhost:3232/api/deploy",
+        url: "/api/deploy",
         headers: { "Authorization": Cloud.localToken },
         method: "POST",
         data: resp,

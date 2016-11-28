@@ -36,7 +36,7 @@ export interface MachineState {
 
 function init() {
     if (!iface) {
-        if (!/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
+        if (!Cloud.isLocalHost() || !Cloud.localToken)
             return;
         pxt.debug('initializing debug pipe');
         iface = workeriface.makeWebSocket('ws://localhost:3233/' + Cloud.localToken + '/debug')
