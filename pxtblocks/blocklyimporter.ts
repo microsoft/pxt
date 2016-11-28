@@ -45,7 +45,7 @@ namespace pxt.blocks {
             return new XMLSerializer().serializeToString(doc);
         }
         catch (e) {
-            reportException(e, xml);
+            reportException(e, { xml: xml });
             return xml;
         }
     }

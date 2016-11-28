@@ -18,6 +18,13 @@ namespace ts.pxtc.avr {
             return 2
         }
 
+        // return offset+1 because stack points to next available slot
+        public computeStackOffset(kind: string, offset: number) {
+            if (kind == "args")
+                return offset + 2   // the return pointer is stored on the stack, skip it to get to args
+            return offset + 1
+        }
+
         public is32bit(i: assembler.Instruction) {
             return i.is32bit;
         }
@@ -74,19 +81,25 @@ namespace ts.pxtc.avr {
             if (i.is32bit)
                 // absolute address
                 return l
-            // relative addressing
-            let pc = f.baseOffset + f.location() + 2;
-            let rel = l - pc
-            // console.log("lookup =", l, " pc+2 =", pc, " rel = ", rel);
-            return rel;
+            // relative address
+            return l - (f.pc() + 2)
         }
 
-        public isPop(opcode: number): boolean {
-            return opcode == 0x900f;
-        }
+        public peephole(ln: pxtc.assembler.Line, lnNext: pxtc.assembler.Line, lnNext2: pxtc.assembler.Line) {
+                /*
+                let ld = this.encoders["$ld"]
+                let lnop = ln.getOp()
 
-        public isPush(opcode: number): boolean {
-            return opcode == 0x920f;
+                // replace 32-bit with 16-bit when branch distance is within bounds
+                if ((lnop == "call" || lnop == "jmp") && ln.numArgs[0] != null) {
+                    let offset = ln.numArgs[0] - (this.file.baseOffset + ln.location + 2) >> 1
+                    if (ld.encode(offset)) {
+                        // RULE: call/jmp .somewhere -> rcall/rjmp .somewhere (if fits)
+                        if (lnop == "call")
+                        ln.update((lnop == "call" ? "rcall " : "rjmp ") + ln.words[1])
+                    }
+                }
+                */
         }
 
         constructor() {
@@ -227,7 +240,7 @@ namespace ts.pxtc.avr {
             this.addInst("lsr   $r0", 0x9406, 0xfe0f);
             this.addInst("mov   $r0, $r1", 0x2C00, 0xfC00);
             this.addInst("movw  $r8, $r9", 0x0100, 0xff00);
-            this.addInst("mul   $r0, $r1", 0x9400, 0xfC00);
+            this.addInst("mul   $r0, $r1", 0x9c00, 0xfC00);
             this.addInst("muls  $r3, $r12", 0x0200, 0xff00);
             this.addInst("mulsu $r10, $r11", 0x0300, 0xff88);
             this.addInst("neg $r0", 0x9401, 0xfe0f);
@@ -242,7 +255,7 @@ namespace ts.pxtc.avr {
             this.addInst("reti", 0x9518, 0xffff);
             this.addInst("rjmp $ld", 0xc000, 0xf000);
             this.addInst("rol $r6", 0x1c00, 0xfc00);
-            this.addInst("lor $r0", 0x9407, 0xfe0f);
+            this.addInst("ror $r0", 0x9407, 0xfe0f);
             this.addInst("sbc   $r0, $r1", 0x0800, 0xfC00);
             this.addInst("sbci  $r3, $i1", 0x4000, 0xf000);
             this.addInst("sbi   $r7, $i9", 0x9a00, 0xff00);

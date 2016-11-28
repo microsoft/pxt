@@ -54,10 +54,16 @@ namespace pxt.github {
             .then(v => JSON.parse(v) as pxt.PackageConfig)
     }
 
-    export function downloadPackageAsync(repoWithTag: string, current: CachedPackage = null): Promise<CachedPackage> {
+    export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig, current: CachedPackage = null): Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
         if (!p) {
             pxt.log('Unknown github syntax');
+            return Promise.resolve<CachedPackage>(undefined);
+        }
+
+        if (!isRepoApproved(p, config)) {
+            pxt.tickEvent("github.download.unauthorized");
+            pxt.log('Github repo not approved');
             return Promise.resolve<CachedPackage>(undefined);
         }
 
@@ -162,7 +168,7 @@ namespace pxt.github {
         return rr;
     }
 
-    function repoStatus(rr: ParsedRepo, config: pxt.PackagesConfig): GitRepoStatus {
+    export function repoStatus(rr: ParsedRepo, config: pxt.PackagesConfig): GitRepoStatus {
         return isRepoBanned(rr, config) ? GitRepoStatus.Banned
             : isRepoApproved(rr, config) ? GitRepoStatus.Approved
                 : GitRepoStatus.Unknown;
@@ -214,7 +220,7 @@ namespace pxt.github {
             return Promise.resolve<GitRepo>(undefined);
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.appTarget.appTheme.homeUrl}api/gh/${rid.fullName}`)
+        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}/gh/${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -299,6 +305,24 @@ namespace pxt.github {
                         else
                             return tagToShaAsync(scr.fullName, scr.defaultBranch)
                     })
+            });
+    }
+
+    export function publishGist(files: any, description: string, publishPublicly: boolean = false): Promise<string> {
+        let data = {
+            "description": description,
+            "public": publishPublicly,
+            "files": files
+        };
+        return U.requestAsync({
+                url: "https://api.github.com/gists",
+                allowHttpErrors: true,
+                data: data || {} })
+            .then((resp) => {
+                if (resp.statusCode == 201 && resp.json.id) {
+                    return Promise.resolve<string>(resp.json.id);
+                }
+                return Promise.reject(resp.text);
             });
     }
 

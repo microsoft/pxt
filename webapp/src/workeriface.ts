@@ -38,7 +38,7 @@ export function wrap(send: (v: any) => void): Iface {
                     pxt.reportError("worker", "no response")
                     reject(new Error("no response"))
                 } else if (v.errorMessage) {
-                    pxt.reportError("worker", "response: " + v.errorMessage)
+                    pxt.reportError("worker", v.errorMessage)
                     reject(new Error(v.errorMessage))
                 } else {
                     resolve(v)

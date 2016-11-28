@@ -50,12 +50,12 @@ CACHE:
 /cdn/vs/language/typescript/src/worker.js
 /cdn/monacoworker.js
 
+# ai
+https://az416426.vo.msecnd.net/scripts/a/ai.0.js
+
 @workerjs@
 
 /sim/target.js
-
-# External
-https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
   
 NETWORK:
 *

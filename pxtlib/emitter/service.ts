@@ -68,6 +68,44 @@ namespace ts.pxtc {
 . . . . .
 `
 
+    export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
+        const lang = pxtc.Util.userLanguage();
+        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
+
+        return mainPkg.localizationStringsAsync(lang)
+            .then(loc => Util.values(apis.byQName).forEach(fn => {
+                const jsDoc = loc[fn.qName]
+                if (jsDoc) {
+                    fn.attributes.jsDoc = jsDoc;
+                    if (fn.parameters)
+                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+                }
+                if (fn.attributes.block) {
+                    const locBlock = loc[`${fn.qName}|block`];
+                    if (locBlock) {
+                        try {
+                            if (pxt.blocks.areFieldsEquivalent(fn.attributes.block, locBlock))
+                                fn.attributes.block = locBlock;
+                            else {
+                                const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
+                                const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
+                                console.error(`localized block description of ${fn.attributes.block} invalid`);
+                                console.debug(`original: `, fields);
+                                console.debug(`loc: `, locFields);
+                            }
+                        } catch (e) {
+                            console.error(`error while parsing localized block of ${fn.attributes.block}`);
+                        }
+                    }
+                }
+                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
+                if (nsDoc) {
+                    fn.attributes.block = nsDoc;
+                }
+            }))
+            .then(() => apis);
+    }
+
     /**
      * Unlocalized category name for a symbol
      */
@@ -249,10 +287,10 @@ namespace ts.pxtc {
     }
 
     export function genMarkdown(pkg: string, apiInfo: ApisInfo, options: GenMarkdownOptions = {}): pxt.Map<string> {
-        let files: pxt.Map<string> = {};
-        let infos = Util.values(apiInfo.byQName);
-        let namespaces = infos.filter(si => si.kind == SymbolKind.Module)
-        namespaces.sort(compareSymbol)
+        const files: pxt.Map<string> = {};
+        const infos = Util.values(apiInfo.byQName);
+        const namespaces = infos.filter(si => si.kind == SymbolKind.Module).sort(compareSymbol);
+        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember).sort(compareSymbol);
 
         let locStrings: pxt.Map<string> = {};
         let jsdocStrings: pxt.Map<string> = {};
@@ -260,7 +298,9 @@ namespace ts.pxtc {
         let reference = ""
         const writeRef = (s: string) => reference += s + "\n"
         const writeLoc = (si: SymbolInfo) => {
-            if (!options.locs || !si.qName) return;
+            if (!options.locs || !si.qName) {
+                return;
+            }
             // must match blockly loader
             const ns = ts.pxtc.blocksCategory(si);
             if (ns)
@@ -298,7 +338,7 @@ namespace ts.pxtc {
         writeRef(`# ${pkg} Reference`)
         writeRef('')
         writeRef('```namespaces')
-        for (let ns of namespaces) {
+        for (const ns of namespaces) {
             let nsHelpPages: pxt.Map<string> = {};
             let syms = infos
                 .filter(si => si.namespace == ns.name && !!si.attributes.jsDoc)
@@ -338,6 +378,11 @@ namespace ts.pxtc {
             if (options.docs)
                 files["reference/" + ns.name + '.md'] = nsmd;
         }
+        if (options.locs)
+            enumMembers.forEach(em => {
+                if (em.attributes.block) locStrings[`${em.qName}|block`] = em.attributes.block;
+                if (em.attributes.jsDoc) locStrings[em.qName] = em.attributes.jsDoc;
+            });
         writeRef('```');
         writePackage(writeRef);
         writeHelpPages(helpPages, writeRef);

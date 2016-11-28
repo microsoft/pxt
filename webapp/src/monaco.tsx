@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/monaco-editor/monaco.d.ts" />
+/// <reference path="../../built/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 
 
@@ -143,10 +143,15 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        if (!this.hasBlocks()) return null
-        return <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
-                tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left"
-         />
+        let editor = pkg.mainEditorPkg(); 
+        if (this.currFile != editor.files["main.ts"]) {
+            return (<sui.Item text={lf("Back to Code") } icon={"align left"} onClick={() => this.parent.setFile(editor.files["main.ts"]) } />);
+        }
+        else if (editor.files["main.blocks"]) { //if main.blocks file present
+            return ( <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
+                    tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left" /> );
+        }
+        return null;
     }
 
     undo() {
@@ -274,39 +279,16 @@ export class Editor extends srceditor.Editor {
 
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
-        let removeFromContextMenu = ["editor.action.changeAll",
-            "editor.action.quickOutline",
-            "editor.action.goToDeclaration",
-            "editor.action.previewDeclaration",
-            "editor.action.referenceSearch.trigger"]
-
-        let disabledFromCommands = ["editor.unfold",
-            "editor.unFoldRecursively",
-            "editor.fold",
-            "editor.foldRecursively",
-            "editor.foldAll",
-            "editor.unFoldAll",
-            "editor.foldLevel1",
-            "editor.foldLevel2",
-            "editor.foldLevel3",
-            "editor.foldLevel4",
-            "editor.foldLevel5"]
-
-        this.editor.getActions().forEach(action => removeFromContextMenu.indexOf(action.id) > -1 ? (action as any)._actual.menuOpts = undefined : null);
-
-        this.editor.getActions().forEach(action => disabledFromCommands.indexOf(action.id) > -1 ? (action as any)._enabled = false : null);
-
         this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
             .run = () => Promise.resolve(this.beforeCompile());
-
-        this.editor.getActions().filter(action => action.id == "editor.action.quickCommand")[0]
-            .label = lf("Show Commands");
 
         this.editor.addAction({
             id: "save",
             label: lf("Save"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
             keybindingContext: "!editorReadonly",
+            contextMenuGroupId: "0_pxtnavigation",
+            contextMenuOrder: 0.2,
             run: () => Promise.resolve(this.parent.typecheckNow())
         });
 
@@ -315,6 +297,8 @@ export class Editor extends srceditor.Editor {
             label: lf("Run Simulator"),
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
             keybindingContext: "!editorReadonly",
+            contextMenuGroupId: "0_pxtnavigation",
+            contextMenuOrder: 0.21,
             run: () => Promise.resolve(this.parent.runSimulator())
         });
 
@@ -324,6 +308,8 @@ export class Editor extends srceditor.Editor {
                 label: lf("Download"),
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
+                contextMenuGroupId: "0_pxtnavigation",
+                contextMenuOrder: 0.22,
                 run: () => Promise.resolve(this.parent.compile())
             });
         }
@@ -351,6 +337,27 @@ export class Editor extends srceditor.Editor {
                 monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: false});
             }
         })
+
+        if (pxt.appTarget.appTheme.hasReferenceDocs) {
+            let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
+            this.editor.addAction({
+                id: "reference",
+                label: lf("Help"),
+                keybindingContext: "!editorReadonly && editorHasReference",
+                contextMenuGroupId: "navigation",
+                contextMenuOrder: 0.1,
+                run: () => Promise.resolve(this.loadReference())
+            });
+
+            this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
+                let word = this.editor.getModel().getWordAtPosition(e.position);
+                if (word) {
+                    referenceContextKey.set(true);
+                } else {
+                    referenceContextKey.reset()
+                }
+            })
+        }
 
         this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
             // Update editor font size in settings after a ctrl+scroll zoom
@@ -411,6 +418,20 @@ export class Editor extends srceditor.Editor {
         this.parent.settings.editorFontSize = currentFont - 1;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
+    }
+
+    loadReference() {
+        let currentPosition = this.editor.getPosition();
+        let wordInfo = this.editor.getModel().getWordAtPosition(currentPosition);
+        let prevWordInfo = this.editor.getModel().getWordUntilPosition(new monaco.Position(currentPosition.lineNumber, wordInfo.startColumn - 1));
+        if (prevWordInfo && wordInfo) {
+            let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
+            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
+            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`);
+        } else if (wordInfo) {
+            let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
+            this.parent.setSideDoc(`/reference/${methodName}`);
+        }
     }
 
     getId() {

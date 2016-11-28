@@ -81,7 +81,7 @@ function htmlmsg(kind: string, msg: string) {
 }
 
 export function errorNotification(msg: string) {
-    pxt.reportError("notification", msg)
+    pxt.tickEvent("notification.error", { message : msg })
     htmlmsg("err", msg)
 }
 
@@ -165,7 +165,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     let html = `
   <div class="ui ${options.size || "small"} modal">
     <div class="header">
-        ${Util.htmlEscape(options.header)}      
+        ${Util.htmlEscape(options.header)}
     </div>
     <div class="content">
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
@@ -227,6 +227,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
+            context: "body.dimmable",
             onHidden: () => {
                 modal.remove()
             },
@@ -302,9 +303,9 @@ export function shareLinkAsync(options: ShareOptions) {
     let html = `
   <div class="ui small modal">
     <div class="header">
-        ${Util.htmlEscape(options.header)}      
+        ${Util.htmlEscape(options.header)}
     </div>
-    <div class="content">    
+    <div class="content">
       <p>${Util.htmlEscape(options.body || "")}</p>
       <div class="ui fluid action input">
          <input class="linkinput" type="text" value="${Util.htmlEscape(options.link)}">

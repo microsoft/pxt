@@ -264,15 +264,21 @@ namespace pxt.runner {
         TypeScript
     }
 
-    let languageMode = LanguageMode.Blocks;
-    export var onLanguageModeChanged: (mode: LanguageMode) => void = undefined;
+    export var languageMode = LanguageMode.Blocks;
+    export var editorLocale = "en";
 
-    export function setLanguageMode(mode: LanguageMode) {
-        if (mode != languageMode) {
-            pxt.debug('language: ' + mode);
-            languageMode = mode;
-            if (onLanguageModeChanged) onLanguageModeChanged(languageMode);
+    export function setEditorContextAsync(mode: LanguageMode, locale: string) {
+        languageMode = mode;
+        if (locale != editorLocale) {
+            const localeLiveRx = /^live-/;
+            editorLocale = locale;
+            return pxt.Util.updateLocalizationAsync(pxt.webConfig.pxtCdnUrl,
+                editorLocale.replace(localeLiveRx, ''),
+                localeLiveRx.test(editorLocale)
+            );
         }
+
+        return Promise.resolve();
     }
 
     function receiveDocMessage(e: MessageEvent) {
@@ -282,8 +288,7 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                if (/\.ts$/i.test(name)) setLanguageMode(LanguageMode.TypeScript);
-                else if (/\.blocks/i.test(name)) setLanguageMode(LanguageMode.Blocks);
+                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).done();
                 break;
             case "popout":
                 let mp = /#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -340,10 +345,13 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md):([^&?:]+)/i.exec(window.location.hash);
+            let m = /^#(doc|md):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
-                render(m[1], decodeURIComponent(m[2]));
+                const p = m[4] ? setEditorContextAsync(
+                    /^blocks$/.test(m[4]) ? LanguageMode.Blocks : LanguageMode.TypeScript,
+                    m[5]) : Promise.resolve();
+                p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
 
@@ -371,7 +379,7 @@ ${files["main.ts"]}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.privateGetTextAsync(`md/${pxt.appTarget.id}/${docid}`)
+        return pxt.Cloud.downloadMarkdownAsync(docid, editorLocale, pxt.Util.localizeLive)
             .then(md => renderMarkdownAsync(content, md, docid))
     }
 
@@ -472,6 +480,7 @@ ${files["main.ts"]}
             snippetReplaceParent: true,
             simulator: true,
             hex: true,
+            showJavaScript: languageMode == LanguageMode.TypeScript,
             hexName: pxt.appTarget.id
         }).then(() => {
             // patch a elements
@@ -500,24 +509,27 @@ ${files["main.ts"]}
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
-                    return { compileJS: resp };
+                    return Promise.resolve<DecompileResult>({ compileJS: resp });
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(resp.ast);
-                let blocksInfo = pxtc.getBlocksInfo(apis);
-                pxt.blocks.initBlocks(blocksInfo);
-                let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
-                if (bresp.diagnostics && bresp.diagnostics.length > 0)
-                    bresp.diagnostics.forEach(diag => console.error(diag.messageText));
-                if (!bresp.success)
-                    return { compileJS: resp, compileBlocks: bresp };
-                pxt.debug(bresp.outfiles["main.blocks"])
-                return {
-                    compileJS: resp,
-                    compileBlocks: bresp,
-                    blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
-                };
-            })
+                return ts.pxtc.localizeApisAsync(apis, mainPkg)
+                    .then(() => {
+                        let blocksInfo = pxtc.getBlocksInfo(apis);
+                        pxt.blocks.initBlocks(blocksInfo);
+                        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                        if (bresp.diagnostics && bresp.diagnostics.length > 0)
+                            bresp.diagnostics.forEach(diag => console.error(diag.messageText));
+                        if (!bresp.success)
+                            return <DecompileResult>{ compileJS: resp, compileBlocks: bresp };
+                        pxt.debug(bresp.outfiles["main.blocks"])
+                        return <DecompileResult>{
+                            compileJS: resp,
+                            compileBlocks: bresp,
+                            blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                        };
+                    })
+            });
     }
 
     export var initCallbacks: (() => void)[] = [];

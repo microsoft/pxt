@@ -33,21 +33,6 @@ body {
     height: 2.5rem;
 }
 
-#cookiemsg {
-   position: absolute;
-   left: 1rem;
-   bottom: 0.5rem;
-   width: 18rem;
-   text-align: left;
-   display:none;
-   z-index:1000;
-}
-
-#cookiemsg > a {
-   color:white;
-   text-decoration: underline;
-}
-
 .organization {
     position:absolute;
     top:1rem;
@@ -76,30 +61,6 @@ div.simframe {
 div.simframe > iframe {
     position:absolute;
     top:0; left: 0; width:100%; height:100%;
-}
-
-#filelist {
-  padding: 0em 1em 0em 0.5em;
-  overflow-x: hidden;
-  overflow-y: auto;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.filemenu {
-  direction:ltr;
-}
-
-#filelist .menu {
-  width: 100%;
-}
-
-#filelist .nested.item {
-    padding-left: 4rem;
-}
-
-#filelist .header {
-    background: rgba(0,0,0,0.05);
 }
 
 #helpcard {
@@ -372,9 +333,6 @@ html {
     .ui.widedesktop.hide {
         display:none !important;
     }
-    #sidedocspopout, #sidedocsexpand {
-        display:block;
-    }
 }
 
 @media only screen and (min-width: 55em) and (min-height:30em) {
@@ -439,32 +397,11 @@ html {
         left:0.5rem;
         right: auto;
     }
-    #maineditor, .rtl #maineditor {
-        left: 0;
-        right:0;
-    }
-    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
-        bottom:2.3rem;
-    }
     .ui.landscape.only {
         display:none !important;
     }
     .hideEditorFloats .editorFloat {
         display:none;
-    }
-    #filelist {
-        position:absolute;
-        z-index:5;
-        bottom:3rem;
-        left:1rem;
-        top:auto;
-        width:auto;
-        min-width: inherit;
-        max-width: inherit;
-    }
-    .rtl #filelist {
-        left:auto;
-        right:1rem;
     }
     div.simframe {
         display:inline-block;
@@ -610,4 +547,10 @@ body.blocklyMinimalBody {
     border-radius: 2px !important;
     padding-left: 10px !important;
     padding-right: 20px !important;
+}
+
+
+/* Fix for monaco editor Signature bug in Safari */
+.monaco-editor .parameter-hints-widget {
+    flex-direction: row !important;
 }

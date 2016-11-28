@@ -40,7 +40,7 @@ export class Editor extends srceditor.Editor {
             this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
             return this.compilationResult.source;
         } catch (e) {
-            pxt.reportException(e, { blocks: this.serializeBlocks() })
+            pxt.reportException(e, { blocks: this.serializeBlocks(true) })
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
             return '';
         }
@@ -89,8 +89,10 @@ export class Editor extends srceditor.Editor {
         return this.serializeBlocks();
     }
 
-    serializeBlocks(): string {
+    serializeBlocks(normalize?: boolean): string {
         let xml = pxt.blocks.saveWorkspaceXml(this.editor);
+        // strip out id, x, y attributes
+        if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
         return xml;
     }
@@ -166,7 +168,12 @@ export class Editor extends srceditor.Editor {
 
                 let card: pxt.CodeCard = selected.codeCard;
                 card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-                card.blocksXml = this.updateFields(card.blocksXml, props);
+                if (!selected.mutation) {
+                    card.blocksXml = this.updateFields(card.blocksXml, props);
+                }
+                else {
+                    card.blocksXml = this.updateFields(card.blocksXml, undefined, selected.mutation.mutationToDom());
+                }
                 this.parent.setHelpCard(card);
             }
             else {
@@ -187,7 +194,7 @@ export class Editor extends srceditor.Editor {
      * Takes the XML definition of the block that will be shown on the help card and modifies the XML
      * so that the field names are updated to match any field names of dropdowns on the selected block
      */
-    private updateFields(originalXML: string, newFieldValues: any): string {
+    private updateFields(originalXML: string, newFieldValues?: any, mutation?: Element): string {
         let parser = new DOMParser();
         let doc = parser.parseFromString(originalXML, "application/xml");
         let blocks = doc.getElementsByTagName("block");
@@ -203,22 +210,34 @@ export class Editor extends srceditor.Editor {
             };
 
             let block = blocks[0];
-            //Depending on the source, the nodeName may be capitalised
-            let fieldNodes = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'field' || c.nodeName == 'FIELD');
 
-            for (let i = 0; i < fieldNodes.length; i++) {
-                if (newFieldValues.hasOwnProperty(fieldNodes[i].getAttribute('name'))) {
-                    setInnerText(fieldNodes[i], newFieldValues[fieldNodes[i].getAttribute('name')]);
-                    delete newFieldValues[fieldNodes[i].getAttribute('name')];
+            if (newFieldValues) {
+                //Depending on the source, the nodeName may be capitalised
+                let fieldNodes = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'field' || c.nodeName == 'FIELD');
+
+                for (let i = 0; i < fieldNodes.length; i++) {
+                    if (newFieldValues.hasOwnProperty(fieldNodes[i].getAttribute('name'))) {
+                        setInnerText(fieldNodes[i], newFieldValues[fieldNodes[i].getAttribute('name')]);
+                        delete newFieldValues[fieldNodes[i].getAttribute('name')];
+                    }
+                }
+
+                //Now that existing field values have been reset, we can create new field values as appropriate
+                for (let p in newFieldValues) {
+                    let c = doc.createElement('field');
+                    c.setAttribute('name', p);
+                    setInnerText(c, newFieldValues[p]);
+                    block.appendChild(c);
                 }
             }
-
-            //Now that existing field values have been reset, we can create new field values as appropriate
-            for (let p in newFieldValues) {
-                let c = doc.createElement('field');
-                c.setAttribute('name', p);
-                setInnerText(c, newFieldValues[p]);
-                block.appendChild(c);
+            else if (mutation) {
+                const existingMutation = Array.prototype.filter.call(block.childNodes, (c: any) => c.nodeName == 'mutation' || c.nodeName == 'MUTATION');
+                if (existingMutation.length) {
+                    block.replaceChild(mutation, existingMutation[0]);
+                }
+                else {
+                    block.appendChild(mutation);
+                }
             }
 
             let serializer = new XMLSerializer();
@@ -273,8 +292,8 @@ export class Editor extends srceditor.Editor {
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
                     this.updateHelpCard(ev.newValue != null);
                 }
-                else if (ev.element == 'commentOpen' 
-                || ev.element == 'warningOpen') {
+                else if (ev.element == 'commentOpen'
+                    || ev.element == 'warningOpen') {
                     /*
                      * We override the default selection behavior so that when a block is selected, its
                      * comment is expanded. However, if a user selects a block by clicking on its comment
@@ -312,7 +331,6 @@ export class Editor extends srceditor.Editor {
             }
         })
         this.resize();
-        Blockly.svgResize(this.editor);
 
         this.isReady = true
     }
@@ -320,19 +338,10 @@ export class Editor extends srceditor.Editor {
     resize(e?: Event) {
         let blocklyArea = document.getElementById('blocksArea');
         let blocklyDiv = document.getElementById('blocksEditor');
-
-        // Compute the absolute coordinates and dimensions of blocklyArea.
-        let element = blocklyArea;
-        let x = 0;
-        let y = 0;
-        do {
-            x += element.offsetLeft;
-            y += element.offsetTop;
-            element = element.offsetParent as HTMLElement;
-        } while (element);
         // Position blocklyDiv over blocklyArea.
         blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
         blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+        Blockly.svgResize(this.editor);
     }
 
     undo() {

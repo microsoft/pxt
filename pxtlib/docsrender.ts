@@ -218,10 +218,16 @@ namespace pxt.docs {
     }
 
     export function renderMarkdown(template: string, src: string,
-        theme: AppTheme = {}, pubinfo: Map<string> = null,
-        breadcrumb: BreadcrumbEntry[] = [], filepath: string = null): string {
+        theme: AppTheme = null, pubinfo: Map<string> = null,
+        breadcrumb: BreadcrumbEntry[] = null, filepath: string = null,
+        locale: Map<string> = null): string {
 
         let params: Map<string> = pubinfo || {}
+
+        if (!theme) theme = {}
+
+        if (!breadcrumb)
+            breadcrumb = []
 
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
@@ -229,6 +235,9 @@ namespace pxt.docs {
                 let cont = (theme.htmlDocIncludes || {})[fn] || ""
                 return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
             })
+
+        if (locale)
+            template = translate(template, locale).text
 
         let d: RenderData = {
             html: template,
@@ -286,7 +295,7 @@ namespace pxt.docs {
         })
 
         // replace pre-tempate in markdow
-        src = src.replace(/@([a-z]+)@/ig, (m,param) => params[param] || 'unknown macro')
+        src = src.replace(/@([a-z]+)@/ig, (m, param) => params[param] || 'unknown macro')
 
         let html = marked(src)
 
@@ -406,5 +415,64 @@ namespace pxt.docs {
         const docurl = `${rootUrl}--docs?projectid=${id}`;
         height = Math.ceil(height || 300);
         return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`
+    }
+
+    const inlineTags: Map<number> = {
+        b: 1,
+        strong: 1,
+        em: 1,
+    }
+
+    export function translate(html: string, locale: Map<string>) {
+        let missing: Map<string> = {}
+
+        function translateOne(toTranslate: string): string {
+            let spm = /^(\s*)([^]*?)(\s*)$/.exec(toTranslate)
+            let text = spm[2].replace(/\s+/g, " ");
+            if (text == "" || /^((IE=edge,.*|width=device-width.*|(https?:\/\/|\/)[\w@\/\.]+|@[\-\w]+@|\{[^\{\}]+\}|[^a-zA-Z]*|(&nbsp;)+)\s*)+$/.test(text))
+                return null;
+            let v = U.lookup(locale, text)
+            if (v)
+                text = v;
+            else
+                missing[text] = "";
+            return spm[1] + text + spm[3];
+        }
+
+        html = html.replace(/<([\/\w]+)([^<>]*)>/g, (full: string, tagname: string, args: string) => {
+            let key = tagname.replace(/^\//, "").toLowerCase();
+            if (inlineTags[key] === 1)
+                return "&llt;" + tagname + args + "&ggt;";
+            return full;
+        });
+
+        function ungt(s: string) {
+            return s.replace(/&llt;/g, "<").replace(/&ggt;/g, ">");
+        }
+
+        html = "<start>" + html;
+        html = html.replace(/(<([\/\w]+)([^<>]*)>)([^<>]+)/g,
+            (full: string, fullTag: string, tagname: string, args: string, str: string) => {
+                if (tagname == "script" || tagname == "style")
+                    return ungt(full)
+
+                let tr = translateOne(ungt(str));
+                if (tr == null)
+                    return ungt(full);
+                return fullTag + tr;
+            });
+
+        html = html.replace(/(<[^<>]*)(content|placeholder|alt|title)="([^"]+)"/g,
+            (full: string, pref: string, attr: string, text: string) => {
+                let tr = translateOne(text);
+                if (tr == null) return full;
+                return pref + attr + '="' + text.replace(/"/g, "''") + '"';
+            });
+
+        html = html.replace(/^<start>/g, "");
+        return {
+            text: html,
+            missing: missing
+        }
     }
 }

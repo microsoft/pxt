@@ -46,7 +46,7 @@ namespace pxt {
             console.log(msg);
         } : () => { };
 
-    export var reportException: (err: any, data: any) => void = function (e, d) {
+    export var reportException: (err: any, data?: Map<string>) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
@@ -56,7 +56,7 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (cat: string, msg: string, data?: Map<number | string>) => void = function (cat, msg, data) {
+    export var reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
         if (console) {
             console.error(`${cat}: ${msg}`);
             if (data) {
@@ -67,11 +67,6 @@ namespace pxt {
         }
     }
 
-    /**
-     * Time an event by including the time between this call
-     * and a later 'tickEvent' call for the same event in the properties sent with the event.
-     */
-    export var timeEvent: (id: string) => void = function (id) { }
     /**
      * Track an event.
      */
@@ -216,7 +211,8 @@ namespace pxt {
             if (proto == "pub") {
                 return Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
-                return pxt.github.downloadPackageAsync(this.verArgument())
+                return pxt.packagesConfigAsync()
+                    .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
                     .then(resp => resp.files)
             } else if (proto == "embed") {
                 let resp = pxt.getEmbeddedScript(this.verArgument())
@@ -526,7 +522,7 @@ namespace pxt {
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly || appTarget.compile.shortPointers ? null : this.filesToBePublishedAsync(true))
+                .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         files = U.mapMap(files, upgradeFile);
@@ -549,7 +545,7 @@ namespace pxt {
                                     name: this.config.name,
                                 })
                                 opts.embedBlob = btoa(U.uint8ArrayToString(buf))
-                            })
+                            });
                     } else {
                         return Promise.resolve()
                     }
@@ -631,7 +627,7 @@ namespace pxt {
                             }
                         }
                     } catch (e) {
-                        pxt.reportError(lf("invalid pxtparts.json file"), undefined);
+                        pxt.reportError("parts", "invalid pxtparts.json file");
                     }
                 }
             })

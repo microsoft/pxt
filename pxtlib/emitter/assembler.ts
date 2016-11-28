@@ -80,8 +80,6 @@ namespace ts.pxtc.assembler {
                     if (enc.isRegister) {
                         v = this.ei.registerNo(actual);
                         if (v == null) return emitErr("expecting register name", actual)
-                        // AVR specific code : check for pop/push instruction 
-                        // this doesn't apply in the ARM case 
                         if (this.ei.isPush(this.opcode)) // push
                             stack++;
                         else if (this.ei.isPop(this.opcode)) // pop
@@ -93,6 +91,7 @@ namespace ts.pxtc.assembler {
                             return emitErr("expecting number", actual)
                         } else {
                             // explicit manipulation of stack pointer (SP)
+                            // ARM only
                             if (this.ei.isAddSP(this.opcode))
                                 stack = -(v / this.ei.wordSize());
                             else if (this.ei.isSubSP(this.opcode))
@@ -188,7 +187,7 @@ namespace ts.pxtc.assembler {
         public lineNo: number;
         public words: string[]; // the tokens in this line 
         public scope: string;
-
+        public location: number;
         public instruction: Instruction;
         public numArgs: number[];
 
@@ -227,6 +226,7 @@ namespace ts.pxtc.assembler {
             this.currLine = new Line(this, "<start>");
             this.currLine.lineNo = 0;
             this.ei = ei;
+            this.ei.file = this;
         }
 
         public baseOffset: number = 0;
@@ -267,6 +267,10 @@ namespace ts.pxtc.assembler {
             return this.buf.length * 2;
         }
 
+        public pc() {
+            return this.location() + this.baseOffset;
+        }
+
         // parsing of an "integer", well actually much more than 
         // just that
         public parseOneInt(s: string): number {
@@ -301,6 +305,12 @@ namespace ts.pxtc.assembler {
             if (U.endsWith(s, "|1")) {
                 return this.parseOneInt(s.slice(0, s.length - 2)) | 1
             }
+            // allow subtracting 1 too
+            if (U.endsWith(s, "-1")) {
+                return this.parseOneInt(s.slice(0, s.length - 2)) - 1
+            }
+
+
 
             // handle hexadecimal and binary encodings
             if (s[0] == "0") {
@@ -325,8 +335,11 @@ namespace ts.pxtc.assembler {
                 if (m) {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
-                    if (this.stackpointers.hasOwnProperty(m[1]))
-                        v = this.ei.wordSize() * (this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                    if (this.stackpointers.hasOwnProperty(m[1])) {
+                        // console.log(m[1] + ": " + this.stack + " " + this.stackpointers[m[1]] + " " + m[2])
+                        v = this.ei.wordSize() * this.ei.computeStackOffset(m[1], this.stack - this.stackpointers[m[1]] + parseInt(m[2]))
+                        // console.log(v)
+                    }
                     else
                         this.directiveError(lf("saved stack not found"))
                 }
@@ -670,6 +683,7 @@ namespace ts.pxtc.assembler {
                 this.stack += op.stack;
                 if (this.checkStack && this.stack < 0)
                     this.pushError(lf("stack underflow"))
+                ln.location = this.location()
                 this.emitShort(op.opcode);
                 if (op.opcode2 != null)
                     this.emitShort(op.opcode2);
@@ -769,11 +783,9 @@ namespace ts.pxtc.assembler {
         }
 
         private iterLines() {
-            // TODO: check we have properly initialized everything
             this.stack = 0;
             this.buf = [];
             this.scopeId = 0;
-            // what about this.scope?
 
             this.lines.forEach(l => {
                 if (this.errors.length > 10)
@@ -944,6 +956,7 @@ namespace ts.pxtc.assembler {
 
         public encoders: pxt.Map<Encoder>;
         public instructions: pxt.Map<Instruction[]>;
+        public file: File = null;
 
         constructor() {
             this.encoders = {};
@@ -952,6 +965,10 @@ namespace ts.pxtc.assembler {
 
         public wordSize() {
             return -1;
+        }
+
+        public computeStackOffset(kind: string, offset: number) {
+            return offset;
         }
 
         public is32bit(i: Instruction) {
