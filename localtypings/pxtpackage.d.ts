@@ -37,6 +37,10 @@ declare namespace pxt {
         config?: any;
         configIsJustDefaults?: boolean;
         ignoreConflicts?: boolean;
+        /**
+         * Overridable config flags
+         */
+        optionalConfig?: any;
     }
 
     interface CodeCard {
