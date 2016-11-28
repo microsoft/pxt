@@ -848,7 +848,7 @@ namespace pxt.hex {
     }
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
-        if (!Cloud.localToken || !window || !/^http:\/\/localhost/i.test(window.location.href)) {
+        if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
             return Promise.resolve();
         }
 
@@ -868,7 +868,7 @@ namespace pxt.hex {
 
     function apiAsync(path: string, data?: any) {
         return U.requestAsync({
-            url: "http://localhost:3232/api/" + path,
+            url: "/api/" + path,
             headers: { "Authorization": Cloud.localToken },
             method: data ? "POST" : "GET",
             data: data || undefined,

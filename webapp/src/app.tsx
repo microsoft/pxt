@@ -1686,7 +1686,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const errorMessage = lf("Unable to check for updates");
         pxt.tickEvent("menu.electronupdate");
         Util.requestAsync({
-            url: "http://localhost:3232/api/externalmsg",
+            url: "/api/externalmsg",
             headers: { "Authorization": Cloud.localToken },
             method: "POST",
             data: {
@@ -1916,7 +1916,7 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!pxt.appTarget.serial || !/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
+    if (!pxt.appTarget.serial || !Cloud.isLocalHost() || !Cloud.localToken)
         return;
 
     pxt.debug('initializing serial pipe');
@@ -2202,7 +2202,7 @@ $(document).ready(() => {
         if (!m) {
             return;
         }
-        if (m.type === "sidedocready" && /^http:\/\/localhost/i.test(window.location.href) && Cloud.localToken) {
+        if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
             SideDocs.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken

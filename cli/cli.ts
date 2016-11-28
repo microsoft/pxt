@@ -46,6 +46,7 @@ export interface UserConfig {
     noAutoBuild?: boolean;
     noAutoStart?: boolean;
     localBuild?: boolean;
+    githubAccessToken?: string; // Github Access Token used for gist publishing
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -124,27 +125,36 @@ function initConfig() {
 }
 
 export function loginAsync(parsed: commandParser.ParsedCommand) {
-    const access_token = parsed.arguments[0];
-    if (/^http/.test(access_token)) {
-        globalConfig.accessToken = access_token
-        saveConfig()
+    const token = parsed.arguments[0];
+    if (/^https:\/\//.test(token)) {
+        globalConfig.accessToken = token
+        saveConfig();
         if (process.env["CLOUD_ACCESS_TOKEN"])
             console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
-    } else {
+        console.log("PXT token saved.")
+    }
+    else if (/^[a-z0-9]{40,}$/.test(token)) {
+        globalConfig.githubAccessToken = token
+        saveConfig();
+        console.log("GitHub token saved.")
+    }
+    else {
         let root = Cloud.apiRoot.replace(/api\/$/, "")
         console.log("USAGE:")
-        console.log(`  pxt login https://example.com/?access_token=...`)
-        console.log(`Go to ${root}oauth/gettoken to obtain the token.`)
+        console.log(`  pxt login TOKEN`)
+        console.log(`where TOKEN can be a GitHub token or PXT token.`)
+        console.log(`* go to https://github.com/settings/tokens/new to obtain the GitHub token for gists.`);
+        console.log(`* go to ${root}oauth/gettoken to obtain the PXT token.`)
         return fatal("Bad usage")
     }
-
     return Promise.resolve()
 }
 
 export function logoutAsync() {
-    globalConfig.accessToken = undefined;
+    delete globalConfig.accessToken;
+    delete globalConfig.githubAccessToken;
     saveConfig();
-    console.log('access token removed');
+    console.log('access tokens removed');
     return Promise.resolve();
 }
 
@@ -1522,6 +1532,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             packaged: packaged,
             electron: !!parsed.flags["electron"],
             externalHandlers: externalMessageHandlers || void 0,
+            port: parsed.flags["port"] as number || 0,
             browser: parsed.flags["browser"] as string
         }))
 }
@@ -1955,7 +1966,8 @@ export function initAsync() {
     let config = U.clone(prj.config);
 
     config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
-    config.public = true
+    // by default, projects are not public
+    config.public = false
 
     let configMap: Map<string> = config as any
 
@@ -1963,9 +1975,6 @@ export function initAsync() {
         config.license = "MIT"
     if (!config.version)
         config.version = "0.0.0"
-
-    // hack: remove microbit-radio, as we don't want it in all libraries
-    delete config.dependencies["microbit-radio"]
 
     return Promise.mapSeries(["name", "description", "license"], f =>
         queryAsync(f, configMap[f])
@@ -3387,14 +3396,18 @@ function checkDocsAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-function publishGistCoreAsync(): Promise<void> {
-    console.log("Publishing project to gist anonymously.");
+function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
+    const token = globalConfig.githubAccessToken;
     return mainPkg.loadAsync()
         .then(() => {
-            console.log("Uploading....")
-            let files: string[] = mainPkg.getFiles()
-            let pxtConfig = mainPkg.config;
-            let filesMap: Map<{content: string;}> = {};
+            const pxtConfig = U.clone(mainPkg.config);
+            if (pxtConfig.gistId && !token && !forceNewGist) {
+                console.warn("You are trying to update an existing project but no GitHub token was provided, publishing a new anonymous project instead.")
+                forceNewGist = true;
+            }
+            const gistId = pxtConfig.gistId;
+            const files: string[] = mainPkg.getFiles()
+            const filesMap: Map<{ content: string; }> = {};
 
             files.forEach((fn) => {
                 let fileContent = fs.readFileSync(fn, "utf8");
@@ -3411,23 +3424,38 @@ function publishGistCoreAsync(): Promise<void> {
                     }
                 }
             })
+            // Strip gist fields from config
+            delete pxtConfig.gistId;
             // Add pxt.json
             filesMap['pxt.json'] = {
                 "content": JSON.stringify(pxtConfig, null, 4)
             }
-            return pxt.github.publishGist(filesMap, pxtConfig.description, false)
+            console.log("Uploading....")
+            return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
         })
         .then((published_id) => {
-            console.log(`Success, your gist url is https://gist.github.com/${published_id}`);
-            console.log(`You can load your published project at ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+            console.log(`Success, view your gist at`);
+            console.log(``)
+            console.log(`    https://gist.github.com/${published_id}`);
+            console.log(``)
+            console.log(`To share your project, go to ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+            if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
+
+            // Save gist id to pxt.json
+            if (token) mainPkg.config.gistId = published_id;
+            mainPkg.saveConfig();
         })
         .catch((e) => {
-            console.error(e);
+            if (e == '404') {
+                console.error("Unable to access the existing project. --new to publish a new gist.")
+            } else {
+                console.error(e);
+            }
         });
 }
 
 export function publishGistAsync(parsed: commandParser.ParsedCommand) {
-    return publishGistCoreAsync();
+    return publishGistCoreAsync(parsed.flags["new"] as boolean);
 }
 
 interface SnippetInfo {
@@ -3480,6 +3508,8 @@ function initCommands() {
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
+    simpleCmd("login", "stores the PXT or GitHub access token", loginAsync, "<access_token>");
+    simpleCmd("logout", "clears access tokens", logoutAsync);
 
     p.defineCommand({
         name: "bump",
@@ -3547,6 +3577,15 @@ function initCommands() {
         }
     }, serveAsync);
 
+    p.defineCommand({
+        name: "gist",
+        help: "publish current package to a gist",
+        flags: {
+            new: { description: "force the creation of a new gist" },
+            public: { description: "make the created gist public (secret by default)" }
+        }
+    }, publishGistAsync)
+
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
@@ -3560,10 +3599,6 @@ function initCommands() {
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
     advancedCommand("checkdocs", "check docs for broken links, typing errors, etc...", checkDocsAsync);
-    advancedCommand("gist", "publish current package to an anonymous gist", publishGistAsync);
-
-    advancedCommand("login", "set access token config variable", loginAsync, "<access_token>");
-    advancedCommand("logout", "clears access token", logoutAsync);
 
     advancedCommand("api", "do authenticated API call", pc => apiAsync(pc.arguments[0], pc.arguments[1]), "<path> [data]");
     advancedCommand("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));

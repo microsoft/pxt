@@ -36,7 +36,7 @@ the package will not show up in search.**
 ### Step 2: Developing package
 
 Now, you're ready to develop your package. You can do it with [VSCode](https://code.visualstudio.com/)
-or from the web editor at http://localhost:3232/ hosted from `pxt serve`.
+or from the web editor served from `pxt serve`.
 
 * put the contents of your package in `main.ts`
 * add sample program using the package in `tests.ts`
