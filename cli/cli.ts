@@ -3474,7 +3474,7 @@ function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
             console.log(``)
             console.log(`    https://gist.github.com/${published_id}`);
             console.log(``)
-            console.log(`To share your project, make your gist public and go to ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+            console.log(`To share your project, go to ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
             if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
 
             // Save gist id to pxt.json
