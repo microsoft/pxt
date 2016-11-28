@@ -3480,7 +3480,6 @@ function initCommands() {
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    simpleCmd("bump", "bump target or package version", bumpAsync);
 
     p.defineCommand({
         name: "bump",
@@ -3549,32 +3548,32 @@ function initCommands() {
     }, serveAsync);
 
     // Hidden commands
-    simpleCmd("test", "run tests on current package", testAsync);
-    simpleCmd("testassembler", "test the assemblers", testAssemblers);
-    simpleCmd("decompile", "decompile typescript files", decompileAsync, "<file1.ts> <file2.ts> ...");
-    simpleCmd("testdecompiler", "run decompiler tests", testDecompilerAsync, "<dir>");
-    simpleCmd("testdecompilererrors", "run decompiler error tests", testDecompilerErrorsAsync, "<dir>");
-    simpleCmd("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
-    simpleCmd("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
+    advancedCommand("test", "run tests on current package", testAsync);
+    advancedCommand("testassembler", "test the assemblers", testAssemblers);
+    advancedCommand("decompile", "decompile typescript files", decompileAsync, "<file1.ts> <file2.ts> ...");
+    advancedCommand("testdecompiler", "run decompiler tests", testDecompilerAsync, "<dir>");
+    advancedCommand("testdecompilererrors", "run decompiler error tests", testDecompilerErrorsAsync, "<dir>");
+    advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
+    advancedCommand("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
 
-    simpleCmd("buildtarget", "build pxtarget.json", buildTargetAsync);
-    simpleCmd("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
-    simpleCmd("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
-    simpleCmd("checkdocs", "check docs for broken links, typing errors, etc...", checkDocsAsync);
-    simpleCmd("gist", "publish current package to an anonymous gist", publishGistAsync);
+    advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
+    advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
+    advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
+    advancedCommand("checkdocs", "check docs for broken links, typing errors, etc...", checkDocsAsync);
+    advancedCommand("gist", "publish current package to an anonymous gist", publishGistAsync);
 
-    simpleCmd("login", "set access token config variable", loginAsync, "<access_token>");
-    simpleCmd("logout", "clears access token", logoutAsync);
+    advancedCommand("login", "set access token config variable", loginAsync, "<access_token>");
+    advancedCommand("logout", "clears access token", logoutAsync);
 
-    simpleCmd("api", "do authenticated API call", pc => apiAsync(pc.arguments[0], pc.arguments[1]), "<path> [data]");
-    simpleCmd("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));
-    simpleCmd("travis", "upload release and npm package", travisAsync);
-    simpleCmd("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
-    simpleCmd("service", "simulate a query to web worker", serviceAsync, "<operation>");
-    simpleCmd("time", "measure performance of the compiler on the current package", timeAsync);
-    simpleCmd("buildcss", "build required css files", buildSemanticUIAsync);
+    advancedCommand("api", "do authenticated API call", pc => apiAsync(pc.arguments[0], pc.arguments[1]), "<path> [data]");
+    advancedCommand("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));
+    advancedCommand("travis", "upload release and npm package", travisAsync);
+    advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
+    advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
+    advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
+    advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
 
-    simpleCmd("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
+    advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
 
     p.defineCommand({
         name: "pokerepo",
@@ -3582,7 +3581,8 @@ function initCommands() {
         argString: "<repo>",
         flags: {
             u: { description: "" }
-        }
+        },
+        advanced: true
     }, pokeRepoAsync);
 
     p.defineCommand({
@@ -3590,7 +3590,8 @@ function initCommands() {
         help: "upload translations for target",
         flags: {
             docs: { description: "upload markdown as well" }
-        }
+        },
+        advanced: true
     }, uploadTargetTranslationsAsync);
 
     p.defineCommand({
@@ -3600,7 +3601,8 @@ function initCommands() {
         flags: {
             i: { description: "format files in-place" },
             t: { description: "test formatting"}
-        }
+        },
+        advanced: true
     }, formatAsync);
 
     p.defineCommand({
@@ -3609,11 +3611,16 @@ function initCommands() {
         flags: {
             docs: { description: "produce docs files" },
             loc: { description: "produce localization files" },
-        }
+        },
+        advanced: true
     }, gendocsAsync);
 
-    function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string): void {
-        p.defineCommand({ name, help, argString }, callback);
+    function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, advanced = false): void {
+        p.defineCommand({ name, help, argString, advanced}, callback);
+    }
+
+    function advancedCommand(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string) {
+        simpleCmd(name, help, callback, argString, true);
     }
 }
 

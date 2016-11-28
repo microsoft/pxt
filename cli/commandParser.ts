@@ -18,6 +18,7 @@ export interface Command {
     help: string;
 
     priority?: number;
+    advanced?: boolean;
     argString?: string;
     flags?: {[index: string]: CommandFlag};
     aliases?: string[];
@@ -156,13 +157,18 @@ export class CommandParser {
     public printHelp(args: string[], print: (s: string) => void) {
         if (args && args.length === 1) {
             const name = args[0];
-            const filtered = this.commands.filter(c => c.name === name || c.aliases && c.aliases.indexOf(name) !== -1);
-            if (filtered) {
-                this.printCommandHelp(filtered[0], print);
+            if (name === "all") {
+                this.printTopLevelHelp(true, print);
+            }
+            else {
+                const filtered = this.commands.filter(c => c.name === name || c.aliases && c.aliases.indexOf(name) !== -1);
+                if (filtered) {
+                    this.printCommandHelp(filtered[0], print);
+                }
             }
         }
         else {
-            this.printTopLevelHelp(print);
+            this.printTopLevelHelp(false, print);
         }
     }
 
@@ -186,6 +192,7 @@ export class CommandParser {
             }
         }
 
+        print("");
         print("Usage:")
         print(usage);
         print("")
@@ -231,16 +238,20 @@ export class CommandParser {
         }
     }
 
-    private printTopLevelHelp(print: (s: string) => void) {
+    private printTopLevelHelp(advanced: boolean, print: (s: string) => void) {
+        print("");
         print("Usage: pxt <command>");
         print("");
         print("Commands:")
 
         this.commands.sort((a, b) => a.priority - b.priority);
+
+        const toPrint = advanced ? this.commands : this.commands.filter(c => !c.advanced);
+
         const cmdDescriptions: string[] = [];
 
         let maxNameWidth = 0;
-        const names: string[] = this.commands.map(command => {
+        const names: string[] = toPrint.map(command => {
             maxNameWidth = Math.max(maxNameWidth, command.name.length);
             cmdDescriptions.push(command.help);
             return command.name;
