@@ -41,12 +41,10 @@ if (prevExports) {
 }
 
 export interface UserConfig {
-    accessToken?: string;
     localToken?: string;
     noAutoBuild?: boolean;
     noAutoStart?: boolean;
     localBuild?: boolean;
-    githubAccessToken?: string; // Github Access Token used for gist publishing
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -109,8 +107,9 @@ function initConfig() {
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config
-        if (!atok && config.accessToken) {
-            atok = config.accessToken
+        const token = passwordGet(PXT_KEY);
+        if (!atok && token) {
+            atok = token
         }
     }
 
@@ -124,18 +123,49 @@ function initConfig() {
     }
 }
 
+interface KeyTar {
+    replacePassword(service: string, account: string, password: string): void;
+    getPassword(service: string, account: string): string;
+    deletePassword(service: string, account: string): void;
+}
+const PXT_KEY = "pxt";
+const GITHUB_KEY = "github";
+
+function passwordGet(account: string): string {
+    try {
+        const keytar = require("keytar") as KeyTar;
+        return keytar.getPassword("pxt/" + pxt.appTarget.id, account);
+    } catch (e) {
+        return undefined;
+    }
+}
+
+function passwordDelete(account: string): void {
+    try {
+        const keytar = require("keytar") as KeyTar;
+        keytar.deletePassword("pxt/" + pxt.appTarget.id, account);
+    } catch (e) {
+    }
+}
+
+function passwordUpdate(account: string, password: string) {
+    try {
+        const keytar = require("keytar") as KeyTar;
+        keytar.replacePassword("pxt/" + pxt.appTarget.id, account, password);
+    } catch (e) {
+    }
+}
+
 export function loginAsync(parsed: commandParser.ParsedCommand) {
     const token = parsed.arguments[0];
     if (/^https:\/\//.test(token)) {
-        globalConfig.accessToken = token
-        saveConfig();
+        passwordUpdate(PXT_KEY, token);
         if (process.env["CLOUD_ACCESS_TOKEN"])
             console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
         console.log("PXT token saved.")
     }
     else if (/^[a-z0-9]{40,}$/.test(token)) {
-        globalConfig.githubAccessToken = token
-        saveConfig();
+        passwordUpdate(GITHUB_KEY, token);
         console.log("GitHub token saved.")
     }
     else {
@@ -151,9 +181,8 @@ export function loginAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function logoutAsync() {
-    delete globalConfig.accessToken;
-    delete globalConfig.githubAccessToken;
-    saveConfig();
+    passwordDelete(PXT_KEY);
+    passwordDelete(GITHUB_KEY);
     console.log('access tokens removed');
     return Promise.resolve();
 }
@@ -3397,7 +3426,11 @@ function checkDocsAsync(): Promise<void> {
 }
 
 function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
-    const token = globalConfig.githubAccessToken;
+    const token = passwordGet(GITHUB_KEY);
+    if (!token) {
+        fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push gists.");
+        return Promise.resolve();
+    }
     return mainPkg.loadAsync()
         .then(() => {
             const pxtConfig = U.clone(mainPkg.config);
