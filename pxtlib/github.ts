@@ -151,7 +151,7 @@ namespace pxt.github {
         name: string;
         description: string;
         defaultBranch: string;
-        status?: GitRepoStatus
+        status?: GitRepoStatus;
     }
 
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
@@ -220,7 +220,7 @@ namespace pxt.github {
             return Promise.resolve<GitRepo>(undefined);
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}/gh/${rid.fullName}`)
+        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
