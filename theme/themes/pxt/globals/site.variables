@@ -53,3 +53,4 @@
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
 @blocklySvgColor: #fff;
 @trashIconColor: @primaryColor;
+@addPackageColor: @primaryColor;
