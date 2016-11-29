@@ -17,7 +17,7 @@ import Map = pxt.Map;
 
 import * as server from './server';
 import * as build from './buildengine';
-import * as commandParser from './commandParser';
+import * as commandParser from './commandparser';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
