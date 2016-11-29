@@ -62,9 +62,11 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
                     pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-                    pxt.blocks.initAddPackage((ev: MouseEvent) => {
-                        this.parent.addPackage();
-                    });
+                    if (!this.parent.getSandboxMode()) {
+                        pxt.blocks.initAddPackage((ev: MouseEvent) => {
+                            this.parent.addPackage();
+                        });
+                    }
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;

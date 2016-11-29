@@ -1715,6 +1715,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({ sideDocsCollapsed: false })
     }
 
+    getSandboxMode() {
+        return sandbox;
+    }
+
     renderCore() {
         theEditor = this;
 
