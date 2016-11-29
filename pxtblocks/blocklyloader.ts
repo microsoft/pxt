@@ -529,6 +529,24 @@ namespace pxt.blocks {
         }
     }
 
+    export function initAddPackage(callback: (ev: MouseEvent) => void): void {
+        // add "Add package" button to toolbox
+        if (!$('#blocklyAddPackage').length) {
+            let addpackageDiv = document.createElement('div');
+            addpackageDiv.id = "blocklyAddPackage";
+            let addPackageButton = document.createElement('button');
+            addPackageButton.setAttribute('role', 'button');
+            addPackageButton.setAttribute('aria-label', lf("Add Package..."));
+            addPackageButton.onclick = callback;
+            addPackageButton.className = 'circular ui icon button';
+            let addpackageIcon = document.createElement('i');
+            addpackageIcon.className = 'plus icon';
+            addPackageButton.appendChild(addpackageIcon);
+            addpackageDiv.appendChild(addPackageButton);
+            $('.blocklyToolboxDiv').append(addpackageDiv);
+        }
+    }
+
     function categoryElement(tb: Element, nameid: string): Element {
         return tb ? tb.querySelector(`category[nameid="${nameid.toLowerCase()}"]`) : undefined;
     }
