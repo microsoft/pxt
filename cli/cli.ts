@@ -2797,14 +2797,17 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 }
 
 function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    const ignorePreviousSuccesses =  parsed && !!parsed.flags["i"];
+    const ignorePreviousSuccesses = parsed && !!parsed.flags["i"];
     let filenameMatch: RegExp;
 
     try {
-        filenameMatch = new RegExp(parsed.flags["re"] as string || '.*');
+        let pattern = '.*';
+        if (parsed && parsed.flags["re"])
+            pattern = parsed.flags["re"] as string;
+        filenameMatch = new RegExp(pattern);
     }
     catch (e) {
-        console.log(`"${parsed.flags["re"]}" could not be compiled as a regular expression, ignoring`);
+        console.log(`pattern could not be compiled as a regular expression, ignoring`);
         filenameMatch = new RegExp('.*')
     }
 
@@ -3488,7 +3491,7 @@ function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
 }
 
 export function publishGistAsync(parsed: commandParser.ParsedCommand) {
-    return publishGistCoreAsync(parsed.flags["new"] as boolean);
+    return publishGistCoreAsync(!!parsed.flags["new"]);
 }
 
 interface SnippetInfo {
@@ -3606,6 +3609,7 @@ function initCommands() {
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
+            port: { description: "port to bind server, default 3232" },
             electron: { description: "used to indicate that the server is being started in the context of an electron app" }
         }
     }, serveAsync);
@@ -3615,7 +3619,6 @@ function initCommands() {
         help: "publish current package to a gist",
         flags: {
             new: { description: "force the creation of a new gist" },
-            public: { description: "make the created gist public (secret by default)" }
         }
     }, publishGistAsync)
 
@@ -3668,7 +3671,7 @@ function initCommands() {
         argString: "<file1.ts> <file2.ts> ...",
         flags: {
             i: { description: "format files in-place" },
-            t: { description: "test formatting"}
+            t: { description: "test formatting" }
         },
         advanced: true
     }, formatAsync);
@@ -3684,7 +3687,7 @@ function initCommands() {
     }, gendocsAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, advanced = false): void {
-        p.defineCommand({ name, help, argString, advanced}, callback);
+        p.defineCommand({ name, help, argString, advanced }, callback);
     }
 
     function advancedCommand(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string) {
@@ -3808,10 +3811,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     }
 
     p.parseCommand(args)
-    .then(() => {
-        if (readlineCount)
-            (process.stdin as any).unref();
-    });
+        .then(() => {
+            if (readlineCount)
+                (process.stdin as any).unref();
+        });
 }
 
 function initGlobals() {
