@@ -107,7 +107,7 @@ function initConfig() {
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config
-        const token = passwordGet("pxt");
+        const token = passwordGet(PXT_KEY);
         if (!atok && token) {
             atok = token
         }
@@ -128,6 +128,8 @@ interface KeyTar {
     getPassword(service: string, account: string): string;
     deletePassword(service: string, account: string): void;
 }
+const PXT_KEY = "pxt";
+const GITHUB_KEY = "github";
 
 function passwordGet(account: string): string {
     try {
@@ -157,13 +159,13 @@ function passwordUpdate(account: string, password: string) {
 export function loginAsync(parsed: commandParser.ParsedCommand) {
     const token = parsed.arguments[0];
     if (/^https:\/\//.test(token)) {
-        passwordUpdate("pxt", token);
+        passwordUpdate(PXT_KEY, token);
         if (process.env["CLOUD_ACCESS_TOKEN"])
             console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
         console.log("PXT token saved.")
     }
     else if (/^[a-z0-9]{40,}$/.test(token)) {
-        passwordUpdate("github", token);
+        passwordUpdate(GITHUB_KEY, token);
         console.log("GitHub token saved.")
     }
     else {
@@ -179,8 +181,8 @@ export function loginAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function logoutAsync() {
-    passwordDelete("pxt");
-    passwordDelete("github");
+    passwordDelete(PXT_KEY);
+    passwordDelete(GITHUB_KEY);
     console.log('access tokens removed');
     return Promise.resolve();
 }
@@ -3424,7 +3426,11 @@ function checkDocsAsync(): Promise<void> {
 }
 
 function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
-    const token = passwordGet("github");
+    const token = passwordGet(GITHUB_KEY);
+    if (!token) {
+        fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push gists.");
+        return Promise.resolve();
+    }
     return mainPkg.loadAsync()
         .then(() => {
             const pxtConfig = U.clone(mainPkg.config);
