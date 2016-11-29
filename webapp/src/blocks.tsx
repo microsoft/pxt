@@ -428,8 +428,7 @@ export class Editor extends srceditor.Editor {
     menu() {
         return (
             <sui.Item text={lf("JavaScript") } class="javascript-menuitem" textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
-                tooltip={lf("Convert code to JavaScript") } tooltipPosition="bottom left"
-                />
+                title={lf("Convert code to JavaScript") } />
         )
     }
 

@@ -1770,7 +1770,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         <div className="ui item wide only projectname">
-                            <div className={`ui large ${targetTheme.invertedMenu ? `inverted` : ''} input`} data-tooltip={lf("Pick a name for your project") } data-position="bottom left">
+                            <div className={`ui large ${targetTheme.invertedMenu ? `inverted` : ''} input`} title={lf("Pick a name for your project") }>
                                 <input id="fileNameInput"
                                     type="text"
                                     placeholder={lf("Pick a name...") }
