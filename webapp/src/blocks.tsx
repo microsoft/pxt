@@ -62,7 +62,7 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
                     pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-                    if (!this.parent.getSandboxMode()) {
+                    if (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode()) {
                         pxt.blocks.initAddPackage((ev: MouseEvent) => {
                             this.parent.addPackage();
                         });
