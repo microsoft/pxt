@@ -143,13 +143,13 @@ export class Editor extends srceditor.Editor {
     }
 
     menu(): JSX.Element {
-        let editor = pkg.mainEditorPkg(); 
+        let editor = pkg.mainEditorPkg();
         if (this.currFile != editor.files["main.ts"]) {
             return (<sui.Item text={lf("Back to Code") } icon={"align left"} onClick={() => this.parent.setFile(editor.files["main.ts"]) } />);
         }
         else if (editor.files["main.blocks"]) { //if main.blocks file present
-            return ( <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
-                    tooltip={lf("Convert code to Blocks")} tooltipPosition="bottom left" /> );
+            return (<sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
+                title={lf("Convert code to Blocks") } />);
         }
         return null;
     }
@@ -330,11 +330,11 @@ export class Editor extends srceditor.Editor {
 
         this.editor.onDidBlurEditorText(() => {
             if (this.isIncomplete()) {
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSyntaxValidation: true});
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: true});
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSyntaxValidation: true });
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: true });
             } else {
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSyntaxValidation: false});
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({noSemanticValidation: false});
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSyntaxValidation: false });
+                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: false });
             }
         })
 
@@ -496,7 +496,7 @@ export class Editor extends srceditor.Editor {
         if (this.fileType == FileType.Markdown)
             this.parent.setSideMarkdown(file.content);
 
-        this.currFile.setForceChangeCallback((from: string, to:string) => {
+        this.currFile.setForceChangeCallback((from: string, to: string) => {
             if (from != to) {
                 pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
                 this.loadFile(this.currFile);

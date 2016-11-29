@@ -62,7 +62,7 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
                     pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-                    if (!this.parent.getSandboxMode()) {
+                    if (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode()) {
                         pxt.blocks.initAddPackage((ev: MouseEvent) => {
                             this.parent.addPackage();
                         });
@@ -428,8 +428,7 @@ export class Editor extends srceditor.Editor {
     menu() {
         return (
             <sui.Item text={lf("JavaScript") } class="javascript-menuitem" textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
-                tooltip={lf("Convert code to JavaScript") } tooltipPosition="bottom left"
-                />
+                title={lf("Convert code to JavaScript") } />
         )
     }
 
