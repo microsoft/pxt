@@ -5,18 +5,24 @@
 Stores tokens for PXT or GitHub
 
 ```
-pxt login <token>
+pxt login <service> <token>
 ```
 
 ## Description
 
-Stores a GitHub token to allow publishing gists using [pxt gist](/cli/gist).
+Stores a service token.
 
 ## Options
 
+### <service>
+
+* **github**, GitHub token to create gists. See https://github.com/settings/tokens/new.
+* **crowdin**, Crowdin token to upload or download translations. See https://crowdin.com/project/kindscript/settings#api.
+* **pxt**, PXT token
+
 ### <token>
 
-A GitHub token with **gist** scope generated from https://github.com/settings/tokens/new .
+A token from the service provider.
 
 ## See Also
 
