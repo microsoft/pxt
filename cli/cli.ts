@@ -128,8 +128,6 @@ interface KeyTar {
     getPassword(service: string, account: string): string;
     deletePassword(service: string, account: string): void;
 }
-const PXT_KEY = "pxt";
-const GITHUB_KEY = "github";
 
 function passwordGet(account: string): string {
     try {
@@ -156,33 +154,40 @@ function passwordUpdate(account: string, password: string) {
     }
 }
 
+const PXT_KEY = "pxt";
+const GITHUB_KEY = "github";
+const CROWDIN_KEY = "crowdin";
+const LOGIN_PROVIDERS = [PXT_KEY, GITHUB_KEY, CROWDIN_KEY];
 export function loginAsync(parsed: commandParser.ParsedCommand) {
-    const token = parsed.arguments[0];
-    if (/^https:\/\//.test(token)) {
-        passwordUpdate(PXT_KEY, token);
-        if (process.env["CLOUD_ACCESS_TOKEN"])
-            console.log("You have $CLOUD_ACCESS_TOKEN set; this overrides what you've specified here.")
-        console.log("PXT token saved.")
-    }
-    else if (/^[a-z0-9]{40,}$/.test(token)) {
-        passwordUpdate(GITHUB_KEY, token);
-        console.log("GitHub token saved.")
-    }
-    else {
-        let root = Cloud.apiRoot.replace(/api\/$/, "")
+    const service = parsed.arguments[0] as string;
+    const token = parsed.arguments[1] as string;
+
+    const usage = (msg: string) => {
+        const root = Cloud.apiRoot.replace(/api\/$/, "")
+        console.log(msg);
         console.log("USAGE:")
-        console.log(`  pxt login TOKEN`)
-        console.log(`where TOKEN can be a GitHub token or PXT token.`)
-        console.log(`* go to https://github.com/settings/tokens/new to obtain the GitHub token for gists.`);
-        console.log(`* go to ${root}oauth/gettoken to obtain the PXT token.`)
+        console.log(`  pxt login <service> <token>`)
+        console.log(`where service can be github, crowdin or pxt; and <token> is obtained from`)
+        console.log(`* github: go to https://github.com/settings/tokens/new .`);
+        console.log(`* crowdin: go to https://crowdin.com/project/kindscript/settings#api.`);
+        console.log(`* pxt: go to ${root}oauth/gettoken.`)
         return fatal("Bad usage")
     }
+
+    if (!service || LOGIN_PROVIDERS.indexOf(service) < 0)
+        return usage("missing provider");
+    if (!token)
+        return usage("missing token");
+    if (service == PXT_KEY && !/^https:\/\//.test(token))
+        return usage("invalid token");
+
+    passwordUpdate(service, token);
+    console.log(`${service} password saved.`)
     return Promise.resolve()
 }
 
 export function logoutAsync() {
-    passwordDelete(PXT_KEY);
-    passwordDelete(GITHUB_KEY);
+    LOGIN_PROVIDERS.forEach(key => passwordDelete(key));
     console.log('access tokens removed');
     return Promise.resolve();
 }
@@ -254,14 +259,14 @@ export function pokeRepoAsync(parsed: commandParser.ParsedCommand): Promise<void
 }
 
 export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
-    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
+    const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
-        console.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        console.log(`crowdin upload skipped, crowdin project not specified in pxtarget.json`);
         return Promise.resolve();
     }
-    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+    const key = passwordGet(CROWDIN_KEY) || process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
-        console.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        console.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
 
@@ -3023,14 +3028,14 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
 
 
 function crowdinCredentials(): { prj: string; key: string; } {
-    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
+    const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
-        pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
+        pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
         return null;
     }
-    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
+    const key = passwordGet(CROWDIN_KEY) || process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
-        pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        pxt.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
         return null;
     }
     return { prj, key };
@@ -3096,16 +3101,9 @@ function uploadBundledTranslationsAsync(crowdinDir: string, prj: string, key: st
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
-    const prj = process.env[pxt.crowdin.PROJECT_VARIABLE] as string;
-    if (!prj) {
-        pxt.log(`crowdin upload skipped, '${pxt.crowdin.PROJECT_VARIABLE}' variable missing`);
-        return Promise.resolve();
-    }
-    const key = process.env[pxt.crowdin.KEY_VARIABLE] as string;
-    if (!key) {
-        pxt.log(`crowdin upload skipped, '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
-        return Promise.resolve();
-    }
+    const cred = crowdinCredentials();
+    if (!cred) return Promise.resolve();
+
     const crowdinDir = pxt.appTarget.id;
     const name = parsed.arguments[0] || "";
     const todo: string[] = [];
@@ -3130,7 +3128,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
         pxt.log(`downloading ${crowdf}`);
         pxt.log(`projectdir: ${projectdir}`)
         const locFiles: Map<string> = {};
-        return pxt.crowdin.downloadTranslationsAsync(prj, key, crowdf, { translatedOnly: true, validatedOnly: true })
+        return pxt.crowdin.downloadTranslationsAsync(cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
             .then(data => {
                 Object.keys(data)
                     .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
@@ -3544,7 +3542,14 @@ function initCommands() {
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    simpleCmd("login", "stores the PXT or GitHub access token", loginAsync, "<access_token>");
+
+    p.defineCommand({
+        name: "login",
+        help: "stores the PXT, GitHub or Crowdin access token",
+        argString: "<service> <token>",
+        numArgs: 2
+    }, loginAsync);
+
     simpleCmd("logout", "clears access tokens", logoutAsync);
 
     p.defineCommand({
