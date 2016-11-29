@@ -537,6 +537,7 @@ namespace pxt.blocks {
             let addPackageButton = document.createElement('button');
             addPackageButton.setAttribute('role', 'button');
             addPackageButton.setAttribute('aria-label', lf("Add Package..."));
+            addPackageButton.setAttribute('title', lf("Add Package..."));
             addPackageButton.onclick = callback;
             addPackageButton.className = 'circular ui icon button';
             let addpackageIcon = document.createElement('i');
