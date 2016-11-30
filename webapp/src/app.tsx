@@ -1445,10 +1445,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }).then(r => {
             if (!r) return;
             workspace.resetAsync()
-                .catch((e: any) => { })
-                .done(() => {
-                    window.location.reload()
-                })
+                .done(() => window.location.reload(),
+                () => window.location.reload())
         });
     }
 
