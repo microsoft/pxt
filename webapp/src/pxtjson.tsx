@@ -98,6 +98,7 @@ export class Editor extends srceditor.Editor {
                     <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
                     {userConfigs.map(uc =>
                         <sui.Checkbox
+                            key={`userconfig-${uc.description}`}
                             inputLabel={uc.description}
                             checked={isUserConfigActive(uc) }
                             onChange={() => applyUserConfig(uc) } />
