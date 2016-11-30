@@ -72,6 +72,7 @@ export class Editor extends srceditor.Editor {
             // update cfg
             if (Object.keys(cfg).length) {
                 if (!this.config.yotta) this.config.yotta = {};
+                Object.keys(cfg).filter(k => cfg[k] === null).forEach(k => delete cfg[k]);
                 this.config.yotta.config = Util.jsonUnFlatten(cfg);
             } else {
                 if (this.config.yotta) {
