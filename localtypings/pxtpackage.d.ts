@@ -33,15 +33,23 @@ declare namespace pxt {
         dependencies?: Map<string>;
     }
 
+    interface CompilationConfig {
+        description: string;
+        config: any;
+    }
+
     interface YottaConfig {
         dependencies?: Map<string>;
         config?: any;
-        configIsJustDefaults?: boolean;
-        ignoreConflicts?: boolean;
         /**
          * Overridable config flags
          */
         optionalConfig?: any;
+        userConfigs?: CompilationConfig[];
+        /* deprecated */
+        configIsJustDefaults?: boolean;
+        /* deprecated */
+        ignoreConflicts?: boolean;
     }
 
     interface CodeCard {
