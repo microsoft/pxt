@@ -921,11 +921,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         if (output && !output.numDiagnosticsOverride
                             && !simulator.driver.runOptions.debug
                             && (simulator.driver.state == pxsim.SimulatorState.Running
-                                || simulator.driver.state == pxsim.SimulatorState.Unloaded
-                                || simulator.driver.state == pxsim.SimulatorState.Stopped)) {
+                                || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
-                            else if (simulator.driver.state != pxsim.SimulatorState.Stopped)
-                                this.autoRunSimulator();
+                            else this.autoRunSimulator();
                         }
                     }
                 });
@@ -1743,7 +1741,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
-        const run = !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
+        const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
