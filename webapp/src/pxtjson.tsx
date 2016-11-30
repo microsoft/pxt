@@ -67,7 +67,7 @@ export class Editor extends srceditor.Editor {
             if (isUserConfigActive(uc)) {
                 Object.keys(ucfg).forEach(k => delete cfg[k]);
             } else {
-                Util.jsonMergeFrom(cfg, ucfg);
+                Object.keys(ucfg).forEach(k => cfg[k] = ucfg[k]);
             }
             // update cfg
             if (Object.keys(cfg).length) {
@@ -81,7 +81,7 @@ export class Editor extends srceditor.Editor {
                         delete this.config.yotta;
                 }
             }
-            // trigger update
+            // trigger update            
             update(uc);
         }
         return (
