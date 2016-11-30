@@ -59,7 +59,7 @@ export class Editor extends srceditor.Editor {
         const isUserConfigActive = (uc: pxt.CompilationConfig) => {
             const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
             const ucfg = Util.jsonFlatten(uc.config);
-            return !Object.keys(ucfg).some(k => cfg[k] !== ucfg[k]);
+            return !Object.keys(ucfg).some(k => ucfg[k] === null ? !!cfg[k] : cfg[k] !== ucfg[k]);
         }
         const applyUserConfig = (uc: pxt.CompilationConfig) => {
             const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
