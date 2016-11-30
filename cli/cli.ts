@@ -3753,7 +3753,8 @@ function errorHandler(reason: any) {
 }
 
 let externalMessageHandlers: pxt.Map<server.ExternalMessageHandler>;
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), externalHandlers?: pxt.Map<server.ExternalMessageHandler>) {
+// called from pxt npm package
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), externalHandlers?: pxt.Map<server.ExternalMessageHandler>): Promise<void> {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3761,6 +3762,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         console.error("Please upgrade your pxt CLI module.")
         console.error("   npm update -g pxt")
         process.exit(30)
+        return Promise.resolve();
     }
 
     if (externalHandlers) {
@@ -3815,7 +3817,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         }
     }
 
-    p.parseCommand(args)
+    return p.parseCommand(args)
         .then(() => {
             if (readlineCount)
                 (process.stdin as any).unref();
@@ -3851,5 +3853,5 @@ if (require.main === module) {
             process.exit(1)
         }
     }
-    mainCli(targetdir);
+    mainCli(targetdir).done();
 }
