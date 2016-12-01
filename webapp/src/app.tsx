@@ -26,6 +26,7 @@ import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
 import * as hwdbg from "./hwdbg"
+import * as electron from "./electron";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -68,16 +69,6 @@ interface IAppState {
     showParts?: boolean;
 }
 
-interface ExternalMessageData {
-    messageType: string;
-    args: any
-}
-interface ExternalMessageResult {
-    error?: any;
-    result?: any;
-}
-
-let isElectron = /[?&]electron=1/.test(window.location.href);
 let theEditor: ProjectView;
 
 interface ISettingsProps {
@@ -1697,25 +1688,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }).done();
     }
 
-    checkForElectronUpdate() {
-        const errorMessage = lf("Unable to check for updates");
-        pxt.tickEvent("menu.electronupdate");
-        Util.requestAsync({
-            url: "/api/externalmsg",
-            headers: { "Authorization": Cloud.localToken },
-            method: "POST",
-            data: {
-                messageType: "checkForUpdate"
-            } as ExternalMessageData
-        }).then((res: ExternalMessageResult) => {
-            if (res.error) {
-                core.errorNotification(errorMessage);
-            }
-        }).catch((e) => {
-            core.errorNotification(errorMessage);
-        });
-    }
-
     embed() {
         pxt.tickEvent("menu.embed");
         const header = this.state.header;
@@ -1823,7 +1795,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                             { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
-                            { isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => this.checkForElectronUpdate() } /> : undefined }
+                            { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
                         </sui.DropdownMenuItem>}
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
@@ -2194,6 +2166,8 @@ $(document).ready(() => {
         .then(() => {
             initSerial()
             initHashchange();
+            electron.init();
+
             switch (hash.cmd) {
                 case "sandbox":
                 case "pub":

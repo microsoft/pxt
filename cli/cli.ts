@@ -1565,7 +1565,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             autoStart: !globalConfig.noAutoStart,
             packaged: packaged,
             electron: !!parsed.flags["electron"],
-            externalHandlers: externalMessageHandlers || void 0,
+            electronHandlers,
             port: parsed.flags["port"] as number || 0,
             browser: parsed.flags["browser"] as string
         }))
@@ -3769,9 +3769,9 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-let externalMessageHandlers: pxt.Map<server.ExternalMessageHandler>;
+let electronHandlers: pxt.Map<server.ElectronHandler>;
 // called from pxt npm package
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), externalHandlers?: pxt.Map<server.ExternalMessageHandler>): Promise<void> {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), handlers?: pxt.Map<server.ElectronHandler>): Promise<void> {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3782,10 +3782,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         return Promise.resolve();
     }
 
-    if (externalHandlers) {
-        externalMessageHandlers = externalHandlers;
-    }
-
+    electronHandlers = handlers;
     nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
@@ -3836,6 +3833,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
             if (readlineCount)
                 (process.stdin as any).unref();
         });
+}
+
+export function sendElectronMessage(message: server.ElectronMessage) {
+    server.sendElectronMessage(message);
 }
 
 function initGlobals() {
