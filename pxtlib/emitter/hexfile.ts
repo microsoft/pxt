@@ -29,6 +29,129 @@ namespace ts.pxtc {
 
     export const vtableShift = 2;
 
+    export namespace UF2 {
+        export const startMagic = "UF2\x0AWQ]\x9E"
+        export const endMagic = "0o\xB1\x0A"
+
+        export const UF2_MAGIC_START0 = 0x0A324655; // "UF2\n"
+        export const UF2_MAGIC_START1 = 0x9E5D5157; // Randomly selected
+        export const UF2_MAGIC_END = 0x0AB16F30;    // Ditto
+
+        export interface Block {
+            flags: number;
+            targetAddr: number;
+            payloadSize: number;
+            blockNo: number;
+            numBlocks: number;
+            data: Uint8Array;
+        }
+
+        export function parseBlock(block: Uint8Array): Block {
+            let wordAt = (k: number) => {
+                return (block[k] + (block[k + 1] << 8) + (block[k + 2] << 16) + (block[k + 3] << 24)) >>> 0
+            }
+            if (!block || block.length != 512 ||
+                wordAt(0) != UF2_MAGIC_START0 || wordAt(4) != UF2_MAGIC_START1 ||
+                wordAt(block.length - 4) != UF2_MAGIC_END)
+                return null
+            return {
+                flags: wordAt(8),
+                targetAddr: wordAt(12),
+                payloadSize: wordAt(16),
+                blockNo: wordAt(20),
+                numBlocks: wordAt(24),
+                data: block.slice(32, 512 - 4)
+            }
+        }
+
+        function setWord(block: Uint8Array, ptr: number, v: number) {
+            block[ptr] = (v & 0xff)
+            block[ptr + 1] = ((v >> 8) & 0xff)
+            block[ptr + 2] = ((v >> 16) & 0xff)
+            block[ptr + 3] = ((v >> 24) & 0xff)
+        }
+
+        export interface BlockFile {
+            currBlock: Uint8Array;
+            currPtr: number;
+            blocks: Uint8Array[];
+            ptrs: number[];
+        }
+
+        export function newBlockFile(): BlockFile {
+            return {
+                currBlock: null,
+                currPtr: -1,
+                blocks: [],
+                ptrs: []
+            }
+        }
+
+        export function serializeFile(f: BlockFile) {
+            for (let i = 0; i < f.blocks.length; ++i) {
+                setWord(f.blocks[i], 24, f.blocks.length)
+            }
+            let res = ""
+            for (let b of f.blocks)
+                res += Util.uint8ArrayToString(b)
+            return res
+        }
+
+        export function writeBytes(f: BlockFile, addr: number, bytes: number[]) {
+            let currBlock = f.currBlock
+            let needAddr = addr >> 8
+            if (needAddr != f.currPtr) {
+                let i = 0;
+                currBlock = null
+                for (let i = 0; i < f.ptrs.length; ++i) {
+                    if (f.ptrs[i] == needAddr) {
+                        currBlock = f.blocks[i]
+                        break
+                    }
+                }
+                if (!currBlock) {
+                    currBlock = new Uint8Array(512)
+                    setWord(currBlock, 0, UF2_MAGIC_START0)
+                    setWord(currBlock, 4, UF2_MAGIC_START1)
+                    setWord(currBlock, 12, needAddr << 8)
+                    setWord(currBlock, 16, 256)
+                    setWord(currBlock, 20, f.blocks.length)
+                    f.blocks.push(currBlock)
+                    f.ptrs.push(needAddr)
+                }
+                f.currPtr = needAddr
+                f.currBlock = currBlock
+            }
+            let p = (addr & 0xff) + 32
+            for (let i = 0; i < bytes.length; ++i)
+                currBlock[p + i] = bytes[i]
+        }
+
+        export function writeHex(f: BlockFile, hex: string[]) {
+            let upperAddr = "0000"
+
+            for (let i = 0; i < hex.length; ++i) {
+                let m = /:02000004(....)/.exec(hex[i])
+                if (m) {
+                    upperAddr = m[1]
+                }
+                m = /^:..(....)00(.*)[0-9A-F][0-9A-F]$/.exec(hex[i])
+                if (m) {
+                    let newAddr = parseInt(upperAddr + m[1], 16)
+                    let hh = m[2]
+                    let arr: number[] = []
+                    for (let j = 0; j < hh.length; j += 2) {
+                        arr.push(parseInt(hh[j] + hh[j + 1], 16))
+                    }
+                    writeBytes(f, newAddr, arr)
+                }
+            }
+
+        }
+    }
+
+
+
     // TODO should be internal
     export namespace hex {
         let funcInfo: Map<FuncInfo>;
@@ -261,7 +384,7 @@ namespace ts.pxtc {
             return r.toUpperCase();
         }
 
-        export function patchHex(bin: Binary, buf: number[], shortForm: boolean) {
+        export function patchHex(bin: Binary, buf: number[], shortForm: boolean, useuf2: boolean) {
             let myhex = hex.slice(0, bytecodeStartIdx)
 
             assert(buf.length < 32000)
@@ -292,7 +415,14 @@ namespace ts.pxtc {
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
 
-            myhex[jmpStartIdx] = hexBytes(nextLine(hd, jmpStartAddr))
+            let uf2 = useuf2 ? UF2.newBlockFile() : null
+
+            if (uf2) {
+                UF2.writeHex(uf2, myhex)
+                UF2.writeBytes(uf2, jmpStartAddr, nextLine(hd, jmpStartIdx).slice(4))
+            } else {
+                myhex[jmpStartIdx] = hexBytes(nextLine(hd, jmpStartAddr))
+            }
 
             ptr = 0
 
@@ -301,22 +431,31 @@ namespace ts.pxtc {
             let addr = bytecodeStartAddr;
             let upper = (addr - 16) >> 16
             while (ptr < buf.length) {
-                if ((addr >> 16) != upper) {
-                    upper = addr >> 16
-                    myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
+                if (uf2) {
+                    UF2.writeBytes(uf2, addr, nextLine(buf, addr).slice(4))
+                } else {
+                    if ((addr >> 16) != upper) {
+                        upper = addr >> 16
+                        myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
+                    }
+                    myhex.push(hexBytes(nextLine(buf, addr)))
                 }
-
-                myhex.push(hexBytes(nextLine(buf, addr)))
                 addr += 16
             }
 
-            if (!shortForm)
-                hex.slice(bytecodeStartIdx).forEach(l => myhex.push(l))
+            if (!shortForm) {
+                let app = hex.slice(bytecodeStartIdx)
+                if (uf2)
+                    UF2.writeHex(uf2, app)
+                else
+                    Util.pushRange(myhex, app)
+            }
 
-            return myhex;
+            if (uf2)
+                return [UF2.serializeFile(uf2)]
+            else
+                return myhex;
         }
-
-
     }
 
     export function asmline(s: string) {
@@ -552,7 +691,7 @@ _stored_program: .string "`
     }
 
     export function processorEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
-        let src = serialize(bin,opts)
+        let src = serialize(bin, opts)
         src = patchSrcHash(src)
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
@@ -561,8 +700,13 @@ _stored_program: .string "`
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {
-            const myhex = hex.patchHex(bin, res.buf, false).join("\r\n") + "\r\n"
-            bin.writeFile(pxtc.BINARY_HEX, myhex)
+            if (opts.target.useUF2) {
+                const myhex = btoa(hex.patchHex(bin, res.buf, false, true)[0])
+                bin.writeFile(pxtc.BINARY_UF2, myhex)
+            } else {
+                const myhex = hex.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"
+                bin.writeFile(pxtc.BINARY_HEX, myhex)
+            }
             cres.quickFlash = {
                 startAddr: hex.bytecodeStartAddrPadded,
                 words: []

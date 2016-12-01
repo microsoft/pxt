@@ -178,6 +178,7 @@ declare namespace ts.pxtc {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
+        useUF2?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
