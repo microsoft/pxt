@@ -71,13 +71,18 @@ namespace pxt.blocks {
         return mkGroup(nodes)
     }
 
-    function mkCommaSep(nodes: JsNode[]) {
-        let r: JsNode[] = []
-        for (let n of nodes) {
-            if (r.length > 0)
+    function mkCommaSep(nodes: JsNode[], externalInputs: boolean) {
+        const r: JsNode[] = []
+        for (const n of nodes) {
+            if (externalInputs) {
+                if (r.length > 0) r.push(mkText(","));
+                r.push(mkNewLine());
+            } else if (r.length > 0) {
                 r.push(mkText(", "))
+            }
             r.push(n)
         }
+        if (externalInputs) r.push(mkNewLine());
         return mkGroup(r)
     }
 
@@ -87,7 +92,7 @@ namespace pxt.blocks {
         export function mkArrayLiteral(args: JsNode[]) {
             return mkGroup([
                 mkText("["),
-                mkCommaSep(args),
+                mkCommaSep(args, false),
                 mkText("]")
             ])
         }
@@ -104,19 +109,19 @@ namespace pxt.blocks {
             return mkText(stringLit(x))
         }
 
-        export function mkCall(name: string, args: JsNode[], property = false) {
+        export function mkCall(name: string, args: JsNode[], externalInputs: boolean, property = false) {
             if (property)
                 return mkGroup([
                     mkInfix(args[0], ".", mkText(name)),
                     mkText("("),
-                    mkCommaSep(args.slice(1)),
+                    mkCommaSep(args.slice(1), externalInputs),
                     mkText(")")
                 ])
             else
                 return mkGroup([
                     mkText(name),
                     mkText("("),
-                    mkCommaSep(args),
+                    mkCommaSep(args, externalInputs),
                     mkText(")")
                 ])
 
@@ -124,23 +129,23 @@ namespace pxt.blocks {
 
         // Call function [name] from the standard device library with arguments
         // [args].
-        export function stdCall(name: string, args: JsNode[]) {
-            return mkCall(name, args);
+        export function stdCall(name: string, args: JsNode[], externalInputs: boolean) {
+            return mkCall(name, args, externalInputs);
         }
 
         // Call extension method [name] on the first argument
-        export function extensionCall(name: string, args: JsNode[]) {
-            return mkCall(name, args, true);
+        export function extensionCall(name: string, args: JsNode[], externalInputs: boolean) {
+            return mkCall(name, args, externalInputs, true);
         }
 
         // Call function [name] from the specified [namespace] in the micro:bit
         // library.
-        export function namespaceCall(namespace: string, name: string, args: JsNode[]) {
-            return mkCall(namespace + "." + name, args);
+        export function namespaceCall(namespace: string, name: string, args: JsNode[], externalInputs: boolean) {
+            return mkCall(namespace + "." + name, args, externalInputs);
         }
 
         export function mathCall(name: string, args: JsNode[]) {
-            return namespaceCall("Math", name, args)
+            return namespaceCall("Math", name, args, false)
         }
 
         export function mkGlobalRef(name: string) {
@@ -904,14 +909,15 @@ namespace pxt.blocks {
             args = func.args.map((p: StdArg) => compileArgument(e, b, p, comments));
         }
 
+        const externalInputs = !b.getInputsInline();
         if (func.isIdentity)
             return args[0];
         else if (func.isExtensionMethod) {
-            return H.extensionCall(func.f, args);
+            return H.extensionCall(func.f, args, externalInputs);
         } else if (func.namespace) {
-            return H.namespaceCall(func.namespace, func.f, args);
+            return H.namespaceCall(func.namespace, func.f, args, externalInputs);
         } else {
-            return H.stdCall(func.f, args);
+            return H.stdCall(func.f, args, externalInputs);
         }
     }
 
@@ -928,7 +934,7 @@ namespace pxt.blocks {
         else {
             callback = mkGroup([mkText("() =>"), body]);
         }
-        return mkStmt(H.namespaceCall(n, f, args.concat([ callback ])))
+        return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
@@ -969,7 +975,7 @@ namespace pxt.blocks {
         }
         let lit = H.mkStringLiteral(state)
         lit.canIndentInside = true
-        return H.namespaceCall(n, f, [lit].concat(args));
+        return H.namespaceCall(n, f, [lit].concat(args), false);
     }
 
     // A standard function argument may be a field name (see below)
@@ -1074,7 +1080,7 @@ namespace pxt.blocks {
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
-                        pxt.reportError("blocks", "function already defined", { "details" : fn.attributes.blockId });
+                        pxt.reportError("blocks", "function already defined", { "details": fn.attributes.blockId });
                         return;
                     }
                     let fieldMap = pxt.blocks.parameterNames(fn);
@@ -1329,6 +1335,9 @@ namespace pxt.blocks {
         // never return empty string - TS compiler service thinks it's an error
         if (!output)
             output += "\n"
+
+        // outformat
+        output = pxtc.format(output, 1).formatted;
 
         return {
             source: output,

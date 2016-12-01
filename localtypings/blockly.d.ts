@@ -99,6 +99,7 @@ declare namespace Blockly {
         // Returns null if the input does not exist on the specified block, or
         // is disconnected.
         getInputTargetBlock(field: string): Block;
+        getInputsInline(): boolean;
         // Returns null if no next block or is disconnected.
         getNextBlock(): Block;
         // Unplug this block from its superior block.  If this block is a statement, optionally reconnect the block underneath with the block on top.
