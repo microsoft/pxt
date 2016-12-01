@@ -29,6 +29,7 @@ export class Editor extends srceditor.Editor {
     currFile: pkg.File;
     fileType: FileType = FileType.Unknown;
     extraLibs: { [path: string]: monaco.IDisposable };
+    blocksDict: { [ns: string]: { color: string, fns: string[] } };
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -167,43 +168,25 @@ export class Editor extends srceditor.Editor {
     }
 
     initEditorCss() {
-        let colorDict: { [ns: string]: { color: string, fns: string[] } } = {};
         let head = document.head || document.getElementsByTagName('head')[0],
             style = (document.getElementById('monacoeditorStyles') as HTMLStyleElement) || document.createElement('style');
         style.id = "monacoeditorStyles";
         style.type = 'text/css';
 
-        compiler.getBlocksAsync()
-            .then((blockInfo: pxtc.BlocksInfo) => {
-                if (!blockInfo) return;
-                blockInfo.blocks
-                    .forEach(fn => {
-                        let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                        let nsn = blockInfo.apis.byQName[ns];
-                        if (nsn) ns = nsn.attributes.block || ns;
-                        if (nsn && nsn.attributes.color) {
-                            if (!colorDict[ns])
-                                colorDict[ns] = { color: nsn.attributes.color, fns: [] };
-                            colorDict[ns].fns.push(fn.name);
-                        }
-                    });
-            }).then(() => {
-                let cssContent = "";
-                Object.keys(colorDict).forEach(function (ns) {
-                    let element = colorDict[ns];
-                    let color = element.color;
-                    let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.` + element.fns.join(', .token.ts.identifier.');
-                    cssContent += `${cssTag} { color: ${color}; }`;
-                })
-                return cssContent;
-            }).done((cssContent: string) => {
-                if (style.sheet) {
-                    style.textContent = cssContent;
-                } else {
-                    style.appendChild(document.createTextNode(cssContent));
-                }
-                head.appendChild(style);
-            });
+        let cssContent = "";
+        let colorDict = this.blocksDict;
+        Object.keys(colorDict).forEach(function (ns) {
+            let element = colorDict[ns];
+            let color = element.color;
+            let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.${element.fns.join(', .token.ts.identifier.')}`;
+            cssContent += `${cssTag} { color: ${color}; }`;
+        })
+        if (style.sheet) {
+            style.textContent = cssContent;
+        } else {
+            style.appendChild(document.createTextNode(cssContent));
+        }
+        head.appendChild(style);
     }
 
     textAndPosition(pos: monaco.IPosition) {
@@ -271,7 +254,8 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         this.extraLibs = Object.create(null);
-        this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
+        let editorElement = document.getElementById("monacoEditorInner");
+        this.editor = pxt.vs.initMonacoAsync(editorElement);
         if (!this.editor) {
             // Todo: create a text area if we weren't able to load the monaco editor correctly.
             return;
@@ -366,6 +350,17 @@ export class Editor extends srceditor.Editor {
                 this.parent.settings.editorFontSize = currentFont;
                 this.forceDiagnosticsUpdate();
             }
+            // Update widgets
+            let toolbox = document.getElementById('pxtMonacoToolboxWidget');
+            toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+            let flyout = document.getElementById('pxtMonacoFlyoutWidget');
+            flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+        })
+
+        this.editor.onDidFocusEditorText(() => {
+            // Hide the flyout
+            let flyout = document.getElementById('pxtMonacoFlyoutWidget');
+            flyout.style.display = 'none';
         })
 
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
@@ -395,7 +390,27 @@ export class Editor extends srceditor.Editor {
             }
         });
 
+        this.editor.onMouseUp((e: monaco.editor.IEditorMouseEvent) => {
+            console.log("mouse up");
+            console.log(e);
+        });
+
+        editorElement.ondragover = (ev: DragEvent) => {
+            console.log("drag over");
+            console.log(ev);
+            let x = ev.clientX;
+            let y = ev.clientY;
+
+        };
+
+        editorElement.ondrop = (ev: DragEvent) => {
+            console.log("dropped");
+            console.log(ev);
+        };
+
         this.editorViewZones = [];
+
+        this.setupToolbox(editorElement);
 
         this.isReady = true
     }
@@ -434,6 +449,128 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    setupToolbox(editorElement: HTMLElement) {
+        let toolbox = document.createElement('div');
+        toolbox.id = 'pxtMonacoToolboxWidget';
+        toolbox.className = 'injectionDiv';
+        editorElement.appendChild(toolbox);
+
+        // Monaco flyout widget
+        let flyoutWidget = {
+            getId: function(): string {
+                return 'pxt.flyout.widget';
+            },
+            getDomNode: function(): HTMLElement {
+                if (!this.domNode) {
+                    this.domNode = document.createElement('div');
+                    this.domNode.id = 'pxtMonacoFlyoutWidget';
+                    this.domNode.style.top = `0`;
+                    this.domNode.className = 'pxtMonacoFlyout';
+                    // Hide by default
+                    this.domNode.style.display = 'none';
+                    this.domNode.innerText = 'Flyout';
+                }
+                return this.domNode;
+            },
+            getPosition: function(): monaco.editor.IOverlayWidgetPosition {
+                return null;
+            }
+        };
+        this.editor.addOverlayWidget(flyoutWidget);
+    }
+
+    updateToolbox() {
+        // Toolbox div
+        let toolbox = document.getElementById('pxtMonacoToolboxWidget');
+        // Move the monaco editor to make room for the toolbox div
+        this.editor.getLayoutInfo().glyphMarginLeft = 200;
+        this.editor.layout();
+        let _this = this;
+        // clear the toolbox
+        toolbox.innerHTML = null;
+
+        // Add an overlay widget for the toolbox
+        toolbox.className = 'pxtMonacoToolbox';
+        toolbox.style.left = '0';
+        toolbox.style.height = `${_this.editor.getLayoutInfo().contentHeight}px`;
+        toolbox.style.display = 'block';
+        let root = document.createElement('div');
+        root.className = 'blocklyTreeRoot';
+        toolbox.appendChild(root);
+        let group = document.createElement('div');
+        group.setAttribute('role', 'group');
+        root.appendChild(group);
+
+        let blocksDict = this.blocksDict;
+        Object.keys(blocksDict).sort().forEach(function (ns) {
+            // Create a tree item
+            let treeitem = document.createElement('div');
+            treeitem.setAttribute('role', 'treeitem');
+            treeitem.onclick = (ev: MouseEvent) => {
+                let monacoFlyout = document.getElementById('pxtMonacoFlyoutWidget');
+                monacoFlyout.innerHTML = null;
+                monacoFlyout.style.left = `${_this.editor.getLayoutInfo().contentLeft}px`;
+                monacoFlyout.style.height = `${_this.editor.getLayoutInfo().contentHeight}px`;
+                monacoFlyout.style.display = 'block';
+                monacoFlyout.style.transform = 'translateX(0px)';
+                let element = blocksDict[ns];
+                element.fns.forEach((fn) => {
+                    let monacoBlock = document.createElement('div');
+                    monacoBlock.setAttribute('draggable','true');
+                    monacoBlock.ondragstart = (ev2: DragEvent) => {
+                        monacoFlyout.className = monacoFlyout.className + ' hide';
+                    };
+                    monacoBlock.style.fontSize = `${_this.parent.settings.editorFontSize}px`;
+                    let methodToken = document.createElement('span');
+                    methodToken.className = `token ts identifier ${fn}`;
+                    methodToken.innerText = fn;
+
+                    monacoBlock.onclick = (ev2: MouseEvent) => {
+                        monacoFlyout.style.display = 'none';
+                        let model = _this.editor.getModel();
+                        let currPos = _this.editor.getPosition();
+                        let cursorOverride = model.getOffsetAt(currPos)
+                        let value = model.getValue();
+                        let insertText = `${ns}.${fn}`;
+                        value = [value.slice(0, cursorOverride), insertText, value.slice(cursorOverride)].join('');
+                        //cursorOverride += (insertText.length - 1);
+                        model.setValue(value);
+                        let endPos = model.getPositionAt(cursorOverride);
+                        _this.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+                        _this.setViewState(endPos);
+                    };
+
+                    monacoBlock.appendChild(methodToken);
+
+                    monacoFlyout.appendChild(monacoBlock);
+                })
+            };
+            group.appendChild(treeitem);
+            let treerow = document.createElement('div');
+            treerow.className = 'blocklyTreeRow';
+            treeitem.appendChild(treerow);
+            let icon = document.createElement('span');
+            let iconNone = document.createElement('span');
+            let label = document.createElement('span');
+
+            icon.className = 'blocklyTreeIcon';
+            icon.setAttribute('role', 'presentation');
+            iconNone.className = 'blocklyTreeIcon blocklyTreeIconNone';
+            iconNone.setAttribute('role', 'presentation');
+            iconNone.style.display = 'inline-block';
+
+            label.className = 'blocklyTreeLabel';
+            treerow.appendChild(icon);
+            treerow.appendChild(label);
+
+            let element = blocksDict[ns];
+            let color = element.color;
+
+            treerow.style.borderLeft = `8px solid ${color}`;
+            label.innerText = `${ns}`;
+        })
+    }
+
     getId() {
         return "monacoEditor"
     }
@@ -461,8 +598,31 @@ export class Editor extends srceditor.Editor {
         this.editor.setValue(content);
     }
 
+    compileBlocks() {
+        this.blocksDict = {};
+        return compiler.getBlocksAsync()
+            .then((blockInfo: pxtc.BlocksInfo) => {
+                if (!blockInfo) return;
+                blockInfo.blocks
+                    .forEach(fn => {
+                        let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                        let nsn = blockInfo.apis.byQName[ns];
+                        if (nsn) ns = nsn.attributes.block || ns;
+                        if (nsn && nsn.attributes.color) {
+                            if (!this.blocksDict[ns])
+                                this.blocksDict[ns] = { color: nsn.attributes.color, fns: [] };
+                            this.blocksDict[ns].fns.push(fn.name);
+                        }
+                    });
+                return this.blocksDict;
+            });
+    }
+
     loadFile(file: pkg.File) {
-        this.initEditorCss();
+        this.compileBlocks().then(() => {
+            this.initEditorCss();
+            if (!file.isReadonly()) this.updateToolbox();
+        });
 
         let ext = file.getExtension()
         let modeMap: any = {

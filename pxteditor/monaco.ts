@@ -11,13 +11,24 @@ namespace pxt.vs {
             mainPkg.sortedDeps().forEach(pkg => {
                 pkg.getFiles().forEach(f => {
                     let fp = pkg.id + "/" + f;
+                    let proto = "pkg:" + fp;
                     if (/\.(ts)$/.test(f) && fp != currFile) {
-                        let proto = "pkg:" + fp;
                         if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fp]) {
                             let content = pkg.readFile(f) || " ";
                             libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
                         }
                         modelMap[fp] = "1";
+                    }
+                    if (!readOnly && /\.d\.ts$/.test(f)) {
+                        // Definitions file
+                         monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
+                            worker(monaco.Uri.parse(fp))
+                            .then((client: any) => {
+                                client.getNavigationBarItems(fp).then((items: any) => {
+                                    console.log(items);
+                                })
+                            });
+                        })
                     }
                 });
             });

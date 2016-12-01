@@ -554,3 +554,27 @@ body.blocklyMinimalBody {
 .monaco-editor .parameter-hints-widget {
     flex-direction: row !important;
 }
+
+.line-numbers {
+    display:none;
+}
+.pxtMonacoToolbox {
+    position: absolute;
+    overflow-x: visible;
+    overflow-y: auto;
+}
+
+.pxtMonacoFlyout {
+    background-color: rgba(221,221,221, .8);
+    color: black;
+    width: 220px;
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+.pxtMonacoFlyout div {
+    margin:2rem;
+}
+
+.pxtMonacoFlyout.hide{
+    transform:translateX(-9999px);
+}
