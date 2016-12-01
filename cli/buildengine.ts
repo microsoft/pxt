@@ -43,7 +43,8 @@ export const buildEngines: Map<BuildEngine> = {
         },
         patchHexInfo: patchYottaHexInfo,
         buildPath: "built/yt",
-        moduleConfig: "module.json"
+        moduleConfig: "module.json",
+        deployAsync: msdDeployCoreAsync
     },
 
     platformio: {
@@ -54,6 +55,16 @@ export const buildEngines: Map<BuildEngine> = {
         buildPath: "built/pio",
         moduleConfig: "platformio.ini",
         deployAsync: platformioDeployAsync,
+    },
+
+    platformiouf2: {
+        updateEngineAsync: () => Promise.resolve(),
+        buildAsync: () => { return runPlatformioAsync(["run"]) },
+        setPlatformAsync: () => Promise.resolve(),
+        patchHexInfo: patchPioHexInfo,
+        buildPath: "built/pio",
+        moduleConfig: "platformio.ini",
+        deployAsync: msdDeployCoreAsync,
     }
 }
 
@@ -290,5 +301,55 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         }
         consts += "}\n"
         fs.writeFileSync(constName, consts)
+    }
+}
+
+const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
+const readDirAsync = Promise.promisify(fs.readdir)
+
+function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
+    return getBoardDrivesAsync()
+        .then(drives => {
+            if (drives.length == 0) {
+                console.log("cannot find any drives to deploy to");
+                return Promise.resolve(0);
+            }
+            console.log(`copy ${ts.pxtc.BINARY_HEX} to ` + drives.join(", "));
+            const writeHexFile = (filename: string) => {
+                return writeFileAsync(filename + ts.pxtc.BINARY_HEX, res.outfiles[ts.pxtc.BINARY_HEX])
+                    .then(() => console.log("wrote hex file to " + filename));
+            };
+            return Promise.map(drives, d => writeHexFile(d))
+                .then(() => drives.length);
+        }).then(() => { });
+}
+
+function getBoardDrivesAsync(): Promise<string[]> {
+    if (process.platform == "win32") {
+        const rx = new RegExp("^([A-Z]:).* " + pxt.appTarget.compile.deployDrives)
+        return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem")
+            .then(buf => {
+                let res: string[] = []
+                buf.toString("utf8").split(/\n/).forEach(ln => {
+                    let m = rx.exec(ln)
+                    if (m) {
+                        res.push(m[1] + "/")
+                    }
+                })
+                return res
+            })
+    }
+    else if (process.platform == "darwin") {
+        const rx = new RegExp(pxt.appTarget.compile.deployDrives)
+        return readDirAsync("/Volumes")
+            .then(lst => lst.filter(s => rx.test(s)).map(s => "/Volumes/" + s + "/"))
+    } else if (process.platform == "linux") {
+        const rx = new RegExp(pxt.appTarget.compile.deployDrives)
+        const user = process.env["USER"]
+        return readDirAsync(`/media/${user}`)
+            .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+    } else {
+        return Promise.resolve([])
     }
 }
