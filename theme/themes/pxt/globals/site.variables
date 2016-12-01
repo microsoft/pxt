@@ -44,6 +44,9 @@
 @mainMenuHeight: 3.6rem;
 @mobileMenuHeight: 4.4rem;
 
+@sidedocsButtonsTop: 4.75rem;
+@sidedocsButtonsRight: 4.25rem;
+
 @sideBarWidth: 22rem;
 @simulatorWidth: 27rem;
 @simulatorWidthSmall: 20rem;
