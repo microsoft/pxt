@@ -306,7 +306,15 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
 
                 return res;
             });
-    else if (cmd == "POST externalmsg") {
+    else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
+        // innerpath start with targetid
+        const fmd = path.join(docsDir, innerPath.slice(pxt.appTarget.id.length + 1) + ".md");
+        return existsAsync(fmd)
+            .then(e => {
+                if (!e) throw throwError(404);
+                return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
+            });
+    } else if (cmd == "POST externalmsg") {
         return readJsonAsync()
             .then((data: ExternalMessageData) => {
                 if (!data || !data.messageType) {
@@ -331,7 +339,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
                 return resultDeferred.promise;
             });
     }
-    else throw throwError(400)
+    else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
 
 function directoryExistsSync(p: string): boolean {
