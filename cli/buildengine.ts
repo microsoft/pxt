@@ -305,6 +305,7 @@ const readDirAsync = Promise.promisify(fs.readdir)
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     const firmware = pxt.appTarget.compile.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_HEX;
+    const encoding = pxt.appTarget.compile.useUF2 ? "base64" : "utf8";
     return getBoardDrivesAsync()
         .then(drives => filterDrives(drives))
         .then(drives => {
@@ -314,7 +315,7 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
             }
             console.log(`copying ${firmware} to ` + drives.join(", "));
             const writeHexFile = (filename: string) => {
-                return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware])
+                return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware], encoding)
                     .then(() => console.log("   wrote hex file to " + filename));
             };
             return Promise.map(drives, d => writeHexFile(d))
