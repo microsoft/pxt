@@ -1566,6 +1566,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             packaged: packaged,
             electron: !!parsed.flags["electron"],
             externalHandlers: externalMessageHandlers || void 0,
+            interface: parsed.flags["interface"] as string,
             port: parsed.flags["port"] as number || 0,
             browser: parsed.flags["browser"] as string
         }))
@@ -3620,6 +3621,12 @@ function initCommands() {
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
+            interface: {
+                description: "interface to bind server, default localhost",
+                aliases: ["i"],
+                type: "string",
+                argument: "interface"
+            },            
             port: {
                 description: "port to bind server, default 3232",
                 aliases: ["p"],
