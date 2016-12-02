@@ -328,13 +328,13 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
 
 function getBoardDrivesAsync(): Promise<string[]> {
     if (process.platform == "win32") {
-        const rx = new RegExp("^([A-Z]:).* " + pxt.appTarget.compile.deployDrives)
-        return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem")
+        const rx = new RegExp("^([A-Z]:)\\s+(\\d+).* " + pxt.appTarget.compile.deployDrives)
+        return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem, DriveType")
             .then(buf => {
                 let res: string[] = []
                 buf.toString("utf8").split(/\n/).forEach(ln => {
                     let m = rx.exec(ln)
-                    if (m) {
+                    if (m && m[2] == "2") {
                         res.push(m[1] + "/")
                     }
                 })
