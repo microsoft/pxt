@@ -3626,7 +3626,7 @@ function initCommands() {
                 aliases: ["i"],
                 type: "string",
                 argument: "interface"
-            },            
+            },
             port: {
                 description: "port to bind server, default 3232",
                 aliases: ["p"],
