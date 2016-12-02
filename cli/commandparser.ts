@@ -20,12 +20,12 @@ export interface Command {
     priority?: number;
     advanced?: boolean;
     argString?: string;
-    flags?: {[index: string]: CommandFlag};
+    flags?: { [index: string]: CommandFlag };
     aliases?: string[];
     numArgs?: number;
 
     /* @internal */
-    _aliasMap?: {[index: string]: string};
+    _aliasMap?: { [index: string]: string };
     /* @internal */
     _callback?: (c?: ParsedCommand) => Promise<void>;
 }
@@ -33,14 +33,14 @@ export interface Command {
 export interface ParsedCommand {
     name: string;
     arguments: string[];
-    flags: {[index: string]: boolean | string | number};
+    flags: { [index: string]: boolean | string | number };
 }
 
 export class CommandParser {
     private commands: Command[] = [];
 
     public defineCommand(c: Command, callback: (c?: ParsedCommand) => Promise<void>) {
-        const aliasMap: {[index: string]: string} = {};
+        const aliasMap: { [index: string]: string } = {};
 
         for (const flag in c.flags) {
             const def = c.flags[flag];
@@ -67,9 +67,11 @@ export class CommandParser {
     }
 
     public parseCommand(args: string[]): Promise<void> {
+        if (!args[0])
+            args = ["help"];
         const name = args[0];
         const parsedArgs: string[] = [];
-        const flags: {[index: string]: string | boolean | number} = {};
+        const flags: { [index: string]: string | boolean | number } = {};
 
         const filtered = this.commands.filter(c => c.name === name || c.aliases && c.aliases.indexOf(name) !== -1);
         if (!filtered.length) {
@@ -217,10 +219,10 @@ export class CommandParser {
 
             if (def.argument) {
                 if (def.possibleValues && def.possibleValues.length) {
-                    usage +=  ` <${def.possibleValues.join("|")}>`;
+                    usage += ` <${def.possibleValues.join("|")}>`;
                 }
                 else {
-                    usage += def.type && def.type === "number" ?  " <number>" : " <value>"
+                    usage += def.type && def.type === "number" ? " <number>" : " <value>"
                 }
             }
 
