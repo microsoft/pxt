@@ -3613,11 +3613,19 @@ function initCommands() {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
             },
-            yt: { description: "use local yotta build" },
+            yt: {
+                description: "use local yotta build",
+                aliases: ["yotta"]
+            },
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
-            port: { description: "port to bind server, default 3232" },
+            port: {
+                description: "port to bind server, default 3232",
+                aliases: ["p"],
+                type: "number",
+                argument: "port"
+            },
             electron: { description: "used to indicate that the server is being started in the context of an electron app" }
         }
     }, serveAsync);
