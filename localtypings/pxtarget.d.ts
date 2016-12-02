@@ -180,11 +180,13 @@ declare namespace ts.pxtc {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
+        useUF2?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defualts to 1k
         upgrades?: UpgradePolicy[];

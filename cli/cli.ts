@@ -1735,7 +1735,10 @@ class Host
             }
         }
         check(p)
-        fs.writeFileSync(p, contents, "utf8")
+        if (U.endsWith(filename, ".uf2"))
+            fs.writeFileSync(p, contents, "base64")
+        else
+            fs.writeFileSync(p, contents, "utf8")
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {

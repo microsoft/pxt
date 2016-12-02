@@ -9,6 +9,7 @@ namespace ts.pxtc {
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_ASM = "binary.asm";
+    export const BINARY_UF2 = "binary.uf2";
 
     let EK = ir.EK;
     export const SK = SyntaxKind;
