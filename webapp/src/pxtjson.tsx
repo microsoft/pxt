@@ -42,16 +42,48 @@ export class Editor extends srceditor.Editor {
 */
 
     display() {
-        let c = this.config
-        let update = (v: any) => {
+        const c = this.config
+        const update = (v: any) => {
             this.parent.forceUpdate()
             Util.nextTick(this.changeCallback)
         }
-        let initCard = () => {
+        const initCard = () => {
             if (!c.card) c.card = {}
         }
-        let card = c.card || {};
+        const card = c.card || {};
+        let userConfigs: pxt.CompilationConfig[] = [];
+        pkg.allEditorPkgs().map(ep => ep.getKsPkg())
+            .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)
+            .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
 
+        const isUserConfigActive = (uc: pxt.CompilationConfig) => {
+            const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+            const ucfg = Util.jsonFlatten(uc.config);
+            return !Object.keys(ucfg).some(k => ucfg[k] === null ? !!cfg[k] : cfg[k] !== ucfg[k]);
+        }
+        const applyUserConfig = (uc: pxt.CompilationConfig) => {
+            const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+            const ucfg = Util.jsonFlatten(uc.config);
+            if (isUserConfigActive(uc)) {
+                Object.keys(ucfg).forEach(k => delete cfg[k]);
+            } else {
+                Object.keys(ucfg).forEach(k => cfg[k] = ucfg[k]);
+            }
+            // update cfg
+            if (Object.keys(cfg).length) {
+                if (!this.config.yotta) this.config.yotta = {};
+                Object.keys(cfg).filter(k => cfg[k] === null).forEach(k => delete cfg[k]);
+                this.config.yotta.config = Util.jsonUnFlatten(cfg);
+            } else {
+                if (this.config.yotta) {
+                    delete this.config.yotta.config;
+                    if (!Object.keys(this.config.yotta).length)
+                        delete this.config.yotta;
+                }
+            }
+            // trigger update            
+            update(uc);
+        }
         return (
             <div className="ui content">
                 <div className="ui segment form text" style={{ backgroundColor: "white" }}>
@@ -64,6 +96,13 @@ export class Editor extends srceditor.Editor {
                             </div>
                         </sui.Field> : ""}
                     <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
+                    {userConfigs.map(uc =>
+                        <sui.Checkbox
+                            key={`userconfig-${uc.description}`}
+                            inputLabel={uc.description}
+                            checked={isUserConfigActive(uc) }
+                            onChange={() => applyUserConfig(uc) } />
+                    ) }
                     <sui.Field>
                         <sui.Button text={lf("Edit Settings As text") } onClick={() => this.parent.editText() } />
                     </sui.Field>

@@ -921,11 +921,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         if (output && !output.numDiagnosticsOverride
                             && !simulator.driver.runOptions.debug
                             && (simulator.driver.state == pxsim.SimulatorState.Running
-                                || simulator.driver.state == pxsim.SimulatorState.Unloaded
-                                || simulator.driver.state == pxsim.SimulatorState.Stopped)) {
+                                || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
-                            else if (simulator.driver.state != pxsim.SimulatorState.Stopped)
-                                this.autoRunSimulator();
+                            else this.autoRunSimulator();
                         }
                     }
                 });
@@ -1445,10 +1443,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }).then(r => {
             if (!r) return;
             workspace.resetAsync()
-                .catch((e: any) => { })
-                .done(() => {
-                    window.location.reload()
-                })
+                .done(() => window.location.reload(),
+                () => window.location.reload())
         });
     }
 
@@ -1461,7 +1457,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (!resp.outfiles[pxtc.BINARY_HEX]) {
+                let fn = pxt.appTarget.compile.useUF2 ? pxtc.BINARY_UF2 : pxtc.BINARY_HEX;
+                if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
@@ -1745,7 +1742,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
-        const run = !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
+        const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1783,6 +1780,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
+                            {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
                             <div className="ui divider"></div>
@@ -1809,7 +1807,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 </div>
                 {!sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks ?
                     <div id="getting-started-btn">
-                        <sui.Button class="bottom attached green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
+                        <sui.Button class="bottom attached getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined }
                 <div id="filelist" className="ui items" role="complementary">
@@ -1834,7 +1832,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
-                {!sandbox && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined }
+                {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui widedesktop hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui widedesktop only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
+                {!sandbox && !targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined}
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">

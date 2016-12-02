@@ -816,6 +816,38 @@ namespace pxt.blocks {
 
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
+
+        if (!appTheme.coloredToolbox || appTheme.coloredToolbox != true) {
+            /**
+             * Recursively add colours to this toolbox.
+             * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
+             *     Defaults to the root node.
+             * @private
+             */
+            (<any>Blockly).Toolbox.prototype.addColour_ = function(opt_tree: any) {
+                let tree = opt_tree || this.tree_;
+                let children = tree.getChildren();
+                for (let i = 0, child: any; child = children[i]; i++) {
+                    let element = child.getRowElement();
+                    if (element) {
+                        let border = '';
+                        if (this.hasColours_) {
+                            border = '8px solid ' + (child.hexColour || '#ddd');
+                        } else {
+                            border = 'none';
+                        }
+                        if (this.workspace_.RTL) {
+                            element.style.borderRight = border;
+                        } else {
+                            element.style.borderLeft = border;
+                        }
+                        element.style.color = (child.hexColour || '#000');
+                    }
+                    this.addColour_(child);
+                }
+            };
+        }
+
         if (!appTheme.invertedToolbox || appTheme.invertedToolbox != true) return;
         /**
          * Recursively add colours to this toolbox.

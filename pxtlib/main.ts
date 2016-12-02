@@ -449,10 +449,12 @@ namespace pxt {
             let rec = (p: Package) => {
                 if (U.lookup(visited, p.id)) return;
                 visited[p.id] = true
-                let deps = Object.keys(p.config.dependencies)
-                deps.sort((a, b) => U.strcmp(a, b))
-                deps.forEach(id => rec(this.resolveDep(id)))
-                ids.push(p.id)
+                if (p.config && p.config.dependencies) {
+                    const deps = Object.keys(p.config.dependencies);
+                    deps.sort((a, b) => U.strcmp(a, b))
+                    deps.forEach(id => rec(this.resolveDep(id)))
+                    ids.push(p.id)
+                }
             }
             rec(this)
             return ids.map(id => this.resolveDep(id))

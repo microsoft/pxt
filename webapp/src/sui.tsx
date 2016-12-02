@@ -241,6 +241,26 @@ export class Input extends data.Component<{
     }
 }
 
+export class Checkbox extends data.Component<{
+    label?: string;
+    inputLabel?: string;
+    class?: string;
+    checked?: boolean;
+    onChange: (v: string) => void;
+}, {}> {
+
+    renderCore() {
+        const p = this.props;
+        return <Field label={p.label}>
+            <div className={"ui toggle checkbox"}>
+                <input type="checkbox" checked={p.checked}
+                    onChange={v => p.onChange((v.target as any).value) } />
+                {p.inputLabel ? <label>{p.inputLabel}</label> : undefined }
+            </div>
+        </Field>;
+    }
+}
+
 export interface ModalProps {
     children?: any;
     addClass?: string;

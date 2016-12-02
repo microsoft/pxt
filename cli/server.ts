@@ -107,21 +107,6 @@ let readdirAsync = Promise.promisify(fs.readdir)
 let readFileAsync = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
 
-// provided by target
-let deployCoreAsync: (r: pxtc.CompileResult) => Promise<number> = undefined;
-
-function initTargetCommands() {
-    let cmdsjs = path.resolve('built/cmds.js');
-    if (fs.existsSync(cmdsjs)) {
-        pxt.debug(`loading cli extensions...`)
-        let cli = require(cmdsjs)
-        if (cli.deployCoreAsync) {
-            pxt.debug('imported deploy command')
-            deployCoreAsync = cli.deployCoreAsync
-        }
-    }
-}
-
 function existsAsync(fn: string) {
     return new Promise((resolve, reject) => {
         fs.exists(fn, resolve)
@@ -287,9 +272,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else if (cmd == "POST pkg")
         return readJsonAsync()
             .then(d => writePkgAsync(innerPath, d))
-    else if (cmd == "POST deploy" && deployCoreAsync)
+    else if (cmd == "POST deploy" && pxt.commands.deployCoreAsync)
         return readJsonAsync()
-            .then(d => deployCoreAsync(d))
+            .then(pxt.commands.deployCoreAsync)
             .then((boardCount) => {
                 return {
                     boardCount: boardCount
@@ -306,7 +291,15 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
 
                 return res;
             });
-    else if (cmd == "POST externalmsg") {
+    else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
+        // innerpath start with targetid
+        const fmd = path.join(docsDir, innerPath.slice(pxt.appTarget.id.length + 1) + ".md");
+        return existsAsync(fmd)
+            .then(e => {
+                if (!e) throw throwError(404);
+                return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
+            });
+    } else if (cmd == "POST externalmsg") {
         return readJsonAsync()
             .then((data: ExternalMessageData) => {
                 if (!data || !data.messageType) {
@@ -331,7 +324,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
                 return resultDeferred.promise;
             });
     }
-    else throw throwError(400)
+    else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
 
 function directoryExistsSync(p: string): boolean {
@@ -694,7 +687,6 @@ export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
     setupRootDir();
-    initTargetCommands();
     initSerialMonitor();
 
     if (serveOptions.externalHandlers) {
