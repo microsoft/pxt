@@ -120,6 +120,7 @@ declare namespace pxt {
         organization?: string;
         organizationUrl?: string;
         organizationLogo?: string;
+        organizationWideLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
@@ -142,6 +143,7 @@ declare namespace pxt {
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
+        coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
