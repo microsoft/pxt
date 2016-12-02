@@ -3800,23 +3800,20 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     initConfig();
 
-    let cmd = args[0]
-
-    if (cmd != "buildtarget") {
+    if (args[0] != "buildtarget") {
         initTargetCommands();
     }
 
-    if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync) {
+    if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync)
         pxt.commands.deployCoreAsync = build.thisBuild.deployAsync
-    }
 
-    if (!cmd) {
+    if (!args[0]) {
         if (pxt.commands.deployCoreAsync) {
             console.log("running 'pxt deploy' (run 'pxt help' for usage)")
-            cmd = "deploy"
+            args = ["deploy"]
         } else {
             console.log("running 'pxt build' (run 'pxt help' for usage)")
-            cmd = "build"
+            args = ["build"]
         }
     }
 
