@@ -310,6 +310,7 @@ const readDirAsync = Promise.promisify(fs.readdir)
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     return getBoardDrivesAsync()
+        .then(drives => filterDrives(drives))
         .then(drives => {
             if (drives.length == 0) {
                 console.log("cannot find any drives to deploy to");
@@ -352,4 +353,16 @@ function getBoardDrivesAsync(): Promise<string[]> {
     } else {
         return Promise.resolve([])
     }
+}
+
+function filterDrives(drives: string[]): string[] {
+    const marker = pxt.appTarget.compile.deployFileMarker;
+    if (!marker) return drives;
+    return drives.filter(d => {
+        try {
+            return fs.existsSync(path.join(d, marker));
+        } catch (e) {
+            return false;
+        }
+    });
 }
