@@ -7,7 +7,7 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["serve"],
+			"args": [],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
@@ -16,7 +16,7 @@
 			"env": {
 				"NODE_ENV": "development"
 			},
-			"externalConsole": false,
+			"console": "integratedTerminal",
 			"sourceMaps": false,
 			"outDir": null
 		},
