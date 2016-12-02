@@ -444,7 +444,6 @@ body.blocklyMinimalBody {
     padding-right: 20px !important;
 }
 
-
 /* Fix for monaco editor Signature bug in Safari */
 .monaco-editor .parameter-hints-widget {
     flex-direction: row !important;
@@ -453,23 +452,37 @@ body.blocklyMinimalBody {
 .line-numbers {
     display:none;
 }
-.pxtMonacoToolbox {
+
+.monacoToolboxDiv {
     position: absolute;
+    top: 0;
+    left: 0;
+    width: 230px;
     overflow-x: visible;
     overflow-y: auto;
 }
-
-.pxtMonacoFlyout {
-    background-color: rgba(221,221,221, .8);
-    color: black;
-    width: 220px;
-    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+.monaco-editor {
+    margin-left: 230px;
 }
 
-.pxtMonacoFlyout div {
+.monacoFlyout {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    color: black;
+    width: 300px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.monacoFlyout div {
     margin:2rem;
 }
 
-.pxtMonacoFlyout.hide{
+.monacoFlyout.hide{
     transform:translateX(-9999px);
+}
+
+.monacoDraggableBlock {
+    background-color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
 }

@@ -379,15 +379,11 @@ export class Editor extends srceditor.Editor {
             });
             this.editorViewZones = [];
 
-            if (this.lastSet != null) {
-                this.lastSet = null
-            } else {
-                if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
-                    this.editor.setValue(" ");
-                }
-                this.updateDiagnostics();
-                this.changeCallback();
+            if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
+                this.editor.setValue(" ");
             }
+            this.updateDiagnostics();
+            this.changeCallback();
         });
 
         this.editor.onMouseUp((e: monaco.editor.IEditorMouseEvent) => {
@@ -465,7 +461,7 @@ export class Editor extends srceditor.Editor {
                     this.domNode = document.createElement('div');
                     this.domNode.id = 'pxtMonacoFlyoutWidget';
                     this.domNode.style.top = `0`;
-                    this.domNode.className = 'pxtMonacoFlyout';
+                    this.domNode.className = 'monacoFlyout';
                     // Hide by default
                     this.domNode.style.display = 'none';
                     this.domNode.innerText = 'Flyout';
@@ -490,8 +486,7 @@ export class Editor extends srceditor.Editor {
         toolbox.innerHTML = null;
 
         // Add an overlay widget for the toolbox
-        toolbox.className = 'pxtMonacoToolbox';
-        toolbox.style.left = '0';
+        toolbox.className = 'monacoToolboxDiv';
         toolbox.style.height = `${_this.editor.getLayoutInfo().contentHeight}px`;
         toolbox.style.display = 'block';
         let root = document.createElement('div');
@@ -509,13 +504,14 @@ export class Editor extends srceditor.Editor {
             treeitem.onclick = (ev: MouseEvent) => {
                 let monacoFlyout = document.getElementById('pxtMonacoFlyoutWidget');
                 monacoFlyout.innerHTML = null;
-                monacoFlyout.style.left = `${_this.editor.getLayoutInfo().contentLeft}px`;
+                monacoFlyout.style.left = `${_this.editor.getLayoutInfo().lineNumbersLeft}px`;
                 monacoFlyout.style.height = `${_this.editor.getLayoutInfo().contentHeight}px`;
                 monacoFlyout.style.display = 'block';
                 monacoFlyout.style.transform = 'translateX(0px)';
                 let element = blocksDict[ns];
                 element.fns.forEach((fn) => {
                     let monacoBlock = document.createElement('div');
+                    monacoBlock.className = 'monacoDraggableBlock';
                     monacoBlock.setAttribute('draggable','true');
                     monacoBlock.ondragstart = (ev2: DragEvent) => {
                         monacoFlyout.className = monacoFlyout.className + ' hide';
@@ -529,19 +525,23 @@ export class Editor extends srceditor.Editor {
                         monacoFlyout.style.display = 'none';
                         let model = _this.editor.getModel();
                         let currPos = _this.editor.getPosition();
-                        let cursorOverride = model.getOffsetAt(currPos)
-                        let value = model.getValue();
+                        let cursor = model.getOffsetAt(currPos)
                         let insertText = `${ns}.${fn}`;
-                        value = [value.slice(0, cursorOverride), insertText, value.slice(cursorOverride)].join('');
-                        //cursorOverride += (insertText.length - 1);
-                        model.setValue(value);
-                        let endPos = model.getPositionAt(cursorOverride);
+                        _this.editor.executeEdits("", [
+                            {
+                                identifier: {major: 0, minor: 0},
+                                range: new monaco.Range(currPos.lineNumber,currPos.column,currPos.lineNumber,currPos.column),
+                                text: insertText,
+                                forceMoveMarkers: true
+                            }
+                        ]);
+                        cursor += (insertText.length);
+                        let endPos = model.getPositionAt(cursor);
+                        _this.editor.focus();
                         _this.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
-                        _this.setViewState(endPos);
                     };
 
                     monacoBlock.appendChild(methodToken);
-
                     monacoFlyout.appendChild(monacoBlock);
                 })
             };
@@ -587,11 +587,8 @@ export class Editor extends srceditor.Editor {
         return true
     }
 
-    private lastSet: string;
     private setValue(v: string) {
-        this.lastSet = v;
-        if (v) this.editor.setValue(v);
-        else this.editor.setValue(" ");
+        this.editor.setValue(v);
     }
 
     overrideFile(content: string) {
