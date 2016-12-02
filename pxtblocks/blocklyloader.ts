@@ -817,7 +817,7 @@ namespace pxt.blocks {
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
 
-        if (!appTheme.coloredToolbox || appTheme.coloredToolbox != true) {
+        if (appTheme.coloredToolbox && appTheme.coloredToolbox == true) {
             /**
              * Recursively add colours to this toolbox.
              * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
