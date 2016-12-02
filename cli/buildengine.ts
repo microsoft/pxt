@@ -56,16 +56,6 @@ export const buildEngines: Map<BuildEngine> = {
         moduleConfig: "platformio.ini",
         deployAsync: platformioDeployAsync,
     },
-
-    platformiouf2: {
-        updateEngineAsync: () => Promise.resolve(),
-        buildAsync: () => { return runPlatformioAsync(["run"]) },
-        setPlatformAsync: () => Promise.resolve(),
-        patchHexInfo: patchPioHexInfo,
-        buildPath: "built/pio",
-        moduleConfig: "platformio.ini",
-        deployAsync: msdDeployCoreAsync,
-    }
 }
 
 // once we have a different build engine, set this appropriately
@@ -92,6 +82,11 @@ function patchPioHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function platformioDeployAsync(r: pxtc.CompileResult) {
+    if (pxt.appTarget.compile.useUF2) return msdDeployCoreAsync(r);
+    else return platformioUploadAsync(r);
+}
+
+function platformioUploadAsync(r: pxtc.CompileResult) {
     // TODO maybe platformio has some option to do this?
     let buildEngine = buildEngines['platformio']
     let prevHex = fs.readFileSync(pioFirmwareHex())
@@ -309,6 +304,7 @@ const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = 
 const readDirAsync = Promise.promisify(fs.readdir)
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
+    const firmware = pxt.appTarget.compile.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_HEX;
     return getBoardDrivesAsync()
         .then(drives => filterDrives(drives))
         .then(drives => {
@@ -316,10 +312,10 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
                 console.log("cannot find any drives to deploy to");
                 return Promise.resolve(0);
             }
-            console.log(`copy ${ts.pxtc.BINARY_HEX} to ` + drives.join(", "));
+            console.log(`copying ${firmware} to ` + drives.join(", "));
             const writeHexFile = (filename: string) => {
-                return writeFileAsync(filename + ts.pxtc.BINARY_HEX, res.outfiles[ts.pxtc.BINARY_HEX])
-                    .then(() => console.log("wrote hex file to " + filename));
+                return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware])
+                    .then(() => console.log("   wrote hex file to " + filename));
             };
             return Promise.map(drives, d => writeHexFile(d))
                 .then(() => drives.length);
