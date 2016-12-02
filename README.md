@@ -24,13 +24,24 @@ More info:
 
 Please follow the [instructions here](https://www.pxt.io/cli).
 
-## Linking a target to PXT
+## Developing with own instance of PXT
 
-If you are modifying your own instance of PXT and want a target (such as pxt-microbit) to use your local version, cd to the directory of the target (pxt-microbit, in our example, which should be a directory sibling of pxt) and perform
+One method of deloping with one's own instance of PXT is to ensure that npm install's the local version of PXT.
 
+Clone the repository that one is using, preferably a fork of Microsoft PXT where one saves ones work.
+- perform build instructions, below.
+- in the pxt directory:
 ```
-npm link ../pxt
+npm link
 ```
+In the target, such as pxt-microbit, clone the target, and in the target's directory:
+```
+npm link pxt-core
+```
+
+The npm install of the target will then take the pxt (pxt-core) linked to previously.
+
+Note: one may wish to change the target's dependancy for pxt-core to 'latest'
 
 ## Build
 
