@@ -116,6 +116,7 @@ namespace ts.pxtc {
                     setWord(currBlock, 12, needAddr << 8)
                     setWord(currBlock, 16, 256)
                     setWord(currBlock, 20, f.blocks.length)
+                    setWord(currBlock, 512 - 4, UF2_MAGIC_END)
                     f.blocks.push(currBlock)
                     f.ptrs.push(needAddr)
                 }
