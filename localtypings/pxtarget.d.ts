@@ -120,6 +120,7 @@ declare namespace pxt {
         organization?: string;
         organizationUrl?: string;
         organizationLogo?: string;
+        organizationWideLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
