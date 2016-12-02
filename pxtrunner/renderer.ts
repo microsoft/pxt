@@ -117,7 +117,7 @@ namespace pxt.runner {
 
         if (woptions.hexname && woptions.hex) {
             let $hexBtn = $('<a class="item"><i aria-label="download" class="download icon"></i></a>').click(() => {
-                BrowserUtils.browserDownloadText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
+                BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
             })
             $menu.append($hexBtn);
         }

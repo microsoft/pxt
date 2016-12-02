@@ -43,7 +43,8 @@ export const buildEngines: Map<BuildEngine> = {
         },
         patchHexInfo: patchYottaHexInfo,
         buildPath: "built/yt",
-        moduleConfig: "module.json"
+        moduleConfig: "module.json",
+        deployAsync: msdDeployCoreAsync
     },
 
     platformio: {
@@ -54,7 +55,7 @@ export const buildEngines: Map<BuildEngine> = {
         buildPath: "built/pio",
         moduleConfig: "platformio.ini",
         deployAsync: platformioDeployAsync,
-    }
+    },
 }
 
 // once we have a different build engine, set this appropriately
@@ -81,6 +82,11 @@ function patchPioHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function platformioDeployAsync(r: pxtc.CompileResult) {
+    if (pxt.appTarget.compile.useUF2) return msdDeployCoreAsync(r);
+    else return platformioUploadAsync(r);
+}
+
+function platformioUploadAsync(r: pxtc.CompileResult) {
     // TODO maybe platformio has some option to do this?
     let buildEngine = buildEngines['platformio']
     let prevHex = fs.readFileSync(pioFirmwareHex())
@@ -291,4 +297,69 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         consts += "}\n"
         fs.writeFileSync(constName, consts)
     }
+}
+
+const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
+const readDirAsync = Promise.promisify(fs.readdir)
+
+function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
+    const firmware = pxt.appTarget.compile.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_HEX;
+    const encoding = pxt.appTarget.compile.useUF2 ? "base64" : "utf8";
+    return getBoardDrivesAsync()
+        .then(drives => filterDrives(drives))
+        .then(drives => {
+            if (drives.length == 0) {
+                console.log("cannot find any drives to deploy to");
+                return Promise.resolve(0);
+            }
+            console.log(`copying ${firmware} to ` + drives.join(", "));
+            const writeHexFile = (filename: string) => {
+                return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware], encoding)
+                    .then(() => console.log("   wrote hex file to " + filename));
+            };
+            return Promise.map(drives, d => writeHexFile(d))
+                .then(() => drives.length);
+        }).then(() => { });
+}
+
+function getBoardDrivesAsync(): Promise<string[]> {
+    if (process.platform == "win32") {
+        const rx = new RegExp("^([A-Z]:)\\s+(\\d+).* " + pxt.appTarget.compile.deployDrives)
+        return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem, DriveType")
+            .then(buf => {
+                let res: string[] = []
+                buf.toString("utf8").split(/\n/).forEach(ln => {
+                    let m = rx.exec(ln)
+                    if (m && m[2] == "2") {
+                        res.push(m[1] + "/")
+                    }
+                })
+                return res
+            })
+    }
+    else if (process.platform == "darwin") {
+        const rx = new RegExp(pxt.appTarget.compile.deployDrives)
+        return readDirAsync("/Volumes")
+            .then(lst => lst.filter(s => rx.test(s)).map(s => "/Volumes/" + s + "/"))
+    } else if (process.platform == "linux") {
+        const rx = new RegExp(pxt.appTarget.compile.deployDrives)
+        const user = process.env["USER"]
+        return readDirAsync(`/media/${user}`)
+            .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+    } else {
+        return Promise.resolve([])
+    }
+}
+
+function filterDrives(drives: string[]): string[] {
+    const marker = pxt.appTarget.compile.deployFileMarker;
+    if (!marker) return drives;
+    return drives.filter(d => {
+        try {
+            return fs.existsSync(path.join(d, marker));
+        } catch (e) {
+            return false;
+        }
+    });
 }

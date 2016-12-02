@@ -1735,7 +1735,10 @@ class Host
             }
         }
         check(p)
-        fs.writeFileSync(p, contents, "utf8")
+        if (U.endsWith(filename, ".uf2"))
+            fs.writeFileSync(p, contents, "base64")
+        else
+            fs.writeFileSync(p, contents, "utf8")
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
@@ -3610,11 +3613,19 @@ function initCommands() {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
             },
-            yt: { description: "use local yotta build" },
+            yt: {
+                description: "use local yotta build",
+                aliases: ["yotta"]
+            },
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
-            port: { description: "port to bind server, default 3232" },
+            port: {
+                description: "port to bind server, default 3232",
+                aliases: ["p"],
+                type: "number",
+                argument: "port"
+            },
             electron: { description: "used to indicate that the server is being started in the context of an electron app" }
         }
     }, serveAsync);
@@ -3797,23 +3808,20 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     initConfig();
 
-    let cmd = args[0]
-
-    if (cmd != "buildtarget") {
+    if (args[0] != "buildtarget") {
         initTargetCommands();
     }
 
-    if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync) {
+    if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync)
         pxt.commands.deployCoreAsync = build.thisBuild.deployAsync
-    }
 
-    if (!cmd) {
+    if (!args[0]) {
         if (pxt.commands.deployCoreAsync) {
             console.log("running 'pxt deploy' (run 'pxt help' for usage)")
-            cmd = "deploy"
+            args = ["deploy"]
         } else {
             console.log("running 'pxt build' (run 'pxt help' for usage)")
-            cmd = "build"
+            args = ["build"]
         }
     }
 

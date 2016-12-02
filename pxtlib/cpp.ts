@@ -218,6 +218,7 @@ namespace pxt.cpp {
                     // TODO: need int16_t
                     case "int32_t":
                     case "uint32_t":
+                    case "unsigned":
                     case "int": return "number";
 
                     case "uint16_t": return "uint16";

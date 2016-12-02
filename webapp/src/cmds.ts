@@ -5,7 +5,7 @@ import * as hwdbg from "./hwdbg";
 import Cloud = pxt.Cloud;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
-    let url = pxt.BrowserUtils.browserDownloadText(
+    let url = pxt.BrowserUtils.browserDownloadBinText(
         text,
         name,
         contentType,
@@ -16,15 +16,29 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 }
 
 function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-    let hex = resp.outfiles[pxtc.BINARY_HEX]
-    let fn = pkg.genFileName(".hex");
-    pxt.debug('saving ' + fn)
-    let url = pxt.BrowserUtils.browserDownloadText(
-        hex,
-        fn,
-        pxt.appTarget.compile.hexMimeType,
-        e => core.errorNotification(lf("saving file failed..."))
-    );
+    let url = ""
+    let fn = ""
+    if (pxt.appTarget.compile.useUF2) {
+        let uf2 = resp.outfiles[pxtc.BINARY_UF2]
+        fn = pkg.genFileName(".uf2");
+        pxt.debug('saving ' + fn)
+        url = pxt.BrowserUtils.browserDownloadBase64(
+            uf2,
+            fn,
+            "application/x-uf2",
+            e => core.errorNotification(lf("saving file failed..."))
+        );
+    } else {
+        let hex = resp.outfiles[pxtc.BINARY_HEX]
+        fn = pkg.genFileName(".hex");
+        pxt.debug('saving ' + fn)
+        url = pxt.BrowserUtils.browserDownloadBinText(
+            hex,
+            fn,
+            pxt.appTarget.compile.hexMimeType,
+            e => core.errorNotification(lf("saving file failed..."))
+        );
+    }
 
     if (!resp.success) {
         return core.confirmAsync({
@@ -32,7 +46,7 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
             body: lf("Ooops, looks like there are errors in your program."),
             hideAgree: true,
             disagreeLbl: lf("Close")
-        }).then(() => {});
+        }).then(() => { });
     }
 
     return showUploadInstructionsAsync(fn, url);

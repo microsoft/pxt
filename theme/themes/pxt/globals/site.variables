@@ -31,10 +31,10 @@
    Breakpoints
 --------------------*/
 
-@mobileBreakpoint            : 320px;
-@tabletBreakpoint            : 768px;
-@computerBreakpoint          : 992px;
-@largeMonitorBreakpoint      : 1400px;
+@mobileBreakpoint            : 576px; /*36rem*/
+@tabletBreakpoint            : 880px; /*55rem*/
+@computerBreakpoint          : 960px; /*64rem*/
+@largeMonitorBreakpoint      : 1472px; /*92rem*/
 @widescreenMonitorBreakpoint : 1920px;
 
 /*******************************
@@ -44,7 +44,7 @@
 @mainMenuHeight: 3.6rem;
 @mobileMenuHeight: 4.4rem;
 
-@sidedocsButtonsTop: 4.75rem;
+@sidedocsButtonsTop: (@mainMenuHeight + 1rem);
 @sidedocsButtonsRight: 4.25rem;
 
 @sideBarWidth: 22rem;
