@@ -802,10 +802,11 @@ int main() {
             return lzmaDecompressAsync(rawEmbed.text)
                 .then(res => {
                     if (!res) return null;
-                    let meta = res.slice(0, hd.headerSize || hd.metaSize);
+                    let meta = res.slice(0, hd.headerSize || hd.metaSize || 0);
                     let text = res.slice(meta.length);
-                    let metajs = JSON.parse(meta);
-                    return { meta: metajs, source: text }
+                    if (meta)
+                        Util.jsonCopyFrom(hd, JSON.parse(meta))
+                    return { meta: hd as any, source: text }
                 })
         } else if (hd.compression) {
             pxt.debug(`Compression type ${hd.compression} not supported.`)
