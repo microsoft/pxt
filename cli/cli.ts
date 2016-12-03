@@ -212,7 +212,7 @@ function pkginfoAsync(repopath: string) {
     const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
         console.log(`name: ${cfg.name}`)
         console.log(`description: ${cfg.description}`)
-        console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
+        console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
     return pxt.packagesConfigAsync()
@@ -1390,7 +1390,7 @@ function buildTargetCoreAsync() {
             const targetjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", targetjson)
             fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
-            pxt.appTarget = cfg; // make sure we're using the latest version
+            pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
@@ -3285,7 +3285,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
                     ]
                 }
             })
-            
+
     return Promise.resolve()
         .then(() => {
             let str = buf.toString("utf8")
@@ -3481,7 +3481,7 @@ function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
             console.log(``)
             console.log(`    https://gist.github.com/${published_id}`);
             console.log(``)
-            console.log(`To share your project, go to ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+            console.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
             if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
 
             // Save gist id to pxt.json
