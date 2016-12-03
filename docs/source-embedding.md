@@ -54,8 +54,11 @@ This header should be kept small, since it is not compressed.
 
 The interpretation of this section is editor-specific.
 
-In case of PXT, the text is always LZMA compressed and is in JSON format.
-It's a map from file name to file contest for all files in the project.
+In case of PXT, the text is always LZMA compressed. If `headerSize` field of JSON header
+is present and non-zero, then the first `headerSize` characters (not bytes) of the decompressed text
+contain a JSON object that logically extends fields of the JSON header (but it compressed).
+The remainder of the uncompressed text (possibly the whole thing) is JSON files -
+a map from file name to file contest for all files in the project.
 
 In case of a scripting language, the text will probably be raw, uncompressed,
 and used straight by the interpreter.
@@ -63,8 +66,6 @@ and used straight by the interpreter.
 ## Caveats
 
 Older versions of PXT and Touch Develop (as implemented in the legacy micro:bit programming
-environment) used fields `headerLength` and `textLength`, and didn't use `eURL`/`eVER`.
-The compressed text in that case starts with `headerLength` characters (not bytes)
-of a JSON header, followed by project files encoded as JSON (ie., same as in the current version).
+environment) didn't use `eURL`/`eVER`.
 
 If the source is too large for the flash size it is not embedded.
