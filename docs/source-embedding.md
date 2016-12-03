@@ -12,11 +12,15 @@ not the particular file format, HEX or otherwise.
 The header is aligned to 16 bytes, and sits somewhere in the flash.
 All numbers are unsigned little endian integers.
 
-| Offset | Size | Value                                    |
-|--------|------|------------------------------------------|
-| 0      | 10   | Magic, `"EMSR\x5a\xaf\x16\x61\x7a\x6c"`  | 
-| 10     | 2    | JSON header length                       |
-| 12     | 4    | Text length                              |
+| Offset | Size | Value                                        |
+|--------|------|----------------------------------------------|
+| 0      | 8    | Magic, `"\x41\x14\x0E\x2F\xB8\x2F\xA2\xBB"`  | 
+| 8      | 2    | JSON header length                           |
+| 10     | 4    | Text length                                  |
+| 14     | 2    | Reserved; write as zero                      |
+
+Note that text length is not naturally aligned. This is due to
+historical reasons (it used to be 16 bit long).
 
 What follows is the JSON header and the text (possibly compressed), both
 with the specified length.
@@ -58,6 +62,9 @@ and used straight by the interpreter.
 
 ## Caveats
 
-This has not been implemented yet - currently PXT uses similar, but more
-convoluted format.
+Older versions of PXT and Touch Develop (as implemented in the legacy micro:bit programming
+environment) used fields `headerLength` and `textLength`, and didn't use `eURL`/`eVER`.
+The compressed text in that case starts with `headerLength` characters (not bytes)
+of a JSON header, followed by project files encoded as JSON (ie., same as in the current version).
 
+If the source is too large for the flash size it is not embedded.
