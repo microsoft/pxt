@@ -476,6 +476,7 @@ export class Editor extends srceditor.Editor {
     }
 
     updateToolbox() {
+        let appTheme = pxt.appTarget.appTheme;
         // Toolbox div
         let toolbox = document.getElementById('pxtMonacoToolboxWidget');
         // Move the monaco editor to make room for the toolbox div
@@ -566,6 +567,9 @@ export class Editor extends srceditor.Editor {
             let element = blocksDict[ns];
             let color = element.color;
 
+            if (appTheme.coloredToolbox) {
+                treerow.style.color = `${color}`;
+            }
             treerow.style.borderLeft = `8px solid ${color}`;
             label.innerText = `${ns}`;
         })
