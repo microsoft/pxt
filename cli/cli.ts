@@ -3263,32 +3263,38 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         return files
     }
 
+    const unpackHexAsync = (buf: Buffer) =>
+        pxt.cpp.unpackSourceFromHexAsync(buf as any)
+            .then(data => {
+                if (!data) return null
+                if (!data.meta) data.meta = {} as any
+                let id = data.meta.cloudId || "?"
+                console.log(`.hex cloudId: ${id}`)
+                let files: Map<string> = null
+                try {
+                    files = JSON.parse(data.source)
+                } catch (e) {
+                    files = oneFile(data.source, data.meta.editor)
+                }
+                return {
+                    projects: [
+                        {
+                            name: data.meta.name,
+                            files: files
+                        }
+                    ]
+                }
+            })
+            
     return Promise.resolve()
         .then(() => {
             let str = buf.toString("utf8")
             if (str[0] == ":") {
                 console.log("Detected .hex file.")
-                return pxt.cpp.unpackSourceFromHexAsync(buf)
-                    .then(data => {
-                        if (!data) return null
-                        if (!data.meta) data.meta = {} as any
-                        let id = data.meta.cloudId || "?"
-                        console.log(`.hex cloudId: ${id}`)
-                        let files: Map<string> = null
-                        try {
-                            files = JSON.parse(data.source)
-                        } catch (e) {
-                            files = oneFile(data.source, data.meta.editor)
-                        }
-                        return {
-                            projects: [
-                                {
-                                    name: data.meta.name,
-                                    files: files
-                                }
-                            ]
-                        }
-                    })
+                return unpackHexAsync(buf)
+            } else if (str[0] == "U") {
+                console.log("Detected .uf2 file.")
+                return unpackHexAsync(buf)
             } else if (str[0] == "{") {  // JSON
                 console.log("Detected .json file.")
                 return JSON.parse(str)
