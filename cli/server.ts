@@ -861,9 +861,9 @@ export function serveAsync(options: ServeOptions) {
     }
 
     server.listen(serveOptions.port, serveOptions.interface);
-    
+
     let startInterface = serveOptions.interface;
-    if (serveOptions.interface === "0.0.0.0"){
+    if (serveOptions.interface === "0.0.0.0") {
         startInterface = "127.0.0.1";
     }
 
