@@ -109,7 +109,7 @@ namespace pxt.blocks {
         }
         if (fn.parameters)
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
-                (/^(string|number)$/.test(attrNames[pr.name].type)
+                (/^(string|number|boolean)$/.test(attrNames[pr.name].type)
                     || !!attrNames[pr.name].shadowType
                     || !!attrNames[pr.name].shadowValue))
                 .forEach(pr => {
