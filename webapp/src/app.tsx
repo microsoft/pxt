@@ -1457,9 +1457,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     compile() {
         pxt.tickEvent("compile");
-        pxt.debug('compiling...')
+        pxt.debug('compiling...');
         this.clearLog();
         this.editor.beforeCompile();
+        const simRestart = this.state.running;
+        if (simRestart) this.stopSimulator();        
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then(resp => {
@@ -1478,7 +1480,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
-            }).finally(() => pxt.tickEvent("perf.compile"))
+            }).finally(() => {
+                if (simRestart) this.runSimulator()
+            })
             .done();
     }
 
