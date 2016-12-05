@@ -1,9 +1,10 @@
 declare var require: any;
+import * as Promise from "bluebird";
+(window as any).Promise = Promise;
+
 const PouchDB = require("pouchdb");
 require('pouchdb/extras/memory');
-import * as Promise from "bluebird";
 
-(window as any).Promise = Promise;
 (Promise as any).config({
     // Enables all warnings except forgotten return statements.
     warnings: {
