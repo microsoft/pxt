@@ -643,16 +643,25 @@ ${output}</xml>`;
             function emitDestructuringMutation(callback: ts.ArrowFunction) {
                 if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
                     const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
-                    const names = elements.map(e => {
+
+                    const renames: {[index: string]: string} = {};
+
+                    const properties = elements.map(e => {
                         if (checkName(e.propertyName) && checkName(e.name)) {
                             const name = (e.name as Identifier).text;
-                            return e.propertyName ? `${(e.propertyName as Identifier).text}:${name}` : name;
+                            if (e.propertyName) {
+                                const propName = (e.propertyName as Identifier).text;
+                                renames[propName] = name;
+                                return propName;
+                            }
+                            return name;
                         }
                         else {
                             return "";
                         }
                     });
-                    write(`<mutation callbackproperties="${names.join(",")}"></mutation>`)
+
+                    write(`<mutation callbackproperties="${properties.join(",")}" renamemap="${Util.htmlEscape(JSON.stringify(renames))}"></mutation>`)
                 }
 
                 function checkName(name: Node) {
