@@ -34,14 +34,14 @@ namespace pxsim {
 
         constructor(private runtime: Runtime) { }
 
-        listen(id: number, evid: number, handler: RefAction) {
+        listen(id: number | string, evid: number | string, handler: RefAction) {
             let k = id + ":" + evid;
             let queue = this.queues[k];
             if (!queue) queue = this.queues[k] = new EventQueue<number>(this.runtime);
             queue.handler = handler;
         }
 
-        queue(id: number, evid: number, value: number = 0) {
+        queue(id: number | string, evid: number | string, value: number = 0) {
             let k = id + ":" + evid;
             let queue = this.queues[k];
             if (queue) queue.push(value);
