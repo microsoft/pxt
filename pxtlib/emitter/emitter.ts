@@ -3185,7 +3185,8 @@ ${lbl}: .short 0xffff
     }
 
     export function emptyExtInfo(): ExtensionInfo {
-        return {
+        const pio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},
             extensionFiles: {},
@@ -3195,6 +3196,9 @@ ${lbl}: .short 0xffff
             enumsDTS: "",
             onlyPublic: true
         }
+        if (pio) r.platformio = { dependencies: {} };
+        else r.yotta = { config: {}, dependencies: {} };
+        return r;
     }
 
 
