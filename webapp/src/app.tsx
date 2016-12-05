@@ -795,10 +795,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     shareEditor: ShareEditor;
 
     private lastChangeTime: number;
+    private reload : boolean;
 
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
+        this.reload = false; //set to true in case of reset of the project where we are going to reload the page.        
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         this.state = {
             showFiles: false,
@@ -828,6 +830,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     saveSettings() {
         let sett = this.settings
+
+        if (this.reload){
+            return;
+        }
 
         let f = this.editorFile
         if (f && f.epkg.getTopHeader()) {
@@ -1403,7 +1409,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
-        if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg())
+        if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg() || this.reload)
             return Promise.resolve();
 
         let promise = Promise.resolve().then(() => {
@@ -1442,6 +1448,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             disagreeLbl: lf("Cancel")
         }).then(r => {
             if (!r) return;
+            this.reload = true; //Indicate we are goint to reload next.
             workspace.resetAsync()
                 .done(() => window.location.reload(),
                 () => window.location.reload())
