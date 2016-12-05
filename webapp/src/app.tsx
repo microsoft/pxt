@@ -61,6 +61,7 @@ interface IAppState {
     sideDocsCollapsed?: boolean;
 
     running?: boolean;
+    compiling?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
     showBlocks?: boolean;
@@ -795,7 +796,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     shareEditor: ShareEditor;
 
     private lastChangeTime: number;
-    private reload : boolean;
+    private reload: boolean;
 
     constructor(props: IAppProps) {
         super(props);
@@ -831,7 +832,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveSettings() {
         let sett = this.settings
 
-        if (this.reload){
+        if (this.reload) {
             return;
         }
 
@@ -1458,10 +1459,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     compile() {
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
+        const simRestart = this.state.running;
+        this.setState({ compiling: true });
         this.clearLog();
         this.editor.beforeCompile();
-        const simRestart = this.state.running;
-        if (simRestart) this.stopSimulator();        
+        if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then(resp => {
@@ -1481,7 +1483,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
             }).finally(() => {
-                if (simRestart) this.runSimulator()
+                this.setState({ compiling: false });
+                if (simRestart) this.runSimulator();
             })
             .done();
     }
@@ -1747,6 +1750,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
         const savingProjectName = this.state.header && this.state.projectName != this.state.header.name;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
+        const compileLoading = !!this.state.compiling;
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const gettingStartedTooltip = lf("Open beginner tutorial");
@@ -1768,7 +1772,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </span> }
                         <div className="ui item portrait only">
                             <div className="ui">
-                                {compileBtn ? <sui.Button role="menuitem" class="download-button download-button-full" icon="download" onClick={() => this.compile() } /> : "" }
+                                {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" onClick={() => this.compile() } /> : "" }
                                 {make ? <sui.Button role="menuitem" icon='configure' class="secondary" onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button role="menuitem" class="play-button play-button-full" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } /> : undefined }
                             </div>
