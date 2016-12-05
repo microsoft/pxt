@@ -45,7 +45,7 @@ export class Editor extends srceditor.Editor {
         const c = this.config
         const update = (v: any) => {
             const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-            f.setContentAsync(JSON.stringify(this.config, null, 2)).then(() => {
+            f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
                 this.parent.forceUpdate()
                 Util.nextTick(this.changeCallback)
             })
