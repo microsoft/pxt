@@ -235,8 +235,8 @@ declare namespace ts.pxtc {
         functions: FuncInfo[];
         generatedFiles: pxt.Map<string>;
         extensionFiles: pxt.Map<string>;
-        yotta: pxt.YottaConfig;
-        platformio: pxt.PlatformIOConfig;
+        yotta?: pxt.YottaConfig;
+        platformio?: pxt.PlatformIOConfig;
         sha: string;
         compileData: string;
         shimsDTS: string;

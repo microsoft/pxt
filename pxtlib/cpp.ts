@@ -139,17 +139,11 @@ namespace pxt.cpp {
         }
 
         pxt.debug("Generating new extinfo")
-
-        let isPlatformio = false;
-        if (pxt.appTarget.compileService && pxt.appTarget.compileService.platformioIni) {
-            isPlatformio = true
-        }
-
-        if (isPlatformio) {
+        const res = pxtc.emptyExtInfo();
+        const isPlatformio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        if (isPlatformio)
             sourcePath = "/src/"
-        }
 
-        let res = pxtc.emptyExtInfo();
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
