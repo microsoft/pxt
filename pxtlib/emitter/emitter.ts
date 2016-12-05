@@ -624,7 +624,11 @@ namespace ts.pxtc {
         return rootFunction as MethodDeclaration
     }
 
-    export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
+    export function compileBinary(
+        program: Program,
+        host: CompilerHost,
+        opts: CompileOptions,
+        res: CompileResult): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: pxt.Map<ClassInfo> = {}
@@ -888,6 +892,10 @@ namespace ts.pxtc {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
+                if (opts.extinfo.yotta)
+                    bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
+                if (opts.extinfo.platformio)
+                    bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
                 processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
@@ -3185,14 +3193,7 @@ ${lbl}: .short 0xffff
             compileData: "",
             shimsDTS: "",
             enumsDTS: "",
-            onlyPublic: true,
-            platformio: {
-                dependencies: {}
-            },
-            yotta: {
-                dependencies: {},
-                config: {}
-            }
+            onlyPublic: true
         }
     }
 
