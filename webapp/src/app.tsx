@@ -61,6 +61,7 @@ interface IAppState {
     sideDocsCollapsed?: boolean;
 
     running?: boolean;
+    compiling?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
     showBlocks?: boolean;
@@ -795,7 +796,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     shareEditor: ShareEditor;
 
     private lastChangeTime: number;
-    private reload : boolean;
+    private reload: boolean;
 
     constructor(props: IAppProps) {
         super(props);
@@ -831,7 +832,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     saveSettings() {
         let sett = this.settings
 
-        if (this.reload){
+        if (this.reload) {
             return;
         }
 
@@ -1457,9 +1458,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     compile() {
         pxt.tickEvent("compile");
-        pxt.debug('compiling...')
+        pxt.debug('compiling...');
+        if (this.state.compiling) {
+            pxt.tickEvent("compile.double");
+            return;
+        }
+        const simRestart = this.state.running;
+        this.setState({ compiling: true });
         this.clearLog();
         this.editor.beforeCompile();
+        if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then(resp => {
@@ -1478,7 +1486,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
-            }).finally(() => pxt.tickEvent("perf.compile"))
+            }).finally(() => {
+                this.setState({ compiling: false });
+                if (simRestart) this.runSimulator();
+            })
             .done();
     }
 
@@ -1743,6 +1754,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
         const savingProjectName = this.state.header && this.state.projectName != this.state.header.name;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
+        const compileLoading = !!this.state.compiling;
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const gettingStartedTooltip = lf("Open beginner tutorial");
@@ -1764,7 +1776,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             </span> }
                         <div className="ui item portrait only">
                             <div className="ui">
-                                {compileBtn ? <sui.Button role="menuitem" class="download-button download-button-full" icon="download" onClick={() => this.compile() } /> : "" }
+                                {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" onClick={() => this.compile() } /> : "" }
                                 {make ? <sui.Button role="menuitem" icon='configure' class="secondary" onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button role="menuitem" class="play-button play-button-full" key='runmenubtn' icon={this.state.running ? "stop" : "play"} onClick={() => this.startStopSimulator() } /> : undefined }
                             </div>
@@ -1821,7 +1833,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
                     </div>
                     <div className="ui item landscape only">
-                        {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : ""}
+                        {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : ""}
                         {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                         {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Start") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
                     </div>
