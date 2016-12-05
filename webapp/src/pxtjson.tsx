@@ -44,8 +44,12 @@ export class Editor extends srceditor.Editor {
     display() {
         const c = this.config
         const update = (v: any) => {
-            this.parent.forceUpdate()
-            Util.nextTick(this.changeCallback)
+            const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
+            f.setContentAsync(JSON.stringify(this.config, null, 2)).then(() => {
+                this.parent.forceUpdate()
+                Util.nextTick(this.changeCallback)
+            })
+
         }
         const initCard = () => {
             if (!c.card) c.card = {}
