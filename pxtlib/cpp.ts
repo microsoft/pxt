@@ -570,11 +570,10 @@ namespace pxt.cpp {
 
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
-        res.yotta.config = U.jsonUnFlatten(optSettings)
-        let configJson = res.yotta.config
-
+        const configJson = U.jsonUnFlatten(optSettings)
         if (isPlatformio) {
-            let iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            const iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            // TODO merge configjson
             iniLines.push("lib_deps =")
             U.iterMap(res.platformio.dependencies, (pkg, ver) => {
                 let pkgSpec = /[@#\/]/.test(ver) ? ver : pkg + "@" + ver
@@ -582,6 +581,7 @@ namespace pxt.cpp {
             })
             res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
         } else {
+            res.yotta.config = configJson;
             let moduleJson = {
                 "name": "pxt-microbit-app",
                 "version": "0.0.0",
