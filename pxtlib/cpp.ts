@@ -617,7 +617,7 @@ int main() {
             config: compileService.serviceId,
             tag: compileService.gittag,
             replaceFiles: tmp,
-            dependencies: res.yotta.dependencies,
+            dependencies: (!isPlatformio ? res.yotta.dependencies : null)
         }
 
         let data = JSON.stringify(creq)
