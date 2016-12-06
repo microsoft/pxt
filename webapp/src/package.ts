@@ -135,7 +135,7 @@ export class EditorPackage {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
-                return cfgFile.setContentAsync(JSON.stringify(cfg, null, 2))
+                return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
             } catch (e) { }
         }
 

@@ -96,7 +96,6 @@
             return;
         }
         var options = { id: id ? id[1] : undefined, code: code ? decodeURIComponent(code[1]) : undefined };
-        console.log(JSON.stringify(options, null, 2))    
         var sims = document.getElementById('simulators');        
         ksRunnerReady(function() {
             var theme = pxt.appTarget.appTheme;

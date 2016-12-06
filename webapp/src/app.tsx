@@ -1673,7 +1673,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             let config = JSON.parse(f.content) as pxt.PackageConfig;
             config.name = this.state.projectName;
-            f.setContentAsync(JSON.stringify(config, null, 2)).done(() => {
+            f.setContentAsync(JSON.stringify(config, null, 4) + "\n").done(() => {
                 if (this.state.header)
                     this.setState({
                         projectName: this.state.header.name
