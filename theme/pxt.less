@@ -380,10 +380,6 @@
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    /* Top Menu */
-    #maineditor {
-        top:@mobileMenuHeight !important;
-    }
     /* Organization logo */
     .organization {
         top:auto;
@@ -404,6 +400,10 @@
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
+    /* Top Menu */
+    #maineditor {
+        top:@mobileMenuHeight !important;
+    }
     /* Layout */
     #filelist {
         position:absolute;
