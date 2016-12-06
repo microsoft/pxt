@@ -2579,13 +2579,7 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
         process.exit(1);
     }
 
-    const testBlocksDir = path.relative(process.cwd(), path.join(dir, "testBlocks"));
-    let testBlocksDirExists = false;
-    try {
-        const stats = fs.statSync(testBlocksDir);
-        testBlocksDirExists = stats.isDirectory();
-    }
-    catch (e) { }
+    const testBlocksDir = getTestBlocksDir(dir);
 
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
@@ -2619,7 +2613,7 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
             return Promise.resolve()
         }
 
-        return decompileAsyncWorker(filename, testBlocksDirExists ? testBlocksDir : undefined)
+        return decompileAsyncWorker(filename, testBlocksDir)
             .then(decompiled => {
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (compareBaselines(decompiled, baseline)) {
@@ -2646,6 +2640,17 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
         });
 }
 
+function getTestBlocksDir(parentDirectory: string): string {
+    const testBlocksDir = path.relative(process.cwd(), path.join(parentDirectory, "testBlocks"));
+    let testBlocksDirExists = false;
+    try {
+        const stats = fs.statSync(testBlocksDir);
+        testBlocksDirExists = stats.isDirectory();
+    }
+    catch (e) { }
+    return testBlocksDirExists ? testBlocksDir : undefined;
+}
+
 function compareBaselines(a: string, b: string): boolean {
     // Ignore whitespace
     return a.replace(/\s/g, "") === b.replace(/\s/g, "")
@@ -2658,6 +2663,7 @@ function replaceFileExtension(file: string, extension: string) {
 function testDecompilerErrorsAsync(parsed: commandParser.ParsedCommand) {
     const filenames: string[] = [];
     const dir = parsed.arguments[0];
+    const testBlocksDir = getTestBlocksDir(path.resolve(dir, ".."));
 
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
@@ -2695,30 +2701,30 @@ function testDecompilerErrorsAsync(parsed: commandParser.ParsedCommand) {
             success = false;
         }
 
-        return Promise.mapSeries(cases, testCase => {
-            const pkg = new pxt.MainPackage(new SnippetHost("decompile-error-pkg", testCase.text, []));
+        let currentCase: string = undefined;
 
+        return Promise.mapSeries(cases, testCase => {
+            const pkg = new pxt.MainPackage(new SnippetHost("decompile-error-pkg", testCase.text, [testBlocksDir]));
+            currentCase = testCase.name;
             return pkg.getCompileOptionsAsync()
                 .then(opts => {
                     opts.ast = true;
-                    try {
-                        const decompiled = pxtc.decompile(opts, "main.ts");
-                        if (decompiled.success) {
-                            errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" expected a decompilation error but got none`);
-                            success = false;
-                        }
+                    const decompiled = pxtc.decompile(opts, "main.ts");
+                    if (decompiled.success) {
+                        errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" expected a decompilation error but got none`);
+                        success = false;
                     }
-                    catch (e) {
-                        errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" generated an exception: ${e}`);
-                        success = false
-                    }
-                });
-        })
+                })
+            })
             .then(() => {
                 if (success) {
                     console.log(`decompiler error test OK: ${basename}`);
                 }
             })
+            .catch(e => {
+                errors.push(`decompiler error test FAILED; ${basename} case "${currentCase}" generated an exception: ${e}`);
+                success = false
+            });
     })
         .then(() => {
             if (errors.length) {
