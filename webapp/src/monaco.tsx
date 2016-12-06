@@ -387,8 +387,8 @@ export class Editor extends srceditor.Editor {
         });
 
         this.editor.onMouseUp((e: monaco.editor.IEditorMouseEvent) => {
-            console.log("mouse up");
-            console.log(e);
+            //console.log("mouse up");
+            //console.log(e);
         });
 
         editorElement.ondragover = (ev: DragEvent) => {
@@ -489,7 +489,7 @@ export class Editor extends srceditor.Editor {
         // Add an overlay widget for the toolbox
         toolbox.className = 'monacoToolboxDiv';
         toolbox.style.height = `${_this.editor.getLayoutInfo().contentHeight}px`;
-        toolbox.style.display = 'block';
+        toolbox.style.display = 'inline-block';
         let root = document.createElement('div');
         root.className = 'blocklyTreeRoot';
         toolbox.appendChild(root);
@@ -520,7 +520,10 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.style.fontSize = `${_this.parent.settings.editorFontSize}px`;
                     let methodToken = document.createElement('span');
                     methodToken.className = `token ts identifier ${fn}`;
-                    methodToken.innerText = fn;
+                    
+                    let suggestion = fn;
+                    
+                    methodToken.innerText = suggestion;
 
                     monacoBlock.onclick = (ev2: MouseEvent) => {
                         monacoFlyout.style.display = 'none';
@@ -562,6 +565,7 @@ export class Editor extends srceditor.Editor {
 
             label.className = 'blocklyTreeLabel';
             treerow.appendChild(icon);
+            treerow.appendChild(iconNone);
             treerow.appendChild(label);
 
             let element = blocksDict[ns];
@@ -571,8 +575,28 @@ export class Editor extends srceditor.Editor {
                 treerow.style.color = `${color}`;
             }
             treerow.style.borderLeft = `8px solid ${color}`;
+            treerow.style.paddingLeft = '0px';
             label.innerText = `${ns}`;
         })
+
+        // add "Add package" button to toolbox
+        if (!$('#monacoAddPackage').length) {
+            let addpackageDiv = document.createElement('div');
+            addpackageDiv.id = "monacoAddPackage";
+            let addPackageButton = document.createElement('button');
+            addPackageButton.setAttribute('role', 'button');
+            addPackageButton.setAttribute('aria-label', lf("Add Package..."));
+            addPackageButton.setAttribute('title', lf("Add Package..."));
+            addPackageButton.onclick = () => {
+                _this.parent.addPackage();
+            }
+            addPackageButton.className = 'circular ui icon button';
+            let addpackageIcon = document.createElement('i');
+            addpackageIcon.className = 'plus icon';
+            addPackageButton.appendChild(addpackageIcon);
+            addpackageDiv.appendChild(addPackageButton);
+            toolbox.appendChild(addpackageDiv);
+        }
     }
 
     getId() {

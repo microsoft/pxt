@@ -455,35 +455,12 @@ body.blocklyMinimalBody {
 }
 
 .monacoToolboxDiv {
-    position: absolute;
+    position: relative;
     top: 0;
     left: 0;
-    width: 230px;
     overflow-x: visible;
     overflow-y: auto;
 }
 .monaco-editor {
-    margin-left: 230px;
-}
 
-.monacoFlyout {
-    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    color: black;
-    width: 300px;
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-}
-
-.monacoFlyout div {
-    margin:2rem;
-}
-
-.monacoFlyout.hide{
-    transform:translateX(-9999px);
-}
-
-.monacoDraggableBlock {
-    background-color: white;
-    padding: 0.5rem;
-    border-radius: 4px;
 }

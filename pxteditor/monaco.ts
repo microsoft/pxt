@@ -19,16 +19,40 @@ namespace pxt.vs {
                         }
                         modelMap[fp] = "1";
                     }
-                    if (!readOnly && /\.d\.ts$/.test(f)) {
-                        // Definitions file
-                         monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                            worker(monaco.Uri.parse(fp))
-                            .then((client: any) => {
-                                client.getNavigationBarItems(fp).then((items: any) => {
-                                    console.log(items);
-                                })
+                    if (/\.d\.ts$/.test(f)) {
+                        // definitions file
+                        let definitions: any = {};
+                        monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
+                            return worker(monaco.Uri.parse(fp))
+                                .then((client: any) => {
+                                    return client.getNavigationBarItems(fp).then((items: any[]) => {
+                                        let promises: Promise<any>[] = [];
+                                        items.forEach((item: any) => {
+                                            if (item.kind == 'module') {
+                                                // namespace
+                                                definitions[item.text] = {
+                                                    fns: {}
+                                                };
+                                                // get namespace weight and color
+                                                console.log(item);
+                                                item.childItems.forEach((fn: any) => {
+                                                    if (fn.kind == 'function') {
+                                                        // function 
+                                                        let promise = client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
+                                                            .then((details: any) => {
+                                                                if (details) definitions[item.text].fns[fn.text] = details[1];
+                                                            });
+                                                        promises.push(promise);
+                                                    }
+                                                })
+                                            }
+                                        });
+                                        return monaco.Promise.join(promises);
+                                    });
                             });
-                        })
+                        }).done(() => {
+                            console.log(definitions);
+                        });
                     }
                 });
             });

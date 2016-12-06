@@ -205,14 +205,14 @@
 }
 
 /* The Add package button at the bottom of the toolbox */
-#blocklyAddPackage {
+#blocklyAddPackage, #monacoAddPackage {
     margin-top: 1rem;
     margin-left: auto;
     margin-right: auto;
     font-size:3rem;
     text-align: center;
 }
-#blocklyAddPackage button {
+#blocklyAddPackage button, #monacoAddPackage button {
     color: @addPackageColor;
 }
 
@@ -275,6 +275,26 @@
     background-color: #FFB900;
 }
 
+/* Monaco Toolbox */
+.monacoFlyout {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    background: @primaryColor;
+    overflow-x: visible;
+    overflow-y: auto;
+    width: 300px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.monacoFlyout div {
+    margin:2rem;
+}
+
+.monacoDraggableBlock {
+    background-color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
 
 /*******************************
         Media Adjustments
