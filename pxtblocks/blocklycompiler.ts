@@ -1169,11 +1169,24 @@ namespace pxt.blocks {
             let e = mkEnv(w, blockInfo);
             infer(e, w);
 
-            // [stmtsHandlers] contains calls to register event handlers. They must be
-            // executed before the code that goes in the main function, as that latter
-            // code may block, and prevent the event handler from being registered.
             let stmtsMain: JsNode[] = [];
-            w.getTopBlocks(true).map(b => {
+
+            // Sort so that top-level event handlers are emitted first. They must be
+            // executed before the code that goes in the main function, as that latter
+            // code may block and prevent the event handler from being registered.
+            let topblocks = w.getTopBlocks(true).sort((a, b) => {
+                const aCall = e.stdCallTable[a.type];
+                const bCall = e.stdCallTable[b.type];
+                if (aCall && aCall.hasHandler) {
+                    if (bCall && bCall.hasHandler) {
+                        return 0;
+                    }
+                    return -1;
+                }
+                return 1;
+            });
+
+            topblocks.forEach(b => {
                 let compiled = compileStatements(e, b)
                 if (compiled.type == NT.Block)
                     append(stmtsMain, compiled.children);

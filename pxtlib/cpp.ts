@@ -139,17 +139,11 @@ namespace pxt.cpp {
         }
 
         pxt.debug("Generating new extinfo")
-
-        let isPlatformio = false;
-        if (pxt.appTarget.compileService && pxt.appTarget.compileService.platformioIni) {
-            isPlatformio = true
-        }
-
-        if (isPlatformio) {
+        const res = pxtc.emptyExtInfo();
+        const isPlatformio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        if (isPlatformio)
             sourcePath = "/src/"
-        }
 
-        let res = pxtc.emptyExtInfo();
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
@@ -576,11 +570,10 @@ namespace pxt.cpp {
 
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
-        res.yotta.config = U.jsonUnFlatten(optSettings)
-        let configJson = res.yotta.config
-
+        const configJson = U.jsonUnFlatten(optSettings)
         if (isPlatformio) {
-            let iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            const iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            // TODO merge configjson
             iniLines.push("lib_deps =")
             U.iterMap(res.platformio.dependencies, (pkg, ver) => {
                 let pkgSpec = /[@#\/]/.test(ver) ? ver : pkg + "@" + ver
@@ -588,6 +581,7 @@ namespace pxt.cpp {
             })
             res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
         } else {
+            res.yotta.config = configJson;
             let moduleJson = {
                 "name": "pxt-microbit-app",
                 "version": "0.0.0",
@@ -623,7 +617,7 @@ int main() {
             config: compileService.serviceId,
             tag: compileService.gittag,
             replaceFiles: tmp,
-            dependencies: res.yotta.dependencies,
+            dependencies: (!isPlatformio ? res.yotta.dependencies : null)
         }
 
         let data = JSON.stringify(creq)

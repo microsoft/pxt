@@ -32,6 +32,7 @@ body {
 .ui.item.logo img {
     max-height: 2.5rem;
     margin-left: 1rem;
+    margin-right: 1rem;
 }
 
 .rtl #fileNameInput {
