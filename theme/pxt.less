@@ -204,16 +204,11 @@
     color: @trashIconColor;
 }
 
-/* The Add package button at the bottom of the toolbox */
-#blocklyAddPackage, #monacoAddPackage {
-    margin-top: 1rem;
-    margin-left: auto;
-    margin-right: auto;
+/* Blockly Toolbox Buttons */
+#blocklyToolboxButtons {
+    margin-top: 0.5rem;
     font-size:3rem;
     text-align: center;
-}
-#blocklyAddPackage button, #monacoAddPackage button {
-    color: @addPackageColor;
 }
 
 /*******************************
@@ -321,10 +316,20 @@
     #getting-started-btn:not(.sideDocs) {
         display: block;
     }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons {
+        margin-right: 2rem;
+        margin-left: 2rem;
+    }
 }
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons {
+        margin-right: 1rem;
+        margin-left: 1rem;
+    }
 }
 
 /* Tablet */
@@ -340,11 +345,19 @@
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
     }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons {
+        margin-right: 0.5rem;
+        margin-left: 0.5rem;
+    }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-
+    /* Blockly Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
+    #blocklyToolboxButtons.ui.stackable.grid .column {
+        padding: 0.3rem 0 0.3rem 0 !important;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
