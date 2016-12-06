@@ -607,6 +607,7 @@ ${output}</xml>`;
                         arg && arg.kind === SK.ArrowFunction && parameters && !parameters[index].questionToken && !parameters[index].initializer);
 
                     if (argumentDifference > 1 || !hasCallback) {
+                        pxt.tickEvent("decompiler.optionalParameters");
                         error(node, Util.lf("Function call has more arguments than are supported by its block"));
                         return;
                     }
