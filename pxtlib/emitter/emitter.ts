@@ -676,7 +676,7 @@ namespace ts.pxtc {
                 start: 0,
                 length: 0,
                 line: 0,
-                character: 0,
+                column: 0,
                 successors: null
             }]
         }
@@ -2344,6 +2344,7 @@ ${lbl}: .short 0xffff
             while (/^\s$/.exec(src.text[pos]))
                 pos++;
             let p = ts.getLineAndCharacterOfPosition(src, pos)
+            let e = ts.getLineAndCharacterOfPosition(src, node.end);
             let brk: Breakpoint = {
                 id: res.breakpoints.length,
                 isDebuggerStmt: node.kind == SK.DebuggerStatement,
@@ -2351,7 +2352,9 @@ ${lbl}: .short 0xffff
                 start: pos,
                 length: node.end - pos,
                 line: p.line,
-                character: p.character,
+                endLine: e.line,
+                column: p.character,
+                endColumn: e.character,
                 successors: null
             }
             res.breakpoints.push(brk)

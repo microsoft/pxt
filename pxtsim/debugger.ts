@@ -9,6 +9,8 @@ namespace pxsim {
         setBreakpoints?: number[];
     }
 
+    export type BreakpointMap = {[index: string]: [number, DebugProtocol.Breakpoint][]};
+
     // subtype=resume
     // subtype=stepover
     // subtype=stepinto
@@ -107,5 +109,35 @@ namespace pxsim {
         }
 
         return r
+    }
+
+    function binarySearch<T>(list: T[], target: T, compare: (a: T, b: T) => number): T {
+        if (!list || list.length === 0) {
+            return undefined;
+        }
+
+        return bSearchRecursive(0, list.length);
+
+        function bSearchRecursive(start: number, end: number): T {
+            if (end - start < 0) {
+                return undefined;
+            }
+
+            const middle = start + Math.floor((end - start) / 2);
+            const comp = compare(target, list[middle]);
+
+            if (comp === 0) {
+                return list[middle];
+            }
+            else if (comp > 0 && middle !== start) {
+                return bSearchRecursive(middle + 1, end);
+            }
+            else if (comp < 0 && middle !== end) {
+                return bSearchRecursive(start, middle);
+            }
+            else {
+                return undefined;
+            }
+        }
     }
 }

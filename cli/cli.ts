@@ -58,7 +58,7 @@ function reportDiagnosticSimply(diagnostic: pxtc.KsDiagnostic): void {
     let output = "";
 
     if (diagnostic.fileName) {
-        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
+        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
     }
 
     const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
@@ -2886,7 +2886,7 @@ function testSnippetsAsync(...args: string[]): Promise<void> {
                         start: 1,
                         line: 1,
                         length: 1,
-                        character: 1
+                        column: 1
                     }
                 ])
             })

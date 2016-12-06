@@ -113,7 +113,9 @@ namespace ts.pxtc {
 
         //derived
         line: number;
-        character: number;
+        column: number;
+        endLine?: number;
+        endColumn?: number;
     }
 
     export interface KsDiagnostic extends LocationInfo {
@@ -125,11 +127,14 @@ namespace ts.pxtc {
     export function nodeLocationInfo(node: ts.Node) {
         let file = getSourceFileOfNode(node)
         const { line, character } = ts.getLineAndCharacterOfPosition(file, node.pos);
+        const { line: endLine, character:endChar } = ts.getLineAndCharacterOfPosition(file, node.end);
         let r: LocationInfo = {
             start: node.pos,
             length: node.end - node.pos,
             line: line,
-            character: character,
+            column: character,
+            endLine: endLine,
+            endColumn: endChar,
             fileName: file.fileName,
         }
         return r
@@ -150,7 +155,7 @@ namespace ts.pxtc {
                     start: d.start,
                     length: d.length,
                     line: 0,
-                    character: 0,
+                    column: 0,
                     messageText: d.messageText,
                     category: d.category,
                     fileName: "?",
@@ -164,7 +169,7 @@ namespace ts.pxtc {
                 start: d.start,
                 length: d.length,
                 line: pos.line,
-                character: pos.character,
+                column: pos.character,
                 messageText: d.messageText,
                 category: d.category,
                 fileName: d.file.fileName,
