@@ -54,6 +54,7 @@ declare namespace pxt {
 
     interface CodeCard {
         name?: string;
+        shortName?: string;
 
         color?: string; // one of semantic ui colors
         description?: string;
