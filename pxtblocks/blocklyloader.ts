@@ -529,11 +529,11 @@ namespace pxt.blocks {
         }
     }
 
-    export function initToolboxButtons(addCallback: (ev?: MouseEvent) => void, undoCallback: (ev?: MouseEvent) => void): void {
-        if (!$('#blocklyToolboxButtons').length) {
+    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: MouseEvent) => void, undoCallback: (ev?: MouseEvent) => void): void {
+        if (!$(`#${id}`).length) {
             let blocklyToolboxButtons = document.createElement('div');
-            blocklyToolboxButtons.id = "blocklyToolboxButtons";
-            blocklyToolboxButtons.className = 'ui equal width stackable grid';
+            blocklyToolboxButtons.id = id;
+            blocklyToolboxButtons.className = 'ui equal width stackable grid blocklyToolboxButtons';
 
             // add "Add package" button to toolbox
             let addButtonDiv = document.createElement('div');
@@ -565,7 +565,7 @@ namespace pxt.blocks {
             undoButtonDiv.appendChild(undoButton);
             blocklyToolboxButtons.appendChild(undoButtonDiv);
 
-            $('.blocklyToolboxDiv').append(blocklyToolboxButtons);
+            toolbox.appendChild(blocklyToolboxButtons);
         }
     }
 

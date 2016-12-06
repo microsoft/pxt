@@ -482,13 +482,13 @@ export class Editor extends srceditor.Editor {
         // Move the monaco editor to make room for the toolbox div
         this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
-        let _this = this;
+        let monacoEditor = this;
         // clear the toolbox
         toolbox.innerHTML = null;
 
         // Add an overlay widget for the toolbox
         toolbox.className = 'monacoToolboxDiv';
-        toolbox.style.height = `${_this.editor.getLayoutInfo().contentHeight}px`;
+        toolbox.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
         toolbox.style.display = 'inline-block';
         let root = document.createElement('div');
         root.className = 'blocklyTreeRoot';
@@ -505,8 +505,8 @@ export class Editor extends srceditor.Editor {
             treeitem.onclick = (ev: MouseEvent) => {
                 let monacoFlyout = document.getElementById('pxtMonacoFlyoutWidget');
                 monacoFlyout.innerHTML = null;
-                monacoFlyout.style.left = `${_this.editor.getLayoutInfo().lineNumbersLeft}px`;
-                monacoFlyout.style.height = `${_this.editor.getLayoutInfo().contentHeight}px`;
+                monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
+                monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
                 monacoFlyout.style.display = 'block';
                 monacoFlyout.style.transform = 'translateX(0px)';
                 let element = blocksDict[ns];
@@ -517,7 +517,7 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.ondragstart = (ev2: DragEvent) => {
                         monacoFlyout.className = monacoFlyout.className + ' hide';
                     };
-                    monacoBlock.style.fontSize = `${_this.parent.settings.editorFontSize}px`;
+                    monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
                     let methodToken = document.createElement('span');
                     methodToken.className = `token ts identifier ${fn}`;
                     
@@ -527,11 +527,11 @@ export class Editor extends srceditor.Editor {
 
                     monacoBlock.onclick = (ev2: MouseEvent) => {
                         monacoFlyout.style.display = 'none';
-                        let model = _this.editor.getModel();
-                        let currPos = _this.editor.getPosition();
+                        let model = monacoEditor.editor.getModel();
+                        let currPos = monacoEditor.editor.getPosition();
                         let cursor = model.getOffsetAt(currPos)
                         let insertText = `${ns}.${fn}`;
-                        _this.editor.executeEdits("", [
+                        monacoEditor.editor.executeEdits("", [
                             {
                                 identifier: {major: 0, minor: 0},
                                 range: new monaco.Range(currPos.lineNumber,currPos.column,currPos.lineNumber,currPos.column),
@@ -541,8 +541,8 @@ export class Editor extends srceditor.Editor {
                         ]);
                         cursor += (insertText.length);
                         let endPos = model.getPositionAt(cursor);
-                        _this.editor.focus();
-                        _this.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+                        monacoEditor.editor.focus();
+                        monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
                     };
 
                     monacoBlock.appendChild(methodToken);
@@ -579,24 +579,13 @@ export class Editor extends srceditor.Editor {
             label.innerText = `${ns}`;
         })
 
-        // add "Add package" button to toolbox
-        if (!$('#monacoAddPackage').length) {
-            let addpackageDiv = document.createElement('div');
-            addpackageDiv.id = "monacoAddPackage";
-            let addPackageButton = document.createElement('button');
-            addPackageButton.setAttribute('role', 'button');
-            addPackageButton.setAttribute('aria-label', lf("Add Package..."));
-            addPackageButton.setAttribute('title', lf("Add Package..."));
-            addPackageButton.onclick = () => {
-                _this.parent.addPackage();
-            }
-            addPackageButton.className = 'circular ui icon button';
-            let addpackageIcon = document.createElement('i');
-            addpackageIcon.className = 'plus icon';
-            addPackageButton.appendChild(addpackageIcon);
-            addpackageDiv.appendChild(addPackageButton);
-            toolbox.appendChild(addpackageDiv);
-        }
+        pxt.blocks.initToolboxButtons(toolbox, 'monacoToolboxButtons',
+        () => {
+            this.parent.addPackage();
+        },
+        () => {
+            this.undo();
+        });
     }
 
     getId() {
