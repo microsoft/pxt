@@ -29,6 +29,7 @@ namespace pxt.docs.codeCard {
 
     export interface CodeCardRenderOptions {
         hideHeader?: boolean;
+        shortName?: boolean;
     }
 
     export function render(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
@@ -109,9 +110,10 @@ namespace pxt.docs.codeCard {
 
 
         let ct = div(r, "ui content");
-        if (card.name) {
-            if (url && !link) a(ct, url, card.name, 'header');
-            else div(ct, 'header', 'div', card.name);
+        const name = (options.shortName ? card.shortName : '') || card.name;
+        if (name) {
+            if (url && !link) a(ct, url, name, 'header');
+            else div(ct, 'header', 'div', name);
         }
         if (card.time) {
             let meta = div(ct, "ui meta");

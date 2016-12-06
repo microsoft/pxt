@@ -292,7 +292,7 @@ namespace pxt.runner {
             const ul = $('<div />').addClass('ui cards');
             const addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
-                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true }));
+                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
             }
             stmts.forEach(stmt => {
                 let info = decompileCallInfo(stmt);
@@ -312,9 +312,8 @@ namespace pxt.runner {
                                     : undefined
                         })
                     } else if (block) {
-                        let card = U.clone(block.codeCard);
+                        let card = U.clone(block.codeCard) as pxt.CodeCard;
                         if (card) {
-                            card.link = true;
                             addItem(card);
                         }
                     } else {
