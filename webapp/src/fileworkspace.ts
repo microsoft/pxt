@@ -41,7 +41,7 @@ function getHeader(id: string) {
 
 function apiAsync(path: string, data?: any) {
     return U.requestAsync({
-        url: "http://localhost:3232/api/" + path,
+        url: "/api/" + path,
         headers: { "Authorization": Cloud.localToken },
         method: data ? "POST" : "GET",
         data: data || undefined

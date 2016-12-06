@@ -23,6 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
+let externalMessageHandlers: pxt.Map<ExternalMessageHandler> = {};
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -105,21 +106,6 @@ let statAsync = Promise.promisify(fs.stat)
 let readdirAsync = Promise.promisify(fs.readdir)
 let readFileAsync = Promise.promisify(fs.readFile)
 let writeFileAsync: any = Promise.promisify(fs.writeFile)
-
-// provided by target
-let deployCoreAsync: (r: pxtc.CompileResult) => Promise<number> = undefined;
-
-function initTargetCommands() {
-    let cmdsjs = path.resolve('built/cmds.js');
-    if (fs.existsSync(cmdsjs)) {
-        pxt.debug(`loading cli extensions...`)
-        let cli = require(cmdsjs)
-        if (cli.deployCoreAsync) {
-            pxt.debug('imported deploy command')
-            deployCoreAsync = cli.deployCoreAsync
-        }
-    }
-}
 
 function existsAsync(fn: string) {
     return new Promise((resolve, reject) => {
@@ -286,9 +272,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else if (cmd == "POST pkg")
         return readJsonAsync()
             .then(d => writePkgAsync(innerPath, d))
-    else if (cmd == "POST deploy" && deployCoreAsync)
+    else if (cmd == "POST deploy" && pxt.commands.deployCoreAsync)
         return readJsonAsync()
-            .then(d => deployCoreAsync(d))
+            .then(pxt.commands.deployCoreAsync)
             .then((boardCount) => {
                 return {
                     boardCount: boardCount
@@ -305,7 +291,40 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
 
                 return res;
             });
-    else throw throwError(400)
+    else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
+        // innerpath start with targetid
+        const fmd = path.join(docsDir, innerPath.slice(pxt.appTarget.id.length + 1) + ".md");
+        return existsAsync(fmd)
+            .then(e => {
+                if (!e) throw throwError(404);
+                return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
+            });
+    } else if (cmd == "POST externalmsg") {
+        return readJsonAsync()
+            .then((data: ExternalMessageData) => {
+                if (!data || !data.messageType) {
+                    throw throwError(400);
+                }
+
+                let resultDeferred = Promise.defer<ExternalMessageResult>();
+
+                if (!externalMessageHandlers[data.messageType]) {
+                    resultDeferred.resolve({
+                        error: "noHandler"
+                    });
+                } else {
+                    externalMessageHandlers[data.messageType]((res) => {
+                        resultDeferred.resolve({
+                            error: res.error,
+                            result: res.result
+                        });
+                    }, data.args);
+                }
+
+                return resultDeferred.promise;
+            });
+    }
+    else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
 
 function directoryExistsSync(p: string): boolean {
@@ -642,20 +661,37 @@ function getBrowserLocation(browser: string) {
     return browser;
 }
 
+export interface ExternalMessageData {
+    messageType: string;
+    args: any
+}
+export interface ExternalMessageResult {
+    error?: any;
+    result?: any;
+}
+export interface ExternalCallback { (res: ExternalMessageResult): void }
+export interface ExternalMessageHandler { (cb: ExternalCallback, data?: ExternalMessageData): void }
+
 export interface ServeOptions {
     localToken: string;
     autoStart: boolean;
     packaged?: boolean;
     electron?: boolean;
     browser?: string;
+    externalHandlers?: pxt.Map<ExternalMessageHandler>;
+    port?: number;
 }
 
 let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
+    if (!serveOptions.port) serveOptions.port = 3232;
     setupRootDir();
-    initTargetCommands();
     initSerialMonitor();
+
+    if (serveOptions.externalHandlers) {
+        externalMessageHandlers = serveOptions.externalHandlers;
+    }
 
     let server = http.createServer((req, res) => {
         let error = (code: number, msg: string = null) => {
@@ -816,15 +852,15 @@ export function serveAsync(options: ServeOptions) {
     });
 
     // if user has a server.js file, require it
-    let serverjs = path.resolve(path.join(root, 'server.js'))
+    const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
         require(serverjs);
     }
 
-    server.listen(3232, "127.0.0.1");
+    server.listen(serveOptions.port, "127.0.0.1");
 
-    let start = `http://localhost:3232/#local_token=${options.localToken}`;
+    let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
     console.log(`---------------------------------------------`);
     console.log(``);
     console.log(`To launch the editor, open this URL:`);

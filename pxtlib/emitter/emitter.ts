@@ -9,6 +9,7 @@ namespace ts.pxtc {
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_ASM = "binary.asm";
+    export const BINARY_UF2 = "binary.uf2";
 
     let EK = ir.EK;
     export const SK = SyntaxKind;
@@ -623,7 +624,11 @@ namespace ts.pxtc {
         return rootFunction as MethodDeclaration
     }
 
-    export function compileBinary(program: Program, host: CompilerHost, opts: CompileOptions, res: CompileResult): EmitResult {
+    export function compileBinary(
+        program: Program,
+        host: CompilerHost,
+        opts: CompileOptions,
+        res: CompileResult): EmitResult {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: pxt.Map<ClassInfo> = {}
@@ -887,6 +892,10 @@ namespace ts.pxtc {
                 host.writeFile(fn, data, false, null);
 
             if (opts.target.isNative) {
+                if (opts.extinfo.yotta)
+                    bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
+                if (opts.extinfo.platformio)
+                    bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
                 processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
@@ -3179,7 +3188,8 @@ ${lbl}: .short 0xffff
     }
 
     export function emptyExtInfo(): ExtensionInfo {
-        return {
+        const pio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},
             extensionFiles: {},
@@ -3187,15 +3197,11 @@ ${lbl}: .short 0xffff
             compileData: "",
             shimsDTS: "",
             enumsDTS: "",
-            onlyPublic: true,
-            platformio: {
-                dependencies: {}
-            },
-            yotta: {
-                dependencies: {},
-                config: {}
-            }
+            onlyPublic: true
         }
+        if (pio) r.platformio = { dependencies: {} };
+        else r.yotta = { config: {}, dependencies: {} };
+        return r;
     }
 
 

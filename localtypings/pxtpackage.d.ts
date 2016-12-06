@@ -26,16 +26,29 @@ declare namespace pxt {
         yotta?: YottaConfig;
         card?: CodeCard;
         additionalFilePath?: string;
+        gistId?: string;
     }
 
     interface PlatformIOConfig {
         dependencies?: Map<string>;
     }
 
+    interface CompilationConfig {
+        description: string;
+        config: any;
+    }
+
     interface YottaConfig {
         dependencies?: Map<string>;
         config?: any;
+        /**
+         * Overridable config flags
+         */
+        optionalConfig?: any;
+        userConfigs?: CompilationConfig[];
+        /* deprecated */
         configIsJustDefaults?: boolean;
+        /* deprecated */
         ignoreConflicts?: boolean;
     }
 

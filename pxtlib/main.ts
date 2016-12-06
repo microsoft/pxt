@@ -46,7 +46,7 @@ namespace pxt {
             console.log(msg);
         } : () => { };
 
-    export var reportException: (err: any, data: any) => void = function (e, d) {
+    export var reportException: (err: any, data?: Map<string>) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
@@ -56,7 +56,7 @@ namespace pxt {
             }
         }
     }
-    export var reportError: (cat: string, msg: string, data?: Map<number | string>) => void = function (cat, msg, data) {
+    export var reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
         if (console) {
             console.error(`${cat}: ${msg}`);
             if (data) {
@@ -449,10 +449,12 @@ namespace pxt {
             let rec = (p: Package) => {
                 if (U.lookup(visited, p.id)) return;
                 visited[p.id] = true
-                let deps = Object.keys(p.config.dependencies)
-                deps.sort((a, b) => U.strcmp(a, b))
-                deps.forEach(id => rec(this.resolveDep(id)))
-                ids.push(p.id)
+                if (p.config && p.config.dependencies) {
+                    const deps = Object.keys(p.config.dependencies);
+                    deps.sort((a, b) => U.strcmp(a, b))
+                    deps.forEach(id => rec(this.resolveDep(id)))
+                    ids.push(p.id)
+                }
             }
             rec(this)
             return ids.map(id => this.resolveDep(id))
@@ -522,7 +524,7 @@ namespace pxt {
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly || appTarget.compile.shortPointers ? null : this.filesToBePublishedAsync(true))
+                .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         files = U.mapMap(files, upgradeFile);
@@ -545,7 +547,7 @@ namespace pxt {
                                     name: this.config.name,
                                 })
                                 opts.embedBlob = btoa(U.uint8ArrayToString(buf))
-                            })
+                            });
                     } else {
                         return Promise.resolve()
                     }
@@ -627,7 +629,7 @@ namespace pxt {
                             }
                         }
                     } catch (e) {
-                        pxt.reportError(lf("invalid pxtparts.json file"), undefined);
+                        pxt.reportError("parts", "invalid pxtparts.json file");
                     }
                 }
             })

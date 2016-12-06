@@ -30,19 +30,9 @@ body {
 }
 
 .ui.item.logo img {
-    height: 2.5rem;
-}
-
-.organization {
-    position:absolute;
-    top:1rem;
-    right:1rem;
-    height:2rem;
-    z-index:102;
-}
-.rtl .organization {
-    right:auto;
-    left:1rem;
+    max-height: 2.5rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
 }
 
 .rtl #fileNameInput {
@@ -77,14 +67,6 @@ div.simframe > iframe {
 
 #settings .popup {
     width: 25rem;
-}
-
-.full-abs {
-    position: absolute !important;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
 }
 
 #root.inverted {
@@ -303,10 +285,6 @@ html {
     margin-top:0.5em !important;
 }
 
-.ui.widedesktop.only {
-    display:none !important;
-}
-
 .flash {
     animation: flash-animation 0.4s alternate infinite;
 }
@@ -325,52 +303,10 @@ html {
     to   { opacity: 0.8; }
 }
 
-/* extra-large desktop screen */
-@media only screen and (min-width: 92em) and (min-height:30em) {
-    .ui.widedesktop.only {
-        display:block !important;
-    }
-    .ui.widedesktop.hide {
-        display:none !important;
-    }
-}
-
-@media only screen and (min-width: 55em) and (min-height:30em) {
-    .blocklyTreeRow {
-        padding-top: 0.75rem !important;
-        padding-bottom: 2rem !important;
-        border-left-width: 12px !important;
-    }
-    .blocklyTreeRoot div div div div .blocklyTreeRow {
-        border-left-width: 18px !important;
-        padding-top: 0px !important;
-        padding-bottom: 1.6rem !important;
-    }
-}
-
-@media only screen and (max-width: 64em), only screen and (max-aspect-ratio: 14/10) {
-    .organization {
-        right:auto;
-        top:auto;
-        left:1.5rem;
-        bottom:0.5rem;
-    }
-    .rtl .organization {
-        left:1.5rem;
-        right:auto;
-    }
-    #cookiemsg {
-        bottom:2.5rem;
-    }
-}
-
 /* smaller desktop screen */
 @media only screen and (max-width: 60em), only screen and (max-aspect-ratio: 12/10) {
     #logo .name {
         display: none !important;
-    }
-    .ui.desktop.only {
-        display:none !important;
     }
     #helpcard {
         top: auto;
@@ -386,20 +322,6 @@ html {
         bottom: 2rem;
         margin: 0;
     }
-    .organization {
-        top:auto;
-        left:0.5rem;
-        right: auto;
-        bottom: 0.5rem;
-        height: 1.3rem;
-    }
-    .rtl .organization {
-        left:0.5rem;
-        right: auto;
-    }
-    .ui.landscape.only {
-        display:none !important;
-    }
     .hideEditorFloats .editorFloat {
         display:none;
     }
@@ -409,31 +331,6 @@ html {
         margin-right:0.5rem;
     }
     div.simframe:not(:first-child) {
-        display:none !important;
-    }
-}
-
-@media only screen and (min-width: 55em) {
-    .ui.portrait.only {
-        display:none !important;
-    }
-}
-
-@media only screen and (max-height:45em) {
-    .ui.tall.only {
-        display:none !important;
-    }
-}
-
-/* thin display, mobile */
-@media only screen and (min-width:36em) {
-    .ui.thin.only {
-        display:none !important;
-    }
-}
-
-@media only screen and (max-width:36em) {
-    .ui.wide.only {
         display:none !important;
     }
 }
@@ -526,7 +423,6 @@ body.blocklyMinimalBody {
 }
 
 
-
 /*******************************
     Monaco Editor
     Add Monaco Editor CSS here that you don't want override in themes
@@ -547,4 +443,10 @@ body.blocklyMinimalBody {
     border-radius: 2px !important;
     padding-left: 10px !important;
     padding-right: 20px !important;
+}
+
+
+/* Fix for monaco editor Signature bug in Safari */
+.monaco-editor .parameter-hints-widget {
+    flex-direction: row !important;
 }

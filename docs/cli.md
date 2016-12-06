@@ -20,7 +20,7 @@ pxt target microbit
 pxt serve
 ```
 
-The last command will open default browser and point it to http://localhost:3232/
+The last command will open the editor in your default browser.
 
 The `pxt target microbit` is conceptually the same as ``npm install pxt-microbit``
 plus some housekeeping, like setting up `pxtcli.json` file to point to the target.
@@ -40,7 +40,7 @@ You can edit the package using [VSCode](https://code.visualstudio.com/).
 
 You can also [publish your own packages on GitHub](/packages).
 
-## Creating a new project
+### Creating a new project
 
 Open a shell to your ``microbit`` folder.
 
@@ -55,7 +55,7 @@ pxt init
 code .
 ```
 
-## Opening an existing project 
+### Opening an existing project 
 
 You can extract a project from the embedded URL or .hex file. Open a shell to your projects folder
 
@@ -65,7 +65,8 @@ pxt extract EMBEDURL
 ```
 where ``EMBEDURL`` is the published project URL.
 
-## Cloud-keeping
+## Commands
 
-The CLI tool is also used for configuring the PXT cloud service. Unless you have your
-own PXT cloud you don't need to worry about it, otherwise [here are the docs](/cloudkeeping).
+* [build](/cli/build), builds the current project
+* [deploy](/cli/deploy), builds and deploys the current project
+* [login](/cli/login), store a GitHub token

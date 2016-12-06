@@ -10,8 +10,7 @@ export interface UiProps {
     children?: any;
     class?: string;
     role?: string;
-    tooltip?: string;
-    tooltipPosition?: string;
+    title?: string;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -82,8 +81,9 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     renderCore() {
         return (
-            <div className={genericClassName("ui dropdown item", this.props) } role={this.props.role} title={this.props.title ? this.props.title : this.props.text}
-                data-tooltip={this.props.tooltip} data-position={this.props.tooltipPosition}>
+            <div className={genericClassName("ui dropdown item", this.props) }
+                role={this.props.role}
+                title={this.props.title}>
                 {genericContent(this.props) }
                 <div className="menu">
                     {this.props.children}
@@ -102,7 +102,7 @@ export class Item extends data.Component<ItemProps, {}> {
         return (
             <div className={genericClassName("ui item link", this.props, true) }
                 role={this.props.role}
-                title={this.props.text}
+                title={this.props.title}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}>
@@ -123,9 +123,8 @@ export class Button extends UiElement<ButtonProps> {
         return (
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
-                title={this.props.title ? this.props.title : this.props.text}
-                onClick={this.props.onClick}
-                data-tooltip={this.props.tooltip} data-position={this.props.tooltipPosition}>
+                title={this.props.title}
+                onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}
             </button>
@@ -239,6 +238,26 @@ export class Input extends data.Component<{
                 </div>
             </Field>
         );
+    }
+}
+
+export class Checkbox extends data.Component<{
+    label?: string;
+    inputLabel?: string;
+    class?: string;
+    checked?: boolean;
+    onChange: (v: string) => void;
+}, {}> {
+
+    renderCore() {
+        const p = this.props;
+        return <Field label={p.label}>
+            <div className={"ui toggle checkbox"}>
+                <input type="checkbox" checked={p.checked}
+                    onChange={v => p.onChange((v.target as any).value) } />
+                {p.inputLabel ? <label>{p.inputLabel}</label> : undefined }
+            </div>
+        </Field>;
     }
 }
 

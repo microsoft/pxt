@@ -187,7 +187,7 @@ namespace ts.pxtc.assembler {
         public lineNo: number;
         public words: string[]; // the tokens in this line 
         public scope: string;
-
+        public location: number;
         public instruction: Instruction;
         public numArgs: number[];
 
@@ -226,6 +226,7 @@ namespace ts.pxtc.assembler {
             this.currLine = new Line(this, "<start>");
             this.currLine.lineNo = 0;
             this.ei = ei;
+            this.ei.file = this;
         }
 
         public baseOffset: number = 0;
@@ -264,6 +265,10 @@ namespace ts.pxtc.assembler {
         public location() {
             // store one short (2 bytes) per buf location
             return this.buf.length * 2;
+        }
+
+        public pc() {
+            return this.location() + this.baseOffset;
         }
 
         // parsing of an "integer", well actually much more than 
@@ -678,6 +683,7 @@ namespace ts.pxtc.assembler {
                 this.stack += op.stack;
                 if (this.checkStack && this.stack < 0)
                     this.pushError(lf("stack underflow"))
+                ln.location = this.location()
                 this.emitShort(op.opcode);
                 if (op.opcode2 != null)
                     this.emitShort(op.opcode2);
@@ -777,11 +783,9 @@ namespace ts.pxtc.assembler {
         }
 
         private iterLines() {
-            // TODO: check we have properly initialized everything
             this.stack = 0;
             this.buf = [];
             this.scopeId = 0;
-            // what about this.scope?
 
             this.lines.forEach(l => {
                 if (this.errors.length > 10)
@@ -952,6 +956,7 @@ namespace ts.pxtc.assembler {
 
         public encoders: pxt.Map<Encoder>;
         public instructions: pxt.Map<Instruction[]>;
+        public file: File = null;
 
         constructor() {
             this.encoders = {};

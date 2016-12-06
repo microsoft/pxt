@@ -119,7 +119,7 @@ namespace ts.pxtc.Util {
     export function jsonFlatten(v: any) {
         let res: pxt.Map<any> = {}
         let loop = (pref: string, v: any) => {
-            if (typeof v == "object") {
+            if (v !== null && typeof v == "object") {
                 assert(!Array.isArray(v))
                 if (pref) pref += "."
                 for (let k of Object.keys(v)) {

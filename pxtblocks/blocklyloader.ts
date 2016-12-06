@@ -109,7 +109,7 @@ namespace pxt.blocks {
         }
         if (fn.parameters)
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
-                (/^(string|number)$/.test(attrNames[pr.name].type)
+                (/^(string|number|boolean)$/.test(attrNames[pr.name].type)
                     || !!attrNames[pr.name].shadowType
                     || !!attrNames[pr.name].shadowValue))
                 .forEach(pr => {
@@ -529,6 +529,25 @@ namespace pxt.blocks {
         }
     }
 
+    export function initAddPackage(callback: (ev: MouseEvent) => void): void {
+        // add "Add package" button to toolbox
+        if (!$('#blocklyAddPackage').length) {
+            let addpackageDiv = document.createElement('div');
+            addpackageDiv.id = "blocklyAddPackage";
+            let addPackageButton = document.createElement('button');
+            addPackageButton.setAttribute('role', 'button');
+            addPackageButton.setAttribute('aria-label', lf("Add Package..."));
+            addPackageButton.setAttribute('title', lf("Add Package..."));
+            addPackageButton.onclick = callback;
+            addPackageButton.className = 'circular ui icon button';
+            let addpackageIcon = document.createElement('i');
+            addpackageIcon.className = 'plus icon';
+            addPackageButton.appendChild(addpackageIcon);
+            addpackageDiv.appendChild(addPackageButton);
+            $('.blocklyToolboxDiv').append(addpackageDiv);
+        }
+    }
+
     function categoryElement(tb: Element, nameid: string): Element {
         return tb ? tb.querySelector(`category[nameid="${nameid.toLowerCase()}"]`) : undefined;
     }
@@ -797,55 +816,84 @@ namespace pxt.blocks {
 
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
-        if (!appTheme.invertedToolbox || appTheme.invertedToolbox != true) return;
-        /**
-         * Recursively add colours to this toolbox.
-         * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
-         *     Defaults to the root node.
-         * @private
-         */
-        (<any>Blockly).Toolbox.prototype.addColour_ = function (opt_tree: any) {
-            let tree = opt_tree || this.tree_;
-            let children = tree.getChildren();
-            for (let i = 0, child: any; child = children[i]; i++) {
-                let element = child.getRowElement();
-                let onlyChild = children.length == 1;
-                if (element) {
-                    let nextElement = element.parentNode.nextSibling;
-                    let previousElement = element.parentNode.previousSibling;
-                    if (!nextElement && !onlyChild) {
-                        element.style.borderBottomLeftRadius = "10px";
-                        element.style.borderBottomRightRadius = "10px";
-                    }
-                    if (!previousElement && !onlyChild) {
-                        element.style.borderTopLeftRadius = "10px";
-                        element.style.borderTopRightRadius = "10px";
-                    }
-                    if (this.hasColours_) {
-                        element.style.color = '#fff';
-                        element.style.background = (child.hexColour || '#ddd');
-                    }
-                }
-                this.addColour_(child);
-            }
-        };
 
-        /**
-         * Display/hide the flyout when an item is selected.
-         * @param {goog.ui.tree.BaseNode} node The item to select.
-         * @override
-         */
-        let setSelectedItem = (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem;
-        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
-            let toolbox = this.toolbox_;
-            // Capture the last category and reset it after Blockly's setSelectedItem has been called.
-            let lastCategory = toolbox.lastCategory_;
-            setSelectedItem.call(this, node);
-            if (lastCategory) {
-                // reset last category colour
-                lastCategory.getRowElement().style.backgroundColor = lastCategory.hexColour;
-            }
-        };
+        if (appTheme.coloredToolbox) {
+            /**
+             * Recursively add colours to this toolbox.
+             * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
+             *     Defaults to the root node.
+             * @private
+             */
+            (<any>Blockly).Toolbox.prototype.addColour_ = function(opt_tree: any) {
+                let tree = opt_tree || this.tree_;
+                let children = tree.getChildren();
+                for (let i = 0, child: any; child = children[i]; i++) {
+                    let element = child.getRowElement();
+                    if (element) {
+                        let border = '';
+                        if (this.hasColours_) {
+                            border = '8px solid ' + (child.hexColour || '#ddd');
+                        } else {
+                            border = 'none';
+                        }
+                        if (this.workspace_.RTL) {
+                            element.style.borderRight = border;
+                        } else {
+                            element.style.borderLeft = border;
+                        }
+                        element.style.color = (child.hexColour || '#000');
+                    }
+                    this.addColour_(child);
+                }
+            };
+        } else if (appTheme.invertedToolbox) {
+            /**
+             * Recursively add colours to this toolbox.
+             * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
+             *     Defaults to the root node.
+             * @private
+             */
+            (<any>Blockly).Toolbox.prototype.addColour_ = function (opt_tree: any) {
+                let tree = opt_tree || this.tree_;
+                let children = tree.getChildren();
+                for (let i = 0, child: any; child = children[i]; i++) {
+                    let element = child.getRowElement();
+                    let onlyChild = children.length == 1;
+                    if (element) {
+                        let nextElement = element.parentNode.nextSibling;
+                        let previousElement = element.parentNode.previousSibling;
+                        if (!nextElement && !onlyChild) {
+                            element.className += ' blocklyTreeRowBottom';
+                        }
+                        if (!previousElement && !onlyChild) {
+                            element.className += ' blocklyTreeRowTop';
+                        }
+                        if (this.hasColours_) {
+                            element.style.color = '#fff';
+                            element.style.background = (child.hexColour || '#ddd');
+                        }
+                    }
+                    this.addColour_(child);
+                }
+            };
+
+            /**
+             * Display/hide the flyout when an item is selected.
+             * @param {goog.ui.tree.BaseNode} node The item to select.
+             * @override
+             */
+            let setSelectedItem = (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem;
+            (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
+                let toolbox = this.toolbox_;
+                // Capture the last category and reset it after Blockly's setSelectedItem has been called.
+                let lastCategory = toolbox.lastCategory_;
+                setSelectedItem.call(this, node);
+                if (lastCategory) {
+                    // reset last category colour
+                    lastCategory.getRowElement().style.backgroundColor = lastCategory.hexColour;
+                }
+            };
+        }
     }
 
     function initContextMenu() {

@@ -5,6 +5,7 @@ var ju = require("./jakeutil")
 var path = require("path")
 var expand = ju.expand;
 var cmdIn = ju.cmdIn;
+var strpSrcMap = ju.strpSrcMap;
 
 function tscIn(task, dir, builtDir) {
     let command = 'node ../node_modules/typescript/bin/tsc'
@@ -249,7 +250,6 @@ file("built/web/pxtlib.js", [
     jake.cpR("built/pxtrunner.js", "built/web/")
     jake.cpR("built/pxteditor.js", "built/web/")
     jake.cpR("external/tdast.js", "built/web/")
-    jake.cpR("external/ai.min.js", "built/web/")
 
     let additionalExports = [
         "getCompletionData"
@@ -307,16 +307,19 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")
-    jake.cpR("node_modules/monaco-editor/dev/vs/base", "webapp/public/vs/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/editor", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/min/vs/base", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/min/vs/editor", "webapp/public/vs/")
     fs.unlinkSync("webapp/public/vs/editor/editor.main.js")
 
-    jake.cpR("node_modules/monaco-editor/dev/vs/loader.js", "webapp/public/vs/")
+    jake.cpR("node_modules/monaco-editor/min/vs/loader.js", "webapp/public/vs/")
     jake.mkdirP("webapp/public/vs/basic-languages/src")
-    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/bat.js", "webapp/public/vs/basic-languages/src/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/src/cpp.js", "webapp/public/vs/basic-languages/src/")
+    jake.cpR("node_modules/monaco-editor/min/vs/basic-languages/src/bat.js", "webapp/public/vs/basic-languages/src/")
+    jake.cpR("node_modules/monaco-editor/min/vs/basic-languages/src/cpp.js", "webapp/public/vs/basic-languages/src/")
     jake.mkdirP("webapp/public/vs/language/json")
-    jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
+    jake.cpR("node_modules/monaco-editor/min/vs/language/json/", "webapp/public/vs/language/")
+    
+    // Strip out the sourceMappingURL= from each of the monaco files (recursively)
+    strpSrcMap(this, "webapp/public/vs/")
 })
 
 file('built/web/vs/language/typescript/src/mode.js', ['node_modules/pxt-monaco-typescript/release/src/mode.js'], function () {

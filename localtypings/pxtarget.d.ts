@@ -120,11 +120,13 @@ declare namespace pxt {
         organization?: string;
         organizationUrl?: string;
         organizationLogo?: string;
+        organizationWideLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
         docMenu?: DocMenuEntry[];
         hideSideDocs?: boolean;
         sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
+        hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         boardName?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
@@ -141,12 +143,14 @@ declare namespace pxt {
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
+        coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         projectGallery?: string;
+        crowdinProject?: string;
     }
 
     interface DocMenuEntry {
@@ -176,11 +180,13 @@ declare namespace ts.pxtc {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
+        useUF2?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
+        deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defualts to 1k
         upgrades?: UpgradePolicy[];
@@ -229,8 +235,8 @@ declare namespace ts.pxtc {
         functions: FuncInfo[];
         generatedFiles: pxt.Map<string>;
         extensionFiles: pxt.Map<string>;
-        yotta: pxt.YottaConfig;
-        platformio: pxt.PlatformIOConfig;
+        yotta?: pxt.YottaConfig;
+        platformio?: pxt.PlatformIOConfig;
         sha: string;
         compileData: string;
         shimsDTS: string;

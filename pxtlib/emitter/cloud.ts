@@ -19,7 +19,7 @@ namespace pxt.Cloud {
 
     export function isLocalHost(): boolean {
         try {
-            return /^http:\/\/(localhost|127\.0\.0\.1):3232\//.test(window.location.href) && !/nolocalhost=1/.test(window.location.href);
+            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href) && !/nolocalhost=1/.test(window.location.href);
         } catch (e) { return false; }
     }
 
@@ -61,14 +61,25 @@ namespace pxt.Cloud {
         })
     }
 
-    export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean) {
+    export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         docid = docid.replace(/^\//, "");
         let url = `md/${pxt.appTarget.id}/${docid}`;
         if (locale != "en") {
             url += `?lang=${encodeURIComponent(Util.userLanguage())}`
             if (live) url += "&live=1"
         }
-        return privateGetTextAsync(url);
+        if (Cloud.isLocalHost() && !live)
+            return Util.requestAsync({
+                url: "/api/" + url,
+                headers: { "Authorization": Cloud.localToken },
+                method: "GET",
+                allowHttpErrors: true
+            }).then(resp => {
+                if (resp.statusCode == 404)
+                    return privateGetTextAsync(url);
+                else return resp.json as string;
+            });
+        else return privateGetTextAsync(url);
     }
 
     export function privateDeleteAsync(path: string) {

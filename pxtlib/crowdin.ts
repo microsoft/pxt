@@ -1,5 +1,4 @@
 namespace pxt.crowdin {
-    export const PROJECT_VARIABLE = "CROWDIN_PROJECT";
     export const KEY_VARIABLE = "CROWDIN_KEY";
 
     function apiUri(prj: string, key: string, cmd: string, args?: Map<string>) {

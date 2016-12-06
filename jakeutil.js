@@ -108,6 +108,27 @@ function cmdIn(task, dir, cmd) {
     });
 }
 
+// strpSrcMap strips out the sourceMappingURL= from each of the files in dir (recursively)
+function strpSrcMap(task, dir) {
+    fs.readdir(dir, (err, files) => {
+        if (err) {
+            console.error(err);
+            task.fail(err);
+        }
+        files.forEach((file, index) => {
+            file = path.resolve(dir, file) + '';
+            let isDirectory = fs.statSync(file).isDirectory();
+            if (isDirectory) {
+                strpSrcMap(this, file);
+            } else {
+                let fileContents = fs.readFileSync(file, "utf8");
+                fileContents = fileContents.replace(/\/\/# sourceMappingURL=.*/gi, '')
+                fs.writeFileSync(file, fileContents)
+            }
+        });
+    });
+}
+
 exports.execCallback = execCallback;
 exports.expand = expand;
 exports.expand1 = expand1;
@@ -116,3 +137,4 @@ exports.cmdIn = cmdIn;
 exports.cmdsIn = cmdsIn;
 exports.cpR = cpR;
 exports.mkdirP = mkdirP;
+exports.strpSrcMap = strpSrcMap;

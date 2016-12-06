@@ -151,7 +151,7 @@ namespace pxt.github {
         name: string;
         description: string;
         defaultBranch: string;
-        status?: GitRepoStatus
+        status?: GitRepoStatus;
     }
 
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
@@ -220,7 +220,7 @@ namespace pxt.github {
             return Promise.resolve<GitRepo>(undefined);
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.appTarget.appTheme.homeUrl}api/gh/${rid.fullName}`)
+        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -308,4 +308,37 @@ namespace pxt.github {
             });
     }
 
+    export function publishGistAsync(token: string, forceNew: boolean, files: any, name: string, currentGistId: string): Promise<any> {
+        // Github gist API: https://developer.github.com/v3/gists/
+        const data = {
+            "description": name,
+            "public": false, /* there is no API to make a gist public or private, so it's easier/safer to always make it private and let the user make it public from the UI */
+            "files": files
+        };
+        const headers: Map<string> = {};
+        let method: string, url: string = "https://api.github.com/gists";
+        if (token) headers['Authorization'] = `token ${token}`;
+        if (currentGistId && token && !forceNew) {
+            // Patch existing gist
+            method = 'PATCH';
+            url += `/${currentGistId}`;
+        } else {
+            // Create new gist
+            method = 'POST';
+        }
+        return U.requestAsync({
+                url: url,
+                allowHttpErrors: true,
+                headers: headers,
+                method: method,
+                data: data || {} })
+            .then((resp) => {
+                if ((resp.statusCode == 200 || resp.statusCode == 201) && resp.json.id) {
+                    return Promise.resolve<string>(resp.json.id);
+                } else if (resp.statusCode == 404 && method == 'PATCH') {
+                    return Promise.reject(resp.statusCode);
+                }
+                return Promise.reject(resp.text);
+            });
+    }
 }

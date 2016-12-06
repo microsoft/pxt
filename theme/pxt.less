@@ -19,6 +19,14 @@
   bottom: 0rem;
 }
 
+.full-abs {
+    position: absolute !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
 /* Main Editor layout */
 #maineditor {
   left: @simulatorWidth;
@@ -89,18 +97,18 @@
 }
 #sidedocspopout {
   position: absolute;
-  top:4.75rem;
-  right:4.25rem;
+  top:@sidedocsButtonsTop;
+  right:@sidedocsButtonsRight;
   display:none;
 }
 .rtl #sidedocspopout {
     right:auto;
-    left:4.25rem;
+    left:@sidedocsButtonsRight;
 }
 
 #sidedocsexpand {
   position: absolute;
-  top:4.75rem;
+  top:@sidedocsButtonsTop;
   right:1.25rem;
   display:none;
 }
@@ -130,6 +138,18 @@
     right:1rem;
 }
 
+/* Organization logo */
+.organization {
+    position:absolute;
+    top:1rem;
+    right:2rem;
+    height:2rem;
+    z-index:102;
+}
+.rtl .organization {
+    right:auto;
+    left:2rem;
+}
 
 /*******************************
              Blockly
@@ -184,6 +204,17 @@
     color: @trashIconColor;
 }
 
+/* The Add package button at the bottom of the toolbox */
+#blocklyAddPackage {
+    margin-top: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    font-size:3rem;
+    text-align: center;
+}
+#blocklyAddPackage button {
+    color: @addPackageColor;
+}
 
 /*******************************
         Monaco Editor
@@ -246,42 +277,12 @@
 
 
 /*******************************
-        Mobile Adjustments
+        Media Adjustments
 *******************************/
 
-
-@media only screen and (max-width: @largestMobileScreen) {
-    .blocklyTreeLabel {
-        font-size: 0.75rem !important;
-    }
-    .blocklyCheckbox {
-        font-size: 17pt !important;
-    }
-    .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
-        font-size: 0.75rem !important;
-    }
-}
-
-@media only screen and (max-width: 60em), only screen and (max-aspect-ratio: 12/10) {
-    .blocklyTreeLabel {
-        font-size:1rem;
-    }
-}
-
-@media only screen and (max-width: 55em), only screen and (max-aspect-ratio: 7/10) {
-    .blocklyTreeLabel {
-        font-size:1rem;
-    }
-}
-
-@media only screen and (max-width:55em) {
-    #maineditor {
-        top:@mobileMenuHeight !important;
-    }
-}
-
-/* extra-large desktop screen */
-@media only screen and (min-width: 92em) and (min-height:30em) {
+/* Large Monitor */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    /* Layout */
     .sideDocs #maineditor {
         right:@sideBarWidth;
     }
@@ -296,10 +297,54 @@
     #sidedocspopout, #sidedocsexpand {
         display:block;
     }
+    /* Getting started button */
+    #getting-started-btn:not(.sideDocs) {
+        display: block;
+    }
 }
 
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+}
 
-@media only screen and (max-width: 64em), only screen and (max-aspect-ratio: 14/10) {
+/* Tablet */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    /* Blockly */
+    .blocklyTreeRow {
+        padding-top: 0.75rem !important;
+        padding-bottom: 2rem !important;
+        border-left-width: 12px !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow {
+        border-left-width: 18px !important;
+        padding-top: 0px !important;
+        padding-bottom: 1.6rem !important;
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+
+}
+
+/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
+@media only screen and (min-width: @computerBreakpoint) {
+    /* Blockly */
+    .blocklyTreeRow {
+        padding-top: 0.9rem !important;
+        padding-bottom: 2.3rem !important;
+        border-left-width: 12px !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow {
+        border-left-width: 18px !important;
+        padding-top: 0px !important;
+        padding-bottom: 1.6rem !important;
+    }
+}   
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+    /* Layout */
     #filelist {
         bottom:3rem;
         min-width:@simulatorWidthSmall;
@@ -312,10 +357,54 @@
         right:@simulatorWidthSmall;
         left:0;
     }
+    /* Organization logo */
+    .organization {
+        right:auto;
+        top:auto;
+        left:1.5rem;
+        bottom:0.5rem;
+    }
+    .rtl .organization {
+        left:1.5rem;
+        right:auto;
+    }
+    /* Cookie Message */
+    #cookiemsg {
+        bottom:2.5rem;
+    }
+    /* Blockly */
+    .blocklyTreeLabel {
+        font-size:1rem;
+    }
 }
 
-/* thin desktop portrait mode */
-@media only screen and (max-width: 55em), only screen and (max-aspect-ratio: 7/10) {
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    /* Top Menu */
+    #maineditor {
+        top:@mobileMenuHeight !important;
+    }
+    /* Organization logo */
+    .organization {
+        top:auto;
+        left:0.5rem;
+        right: auto;
+        bottom: 0.5rem;
+        height: 1.3rem;
+    }
+    .rtl .organization {
+        left:0.5rem;
+        right: auto;
+    }
+    /* Blockly */
+    .blocklyTreeLabel {
+        font-size:1rem;
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    /* Layout */
     #filelist {
         position:absolute;
         z-index:5;
@@ -338,12 +427,69 @@
     #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
         bottom:2.3rem;
     }
+    /* Blockly */
+    .blocklyTreeLabel {
+        font-size: 0.75rem !important;
+    }
+    .blocklyCheckbox {
+        font-size: 17pt !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
+        font-size: 0.75rem !important;
+    }
 }
 
-/* Large Monitor */
-@media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* Getting started button */
-    #getting-started-btn:not(.sideDocs) {
-        display: block;
+/*******************************
+        Layout Variables
+*******************************/
+
+.ui.widedesktop.only {
+    display:none !important;
+}
+
+@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
+    .ui.widedesktop.only {
+        display:block !important;
+    }
+    .ui.widedesktop.hide {
+        display:none !important;
+    }
+}
+
+/* smaller desktop screen */
+@media only screen and (max-width: @computerBreakpoint), only screen and (max-aspect-ratio: 12/10) {
+    .ui.desktop.only {
+        display:none !important;
+    }
+}
+
+/* thin desktop portrait mode */
+@media only screen and (max-width: @tabletBreakpoint), only screen and (max-aspect-ratio: 7/10) {
+    .ui.landscape.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @tabletBreakpoint) {
+    .ui.portrait.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (max-height:45em) {
+    .ui.tall.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width:@mobileBreakpoint) {
+    .ui.thin.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (max-width:@mobileBreakpoint) {
+    .ui.wide.only {
+        display:none !important;
     }
 }
