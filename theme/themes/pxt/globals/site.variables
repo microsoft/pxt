@@ -24,8 +24,10 @@
      Fonts
 --------------------*/
 
-
 @importGoogleFonts: false;
+
+@docsHeaderFont: @headerFont;
+@docsPageFont: @pageFont;
 
 /*-------------------
    Breakpoints
