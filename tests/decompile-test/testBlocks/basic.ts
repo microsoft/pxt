@@ -72,6 +72,26 @@ namespace testNamespace {
     //% block="Output Multiple args|number %arg1|and boolean %arg2=logic_boolean"
     export function multipleArgumentsOutput(arg1: number, arg2: boolean): number { return arg1; }
 
+    //% blockId=test_single_default_argument
+    //% block="Single default arg and|number %arg1"
+    export function defaultArguments(arg1: number, arg2 = 500) { }
+
+    //% blockId=test_multi_default_argument
+    //% block="Multiple default arguments"
+    export function multipleDefaultArguments(arg2 = 500, arg3 = 700) { }
+
+    //% blockId=test_optional_argument
+    //% block="Single optional arg and|number %arg1"
+    export function optionalArgument(arg1: number, arg2?: number) { }
+
+    //% blockId=test_optional_argument_2
+    //% block="Callback with optional arg"
+    export function optionalArgumentWithCallback(arg1: () => void, arg2?: number) { }
+
+    //% blockId=test_optional_argument_3
+    //% block="Optional callback"
+    export function optionalCallback(arg1?: () => void) { }
+
 
     /**
      * Enum value function
