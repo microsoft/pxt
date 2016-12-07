@@ -360,18 +360,6 @@ html {
     width:60% !important;
 }
 
-
-/* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
-::-webkit-scrollbar {
-    -webkit-appearance: none;
-    width: 10px;
-}
-::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background-color: #ccc;
-    -webkit-box-shadow: 0 0 1px #ccc;
-}
-
 /*******************************
     Blockly
     Add Blockly CSS here that you don't want overriden in themes
