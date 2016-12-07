@@ -87,6 +87,9 @@
     top: @mainMenuHeight;
     right: 2rem;
 }
+#getting-started-btn:not(.sideDocs) {
+    display: block;
+}
 
 /* Side Docs layout */
 #sidedocs {
@@ -351,10 +354,6 @@ div.simframe > iframe {
     #sidedocspopout, #sidedocsexpand {
         display:block;
     }
-    /* Getting started button */
-    #getting-started-btn:not(.sideDocs) {
-        display: block;
-    }
 }
 
 /* Small Monitor */
@@ -381,6 +380,10 @@ div.simframe > iframe {
     /* Blockly Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
     #blocklyToolboxButtons.ui.stackable.grid .column {
         padding: 0.3rem 0 0.3rem 0 !important;
+    }
+    /* Hide the getting started button in the mobile view */
+    #getting-started-btn {
+        display: none !important;
     }
 }
 
