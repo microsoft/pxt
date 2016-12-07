@@ -294,6 +294,7 @@ namespace pxt.blocks {
             .replace(/^<\?[^>]*>/, '');
         return {
             name: fn.namespace + '.' + fn.name,
+            shortName: fn.name,
             description: fn.attributes.jsDoc,
             url: fn.attributes.help ? 'reference/' + fn.attributes.help.replace(/^\//, '') : undefined,
             blocksXml: `<xml xmlns="http://www.w3.org/1999/xhtml">${cleanOuterHTML(blockXml)}</xml>`,

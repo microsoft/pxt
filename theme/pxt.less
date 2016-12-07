@@ -89,7 +89,9 @@
   overflow-y: auto;
   right: 0;
   border:none;
-  height: calc(100% - (@mobileMenuHeight + 4.6rem));
+  top: 0;
+  padding-top: @mainMenuHeight;
+  height: 100%;
 }
 .rtl #sidedocs {
     right:auto;
@@ -149,6 +151,19 @@
 .rtl .organization {
     right:auto;
     left:2rem;
+}
+
+
+/*******************************
+             Docs
+*******************************/
+
+#docs {
+    font-family: @docsPageFont !important;
+}
+
+#docs > h1,h2,h3,h4,h5,h6 {
+    font-family: @docsHeaderFont !important;
 }
 
 /*******************************
@@ -316,20 +331,10 @@
     #getting-started-btn:not(.sideDocs) {
         display: block;
     }
-    /* Blockly / Monaco Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 2rem;
-        margin-left: 2rem;
-    }
 }
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-    /* Blockly / Monaco Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 1rem;
-        margin-left: 1rem;
-    }
 }
 
 /* Tablet */
@@ -344,11 +349,6 @@
         border-left-width: 18px !important;
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
-    }
-    /* Blockly / Monaco Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 0.5rem;
-        margin-left: 0.5rem;
     }
 }
 

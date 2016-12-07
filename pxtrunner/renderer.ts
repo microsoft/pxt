@@ -285,17 +285,15 @@ namespace pxt.runner {
 
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
         return renderNextSnippetAsync(cls, (c, r) => {
-            let cjs = r.compileJS;
+            const cjs = r.compileJS;
             if (!cjs) return;
-            let file = r.compileJS.ast.getSourceFile("main.ts");
-            let stmts = file.statements;
-            let ul = $('<div />').addClass('ui cards');
-
-            let addItem = (card: pxt.CodeCard) => {
+            const file = r.compileJS.ast.getSourceFile("main.ts");
+            const stmts = file.statements.slice(0).reverse();
+            const ul = $('<div />').addClass('ui cards');
+            const addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
-                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true }));
+                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
             }
-
             stmts.forEach(stmt => {
                 let info = decompileCallInfo(stmt);
                 if (info) {
@@ -314,9 +312,8 @@ namespace pxt.runner {
                                     : undefined
                         })
                     } else if (block) {
-                        let card = U.clone(block.codeCard);
+                        let card = U.clone(block.codeCard) as pxt.CodeCard;
                         if (card) {
-                            card.link = true;
                             addItem(card);
                         }
                     } else {
