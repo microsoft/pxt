@@ -282,6 +282,18 @@ namespace ts.pxtc {
     }
 
     function normalizePath(path: string): string {
-        return path.replace(/\\/g, "/")
+        path = path.replace(/\\/g, "/");
+
+        const parts: string[] = [];
+        path.split("/").forEach(part => {
+            if (part === ".." && parts.length) {
+                parts.pop();
+            }
+            else if (part !== ".") {
+                parts.push(part)
+            }
+        });
+
+        return parts.join("/");
     }
 }

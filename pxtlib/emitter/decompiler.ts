@@ -599,6 +599,20 @@ ${output}</xml>`;
                     return ""
                 });
 
+                const argumentDifference = info.args.length - argNames.length;
+                if (argumentDifference > 0) {
+                    const parameters = (info.decl as FunctionLikeDeclaration).parameters;
+
+                    const hasCallback = info.args.some((arg, index) =>
+                        arg && arg.kind === SK.ArrowFunction && parameters && !parameters[index].questionToken && !parameters[index].initializer);
+
+                    if (argumentDifference > 1 || !hasCallback) {
+                        pxt.tickEvent("decompiler.optionalParameters");
+                        error(node, Util.lf("Function call has more arguments than are supported by its block"));
+                        return;
+                    }
+                }
+
                 openBlockTag(info.attrs.blockId);
                 if (extraArgs) write(extraArgs);
                 info.args.forEach((e, i) => {
