@@ -364,12 +364,12 @@ html {
 /* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
 ::-webkit-scrollbar {
     -webkit-appearance: none;
-    width: 7px;
+    width: 10px;
 }
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background-color: rgba(0,0,0,.5);
-    -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+    background-color: #ccc;
+    -webkit-box-shadow: 0 0 1px #ccc;
 }
 
 /*******************************
