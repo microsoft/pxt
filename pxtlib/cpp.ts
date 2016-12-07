@@ -923,7 +923,7 @@ namespace pxt.hex {
         let key = "hex-" + extInfo.sha
         return host.cacheGetAsync(key)
             .then(res => {
-                let cachedMeta : any;
+                let cachedMeta: any;
                 try { cachedMeta = res ? JSON.parse(res) : null }
                 catch (e) {
                     // cache entry is corrupted, clear cache so that it gets rebuilt
