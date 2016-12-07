@@ -487,7 +487,6 @@ export class Editor extends srceditor.Editor {
         toolbox.innerHTML = null;
 
         // Add an overlay widget for the toolbox
-        toolbox.className = 'monacoToolboxDiv';
         toolbox.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
         let root = document.createElement('div');
         root.className = 'blocklyTreeRoot';
