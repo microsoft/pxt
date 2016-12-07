@@ -161,8 +161,9 @@ export class Editor extends srceditor.Editor {
 
     display() {
         return (
-            <div>
-                <div className='full-abs' id='monacoEditorInner' />
+            <div className='full-abs' id="monacoEditorArea">
+                <div id='monacoEditorToolbox' className='injectionDiv' />
+                <div id='monacoEditorInner' />
             </div>
         )
     }
@@ -254,7 +255,9 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         this.extraLibs = Object.create(null);
+        let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
+
         this.editor = pxt.vs.initMonacoAsync(editorElement);
         if (!this.editor) {
             // Todo: create a text area if we weren't able to load the monaco editor correctly.
@@ -351,7 +354,7 @@ export class Editor extends srceditor.Editor {
                 this.forceDiagnosticsUpdate();
             }
             // Update widgets
-            let toolbox = document.getElementById('pxtMonacoToolboxWidget');
+            let toolbox = document.getElementById('monacoEditorToolbox');
             toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
             let flyout = document.getElementById('pxtMonacoFlyoutWidget');
             flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
@@ -406,13 +409,15 @@ export class Editor extends srceditor.Editor {
 
         this.editorViewZones = [];
 
-        this.setupToolbox(editorElement);
+        this.setupToolbox(editorArea);
 
         this.isReady = true
     }
 
     resize(e?: Event) {
-        this.editor.layout();
+        let monacoArea = document.getElementById('monacoEditorArea');
+        let monacoToolbox = document.getElementById('monacoEditorToolbox')
+        this.editor.layout({width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight});
     }
 
     zoomIn() {
@@ -446,11 +451,6 @@ export class Editor extends srceditor.Editor {
     }
 
     setupToolbox(editorElement: HTMLElement) {
-        let toolbox = document.createElement('div');
-        toolbox.id = 'pxtMonacoToolboxWidget';
-        toolbox.className = 'injectionDiv';
-        editorElement.appendChild(toolbox);
-
         // Monaco flyout widget
         let flyoutWidget = {
             getId: function(): string {
@@ -478,7 +478,7 @@ export class Editor extends srceditor.Editor {
     updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
         // Toolbox div
-        let toolbox = document.getElementById('pxtMonacoToolboxWidget');
+        let toolbox = document.getElementById('monacoEditorToolbox');
         // Move the monaco editor to make room for the toolbox div
         this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
@@ -489,7 +489,6 @@ export class Editor extends srceditor.Editor {
         // Add an overlay widget for the toolbox
         toolbox.className = 'monacoToolboxDiv';
         toolbox.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
-        toolbox.style.display = 'inline-block';
         let root = document.createElement('div');
         root.className = 'blocklyTreeRoot';
         toolbox.appendChild(root);
@@ -635,7 +634,10 @@ export class Editor extends srceditor.Editor {
     loadFile(file: pkg.File) {
         this.compileBlocks().then(() => {
             this.initEditorCss();
-            if (!file.isReadonly()) this.updateToolbox();
+            if (!file.isReadonly()) {
+                this.updateToolbox();
+                this.resize();
+            }
         });
 
         let ext = file.getExtension()
@@ -676,6 +678,13 @@ export class Editor extends srceditor.Editor {
                 this.loadFile(this.currFile);
             }
         });
+
+        let toolbox = document.getElementById('monacoEditorToolbox');
+        if (mode == "typescript" && !file.isReadonly()) {
+            toolbox.className = 'monacoToolboxDiv';
+        } else {
+            toolbox.className = 'monacoToolboxDiv hide';
+        }
 
         this.resize();
     }

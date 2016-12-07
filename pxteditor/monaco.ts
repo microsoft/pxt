@@ -102,7 +102,7 @@ namespace pxt.vs {
             tabCompletion: true,
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
-            automaticLayout: true,
+            //automaticLayout: true,
             mouseWheelScrollSensitivity: 0.5,
             quickSuggestionsDelay: 200,
             theme: pxt.appTarget.appTheme.invertedMonaco ? 'vs-dark' : 'vs'

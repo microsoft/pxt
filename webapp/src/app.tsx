@@ -1022,7 +1022,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        this.fireResize();
+        //this.fireResize();
     }
 
     setSideFile(fn: pkg.File) {

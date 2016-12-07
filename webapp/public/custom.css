@@ -378,11 +378,15 @@ body.blocklyMinimalBody {
 
 .monacoToolboxDiv {
     position: relative;
-    top: 0;
-    left: 0;
+    display: inline-block;
     overflow-x: visible;
     overflow-y: auto;
 }
-.monaco-editor {
+.monacoToolboxDiv.hide {
+    display: none;
+}
 
+#monacoEditorInner {
+    position: relative !important;
+    display: inline-block;
 }
