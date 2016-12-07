@@ -875,7 +875,13 @@ namespace pxt.hex {
         return host.cacheStoreAsync(newkey, newval)
             .then(() => host.cacheGetAsync(idxkey))
             .then(res => {
-                let keys: string[] = JSON.parse(res || "[]")
+                let keys: string[];
+                try { keys = JSON.parse(res || "[]") }
+                catch (e) {
+                    // cache entry is corrupted, clear cache so that it gets rebuilt
+                    console.error('invalid cache entry, clearing entry');
+                    keys = [];
+                }
                 keys = keys.filter(k => k != newkey)
                 keys.unshift(newkey)
                 let todel = keys.slice(maxLen)
@@ -888,7 +894,13 @@ namespace pxt.hex {
     export function recordGetAsync(host: Host, idxkey: string, newkey: string) {
         return host.cacheGetAsync(idxkey)
             .then(res => {
-                let keys: string[] = JSON.parse(res || "[]")
+                let keys: string[];
+                try { keys = JSON.parse(res || "[]") }
+                catch (e) {
+                    // cache entry is corrupted, clear cache so that it gets rebuilt
+                    console.error('invalid cache entry, clearing entry');
+                    return host.cacheStoreAsync(idxkey, "[]")
+                }
                 if (keys[0] != newkey) {
                     keys = keys.filter(k => k != newkey)
                     keys.unshift(newkey)
@@ -911,7 +923,13 @@ namespace pxt.hex {
         let key = "hex-" + extInfo.sha
         return host.cacheGetAsync(key)
             .then(res => {
-                let cachedMeta = res ? JSON.parse(res) : null
+                let cachedMeta: any;
+                try { cachedMeta = res ? JSON.parse(res) : null }
+                catch (e) {
+                    // cache entry is corrupted, clear cache so that it gets rebuilt
+                    console.log('invalid cache entry, clearing entry');
+                    cachedMeta = null;
+                }
                 if (cachedMeta && cachedMeta.hex) {
                     pxt.debug("cache hit, size=" + res.length)
                     cachedMeta.hex = decompressHex(cachedMeta.hex)
