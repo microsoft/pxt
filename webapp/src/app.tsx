@@ -272,9 +272,14 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             this.props.parent.importFileDialog();
         }
         const newProject = () => {
-            pxt.tickEvent("projects.import");
+            pxt.tickEvent("projects.new");
             this.hide();
             this.props.parent.newEmptyProject();
+        }
+        const saveProject = () => {
+            pxt.tickEvent("projects.save");
+            this.hide();
+            this.props.parent.saveProjectToFile();
         }
         const isEmpty = () => {
             if (this.state.searchFor) {
@@ -311,13 +316,21 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
-                    {pxt.appTarget.compile && !this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
                         <codecard.CodeCardView
                             color="pink"
                             key="newproject"
                             name={lf("New Project...") }
                             description={lf("Creates a new empty project") }
                             onClick={() => newProject() }
+                            /> : undefined}
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                        <codecard.CodeCardView
+                            color="pink"
+                            key="saveproject"
+                            name={lf("Save Project...") }
+                            description={lf("Saves current project to a file") }
+                            onClick={() => saveProject() }
                             /> : undefined}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
