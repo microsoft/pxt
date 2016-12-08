@@ -4,10 +4,11 @@
 
 namespace pxt.vs {
 
-    export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): void {
+    export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<any> {
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
         let definitions: any = {};
+        let promises: monaco.Promise<any>[] = [];
         if (!readOnly) {
             mainPkg.sortedDeps().forEach(pkg => {
                 pkg.getFiles().forEach(f => {
@@ -19,54 +20,67 @@ namespace pxt.vs {
                             libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
                         }
                         modelMap[fp] = "1";
-                    }
-                    if (/\.d\.ts$/.test(f)) {
-                        // definitions file
-                        monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
+
+                        // populate definitions
+                        let promise = monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
                             return worker(monaco.Uri.parse(fp))
                                 .then((client: any) => {
                                     return client.getNavigationBarItems(fp).then((items: any[]) => {
-                                        let promises: Promise<any>[] = [];
+                                        let innerPromises: Promise<any>[] = [];
                                         items.forEach((item: any) => {
                                             if (item.kind == 'module') {
                                                 // namespace
-                                                definitions[item.text] = {
-                                                    fns: {}
-                                                };
+                                                if (!definitions[item.text]) {
+                                                    definitions[item.text] = {
+                                                        fns: {},
+                                                        commentAttr: {}
+                                                    };
+                                                }
                                                 // get namespace weight and color
-                                                console.log(item);
-                                                let promise = client.getJsDoc(fp, item.spans[0].start, item.text)
-                                                    .then((details: any) => {
-                                                        console.log("signature");
-                                                        console.log(details);
-                                                    });
-                                                item.childItems.forEach((fn: any) => {
-                                                    if (fn.kind == 'function') {
-                                                        // function 
-                                                        let promise = client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
-                                                            .then((details: any) => {
-                                                                if (details) definitions[item.text].fns[fn.text] = details[1];
-                                                            });
-                                                        promises.push(promise);
-                                                    }
-                                                })
+                                                if (definitions[item.text].commentAttr != {}) {
+                                                    let promise = client.getLeadingComments(fp, item.spans[0].start, item.text)
+                                                        .then((cmts: any) => {
+                                                            if (cmts) {
+                                                                let commentAttr = pxtc.parseCommentString(cmts);
+                                                                if (commentAttr.color)
+                                                                    definitions[item.text].commentAttr = commentAttr;
+                                                            }
+                                                        });
+                                                    innerPromises.push(promise);
+                                                }
+                                                // only scan definition files for methods
+                                                if (/\.d\.ts$/.test(f)) {
+                                                    item.childItems.forEach((fn: any) => {
+                                                        if (fn.kind == 'function') {
+                                                            // function 
+                                                            let promise = client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
+                                                                .then((details: any) => {
+                                                                    if (details) definitions[item.text].fns[fn.text] = details[1];
+                                                                });
+                                                            innerPromises.push(promise);
+                                                        }
+                                                    })
+                                                }
                                             }
                                         });
-                                        return monaco.Promise.join(promises);
+                                        return Promise.join(innerPromises);
                                     });
                             });
-                        }).done(() => {
-                            console.log(definitions);
                         });
+                        promises.push(promise)
                     }
                 });
             });
         }
-        Object.keys(extraLibs)
-            .filter(lib => /\.(ts)$/.test(lib) && !modelMap[lib])
-            .forEach(lib => {
-                libs[lib].dispose();
-            });
+        return monaco.Promise.join(promises)
+            .then(() => {
+                Object.keys(extraLibs)
+                    .filter(lib => /\.(ts)$/.test(lib) && !modelMap[lib])
+                    .forEach(lib => {
+                        libs[lib].dispose();
+                    });
+                return definitions;
+        });
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {

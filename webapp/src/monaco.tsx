@@ -631,6 +631,8 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
+        let toolbox = document.getElementById('monacoEditorToolbox');
+        toolbox.innerHTML = null;
         this.compileBlocks().then(() => {
             this.initEditorCss();
             if (!file.isReadonly()) {
@@ -661,7 +663,9 @@ export class Editor extends srceditor.Editor {
         if (model) this.editor.setModel(model);
 
         if (mode == "typescript")
-            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
+            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly()).then((definitions) => {
+                console.log(definitions);
+            })
 
         this.setValue(file.content)
         this.setDiagnostics(file, this.snapshotState())
@@ -678,7 +682,6 @@ export class Editor extends srceditor.Editor {
             }
         });
 
-        let toolbox = document.getElementById('monacoEditorToolbox');
         if (mode == "typescript" && !file.isReadonly()) {
             toolbox.className = 'monacoToolboxDiv';
         } else {
