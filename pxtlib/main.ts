@@ -291,7 +291,7 @@ namespace pxt {
 
         addMissingPackages(config: pxt.PackageConfig, ts: string) {
             const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
-            if (upgrades)
+            if (ts && upgrades)
                 upgrades.filter(rule => rule.type == "missingPackage")
                     .forEach(rule => {
                         for (const match in rule.map) {
@@ -354,8 +354,7 @@ namespace pxt {
                     }
                 }
             }
-            if (mainTs)
-                this.addMissingPackages(this.config, mainTs);
+            this.addMissingPackages(this.config, mainTs);
             if (JSON.stringify(this.config) != currentConfig) {
                 this.saveConfig();
             }
