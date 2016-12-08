@@ -7,6 +7,7 @@ namespace pxt.vs {
     export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): void {
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
+        let definitions: any = {};
         if (!readOnly) {
             mainPkg.sortedDeps().forEach(pkg => {
                 pkg.getFiles().forEach(f => {
@@ -21,7 +22,6 @@ namespace pxt.vs {
                     }
                     if (/\.d\.ts$/.test(f)) {
                         // definitions file
-                        let definitions: any = {};
                         monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
                             return worker(monaco.Uri.parse(fp))
                                 .then((client: any) => {
@@ -35,6 +35,11 @@ namespace pxt.vs {
                                                 };
                                                 // get namespace weight and color
                                                 console.log(item);
+                                                let promise = client.getJsDoc(fp, item.spans[0].start, item.text)
+                                                    .then((details: any) => {
+                                                        console.log("signature");
+                                                        console.log(details);
+                                                    });
                                                 item.childItems.forEach((fn: any) => {
                                                     if (fn.kind == 'function') {
                                                         // function 
