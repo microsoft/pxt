@@ -294,11 +294,10 @@ namespace pxt {
             let newPackage = pkg;
             if (upgrades) {
                 upgrades.filter(rule => rule.type == "package")
-                    .forEach((rule) => {
-                        let pkgRule = rule as ts.pxtc.PackageUpgradePolicy;
-                        for (let match in pkgRule.map) {
+                    .forEach(rule => {
+                        for (let match in rule.map) {
                             if (newPackage == match) {
-                                newPackage = pkgRule.map[match];
+                                newPackage = rule.map[match];
                             }
                         }
                     });
@@ -311,11 +310,10 @@ namespace pxt {
             let updatedContents = fileContents;
             if (upgrades) {
                 upgrades.filter(rule => rule.type == "api")
-                    .forEach((rule) => {
-                        let apiRule = rule as ts.pxtc.APIUpgradePolicy;
-                        for (let match in apiRule.map) {
-                            let regex = new RegExp(match, 'g');
-                            updatedContents = updatedContents.replace(regex, apiRule.map[match]);
+                    .forEach(rule => {
+                        for (const match in rule.map) {
+                            const regex = new RegExp(match, 'g');
+                            updatedContents = updatedContents.replace(regex, rule.map[match]);
                         }
                     });
             }

@@ -188,7 +188,7 @@ declare namespace ts.pxtc {
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
-        flashCodeAlign?: number; // defualts to 1k
+        flashCodeAlign?: number; // defaults to 1k
         upgrades?: UpgradePolicy[];
     }
 
@@ -212,16 +212,7 @@ declare namespace ts.pxtc {
 
     interface UpgradePolicy {
         type: string;
-    }
-
-    interface PackageUpgradePolicy extends UpgradePolicy {
-        type: "package";
-        map: pxt.Map<string>;
-    }
-
-    interface APIUpgradePolicy extends UpgradePolicy {
-        type: "api";
-        map: pxt.Map<string>;
+        map?: pxt.Map<string>;
     }
 
     interface FuncInfo {
