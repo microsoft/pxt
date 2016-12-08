@@ -260,7 +260,7 @@ namespace pxt {
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
                             const confStr = this.readFile(pxt.CONFIG_NAME)
-                            const mainTs = this.readFile(pxt.MAIN_TS)
+                            const mainTs = this.readFile("main.ts")
                             if (!confStr)
                                 U.userError(`package ${this.id} is missing ${pxt.CONFIG_NAME}`)
                             this.parseConfig(confStr, mainTs);
@@ -368,7 +368,7 @@ namespace pxt {
 
             this.isLoaded = true
             const str = this.readFile(pxt.CONFIG_NAME);
-            const mainTs = this.readFile(pxt.MAIN_TS);
+            const mainTs = this.readFile("main.ts");
             if (str == null) {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
@@ -670,7 +670,6 @@ namespace pxt {
     }
 
     export const CONFIG_NAME = "pxt.json"
-    export const MAIN_TS = "main.ts"
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
