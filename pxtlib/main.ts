@@ -259,10 +259,11 @@ namespace pxt {
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            let confStr = this.readFile(pxt.CONFIG_NAME)
+                            const confStr = this.readFile(pxt.CONFIG_NAME)
+                            const mainTs = this.readFile(pxt.MAIN_TS)
                             if (!confStr)
                                 U.userError(`package ${this.id} is missing ${pxt.CONFIG_NAME}`)
-                            this.parseConfig(confStr)
+                            this.parseConfig(confStr, mainTs);
                             if (this.level != 0)
                                 this.config.installedVersion = this.version()
                             this.saveConfig()
@@ -286,6 +287,25 @@ namespace pxt {
             if (targetVersion && semver.strcmp(targetVersion, appTarget.versions.target) > 0)
                 U.userError(lf("Package {0} requires target version {1} (you are running {2})",
                     this.config.name, targetVersion, appTarget.versions.target))
+        }
+
+        addMissingPackages(config: pxt.PackageConfig, ts: string) {
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            if (upgrades)
+                upgrades.filter(rule => rule.type == "missingPackage")
+                    .forEach(rule => {
+                        for (const match in rule.map) {
+                            const regex = new RegExp(match, 'g');
+                            const pkg = rule.map[match];
+                            ts.replace(regex, (m) => {
+                                if (!config.dependencies[pkg]) {
+                                    pxt.log(`adding missing package ${pkg}`);
+                                    config.dependencies[pkg] = "*"
+                                }
+                                return "";
+                            })
+                        }
+                    })
         }
 
         upgradePackage(pkg: string, val: string): string {
@@ -320,13 +340,13 @@ namespace pxt {
             return updatedContents;
         }
 
-        private parseConfig(str: string) {
-            let cfg = <PackageConfig>JSON.parse(str)
+        private parseConfig(cfgSrc: string, mainTs: string) {
+            const cfg = <PackageConfig>JSON.parse(cfgSrc)
             this.config = cfg;
 
-            let currentConfig = JSON.stringify(this.config);
-            for (let dep in this.config.dependencies) {
-                let value = this.upgradePackage(dep, this.config.dependencies[dep]);
+            const currentConfig = JSON.stringify(this.config);
+            for (const dep in this.config.dependencies) {
+                const value = this.upgradePackage(dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {
@@ -334,6 +354,8 @@ namespace pxt {
                     }
                 }
             }
+            if (mainTs)
+                this.addMissingPackages(this.config, mainTs);
             if (JSON.stringify(this.config) != currentConfig) {
                 this.saveConfig();
             }
@@ -346,12 +368,13 @@ namespace pxt {
             let initPromise = Promise.resolve()
 
             this.isLoaded = true
-            let str = this.readFile(pxt.CONFIG_NAME)
+            const str = this.readFile(pxt.CONFIG_NAME);
+            const mainTs = this.readFile(pxt.MAIN_TS);
             if (str == null) {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
             } else {
-                initPromise = initPromise.then(() => this.parseConfig(str))
+                initPromise = initPromise.then(() => this.parseConfig(str, mainTs))
             }
 
             if (isInstall)
@@ -484,7 +507,7 @@ namespace pxt {
                 hexinfo: { hex: [] }
             }
 
-            let generateFile = (fn: string, cont: string) => {
+            const generateFile = (fn: string, cont: string) => {
                 if (this.config.files.indexOf(fn) < 0)
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
@@ -494,7 +517,7 @@ namespace pxt {
                 }
             }
 
-            let upgradeFile = (fn: string, cont: string) => {
+            const upgradeFile = (fn: string, cont: string) => {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
                     // save file (force write)
@@ -526,7 +549,7 @@ namespace pxt {
                 .then(files => {
                     if (files) {
                         files = U.mapMap(files, upgradeFile);
-                        let headerString = JSON.stringify({
+                        const headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,
                             status: "unpublished",
@@ -535,7 +558,7 @@ namespace pxt {
                             editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
                             targetVersion: pxt.appTarget.versions ? pxt.appTarget.versions.target : undefined
                         })
-                        let programText = JSON.stringify(files)
+                        const programText = JSON.stringify(files)
                         return lzmaCompressAsync(headerString + programText)
                             .then(buf => {
                                 opts.embedMeta = JSON.stringify({
@@ -551,8 +574,8 @@ namespace pxt {
                     }
                 })
                 .then(() => {
-                    for (let pkg of this.sortedDeps()) {
-                        for (let f of pkg.getFiles()) {
+                    for (const pkg of this.sortedDeps()) {
+                        for (const f of pkg.getFiles()) {
                             if (/\.(ts|asm)$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
@@ -648,6 +671,7 @@ namespace pxt {
     }
 
     export const CONFIG_NAME = "pxt.json"
+    export const MAIN_TS = "main.ts"
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
