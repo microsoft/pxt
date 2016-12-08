@@ -63,7 +63,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "") }>
                     <div className="right floated meta">
                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : null}</i>) : null}
-                        {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle oragne icon" ></i>) }
+                        {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle orange icon" ></i>) }
                         {repeat(card.javascript, (k) => <i key={"costjs" + k} className="align left blue icon" ></i>) }
                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
                         {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }

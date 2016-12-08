@@ -1730,6 +1730,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({ sideDocsCollapsed: false })
     }
 
+    gettingStartedLink() {
+        pxt.tickEvent("btn.gettingstartedlink");
+        const targetTheme = pxt.appTarget.appTheme;
+        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
+        window.open(targetTheme.sideDoc)
+    }
+
     getSandboxMode() {
         return sandbox;
     }
@@ -1757,10 +1764,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const compileLoading = !!this.state.compiling;
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
-        const gettingStartedTooltip = lf("Open beginner tutorial");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
+        const gettingStarted = !sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
+        const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
 
         return (
@@ -1824,9 +1832,15 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
-                {!sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks ?
+                {gettingStarted && sideDocs ?
                     <div id="getting-started-btn">
-                        <sui.Button class="bottom attached getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
+                        <sui.Button class="bottom attached widedesktop only getting-started-btn green " title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
+                        <sui.Button class="bottom attached widedesktop hide getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
+                    </div>
+                    : undefined }
+                {gettingStarted && !sideDocs ?
+                    <div id="getting-started-btn">
+                        <sui.Button class="bottom attached getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
                     </div>
                     : undefined }
                 <div id="simulator">
