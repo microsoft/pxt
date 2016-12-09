@@ -57,8 +57,6 @@ interface IAppState {
     showFiles?: boolean;
     helpCard?: pxt.CodeCard;
     helpCardClick?: (e: React.MouseEvent) => boolean;
-    sideDocsLoadUrl?: string; // set once to load the side docs frame
-    sideDocsCollapsed?: boolean;
 
     running?: boolean;
     compiling?: boolean;
@@ -580,88 +578,11 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    openDoc(path: string) {
-        pxt.tickEvent(`docs`, { path });
-        this.props.parent.setSideDoc(path);
-    }
-
     render() {
         const targetTheme = pxt.appTarget.appTheme;
-        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" text={lf("Help")} textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
-            {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
-            {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
+            {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item`}>{m.name}</a>) }
         </sui.DropdownMenuItem>
-    }
-}
-
-class SideDocs extends data.Component<ISettingsProps, {}> {
-    public static notify(message: pxsim.SimulatorMessage) {
-        let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
-    }
-
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    setPath(path: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
-        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-    }
-
-    setMarkdown(md: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-    }
-
-    private setUrl(url: string) {
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el) el.src = url;
-        else this.props.parent.setState({ sideDocsLoadUrl: url });
-        this.props.parent.setState({ sideDocsCollapsed: false });
-    }
-
-    collapse() {
-        this.props.parent.setState({ sideDocsCollapsed: true });
-    }
-
-    popOut() {
-        SideDocs.notify({
-            type: "popout"
-        })
-    }
-
-    toggleVisibility() {
-        const state = this.props.parent.state;
-        this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
-    }
-
-    componentDidUpdate() {
-        this.props.parent.editor.resize();
-    }
-
-    renderCore() {
-        const state = this.props.parent.state;
-        const docsUrl = state.sideDocsLoadUrl;
-        if (!docsUrl) return null;
-
-        const icon = !docsUrl || state.sideDocsCollapsed ? "expand" : "compress";
-        return <div>
-            <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
-            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
-                <i className={`external icon`}></i>
-            </button>
-            <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation") } className="circular ui icon button" onClick={() => this.toggleVisibility() }>
-                <i className={`${icon} icon`}></i>
-            </button>
-        </div>
     }
 }
 
@@ -926,16 +847,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 });
         }, 1000, false);
 
-    private markdownChangeHandler = Util.debounce(() => {
-        if (this.state.currFile && /\.md$/i.test(this.state.currFile.name))
-            this.setSideMarkdown(this.editor.getCurrentSource());
-    }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
             this.saveFile();
             this.typecheck();
         }
-        this.markdownChangeHandler();
     }, 1000, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
@@ -997,13 +913,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (e)
             this.editor.setViewState(e.pos)
 
-        SideDocs.notify({
-            type: "fileloaded",
-            name: this.editorFile.getName(),
-            locale: pxt.Util.localeInfo()
-        } as pxsim.SimulatorFileLoadedMessage)
-
         if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
+    }
+
+    openDocumentation(path: string) {
+        window.open(path, 'docs');
     }
 
     setFile(fn: pkg.File) {
@@ -1070,19 +984,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }).done(res => {
             if (res) removeIt();
         })
-    }
-
-    setSideMarkdown(md: string) {
-        let sd = this.refs["sidedoc"] as SideDocs;
-        if (!sd) return;
-        sd.setMarkdown(md);
-    }
-
-    setSideDoc(path: string) {
-        let sd = this.refs["sidedoc"] as SideDocs;
-        if (!sd) return;
-        if (path) sd.setPath(path);
-        else sd.collapse();
     }
 
     reloadHeaderAsync() {
@@ -1153,12 +1054,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         }
                     })
                     .done()
-
-                let readme = main.lookupFile("this/README.md");
-                if (readme && readme.content && readme.content.trim())
-                    this.setSideMarkdown(readme.content);
-                else if (pkg.mainPkg.config.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation);
             })
     }
 
@@ -1380,7 +1275,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     createProjectAsync(options: ProjectCreationOptions): Promise<void> {
-        this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
         cfg.name = options.name || lf("Untitled") // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
@@ -1659,19 +1553,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.shareEditor.show(header);
     }
 
-    gettingStarted() {
-        pxt.tickEvent("btn.gettingstarted");
-        const targetTheme = pxt.appTarget.appTheme;
-        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        this.setSideDoc(targetTheme.sideDoc);
-        this.setState({ sideDocsCollapsed: false })
-    }
-
     gettingStartedLink() {
         pxt.tickEvent("btn.gettingstartedlink");
         const targetTheme = pxt.appTarget.appTheme;
-        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        window.open(targetTheme.sideDoc)
+        Util.assert(targetTheme && !!targetTheme.sideDoc);
+        this.openDocumentation(targetTheme.sideDoc);
     }
 
     getSandboxMode() {
@@ -1701,9 +1587,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
-        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
-        const gettingStarted = !sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
+        const gettingStarted = !sandbox && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const blockActive = this.editor == this.blocksEditor;
@@ -1713,7 +1598,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -1764,13 +1649,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
-                {gettingStarted && sideDocs ?
-                    <div id="getting-started-btn">
-                        <sui.Button class="bottom attached widedesktop only getting-started-btn green " title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
-                        <sui.Button class="bottom attached widedesktop hide getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
-                    </div>
-                    : undefined }
-                {gettingStarted && !sideDocs ?
+                {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="bottom attached getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
                     </div>
@@ -1798,7 +1677,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
-                {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui widedesktop hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui widedesktop only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
                 {!sandbox && !targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined}
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
@@ -2017,10 +1895,6 @@ function handleHash(hash: { cmd: string; arg: string }) {
     let editor = theEditor;
     if (!editor) return;
     switch (hash.cmd) {
-        case "doc":
-            pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg);
-            break;
         case "follow":
             pxt.tickEvent("hash.follow")
             editor.newEmptyProject(undefined, hash.arg);
@@ -2172,12 +2046,6 @@ $(document).ready(() => {
         let m = ev.data as pxsim.SimulatorMessage;
         if (!m) {
             return;
-        }
-        if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
-            SideDocs.notify({
-                type: "localtoken",
-                localToken: Cloud.localToken
-            } as pxsim.SimulatorDocMessage);
         }
     }, false);
 })

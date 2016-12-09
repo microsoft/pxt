@@ -415,10 +415,10 @@ export class Editor extends srceditor.Editor {
         if (prevWordInfo && wordInfo) {
             let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
             let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`);
+            this.parent.openDocumentation(`/reference/${namespaceName}/${methodName}`);
         } else if (wordInfo) {
             let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${methodName}`);
+            this.parent.openDocumentation(`/reference/${methodName}`);
         }
     }
 
@@ -480,9 +480,6 @@ export class Editor extends srceditor.Editor {
         this.setDiagnostics(file, this.snapshotState())
 
         this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
-
-        if (this.fileType == FileType.Markdown)
-            this.parent.setSideMarkdown(file.content);
 
         this.currFile.setForceChangeCallback((from: string, to: string) => {
             if (from != to) {

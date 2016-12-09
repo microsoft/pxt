@@ -290,14 +290,6 @@ namespace pxt.runner {
                 let name = fm.name;
                 setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).done();
                 break;
-            case "popout":
-                let mp = /#(doc|md):([^&?:]+)/i.exec(window.location.href);
-                if (mp) {
-                    const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-                    let url = mp[1] == "doc" ? `${mp[2]}` : `${docsUrl}?md=${mp[2]}`;
-                    window.open(url, "_blank");
-                }
-                break;
             case "localtoken":
                 let dm = m as pxsim.SimulatorDocMessage;
                 if (dm && dm.localToken) {
@@ -359,8 +351,6 @@ namespace pxt.runner {
         window.addEventListener("hashchange", () => {
             renderHash();
         }, false);
-
-        parent.postMessage({ type: "sidedocready" }, "*");
 
         // delay load doc page to allow simulator to load first
         setTimeout(() => renderHash(), 1);
