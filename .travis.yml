@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "6.9.2"
+  - "5.7.0"
 before_script:
   - "npm install"
   - "tsd reinstall"

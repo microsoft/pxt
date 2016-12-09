@@ -597,7 +597,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" title={lf("Help") }>
+        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" text={lf("Help")} textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
@@ -1765,8 +1765,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
                         <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => javascriptActive ? this.textEditor.openBlocks() : !blockActive ? this.setFile(pkg.mainEditorPkg().files["main.blocks"]) : undefined } title={lf("Convert code to Blocks") } />
                         <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => blockActive ? this.blocksEditor.openTypeScript() : !javascriptActive ? this.setFile(pkg.mainEditorPkg().files["main.ts"]) : undefined } title={lf("Convert code to JavaScript") } />
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
-                            {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
+                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
+                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' class="more-dropdown-menuitem">
+                            {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
@@ -1785,7 +1786,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                             { isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => this.checkForElectronUpdate() } /> : undefined }
                         </sui.DropdownMenuItem>}
-                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span>
