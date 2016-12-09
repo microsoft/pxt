@@ -1766,9 +1766,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => javascriptActive ? this.textEditor.openBlocks() : !blockActive ? this.setFile(pkg.mainEditorPkg().files["main.blocks"]) : undefined } title={lf("Convert code to Blocks") } />
                         <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => blockActive ? this.blocksEditor.openTypeScript() : !javascriptActive ? this.setFile(pkg.mainEditorPkg().files["main.ts"]) : undefined } title={lf("Convert code to JavaScript") } />
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
+                            {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
-                            {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
                             <div className="ui divider"></div>
                             <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
