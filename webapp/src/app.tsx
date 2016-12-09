@@ -1761,7 +1761,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => javascriptActive ? this.textEditor.openBlocks() : undefined } title={lf("Convert code to Blocks") } />);
+                        <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => javascriptActive ? this.textEditor.openBlocks() : undefined } title={lf("Convert code to Blocks") } />
                         <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => blockActive ? this.blocksEditor.openTypeScript() : undefined } title={lf("Convert code to JavaScript") } />
                         {this.editor.menu() }
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
