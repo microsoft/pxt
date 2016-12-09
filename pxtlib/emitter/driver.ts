@@ -57,7 +57,9 @@ namespace ts.pxtc {
         quickFlash?: {
             words: number[];
             startAddr: number;
-        }
+        };
+        // client options
+        saveOnly?: boolean;
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {

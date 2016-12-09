@@ -15,7 +15,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
     return Promise.resolve();
 }
 
-function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let url = ""
     let fn = ""
     if (pxt.appTarget.compile.useUF2) {
@@ -49,7 +49,8 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         }).then(() => { });
     }
 
-    return showUploadInstructionsAsync(fn, url);
+    if (resp.saveOnly) return Promise.resolve();
+    else return showUploadInstructionsAsync(fn, url);
 }
 
 //Searches the known USB image, matching on platform and browser

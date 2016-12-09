@@ -262,9 +262,14 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             this.props.parent.importFileDialog();
         }
         const newProject = () => {
-            pxt.tickEvent("projects.import");
+            pxt.tickEvent("projects.new");
             this.hide();
             this.props.parent.newEmptyProject();
+        }
+        const saveProject = () => {
+            pxt.tickEvent("projects.save");
+            this.hide();
+            this.props.parent.compile(true);
         }
         const isEmpty = () => {
             if (this.state.searchFor) {
@@ -301,13 +306,21 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
-                    {pxt.appTarget.compile && !this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
                         <codecard.CodeCardView
                             color="pink"
                             key="newproject"
                             name={lf("New Project...") }
                             description={lf("Creates a new empty project") }
                             onClick={() => newProject() }
+                            /> : undefined}
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                        <codecard.CodeCardView
+                            color="pink"
+                            key="saveproject"
+                            name={lf("Save Project...") }
+                            description={lf("Saves current project to a.hex file") }
+                            onClick={() => saveProject() }
                             /> : undefined}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
@@ -1447,7 +1460,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         });
     }
 
-    compile() {
+    compile(saveOnly = false) {
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
         if (this.state.compiling) {
@@ -1469,6 +1482,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
+                resp.saveOnly = saveOnly
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload, please try again."));
