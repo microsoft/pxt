@@ -269,7 +269,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const saveProject = () => {
             pxt.tickEvent("projects.save");
             this.hide();
-            this.props.parent.saveProjectToFile();
+            this.props.parent.compile(true);
         }
         const isEmpty = () => {
             if (this.state.searchFor) {
@@ -1460,7 +1460,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         });
     }
 
-    compile() {
+    compile(saveOnly = false) {
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
         if (this.state.compiling) {
@@ -1482,6 +1482,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
+                resp.saveOnly = saveOnly
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload, please try again."));
