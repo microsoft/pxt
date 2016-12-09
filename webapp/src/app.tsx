@@ -2,6 +2,7 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
+/// <reference path="../../built/pxtwinrt.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -2182,18 +2183,18 @@ $(document).ready(() => {
             if (localStorage["noAutoRun"] && pxt.appTarget.simulator)
                 pxt.appTarget.simulator.autoRun = false
         })
-        .then(() => {
-            return compiler.init();
-        })
+        .then(() => compiler.init())
         .then(() => workspace.initAsync())
         .then(() => {
             $("#loading").remove();
             render()
-            workspace.syncAsync().done()
+            return workspace.syncAsync();
         })
         .then(() => {
             initSerial()
             initHashchange();
+        }).then(() => pxt.winrt.initAsync(ih))
+        .then(() => {
             switch (hash.cmd) {
                 case "sandbox":
                 case "pub":
