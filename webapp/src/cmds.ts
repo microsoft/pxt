@@ -138,7 +138,10 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function initCommandsAsync(): Promise<void> {
-    if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
+    if (pxt.winrt.isWinRT()) { // window app
+        pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
+        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+    } if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
         pxt.commands.browserDownloadAsync = browserDownloadAsync;
     } else { // in browser
