@@ -23,7 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
-let externalMessageHandlers: pxt.Map<ExternalMessageHandler> = {};
+let electronHandlers: pxt.Map<ElectronHandler> = {};
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -299,30 +299,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
                 if (!e) throw throwError(404);
                 return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
             });
-    } else if (cmd == "POST externalmsg") {
-        return readJsonAsync()
-            .then((data: ExternalMessageData) => {
-                if (!data || !data.messageType) {
-                    throw throwError(400);
-                }
-
-                let resultDeferred = Promise.defer<ExternalMessageResult>();
-
-                if (!externalMessageHandlers[data.messageType]) {
-                    resultDeferred.resolve({
-                        error: "noHandler"
-                    });
-                } else {
-                    externalMessageHandlers[data.messageType]((res) => {
-                        resultDeferred.resolve({
-                            error: res.error,
-                            result: res.result
-                        });
-                    }, data.args);
-                }
-
-                return resultDeferred.promise;
-            });
     }
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
@@ -411,7 +387,10 @@ interface SerialPortInfo {
 }
 
 let wsSerialClients: WebSocket[] = [];
-let serialPorts: pxt.Map<SerialPortInfo> = {}
+let serialPorts: pxt.Map<SerialPortInfo> = {};
+let electronSocket: WebSocket = null;
+let webappReady = false;
+let electronPendingMessages: ElectronMessage[] = [];
 
 function initSocketServer() {
     console.log('starting local ws server at 3233...')
@@ -499,6 +478,30 @@ function initSocketServer() {
         })
     }
 
+    function startElectronChannel(request: any, socket: any, body: any) {
+        electronSocket = new WebSocket(request, socket, body);
+        electronSocket.onmessage = function (event: any) {
+            let messageInfo = JSON.parse(event.data) as ElectronMessage;
+
+            if (messageInfo.type === "ready") {
+                webappReady = true;
+                electronPendingMessages.forEach((m) => {
+                    sendElectronMessage(m);
+                });
+            } else if (electronHandlers[messageInfo.type]) {
+                electronHandlers[messageInfo.type](messageInfo.args);
+            }
+        };
+        electronSocket.onclose = function (event: any) {
+            console.log('Electron socket connection closed')
+            electronSocket = null;
+        };
+        electronSocket.onerror = function () {
+            console.log('Electron socket connection closed')
+            electronSocket = null;
+        };
+    }
+
     let wsserver = http.createServer();
     wsserver.on('upgrade', function (request: http.IncomingMessage, socket: WebSocket, body: any) {
         try {
@@ -508,6 +511,8 @@ function initSocketServer() {
                     startSerial(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/debug")
                     startDebug(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/electron")
+                    startElectronChannel(request, socket, body);
                 else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
@@ -522,7 +527,6 @@ function initSerialMonitor() {
     if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
 
     console.log('serial: monitoring ports...')
-    initSocketServer();
 
     let SerialPort: any;
     try {
@@ -610,7 +614,6 @@ function openUrl(startUrl: string, browser: string) {
     }
 }
 
-
 function getBrowserLocation(browser: string) {
     let browserPath: string;
 
@@ -661,16 +664,11 @@ function getBrowserLocation(browser: string) {
     return browser;
 }
 
-export interface ExternalMessageData {
-    messageType: string;
-    args: any
+export interface ElectronMessage {
+    type: string;
+    args?: any
 }
-export interface ExternalMessageResult {
-    error?: any;
-    result?: any;
-}
-export interface ExternalCallback { (res: ExternalMessageResult): void }
-export interface ExternalMessageHandler { (cb: ExternalCallback, data?: ExternalMessageData): void }
+export interface ElectronHandler { (args?: any): void }
 
 export interface ServeOptions {
     localToken: string;
@@ -678,8 +676,17 @@ export interface ServeOptions {
     packaged?: boolean;
     electron?: boolean;
     browser?: string;
-    externalHandlers?: pxt.Map<ExternalMessageHandler>;
+    electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
+}
+
+export function sendElectronMessage(message: ElectronMessage) {
+    if (!webappReady) {
+        electronPendingMessages.push(message);
+        return;
+    }
+
+    electronSocket.send(JSON.stringify(message));
 }
 
 let serveOptions: ServeOptions;
@@ -687,10 +694,11 @@ export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
     setupRootDir();
+    initSocketServer();
     initSerialMonitor();
 
-    if (serveOptions.externalHandlers) {
-        externalMessageHandlers = serveOptions.externalHandlers;
+    if (serveOptions.electronHandlers) {
+        electronHandlers = serveOptions.electronHandlers;
     }
 
     let server = http.createServer((req, res) => {
@@ -858,17 +866,21 @@ export function serveAsync(options: ServeOptions) {
         require(serverjs);
     }
 
-    server.listen(serveOptions.port, "127.0.0.1");
+    return new Promise<void>((resolve, reject) => {
+        server.listen(serveOptions.port, "127.0.0.1", () => {
+            let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
+            console.log(`---------------------------------------------`);
+            console.log(``);
+            console.log(`To launch the editor, open this URL:`);
+            console.log(start);
+            console.log(``);
+            console.log(`---------------------------------------------`);
 
-    let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
-    console.log(`---------------------------------------------`);
-    console.log(``);
-    console.log(`To launch the editor, open this URL:`);
-    console.log(start);
-    console.log(``);
-    console.log(`---------------------------------------------`);
-    if (options.autoStart)
-        openUrl(start, options.browser);
+            if (options.autoStart) {
+                openUrl(start, options.browser);
+            }
 
-    return new Promise<void>((resolve, reject) => { })
+            resolve();
+        });
+    });
 }
