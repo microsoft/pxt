@@ -51,7 +51,6 @@ interface IAppProps { }
 interface IAppState {
     active?: boolean; // is this tab visible at all
     header?: Header;
-    projectName?: string; // project name value while being edited
     currFile?: pkg.File;
     fileState?: string;
     showFiles?: boolean;
@@ -1126,7 +1125,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     });
                 this.setState({
                     header: h,
-                    projectName: h.name,
                     currFile: file
                 })
                 if (!sandbox)
@@ -1650,41 +1648,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    private debouncedSaveProjectName = Util.debounce(() => {
-        pxt.tickEvent("nav.projectrename")
-        this.saveProjectName();
-    }, 2000, false);
-
-    updateHeaderName(name: string) {
-        this.setState({
-            projectName: name
-        })
-        this.debouncedSaveProjectName();
-    }
-
-    saveProjectName() {
-        if (!this.state.projectName || !this.state.header) return;
-
-        pxt.debug('saving project name to ' + this.state.projectName);
-        try {
-            //Save the name in the target MainPackage as well
-            pkg.mainPkg.config.name = this.state.projectName;
-
-            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-            let config = JSON.parse(f.content) as pxt.PackageConfig;
-            config.name = this.state.projectName;
-            f.setContentAsync(JSON.stringify(config, null, 4) + "\n").done(() => {
-                if (this.state.header)
-                    this.setState({
-                        projectName: this.state.header.name
-                    })
-            });
-        }
-        catch (e) {
-            console.error('failed to read pxt.json')
-        }
-    }
-
     about() {
         pxt.tickEvent("menu.about");
         core.confirmAsync({
@@ -1759,7 +1722,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const simOpts = pxt.appTarget.simulator;
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
-        const savingProjectName = this.state.header && this.state.projectName != this.state.header.name;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const compileLoading = !!this.state.compiling;
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
@@ -1770,6 +1732,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const gettingStarted = !sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
+
+        // update window title
+        document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1793,16 +1758,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        <div className="ui item wide only projectname">
-                            <div className={`ui large ${targetTheme.invertedMenu ? `inverted` : ''} input`} title={lf("Pick a name for your project") }>
-                                <input id="fileNameInput"
-                                    type="text"
-                                    placeholder={lf("Pick a name...") }
-                                    value={this.state.projectName || ''}
-                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
-                                </input>
-                            </div>
-                        </div>
                         {this.editor.menu() }
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
