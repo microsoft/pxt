@@ -7,7 +7,7 @@ before_script:
 sudo: false
 notifications:
   email:
-    - touchdevelop-build@microsoft.com
+    - yelm-eng@microsoft.com
 cache:
   directories:
     - node_modules
