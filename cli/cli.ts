@@ -3835,10 +3835,6 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         });
 }
 
-export function sendElectronMessage(message: server.ElectronMessage) {
-    server.sendElectronMessage(message);
-}
-
 function initGlobals() {
     let g = global as any
     g.pxt = pxt;
