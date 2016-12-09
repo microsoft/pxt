@@ -56,7 +56,6 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         }
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
-        const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
         const className = card.className;
         const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} onClick={e => card.onClick ? card.onClick(e) : undefined } >
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
@@ -70,7 +69,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                     {card.header}
                 </div> : null }
-            <div className={"ui image" + (card.responsive ? " tall landscape only" : "") }>
+            <div className={"ui image" + (card.responsive ? " tall widedesktop only" : "") }>
                 {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
@@ -88,8 +87,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
         if (!card.onClick && url) {
             return (
                 <div>
-                    <a href={url} target="docs" className="ui widedesktop hide">{cardDiv}</a>
-                    <a href={sideUrl} className="ui widedesktop only">{cardDiv}</a>
+                    <a href={url} target="docs" className="ui">{cardDiv}</a>
                 </div>
             )
         } else {

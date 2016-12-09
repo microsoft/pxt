@@ -12,8 +12,7 @@
 
 /* Main Layout */
 #filelist,
-#maineditor,
-#sidedocs {
+#maineditor {
   position: absolute;
   top:@mainMenuHeight;
   bottom: 0rem;
@@ -86,45 +85,6 @@
     position: absolute;
     top: @mainMenuHeight;
     right: 2rem;
-}
-#getting-started-btn:not(.sideDocs) {
-    display: block;
-}
-
-/* Side Docs layout */
-#sidedocs {
-  display:none;
-  overflow-y: auto;
-  right: 0;
-  border:none;
-  top: 0;
-  padding-top: @mainMenuHeight;
-  height: 100%;
-}
-.rtl #sidedocs {
-    right:auto;
-    left:0;
-}
-#sidedocspopout {
-  position: absolute;
-  top:@sidedocsButtonsTop;
-  right:@sidedocsButtonsRight;
-  display:none;
-}
-.rtl #sidedocspopout {
-    right:auto;
-    left:@sidedocsButtonsRight;
-}
-
-#sidedocsexpand {
-  position: absolute;
-  top:@sidedocsButtonsTop;
-  right:1.25rem;
-  display:none;
-}
-.rtl #sidedocsexpand {
-    right:auto;
-    left:1.25rem;
 }
 
 /* Cookie Message */
@@ -339,21 +299,6 @@ div.simframe > iframe {
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* Layout */
-    .sideDocs #maineditor {
-        right:@sideBarWidth;
-    }
-    .rtl .sideDocs #maineditor {
-        left:@sideBarWidth;
-        right:@simulatorWidth;
-    }
-    .sideDocs #sidedocs {
-        display:block;
-        width:@sideBarWidth;
-    }
-    #sidedocspopout, #sidedocsexpand {
-        display:block;
-    }
 }
 
 /* Small Monitor */
