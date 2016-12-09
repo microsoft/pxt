@@ -53,6 +53,8 @@
 @simulatorWidth: 27rem;
 @simulatorWidthSmall: 20rem;
 
+@tallBreakpoint: 44rem;
+
 @simulatorBackground: #fff;
 
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);

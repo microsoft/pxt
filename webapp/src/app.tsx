@@ -1222,7 +1222,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     filesOverride: {
                         "main.blocks": pxt.blocks.importXml(info, data.source)
                     }, name: data.meta.name
-                })).done(() => core.hideLoading);
+                })).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             pxt.tickEvent("import.td")
