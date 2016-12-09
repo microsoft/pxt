@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "out": "../built/pxtwinrt.js",
+        "rootDir": ".",
+        "newLine": "LF",
+        "sourceMap": false
+    }
+}
