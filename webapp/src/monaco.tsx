@@ -142,18 +142,6 @@ export class Editor extends srceditor.Editor {
             })
     }
 
-    menu(): JSX.Element {
-        let editor = pkg.mainEditorPkg();
-        if (this.currFile != editor.files["main.ts"]) {
-            return (<sui.Item text={lf("Back to Code") } icon={"align left"} onClick={() => this.parent.setFile(editor.files["main.ts"]) } />);
-        }
-        else if (editor.files["main.blocks"]) { //if main.blocks file present
-            return (<sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
-                title={lf("Convert code to Blocks") } />);
-        }
-        return null;
-    }
-
     undo() {
         this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
     }

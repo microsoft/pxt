@@ -581,7 +581,8 @@ div.simframe > iframe {
     }
 }
 
-@media only screen and (max-height:45em) {
+/* Screens with decent vertical space */
+@media only screen and (max-height:@tallBreakpoint) {
     .ui.tall.only {
         display:none !important;
     }
