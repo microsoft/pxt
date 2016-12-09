@@ -679,6 +679,7 @@ export interface ServeOptions {
     electron?: boolean;
     browser?: string;
     externalHandlers?: pxt.Map<ExternalMessageHandler>;
+    interface?: string;
     port?: number;
 }
 
@@ -686,6 +687,7 @@ let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
+    if (!serveOptions.interface) serveOptions.interface = "127.0.0.1";
     setupRootDir();
     initSerialMonitor();
 
@@ -858,9 +860,9 @@ export function serveAsync(options: ServeOptions) {
         require(serverjs);
     }
 
-    server.listen(serveOptions.port, "127.0.0.1");
+    server.listen(serveOptions.port, serveOptions.interface);
 
-    let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
+    let start = `http://${serveOptions.interface}:${serveOptions.port}/#local_token=${options.localToken}`;
     console.log(`---------------------------------------------`);
     console.log(``);
     console.log(`To launch the editor, open this URL:`);
