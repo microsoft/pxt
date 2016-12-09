@@ -1,13 +1,13 @@
 language: node_js
 node_js:
-  - "5.7.0"
+  - "6.9.2"
 before_script:
   - "npm install"
   - "tsd reinstall"
 sudo: false
 notifications:
   email:
-    - touchdevelop-build@microsoft.com
+    - yelm-eng@microsoft.com
 cache:
   directories:
     - node_modules
