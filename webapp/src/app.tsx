@@ -588,7 +588,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" text={lf("Help")} textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
+        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" text={lf("Help") } textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
@@ -1706,8 +1706,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const gettingStarted = !sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
-        const blockActive = this.editor == this.blocksEditor;
-        const javascriptActive = this.editor == this.textEditor;
+        const blockActive = this.editor == this.blocksEditor
+            && this.editorFile && this.editorFile.name == "main.blocks";
+        const javascriptActive = this.editor == this.textEditor
+            && this.editorFile && this.editorFile.name == "main.ts";
+        const blocksClick = () => {
+            pxt.tickEvent("menu.blocks");
+            if (blockActive) return;
+            if (javascriptActive) this.textEditor.openBlocks();
+            else this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+        }
+        const javascriptClick = () => {
+            pxt.tickEvent("menu.javascript");
+            if (javascriptActive) return;
+            if (blockActive) this.blocksEditor.openTypeScript();
+            else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+        }
 
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
@@ -1735,8 +1749,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => javascriptActive ? this.textEditor.openBlocks() : !blockActive ? this.setFile(pkg.mainEditorPkg().files["main.blocks"]) : undefined } title={lf("Convert code to Blocks") } />
-                        <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => blockActive ? this.blocksEditor.openTypeScript() : !javascriptActive ? this.setFile(pkg.mainEditorPkg().files["main.ts"]) : undefined } title={lf("Convert code to JavaScript") } />
+                        <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
+                        <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
