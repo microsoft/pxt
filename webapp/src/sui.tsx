@@ -93,6 +93,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 }
 
 export interface ItemProps extends UiProps {
+    active?: boolean;
     value?: string;
     onClick?: () => void;
 }
@@ -100,7 +101,7 @@ export interface ItemProps extends UiProps {
 export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
         return (
-            <div className={genericClassName("ui item link", this.props, true) }
+            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
                 title={this.props.title}
                 key={this.props.value}
