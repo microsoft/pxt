@@ -288,7 +288,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
 
         const headerText = this.state.mode == ScriptSearchMode.Packages ? lf("Add Package...")
-            : lf("Open Project...");
+            : lf("Projects");
         return (
             <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
