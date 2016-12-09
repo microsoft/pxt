@@ -319,7 +319,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             color="pink"
                             key="saveproject"
                             name={lf("Save Project...") }
-                            description={lf("Saves current project to a file") }
+                            description={lf("Saves current project to a.hex file") }
                             onClick={() => saveProject() }
                             /> : undefined}
                     {bundles.map(scr =>
