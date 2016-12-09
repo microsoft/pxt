@@ -680,6 +680,7 @@ export interface ServeOptions {
     browser?: string;
     externalHandlers?: pxt.Map<ExternalMessageHandler>;
     port?: number;
+    serial?: boolean;
 }
 
 let serveOptions: ServeOptions;
@@ -687,7 +688,8 @@ export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
     setupRootDir();
-    initSerialMonitor();
+    if (serveOptions.serial)
+        initSerialMonitor();
 
     if (serveOptions.externalHandlers) {
         externalMessageHandlers = serveOptions.externalHandlers;
