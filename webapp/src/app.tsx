@@ -271,6 +271,11 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             this.hide();
             this.props.parent.compile(true);
         }
+        const renameProject = () => {
+            pxt.tickEvent("projects.rename");
+            this.hide();
+            this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
+        }
         const isEmpty = () => {
             if (this.state.searchFor) {
                 if (headers.length > 0
@@ -302,7 +307,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                         <codecard.CodeCardView
                             color="pink"
                             key="importhex"
-                            name={lf("My Computer...") }
+                            name={lf("Import from file...") }
                             description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
@@ -321,6 +326,14 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             name={lf("Save Project...") }
                             description={lf("Saves current project to a.hex file") }
                             onClick={() => saveProject() }
+                            /> : undefined}
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                        <codecard.CodeCardView
+                            color="pink"
+                            key="renameproject"
+                            name={lf("Rename Project...") }
+                            description={lf("Rename the current project") }
+                            onClick={() => renameProject() }
                             /> : undefined}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
