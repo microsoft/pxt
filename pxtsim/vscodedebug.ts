@@ -362,12 +362,12 @@ namespace pxsim.debug {
     }
 
     export class DebugSession extends ProtocolServer {
-        private _debuggerLinesStartAt1: boolean;
-        private _debuggerColumnsStartAt1: boolean;
+        private _debuggerLinesStartAt1: boolean = false;
+        private _debuggerColumnsStartAt1: boolean = false;
         private _debuggerPathsAreURIs: boolean;
 
-        private _clientLinesStartAt1: boolean;
-        private _clientColumnsStartAt1: boolean;
+        private _clientLinesStartAt1: boolean = true;
+        private _clientColumnsStartAt1: boolean = true;
         private _clientPathsAreURIs: boolean;
 
         private _isServer: boolean;
@@ -753,6 +753,11 @@ namespace pxsim.debug {
 
         public runCode(js: string, parts: string[], fnArgs: { [index: string]: string }, breakpoints: BreakpointMap, board: pxsim.BoardDefinition) {
             this.breakpoints = breakpoints;
+
+            if (this.projectDir) {
+                this.fixBreakpoints();
+            }
+
             this.sendEvent(new InitializedEvent());
             this.driver.run(js, { parts, fnArgs, boardDefinition: board });
         }
@@ -801,7 +806,12 @@ namespace pxsim.debug {
         }
 
         protected launchRequest(response: DebugProtocol.LaunchResponse, args: SimLaunchArgs): void {
-            this.projectDir = args.projectDir;
+            if (!this.projectDir) {
+                this.projectDir = normalizePath(args.projectDir);
+                if (this.breakpoints) {
+                    this.fixBreakpoints();
+                }
+            }
             this.sendResponse(response);
         }
 
@@ -817,7 +827,6 @@ namespace pxsim.debug {
             args.breakpoints.forEach(requestedBp => {
                 if (this.breakpoints) {
                     const [id, bp] = this.breakpoints.verifyBreakpoint(relativePath(this.projectDir, args.source.path), requestedBp);
-                    bp.source = { path: args.source.path };
                     response.body.breakpoints.push(bp);
 
                     if (bp.verified) {
@@ -893,7 +902,8 @@ namespace pxsim.debug {
 
         protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
             if (this.lastBreak) {
-                response.body = { stackFrames: this.state.getFrames() };
+                const frames = this.state.getFrames();
+                response.body = { stackFrames: frames };
             }
             this.sendResponse(response);
         }
@@ -936,7 +946,7 @@ namespace pxsim.debug {
 
         private onDebuggerBreakpoint(breakMsg: pxsim.DebuggerBreakpointMessage) {
             this.lastBreak = breakMsg;
-            this.state = new StoppedState(this.lastBreak, this.breakpoints);
+            this.state = new StoppedState(this.lastBreak, this.breakpoints, this.projectDir);
 
             if (breakMsg.exceptionMessage) {
                 this.sendEvent(new pxsim.debug.StoppedEvent("exception", SimDebugSession.THREAD_ID, breakMsg.exceptionMessage));
@@ -956,7 +966,7 @@ namespace pxsim.debug {
         private onStateChanged(state: SimulatorState) {
             switch (state) {
                 case SimulatorState.Paused:
-                    this.sendEvent(new StoppedEvent("pause", SimDebugSession.THREAD_ID));
+                    // this.sendEvent(new StoppedEvent("pause", SimDebugSession.THREAD_ID));
                     break;
                 case SimulatorState.Running:
                     this.sendEvent(new ContinuedEvent(SimDebugSession.THREAD_ID, true))
@@ -968,6 +978,19 @@ namespace pxsim.debug {
                 default:
             }
         }
+
+        private fixBreakpoints() {
+            // Fix breakpoint locations
+            for (const bpId in this.breakpoints.idMap) {
+                const bp = this.breakpoints.idMap[bpId];
+                bp.source.path = pathJoin(this.projectDir, bp.source.path);
+
+                bp.line = this.convertDebuggerLineToClient(bp.line);
+                bp.endLine = this.convertDebuggerLineToClient(bp.endLine);
+                bp.column = this.convertDebuggerColumnToClient(bp.column);
+                bp.endColumn = this.convertDebuggerColumnToClient(bp.endColumn);
+            }
+        }
     }
 
     class StoppedState {
@@ -977,7 +1000,7 @@ namespace pxsim.debug {
         private _globalScope: DebugProtocol.Scope;
 
 
-        constructor(private _message: DebuggerBreakpointMessage, private _map: BreakpointMap ) {
+        constructor(private _message: DebuggerBreakpointMessage, private _map: BreakpointMap, private _dir: string) {
             const globalId = this.nextId();
             this._vars[globalId] = this.getVariableValues(this._message.globals);
             this._globalScope = {
@@ -990,9 +1013,9 @@ namespace pxsim.debug {
         getFrames(): DebugProtocol.StackFrame[] {
             return this._message.stackframes.map((s, i) => {;
                 const bp = this._map.getById(s.breakpointId);
-                this._frames[bp.id] = s;
+                this._frames[s.breakpointId] = s;
                 return {
-                    id: bp.id,
+                    id: s.breakpointId,
                     name: this.nameFromFunctionInfo(s.funcInfo, i),
                     line: bp.line,
                     column: bp.column,
@@ -1104,7 +1127,7 @@ namespace pxsim.debug {
         return getNormalizedParts(path).join("/");
     }
 
-    function relativePath(fromDir: string, toFile: string) {
+    function relativePath(fromDir: string, toFile: string): string {
         const fParts = getNormalizedParts(fromDir);
         const tParts = getNormalizedParts(toFile);
 
@@ -1123,5 +1146,17 @@ namespace pxsim.debug {
         }
 
         return tRemainder.join("/");
+    }
+
+    function pathJoin(...paths: string[]): string {
+        let result = "";
+        paths.forEach(path => {
+            path.replace(/\\/g, "/");
+            if (path.lastIndexOf("/") === path.length - 1) {
+                path = path.slice(0, path.length - 1)
+            }
+            result += "/" + path;
+        });
+        return result;
     }
 }

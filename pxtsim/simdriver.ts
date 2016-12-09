@@ -293,6 +293,7 @@ namespace pxsim {
                     return;
             }
 
+            this.postMessage({type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
         }
 
         public setBreakpoints(breakPoints: number[]) {

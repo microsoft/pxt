@@ -57,8 +57,8 @@ namespace pxsim {
     }
 
     export class BreakpointMap {
-        private fileMap: {[index: string]: [number, DebugProtocol.Breakpoint][]} = {};
-        private idMap: {[index: number]: DebugProtocol.Breakpoint} = {};
+        public fileMap: {[index: string]: [number, DebugProtocol.Breakpoint][]} = {};
+        public idMap: {[index: number]: DebugProtocol.Breakpoint} = {};
 
         constructor(breakpoints: [number, DebugProtocol.Breakpoint][]) {
             breakpoints.forEach(tuple => {
@@ -70,6 +70,20 @@ namespace pxsim {
                 this.fileMap[bp.source.path].push(tuple);
                 this.idMap[id] = bp;
             });
+
+            for (const file in this.fileMap) {
+                const bps = this.fileMap[file];
+                this.fileMap[file] = bps.sort(([, a], [, b]) => {
+                    if (a.line === b.line) {
+                        if (b.endLine === a.endLine) {
+                            return a.column - b.column;
+                        }
+                        // Parent breakpoints go before children
+                        return b.endLine - a.endLine;
+                    }
+                    return a.line - b.line;
+                });
+            }
         }
 
         public getById(id: number): DebugProtocol.Breakpoint {
@@ -79,13 +93,18 @@ namespace pxsim {
         public verifyBreakpoint(path: string, breakpoint: DebugProtocol.SourceBreakpoint): [number, DebugProtocol.Breakpoint] {
             const breakpoints = this.fileMap[path];
 
+            let best: [number, DebugProtocol.Breakpoint];
             if (breakpoints) {
                 for (const [id, bp] of breakpoints) {
                     if (bp.line <= breakpoint.line && bp.endLine >= breakpoint.line) {
-                        bp.verified = true;
-                        return [id, bp];
+                        best = [id, bp];
                     }
                 }
+            }
+
+            if (best) {
+                best[1].verified = true;
+                return best;
             }
 
             return [-1, { verified: false }];
