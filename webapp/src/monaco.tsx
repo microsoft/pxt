@@ -142,14 +142,6 @@ export class Editor extends srceditor.Editor {
             })
     }
 
-    menu(): JSX.Element {
-        const editor = pkg.mainEditorPkg();
-        if (this.currFile != editor.files["main.ts"]) {
-            return (<sui.Item text={lf("Back to Code") } icon={"align left"} onClick={() => this.parent.setFile(editor.files["main.ts"]) } />);
-        }
-        return null as JSX.Element;
-    }
-
     undo() {
         this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
     }

@@ -427,10 +427,6 @@ export class Editor extends srceditor.Editor {
         this.parent.openTypeScriptAsync().done();
     }
 
-    menu() {
-        return undefined as JSX.Element;
-    }
-
     cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));

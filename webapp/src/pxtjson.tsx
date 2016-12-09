@@ -134,8 +134,4 @@ export class Editor extends srceditor.Editor {
         this.config = JSON.parse(file.content)
         this.setDiagnostics(file, this.snapshotState())
     }
-
-    menu() {
-        return (<sui.Item text={lf("Back to Code") } icon={this.parent.state.header.editor == pxt.BLOCKS_PROJECT_NAME ? "puzzle" : "align left"} onClick={() => this.parent.setFile(pkg.mainEditorPkg().getMainFile()) } />)
-    }
 }
