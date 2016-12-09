@@ -1567,7 +1567,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             electron: !!parsed.flags["electron"],
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
-            browser: parsed.flags["browser"] as string
+            browser: parsed.flags["browser"] as string,
+            serial: !parsed.flags["noSerial"]
         }))
 }
 
@@ -3614,6 +3615,9 @@ function initCommands() {
             noBrowser: {
                 description: "start the server without launching a browser",
                 aliases: ["no-browser"]
+            },
+            noSerial: {
+                description: "do not monitor serial devices"
             },
             sourceMaps: {
                 description: "include souorce maps when building ts files",

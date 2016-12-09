@@ -678,6 +678,7 @@ export interface ServeOptions {
     browser?: string;
     electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
+    serial?: boolean;
 }
 
 export function sendElectronMessage(message: ElectronMessage) {
@@ -695,8 +696,8 @@ export function serveAsync(options: ServeOptions) {
     if (!serveOptions.port) serveOptions.port = 3232;
     setupRootDir();
     initSocketServer();
-    initSerialMonitor();
-
+    if (serveOptions.serial)
+        initSerialMonitor();
     if (serveOptions.electronHandlers) {
         electronHandlers = serveOptions.electronHandlers;
     }

@@ -66,6 +66,7 @@ declare namespace pxt {
 
     interface AppSerial {
         manufacturerFilter?: string; // used by node-serial
+        nameFilter?: string; // regex to match devices
         log?: boolean;
     }
 
