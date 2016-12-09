@@ -9,8 +9,6 @@ namespace pxsim {
         setBreakpoints?: number[];
     }
 
-    export type BreakpointMap = {[index: string]: [number, DebugProtocol.Breakpoint][]};
-
     // subtype=resume
     // subtype=stepover
     // subtype=stepinto
@@ -56,6 +54,42 @@ namespace pxsim {
         }
 
         return r
+    }
+
+    export class BreakpointMap {
+        private fileMap: {[index: string]: [number, DebugProtocol.Breakpoint][]} = {};
+        private idMap: {[index: number]: DebugProtocol.Breakpoint} = {};
+
+        constructor(breakpoints: [number, DebugProtocol.Breakpoint][]) {
+            breakpoints.forEach(tuple => {
+                const [id, bp] = tuple;
+                if (!this.fileMap[bp.source.path]) {
+                    this.fileMap[bp.source.path] = [];
+                }
+
+                this.fileMap[bp.source.path].push(tuple);
+                this.idMap[id] = bp;
+            });
+        }
+
+        public getById(id: number): DebugProtocol.Breakpoint {
+            return this.idMap[id];
+        }
+
+        public verifyBreakpoint(path: string, breakpoint: DebugProtocol.SourceBreakpoint): [number, DebugProtocol.Breakpoint] {
+            const breakpoints = this.fileMap[path];
+
+            if (breakpoints) {
+                for (const [id, bp] of breakpoints) {
+                    if (bp.line <= breakpoint.line && bp.endLine >= breakpoint.line) {
+                        bp.verified = true;
+                        return [id, bp];
+                    }
+                }
+            }
+
+            return [-1, { verified: false }];
+        }
     }
 
     export function getBreakpointMsg(s: StackFrame, brkId: number) {

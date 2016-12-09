@@ -15,8 +15,8 @@ namespace pxt.runner {
         subtype: "ready";
     }
 
-    export interface BuildInfoMessage extends RunnerMessage {
-        subtype: "buildInfo";
+    export interface RunCodeMessage extends RunnerMessage {
+        subtype: "runcode";
         code: string;
         usedParts: string[];
         usedArguments: { [index: string]: string };
@@ -83,6 +83,12 @@ namespace pxt.runner {
                         this.handleMessage(message as RunnerMessage);
                     }
                     else {
+                        if (message.type === "request" && (message as DebugProtocol.Request).command === "launch") {
+                            // Build happens on the server side
+                            this.sendRunnerMessage("configure", {
+                                projectDir: (message as any).arguments.projectDir
+                            });
+                        }
                         this.dataListener(message);
                     }
                 }
@@ -111,23 +117,22 @@ namespace pxt.runner {
 
         private handleMessage(msg: RunnerMessage) {
             switch (msg.subtype) {
-                case "buildInfo":
-                    this.runCode(msg as BuildInfoMessage);
+                case "ready":
+                    this.sendRunnerMessage("ready");
+                    break;
+                case "runcode":
+                    this.runCode(msg as RunCodeMessage);
                     break;
             }
         }
 
-        private runCode(msg: BuildInfoMessage) {
-            const bpMap: pxsim.BreakpointMap = {};
+        private runCode(msg: RunCodeMessage) {
+            const breakpoints: [number, DebugProtocol.Breakpoint][] = [];
 
             // The breakpoints are in the format returned by the compiler
             // and need to be converted to debug protocol
             msg.breakpoints.forEach(bp => {
-                if (!bpMap[bp.fileName]) {
-                    bpMap[bp.fileName] = [];
-                }
-
-                bpMap[bp.fileName].push([bp.id, {
+                breakpoints.push([bp.id, {
                     verified: true,
                     line: bp.line,
                     column: bp.column,
@@ -139,7 +144,13 @@ namespace pxt.runner {
                 }]);
             });
 
-            this.session.runCode(msg.code, msg.usedParts, msg.usedArguments, bpMap);
+            this.session.runCode(msg.code, msg.usedParts, msg.usedArguments, new pxsim.BreakpointMap(breakpoints), pxt.appTarget.simulator.boardDefinition);
+        }
+
+        private sendRunnerMessage(subtype: string, msg: {[index: string]: string} = {}) {
+            msg["subtype"] = subtype;
+            msg["type"] = "runner";
+            this.send(JSON.stringify(msg));
         }
     }
 }

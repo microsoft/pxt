@@ -3590,7 +3590,8 @@ function initCommands() {
         name: "build",
         help: "build current package",
         flags: {
-            cloud: { description: "Force build to happen in the cloud" }
+            cloud: { description: "Force build to happen in the cloud" },
+            debug: { description: "Emit debug information with build" }
         }
     }, buildAsync);
 

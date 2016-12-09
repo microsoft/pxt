@@ -724,11 +724,17 @@ namespace pxsim.debug {
         close(): void;
     }
 
+    export interface SimLaunchArgs extends DebugProtocol.LaunchRequestArguments {
+        projectDir: string;
+    }
+
 
     export class SimDebugSession extends DebugSession {
         private static THREAD_ID = 1;
         private driver: SimulatorDriver;
         private lastBreak: DebuggerBreakpointMessage;
+        private state: StoppedState;
+        private projectDir: string;
 
         private breakpoints: BreakpointMap;
 
@@ -745,9 +751,10 @@ namespace pxsim.debug {
             this.driver = new pxsim.SimulatorDriver(container, options);
         }
 
-        public runCode(js: string, parts: string[], fnArgs: { [index: string]: string }, breakpoints: BreakpointMap) {
+        public runCode(js: string, parts: string[], fnArgs: { [index: string]: string }, breakpoints: BreakpointMap, board: pxsim.BoardDefinition) {
             this.breakpoints = breakpoints;
-            this.driver.run(js, { parts, fnArgs });
+            this.sendEvent(new InitializedEvent());
+            this.driver.run(js, { parts, fnArgs, boardDefinition: board });
         }
 
         protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
@@ -793,7 +800,8 @@ namespace pxsim.debug {
             this.shutdown();
         }
 
-        protected launchRequest(response: DebugProtocol.LaunchResponse, args: DebugProtocol.LaunchRequestArguments): void {
+        protected launchRequest(response: DebugProtocol.LaunchResponse, args: SimLaunchArgs): void {
+            this.projectDir = args.projectDir;
             this.sendResponse(response);
         }
 
@@ -802,16 +810,22 @@ namespace pxsim.debug {
         }
 
         protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
-            response.body.breakpoints = [];
+            response.body = { breakpoints: [] };
 
             const ids: number[] = [];
 
             args.breakpoints.forEach(requestedBp => {
-                const [id, bp] = this.verifyBreakpoint(args.source.path, requestedBp);
-                response.body.breakpoints.push(bp);
+                if (this.breakpoints) {
+                    const [id, bp] = this.breakpoints.verifyBreakpoint(relativePath(this.projectDir, args.source.path), requestedBp);
+                    bp.source = { path: args.source.path };
+                    response.body.breakpoints.push(bp);
 
-                if (bp.verified) {
-                    ids.push(id);
+                    if (bp.verified) {
+                        ids.push(id);
+                    }
+                }
+                else {
+                    response.body.breakpoints.push({ verified: false });
                 }
             });
 
@@ -833,14 +847,17 @@ namespace pxsim.debug {
         }
 
         protected continueRequest(response: DebugProtocol.ContinueResponse, args: DebugProtocol.ContinueArguments) : void {
+            this.driver.resume(SimulatorDebuggerCommand.Resume);
             this.sendResponse(response);
         }
 
         protected nextRequest(response: DebugProtocol.NextResponse, args: DebugProtocol.NextArguments) : void {
+            this.driver.resume(SimulatorDebuggerCommand.StepOver);
             this.sendResponse(response);
         }
 
         protected stepInRequest(response: DebugProtocol.StepInResponse, args: DebugProtocol.StepInArguments) : void {
+            this.driver.resume(SimulatorDebuggerCommand.StepInto)
             this.sendResponse(response);
         }
 
@@ -861,6 +878,7 @@ namespace pxsim.debug {
         }
 
         protected pauseRequest(response: DebugProtocol.PauseResponse, args: DebugProtocol.PauseArguments) : void {
+            this.driver.resume(SimulatorDebuggerCommand.Pause);
             this.sendResponse(response);
         }
 
@@ -869,18 +887,30 @@ namespace pxsim.debug {
         }
 
         protected threadsRequest(response: DebugProtocol.ThreadsResponse): void {
+            response.body = { threads: [{ id: SimDebugSession.THREAD_ID, name: "main"}] }
             this.sendResponse(response);
         }
 
         protected stackTraceRequest(response: DebugProtocol.StackTraceResponse, args: DebugProtocol.StackTraceArguments): void {
+            if (this.lastBreak) {
+                response.body = { stackFrames: this.state.getFrames() };
+            }
             this.sendResponse(response);
         }
 
         protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
+            if (this.state) {
+                response.body = { scopes: this.state.getScopes(args.frameId) }
+            }
+
             this.sendResponse(response);
         }
 
         protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
+            if (this.state) {
+                response.body = { variables: this.state.getVariables(args.variablesReference) };
+            }
+
             this.sendResponse(response);
         }
 
@@ -906,6 +936,8 @@ namespace pxsim.debug {
 
         private onDebuggerBreakpoint(breakMsg: pxsim.DebuggerBreakpointMessage) {
             this.lastBreak = breakMsg;
+            this.state = new StoppedState(this.lastBreak, this.breakpoints);
+
             if (breakMsg.exceptionMessage) {
                 this.sendEvent(new pxsim.debug.StoppedEvent("exception", SimDebugSession.THREAD_ID, breakMsg.exceptionMessage));
             }
@@ -918,24 +950,178 @@ namespace pxsim.debug {
         }
 
         private onDebuggerResume() {
+            this.sendEvent(new pxsim.debug.ContinuedEvent(SimDebugSession.THREAD_ID, true));
         }
 
         private onStateChanged(state: SimulatorState) {
+            switch (state) {
+                case SimulatorState.Paused:
+                    this.sendEvent(new StoppedEvent("pause", SimDebugSession.THREAD_ID));
+                    break;
+                case SimulatorState.Running:
+                    this.sendEvent(new ContinuedEvent(SimDebugSession.THREAD_ID, true))
+                    break;
+                case SimulatorState.Stopped:
+                    this.sendEvent(new TerminatedEvent())
+                    break;
+                case SimulatorState.Unloaded:
+                default:
+            }
+        }
+    }
+
+    class StoppedState {
+        private _currentId: number = 1;
+        private _frames: {[index: number]: { locals: Variables, funcInfo: any, breakpointId: number }} = {};
+        private _vars: {[index: number]: Lazy<Variable[]>} = {};
+        private _globalScope: DebugProtocol.Scope;
+
+
+        constructor(private _message: DebuggerBreakpointMessage, private _map: BreakpointMap ) {
+            const globalId = this.nextId();
+            this._vars[globalId] = this.getVariableValues(this._message.globals);
+            this._globalScope = {
+                name: "Globals",
+                variablesReference: globalId,
+                expensive: false
+            };
         }
 
-        private verifyBreakpoint(path: string, breakpoint: DebugProtocol.SourceBreakpoint): [number, DebugProtocol.Breakpoint] {
-            const breakpoints = this.breakpoints && this.breakpoints[path];
+        getFrames(): DebugProtocol.StackFrame[] {
+            return this._message.stackframes.map((s, i) => {;
+                const bp = this._map.getById(s.breakpointId);
+                this._frames[bp.id] = s;
+                return {
+                    id: bp.id,
+                    name: this.nameFromFunctionInfo(s.funcInfo, i),
+                    line: bp.line,
+                    column: bp.column,
+                    endLine: bp.endLine,
+                    endColumn: bp.endLine,
+                    source: bp.source
+                };
+            });
+        }
 
-            if (breakpoints) {
-                for (const [id, bp] of breakpoints) {
-                    if (bp.line <= breakpoint.line && bp.endLine >= breakpoint.line) {
-                        bp.verified = true;
-                        return [id, bp];
-                    }
-                }
+
+        getScopes(frameId: number): DebugProtocol.Scope[] {
+            const frame = this._frames[frameId];
+
+            if (frame) {
+                const localId = this.nextId();
+                this._vars[localId] = this.getVariableValues(frame.locals);
+                return [{
+                    name: "Locals",
+                    variablesReference: localId,
+                    expensive: false
+                }, this._globalScope];
             }
 
-            return [-1, { verified: false }];
+            return [this._globalScope];
         }
+
+        getVariables(variablesReference: number): DebugProtocol.Variable[] {
+            const lz = this._vars[variablesReference];
+            return (lz && lz.value) || [];
+        }
+
+        private getVariableValues(v: Variables): Lazy<DebugProtocol.Variable[]> {
+            return new Lazy(() => {
+                const result: DebugProtocol.Variable[] = [];
+
+                for (const name in v) {
+                    const value = v[name];
+                    let vString: string;
+                    let variablesReference = 0;
+
+                    if (value === null) {
+                        vString = "null";
+                    }
+                    else if (value === undefined) {
+                        vString = "undefined"
+                    }
+                    else if (typeof value === "object") {
+                        vString = "(object)";
+                        variablesReference = this.nextId();
+                        // vscode requests variables lazily, so reference loops aren't an issue
+                        this._vars[variablesReference] = this.getVariableValues(value);
+                    }
+                    else {
+                        vString = value.toString();
+                    }
+
+                    result.push({
+                        name,
+                        value: vString,
+                        variablesReference
+                    });
+                }
+                return result;
+            });
+        }
+
+        private nameFromFunctionInfo(f: any, index: number) {
+            return (f && f.functionName) || (index === 0 ? "main" : "anonymous");
+        }
+
+        private nextId(): number {
+            return this._currentId++;
+        }
+    }
+
+    class Lazy<T> {
+        private _value: T;
+        private _evaluated = false;
+
+        constructor(private _func: () => T) {}
+
+        get value(): T {
+            if (!this._evaluated) {
+                this._value = this._func();
+                this._evaluated = true;
+            }
+            return this._value;
+        }
+    }
+
+    function getNormalizedParts(path: string): string[] {
+        path = path.replace(/\\/g, "/");
+
+        const parts: string[] = [];
+        path.split("/").forEach(part => {
+            if (part === ".." && parts.length) {
+                parts.pop();
+            }
+            else if (part && part !== ".") {
+                parts.push(part)
+            }
+        });
+
+        return parts;
+    }
+
+    function normalizePath(path: string): string {
+        return getNormalizedParts(path).join("/");
+    }
+
+    function relativePath(fromDir: string, toFile: string) {
+        const fParts = getNormalizedParts(fromDir);
+        const tParts = getNormalizedParts(toFile);
+
+        let i = 0;
+        while (fParts[i] === tParts[i]) {
+            i++;
+            if (i === fParts.length || i === tParts.length) {
+                break;
+            }
+        }
+
+        const fRemainder = fParts.slice(i);
+        const tRemainder = tParts.slice(i);
+        for (let i = 0; i <  fRemainder.length; i++) {
+            tRemainder.unshift("..");
+        }
+
+        return tRemainder.join("/");
     }
 }
