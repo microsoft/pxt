@@ -718,10 +718,9 @@ export class Editor extends srceditor.Editor {
         if (mode == "typescript") {
             let promises: monaco.Promise<any>[] = [];
             promises.push(this.compileBlocks());
-            if (pxt.appTarget.appTheme.monacoToolbox)
-                promises.push(pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly()).then((definitions) => {
-                    this.definitions = definitions;
-                }));
+            promises.push(pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly()).then((definitions) => {
+                this.definitions = definitions;
+            }));
 
             monaco.Promise.join(promises).done(() => {
                 this.initEditorCss();
