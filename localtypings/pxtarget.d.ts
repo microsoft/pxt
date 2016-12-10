@@ -152,6 +152,7 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         projectGallery?: string;
         crowdinProject?: string;
+        monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
     }
 
     interface DocMenuEntry {

@@ -12,7 +12,7 @@ namespace pxt.vs {
     export interface MethodDef {
         snippet: string;
         comment?: string;
-        weight?: number;
+        metaData?: pxtc.CommentAttrs;
     }
 
     export interface NameDefiniton {
@@ -81,14 +81,14 @@ namespace pxt.vs {
 
                                         return client.getLeadingComments(fp, fn.spans[0].start + fn.spans[0].length, fn.text)
                                             .then((comments: string) => {
-                                                let commentAttr: pxtc.CommentAttrs;
+                                                let meta: pxtc.CommentAttrs;
                                                 if (comments)
-                                                    commentAttr = pxtc.parseCommentString(comments);
-                                                let comment = commentAttr ? commentAttr.jsDoc : ts.displayPartsToString(details[0].documentation);
+                                                    meta = pxtc.parseCommentString(comments);
+                                                let comment = meta ? meta.jsDoc : ts.displayPartsToString(details[0].documentation);
                                                 definitions[item.text].fns[fn.text] = {
                                                     snippet: details[1],
                                                     comment: comment,
-                                                    weight: commentAttr ? commentAttr.weight : 50
+                                                    metaData: meta
                                                 }
                                             });
                                     });

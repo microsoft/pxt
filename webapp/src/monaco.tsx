@@ -345,7 +345,7 @@ export class Editor extends srceditor.Editor {
             // Update widgets
             let toolbox = document.getElementById('monacoEditorToolbox');
             toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
-            let flyout = document.getElementById('pxtMonacoFlyoutWidget');
+            let flyout = document.getElementById('monacoFlyoutWidget');
             flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
         })
 
@@ -446,7 +446,7 @@ export class Editor extends srceditor.Editor {
             getDomNode: function(): HTMLElement {
                 if (!this.domNode) {
                     this.domNode = document.createElement('div');
-                    this.domNode.id = 'pxtMonacoFlyoutWidget';
+                    this.domNode.id = 'monacoFlyoutWidget';
                     this.domNode.style.top = `0`;
                     this.domNode.className = 'monacoFlyout';
                     // Hide by default
@@ -487,6 +487,7 @@ export class Editor extends srceditor.Editor {
 
     updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
+        if (!appTheme.monacoToolbox) return;
         // Toolbox div
         let toolbox = document.getElementById('monacoEditorToolbox');
         // Move the monaco editor to make room for the toolbox div
@@ -516,7 +517,7 @@ export class Editor extends srceditor.Editor {
             let fnElement = fnDef[ns];
             let color = metaElement.meta.commentAttr.color;
             treeitem.onclick = (ev: MouseEvent) => {
-                let monacoFlyout = document.getElementById('pxtMonacoFlyoutWidget');
+                let monacoFlyout = document.getElementById('monacoFlyoutWidget');
                 monacoEditor.resetFlyout(false);
 
                 // Hide the toolbox if the current category is clicked twice
@@ -542,7 +543,7 @@ export class Editor extends srceditor.Editor {
                         // sort by fn weight
                         let fn1 = fnElement.fns[f1];
                         let fn2 = fnElement.fns[f2];
-                        return (fn2.weight || 50) - (fn1.weight || 50);
+                        return (fn2.metaData ? fn2.metaData.weight || 50 : 50) - (fn1.metaData ? fn1.metaData.weight || 50 : 50);
                     }).forEach((fn) => {
                     let monacoBlock = document.createElement('div');
                     monacoBlock.className = 'monacoDraggableBlock';
@@ -551,12 +552,14 @@ export class Editor extends srceditor.Editor {
                         monacoFlyout.className = monacoFlyout.className + ' hide';
                     };
                     monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
+                    monacoBlock.style.backgroundColor = `${color}`;
+                    monacoBlock.style.borderColor = `${color}`;
 
                     let snippet = fnElement.fns[fn].snippet;
                     let comment = fnElement.fns[fn].comment;
+                    let metaData = fnElement.fns[fn].metaData;
 
                     let methodToken = document.createElement('span');
-                    methodToken.className = `token ts identifier ${fn}`;
                     methodToken.innerText = snippet.replace('{{}}', '');
 
                     monacoBlock.title = comment;
@@ -715,9 +718,10 @@ export class Editor extends srceditor.Editor {
         if (mode == "typescript") {
             let promises: monaco.Promise<any>[] = [];
             promises.push(this.compileBlocks());
-            promises.push(pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly()).then((definitions) => {
-                this.definitions = definitions;
-            }));
+            if (pxt.appTarget.appTheme.monacoToolbox)
+                promises.push(pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly()).then((definitions) => {
+                    this.definitions = definitions;
+                }));
 
             monaco.Promise.join(promises).done(() => {
                 this.initEditorCss();
