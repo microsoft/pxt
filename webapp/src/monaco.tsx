@@ -350,7 +350,7 @@ export class Editor extends srceditor.Editor {
         })
 
         this.editor.onDidFocusEditorText(() => {
-            this.resetFlyout();
+            this.resetFlyout(true);
         })
 
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
@@ -462,21 +462,26 @@ export class Editor extends srceditor.Editor {
         this.editor.addOverlayWidget(flyoutWidget);
     }
 
-    private currCategoryItem: HTMLElement;
-    private currCategoryRow: HTMLElement;
-    private currCategoryColor: string;
+    private selectedCategoryItem: HTMLElement;
+    private selectedCategoryRow: HTMLElement;
+    private selectedCategoryColor: string;
 
-    resetFlyout() {
+    resetFlyout(clear?: boolean) {
         // Hide the flyout
         let flyout = document.getElementById('pxtMonacoFlyoutWidget');
         flyout.innerHTML = '';
         flyout.style.display = 'none';
 
         // Hide the currnet toolbox category 
-        if (this.currCategoryItem) {
-            this.currCategoryItem.style.background = 'none';
-            this.currCategoryRow.style.color = `${this.currCategoryColor}`;
-            this.currCategoryRow.className = 'blocklyTreeRow';
+        if (this.selectedCategoryItem) {
+            this.selectedCategoryItem.style.background = 'none';
+            this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
+            this.selectedCategoryRow.className = 'blocklyTreeRow';
+        }
+
+        if (clear) {
+            this.selectedCategoryItem = null;
+            this.selectedCategoryRow = null;
         }
     }
 
@@ -512,11 +517,11 @@ export class Editor extends srceditor.Editor {
             let color = metaElement.meta.commentAttr.color;
             treeitem.onclick = (ev: MouseEvent) => {
                 let monacoFlyout = document.getElementById('pxtMonacoFlyoutWidget');
-                monacoEditor.resetFlyout();
+                monacoEditor.resetFlyout(false);
 
                 // Hide the toolbox if the current category is clicked twice
-                if (monacoEditor.currCategoryItem == treeitem) {
-                    monacoEditor.currCategoryItem = null;
+                if (monacoEditor.selectedCategoryItem == treeitem) {
+                    monacoEditor.selectedCategoryItem = null;
                     monacoFlyout.style.display = 'none';
                     treerow.className = 'blocklyTreeRow';
                     return;
@@ -524,9 +529,9 @@ export class Editor extends srceditor.Editor {
                     treeitem.style.background = `${color}`;
                     treerow.style.color = '#fff';
                     treerow.className += ' blocklyTreeSelected';
-                    monacoEditor.currCategoryItem = treeitem;
-                    monacoEditor.currCategoryRow = treerow;
-                    monacoEditor.currCategoryColor = color;
+                    monacoEditor.selectedCategoryItem = treeitem;
+                    monacoEditor.selectedCategoryRow = treerow;
+                    monacoEditor.selectedCategoryColor = color;
                 }
 
                 monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
@@ -557,7 +562,7 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.title = comment;
 
                     monacoBlock.onclick = (ev2: MouseEvent) => {
-                        monacoEditor.resetFlyout();
+                        monacoEditor.resetFlyout(true);
 
                         let model = monacoEditor.editor.getModel();
                         let currPos = monacoEditor.editor.getPosition();
