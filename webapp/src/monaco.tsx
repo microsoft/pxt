@@ -376,24 +376,6 @@ export class Editor extends srceditor.Editor {
             this.changeCallback();
         });
 
-        this.editor.onMouseUp((e: monaco.editor.IEditorMouseEvent) => {
-            //console.log("mouse up");
-            //console.log(e);
-        });
-
-        editorElement.ondragover = (ev: DragEvent) => {
-            console.log("drag over");
-            console.log(ev);
-            let x = ev.clientX;
-            let y = ev.clientY;
-
-        };
-
-        editorElement.ondrop = (ev: DragEvent) => {
-            console.log("dropped");
-            console.log(ev);
-        };
-
         this.editorViewZones = [];
 
         this.setupToolbox(editorArea);
@@ -538,6 +520,7 @@ export class Editor extends srceditor.Editor {
                 monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
                 monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
                 monacoFlyout.style.display = 'block';
+                monacoFlyout.className = 'monacoFlyout';
 
                 Object.keys(fnElement.fns).sort((f1, f2) => {
                         // sort by fn weight
@@ -547,10 +530,7 @@ export class Editor extends srceditor.Editor {
                     }).forEach((fn) => {
                     let monacoBlock = document.createElement('div');
                     monacoBlock.className = 'monacoDraggableBlock';
-                    monacoBlock.setAttribute('draggable','true');
-                    monacoBlock.ondragstart = (ev2: DragEvent) => {
-                        monacoFlyout.className = monacoFlyout.className + ' hide';
-                    };
+
                     monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
                     monacoBlock.style.backgroundColor = `${color}`;
                     monacoBlock.style.borderColor = `${color}`;
