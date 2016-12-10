@@ -15,7 +15,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
     return Promise.resolve();
 }
 
-function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let url = ""
     let fn = ""
     if (pxt.appTarget.compile.useUF2) {
@@ -49,7 +49,8 @@ function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void>
         }).then(() => { });
     }
 
-    return showUploadInstructionsAsync(fn, url);
+    if (resp.saveOnly) return Promise.resolve();
+    else return showUploadInstructionsAsync(fn, url);
 }
 
 //Searches the known USB image, matching on platform and browser
@@ -138,7 +139,10 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function initCommandsAsync(): Promise<void> {
-    if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
+    if (pxt.winrt.isWinRT()) { // window app
+        pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
+        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+    } else if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
         pxt.commands.browserDownloadAsync = browserDownloadAsync;
     } else { // in browser

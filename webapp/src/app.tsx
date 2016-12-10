@@ -2,6 +2,7 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
+/// <reference path="../../built/pxtwinrt.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -26,6 +27,7 @@ import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
 import * as hwdbg from "./hwdbg"
+import * as electron from "./electron";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -51,7 +53,6 @@ interface IAppProps { }
 interface IAppState {
     active?: boolean; // is this tab visible at all
     header?: Header;
-    projectName?: string; // project name value while being edited
     currFile?: pkg.File;
     fileState?: string;
     showFiles?: boolean;
@@ -68,16 +69,6 @@ interface IAppState {
     showParts?: boolean;
 }
 
-interface ExternalMessageData {
-    messageType: string;
-    args: any
-}
-interface ExternalMessageResult {
-    error?: any;
-    result?: any;
-}
-
-let isElectron = /[?&]electron=1/.test(window.location.href);
 let theEditor: ProjectView;
 
 interface ISettingsProps {
@@ -272,9 +263,19 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             this.props.parent.importFileDialog();
         }
         const newProject = () => {
-            pxt.tickEvent("projects.import");
+            pxt.tickEvent("projects.new");
             this.hide();
             this.props.parent.newEmptyProject();
+        }
+        const saveProject = () => {
+            pxt.tickEvent("projects.save");
+            this.hide();
+            this.props.parent.compile(true);
+        }
+        const renameProject = () => {
+            pxt.tickEvent("projects.rename");
+            this.hide();
+            this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
         }
         const isEmpty = () => {
             if (this.state.searchFor) {
@@ -289,7 +290,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         }
 
         const headerText = this.state.mode == ScriptSearchMode.Packages ? lf("Add Package...")
-            : lf("Open Project...");
+            : lf("Projects");
         return (
             <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
@@ -307,17 +308,33 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                         <codecard.CodeCardView
                             color="pink"
                             key="importhex"
-                            name={lf("My Computer...") }
+                            name={lf("Import from file...") }
                             description={lf("Open .hex files on your computer") }
                             onClick={() => importHex() }
                             /> : undefined}
-                    {pxt.appTarget.compile && !this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
                         <codecard.CodeCardView
                             color="pink"
                             key="newproject"
                             name={lf("New Project...") }
                             description={lf("Creates a new empty project") }
                             onClick={() => newProject() }
+                            /> : undefined}
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                        <codecard.CodeCardView
+                            color="pink"
+                            key="saveproject"
+                            name={lf("Save Project...") }
+                            description={lf("Saves current project to a.hex file") }
+                            onClick={() => saveProject() }
+                            /> : undefined}
+                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                        <codecard.CodeCardView
+                            color="pink"
+                            key="renameproject"
+                            name={lf("Rename Project...") }
+                            description={lf("Rename the current project") }
+                            onClick={() => renameProject() }
                             /> : undefined}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
@@ -598,7 +615,7 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" title={lf("Help") }>
+        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" text={lf("Help") } textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
@@ -1017,6 +1034,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setFile(fn: pkg.File) {
+        if (!fn) return;
+
         this.setState({
             currFile: fn,
             helpCard: undefined,
@@ -1126,7 +1145,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     });
                 this.setState({
                     header: h,
-                    projectName: h.name,
                     currFile: file
                 })
                 if (!sandbox)
@@ -1456,7 +1474,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         });
     }
 
-    compile() {
+    compile(saveOnly = false) {
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
         if (this.state.compiling) {
@@ -1478,6 +1496,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()
                 }
+                resp.saveOnly = saveOnly
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload, please try again."));
@@ -1650,41 +1669,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
     }
 
-    private debouncedSaveProjectName = Util.debounce(() => {
-        pxt.tickEvent("nav.projectrename")
-        this.saveProjectName();
-    }, 2000, false);
-
-    updateHeaderName(name: string) {
-        this.setState({
-            projectName: name
-        })
-        this.debouncedSaveProjectName();
-    }
-
-    saveProjectName() {
-        if (!this.state.projectName || !this.state.header) return;
-
-        pxt.debug('saving project name to ' + this.state.projectName);
-        try {
-            //Save the name in the target MainPackage as well
-            pkg.mainPkg.config.name = this.state.projectName;
-
-            let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-            let config = JSON.parse(f.content) as pxt.PackageConfig;
-            config.name = this.state.projectName;
-            f.setContentAsync(JSON.stringify(config, null, 4) + "\n").done(() => {
-                if (this.state.header)
-                    this.setState({
-                        projectName: this.state.header.name
-                    })
-            });
-        }
-        catch (e) {
-            console.error('failed to read pxt.json')
-        }
-    }
-
     about() {
         pxt.tickEvent("menu.about");
         core.confirmAsync({
@@ -1695,25 +1679,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 <p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.appTarget.versions.target}</p>
 `
         }).done();
-    }
-
-    checkForElectronUpdate() {
-        const errorMessage = lf("Unable to check for updates");
-        pxt.tickEvent("menu.electronupdate");
-        Util.requestAsync({
-            url: "/api/externalmsg",
-            headers: { "Authorization": Cloud.localToken },
-            method: "POST",
-            data: {
-                messageType: "checkForUpdate"
-            } as ExternalMessageData
-        }).then((res: ExternalMessageResult) => {
-            if (res.error) {
-                core.errorNotification(errorMessage);
-            }
-        }).catch((e) => {
-            core.errorNotification(errorMessage);
-        });
     }
 
     embed() {
@@ -1759,7 +1724,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const simOpts = pxt.appTarget.simulator;
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
-        const savingProjectName = this.state.header && this.state.projectName != this.state.header.name;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const compileLoading = !!this.state.compiling;
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
@@ -1770,6 +1734,25 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const gettingStarted = !sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
+        const blockActive = this.editor == this.blocksEditor
+            && this.editorFile && this.editorFile.name == "main.blocks";
+        const javascriptActive = this.editor == this.textEditor
+            && this.editorFile && this.editorFile.name == "main.ts";
+        const blocksClick = () => {
+            pxt.tickEvent("menu.blocks");
+            if (blockActive) return;
+            if (javascriptActive) this.textEditor.openBlocks();
+            else this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+        }
+        const javascriptClick = () => {
+            pxt.tickEvent("menu.javascript");
+            if (javascriptActive) return;
+            if (blockActive) this.blocksEditor.openTypeScript();
+            else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+        }
+
+        // update window title
+        document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
@@ -1793,22 +1776,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        <div className="ui item wide only projectname">
-                            <div className={`ui large ${targetTheme.invertedMenu ? `inverted` : ''} input`} title={lf("Pick a name for your project") }>
-                                <input id="fileNameInput"
-                                    type="text"
-                                    placeholder={lf("Pick a name...") }
-                                    value={this.state.projectName || ''}
-                                    onChange={(e) => this.updateHeaderName((e.target as any).value) }>
-                                </input>
-                            </div>
-                        </div>
-                        {this.editor.menu() }
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='sidebar' class="more-dropdown-menuitem">
+                        <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
+                        <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
+                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
+                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' class="more-dropdown-menuitem">
+                            {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
-                            {this.state.header ? <sui.Item role="menuitem" icon="setting" text={lf("Project Settings...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
                             <div className="ui divider"></div>
                             <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
@@ -1823,9 +1798,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
                             { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
-                            { isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => this.checkForElectronUpdate() } /> : undefined }
+                            { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
                         </sui.DropdownMenuItem>}
-                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span>
@@ -1850,7 +1824,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="ui item landscape only">
                             {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : ""}
                             {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
-                            {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Start") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
+                            {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Run") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
                         </div>
                         <div className="ui item landscape only">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
@@ -2182,18 +2156,19 @@ $(document).ready(() => {
             if (localStorage["noAutoRun"] && pxt.appTarget.simulator)
                 pxt.appTarget.simulator.autoRun = false
         })
-        .then(() => {
-            return compiler.init();
-        })
+        .then(() => compiler.init())
         .then(() => workspace.initAsync())
         .then(() => {
             $("#loading").remove();
             render()
-            workspace.syncAsync().done()
+            return workspace.syncAsync();
         })
         .then(() => {
             initSerial()
             initHashchange();
+        }).then(() => pxt.winrt.initAsync(ih))
+        .then(() => {
+            electron.init();
             switch (hash.cmd) {
                 case "sandbox":
                 case "pub":

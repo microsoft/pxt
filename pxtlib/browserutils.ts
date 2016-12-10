@@ -1,5 +1,9 @@
+/// <reference path="../typings/winrt/winrt.d.ts"/>
 
 namespace pxt.BrowserUtils {
+    export function isWinRT(): boolean {
+        return typeof Windows !== "undefined";
+    }
 
     export function isIFrame(): boolean {
         try {

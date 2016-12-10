@@ -46,6 +46,7 @@ export class Editor extends srceditor.Editor {
         const update = (v: any) => {
             const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
+                pkg.mainPkg.config.name = c.name;
                 this.parent.forceUpdate()
                 Util.nextTick(this.changeCallback)
             })
@@ -91,14 +92,7 @@ export class Editor extends srceditor.Editor {
         return (
             <div className="ui content">
                 <div className="ui segment form text" style={{ backgroundColor: "white" }}>
-                    {Cloud.isLoggedIn() ?
-                        <sui.Field>
-                            <div className="ui toggle checkbox ">
-                                <input type="checkbox" name="public" checked={c.public}
-                                    onChange={() => update(c.public = !c.public) } />
-                                <label>{lf("Public package (library)") }</label>
-                            </div>
-                        </sui.Field> : ""}
+                    <sui.Input label={lf("Name")} value={c.name} onChange={v => update(c.name = v)} />
                     <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
                     {userConfigs.map(uc =>
                         <sui.Checkbox
@@ -139,9 +133,5 @@ export class Editor extends srceditor.Editor {
     loadFile(file: pkg.File) {
         this.config = JSON.parse(file.content)
         this.setDiagnostics(file, this.snapshotState())
-    }
-
-    menu() {
-        return (<sui.Item text={lf("Back to Code") } icon={this.parent.state.header.editor == pxt.BLOCKS_PROJECT_NAME ? "puzzle" : "align left"} onClick={() => this.parent.setFile(pkg.mainEditorPkg().getMainFile()) } />)
     }
 }
