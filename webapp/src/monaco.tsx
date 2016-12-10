@@ -468,7 +468,7 @@ export class Editor extends srceditor.Editor {
 
     resetFlyout(clear?: boolean) {
         // Hide the flyout
-        let flyout = document.getElementById('pxtMonacoFlyoutWidget');
+        let flyout = document.getElementById('monacoFlyoutWidget');
         flyout.innerHTML = '';
         flyout.style.display = 'none';
 
