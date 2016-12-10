@@ -355,7 +355,7 @@ namespace pxt.blocks {
                         i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
                         // if a value is provided, move it first
                         if (pr.shadowValue)
-                            dd.sort((v1, v2) => v1[0] == pr.shadowValue ? -1 : v2[0] == pr.shadowValue ? 1 : 0);
+                            dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
                     } else {
                         i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
