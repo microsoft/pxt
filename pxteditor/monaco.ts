@@ -4,83 +4,99 @@
 
 namespace pxt.vs {
 
-    export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<any> {
+    export interface BlockDefiniton {
+        commentAttr: pxtc.CommentAttrs;
+        fns?: { [fn: string]: string };
+    }
+
+    export interface MethodDef {
+        snippet: string;
+        comment?: string;
+        weight?: number;
+    }
+
+    export interface NameDefiniton {
+        fns: { [fn: string]: MethodDef };
+        comment?: string;
+    }
+
+    export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<{ [ns: string]: NameDefiniton }> {
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
-        let definitions: any = {};
-        let promises: monaco.Promise<any>[] = [];
-        if (!readOnly) {
-            mainPkg.sortedDeps().forEach(pkg => {
-                pkg.getFiles().forEach(f => {
-                    let fp = pkg.id + "/" + f;
-                    let proto = "pkg:" + fp;
-                    if (/\.(ts)$/.test(f) && fp != currFile) {
-                        if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fp]) {
-                            let content = pkg.readFile(f) || " ";
-                            libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
-                        }
-                        modelMap[fp] = "1";
+        const promises: monaco.Promise<any>[] = [];
+        let definitions: {[ns: string]: NameDefiniton} = {}
 
-                        // populate definitions
-                        let promise = monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                            return worker(monaco.Uri.parse(fp))
-                                .then((client: any) => {
-                                    return client.getNavigationBarItems(fp).then((items: any[]) => {
-                                        let innerPromises: Promise<any>[] = [];
-                                        items.forEach((item: any) => {
-                                            if (item.kind == 'module') {
-                                                // namespace
-                                                if (!definitions[item.text]) {
-                                                    definitions[item.text] = {
-                                                        fns: {},
-                                                        commentAttr: {}
-                                                    };
-                                                }
-                                                // get namespace weight and color
-                                                if (definitions[item.text].commentAttr != {}) {
-                                                    let promise = client.getLeadingComments(fp, item.spans[0].start, item.text)
-                                                        .then((cmts: any) => {
-                                                            if (cmts) {
-                                                                let commentAttr = pxtc.parseCommentString(cmts);
-                                                                if (commentAttr.color)
-                                                                    definitions[item.text].commentAttr = commentAttr;
-                                                            }
-                                                        });
-                                                    innerPromises.push(promise);
-                                                }
-                                                // only scan definition files for methods
-                                                if (/\.d\.ts$/.test(f)) {
-                                                    item.childItems.forEach((fn: any) => {
-                                                        if (fn.kind == 'function') {
-                                                            // function 
-                                                            let promise = client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
-                                                                .then((details: any) => {
-                                                                    if (details) definitions[item.text].fns[fn.text] = details[1];
-                                                                });
-                                                            innerPromises.push(promise);
-                                                        }
-                                                    })
-                                                }
-                                            }
-                                        });
-                                        return Promise.join(innerPromises);
-                                    });
-                            });
-                        });
-                        promises.push(promise)
+        if (readOnly) return;
+
+        mainPkg.sortedDeps().forEach(pkg => {
+            pkg.getFiles().forEach(f => {
+                let fp = pkg.id + "/" + f;
+                let proto = "pkg:" + fp;
+                if (/\.(ts)$/.test(f) && fp != currFile) {
+                    if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fp]) {
+                        let content = pkg.readFile(f) || " ";
+                        libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
                     }
-                });
+                    modelMap[fp] = "1";
+
+                    // populate definitions
+                    let promise = populateDefinitions(f, fp, definitions);
+                    promises.push(promise);
+                }
             });
-        }
+        });
+
+        Object.keys(extraLibs)
+            .filter(lib => /\.(ts)$/.test(lib) && !modelMap[lib])
+            .forEach(lib => {
+                libs[lib].dispose();
+            });
+
         return monaco.Promise.join(promises)
-            .then(() => {
-                Object.keys(extraLibs)
-                    .filter(lib => /\.(ts)$/.test(lib) && !modelMap[lib])
-                    .forEach(lib => {
-                        libs[lib].dispose();
-                    });
+                .then(() => {
                 return definitions;
         });
+    }
+
+    function populateDefinitions(f: string, fp: string, definitions: {[ns: string]: NameDefiniton}): monaco.Promise<any> {
+        return monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
+                return worker(monaco.Uri.parse(fp))
+                    .then((client: any) => {
+                    return client.getNavigationBarItems(fp).then((items: ts.NavigationBarItem[]) => {
+                        return monaco.Promise.join(items.filter(item => item.kind == 'module').map((item) => {
+                            let promises: monaco.Promise<any>[] = [];
+                            // namespace
+                            if (!definitions[item.text]) {
+                                definitions[item.text] = {
+                                    fns: {}
+                                };
+                            }
+
+                            return monaco.Promise.join(item.childItems
+                                .filter(item => item.kind == 'function' && (item.kindModifiers.indexOf('export') > -1 || item.kindModifiers.indexOf('declare') > -1)).map((fn) => {
+                                // exported function 
+                                return client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
+                                    .then((details: [ts.CompletionEntryDetails, string]) => {
+                                        if (!details) return;
+
+                                        return client.getLeadingComments(fp, fn.spans[0].start + fn.spans[0].length, fn.text)
+                                            .then((comments: string) => {
+                                                let commentAttr: pxtc.CommentAttrs;
+                                                if (comments)
+                                                    commentAttr = pxtc.parseCommentString(comments);
+                                                let comment = commentAttr ? commentAttr.jsDoc : ts.displayPartsToString(details[0].documentation);
+                                                definitions[item.text].fns[fn.text] = {
+                                                    snippet: details[1],
+                                                    comment: comment,
+                                                    weight: commentAttr ? commentAttr.weight : 50
+                                                }
+                                            });
+                                    });
+                            }));
+                        }));
+                    });
+                });
+            });
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {

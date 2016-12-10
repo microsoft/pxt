@@ -338,19 +338,25 @@ div.simframe > iframe {
     background: @primaryColor;
     overflow-x: visible;
     overflow-y: auto;
-    width: 300px;
     border-top-right-radius: 8px;
     border-bottom-right-radius: 8px;
 }
 
 .monacoFlyout div {
-    margin:2rem;
+    margin: 1.2rem;
 }
 
 .monacoDraggableBlock {
     background-color: white;
-    padding: 0.5rem;
-    border-radius: 4px;
+    padding: 0.4rem;
+    border-radius: 8px;
+    border: solid 3px white;
+    /*max-width: 300px;
+    word-wrap: break-word;*/
+}
+
+.monacoDraggableBlock:hover {
+    border: solid 3px #fc3;
 }
 
 /*******************************
