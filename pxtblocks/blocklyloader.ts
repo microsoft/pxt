@@ -349,10 +349,13 @@ namespace pxt.blocks {
                 } else {
                     let prtype = Util.lookup(info.apis.byQName, pr.type);
                     if (prtype && prtype.kind == pxtc.SymbolKind.Enum) {
-                        let dd = Util.values(info.apis.byQName)
+                        const dd = Util.values(info.apis.byQName)
                             .filter(e => e.namespace == pr.type)
                             .map(v => [v.attributes.block || v.attributes.blockId || v.name, v.namespace + "." + v.name]);
                         i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
+                        // if a value is provided, move it first
+                        if (pr.shadowValue)
+                            dd.sort((v1, v2) => v1[0] == pr.shadowValue ? -1 : v2[0] == pr.shadowValue ? 1 : 0);
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
                     } else {
                         i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
