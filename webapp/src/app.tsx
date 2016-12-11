@@ -976,7 +976,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 this.editorFile.markDirty();
             }
             this.lastChangeTime = Util.now();
-            if (pxt.appTarget.simulator && pxt.appTarget.simulator.stopOnChange)
+            if (this.state.running
+                && pxt.appTarget.simulator && pxt.appTarget.simulator.stopOnChange)
                 this.stopSimulator();
             this.editorChangeHandler();
         }
