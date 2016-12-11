@@ -1958,8 +1958,12 @@ function initScreenshots() {
     window.addEventListener('message', (ev: MessageEvent) => {
         let msg = ev.data as pxsim.SimulatorMessage;
         if (msg && msg.type == "screenshot") {
+            pxt.tickEvent("sim.screenshot");
+            const scmsg = msg as pxsim.SimulatorScreenshotMessage;
             console.log('received screenshot');
-        }
+            workspace.saveScreenshotAsync(theEditor.state.header, scmsg.data)
+                .done(() => { pxt.debug('screenshot saved')})
+        };
     }, false);
 }
 

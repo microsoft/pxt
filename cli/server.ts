@@ -102,10 +102,10 @@ function setupProjectsDir() {
     nodeutil.mkdirP(userProjectsDir);
 }
 
-let statAsync = Promise.promisify(fs.stat)
-let readdirAsync = Promise.promisify(fs.readdir)
-let readFileAsync = Promise.promisify(fs.readFile)
-let writeFileAsync: any = Promise.promisify(fs.writeFile)
+const statAsync = Promise.promisify(fs.stat)
+const readdirAsync = Promise.promisify(fs.readdir)
+const readFileAsync = Promise.promisify(fs.readFile)
+const writeFileAsync: any = Promise.promisify(fs.writeFile)
 
 function existsAsync(fn: string) {
     return new Promise((resolve, reject) => {
@@ -159,8 +159,19 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
         })
 }
 
+function writeScreenshotAsync(logicalDirname: string, uri: string) {
+    console.log('writing screenshot...');
+    const dirname = path.join(userProjectsDir, logicalDirname)
+    nodeutil.mkdirP(dirname)
+    const m = uri.match(/^data:.+\/(.+);base64,(.*)$/);
+    if (!m) return Promise.resolve();
+    const ext = m[1];
+    const data = m[2];
+    return writeFileAsync(path.join(dirname, "screenshot." + ext), new Buffer(data, 'base64'));
+}
+
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
-    let dirname = path.join(userProjectsDir, logicalDirname)
+    const dirname = path.join(userProjectsDir, logicalDirname)
 
     nodeutil.mkdirP(dirname)
 
@@ -242,13 +253,13 @@ function getCachedHexAsync(sha: string): Promise<any> {
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
-    let opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
-    let innerPath = elts.slice(2).join("/").replace(/^\//, "")
-    let filename = path.resolve(path.join(userProjectsDir, innerPath))
-    let meth = req.method.toUpperCase()
-    let cmd = meth + " " + elts[1]
+    const opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
+    const innerPath = elts.slice(2).join("/").replace(/^\//, "")
+    const filename = path.resolve(path.join(userProjectsDir, innerPath))
+    const meth = req.method.toUpperCase()
+    const cmd = meth + " " + elts[1]
 
-    let readJsonAsync = () =>
+    const readJsonAsync = () =>
         nodeutil.readResAsync(req)
             .then(buf => JSON.parse(buf.toString("utf8")))
 
@@ -280,6 +291,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
                     boardCount: boardCount
                 };
             });
+    else if (cmd == "POST screenshot")
+        return readJsonAsync()
+            .then(d => writeScreenshotAsync(innerPath, d.data));
     else if (cmd == "GET compile")
         return getCachedHexAsync(innerPath)
             .then((res) => {

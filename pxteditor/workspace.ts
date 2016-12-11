@@ -36,5 +36,6 @@ namespace pxt.workspace {
         saveToCloudAsync(h: Header): Promise<void>;
         syncAsync(): Promise<void>;
         resetAsync(): Promise<void>;
+        saveScreenshotAsync?: (h: Header, data: string) => Promise<void>;
     }
 }

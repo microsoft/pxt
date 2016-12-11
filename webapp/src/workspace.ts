@@ -139,6 +139,13 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     return impl.installAsync(h0, text)
 }
 
+export function saveScreenshotAsync(h: Header, data: string) {
+    checkSession();
+    return impl.saveScreenshotAsync
+        ? impl.saveScreenshotAsync(h, data)
+        : Promise.resolve();
+}
+
 export function fixupFileNames(txt: ScriptText) {
     if (!txt) return txt
     for (let oldName in ["kind.json", "yelm.json"]) {

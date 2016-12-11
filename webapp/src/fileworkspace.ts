@@ -213,6 +213,10 @@ function syncAsync() {
         })
 }
 
+function saveScreenshotAsync(h: Header, data: string) {
+    return apiAsync("screenshot/" + h.id, { data })
+}
+
 function resetAsync() {
     return db.destroyAsync()
         .then(() => {
@@ -230,5 +234,6 @@ export var provider: WorkspaceProvider = {
     installAsync,
     saveToCloudAsync,
     syncAsync,
-    resetAsync
+    resetAsync,
+    saveScreenshotAsync
 }
