@@ -163,7 +163,7 @@ function writeScreenshotAsync(logicalDirname: string, uri: string) {
     console.log('writing screenshot...');
     const dirname = path.join(userProjectsDir, logicalDirname)
     nodeutil.mkdirP(dirname)
-    const m = uri.match(/^data:.+\/(.+);base64,(.*)$/);
+    const m = uri.match(/^data:image\/(png|jpg);base64,(.*)$/);
     if (!m) return Promise.resolve();
     const ext = m[1];
     const data = m[2];
