@@ -1954,7 +1954,13 @@ function getsrc() {
     pxt.log(theEditor.editor.getCurrentSource())
 }
 
-function enableFeedback() {
+function initScreenshots() {
+    window.addEventListener('message', (ev: MessageEvent) => {
+        let msg = ev.data as pxsim.SimulatorMessage;
+        if (msg && msg.type == "screenshot") {
+            console.log('received screenshot');
+        }
+    }, false);
 }
 
 function enableAnalytics() {
@@ -2164,7 +2170,8 @@ $(document).ready(() => {
             return workspace.syncAsync();
         })
         .then(() => {
-            initSerial()
+            initSerial();
+            initScreenshots();
             initHashchange();
         }).then(() => pxt.winrt.initAsync(ih))
         .then(() => {
@@ -2192,9 +2199,7 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd)
             else theEditor.newProject();
             return Promise.resolve();
-        }).done(() => {
-            enableFeedback();
-        });
+        }).done(() => {});
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)
