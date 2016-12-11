@@ -81,6 +81,7 @@ declare namespace pxt {
 
     interface AppSimulator {
         autoRun?: boolean;
+        stopOnChange?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
