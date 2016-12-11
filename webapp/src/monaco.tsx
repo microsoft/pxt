@@ -540,7 +540,7 @@ export class Editor extends srceditor.Editor {
                     let metaData = fnElement.fns[fn].metaData;
 
                     let methodToken = document.createElement('span');
-                    methodToken.innerText = snippet.replace('{{}}', '');
+                    methodToken.innerText = snippet.replace('(', ' (').replace('{{}}', '');
 
                     monacoBlock.title = comment;
 
