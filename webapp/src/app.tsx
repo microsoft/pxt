@@ -19,6 +19,7 @@ import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import * as gallery from "./gallery";
+import * as screenshot from "./screenshot";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -350,6 +351,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             key={'local' + scr.id}
                             name={scr.name}
                             time={scr.recentUse}
+                            imageUrl={scr.icon}
                             url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                             onClick={() => chgHeader(scr) }
                             />
@@ -1957,7 +1959,17 @@ function getsrc() {
     pxt.log(theEditor.editor.getCurrentSource())
 }
 
-function enableFeedback() {
+function initScreenshots() {
+    window.addEventListener('message', (ev: MessageEvent) => {
+        let msg = ev.data as pxsim.SimulatorMessage;
+        if (msg && msg.type == "screenshot") {
+            pxt.tickEvent("sim.screenshot");
+            const scmsg = msg as pxsim.SimulatorScreenshotMessage;
+            console.log('received screenshot');
+            screenshot.saveAsync(theEditor.state.header, scmsg.data)
+                .done(() => { pxt.debug('screenshot saved')})
+        };
+    }, false);
 }
 
 function enableAnalytics() {
@@ -2167,7 +2179,8 @@ $(document).ready(() => {
             return workspace.syncAsync();
         })
         .then(() => {
-            initSerial()
+            initSerial();
+            initScreenshots();
             initHashchange();
         }).then(() => pxt.winrt.initAsync(ih))
         .then(() => {
@@ -2195,9 +2208,7 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd)
             else theEditor.newProject();
             return Promise.resolve();
-        }).done(() => {
-            enableFeedback();
-        });
+        }).done(() => {});
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)
