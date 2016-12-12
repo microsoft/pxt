@@ -107,8 +107,8 @@ const readdirAsync = Promise.promisify(fs.readdir)
 const readFileAsync = Promise.promisify(fs.readFile)
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
 
-function existsAsync(fn: string) {
-    return new Promise((resolve, reject) => {
+function existsAsync(fn: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
         fs.exists(fn, resolve)
     })
 }
@@ -129,6 +129,7 @@ type FsPkg = pxt.FsPkg;
 
 function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
+    let r: FsPkg = undefined;
     return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
         .then(buf => {
             let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
@@ -150,11 +151,15 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
                                 })
                     }))
                 .then(files => {
-                    return {
+                    r = {
                         path: logicalDirname,
                         config: cfg,
                         files: files
-                    }
+                    };
+                    return existsAsync(path.join(dirname, "icon.png"));
+                }).then(icon => {
+                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
+                    return r;
                 })
         })
 }
@@ -178,7 +183,7 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
     return Promise.all([
         writeUriAsync("screenshot", screenshotUri),
         writeUriAsync("icon", iconUri)
-    ]).then(() => {});
+    ]).then(() => { });
 }
 
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
@@ -727,23 +732,23 @@ export function serveAsync(options: ServeOptions) {
         electronHandlers = serveOptions.electronHandlers;
     }
 
-    let server = http.createServer((req, res) => {
-        let error = (code: number, msg: string = null) => {
+    const server = http.createServer((req, res) => {
+        const error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
             res.end(msg || "Error " + code)
         }
 
-        let sendJson = (v: any) => {
+        const sendJson = (v: any) => {
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
             res.end(JSON.stringify(v))
         }
 
-        let sendHtml = (s: string) => {
+        const sendHtml = (s: string) => {
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf8' })
             res.end(s)
         }
 
-        let sendFile = (filename: string) => {
+        const sendFile = (filename: string) => {
             try {
                 let stat = fs.statSync(filename);
 
@@ -788,6 +793,12 @@ export function serveAsync(options: ServeOptions) {
                         console.log(err.stack)
                     }
                 })
+        }
+
+        if (elts[0] == "icon") {
+            const name = path.join(userProjectsDir, elts[1], "icon.png");
+            return existsAsync(name)
+                .then(exists => exists ? sendFile(name) : error(404));
         }
 
         if (options.packaged) {

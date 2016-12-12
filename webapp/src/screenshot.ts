@@ -1,4 +1,6 @@
 import * as workspace from "./workspace";
+import * as data from "./data";
+
 type Header = pxt.workspace.Header;
 
 function loadImageAsync(data: string): Promise<HTMLImageElement> {
@@ -17,10 +19,10 @@ function renderIcon(img: HTMLImageElement): string {
         const w = 320;
         if (img.height > img.width) {
             cvs.width = w;
-            cvs.height = img.width / w * img.height;
+            cvs.height = img.height / img.width * w;
         } else {
+            cvs.width = img.width / img.height * w;
             cvs.height = w;
-            cvs.width = img.height / w * img.width;
         }
         const ctx = cvs.getContext("2d");
         ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
@@ -34,5 +36,8 @@ export function saveAsync(header: Header, screenshot: string): Promise<void> {
         .then(img => {
             const icon = renderIcon(img);
             return workspace.saveScreenshotAsync(header, screenshot, icon)
-        })
+                .then(() => {
+                    data.invalidate("header:" + header.id);
+                });
+        });
 }

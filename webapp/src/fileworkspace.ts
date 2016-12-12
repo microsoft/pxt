@@ -77,6 +77,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         blobId: null,
         blobCurrent: false,
         isDeleted: false,
+        icon: pkg.icon
     }
 
     if (!e.header) {
@@ -87,6 +88,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         eh.pubId = hd.pubId
         eh.modificationTime = hd.modificationTime
         eh.isDeleted = hd.isDeleted
+        eh.icon = hd.icon
     }
 }
 
