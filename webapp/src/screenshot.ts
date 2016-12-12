@@ -47,6 +47,7 @@ export function saveAsync(header: Header, screenshot: string): Promise<void> {
             return workspace.saveScreenshotAsync(header, screenshot, icon)
                 .then(() => {
                     data.invalidate("header:" + header.id);
+                    data.invalidate("header:*");
                 });
         });
 }
