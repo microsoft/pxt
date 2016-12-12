@@ -1523,7 +1523,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             this.stopSimulator()
         } else {
             pxt.tickEvent('simulator.run')
-            this.runSimulator();
+            this.saveFileAsync()
+                .then(() => this.runSimulator());
         }
     }
 
