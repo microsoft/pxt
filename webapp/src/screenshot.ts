@@ -16,17 +16,26 @@ function renderIcon(img: HTMLImageElement): string {
     let icon: string = null;
     if (img && img.width > 0 && img.height > 0) {
         const cvs = document.createElement("canvas") as HTMLCanvasElement;
-        const w = 320;
+        cvs.width = 305;
+        cvs.height = 200;
+        let ox = 0;
+        let oy = 0;
+        let iw = 0;
+        let ih = 0;
         if (img.height > img.width) {
-            cvs.width = w;
-            cvs.height = img.height / img.width * w;
+            ox = 0;
+            iw = img.width;
+            ih = iw / cvs.width * cvs.height;
+            oy = (img.height - ih) / 2;
         } else {
-            cvs.width = img.width / img.height * w;
-            cvs.height = w;
+            oy = 0;
+            ih = img.height;
+            iw = ih / cvs.height * cvs.width;
+            ox = (img.width - iw) / 2;
         }
         const ctx = cvs.getContext("2d");
-        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
-        icon = cvs.toDataURL('image/png');
+        ctx.drawImage(img, ox, oy, iw, ih, 0, 0, cvs.width, cvs.height);
+        icon = cvs.toDataURL('image/jpeg', 85);
     }
     return icon;
 }
