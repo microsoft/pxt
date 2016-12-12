@@ -213,8 +213,8 @@ function syncAsync() {
         })
 }
 
-function saveScreenshotAsync(h: Header, data: string) {
-    return apiAsync("screenshot/" + h.id, { data })
+function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
+    return apiAsync("screenshot/" + h.id, { screenshot, icon })
 }
 
 function resetAsync() {

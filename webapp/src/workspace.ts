@@ -139,10 +139,10 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     return impl.installAsync(h0, text)
 }
 
-export function saveScreenshotAsync(h: Header, data: string) {
+export function saveScreenshotAsync(h: Header, data: string, icon: string) {
     checkSession();
     return impl.saveScreenshotAsync
-        ? impl.saveScreenshotAsync(h, data)
+        ? impl.saveScreenshotAsync(h, data, icon)
         : Promise.resolve();
 }
 

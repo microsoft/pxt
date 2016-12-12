@@ -159,15 +159,26 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
         })
 }
 
-function writeScreenshotAsync(logicalDirname: string, uri: string) {
+function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, iconUri: string) {
     console.log('writing screenshot...');
     const dirname = path.join(userProjectsDir, logicalDirname)
     nodeutil.mkdirP(dirname)
-    const m = uri.match(/^data:image\/(png|jpg);base64,(.*)$/);
-    if (!m) return Promise.resolve();
-    const ext = m[1];
-    const data = m[2];
-    return writeFileAsync(path.join(dirname, "screenshot." + ext), new Buffer(data, 'base64'));
+
+    function writeUriAsync(name: string, uri: string) {
+        if (!uri) return Promise.resolve();
+        const m = uri.match(/^data:image\/(png|jpg);base64,(.*)$/);
+        if (!m) return Promise.resolve();
+        const ext = m[1];
+        const data = m[2];
+        const fn = path.join(dirname, name + "." + ext);
+        console.log(`writing ${fn}`)
+        return writeFileAsync(fn, new Buffer(data, 'base64'));
+    }
+
+    return Promise.all([
+        writeUriAsync("screenshot", screenshotUri),
+        writeUriAsync("icon", iconUri)
+    ]).then(() => {});
 }
 
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
@@ -293,7 +304,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "POST screenshot")
         return readJsonAsync()
-            .then(d => writeScreenshotAsync(innerPath, d.data));
+            .then(d => writeScreenshotAsync(innerPath, d.screenshot, d.icon));
     else if (cmd == "GET compile")
         return getCachedHexAsync(innerPath)
             .then((res) => {

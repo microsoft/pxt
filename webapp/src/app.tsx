@@ -19,6 +19,7 @@ import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import * as gallery from "./gallery";
+import * as screenshot from "./screenshot";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1961,7 +1962,7 @@ function initScreenshots() {
             pxt.tickEvent("sim.screenshot");
             const scmsg = msg as pxsim.SimulatorScreenshotMessage;
             console.log('received screenshot');
-            workspace.saveScreenshotAsync(theEditor.state.header, scmsg.data)
+            screenshot.saveAsync(theEditor.state.header, scmsg.data)
                 .done(() => { pxt.debug('screenshot saved')})
         };
     }, false);
