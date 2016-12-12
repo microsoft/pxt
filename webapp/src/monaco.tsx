@@ -497,7 +497,7 @@ export class Editor extends srceditor.Editor {
             let treerow = document.createElement('div');
             treeitem.setAttribute('role', 'treeitem');
             let fnElement = fnDef[ns];
-            let color = metaElement.meta.commentAttr.color;
+            let color = monacoEditor.convertColour(metaElement.meta.commentAttr.color);
             treeitem.onclick = (ev: MouseEvent) => {
                 let monacoFlyout = document.getElementById('monacoFlyoutWidget');
                 monacoEditor.resetFlyout(false);
@@ -509,12 +509,18 @@ export class Editor extends srceditor.Editor {
                     treerow.className = 'blocklyTreeRow';
                     return;
                 } else {
+                    // Selected category
                     treeitem.style.background = `${color}`;
                     treerow.style.color = '#fff';
                     treerow.className += ' blocklyTreeSelected';
                     monacoEditor.selectedCategoryItem = treeitem;
                     monacoEditor.selectedCategoryRow = treerow;
-                    monacoEditor.selectedCategoryColor = color;
+                    if (appTheme.invertedToolbox) {
+                        // Inverted toolbox
+                        monacoEditor.selectedCategoryColor = '#fff';
+                    } else {
+                        monacoEditor.selectedCategoryColor = color;
+                    }
                 }
 
                 monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
@@ -594,20 +600,40 @@ export class Editor extends srceditor.Editor {
             treerow.appendChild(label);
 
             if (appTheme.coloredToolbox) {
+                // Colored toolbox
                 treerow.style.color = `${color}`;
+                treerow.style.borderLeft = `8px solid ${color}`;
+            } else if (appTheme.invertedToolbox) {
+                // Inverted toolbox
+                treerow.style.color = '#fff';
+                treerow.style.background = (color || '#ddd');
+            } else {
+                // Standard toolbox
+                treerow.style.borderLeft = `8px solid ${color}`;
             }
-            treerow.style.borderLeft = `8px solid ${color}`;
             treerow.style.paddingLeft = '0px';
             label.innerText = `${Util.capitalize(ns)}`;
         })
 
+        // Add the toolbox buttons
         pxt.blocks.initToolboxButtons(toolbox, 'monacoToolboxButtons',
-        () => {
-            this.parent.addPackage();
-        },
-        () => {
+            (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
+            (() => {
+                this.parent.addPackage();
+            }) : null),
+            (!this.parent.getSandboxMode() ?
+            (() => {
             this.undo();
-        });
+            }) : null)
+        );
+    }
+
+    convertColour(colour: string) {
+        let hue = parseFloat(colour);
+        if (!isNaN(hue)) {
+            return Blockly.hueToRgb(hue);
+        }
+        return colour;
     }
 
     getId() {

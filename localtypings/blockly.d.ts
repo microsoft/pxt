@@ -34,6 +34,7 @@ declare namespace Blockly {
     function terminateDrag_(): void;
     function mouseToSvg(e: Event, svg: Element): any;
     function svgResize(workspace: Blockly.Workspace): void;
+    function hueToRgb(hue: number): string;
 
     let ALIGN_RIGHT: number;
 
