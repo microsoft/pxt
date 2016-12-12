@@ -156,7 +156,7 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
                         config: cfg,
                         files: files
                     };
-                    return existsAsync(path.join(dirname, "icon.png"));
+                    return existsAsync(path.join(dirname, "icon.jpeg"));
                 }).then(icon => {
                     r.icon = icon ? "/icon/" + logicalDirname : undefined;
                     return r;
@@ -171,7 +171,7 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
 
     function writeUriAsync(name: string, uri: string) {
         if (!uri) return Promise.resolve();
-        const m = uri.match(/^data:image\/(png|jpg);base64,(.*)$/);
+        const m = uri.match(/^data:image\/(png|jpeg);base64,(.*)$/);
         if (!m) return Promise.resolve();
         const ext = m[1];
         const data = m[2];
@@ -796,7 +796,7 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (elts[0] == "icon") {
-            const name = path.join(userProjectsDir, elts[1], "icon.png");
+            const name = path.join(userProjectsDir, elts[1], "icon.jpeg");
             return existsAsync(name)
                 .then(exists => exists ? sendFile(name) : error(404));
         }
