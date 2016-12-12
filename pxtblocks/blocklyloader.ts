@@ -548,7 +548,7 @@ namespace pxt.blocks {
                 addPackageButton.setAttribute('aria-label', lf("Add Package..."));
                 addPackageButton.setAttribute('title', lf("Add Package..."));
                 addPackageButton.onclick = addCallback;
-                addPackageButton.className = 'circular ui icon button blocklyToolboxButton blocklyAddPackageButton';
+                addPackageButton.className = 'ui icon button blocklyToolboxButton blocklyAddPackageButton';
                 let addpackageIcon = document.createElement('i');
                 addpackageIcon.className = 'plus icon';
                 addPackageButton.appendChild(addpackageIcon);
@@ -565,7 +565,7 @@ namespace pxt.blocks {
                 undoButton.setAttribute('aria-label', lf("Undo"));
                 undoButton.setAttribute('title', lf("Undo"));
                 undoButton.onclick = undoCallback;
-                undoButton.className = 'circular ui icon button blocklyToolboxButton blocklyUndoButton';
+                undoButton.className = 'ui icon button blocklyToolboxButton blocklyUndoButton';
                 let undoIcon = document.createElement('i');
                 undoIcon.className = 'undo icon';
                 undoButton.appendChild(undoIcon);
