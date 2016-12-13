@@ -102,7 +102,7 @@ ${output}</xml>`;
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
             if (expr.expression.kind == SK.CallExpression) {
                 const call = expr.expression as ts.CallExpression;
-                const callInfo: pxtc.CallInfo = (expr as any).callInfo
+                const callInfo: pxtc.CallInfo = (call as any).callInfo
                 if (!callInfo) {
                     error(expr)
                     return false;
