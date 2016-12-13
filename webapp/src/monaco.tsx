@@ -501,7 +501,7 @@ export class Editor extends srceditor.Editor {
         this.editor.layout();
         let monacoEditor = this;
         // clear the toolbox
-        toolbox.innerHTML = null;
+        toolbox.innerHTML = '';
 
         // Add an overlay widget for the toolbox
         toolbox.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
