@@ -344,6 +344,10 @@ body.blocklyMinimalBody {
     }
 }
 
+/* Fix for context menu scroll issue */
+.blocklyWidgetDiv {
+    position: fixed;
+}
 
 /*******************************
     Monaco Editor
