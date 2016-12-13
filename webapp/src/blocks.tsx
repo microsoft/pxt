@@ -62,13 +62,16 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
                     pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-                    if (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode()) {
-                        pxt.blocks.initToolboxButtons(() => {
+                    pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
+                        (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
+                        (() => {
                             this.parent.addPackage();
-                        },() => {
-                            this.undo();
-                        });
-                    }
+                        }) : null),
+                        (!this.parent.getSandboxMode() ?
+                        (() => {
+                        this.undo();
+                        }) : null)
+                    );
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;

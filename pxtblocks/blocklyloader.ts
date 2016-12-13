@@ -533,43 +533,47 @@ namespace pxt.blocks {
         }
     }
 
-    export function initToolboxButtons(addCallback: (ev?: MouseEvent) => void, undoCallback: (ev?: MouseEvent) => void): void {
-        if (!$('#blocklyToolboxButtons').length) {
+    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: MouseEvent) => void, undoCallback: (ev?: MouseEvent) => void): void {
+        if (!$(`#${id}`).length) {
             let blocklyToolboxButtons = document.createElement('div');
-            blocklyToolboxButtons.id = "blocklyToolboxButtons";
-            blocklyToolboxButtons.className = 'ui equal width stackable grid';
+            blocklyToolboxButtons.id = id;
+            blocklyToolboxButtons.className = 'ui equal width stackable grid blocklyToolboxButtons';
 
-            // add "Add package" button to toolbox
-            let addButtonDiv = document.createElement('div');
-            addButtonDiv.className = 'column';
-            let addPackageButton = document.createElement('button');
-            addPackageButton.setAttribute('role', 'button');
-            addPackageButton.setAttribute('aria-label', lf("Add Package..."));
-            addPackageButton.setAttribute('title', lf("Add Package..."));
-            addPackageButton.onclick = addCallback;
-            addPackageButton.className = 'circular ui icon button blocklyToolboxButton blocklyAddPackageButton';
-            let addpackageIcon = document.createElement('i');
-            addpackageIcon.className = 'plus icon';
-            addPackageButton.appendChild(addpackageIcon);
-            addButtonDiv.appendChild(addPackageButton);
-            blocklyToolboxButtons.appendChild(addButtonDiv);
+            if (addCallback) {
+                // add "Add package" button to toolbox
+                let addButtonDiv = document.createElement('div');
+                addButtonDiv.className = 'column';
+                let addPackageButton = document.createElement('button');
+                addPackageButton.setAttribute('role', 'button');
+                addPackageButton.setAttribute('aria-label', lf("Add Package..."));
+                addPackageButton.setAttribute('title', lf("Add Package..."));
+                addPackageButton.onclick = addCallback;
+                addPackageButton.className = 'ui icon button blocklyToolboxButton blocklyAddPackageButton';
+                let addpackageIcon = document.createElement('i');
+                addpackageIcon.className = 'plus icon';
+                addPackageButton.appendChild(addpackageIcon);
+                addButtonDiv.appendChild(addPackageButton);
+                blocklyToolboxButtons.appendChild(addButtonDiv);
+            }
 
-            // add "undo" button to toolbox
-            let undoButtonDiv = document.createElement('div');
-            undoButtonDiv.className = 'column';
-            let undoButton = document.createElement('button');
-            undoButton.setAttribute('role', 'button');
-            undoButton.setAttribute('aria-label', lf("Undo"));
-            undoButton.setAttribute('title', lf("Undo"));
-            undoButton.onclick = undoCallback;
-            undoButton.className = 'circular ui icon button blocklyToolboxButton blocklyUndoButton';
-            let undoIcon = document.createElement('i');
-            undoIcon.className = 'undo icon';
-            undoButton.appendChild(undoIcon);
-            undoButtonDiv.appendChild(undoButton);
-            blocklyToolboxButtons.appendChild(undoButtonDiv);
+            if (undoCallback) {
+                // add "undo" button to toolbox
+                let undoButtonDiv = document.createElement('div');
+                undoButtonDiv.className = 'column';
+                let undoButton = document.createElement('button');
+                undoButton.setAttribute('role', 'button');
+                undoButton.setAttribute('aria-label', lf("Undo"));
+                undoButton.setAttribute('title', lf("Undo"));
+                undoButton.onclick = undoCallback;
+                undoButton.className = 'ui icon button blocklyToolboxButton blocklyUndoButton';
+                let undoIcon = document.createElement('i');
+                undoIcon.className = 'undo icon';
+                undoButton.appendChild(undoIcon);
+                undoButtonDiv.appendChild(undoButton);
+                blocklyToolboxButtons.appendChild(undoButtonDiv);
+            }
 
-            $('.blocklyToolboxDiv').append(blocklyToolboxButtons);
+            toolbox.appendChild(blocklyToolboxButtons);
         }
     }
 

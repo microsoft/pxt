@@ -217,7 +217,7 @@ div.simframe > iframe {
              Blockly
 *******************************/
 
-.blocklyToolboxDiv {
+.blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;
 }
 
@@ -266,9 +266,11 @@ div.simframe > iframe {
     color: @trashIconColor;
 }
 
-/* Blockly Toolbox Buttons */
-#blocklyToolboxButtons {
+/* Blockly / Monaco Toolbox Buttons */
+#blocklyToolboxButtons, #monacoToolboxButtons {
     margin-top: 0.5rem;
+    margin-left: auto;
+    margin-right: auto;
     font-size:3rem;
     text-align: center;
 }
@@ -332,6 +334,42 @@ div.simframe > iframe {
     background-color: #FFB900;
 }
 
+/* Monaco Toolbox */
+.monacoFlyout {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    background: rgba(221,221,221, 0.8);
+    overflow-x: visible;
+    overflow-y: auto;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.monacoFlyout div {
+    margin: 1.2rem;
+}
+
+.monacoDraggableBlock {
+    color: white;
+    padding: 0.4rem;
+    border-radius: 8px;
+    border: solid 3px white;
+    cursor: pointer;
+}
+
+.monacoDraggableBlock span.sig {
+    opacity: 0.7;
+}
+
+.monacoDraggableBlock span.docs {
+    display: none; /* enable as needed */
+    color: #ccc;
+    font-size:70%;
+    max-width: 22rem;
+}
+
+.monacoDraggableBlock:hover {
+    border: solid 3px #fc3 !important;
+}
 
 /*******************************
         Media Adjustments
@@ -377,8 +415,8 @@ div.simframe > iframe {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    /* Blockly Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
-    #blocklyToolboxButtons.ui.stackable.grid .column {
+    /* Blockly / Monaco Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
+    #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
         padding: 0.3rem 0 0.3rem 0 !important;
     }
     /* Hide the getting started button in the mobile view */

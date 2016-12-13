@@ -367,8 +367,26 @@ body.blocklyMinimalBody {
     padding-right: 20px !important;
 }
 
-
 /* Fix for monaco editor Signature bug in Safari */
 .monaco-editor .parameter-hints-widget {
     flex-direction: row !important;
+}
+
+.line-numbers {
+    display:none;
+}
+
+.monacoToolboxDiv {
+    position: relative;
+    display: inline-block;
+    overflow-x: visible;
+    overflow-y: auto;
+}
+.monacoToolboxDiv.hide {
+    display: none;
+}
+
+#monacoEditorInner {
+    position: relative !important;
+    display: inline-block;
 }

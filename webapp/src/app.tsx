@@ -965,7 +965,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             this.typecheck();
         }
         this.markdownChangeHandler();
-    }, 1000, false);
+    }, 500, false);
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
@@ -1046,7 +1046,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             helpCard: undefined,
             showBlocks: false
         })
-        this.fireResize();
+        //this.fireResize();
     }
 
     setSideFile(fn: pkg.File) {
