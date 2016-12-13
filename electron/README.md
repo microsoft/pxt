@@ -24,13 +24,10 @@ pxt electron run
 
 > **NOTE 1:** Make sure you have built both pxt-core and your target before running this. **You must be able to successfully `pxt serve` your current target**, otherwise the app won't work.
 
-> **NOTE 2:** Because of the way native modules work, `pxt electron init/run` and `pxt serve` are **mutually exclusive**.
-Once you run `pxt electron init`, you won't be able to run `pxt serve` anymore. To restore `pxt serve` functionality, run `pxt electron clean`.
-You will no longer be able to run `pxt electron run` after you clean.
+> **NOTE 2:** Because of the way native modules work, `pxt electron init` may break `pxt serve`.
+Once you run `pxt electron init`, if you can't run `pxt serve` anymore, delete all node modules from your target and from pxt-core, and reinstall them.
 
-> **NOTE 3:** Only one target can be initialized for Electron at a time. If you `pxt electron init` target A, and then `pxt electron init` target B, you won't be able to `pxt electron run` target A anymore.
-
-> **NOTE 4:** Due to a bug in NPM 3 when linking packages, this functionality only works in NPM 2.
+> **NOTE 3:** Due to a bug in NPM 3 when linking packages, this functionality only works in NPM 2.
 If you are using NPM 3, you can still package the app (see section below), but you won't be able to run your target in Electron on the fly - you'll need to re-package the app every time you make changes.
 
 ## Packaging the app
@@ -46,11 +43,16 @@ The packaged app will be in `[Target directory]/electron-out`.
 
 > **NOTE 2:** You do not need to `pxt electron init` your current target to package the app.
 
-> **NOTE 3:** Packaging the app implicitly does the equivalent of `pxt electron clean`. This means you will need to re-run `pxt electron init` if you want to use `pxt electron run` again.
+> **NOTE 3:** Packaging the app undoes `pxt electron init`. This means you will need to re-run `pxt electron init` if you want to use `pxt electron run` again.
 
-You can also package the app for a published target (independent of your current target).
+You can also package the app for a published target instead of using your local target:
+```
+pxt electron build --release <Target NPM package name>[@<NPM package version>]
+```
 
-# Contributing to / modifying the core app
+In this case, the packaged app will be in `[PXT repo]/electron/out`.
+
+# Contributing to / modifying the Electron app
 
 ## Dependencies structure
 The Electron app uses a dual `package.json` structure.
@@ -61,13 +63,18 @@ This is the development package.json. Use this one for dev dependencies needed t
 ### electron/src/package.json
 This is the app package.json. Use this one for dependencies needed by the app.
 
-#### Adding a dependency that is or contains a native modules
-If you add an app dependency to `src/package.json` that contains native code, or if your target has a dependency with native code, you may need to modify the `electron/dev_tools/rebuild-native.js` script.
+#### Native dependencies
+Some node modules have native components that need to be recompiled when you install them. These are compiled against a specific version of Node.
+However, Electron apps bundle their own version of Node, which will most likely be different from the version you have installed on your machine.
+For this reason, we have a helper script that rebuilds the native modules against the installed Electron version:
+```
+npm run rebuild-native
+```
 
+If you add a dependency that has native modules to either the app shell (`src/package.json`), to a target or to pxt-core, you may need to modify the `electron/dev_tools/rebuild-native.js` script.
 In that script, we maintain a list of known native modules that we manually clean up. You will need to find where the module keeps its built native components, and add an entry to the `knownNativeModules` array.
 
 For example, serialport, used by pxt-core, keeps its built components under `[serialport module root]/build/release`, so we added the following entry:
-
 ```
 let knownNativeModules = [
     {
