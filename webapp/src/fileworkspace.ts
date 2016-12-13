@@ -77,6 +77,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         blobId: null,
         blobCurrent: false,
         isDeleted: false,
+        icon: pkg.icon
     }
 
     if (!e.header) {
@@ -87,6 +88,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         eh.pubId = hd.pubId
         eh.modificationTime = hd.modificationTime
         eh.isDeleted = hd.isDeleted
+        eh.icon = hd.icon
     }
 }
 
@@ -213,6 +215,10 @@ function syncAsync() {
         })
 }
 
+function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
+    return apiAsync("screenshot/" + h.id, { screenshot, icon })
+}
+
 function resetAsync() {
     return db.destroyAsync()
         .then(() => {
@@ -230,5 +236,6 @@ export var provider: WorkspaceProvider = {
     installAsync,
     saveToCloudAsync,
     syncAsync,
-    resetAsync
+    resetAsync,
+    saveScreenshotAsync
 }

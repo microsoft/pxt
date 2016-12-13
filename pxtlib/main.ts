@@ -164,6 +164,7 @@ namespace pxt {
         path: string; // eg "foo/bar"
         config: pxt.PackageConfig; // pxt.json
         files: FsFile[]; // this includes pxt.json
+        icon?: string;
     }
 
     export interface FsPkgs {

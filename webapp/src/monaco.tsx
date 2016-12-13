@@ -163,13 +163,17 @@ export class Editor extends srceditor.Editor {
         style.id = "monacoeditorStyles";
         style.type = 'text/css';
 
+        const inverted = pxt.appTarget.appTheme.invertedMonaco;
+        const invertedColorluminosityMultipler = 0.6;
         let cssContent = "";
         let colorDict = this.blocksDict;
         let fnDict = this.definitions;
         colorDict.forEach(function (element) {
-            let color = element.meta.commentAttr.color;
+            const hexcolor = pxt.blocks.convertColour(element.meta.commentAttr.color);
             let cssTag = `.token.ts.identifier.${element.ns}, .token.ts.identifier.${Object.keys(fnDict[element.ns].fns).join(', .token.ts.identifier.')}`;
-            cssContent += `${cssTag} { color: ${color}; }`;
+            cssContent += `${cssTag} { color: ${inverted
+                        ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
+                        : hexcolor}; }`;
         })
         if (style.sheet) {
             style.textContent = cssContent;
@@ -177,6 +181,26 @@ export class Editor extends srceditor.Editor {
             style.appendChild(document.createTextNode(cssContent));
         }
         head.appendChild(style);
+    }
+
+    static lightenColor(hex: string, luminosity: number): string {
+        // #ABC => ABC
+        hex = hex.replace(/[^0-9a-f]/gi, '');
+
+        // ABC => AABBCC
+        if (hex.length < 6)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+
+        // tweak
+        let rgb = "#";
+        for (let i = 0; i < 3; i++) {
+            let c = parseInt(hex.substr(i * 2, 2), 16);
+            c = Math.round(Math.min(Math.max(0, c + (c * luminosity)), 255));
+            let cStr = c.toString(16);
+            rgb += ("00" + cStr).substr(cStr.length);
+        }
+
+        return rgb;
     }
 
     textAndPosition(pos: monaco.IPosition) {

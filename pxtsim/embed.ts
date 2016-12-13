@@ -6,6 +6,7 @@ namespace pxsim {
     }
 
     export interface SimulatorRunMessage extends SimulatorMessage {
+        type: "run";
         id?: string;
         boardDefinition?: BoardDefinition;
         frameCounter?: number;
@@ -29,6 +30,7 @@ namespace pxsim {
     }
 
     export interface SimulatorReadyMessage extends SimulatorMessage {
+        type: "ready";
         frameid: string;
     }
 
@@ -65,6 +67,10 @@ namespace pxsim {
         numberData?: number;
     }
 
+    export interface SimulatorScreenshotMessage extends SimulatorMessage {
+        type: "streenshot";
+        data: string;
+    }
 
     export namespace Embed {
         export function start() {

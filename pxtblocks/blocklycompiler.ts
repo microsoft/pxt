@@ -504,7 +504,15 @@ namespace pxt.blocks {
 
     function extractNumber(b: B.Block): number {
         let v = b.getFieldValue("NUM");
-        return parseFloat(v);
+        const parsed = parseFloat(v);
+        checkNumber(parsed);
+        return parsed;
+    }
+
+    function checkNumber(n: number) {
+        if (n === Infinity || n === NaN) {
+            U.userError(lf("Number entered is either too large or too small"));
+        }
     }
 
     function compileNumber(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -584,7 +592,9 @@ namespace pxt.blocks {
     function extractNumberLit(e: JsNode): number {
         if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
             return null
-        return parseInt(e.op)
+        const parsed = parseInt(e.op);
+        checkNumber(parsed);
+        return parsed;
     }
 
     function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
