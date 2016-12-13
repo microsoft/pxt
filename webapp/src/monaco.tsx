@@ -523,6 +523,8 @@ export class Editor extends srceditor.Editor {
             let fnElement = fnDef[ns];
             let color = monacoEditor.convertColour(metaElement.meta.commentAttr.color);
             treeitem.onclick = (ev: MouseEvent) => {
+                pxt.tickEvent("monaco.toolbox.click");
+
                 let monacoFlyout = document.getElementById('monacoFlyoutWidget');
                 monacoEditor.resetFlyout(false);
 
@@ -585,6 +587,8 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.title = comment;
 
                     monacoBlock.onclick = (ev2: MouseEvent) => {
+                        pxt.tickEvent("monaco.toolbox.itemclick");
+
                         monacoEditor.resetFlyout(true);
 
                         let model = monacoEditor.editor.getModel();
