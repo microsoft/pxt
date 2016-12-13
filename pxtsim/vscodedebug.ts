@@ -1013,17 +1013,20 @@ namespace pxsim.debug {
         getFrames(): DebugProtocol.StackFrame[] {
             return this._message.stackframes.map((s, i) => {;
                 const bp = this._map.getById(s.breakpointId);
-                this._frames[s.breakpointId] = s;
-                return {
-                    id: s.breakpointId,
-                    name: this.nameFromFunctionInfo(s.funcInfo, i),
-                    line: bp.line,
-                    column: bp.column,
-                    endLine: bp.endLine,
-                    endColumn: bp.endLine,
-                    source: bp.source
-                };
-            });
+                if (bp) {
+                    this._frames[s.breakpointId] = s;
+                    return {
+                        id: s.breakpointId,
+                        name: this.nameFromFunctionInfo(s.funcInfo, i),
+                        line: bp.line,
+                        column: bp.column,
+                        endLine: bp.endLine,
+                        endColumn: bp.endLine,
+                        source: bp.source
+                    };
+                }
+                return undefined;
+            }).filter(b => !!b);
         }
 
 
@@ -1073,8 +1076,11 @@ namespace pxsim.debug {
                         vString = value.toString();
                     }
 
+                    // Remove the metadata from the name
+                    const displayName = name.substr(0, name.lastIndexOf("___"));
+
                     result.push({
-                        name,
+                        name: displayName,
                         value: vString,
                         variablesReference
                     });
