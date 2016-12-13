@@ -50,6 +50,7 @@
     "typings/marked",
     "typings/jquery",
     "typings/highlightjs",
+    "typings/winrt",
     "docfiles",
     "theme"
   ],
