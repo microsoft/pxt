@@ -176,12 +176,17 @@ export class Editor extends srceditor.Editor {
                         }
                     });
             }).then(() => {
+                const inverted = pxt.appTarget.appTheme.invertedMonaco;
                 let cssContent = "";
-                Object.keys(colorDict).forEach(function (ns) {
+                let invertedColorluminosityMultipler = 0.6;
+                let monacoEditor = this;
+                Object.keys(colorDict).forEach((ns) => {
                     let element = colorDict[ns];
-                    let color = element.color;
+                    const hexcolor = pxt.blocks.convertColour(element.color);
                     let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.` + element.fns.join(', .token.ts.identifier.');
-                    cssContent += `${cssTag} { color: ${color}; }`;
+                    cssContent += `${cssTag} { color: ${inverted
+                        ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
+                        : hexcolor}; }`;
                 })
                 return cssContent;
             }).done((cssContent: string) => {
@@ -192,6 +197,26 @@ export class Editor extends srceditor.Editor {
                 }
                 head.appendChild(style);
             });
+    }
+
+    static lightenColor(hex: string, luminosity: number): string {
+        // #ABC => ABC
+        hex = hex.replace(/[^0-9a-f]/gi, '');
+
+        // ABC => AABBCC
+        if (hex.length < 6)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+
+        // tweak
+        let rgb = "#";
+        for (let i = 0; i < 3; i++) {
+            let c = parseInt(hex.substr(i * 2, 2), 16);
+            c = Math.round(Math.min(Math.max(0, c + (c * luminosity)), 255));
+            let cStr = c.toString(16);
+            rgb += ("00" + cStr).substr(cStr.length);
+        }
+
+        return rgb;
     }
 
     textAndPosition(pos: monaco.IPosition) {

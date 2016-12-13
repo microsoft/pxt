@@ -73,4 +73,15 @@ namespace pxt.blocks {
             }
         })
     }
+
+    /**
+     * Convert blockly hue to rgb
+     */
+    export function convertColour(colour: string): string {
+        let hue = parseInt(colour);
+        if (!isNaN(hue)) {
+            return Blockly.hueToRgb(hue);
+        }
+        return colour;
+    }
 }
