@@ -1071,11 +1071,6 @@ namespace pxt.blocks {
         return mkBlock(stmts);
     }
 
-    function isTopBlock(b: B.Block): boolean {
-        if (!b.parentBlock_) return true;
-        return isTopBlock(b.parentBlock_);
-    }
-
     // This function creates an empty environment where type inference has NOT yet
     // been performed.
     // - All variables have been assigned an initial [Point] in the union-find.
