@@ -147,7 +147,7 @@ export class UpdateService extends EventEmitter {
 
     private makeUpdateInfo(targetVersion: string, isInitialCheck: boolean = false): I.UpdateEventInfo {
         return {
-            appName: "@@nameLong@@",
+            appName: product.nameLong,
             isBeta: product.isBeta,
             isInitialCheck,
             targetVersion

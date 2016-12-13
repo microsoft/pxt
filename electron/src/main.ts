@@ -8,14 +8,14 @@ import * as I from "./typings/interfaces";
 import * as minimist from "minimist";
 import * as path from "path";
 import product from "./util/productInfoLoader";
-import * as target from "@@targetId@@";
 import { UpdateService } from "./updater/updateService";
 import { Mutex } from 'windows-mutex';
 
+const target = require(product.targetId);
 let pxtCore: I.PxtCore = target.pxtCore;
 
 // require.resolve() gives path to [target dir]/built/pxtrequire.js, so move up twice to get target root dir
-const targetDir = path.resolve(require.resolve("@@targetId@@"), "..", "..");
+const targetDir = path.resolve(require.resolve(product.targetId), "..", "..");
 
 let appOptions: I.AppOptions = {};
 let win: Electron.BrowserWindow = null;
@@ -152,7 +152,7 @@ function createWindow(): void {
     win = new BrowserWindow({
         width: 800,
         height: 600,
-        title: "@@nameLong@@"
+        title: product.nameLong
     });
     Menu.setApplicationMenu(null);
     win.loadURL(url);
