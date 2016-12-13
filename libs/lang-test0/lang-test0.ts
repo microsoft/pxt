@@ -1451,6 +1451,10 @@ ObjLit.run()
 testBitSize()
 ObjectDestructuring.run();
 
+// test int size
+let int_max = 2147483647;
+let int_min = -2147483647;
+
 
 msg("test top level code")
 let xsum = 0;
