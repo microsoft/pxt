@@ -1,3 +1,4 @@
+import * as child_process from 'child_process';
 import * as fs from 'fs';
 import * as zlib from 'zlib';
 import * as url from 'url';
@@ -10,6 +11,14 @@ import * as path from 'path';
 Promise = require("bluebird");
 
 import Util = pxt.Util;
+
+export interface SpawnOptions {
+    cmd: string;
+    args: string[];
+    cwd?: string;
+    shell?: boolean;
+    pipe?: boolean;
+}
 
 //This should be correct at startup when running from command line
 //When running inside Electron it gets updated to the correct path
@@ -59,6 +68,37 @@ export function readResAsync(g: events.EventEmitter) {
     })
 }
 
+export function spawnAsync(opts: SpawnOptions) {
+    opts.pipe = false
+    return spawnWithPipeAsync(opts)
+        .then(() => { })
+}
+
+export function spawnWithPipeAsync(opts: SpawnOptions) {
+    if (opts.pipe === undefined) opts.pipe = true
+    let info = opts.cmd + " " + opts.args.join(" ")
+    if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
+    console.log("[run] " + info)
+    return new Promise<Buffer>((resolve, reject) => {
+        let ch = child_process.spawn(opts.cmd, opts.args, {
+            cwd: opts.cwd,
+            env: process.env,
+            stdio: opts.pipe ? [process.stdin, "pipe", process.stderr] : "inherit",
+            shell: opts.shell || false
+        } as any)
+        let bufs: Buffer[] = []
+        if (opts.pipe)
+            ch.stdout.on('data', (buf: Buffer) => {
+                bufs.push(buf)
+                process.stdout.write(buf)
+            })
+        ch.on('close', (code: number) => {
+            if (code != 0)
+                reject(new Error("Exit code: " + code + " from " + info))
+            resolve(Buffer.concat(bufs))
+        });
+    })
+}
 
 function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
     let isHttps = false

@@ -1,0 +1,22 @@
+{
+    "name": "pxt-electron",
+    "version": "0.0.1",
+    "description": "Blocks / Javascript editor",
+    "author": "Microsoft",
+    "repository": {
+        "url": "https://github.com/Microsoft/pxt-core"
+    },
+    "license": "MIT",
+    "main": "src/main.js",
+    "scripts": {
+        "rebuild-native": "node ../dev_tools/rebuild-native.js"
+    },
+    "dependencies": {
+        "bluebird": "^3.4.6",
+        "minimist": "^1.2.0",
+        "semver": "^5.3.0"
+    },
+    "optionalDependencies": {
+        "windows-mutex": "^0.2.0"
+    }
+}

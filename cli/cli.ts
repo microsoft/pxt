@@ -17,6 +17,7 @@ import Map = pxt.Map;
 
 import * as server from './server';
 import * as build from './buildengine';
+import * as electron from "./electron";
 import * as commandParser from './commandparser';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
@@ -461,7 +462,7 @@ function bumpPxtCoreDepAsync() {
     let gitPull = Promise.resolve()
 
     if (fs.existsSync("node_modules/pxt-core/.git")) {
-        gitPull = spawnAsync({
+        gitPull = nodeutil.spawnAsync({
             cmd: "git",
             args: ["pull"],
             cwd: "node_modules/pxt-core"
@@ -499,7 +500,7 @@ function updateAsync() {
 function justBumpPkgAsync() {
     ensurePkgDir()
     return Promise.resolve()
-        .then(() => spawnWithPipeAsync({
+        .then(() => nodeutil.spawnWithPipeAsync({
             cmd: "git",
             args: ["status", "--porcelain", "--untracked-files=no"]
         }))
@@ -543,7 +544,7 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
 }
 
 function runGitAsync(...args: string[]) {
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: "git",
         args: args,
         cwd: "."
@@ -552,7 +553,7 @@ function runGitAsync(...args: string[]) {
 
 function runNpmAsync(...args: string[]) {
     console.log("npm", args);
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: addCmd("npm"),
         args: args,
         cwd: "."
@@ -729,7 +730,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         "-c", "user.name=" + user,
         "-c", "user.email=" + user + "@build.pxt.io",
     ]
-    let gitAsync = (args: string[]) => spawnAsync({
+    let gitAsync = (args: string[]) => nodeutil.spawnAsync({
         cmd: "git",
         cwd: trgPath,
         args: cred.concat(args)
@@ -745,7 +746,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                     throw U.userError(trgPath + " already exists; please remove it")
                 }
             } else {
-                return spawnAsync({
+                return nodeutil.spawnAsync({
                     cmd: "git",
                     args: cred.concat(["clone", "--depth", "3", repoUrl, trgPath]),
                     cwd: "."
@@ -1007,46 +1008,6 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         .then(() => { });
 }
 
-export interface SpawnOptions {
-    cmd: string;
-    args: string[];
-    cwd?: string;
-    shell?: boolean;
-    pipe?: boolean;
-}
-
-export function spawnAsync(opts: SpawnOptions) {
-    opts.pipe = false
-    return spawnWithPipeAsync(opts)
-        .then(() => { })
-}
-
-export function spawnWithPipeAsync(opts: SpawnOptions) {
-    if (opts.pipe === undefined) opts.pipe = true
-    let info = opts.cmd + " " + opts.args.join(" ")
-    if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
-    console.log("[run] " + info)
-    return new Promise<Buffer>((resolve, reject) => {
-        let ch = child_process.spawn(opts.cmd, opts.args, {
-            cwd: opts.cwd,
-            env: process.env,
-            stdio: opts.pipe ? [process.stdin, "pipe", process.stderr] : "inherit",
-            shell: opts.shell || false
-        } as any)
-        let bufs: Buffer[] = []
-        if (opts.pipe)
-            ch.stdout.on('data', (buf: Buffer) => {
-                bufs.push(buf)
-                process.stdout.write(buf)
-            })
-        ch.on('close', (code: number) => {
-            if (code != 0)
-                reject(new Error("Exit code: " + code + " from " + info))
-            resolve(Buffer.concat(bufs))
-        });
-    })
-}
-
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
     return Promise.map(dirs, dn => readDirAsync(dn)
@@ -1080,7 +1041,7 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
 
     console.log(`building ${p}...`)
     dirsToWatch.push(p)
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
@@ -1096,7 +1057,7 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: addCmd("jake"),
         args: includeSourceMaps ? ["sourceMaps=true"] : [],
         cwd: ksd
@@ -1239,7 +1200,7 @@ function buildSemanticUIAsync() {
     if (!dirty) return Promise.resolve();
 
     nodeutil.mkdirP(path.join("built", "web"));
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: "node",
         args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
@@ -2716,7 +2677,7 @@ function testDecompilerErrorsAsync(parsed: commandParser.ParsedCommand) {
                         success = false;
                     }
                 })
-            })
+        })
             .then(() => {
                 if (success) {
                     console.log(`decompiler error test OK: ${basename}`);
@@ -3648,6 +3609,30 @@ function initCommands() {
         }
     }, publishGistAsync)
 
+    p.defineCommand({
+        name: "electron",
+        help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'build': generates a packaged Electron app for current target",
+        flags: {
+            product: {
+                description: "path to a product.json file to use instead of the target's default one",
+                aliases: ["p"],
+                type: "string"
+            },
+            pxtElectron: {
+                description: "path to the root of the PXT Electron app in the pxt repo",
+                aliases: ["e"],
+                type: "string"
+            },
+            release: {
+                description: "('build' only) instead of using current target, use specified published NPM package (value format: <Target's NPM package>[@<Package version>])",
+                aliases: ["r"],
+                type: "string"
+            }
+        },
+        argString: "subcommand",
+        numArgs: 1
+    }, electron.electronAsync);
+
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
@@ -3848,6 +3833,10 @@ function initGlobals() {
 
 initGlobals();
 initCommands();
+
+export function sendElectronMessage(message: server.ElectronMessage) {
+    server.sendElectronMessage(message);
+}
 
 if (require.main === module) {
     let targetdir = process.cwd()
