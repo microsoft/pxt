@@ -29,7 +29,7 @@ export class Editor extends srceditor.Editor {
     currFile: pkg.File;
     fileType: FileType = FileType.Unknown;
     extraLibs: { [path: string]: monaco.IDisposable };
-    blocksDict: {ns: string, meta: pxt.vs.BlockDefiniton }[];
+    blocksDict: { ns: string, meta: pxt.vs.BlockDefiniton }[];
     definitions: { [ns: string]: pxt.vs.NameDefiniton };
 
     hasBlocks() {
@@ -172,8 +172,8 @@ export class Editor extends srceditor.Editor {
             const hexcolor = pxt.blocks.convertColour(element.meta.commentAttr.color);
             let cssTag = `.token.ts.identifier.${element.ns}, .token.ts.identifier.${Object.keys(fnDict[element.ns].fns).join(', .token.ts.identifier.')}`;
             cssContent += `${cssTag} { color: ${inverted
-                        ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
-                        : hexcolor}; }`;
+                ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
+                : hexcolor}; }`;
         })
         if (style.sheet) {
             style.textContent = cssContent;
@@ -410,7 +410,7 @@ export class Editor extends srceditor.Editor {
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
         let monacoToolbox = document.getElementById('monacoEditorToolbox')
-        this.editor.layout({width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight});
+        this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight });
     }
 
     zoomIn() {
@@ -446,10 +446,10 @@ export class Editor extends srceditor.Editor {
     setupToolbox(editorElement: HTMLElement) {
         // Monaco flyout widget
         let flyoutWidget = {
-            getId: function(): string {
+            getId: function (): string {
                 return 'pxt.flyout.widget';
             },
-            getDomNode: function(): HTMLElement {
+            getDomNode: function (): HTMLElement {
                 if (!this.domNode) {
                     this.domNode = document.createElement('div');
                     this.domNode.id = 'monacoFlyoutWidget';
@@ -461,7 +461,7 @@ export class Editor extends srceditor.Editor {
                 }
                 return this.domNode;
             },
-            getPosition: function(): monaco.editor.IOverlayWidgetPosition {
+            getPosition: function (): monaco.editor.IOverlayWidgetPosition {
                 return null;
             }
         };
@@ -553,11 +553,11 @@ export class Editor extends srceditor.Editor {
                 monacoFlyout.className = 'monacoFlyout';
 
                 Object.keys(fnElement.fns).sort((f1, f2) => {
-                        // sort by fn weight
-                        let fn1 = fnElement.fns[f1];
-                        let fn2 = fnElement.fns[f2];
-                        return (fn2.metaData ? fn2.metaData.weight || 50 : 50) - (fn1.metaData ? fn1.metaData.weight || 50 : 50);
-                    }).forEach((fn) => {
+                    // sort by fn weight
+                    let fn1 = fnElement.fns[f1];
+                    let fn2 = fnElement.fns[f2];
+                    return (fn2.metaData ? fn2.metaData.weight || 50 : 50) - (fn1.metaData ? fn1.metaData.weight || 50 : 50);
+                }).forEach((fn) => {
                     let monacoBlock = document.createElement('div');
                     monacoBlock.className = 'monacoDraggableBlock';
 
@@ -565,12 +565,16 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.style.backgroundColor = `${color}`;
                     monacoBlock.style.borderColor = `${color}`;
 
-                    let snippet = fnElement.fns[fn].snippet;
-                    let comment = fnElement.fns[fn].comment;
-                    let metaData = fnElement.fns[fn].metaData;
+                    const elem = fnElement.fns[fn];
+                    const sig = elem.sig;
+                    const snippet = elem.snippet;
+                    const comment = elem.comment;
+                    const metaData = elem.metaData;
 
                     let methodToken = document.createElement('span');
-                    methodToken.innerText = snippet.replace('(', ' (').replace('{{}}', '');
+                    methodToken.innerText = fn;
+                    let sigToken = document.createElement('span'); sigToken.className = 'sig';
+                    sigToken.innerText = sig || snippet.replace('(', ' (').replace('{{}}', '');
 
                     monacoBlock.title = comment;
 
@@ -589,8 +593,8 @@ export class Editor extends srceditor.Editor {
                             cursor += (insertText.length);
                         monacoEditor.editor.executeEdits("", [
                             {
-                                identifier: {major: 0, minor: 0},
-                                range: new monaco.Range(currPos.lineNumber,currPos.column,currPos.lineNumber,currPos.column),
+                                identifier: { major: 0, minor: 0 },
+                                range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
                                 text: insertText,
                                 forceMoveMarkers: false
                             }
@@ -602,6 +606,7 @@ export class Editor extends srceditor.Editor {
                     };
 
                     monacoBlock.appendChild(methodToken);
+                    monacoBlock.appendChild(sigToken);
                     monacoFlyout.appendChild(monacoBlock);
                 })
             };
@@ -642,13 +647,13 @@ export class Editor extends srceditor.Editor {
         // Add the toolbox buttons
         pxt.blocks.initToolboxButtons(toolbox, 'monacoToolboxButtons',
             (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
-            (() => {
-                this.parent.addPackage();
-            }) : null),
+                (() => {
+                    this.parent.addPackage();
+                }) : null),
             (!this.parent.getSandboxMode() ?
-            (() => {
-            this.undo();
-            }) : null)
+                (() => {
+                    this.undo();
+                }) : null)
         );
     }
 
@@ -702,15 +707,15 @@ export class Editor extends srceditor.Editor {
                     c = (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
                     return c;
                 }).forEach(fn => {
-                        let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                        let nsn = blockInfo.apis.byQName[ns];
-                        if (nsn) ns = nsn.attributes.block || ns;
-                        if (nsn && nsn.attributes.color) {
-                            blockDefinitions[ns] = {
-                                commentAttr: nsn.attributes
-                            };
-                        }
-                    });
+                    let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                    let nsn = blockInfo.apis.byQName[ns];
+                    if (nsn) ns = nsn.attributes.block || ns;
+                    if (nsn && nsn.attributes.color) {
+                        blockDefinitions[ns] = {
+                            commentAttr: nsn.attributes
+                        };
+                    }
+                });
                 Object.keys(blockDefinitions).forEach((ns) => {
                     this.blocksDict.push({
                         ns: ns,

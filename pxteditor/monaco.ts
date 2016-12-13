@@ -6,10 +6,11 @@ namespace pxt.vs {
 
     export interface BlockDefiniton {
         commentAttr: pxtc.CommentAttrs;
-        fns?: { [fn: string]: string };
+        fns?: Map<string>;
     }
 
     export interface MethodDef {
+        sig: string;
         snippet: string;
         comment?: string;
         metaData?: pxtc.CommentAttrs;
@@ -24,7 +25,7 @@ namespace pxt.vs {
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
         const promises: monaco.Promise<any>[] = [];
-        let definitions: {[ns: string]: NameDefiniton} = {}
+        let definitions: { [ns: string]: NameDefiniton } = {}
 
         if (readOnly) return;
 
@@ -53,15 +54,19 @@ namespace pxt.vs {
             });
 
         return monaco.Promise.join(promises)
-                .then(() => {
+            .then(() => {
                 return definitions;
-        });
+            });
     }
 
-    function populateDefinitions(f: string, fp: string, definitions: {[ns: string]: NameDefiniton}): monaco.Promise<any> {
+    function displayPartsToParameterSignature(parts: ts.SymbolDisplayPart[]): string {
+        return `(${parts.filter(part => part.kind == "parameterName").map(part => part.text).join(", ")})`;
+    }
+
+    function populateDefinitions(f: string, fp: string, definitions: { [ns: string]: NameDefiniton }): monaco.Promise<any> {
         return monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-                return worker(monaco.Uri.parse(fp))
-                    .then((client: any) => {
+            return worker(monaco.Uri.parse(fp))
+                .then((client: any) => {
                     return client.getNavigationBarItems(fp).then((items: ts.NavigationBarItem[]) => {
                         return monaco.Promise.join(items.filter(item => item.kind == 'module').map((item) => {
                             let promises: monaco.Promise<any>[] = [];
@@ -74,29 +79,30 @@ namespace pxt.vs {
 
                             return monaco.Promise.join(item.childItems
                                 .filter(item => item.kind == 'function' && (item.kindModifiers.indexOf('export') > -1 || item.kindModifiers.indexOf('declare') > -1)).map((fn) => {
-                                // exported function 
-                                return client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
-                                    .then((details: [ts.CompletionEntryDetails, string]) => {
-                                        if (!details) return;
+                                    // exported function 
+                                    return client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
+                                        .then((details: [ts.CompletionEntryDetails, string]) => {
+                                            if (!details) return;
 
-                                        return client.getLeadingComments(fp, fn.spans[0].start + fn.spans[0].length, fn.text)
-                                            .then((comments: string) => {
-                                                let meta: pxtc.CommentAttrs;
-                                                if (comments)
-                                                    meta = pxtc.parseCommentString(comments);
-                                                let comment = meta ? meta.jsDoc : ts.displayPartsToString(details[0].documentation);
-                                                definitions[item.text].fns[fn.text] = {
-                                                    snippet: details[1],
-                                                    comment: comment,
-                                                    metaData: meta
-                                                }
-                                            });
-                                    });
-                            }));
+                                            return client.getLeadingComments(fp, fn.spans[0].start + fn.spans[0].length, fn.text)
+                                                .then((comments: string) => {
+                                                    let meta: pxtc.CommentAttrs;
+                                                    if (comments)
+                                                        meta = pxtc.parseCommentString(comments);
+                                                    let comment = meta ? meta.jsDoc : ts.displayPartsToString(details[0].documentation);
+                                                    definitions[item.text].fns[fn.text] = {
+                                                        sig: displayPartsToParameterSignature(details[0].displayParts),
+                                                        snippet: details[1],
+                                                        comment: comment,
+                                                        metaData: meta
+                                                    }
+                                                });
+                                        });
+                                }));
                         }));
                     });
                 });
-            });
+        });
     }
 
     export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
@@ -149,7 +155,7 @@ namespace pxt.vs {
     }
 
     function initAsmMonarchLanguage(): void {
-        monaco.languages.register({id: 'asm', extensions: ['.asm']});
+        monaco.languages.register({ id: 'asm', extensions: ['.asm'] });
         monaco.languages.setMonarchTokensProvider('asm', <monaco.languages.IMonarchLanguage>{
             // Set defaultToken to invalid to see what you do not tokenize yet
             // defaultToken: 'invalid',
@@ -178,7 +184,7 @@ namespace pxt.vs {
             operators: [],
 
             // Not all of these are valid in ARM Assembly
-            symbols:  /[:\*]+/,
+            symbols: /[:\*]+/,
 
             // C# style strings
             escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
@@ -186,53 +192,61 @@ namespace pxt.vs {
             // The main tokenizer for our languages
             tokenizer: {
                 root: [
-                // identifiers and keywords
-                [/(\.)?[a-z_$\.][\w$]*/, { cases: { '@typeKeywords': 'keyword',
-                                            '@keywords': 'keyword',
-                                            '@default': 'identifier' } }],
+                    // identifiers and keywords
+                    [/(\.)?[a-z_$\.][\w$]*/, {
+                        cases: {
+                            '@typeKeywords': 'keyword',
+                            '@keywords': 'keyword',
+                            '@default': 'identifier'
+                        }
+                    }],
 
-                // whitespace
-                { include: '@whitespace' },
+                    // whitespace
+                    { include: '@whitespace' },
 
-                // delimiters and operators
-                [/[{}()\[\]]/, '@brackets'],
-                [/[<>](?!@symbols)/, '@brackets'],
-                [/@symbols/, { cases: { '@operators': 'operator',
-                                        '@default'  : '' } } ],
+                    // delimiters and operators
+                    [/[{}()\[\]]/, '@brackets'],
+                    [/[<>](?!@symbols)/, '@brackets'],
+                    [/@symbols/, {
+                        cases: {
+                            '@operators': 'operator',
+                            '@default': ''
+                        }
+                    }],
 
-                // @ annotations.
-                [/@\s*[a-zA-Z_\$][\w\$]*/, { token: 'annotation' }],
+                    // @ annotations.
+                    [/@\s*[a-zA-Z_\$][\w\$]*/, { token: 'annotation' }],
 
-                // numbers
-                //[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
-                [/(#|(0[xX]))?[0-9a-fA-F]+/, 'number'],
+                    // numbers
+                    //[/\d*\.\d+([eE][\-+]?\d+)?/, 'number.float'],
+                    [/(#|(0[xX]))?[0-9a-fA-F]+/, 'number'],
 
-                // delimiter: after number because of .\d floats
-                [/[;,.]/, 'delimiter'],
+                    // delimiter: after number because of .\d floats
+                    [/[;,.]/, 'delimiter'],
 
-                // strings
-                [/"([^"\\]|\\.)*$/, 'string.invalid' ],  // non-teminated string
-                [/"/,  { token: 'string.quote', bracket: '@open', next: '@string' } ],
+                    // strings
+                    [/"([^"\\]|\\.)*$/, 'string.invalid'],  // non-teminated string
+                    [/"/, { token: 'string.quote', bracket: '@open', next: '@string' }],
 
-                // characters
-                [/'[^\\']'/, 'string'],
-                [/(')(@escapes)(')/, ['string','string.escape','string']],
-                [/'/, 'string.invalid']
+                    // characters
+                    [/'[^\\']'/, 'string'],
+                    [/(')(@escapes)(')/, ['string', 'string.escape', 'string']],
+                    [/'/, 'string.invalid']
                 ],
 
                 comment: [],
 
                 string: [
-                [/[^\\"]+/,  'string'],
-                [/@escapes/, 'string.escape'],
-                [/\\./,      'string.escape.invalid'],
-                [/"/,        { token: 'string.quote', bracket: '@close', next: '@pop' } ]
+                    [/[^\\"]+/, 'string'],
+                    [/@escapes/, 'string.escape'],
+                    [/\\./, 'string.escape.invalid'],
+                    [/"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
                 ],
 
                 whitespace: [
-                [/[ \t\r\n]+/, 'white'],
-                [/\/\*/,       'comment', '@comment' ],
-                [/;.*$/,    'comment'],
+                    [/[ \t\r\n]+/, 'white'],
+                    [/\/\*/, 'comment', '@comment'],
+                    [/;.*$/, 'comment'],
                 ],
             }
         });
