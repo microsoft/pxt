@@ -28,9 +28,9 @@ export class Editor extends srceditor.Editor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
     fileType: FileType = FileType.Unknown;
-    extraLibs: { [path: string]: monaco.IDisposable };
+    extraLibs: pxt.Map<monaco.IDisposable>;
     blocksDict: { ns: string, meta: pxt.vs.BlockDefiniton }[];
-    definitions: { [ns: string]: pxt.vs.NameDefiniton };
+    definitions: pxt.Map<pxt.vs.NameDefiniton>;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -574,7 +574,10 @@ export class Editor extends srceditor.Editor {
                     let methodToken = document.createElement('span');
                     methodToken.innerText = fn;
                     let sigToken = document.createElement('span'); sigToken.className = 'sig';
-                    sigToken.innerText = sig || snippet.replace('(', ' (').replace('{{}}', '');
+                    // completion is a bit busted but looks better
+                    sigToken.innerText = snippet
+                        .replace(/^[^(]*\(/, '(')
+                        .replace(/^\s*\{\{\}\}\n/gm, '');
 
                     monacoBlock.title = comment;
 
