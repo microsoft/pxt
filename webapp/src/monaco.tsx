@@ -177,11 +177,13 @@ export class Editor extends srceditor.Editor {
                     });
             }).then(() => {
                 let cssContent = "";
+                let invertedColorluminosityMultipler = 0.6;
+                let monacoEditor = this;
                 Object.keys(colorDict).forEach(function (ns) {
                     let element = colorDict[ns];
                     let color = element.color;
                     let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.` + element.fns.join(', .token.ts.identifier.');
-                    cssContent += `${cssTag} { color: ${color}; }`;
+                    cssContent += `${cssTag} { color: ${pxt.appTarget.appTheme.invertedMonaco ? monacoEditor.LightenColour(monacoEditor.convertColour(color), invertedColorluminosityMultipler) : monacoEditor.convertColour(color)}; }`;
                 })
                 return cssContent;
             }).done((cssContent: string) => {
@@ -192,6 +194,32 @@ export class Editor extends srceditor.Editor {
                 }
                 head.appendChild(style);
             });
+    }
+
+    private LightenColour(hex: string, luminosity: number) {
+        hex = String(hex).replace(/[^0-9a-f]/gi, '');
+        if (hex.length < 6) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        luminosity = luminosity || 0;
+
+        let rgb = "#", c: number;
+        for (let i = 0; i < 3; i++) {
+            c = parseInt(hex.substr(i * 2,2), 16);
+            c = Math.round(Math.min(Math.max(0, c + (c * luminosity)), 255));
+            let cStr = c.toString(16);
+            rgb += ("00" + cStr).substr(cStr.length);
+        }
+
+        return rgb;
+    }
+
+    convertColour(colour: string): string {
+        let hue = parseFloat(colour);
+        if (!isNaN(hue)) {
+            return Blockly.hueToRgb(hue);
+        }
+        return colour;
     }
 
     textAndPosition(pos: monaco.IPosition) {
