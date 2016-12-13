@@ -368,7 +368,7 @@ namespace pxt.blocks {
             addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
         }
 
-        let body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
+        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
         if (body) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
@@ -397,8 +397,8 @@ namespace pxt.blocks {
         }
 
         // hook up/down if return value is void
-        block.setPreviousStatement(fn.retType == "void");
-        block.setNextStatement(fn.retType == "void");
+        block.setPreviousStatement(!body && fn.retType == "void");
+        block.setNextStatement(!body && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
     }
@@ -620,9 +620,7 @@ namespace pxt.blocks {
         initDrag();
         initToolboxColor();
 
-        // hats creates issues when trying to round-trip events between JS and blocks. To better support that scenario,
-        // we're taking off hats.
-        // Blockly.BlockSvg.START_HAT = true;
+        Blockly.BlockSvg.START_HAT = true;
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
