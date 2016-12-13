@@ -3616,21 +3616,23 @@ function initCommands() {
             product: {
                 description: "path to a product.json file to use instead of the target's default one",
                 aliases: ["p"],
-                type: "string"
+                type: "string",
+                argument: "product"
             },
             pxtElectron: {
                 description: "path to the root of the PXT Electron app in the pxt repo",
                 aliases: ["e"],
-                type: "string"
+                type: "string",
+                argument: "pxtElectron"
             },
             release: {
                 description: "('build' only) instead of using current target, use specified published NPM package (value format: <Target's NPM package>[@<Package version>])",
                 aliases: ["r"],
-                type: "string"
+                type: "string",
+                argument: "release"
             }
         },
-        argString: "subcommand",
-        numArgs: 1
+        argString: "<subcommand>"
     }, electron.electronAsync);
 
     // Hidden commands

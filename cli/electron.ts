@@ -59,21 +59,23 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     pxtElectronSrcPath = path.resolve(pxtElectronPath, "src");
 
     // Ensure there is a product.json
-    if (parsed.flags["product"]) {
-        targetProductJson = parsed.flags["product"] as string;
+    if (subcommand !== "init") {
+        if (parsed.flags["product"]) {
+            targetProductJson = parsed.flags["product"] as string;
 
-        if (!fs.existsSync(targetProductJson)) {
-            errorOut("Cannot find the specified product.json file: " + targetProductJson);
-        }
-    } else {
-        targetProductJson = path.join("electron", "product.json");
+            if (!fs.existsSync(targetProductJson)) {
+                errorOut("Cannot find the specified product.json file: " + targetProductJson);
+            }
+        } else {
+            targetProductJson = path.join("electron", "product.json");
 
-        if (!fs.existsSync(targetProductJson)) {
-            errorOut("Please specify --product path; cannot find product.json at default location: " + targetProductJson);
+            if (!fs.existsSync(targetProductJson)) {
+                errorOut("Please specify --product path; cannot find product.json at default location: " + targetProductJson);
+            }
         }
+
+        targetProductJson = path.resolve(targetProductJson);
     }
-
-    targetProductJson = path.resolve(targetProductJson);
 
     // Other initializations
     let linkedTarget = path.join(pxtElectronSrcPath, "node_modules", targetId);
@@ -113,7 +115,7 @@ function initAsync(): Promise<void> {
         })
         .then(() => npmLink(pxtElectronSrcPath, process.cwd()))
         .then(() => npmRunElectronScript("rebuild-native"))
-        .then(() => console.log("\nWARNING: 'pxt electron init/run' can conflict with 'pxt serve'. If you have problems with 'pxt serve', delete all node modules and reinstall them (for both the target and pxt-core)."));
+        .then(() => console.log("\nWARNING: 'pxt electron init' can break 'pxt serve'. If you have problems with 'pxt serve', delete all node modules and reinstall them (for both the target and pxt-core)."));
 }
 
 function runAsync(): Promise<void> {
