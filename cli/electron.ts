@@ -96,18 +96,17 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
             return runAsync();
         case "package":
             return packageAsync(parsed);
-        case "buildInstaller":
-            return buildInstallerAsync();
         default:
             return errorOut("Unknown subcommand: " + subcommand);
     }
 }
 
 function initAsync(): Promise<void> {
-    return nodeutil.spawnWithPipeAsync({
-        cmd: npmCmd,
-        "args": ["-v"]
-    })
+    return npm(pxtElectronSrcPath, "prune")
+        .then(() => nodeutil.spawnWithPipeAsync({
+            cmd: npmCmd,
+            "args": ["-v"]
+        }))
         .then((buf) => buf.toString())
         .then((v) => {
             if (/^3\./.test(v)) {
@@ -142,7 +141,14 @@ function packageAsync(parsed: p.ParsedCommand): Promise<void> {
     return buildPromise
         .then(() => npm(pxtElectronPath, "install"))
         .then(() => npm(pxtElectronPath, "run", "rebuild-native"))
-        .then(() => electronGulpTask("package"));
+        .then(() => electronGulpTask("package"))
+        .then(() => {
+            if (parsed.flags["buildInstaller"]) {
+                return buildInstallerAsync();
+            }
+
+            return Promise.resolve();
+        });
 }
 
 function buildInstallerAsync(): Promise<void> {
@@ -169,10 +175,10 @@ function reinstallLocalPxtCoreAsync(pxtCoreTruePath: string): Promise<void> {
     let pxtCoreLocation: string;
 
     return nodeutil.spawnWithPipeAsync({
-        cmd: nodeutil.addCmd("node"),
+        cmd: "node",
         args: [
             "-e",
-            `console.log(require(${targetNpmPackageName}).pxtCoreDir)`
+            `console.log(require("${targetNpmPackageName}").pxtCoreDir)`
         ],
         cwd: pxtElectronSrcPath
     })

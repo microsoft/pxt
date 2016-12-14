@@ -187,7 +187,7 @@ export class UpdateService extends EventEmitter {
             return Promise.reject(null);
         }
 
-        return Utils.request({ url: product.releaseManifestUrl })
+        return Utils.requestAsStream({ url: product.releaseManifestUrl })
             .then<I.ReleaseManifest>(Utils.asJson)
             .then((releaseManifest) => {
                 return this.cacheReleaseManifest(releaseManifest)

@@ -12,11 +12,10 @@ import { UpdateService } from "./updater/updateService";
 import { Mutex } from 'windows-mutex';
 
 const target = require(product.targetId);
-let pxtCore: I.PxtCore = target.pxtCore;
-
 // require.resolve() gives path to [target dir]/built/pxtrequire.js, so move up twice to get target root dir
 const targetDir = path.resolve(require.resolve(product.targetId), "..", "..");
 
+let pxtCore: I.PxtCore = target.pxtCore;
 let appOptions: I.AppOptions = {};
 let win: Electron.BrowserWindow = null;
 let windowsMutex: Mutex = null;
@@ -199,3 +198,13 @@ app.on('will-quit', () => {
         createWindow();
     }
 });*/
+
+// Enfore single instance
+let isMultipleInstance = app.makeSingleInstance(() => {
+    win.restore();
+    win.focus();
+});
+
+if (isMultipleInstance) {
+    app.quit();
+}

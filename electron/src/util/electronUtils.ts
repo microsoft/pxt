@@ -73,7 +73,7 @@ export function writeJsonFileAsync<T>(content: T, thePath: string): Promise<void
     return fsWriteFilePromise(thePath, JSON.stringify(content));
 }
 
-export function request(options: I.RequestOptions): Promise<I.RequestContext> {
+export function requestAsStream(options: I.RequestOptions): Promise<I.RequestContext> {
     let deferred = defer<I.RequestContext>();
     let req: http.ClientRequest;
     const endpoint = url.parse(options.url);
@@ -96,7 +96,7 @@ export function request(options: I.RequestOptions): Promise<I.RequestContext> {
         const followRedirects = isNumber(options.followRedirects) ? options.followRedirects : 3;
 
         if (res.statusCode >= 300 && res.statusCode < 400 && followRedirects > 0 && res.headers['location']) {
-            request(Object.assign({}, options, {
+            requestAsStream(Object.assign({}, options, {
                 url: res.headers['location'],
                 followRedirects: followRedirects - 1
             })).done(deferred.resolve, deferred.reject);

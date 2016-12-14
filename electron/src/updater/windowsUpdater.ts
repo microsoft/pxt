@@ -32,7 +32,7 @@ export class WindowsUpdater extends EventEmitter implements I.UpdaterBase {
         }
 
         this.emit("checking-for-update");
-        this.currentRequest = Utils.request({ url: this.url })
+        this.currentRequest = Utils.requestAsStream({ url: this.url })
             .then<I.Update>(Utils.asJson)
             .then(update => {
                 if (!update || !update.url) {
@@ -87,7 +87,7 @@ export class WindowsUpdater extends EventEmitter implements I.UpdaterBase {
                 const url = update.url;
                 const downloadPath = `${packagePath}.tmp`;
 
-                return Utils.request({ url })
+                return Utils.requestAsStream({ url })
                     .then(context => Utils.download(downloadPath, context))
                     .then(() => Utils.fsRenamePromise(downloadPath, packagePath));
             })

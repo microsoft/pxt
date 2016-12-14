@@ -83,6 +83,16 @@ function cleanAll() {
     rimraf.sync(outRoot);
 }
 
+function cleanDist(platform) {
+    const distToClean = getDistributablePath(platform);
+    rimraf.sync(distToClean);
+}
+
+function cleanPackage(platform) {
+    const packageToClean = getPackagePath(platform);
+    rimraf.sync(packageToClean);
+}
+
 function compileTs() {
     let tsSrc = gulp.src(["src/**/*.ts", "!src/node_modules{,/**}"])
         .pipe(replace(/@@(.*)@@/g, (match, p1) => {

@@ -24,17 +24,19 @@ pxt electron run
 
 > **NOTE 1:** Make sure you have built both pxt-core and your target before running this. **You must be able to successfully `pxt serve` your current target**, otherwise the app won't work.
 
-> **NOTE 2:** Because of the way native modules work, `pxt electron init` may break `pxt serve`.
+> **NOTE 2:** Only one target can be initialized for Electron at a time. You will need `pxt electorn init` every time you try a different target. 
+
+> **NOTE 3:** Because of the way native modules work, `pxt electron init` may break `pxt serve`.
 Once you run `pxt electron init`, if you can't run `pxt serve` anymore, delete all node modules from your target and from pxt-core, and reinstall them.
 
-> **NOTE 3:** Due to a bug in NPM 3 when linking packages, this functionality only works in NPM 2.
+> **NOTE 4:** Due to a bug in NPM 3 when linking packages, this functionality only works in NPM 2.
 If you are using NPM 3, you can still package the app (see section below), but you won't be able to run your target in Electron on the fly - you'll need to re-package the app every time you make changes.
 
 ## Packaging the app
 To package (build) the app for your current target, run:
 ```
 cd [target directory]
-pxt electron build
+pxt electron package
 ```
 
 The packaged app will be in `[Target directory]/electron-out`.
@@ -44,6 +46,8 @@ The packaged app will be in `[Target directory]/electron-out`.
 > **NOTE 2:** You do not need to `pxt electron init` your current target to package the app.
 
 > **NOTE 3:** Packaging the app undoes `pxt electron init`. This means you will need to re-run `pxt electron init` if you want to use `pxt electron run` again.
+
+> **NOTE 4:** Use the `--buildInstaller` flag to also build the distributable artifact for the app (.exe installer on Windows, zipped app bundle on Mac).
 
 You can also package the app for a published target instead of using your local target:
 ```

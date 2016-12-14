@@ -3600,7 +3600,11 @@ function initCommands() {
         name: "electron",
         help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
         flags: {
-            product: {
+            buildInstaller: {
+                description: "('package' only) Also build the installer / zip redistributable for the built app",
+                aliases: ["i"],
+                argument: "buildInstaller"
+            },product: {
                 description: "path to a product.json file to use instead of the target's default one",
                 aliases: ["p"],
                 type: "string",
@@ -3613,7 +3617,7 @@ function initCommands() {
                 argument: "pxtElectron"
             },
             release: {
-                description: "('package' only) instead of using current target, use the specified published NPM package (value format: <Target's NPM package>[@<Package version>])",
+                description: "('package' only) Instead of using the current local target, use the published target from NPM (value format: <Target's NPM package>[@<Package version>])",
                 aliases: ["r"],
                 type: "string",
                 argument: "release"
