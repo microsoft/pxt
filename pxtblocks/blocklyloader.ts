@@ -397,8 +397,11 @@ namespace pxt.blocks {
         }
 
         // hook up/down if return value is void
-        block.setPreviousStatement(!body && fn.retType == "void");
-        block.setNextStatement(!body && fn.retType == "void");
+        const hasHandlers = fn.parameters
+            ? fn.parameters.filter(pr => /^\([^\)]*\)\s*=>/.test(pr.type))[0]
+            : undefined;
+        block.setPreviousStatement(!hasHandlers && fn.retType == "void");
+        block.setNextStatement(!hasHandlers && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
     }
@@ -851,7 +854,7 @@ namespace pxt.blocks {
              *     Defaults to the root node.
              * @private
              */
-            (<any>Blockly).Toolbox.prototype.addColour_ = function(opt_tree: any) {
+            (<any>Blockly).Toolbox.prototype.addColour_ = function (opt_tree: any) {
                 let tree = opt_tree || this.tree_;
                 let children = tree.getChildren();
                 for (let i = 0, child: any; child = children[i]; i++) {
