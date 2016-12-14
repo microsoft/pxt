@@ -620,7 +620,7 @@ namespace pxt.blocks {
         initDrag();
         initToolboxColor();
 
-        Blockly.BlockSvg.START_HAT = true;
+        Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
