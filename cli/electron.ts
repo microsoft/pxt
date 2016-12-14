@@ -5,14 +5,13 @@ import * as fs from "fs";
 import * as nodeutil from './nodeutil';
 import * as path from "path";
 
-const gulpCmd = process.platform === "win32" ? "gulp.cmd" : "gulp";
-const nodeCmd = process.platform === "win32" ? "node.cmd" : "node";
-const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+const npm = nodeutil.runNpmAsyncWithCwd;
+const npmCmd = nodeutil.addCmd("npm");
 
 let pxtElectronPath: string;
 let pxtElectronSrcPath: string;
 let targetProductJson: string;
-let targetId: string;
+let targetNpmPackageName: string;
 let isInit = false;
 let buildOut: string;
 
@@ -34,11 +33,11 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     // Validate current target
     let needsCurrentTarget = (subcommand !== "build" && subcommand !== "dist") || !parsed.flags["release"];
 
-    if (needsCurrentTarget && !fs.existsSync("pxtarget.json") && !fs.existsSync("package.json")) {
+    if (needsCurrentTarget && (!fs.existsSync("pxtarget.json") || !fs.existsSync("package.json"))) {
         errorOut("This command requires to be in a valid target directory (pxtarget.json and package.json required)");
     }
 
-    targetId = JSON.parse(fs.readFileSync("package.json", "utf8")).name;
+    targetNpmPackageName = JSON.parse(fs.readFileSync("package.json", "utf8")).name;
 
     // Find root of PXT Electron app sources
     if (parsed.flags["pxtElectron"]) {
@@ -78,10 +77,10 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     }
 
     // Other initializations
-    let linkedTarget = path.join(pxtElectronSrcPath, "node_modules", targetId);
+    let linkedTarget = path.join(pxtElectronSrcPath, "node_modules", targetNpmPackageName);
     let linkPath = fs.existsSync(linkedTarget) ? finalLinkPath(linkedTarget) : null;
 
-    isInit = path.resolve(linkPath) === path.resolve(process.cwd());
+    isInit = linkPath && path.resolve(linkPath) === path.resolve(process.cwd());
 
     if (parsed.flags["release"]) {
         buildOut = "out";
@@ -95,26 +94,30 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
             return initAsync();
         case "run":
             return runAsync();
-        case "build":
-            return buildAsync(parsed);
-        case "dist":
-            return distAsync();
+        case "package":
+            return packageAsync(parsed);
+        case "buildInstaller":
+            return buildInstallerAsync();
         default:
             return errorOut("Unknown subcommand: " + subcommand);
     }
 }
 
 function initAsync(): Promise<void> {
-    return npmVersion()
+    return nodeutil.spawnWithPipeAsync({
+        cmd: npmCmd,
+        "args": ["-v"]
+    })
+        .then((buf) => buf.toString())
         .then((v) => {
             if (/^3\./.test(v)) {
-                return errorOut("'pxt electron init/run' is not supported in NPM 3+ due to a package linking bug. You can still use 'pxt electron build', however.");
+                return errorOut("'pxt electron init/run' only works in NPM 2 due to a package linking bug in NPM 3. You can still use 'pxt electron package', however.");
             }
 
-            return npmInstall(pxtElectronPath);
+            return npm(pxtElectronPath, "install");
         })
-        .then(() => npmLink(pxtElectronSrcPath, process.cwd()))
-        .then(() => npmRunElectronScript("rebuild-native"))
+        .then(() => npm(pxtElectronSrcPath, "link", process.cwd()))
+        .then(() => npm(pxtElectronPath, "run", "rebuild-native"))
         .then(() => console.log("\nWARNING: 'pxt electron init' can break 'pxt serve'. If you have problems with 'pxt serve', delete all node modules and reinstall them (for both the target and pxt-core)."));
 }
 
@@ -124,30 +127,30 @@ function runAsync(): Promise<void> {
     }
 
     return electronGulpTask("compile")
-        .then(() => npmRunElectronScript("start"));
+        .then(() => npm(pxtElectronPath, "run", "start"));
 }
 
-function buildAsync(parsed: p.ParsedCommand): Promise<void> {
-    let buildPromise = npmPrune(pxtElectronSrcPath);
+function packageAsync(parsed: p.ParsedCommand): Promise<void> {
+    let buildPromise = npm(pxtElectronSrcPath, "prune");
 
     if (parsed.flags["release"]) {
-        buildPromise = buildPromise.then(() => npmInstall(pxtElectronSrcPath, parsed.flags["release"] as string));
+        buildPromise = buildPromise.then(() => npm(pxtElectronSrcPath, "install", parsed.flags["release"] as string));
     } else {
         buildPromise = buildPromise.then(() => installLocalTargetAsync());
     }
 
     return buildPromise
-        .then(() => npmInstall(pxtElectronPath))
-        .then(() => npmRunElectronScript("rebuild-native"))
+        .then(() => npm(pxtElectronPath, "install"))
+        .then(() => npm(pxtElectronPath, "run", "rebuild-native"))
         .then(() => electronGulpTask("package"));
 }
 
-function distAsync(): Promise<void> {
+function buildInstallerAsync(): Promise<void> {
     return electronGulpTask("dist");
 }
 
 function installLocalTargetAsync(): Promise<void> {
-    return npmInstall(pxtElectronSrcPath, process.cwd())
+    return npm(pxtElectronSrcPath, "install", process.cwd())
         .then(() => {
             // If pxt-core is linked inside the current target, install the linked pxt-core in the app instead of the published one
             let pxtCorePath = path.join(process.cwd(), "node_modules", "pxt-core");
@@ -162,104 +165,35 @@ function installLocalTargetAsync(): Promise<void> {
 }
 
 function reinstallLocalPxtCoreAsync(pxtCoreTruePath: string): Promise<void> {
-    // The location where we need to run npm install for pxt-core depends on NPM 2 vs NPM 3, so we first launch a small node script to determine where it was installed
+    // The location where we need to run npm install for pxt-core depends on NPM 2 vs NPM 3, so we first launch a small node script to determine where to install from
     let pxtCoreLocation: string;
 
     return nodeutil.spawnWithPipeAsync({
-        cmd: nodeCmd,
+        cmd: nodeutil.addCmd("node"),
         args: [
             "-e",
-            `console.log(require(${targetId}).pxtCoreDir)`
+            `console.log(require(${targetNpmPackageName}).pxtCoreDir)`
         ],
         cwd: pxtElectronSrcPath
     })
         .then((pxtCoreLocationBuffer) => {
             pxtCoreLocation = path.join(pxtCoreLocationBuffer.toString(), "..", "..");
 
-            return npmUninstall(pxtCoreLocation, "pxt-core");
+            return npm(pxtCoreLocation, "uninstall", "pxt-core");
         })
-        .then(() => npmInstall(pxtCoreLocation, pxtCoreTruePath));
+        .then(() => npm(pxtCoreLocation, "install", pxtCoreTruePath));
 }
 
 function electronGulpTask(taskName: string): Promise<void> {
+    let gulpPath = path.join(pxtElectronPath, "node_modules", ".bin", "gulp");
+
     return nodeutil.spawnAsync({
-        cmd: gulpCmd,
+        cmd: nodeutil.addCmd(gulpPath),
         args: [
             taskName,
             "--" + targetProductJson,
             "--" + buildOut
         ],
-        cwd: pxtElectronPath
-    });
-}
-
-function npmVersion(): Promise<string> {
-    return nodeutil.spawnWithPipeAsync({
-        cmd: npmCmd,
-        "args": ["-v"]
-    })
-        .then((buf) => {
-            return buf.toString();
-        });
-}
-
-function npmLink(cwd: string, moduleToLink: string): Promise<void> {
-    return nodeutil.spawnAsync({
-        cmd: npmCmd,
-        args: [
-            "link",
-            moduleToLink],
-        cwd
-    });
-}
-
-function npmInstall(cwd: string, npmPackage?: string): Promise<void> {
-    let args = ["install"];
-
-    if (npmPackage) {
-        args.push(npmPackage);
-    }
-
-    return nodeutil.spawnAsync({
-        cmd: npmCmd,
-        args,
-        cwd
-    });
-}
-
-function npmUninstall(cwd: string, npmPackage: string): Promise<void> {
-    return nodeutil.spawnAsync({
-        cmd: npmCmd,
-        args: [
-            "uninstall",
-            npmPackage
-        ],
-        cwd
-    });
-}
-
-function npmPrune(cwd: string): Promise<void> {
-    return nodeutil.spawnAsync({
-        cmd: npmCmd,
-        args: ["prune"],
-        cwd
-    });
-}
-
-function npmRunElectronScript(script: string, scriptArgs?: string[]): Promise<void> {
-    let args = [
-        "run",
-        script
-    ];
-
-    if (scriptArgs) {
-        args.push("--");
-        args = args.concat(scriptArgs);
-    }
-
-    return nodeutil.spawnAsync({
-        cmd: npmCmd,
-        args,
         cwd: pxtElectronPath
     });
 }

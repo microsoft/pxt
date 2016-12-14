@@ -100,6 +100,23 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
     })
 }
 
+export function addCmd(name: string) {
+    return name + (/^win/.test(process.platform) ? ".cmd" : "")
+}
+
+export function runNpmAsync(...args: string[]) {
+    return runNpmAsyncWithCwd(".", ...args);
+}
+
+export function runNpmAsyncWithCwd(cwd: string, ...args: string[]) {
+    console.log("npm", args);
+    return spawnAsync({
+        cmd: addCmd("npm"),
+        args: args,
+        cwd
+    });
+}
+
 function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
     let isHttps = false
 

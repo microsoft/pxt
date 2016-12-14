@@ -429,7 +429,7 @@ function travisAsync() {
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        let p = npmPublish ? runNpmAsync("publish") : Promise.resolve();
+        let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
         if (uploadLocs)
             p = p.then(() => execCrowdinAsync("upload", "built/strings.json"));
         return p;
@@ -446,7 +446,7 @@ function travisAsync() {
                 let trg = readLocalPxTarget()
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
-                        .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
+                        .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
@@ -494,7 +494,7 @@ function updateAsync() {
     return Promise.resolve()
         .then(() => runGitAsync("pull"))
         .then(() => bumpPxtCoreDepAsync())
-        .then(() => runNpmAsync("install"));
+        .then(() => nodeutil.runNpmAsync("install"));
 }
 
 function justBumpPkgAsync() {
@@ -535,7 +535,7 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
             .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
-            .then(() => runNpmAsync("version", "patch"))
+            .then(() => nodeutil.runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
     else {
@@ -546,15 +546,6 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
 function runGitAsync(...args: string[]) {
     return nodeutil.spawnAsync({
         cmd: "git",
-        args: args,
-        cwd: "."
-    })
-}
-
-function runNpmAsync(...args: string[]) {
-    console.log("npm", args);
-    return nodeutil.spawnAsync({
-        cmd: addCmd("npm"),
         args: args,
         cwd: "."
     })
@@ -1048,17 +1039,13 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
     })
 }
 
-function addCmd(name: string) {
-    return name + (/^win/.test(process.platform) ? ".cmd" : "")
-}
-
 function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
     let ksd = "node_modules/pxt-core"
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
     return nodeutil.spawnAsync({
-        cmd: addCmd("jake"),
+        cmd: nodeutil.addCmd("jake"),
         args: includeSourceMaps ? ["sourceMaps=true"] : [],
         cwd: ksd
     }).then(() => {
@@ -3611,7 +3598,7 @@ function initCommands() {
 
     p.defineCommand({
         name: "electron",
-        help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'build': generates a packaged Electron app for current target",
+        help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
         flags: {
             product: {
                 description: "path to a product.json file to use instead of the target's default one",
@@ -3626,7 +3613,7 @@ function initCommands() {
                 argument: "pxtElectron"
             },
             release: {
-                description: "('build' only) instead of using current target, use specified published NPM package (value format: <Target's NPM package>[@<Package version>])",
+                description: "('package' only) instead of using current target, use the specified published NPM package (value format: <Target's NPM package>[@<Package version>])",
                 aliases: ["r"],
                 type: "string",
                 argument: "release"
