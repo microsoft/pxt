@@ -1066,7 +1066,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 // current file is the ts file, so just switch
                 this.textEditor.openBlocks();
             } else if (tsFile) {
-                this.textEditor.decompile(tsFile.name).then((success) => {
+                this.textEditor.decompileAsync(tsFile.name).then((success) => {
                     if (!success) {
                         this.setFile(tsFile)
                         this.textEditor.showConversionFailedDialog(fn.name)
@@ -1142,12 +1142,15 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 if (e)
                     file = main.lookupFile(e.name) || file
                 if (!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName())
-                    file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
-                    this.textEditor.decompile(file.getVirtualFileName()).then((success) => {
+                    file = main.lookupFile("this/" + file.getVirtualFileName()) || file;
+                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
+                    if (!file.content) // empty blocks file, open javascript editor
+                        file = main.lookupFile("this/" + file.getVirtualFileName()) || file
+                    else this.textEditor.decompileAsync(file.getVirtualFileName()).then((success) => {
                         if (!success)
                             file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                     });
+                }
                 this.setState({
                     header: h,
                     currFile: file
@@ -1277,7 +1280,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 pubId: "",
                 pubCurrent: false
             };
-            let files = JSON.parse(data.source);
+            const files = JSON.parse(data.source) as pxt.Map<string>;
+            // basic xml validation of main.blocks.
+            if (files["main.blocks"] && !pxt.blocks.loadWorkspaceXml(files["main.blocks"], true)) {
+                // block code seems invalid., reset blocks to force decompilation
+                pxt.log('invalid blockly xml, reseting blockly');
+                files["main.blocks"] = '';
+            }
             workspace.installAsync(h, files)
                 .done(hd => this.loadHeaderAsync(hd));
             return;
@@ -1968,7 +1977,7 @@ function initScreenshots() {
             const scmsg = msg as pxsim.SimulatorScreenshotMessage;
             console.log('received screenshot');
             screenshot.saveAsync(theEditor.state.header, scmsg.data)
-                .done(() => { pxt.debug('screenshot saved')})
+                .done(() => { pxt.debug('screenshot saved') })
         };
     }, false);
 }
@@ -2209,7 +2218,7 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd)
             else theEditor.newProject();
             return Promise.resolve();
-        }).done(() => {});
+        }).done(() => { });
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)

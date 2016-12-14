@@ -2,13 +2,14 @@
 <block type="test_callback">
 <statement name="HANDLER">
 </statement>
-<next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
 <block type="test_callback">
 <statement name="HANDLER">
 <block type="test_no_argument">
 </block>
 </statement>
-<next>
+</block>
 <block type="test_callback">
 <statement name="HANDLER">
 <block type="test_no_argument">
@@ -18,7 +19,7 @@
 </next>
 </block>
 </statement>
-<next>
+</block>
 <block type="test_callback_with_argument">
 <field name="arg1">TestEnum.testValue2</field>
 <value name="arg2">
@@ -30,12 +31,5 @@
 <block type="test_no_argument">
 </block>
 </statement>
-</block>
-</next>
-</block>
-</next>
-</block>
-</next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </xml>

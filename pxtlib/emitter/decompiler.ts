@@ -93,6 +93,25 @@ ${output}</xml>`;
             result.success = false;
         }
 
+        function hasArrowFunction(info: CallInfo): boolean {
+            const parameters = (info.decl as FunctionLikeDeclaration).parameters;
+            return info.args.some((arg, index) =>
+                arg && arg.kind === SK.ArrowFunction && parameters && !parameters[index].questionToken && !parameters[index].initializer);
+        }
+
+        function isEventExpression(expr: ts.ExpressionStatement): boolean {
+            if (expr.expression.kind == SK.CallExpression) {
+                const call = expr.expression as ts.CallExpression;
+                const callInfo: pxtc.CallInfo = (call as any).callInfo
+                if (!callInfo) {
+                    error(expr)
+                    return false;
+                }
+                return !callInfo.isExpression && hasArrowFunction(callInfo);
+            }
+            return false;
+        }
+
         function isOutputExpression(expr: ts.Expression): boolean {
 
             switch (expr.kind) {
@@ -143,7 +162,10 @@ ${output}</xml>`;
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
             statements.reverse().forEach(statement => {
-                if (statement.kind == SK.ExpressionStatement && isOutputExpression((statement as ts.ExpressionStatement).expression)) {
+                if (statement.kind == SK.ExpressionStatement &&
+                    (isOutputExpression((statement as ts.ExpressionStatement).expression) ||
+                        isEventExpression((statement as ts.ExpressionStatement))
+                    )) {
                     if (!topLevel) {
                         error(statement, Util.lf("Output expressions can only exist in the top level scope"))
                     }
@@ -377,7 +399,7 @@ ${output}</xml>`;
                                 addVariableDeclaration(decl);
                                 return false;
                             }
-                        break;
+                            break;
                         default:
                     }
                     return true;
@@ -601,11 +623,7 @@ ${output}</xml>`;
 
                 const argumentDifference = info.args.length - argNames.length;
                 if (argumentDifference > 0) {
-                    const parameters = (info.decl as FunctionLikeDeclaration).parameters;
-
-                    const hasCallback = info.args.some((arg, index) =>
-                        arg && arg.kind === SK.ArrowFunction && parameters && !parameters[index].questionToken && !parameters[index].initializer);
-
+                    const hasCallback = hasArrowFunction(info);
                     if (argumentDifference > 1 || !hasCallback) {
                         pxt.tickEvent("decompiler.optionalParameters");
                         error(node, Util.lf("Function call has more arguments than are supported by its block"));
@@ -658,7 +676,7 @@ ${output}</xml>`;
                 if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
                     const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
 
-                    const renames: {[index: string]: string} = {};
+                    const renames: { [index: string]: string } = {};
 
                     const properties = elements.map(e => {
                         if (checkName(e.propertyName) && checkName(e.name)) {

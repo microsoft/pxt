@@ -11,19 +11,20 @@ namespace pxt.blocks {
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
-    export function loadWorkspaceXml(xml: string) {
-        let workspace = new Blockly.Workspace();
+    export function loadWorkspaceXml(xml: string, skipReport = false) {
+        const workspace = new Blockly.Workspace();
         try {
             Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xml), workspace);
             return workspace;
         } catch (e) {
-            pxt.reportException(e, { xml: xml });
+            if (!skipReport)
+                pxt.reportException(e);
             return null;
         }
     }
 
 
-    export function importXml(info: pxtc.BlocksInfo, xml: string): string {
+    export function importXml(info: pxtc.BlocksInfo, xml: string, skipReport = false): string {
         try {
             let parser = new DOMParser();
             let doc = parser.parseFromString(xml, "application/xml");
@@ -33,7 +34,8 @@ namespace pxt.blocks {
             for (let k in info.apis.byQName) {
                 let api = info.apis.byQName[k];
                 if (api.kind == pxtc.SymbolKind.EnumMember)
-                    enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)] = api.namespace + '.' + api.name;
+                    enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)]
+                        = api.namespace + '.' + api.name;
             }
 
             // walk through blocks and patch enums
@@ -45,7 +47,8 @@ namespace pxt.blocks {
             return new XMLSerializer().serializeToString(doc);
         }
         catch (e) {
-            reportException(e, { xml: xml });
+            if (!skipReport)
+                reportException(e);
             return xml;
         }
     }

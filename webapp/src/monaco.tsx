@@ -136,12 +136,9 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    decompile(blockFile: string): Promise<boolean> {
-        let xml: string;
+    decompileAsync(blockFile: string): Promise<boolean> {
         return compiler.decompileAsync(blockFile)
-            .then(resp => {
-                return Promise.resolve(resp.success);
-            })
+            .then(resp => resp.success);
     }
 
     undo() {

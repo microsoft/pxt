@@ -154,6 +154,7 @@ declare namespace pxt {
         projectGallery?: string;
         crowdinProject?: string;
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
+        blockHats?: boolean; // if true, event blocks have hats
     }
 
     interface DocMenuEntry {

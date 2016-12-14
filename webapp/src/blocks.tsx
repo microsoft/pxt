@@ -119,6 +119,7 @@ export class Editor extends srceditor.Editor {
             let xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
+            this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
         } catch (e) {
@@ -128,6 +129,16 @@ export class Editor extends srceditor.Editor {
         this.changeCallback();
 
         return true;
+    }
+
+    private initLayout() {
+        // layout on first load if no data info
+        const layoutInfo = this.editor.getTopBlocks(false).some(b => {
+            const tp = b.getBoundingRectangle().topLeft;
+            return tp.x != 0 || tp.y != 0
+        });
+        if (!layoutInfo)
+            pxt.blocks.layout.flow(this.editor);
     }
 
     private reportDeprecatedBlocks() {
