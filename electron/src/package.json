@@ -7,7 +7,7 @@
         "url": "https://github.com/Microsoft/pxt-core"
     },
     "license": "MIT",
-    "main": "src/main.js",
+    "main": "main.js",
     "scripts": {
         "rebuild-native": "node ../dev_tools/rebuild-native.js"
     },
