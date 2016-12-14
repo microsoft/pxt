@@ -21,7 +21,11 @@ namespace pxt.blocks.layout {
         // randomize order
         fisherYates(blocks);
         // apply layout
-        flow(blocks, ratio || 1.62);
+        flowBlocks(blocks, ratio);
+    }
+
+    export function flow(ws: B.Workspace, ratio?: number) {
+        flowBlocks(ws.getTopBlocks(true), ratio);
     }
 
     export function screenshotAsync(ws: B.Workspace): Promise<string> {
@@ -124,8 +128,11 @@ namespace pxt.blocks.layout {
         return { width: width, height: height, xml: data };
     }
 
-    function flow(blocks: Blockly.Block[], ratio: number) {
+    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62) {
         const gap = 14;
+        const marginx = 14;
+        const marginy = 14;
+
         // compute total block surface and infer width
         let surface = 0;
         for (let block of blocks) {
@@ -134,8 +141,8 @@ namespace pxt.blocks.layout {
         }
         const maxx = Math.sqrt(surface) * ratio;
 
-        let insertx = 0;
-        let inserty = 0;
+        let insertx = marginx;
+        let inserty = marginy;
         let endy = 0;
         for (let block of blocks) {
             let r = block.getBoundingRectangle();
@@ -145,7 +152,7 @@ namespace pxt.blocks.layout {
             insertx += s.width + gap;
             endy = Math.max(endy, inserty + s.height + gap);
             if (insertx > maxx) { // start new line
-                insertx = 0;
+                insertx = marginx;
                 inserty = endy;
             }
         }
