@@ -19,7 +19,8 @@ namespace pxt.blocks {
     export enum BlockLayout {
         Align = 1,
         Shuffle = 2,
-        Clean = 3
+        Clean = 3,
+        Flow = 4
     }
 
     export interface BlocksRenderOptions {
@@ -30,7 +31,7 @@ namespace pxt.blocks {
         package?: string;
     }
 
-    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Align }): HTMLElement {
+    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Flow }): HTMLElement {
         if (!workspace) {
             blocklyDiv = document.createElement("div");
             blocklyDiv.style.position = "absolute";
@@ -60,6 +61,8 @@ namespace pxt.blocks {
                     pxt.blocks.layout.verticalAlign(workspace, options.emPixels); break;
                 case BlockLayout.Shuffle:
                     pxt.blocks.layout.shuffle(workspace, options.aspectRatio); break;
+                case BlockLayout.Flow:
+                    pxt.blocks.layout.flow(workspace, options.aspectRatio); break;
                 case BlockLayout.Clean:
                     if ((<any>workspace).cleanUp_)
                         (<any>workspace).cleanUp_();
