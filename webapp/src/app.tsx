@@ -1222,12 +1222,22 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     importBlocksFiles(file: File) {
         if (!file) return;
-
         fileReadAsTextAsync(file)
             .done(contents => {
                 this.newProject({
                     filesOverride: { "main.blocks": contents, "main.ts": "  " },
                     name: file.name.replace(/\.blocks$/i, '') || lf("Untitled")
+                })
+            })
+    }
+
+    importTypescriptFile(file: File) {
+        if (!file) return;
+        fileReadAsTextAsync(file)
+            .done(contents => {
+                this.newProject({
+                    filesOverride: { "main.blocks": '', "main.ts": contents || "  " },
+                    name: file.name.replace(/\.ts$/i, '') || lf("Untitled")
                 })
             })
     }
@@ -1315,6 +1325,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             this.importHexFile(file)
         } else if (isBlocksFile(file.name)) {
             this.importBlocksFiles(file)
+        } else if (isTypescriptFile(file.name)) {
+            this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
         } else core.warningNotification(lf("Oops, don't know how to load this file!"));
@@ -1879,15 +1891,19 @@ function getEditor() {
     return theEditor
 }
 
-function isHexFile(filename: string) {
+function isHexFile(filename: string): boolean {
     return /\.hex$/i.test(filename)
 }
 
-function isBlocksFile(filename: string) {
+function isBlocksFile(filename: string): boolean {
     return /\.blocks$/i.test(filename)
 }
 
-function isProjectFile(filename: string) {
+function isTypescriptFile(filename: string): boolean {
+    return /\.ts$/i.test(filename);
+}
+
+function isProjectFile(filename: string): boolean {
     return /\.pxt$/i.test(filename)
 }
 
