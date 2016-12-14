@@ -129,9 +129,9 @@ namespace pxt.blocks.layout {
     }
 
     function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62) {
-        const gap = 14;
-        const marginx = 14;
-        const marginy = 14;
+        const gap = 16;
+        const marginx = 20;
+        const marginy = 20;
 
         // compute total block surface and infer width
         let surface = 0;
