@@ -254,6 +254,10 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     })
 }
 
+export function hideDialog() {
+    $('.modal').modal("hide");
+}
+
 export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (!options.buttons) options.buttons = []
 
