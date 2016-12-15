@@ -820,7 +820,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
-        this.reload = false; //set to true in case of reset of the project where we are going to reload the page.        
+        this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         this.state = {
             showFiles: false,
@@ -1530,7 +1530,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload, please try again."));
-                        pxt.reportException(e, resp.outfiles);
+                        pxt.reportException(e);
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);

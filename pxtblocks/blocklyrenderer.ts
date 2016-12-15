@@ -12,7 +12,7 @@ namespace pxt.blocks {
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
-            y += emPixels; //buffer            
+            y += emPixels; //buffer
         })
     }
 
@@ -89,7 +89,7 @@ namespace pxt.blocks {
             return svg[0];
 
         } catch (e) {
-            pxt.reportException(e, { blocks: blocksXml });
+            pxt.reportException(e);
             return undefined;
         }
     }
