@@ -20,6 +20,7 @@ namespace pxsim {
     export enum SimulatorDebuggerCommand {
         StepInto,
         StepOver,
+        StepOut,
         Resume,
         Pause
     }
@@ -204,7 +205,7 @@ namespace pxsim {
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
-            // first frame            
+            // first frame
             let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
@@ -283,6 +284,10 @@ namespace pxsim {
                     msg = 'stepinto';
                     this.setState(SimulatorState.Running);
                     break;
+                case SimulatorDebuggerCommand.StepOut:
+                    msg = 'stepout';
+                    this.setState(SimulatorState.Running);
+                    break;
                 case SimulatorDebuggerCommand.StepOver:
                     msg = 'stepover';
                     this.setState(SimulatorState.Running);
@@ -295,7 +300,11 @@ namespace pxsim {
                     return;
             }
 
-            this.postDebuggerMessage(msg)
+            this.postMessage({type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
+        }
+
+        public setBreakpoints(breakPoints: number[]) {
+            this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
         }
 
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {

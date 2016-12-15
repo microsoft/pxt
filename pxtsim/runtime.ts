@@ -384,6 +384,9 @@ namespace pxsim {
                         case "stepinto":
                             breakAlways = true
                             break
+                        case "stepout":
+                            breakAlways = true;
+                            breakFrame = s.parent || s;
                     }
 
                     return loop(s)
@@ -409,6 +412,7 @@ namespace pxsim {
                     case "resume":
                     case "stepover":
                     case "stepinto":
+                    case "stepout":
                         if (dbgResume)
                             dbgResume(msg);
                         break;
