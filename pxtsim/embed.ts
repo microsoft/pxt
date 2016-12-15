@@ -54,8 +54,9 @@ namespace pxsim {
         sim?: boolean;
     }
     export interface SimulatorModalMessage extends SimulatorMessage {
-        header: string;
-        body: string;
+        command: "open" | "close"
+        header?: string;
+        body?: string;
         copyable?: string;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {

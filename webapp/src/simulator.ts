@@ -68,6 +68,21 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onStateChanged: function (state) {
             updateDebuggerButtons()
+        },
+        onModal: (msg: pxsim.SimulatorModalMessage): void => {
+            switch (msg.command) {
+                case "open":
+                    stop();
+                    core.confirmAsync({
+                        header: msg.header,
+                        body: msg.body,
+                        size: "large",
+                        copyable: msg.copyable,
+                        hideAgree: true,
+                        disagreeLbl: lf("Close")
+                    }).done();
+                    break;
+            }
         }
     };
     driver = new pxsim.SimulatorDriver($('#simulators')[0], options);

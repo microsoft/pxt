@@ -6,6 +6,7 @@ namespace pxsim {
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
+        onModal?: (msg: pxsim.SimulatorModalMessage) => void;
         simUrl?: string;
     }
 
@@ -248,7 +249,7 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
-                case 'modal': break; //handled elsewhere
+                case 'modal':  this.handleModalMessage(msg as pxsim.SimulatorModalMessage); break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 default:
@@ -295,6 +296,10 @@ namespace pxsim {
             }
 
             this.postDebuggerMessage(msg)
+        }
+
+        private handleModalMessage(msg: pxsim.SimulatorModalMessage) {
+            if (this.options.onModal) this.options.onModal(msg);
         }
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
