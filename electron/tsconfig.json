@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "removeComments": false,
+        "target": "es6",
+        "sourceMap": false,
+        "newLine": "LF",
+        "typeRoots": [
+            "src/typings"
+        ]
+    }
+}

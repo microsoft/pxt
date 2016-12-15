@@ -1,0 +1,7 @@
+{
+    "aggressivePrompt": "v1.0.0",
+    "blackList": [
+        "v0.6.0"
+    ],
+    "latestRelease": "v2.0.0"
+}
