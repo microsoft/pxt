@@ -9,7 +9,6 @@ import { OsxUpdater } from "./osxUpdater";
 import * as path from "path";
 import product from "../util/productInfoLoader";
 import * as semver from "semver";
-import { UpdateServer } from "./updateServer";
 import * as Utils from "../util/electronUtils";
 import { WindowsUpdater } from "./windowsUpdater";
 
@@ -19,7 +18,6 @@ export class UpdateService extends EventEmitter {
     private readonly CACHE_LIFE_MS = 20 * 60 * 1000; // 20 minutes before re-fetching the release manifest
 
     private updaterImpl: I.UpdaterBase = null;
-    private updateServer: UpdateServer = null;
     private _cacheInfo: I.UpdateCacheInfo = null;
 
     private get cacheInfo(): I.UpdateCacheInfo {
@@ -48,18 +46,9 @@ export class UpdateService extends EventEmitter {
                 this.updaterImpl = new OsxUpdater();
                 break;
         }
-
-        this.updateServer = new UpdateServer();
     }
 
-    public start(): Promise<void> {
-        return this.updateServer.start()
-            .catch((e) => {
-                this.updateServer = null;
-            });
-    }
-
-    public versionCheck(): void {
+    public initialCheck(): void {
         this.getReleaseManifest()
             .then((releaseManifest) => {
                 let targetVersion = this.getTargetRelease(releaseManifest);
@@ -123,7 +112,19 @@ export class UpdateService extends EventEmitter {
         });
 
         try {
-            this.updaterImpl.setFeedURL(this.updateServer.getFeedUrl(targetVersion));
+            let downloadUrl = product.updateDownloadUrl;
+
+            if (!/\/$/.test(product.updateDownloadUrl)) {
+                downloadUrl += "/";
+            }
+
+            downloadUrl = `${downloadUrl}${targetVersion}/${process.platform}`; 
+
+            if (product.isBeta) {
+                downloadUrl += "-beta";
+            }
+
+            this.updaterImpl.setFeedURL(downloadUrl);
         } catch (e) {
             // On OSX, an error here means the current app isn't signed. Update is not possible.
             deferred.reject(void 0);

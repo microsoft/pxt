@@ -133,14 +133,7 @@ function main(): void {
             if (isUpdateEnabled()) {
                 updateService = new UpdateService();
                 registerUpdateHandlers();
-                updateService.start()
-                    .then(() => {
-                        return updateService.versionCheck();
-                    })
-                    .catch((e) => {
-                        // Error creating the update server; silently swallow, but updates won't work for this session
-                        updateService = null;
-                    });
+                updateService.initialCheck();
             }
         });
 }
