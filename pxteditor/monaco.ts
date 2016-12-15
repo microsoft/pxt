@@ -84,7 +84,7 @@ namespace pxt.vs {
                                         .then((details: [ts.CompletionEntryDetails, string]) => {
                                             if (!details) return;
 
-                                            return client.getLeadingComments(fp, fn.spans[0].start + fn.spans[0].length, fn.text)
+                                            return client.getLeadingComments(fp, fn.spans[0].start)
                                                 .then((comments: string) => {
                                                     let meta: pxtc.CommentAttrs;
                                                     if (comments)

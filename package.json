@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "monaco-editor": "0.7.0",
-    "pxt-monaco-typescript": "2.0.4",
+    "pxt-monaco-typescript": "2.0.5",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",
