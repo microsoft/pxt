@@ -248,6 +248,7 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
+                case 'modal': break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 default:

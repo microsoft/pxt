@@ -53,6 +53,11 @@ namespace pxsim {
         data: string;
         sim?: boolean;
     }
+    export interface SimulatorModalMessage extends SimulatorMessage {
+        header: string;
+        body: string;
+        copyable?: string;
+    }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
         rssi: number;
         serial: number;

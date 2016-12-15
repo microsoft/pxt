@@ -151,6 +151,7 @@ export interface DialogOptions {
     header: string;
     body?: string;
     htmlBody?: string;
+    copyable?: string;
     size?: string; // defaults to "small"
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
@@ -170,9 +171,16 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     <div class="content">
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
+      ${options.copyable ? `<div class="ui fluid action input">
+         <input class="linkinput" type="text" value="${Util.htmlEscape(options.copyable)}">
+         <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
+            ${lf("Copy")}
+            <i class="copy icon"></i>
+         </button>
+      </div>` : ``}
     </div>`
     html += `<div class="actions">`
-    html += logos
+    html += logos;
 
     if (!options.hideCancel) {
         options.buttons.push({
@@ -195,6 +203,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     html += `</div>`
 
     let modal = $(html)
+    if (options.copyable)
+        modal.find('input[type=text]').val(options.copyable);
     let done = false
     $('#root').append(modal)
     if (options.onLoaded) options.onLoaded(modal)

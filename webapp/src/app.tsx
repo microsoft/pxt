@@ -1974,11 +1974,21 @@ function initSerial() {
             let msg = JSON.parse(ev.data) as pxsim.SimulatorMessage;
             if (msg && msg.type == 'serial')
                 window.postMessage(msg, "*")
+            else if (msg && msg.type == 'modal')
+                showSimModal(msg as pxsim.SimulatorModalMessage);
         }
         catch (e) {
             pxt.debug('unknown message: ' + ev.data);
         }
     }
+}
+
+function showSimModal(msg: pxsim.SimulatorModalMessage) {
+    core.confirmAsync({
+        header: msg.header,
+        body: msg.body,
+        copyable: msg.copyable
+    }).done();
 }
 
 function getsrc() {
