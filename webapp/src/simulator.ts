@@ -6,6 +6,7 @@ import U = pxt.U
 
 interface SimulatorConfig {
     highlightStatement(stmt: pxtc.LocationInfo): void;
+    restartSimulator(): void;
     editor: string;
 }
 
@@ -68,6 +69,24 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onStateChanged: function (state) {
             updateDebuggerButtons()
+        },
+        onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
+            switch (msg.command) {
+                case "restart":
+                    cfg.restartSimulator();
+                    break;
+                case "modal":
+                    stop();
+                    core.confirmAsync({
+                        header: msg.header,
+                        body: msg.body,
+                        size: "large",
+                        copyable: msg.copyable,
+                        hideAgree: true,
+                        disagreeLbl: lf("Close")
+                    }).done();
+                    break;
+            }
         }
     };
     driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
