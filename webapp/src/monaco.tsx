@@ -104,7 +104,7 @@ export class Editor extends srceditor.Editor {
                                 .then(() => this.parent.setFile(mainPkg.files[blockFile]));
                         })
                 }).catch(e => {
-                    pxt.reportException(e, { js: this.currFile.content });
+                    pxt.reportException(e);
                     core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
                 });
         });
@@ -126,7 +126,7 @@ export class Editor extends srceditor.Editor {
             size: "medium",
             hideCancel: !bf
         }).then(b => {
-            // discard                
+            // discard
             if (!b) {
                 pxt.tickEvent("typescript.keepText");
             } else {
@@ -475,7 +475,7 @@ export class Editor extends srceditor.Editor {
         flyout.innerHTML = '';
         flyout.style.display = 'none';
 
-        // Hide the currnet toolbox category 
+        // Hide the currnet toolbox category
         if (this.selectedCategoryItem) {
             this.selectedCategoryItem.style.background = 'none';
             this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
