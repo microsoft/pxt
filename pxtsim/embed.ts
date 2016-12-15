@@ -53,8 +53,9 @@ namespace pxsim {
         data: string;
         sim?: boolean;
     }
-    export interface SimulatorModalMessage extends SimulatorMessage {
-        command: "open" | "close"
+    export interface SimulatorCommandMessage extends SimulatorMessage {
+        type: "simulator",
+        command: "modal" | "restart"
         header?: string;
         body?: string;
         copyable?: string;

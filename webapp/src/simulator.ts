@@ -69,9 +69,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onStateChanged: function (state) {
             updateDebuggerButtons()
         },
-        onModal: (msg: pxsim.SimulatorModalMessage): void => {
+        onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {
-                case "open":
+                case "modal":
                     stop();
                     core.confirmAsync({
                         header: msg.header,
