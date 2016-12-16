@@ -2004,16 +2004,14 @@ function initScreenshots() {
 
 function enableAnalytics() {
     pxt.analytics.enable();
-    const stats: pxt.Map<string | number> = {
-        "electron": electron.isElectron ? 1 : 0
-    };
+    const stats: pxt.Map<string | number> = {}
     if (typeof window !== "undefined") {
         const screen = window.screen;
         stats["screen.width"] = screen.width;
         stats["screen.width"] = screen.height;
         stats["screen.availwidth"] = screen.availWidth;
         stats["screen.availheight"] = screen.availHeight;
-        stats["screen.pixelratio"] = pxt.BrowserUtils.devicePixelRatio();
+        stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
     }
     pxt.tickEvent("editor.loaded", stats);
 }
