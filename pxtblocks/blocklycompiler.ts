@@ -1213,7 +1213,8 @@ namespace pxt.blocks {
                 // compute key that identifies event call
                 // detect if same event is registered already   
                 const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
-                const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs });
+                const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
+                    .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
                 const otherEvent = events[key];
                 if (otherEvent) {
                     // another block is already registered
