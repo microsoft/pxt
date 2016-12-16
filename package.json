@@ -52,6 +52,7 @@
     "typings/jquery",
     "typings/highlightjs",
     "typings/winrt",
+    "localtypings/vscode-debug-protocol.d.ts",
     "docfiles",
     "theme"
   ],
