@@ -676,6 +676,7 @@ namespace pxt.blocks {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
+        events: Map<B.Block>;
         errors: B.Block[];
     }
 
@@ -703,6 +704,7 @@ namespace pxt.blocks {
             workspace: e.workspace,
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
             stdCallTable: e.stdCallTable,
+            events: e.events,
             errors: e.errors
         };
     }
@@ -727,6 +729,7 @@ namespace pxt.blocks {
             workspace: w,
             bindings: [],
             stdCallTable: {},
+            events: {},
             errors: []
         }
     };
@@ -927,15 +930,23 @@ namespace pxt.blocks {
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
-        let bBody = b.getInputTargetBlock("HANDLER");
-        let compiledArgs: JsNode[] = args.map((arg: string) => {
+        const compiledArgs: JsNode[] = args.map((arg: string) => {
             // b.getFieldValue may be string, numbers
-            let argb = b.getInputTargetBlock(arg);
+            const argb = b.getInputTargetBlock(arg);
             if (argb) return compileExpression(e, argb, comments);
             return mkText(b.getFieldValue(arg))
         });
-        let body = compileStatements(e, bBody);
-
+        // compute key that identifies event call
+        // detect if same event is registered already
+        const key = JSON.stringify({ event, compiledArgs });
+        if (e.events[key]) {
+            // another block is already registered
+            e.events[key].setDisabled(true);
+        }
+        // remember last event
+        e.events[key] = b;
+        const bBody = b.getInputTargetBlock("HANDLER");
+        const body = compileStatements(e, bBody);
         let argumentDeclaration: JsNode;
 
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
@@ -1171,6 +1182,7 @@ namespace pxt.blocks {
             });
 
             topblocks.forEach(b => {
+                b.setDisabled(false);
                 let compiled = compileStatements(e, b)
                 if (compiled.type == NT.Block)
                     append(stmtsMain, compiled.children);
