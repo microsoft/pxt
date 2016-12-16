@@ -210,29 +210,6 @@ namespace pxt.blocks {
         throw e;
     }
 
-    namespace Errors {
-
-        export interface CompilationError {
-            msg: string;
-            block: B.Block;
-        }
-
-        let errors: CompilationError[] = [];
-
-        export function report(m: string, b: B.Block) {
-            errors.push({ msg: m, block: b });
-        }
-
-        export function clear() {
-            errors = [];
-        }
-
-        export function get() {
-            return errors;
-        }
-
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // Types
     //
@@ -480,10 +457,9 @@ namespace pxt.blocks {
                         }
                 }
             } catch (e) {
-                if ((<any>e).block)
-                    Errors.report(e + "", (<any>e).block);
-                else
-                    Errors.report(e + "", b);
+                const be = ((<any>e).block as B.Block) || b;
+                be.setWarningText(e + "");
+                e.push(be);
             }
         });
 
@@ -700,6 +676,7 @@ namespace pxt.blocks {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
+        errors: B.Block[];
     }
 
     export enum VarUsage {
@@ -725,7 +702,8 @@ namespace pxt.blocks {
         return {
             workspace: e.workspace,
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
-            stdCallTable: e.stdCallTable
+            stdCallTable: e.stdCallTable,
+            errors: e.errors
         };
     }
 
@@ -748,7 +726,8 @@ namespace pxt.blocks {
         return {
             workspace: w,
             bindings: [],
-            stdCallTable: {}
+            stdCallTable: {},
+            errors: []
         }
     };
 
@@ -889,12 +868,16 @@ namespace pxt.blocks {
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
+    function eventArgs(call: StdFunc): string[] {
+        return call.args.map(ar => ar.field).filter(ar => !!ar);
+    }
+
     function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let call = e.stdCallTable[b.type];
+        const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
-            return compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace, comments)
+            return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
         else
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
@@ -947,16 +930,17 @@ namespace pxt.blocks {
         return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
     }
 
-    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
-        let bBody = b.getInputTargetBlock("HANDLER");
-        let compiledArgs: JsNode[] = args.map((arg: string) => {
-            // b.getFieldValue may be string, numbers
-            let argb = b.getInputTargetBlock(arg);
-            if (argb) return compileExpression(e, argb, comments);
-            return mkText(b.getFieldValue(arg))
-        });
-        let body = compileStatements(e, bBody);
+    function compileArg(e: Environment, b: B.Block, arg: string, comments: string[]): JsNode {
+        // b.getFieldValue may be string, numbers
+        const argb = b.getInputTargetBlock(arg);
+        if (argb) return compileExpression(e, argb, comments);
+        return mkText(b.getFieldValue(arg))
+    }
 
+    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
+        const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
+        const bBody = b.getInputTargetBlock("HANDLER");
+        const body = compileStatements(e, bBody);
         let argumentDeclaration: JsNode;
 
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
@@ -1191,6 +1175,8 @@ namespace pxt.blocks {
                 return 1;
             });
 
+            disableDuplicateEvents(e, topblocks);
+
             topblocks.forEach(b => {
                 let compiled = compileStatements(e, b)
                 if (compiled.type == NT.Block)
@@ -1218,6 +1204,31 @@ namespace pxt.blocks {
         return [] // unreachable
     }
 
+    function disableDuplicateEvents(e: Environment, blocks: B.Block[]) {
+        // first go through events and disable duplicates
+        const events: Map<B.Block> = {};
+        blocks.forEach(b => {
+            const call = e.stdCallTable[b.type];
+            if (call && call.hasHandler) {
+                // compute key that identifies event call
+                // detect if same event is registered already   
+                const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
+                const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
+                    .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
+                const otherEvent = events[key];
+                if (otherEvent) {
+                    // another block is already registered
+                    b.setDisabled(true);
+                    b.setWarningText(lf("This event is already used."))
+                } else {
+                    b.setDisabled(false);
+                    b.setWarningText(undefined);
+                    events[key] = b;
+                }
+            }
+        });
+    }
+
     export interface SourceInterval {
         id: string;
         start: number;
@@ -1240,7 +1251,6 @@ namespace pxt.blocks {
     }
 
     export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
-        Errors.clear();
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
