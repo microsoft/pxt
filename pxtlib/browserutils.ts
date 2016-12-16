@@ -240,6 +240,20 @@ namespace pxt.BrowserUtils {
         return match ? match.path : null;
     }
 
+    export function devicePixelRatio(): number {
+        if (typeof window === "undefined" || !window.screen) return 1;
+
+        if (window.screen.systemXDPI !== undefined
+            && window.screen.logicalXDPI !== undefined
+            && window.screen.systemXDPI > window.screen.logicalXDPI) {
+            return window.screen.systemXDPI / window.screen.logicalXDPI;
+        }
+        else if (window && window.devicePixelRatio !== undefined) {
+            return window.devicePixelRatio;
+        }
+        return 1;
+    }
+
     export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
         return browserDownloadBase64(btoa(text), name, contentType, onError)
     }
