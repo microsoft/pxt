@@ -10,11 +10,11 @@
             height: 100%;
             overflow: hidden;
         }
-        
+
         body {
             height: 100%;
         }
-        
+
         div.simframe {
             border: none;
             margin: 0 0 0.5rem 0;
@@ -24,7 +24,7 @@
             padding-bottom: 81.96%;
             display: inline-block;
         }
-        
+
         div.simframe > iframe {
             position: absolute;
             left: 0;
@@ -32,7 +32,7 @@
             width: 100%;
             height: 100%;
         }
-        
+
         footer {
             position: absolute;
             bottom: 0;
@@ -46,13 +46,13 @@
             margin: 0;
             background: #fff;
         }
-        
+
         footer img {
             max-height: 1rem;
             vertical-align: middle;
             margin-left: 0.5rem;
         }
-        
+
         footer a,
         footer a:visited {
             text-decoration: none;
@@ -60,7 +60,7 @@
             border: none;
             color: #333;
         }
-        
+
         a.center {
             font-size: 3em;
             font-family: monospace;
@@ -84,19 +84,22 @@
     <!-- @include apptracking.html -->
     <script type="text/javascript" src="/embed.js"></script>
     <script type="text/javascript">
-        (function () {    
+        (function () {
         var loading = document.getElementById('loading');
-        var id = /id=([^&?]+)/i.exec(window.location.href); 
+        var id = /id=([^&?]+)/i.exec(window.location.href);
         var code = /code=([^&?]+)/i.exec(window.location.href);
+        var localToken = /local_token=([^&?]+)/i.exec(window.location.href);
         var hex = !!/hex=1/i.exec(window.location.href);
         var footer = !/nofooter=1/i.exec(window.location.href);
-        if (!id && !code) {
+        var debugSim = !!/debugSim=1/i.exec(window.location.href);
+        var sims = document.getElementById('simulators');
+
+        if (!id && !code && !debugSim) {
             console.error("missing id or code");
             loading.innerText = 'Oops, wrong arguments...';
             return;
         }
-        var options = { id: id ? id[1] : undefined, code: code ? decodeURIComponent(code[1]) : undefined };
-        var sims = document.getElementById('simulators');        
+
         ksRunnerReady(function() {
             var theme = pxt.appTarget.appTheme;
             document.title = theme.title;
@@ -106,19 +109,28 @@
                 pxt.runner.generateHexFileAsync(options).done(function(hex) {
                     $(loading).remove();
                     var name = pxt.appTarget.id + '-' + ts.pxt.BINARY_HEX;
-                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name)                    
+                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name)
                     var a = document.createElement("a");
                     a.href = uri;
                     a.download = name;
                     a.appendChild(document.createTextNode("Right click to save to another location."))
                     sims.appendChild(a);
                 })
-            } else {
+            }
+            else if (!debugSim) {
+                var options = { id: id ? id[1] : undefined, code: code ? decodeURIComponent(code[1]) : undefined };
                 console.log('simulating script')
                 pxt.runner.simulateAsync(sims, options).done(function() {
                     console.log('simulator started...')
                     $(loading).remove();
                 })
+            }
+            else {
+                $(loading).remove();
+                if (localToken) {
+                    pxt.Cloud.localToken = localToken[1];
+                }
+                pxt.runner.startDebuggerAsync(sims);
             }
         })
 })()

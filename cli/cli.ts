@@ -61,7 +61,7 @@ function reportDiagnosticSimply(diagnostic: pxtc.KsDiagnostic): void {
     let output = "";
 
     if (diagnostic.fileName) {
-        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
+        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
     }
 
     const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
@@ -1509,10 +1509,10 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
-            localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
-            packaged: packaged,
             electron: !!parsed.flags["electron"],
+            localToken,
+            packaged,
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
             browser: parsed.flags["browser"] as string,
@@ -2024,6 +2024,7 @@ enum BuildOption {
     Run,
     Deploy,
     Test,
+    DebugSim,
     GenDocs,
 }
 
@@ -2868,7 +2869,7 @@ function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> 
                         start: 1,
                         line: 1,
                         length: 1,
-                        character: 1
+                        column: 1
                     }
                 ])
             })
@@ -2906,7 +2907,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
-            if (target.hasHex && mode != BuildOption.Run)
+            if (target.hasHex && mode != BuildOption.Run && mode != BuildOption.DebugSim)
                 target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
@@ -2933,14 +2934,30 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
+            opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
             return pxtc.compile(opts);
         })
         .then((res): Promise<void | pxtc.CompileOptions> => {
-            U.iterMap(res.outfiles, (fn, c) =>
-                mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
+            U.iterMap(res.outfiles, (fn, c) => {
+                if (fn !== pxtc.BINARY_JS) {
+                    mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
+                }
+                else {
+                    mainPkg.host().writeFile(mainPkg, "built/debug/" + fn, c);
+                }
+            });
+
             reportDiagnostics(res.diagnostics);
             if (!res.success) {
                 process.exit(1)
+            }
+
+            if (buildOpts.mode === BuildOption.DebugSim) {
+                mainPkg.host().writeFile(mainPkg, "built/debug/debugInfo.json", JSON.stringify({
+                    usedParts: pxtc.computeUsedParts(res, true),
+                    usedArguments: res.usedArguments,
+                    breakpoints: res.breakpoints
+                }));
             }
 
             console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
@@ -3131,7 +3148,12 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     forceCloudBuild = !!parsed.flags["cloud"];
 
-    return buildCoreAsync({ mode: BuildOption.JustBuild })
+    let mode = BuildOption.JustBuild;
+    if (parsed.flags["debug"]) {
+        mode = BuildOption.DebugSim;
+    }
+
+    return buildCoreAsync({ mode })
         .then((compileOpts) => { });
 }
 
@@ -3522,7 +3544,8 @@ function initCommands() {
         name: "build",
         help: "build current package",
         flags: {
-            cloud: { description: "Force build to happen in the cloud" }
+            cloud: { description: "Force build to happen in the cloud" },
+            debug: { description: "Emit debug information with build" }
         }
     }, buildAsync);
 
