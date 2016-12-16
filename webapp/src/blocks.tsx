@@ -407,8 +407,8 @@ export class Editor extends srceditor.Editor {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
 
-        // clear previous warnings
-        this.editor.getAllBlocks().forEach(b => b.setWarningText(null));
+        // clear previous warnings on non-disabled blocks
+        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => b.setWarningText(null));
         let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 

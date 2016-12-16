@@ -939,9 +939,11 @@ namespace pxt.blocks {
         // compute key that identifies event call
         // detect if same event is registered already
         const key = JSON.stringify({ event, compiledArgs });
-        if (e.events[key]) {
+        const otherEvent = e.events[key];
+        if (otherEvent) {
             // another block is already registered
-            e.events[key].setDisabled(true);
+            otherEvent.setDisabled(true);
+            otherEvent.setWarningText(lf("This event is already used."))
         }
         // remember last event
         e.events[key] = b;
@@ -1182,7 +1184,10 @@ namespace pxt.blocks {
             });
 
             topblocks.forEach(b => {
-                b.setDisabled(false);
+                if (b.disabled) {
+                    b.setDisabled(false);
+                    b.setWarningText(undefined);
+                }
                 let compiled = compileStatements(e, b)
                 if (compiled.type == NT.Block)
                     append(stmtsMain, compiled.children);
