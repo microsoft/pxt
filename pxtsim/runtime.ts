@@ -387,6 +387,7 @@ namespace pxsim {
                         case "stepout":
                             breakAlways = true;
                             breakFrame = s.parent || s;
+                            break;
                     }
 
                     return loop(s)

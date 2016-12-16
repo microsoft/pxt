@@ -36,7 +36,7 @@ namespace pxt.runner {
         subtype: "runcode";
         code: string;
         usedParts: string[];
-        usedArguments: { [index: string]: string };
+        usedArguments: Map<string>;
         breakpoints: pxtc.Breakpoint[];
     }
 
@@ -63,7 +63,7 @@ namespace pxt.runner {
         }
 
         private initializeWebsocket() {
-            if (!/^http:\/\/localhost/i.test(window.location.href) || !Cloud.localToken)
+            if (!Cloud.isLocalHost() || !Cloud.localToken)
             return;
 
             pxt.debug('initializing debug pipe');
@@ -174,7 +174,7 @@ namespace pxt.runner {
             this.session.runCode(msg.code, msg.usedParts, msg.usedArguments, new pxsim.BreakpointMap(breakpoints), pxt.appTarget.simulator.boardDefinition);
         }
 
-        private sendRunnerMessage(subtype: string, msg: {[index: string]: string} = {}) {
+        private sendRunnerMessage(subtype: string, msg: Map<string> = {}) {
             msg["subtype"] = subtype;
             msg["type"] = "runner";
             this.send(JSON.stringify(msg));

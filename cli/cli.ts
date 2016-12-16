@@ -3153,7 +3153,6 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
         mode = BuildOption.DebugSim;
     }
 
-
     return buildCoreAsync({ mode })
         .then((compileOpts) => { });
 }
