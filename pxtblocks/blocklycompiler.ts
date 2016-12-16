@@ -210,29 +210,6 @@ namespace pxt.blocks {
         throw e;
     }
 
-    namespace Errors {
-
-        export interface CompilationError {
-            msg: string;
-            block: B.Block;
-        }
-
-        let errors: CompilationError[] = [];
-
-        export function report(m: string, b: B.Block) {
-            errors.push({ msg: m, block: b });
-        }
-
-        export function clear() {
-            errors = [];
-        }
-
-        export function get() {
-            return errors;
-        }
-
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     // Types
     //
@@ -480,10 +457,9 @@ namespace pxt.blocks {
                         }
                 }
             } catch (e) {
-                if ((<any>e).block)
-                    Errors.report(e + "", (<any>e).block);
-                else
-                    Errors.report(e + "", b);
+                const be = ((<any>e).block as B.Block) || b;
+                be.setWarningText(e + "");
+                e.push(be);
             }
         });
 
@@ -700,6 +676,7 @@ namespace pxt.blocks {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
+        errors: B.Block[];
     }
 
     export enum VarUsage {
@@ -725,7 +702,8 @@ namespace pxt.blocks {
         return {
             workspace: e.workspace,
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
-            stdCallTable: e.stdCallTable
+            stdCallTable: e.stdCallTable,
+            errors: e.errors
         };
     }
 
@@ -748,7 +726,8 @@ namespace pxt.blocks {
         return {
             workspace: w,
             bindings: [],
-            stdCallTable: {}
+            stdCallTable: {},
+            errors: []
         }
     };
 
@@ -1240,7 +1219,6 @@ namespace pxt.blocks {
     }
 
     export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
-        Errors.clear();
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
