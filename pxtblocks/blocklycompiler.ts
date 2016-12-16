@@ -676,7 +676,6 @@ namespace pxt.blocks {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
-        events: Map<B.Block>;
         errors: B.Block[];
     }
 
@@ -704,7 +703,6 @@ namespace pxt.blocks {
             workspace: e.workspace,
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
             stdCallTable: e.stdCallTable,
-            events: e.events,
             errors: e.errors
         };
     }
@@ -729,7 +727,6 @@ namespace pxt.blocks {
             workspace: w,
             bindings: [],
             stdCallTable: {},
-            events: {},
             errors: []
         }
     };
@@ -871,12 +868,16 @@ namespace pxt.blocks {
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
+    function eventArgs(call: StdFunc): string[] {
+        return call.args.map(ar => ar.field).filter(ar => !!ar);
+    }
+
     function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let call = e.stdCallTable[b.type];
+        const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
-            return compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace, comments)
+            return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
         else
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
@@ -929,24 +930,15 @@ namespace pxt.blocks {
         return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
     }
 
+    function compileArg(e: Environment, b: B.Block, arg: string, comments: string[]): JsNode {
+        // b.getFieldValue may be string, numbers
+        const argb = b.getInputTargetBlock(arg);
+        if (argb) return compileExpression(e, argb, comments);
+        return mkText(b.getFieldValue(arg))
+    }
+
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
-        const compiledArgs: JsNode[] = args.map((arg: string) => {
-            // b.getFieldValue may be string, numbers
-            const argb = b.getInputTargetBlock(arg);
-            if (argb) return compileExpression(e, argb, comments);
-            return mkText(b.getFieldValue(arg))
-        });
-        // compute key that identifies event call
-        // detect if same event is registered already
-        const key = JSON.stringify({ event, compiledArgs });
-        const otherEvent = e.events[key];
-        if (otherEvent) {
-            // another block is already registered
-            otherEvent.setDisabled(true);
-            otherEvent.setWarningText(lf("This event is already used."))
-        }
-        // remember last event
-        e.events[key] = b;
+        const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
         const bBody = b.getInputTargetBlock("HANDLER");
         const body = compileStatements(e, bBody);
         let argumentDeclaration: JsNode;
@@ -1183,11 +1175,9 @@ namespace pxt.blocks {
                 return 1;
             });
 
+            disableDuplicateEvents(e, topblocks);
+
             topblocks.forEach(b => {
-                if (b.disabled) {
-                    b.setDisabled(false);
-                    b.setWarningText(undefined);
-                }
                 let compiled = compileStatements(e, b)
                 if (compiled.type == NT.Block)
                     append(stmtsMain, compiled.children);
@@ -1212,6 +1202,30 @@ namespace pxt.blocks {
         }
 
         return [] // unreachable
+    }
+
+    function disableDuplicateEvents(e: Environment, blocks: B.Block[]) {
+        // first go through events and disable duplicates
+        const events: Map<B.Block> = {};
+        blocks.forEach(b => {
+            const call = e.stdCallTable[b.type];
+            if (call && call.hasHandler) {
+                // compute key that identifies event call
+                // detect if same event is registered already   
+                const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
+                const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs });
+                const otherEvent = events[key];
+                if (otherEvent) {
+                    // another block is already registered
+                    b.setDisabled(true);
+                    b.setWarningText(lf("This event is already used."))
+                } else {
+                    b.setDisabled(false);
+                    b.setWarningText(undefined);
+                    events[key] = b;
+                }
+            }
+        });
     }
 
     export interface SourceInterval {
