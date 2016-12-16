@@ -904,6 +904,7 @@ export function serveAsync(options: ServeOptions) {
     }
 
     return new Promise<void>((resolve, reject) => {
+        server.on("error", reject);
         server.listen(serveOptions.port, "127.0.0.1", () => {
             let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
             console.log(`---------------------------------------------`);
