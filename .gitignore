@@ -6,7 +6,7 @@ webapp/public/closure-library
 node_modules
 *.sw?
 built
-typings/
+/typings
 kind_modules
 pxt_modules
 tmp/
