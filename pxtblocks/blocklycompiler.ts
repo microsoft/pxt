@@ -9,6 +9,8 @@
 import B = Blockly;
 
 namespace pxt.blocks {
+    const ON_START_TYPE = "pxtStart";
+
     export enum NT {
         Prefix, // op + map(children)
         Infix, // children.length == 2, child[0] op child[1]
@@ -876,8 +878,12 @@ namespace pxt.blocks {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
-        else if (call.hasHandler)
-            return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
+        else if (call.hasHandler) {
+            if (b.type == ON_START_TYPE)
+                return compileStartEvent(e, b)
+            else
+                return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
+        }
         else
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
@@ -935,6 +941,14 @@ namespace pxt.blocks {
         const argb = b.getInputTargetBlock(arg);
         if (argb) return compileExpression(e, argb, comments);
         return mkText(b.getFieldValue(arg))
+    }
+
+    function compileStartEvent(e: Environment, b: B.Block): JsNode {
+        const bBody = b.getInputTargetBlock("HANDLER");
+        const body = compileStatements(e, bBody);
+        if (body.type == NT.Block && body.children && body.children.length == 1)
+            return body.children[0];
+        return body;
     }
 
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
@@ -1157,15 +1171,15 @@ namespace pxt.blocks {
 
     function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
-            let e = mkEnv(w, blockInfo);
+            const e = mkEnv(w, blockInfo);
             infer(e, w);
 
-            let stmtsMain: JsNode[] = [];
+            const stmtsMain: JsNode[] = [];
 
             // Sort so that top-level event handlers are emitted first. They must be
             // executed before the code that goes in the main function, as that latter
             // code may block and prevent the event handler from being registered.
-            let topblocks = w.getTopBlocks(true).sort((a, b) => {
+            const topblocks = w.getTopBlocks(true).sort((a, b) => {
                 const aCall = e.stdCallTable[a.type];
                 const bCall = e.stdCallTable[b.type];
                 if (aCall && aCall.hasHandler) {
@@ -1177,7 +1191,7 @@ namespace pxt.blocks {
                 return 1;
             });
 
-            disableDuplicateEvents(e, topblocks);
+            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
             topblocks.forEach(b => {
                 let compiled = compileStatements(e, b)
@@ -1187,7 +1201,7 @@ namespace pxt.blocks {
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
-            let stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
+            const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
                     // let btype = find(b.type);
                     // Not sure we need the type here - is is always number or boolean?
@@ -1206,11 +1220,15 @@ namespace pxt.blocks {
         return [] // unreachable
     }
 
-    function disableDuplicateEvents(e: Environment, blocks: B.Block[]) {
-        // first go through events and disable duplicates
+    function updateDisabledBlocks(e: Environment, allBlocks: B.Block[], topBlocks: B.Block[]) {
+        // unset disabled
+        allBlocks.forEach(b => b.setDisabled(false));
+
+        // update top blocks
         const events: Map<B.Block> = {};
-        blocks.forEach(b => {
+        topBlocks.forEach(b => {
             const call = e.stdCallTable[b.type];
+            // is this an event?
             if (call && call.hasHandler && !call.attrs.blockAllowMultiple) {
                 // compute key that identifies event call
                 // detect if same event is registered already   
@@ -1226,6 +1244,13 @@ namespace pxt.blocks {
                     b.setDisabled(false);
                     b.setWarningText(undefined);
                     events[key] = b;
+                }
+            } else {
+                // all non-events are disabled
+                let t = b;
+                while (t) {
+                    t.setDisabled(true);
+                    t = t.getNextBlock();
                 }
             }
         });
