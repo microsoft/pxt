@@ -941,8 +941,6 @@ namespace pxt.blocks {
     function compileStartEvent(e: Environment, b: B.Block): JsNode {
         const bBody = b.getInputTargetBlock("HANDLER");
         const body = compileStatements(e, bBody);
-        if (body.type == NT.Block && body.children && body.children.length == 1)
-            return body.children[0];
         return body;
     }
 
