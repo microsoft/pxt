@@ -1,6 +1,5 @@
 
 namespace ts.pxtc.decompiler {
-    export const ON_START_TYPE = "pxtStart";
     const SK = ts.SyntaxKind;
 
     type NextNode = ts.Node | "ScopeEnd";

@@ -6,6 +6,7 @@ namespace ts.pxtc {
     export const oops = Util.oops;
     export import U = pxtc.Util;
 
+    export const ON_START_TYPE = "pxtStart";
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_ASM = "binary.asm";

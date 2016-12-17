@@ -1171,13 +1171,13 @@ namespace pxt.blocks {
 
             // all compiled top level blocks are event, move on start to bottom
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
-                return (a.type == ts.pxtc.decompiler.ON_START_TYPE ? 1 : 0) - (b.type == ts.pxtc.decompiler.ON_START_TYPE ? 1 : 0);
+                return (a.type == ts.pxtc.ON_START_TYPE ? 1 : 0) - (b.type == ts.pxtc.ON_START_TYPE ? 1 : 0);
             });
 
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
             topblocks.forEach(b => {
-                if (b.type == ts.pxtc.decompiler.ON_START_TYPE)
+                if (b.type == ts.pxtc.ON_START_TYPE)
                     append(stmtsMain, compileStartEvent(e, b).children);
                 else {
                     const compiled = compileStatements(e, b)

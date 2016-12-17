@@ -1260,7 +1260,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             compiler.getBlocksAsync()
                 .then(info => this.createProjectAsync({
                     filesOverride: {
-                        "main.blocks": pxt.blocks.importXml(info, data.source)
+                        "main.blocks": pxt.blocks.importXml(data.source, info)
                     }, name: data.meta.name
                 })).done(() => core.hideLoading());
             return;
@@ -1295,6 +1295,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 pubCurrent: false
             };
             const files = JSON.parse(data.source) as pxt.Map<string>;
+            if (files["main.blocks"]) // TODO check version
+                files["main.blocks"] = pxt.blocks.importXml(files["main.blocks"]);
             // basic xml validation of main.blocks.
             if (files["main.blocks"] && !pxt.blocks.loadWorkspaceXml(files["main.blocks"], true)) {
                 // block code seems invalid., reset blocks to force decompilation
