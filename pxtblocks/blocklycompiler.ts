@@ -878,12 +878,8 @@ namespace pxt.blocks {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
-        else if (call.hasHandler) {
-            if (b.type == ON_START_TYPE)
-                return compileStartEvent(e, b)
-            else
-                return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
-        }
+        else if (call.hasHandler)
+            return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
         else
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
@@ -1176,28 +1172,22 @@ namespace pxt.blocks {
 
             const stmtsMain: JsNode[] = [];
 
-            // Sort so that top-level event handlers are emitted first. They must be
-            // executed before the code that goes in the main function, as that latter
-            // code may block and prevent the event handler from being registered.
+            // all compiled top level blocks are event, move on start to bottom
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
-                const aCall = e.stdCallTable[a.type];
-                const bCall = e.stdCallTable[b.type];
-                if (aCall && aCall.hasHandler) {
-                    if (bCall && bCall.hasHandler) {
-                        return 0;
-                    }
-                    return -1;
-                }
-                return 1;
+                return (a.type == ON_START_TYPE ? 1 : 0) - (b.type == ON_START_TYPE ? 1 : 0);
             });
 
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
             topblocks.forEach(b => {
-                let compiled = compileStatements(e, b)
-                if (compiled.type == NT.Block)
-                    append(stmtsMain, compiled.children);
-                else stmtsMain.push(compiled)
+                if (b.type == ON_START_TYPE)
+                    append(stmtsMain, compileStartEvent(e, b).children);
+                else {
+                    const compiled = compileStatements(e, b)
+                    if (compiled.type == NT.Block)
+                        append(stmtsMain, compiled.children);
+                    else stmtsMain.push(compiled)
+                }
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
