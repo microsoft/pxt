@@ -1423,7 +1423,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     newEmptyProject(name?: string, documentation?: string) {
         this.newProject({
-            filesOverride: { "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>" },
+            filesOverride: { "main.blocks": '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="pxtStart"></block></xml>' },
             name, documentation
         })
     }
