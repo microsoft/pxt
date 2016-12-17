@@ -270,6 +270,7 @@ namespace ts.pxtc {
         blockBuiltin?: boolean;
         blockNamespace?: string;
         blockIdentity?: string;
+        blockAllowMultiple?: boolean;
         color?: string;
         icon?: string;
         imageLiteral?: number;

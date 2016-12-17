@@ -995,6 +995,7 @@ namespace pxt.blocks {
     export interface StdFunc {
         f: string;
         args: StdArg[];
+        attrs: ts.pxtc.CommentAttrs;
         isExtensionMethod?: boolean;
         imageLiteral?: number;
         hasHandler?: boolean;
@@ -1086,11 +1087,12 @@ namespace pxt.blocks {
                     e.stdCallTable[fn.attributes.blockId] = {
                         namespace: fn.namespace,
                         f: fn.name,
+                        args: args,
+                        attrs: fn.attributes,
                         isExtensionMethod: instance,
                         imageLiteral: fn.attributes.imageLiteral,
                         hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
-                        args: args,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
                 })
@@ -1209,7 +1211,7 @@ namespace pxt.blocks {
         const events: Map<B.Block> = {};
         blocks.forEach(b => {
             const call = e.stdCallTable[b.type];
-            if (call && call.hasHandler) {
+            if (call && call.hasHandler && !call.attrs.blockAllowMultiple) {
                 // compute key that identifies event call
                 // detect if same event is registered already   
                 const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
