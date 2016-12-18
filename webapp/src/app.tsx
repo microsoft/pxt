@@ -1708,6 +1708,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             agreeLbl: lf("Ok"),
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.appTarget.versions.target}</p>
+<p>${Util.htmlEscape(pxt.appTarget.description)}</p>
 `
         }).done();
     }
