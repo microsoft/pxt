@@ -83,19 +83,7 @@ namespace ts.pxtc {
                 if (fn.attributes.block) {
                     const locBlock = loc[`${fn.qName}|block`];
                     if (locBlock) {
-                        try {
-                            if (pxt.blocks.areFieldsEquivalent(fn.attributes.block, locBlock))
-                                fn.attributes.block = locBlock;
-                            else {
-                                const fields = JSON.stringify(pxt.blocks.parseFields(fn.attributes.block), null, 2);
-                                const locFields = JSON.stringify(pxt.blocks.parseFields(locBlock), null, 2);
-                                console.error(`localized block description of ${fn.attributes.block} invalid`);
-                                console.debug(`original: `, fields);
-                                console.debug(`loc: `, locFields);
-                            }
-                        } catch (e) {
-                            console.error(`error while parsing localized block of ${fn.attributes.block}`);
-                        }
+                        fn.attributes.block = locBlock;
                     }
                 }
                 const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
