@@ -22,7 +22,9 @@ namespace ts.pxtc {
         Variable,
         Module,
         Enum,
-        EnumMember
+        EnumMember,
+        Class,
+        Interface,
     }
 
     export interface SymbolInfo {
@@ -32,6 +34,7 @@ namespace ts.pxtc {
         kind: SymbolKind;
         parameters: ParameterDesc[];
         retType: string;
+        extendsTypes?: string[]; // for classes and interfaces
         isContextual?: boolean;
         qName?: string;
         pkg?: string;
@@ -166,6 +169,10 @@ namespace ts.pxtc {
                 return SymbolKind.Enum;
             case SK.EnumMember:
                 return SymbolKind.EnumMember;
+            case SK.ClassDeclaration:
+                return SymbolKind.Class;
+            case SK.InterfaceDeclaration:
+                return SymbolKind.Interface;
             default:
                 return SymbolKind.None
         }
@@ -238,12 +245,28 @@ namespace ts.pxtc {
                     pkg = m[1]
             }
 
+            let extendsTypes: string[] = undefined
+
+            if (kind == SymbolKind.Class || kind == SymbolKind.Interface) {
+                let cl = stmt as ClassLikeDeclaration
+                extendsTypes = []
+                if (cl.heritageClauses)
+                    for (let h of cl.heritageClauses) {
+                        if (h.types) {
+                            for (let t of h.types) {
+                                extendsTypes.push(typeOf(t, t))
+                            }
+                        }
+                    }
+            }
+
             return {
                 kind,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
                 pkg,
+                extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
                 parameters: !hasParams ? null : (decl.parameters || []).map(p => {
                     let n = getName(p)
@@ -463,9 +486,33 @@ namespace ts.pxtc {
             srcFile.statements.forEach(collectDecls)
         }
 
+        let toclose: SymbolInfo[] = []
+
         // store qName in symbols
-        for (let qName in res.byQName)
-            res.byQName[qName].qName = qName;
+        for (let qName in res.byQName) {
+            let si = res.byQName[qName]
+            si.qName = qName;
+            if (si.extendsTypes && si.extendsTypes.length) toclose.push(si)
+        }
+
+        // transitive closure of inheritance
+        let closed: Map<boolean> = {}
+        let closeSi = (si: SymbolInfo) => {
+            if (U.lookup(closed, si.qName)) return;
+            closed[si.qName] = true
+            let mine: Map<boolean> = {}
+            mine[si.qName] = true
+            for (let e of si.extendsTypes || []) {
+                mine[e] = true
+                let psi = res.byQName[e]
+                if (psi) {
+                    closeSi(psi)
+                    for (let ee of psi.extendsTypes) mine[ee] = true
+                }
+            }
+            si.extendsTypes = Object.keys(mine)
+        }
+        toclose.forEach(closeSi)
 
         if (legacyOnly) {
             // conflicts with pins.map()

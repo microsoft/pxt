@@ -271,6 +271,8 @@ namespace ts.pxtc {
         blockNamespace?: string;
         blockIdentity?: string;
         blockAllowMultiple?: boolean;
+        fixedInstances?: string;
+        fixedInstance?: string;
         color?: string;
         icon?: string;
         imageLiteral?: number;
@@ -335,6 +337,8 @@ namespace ts.pxtc {
     let typeBindings: TypeBinding[] = []
 
     export function getComments(node: Node) {
+        if (node.kind == SK.VariableDeclaration)
+            node = node.parent.parent // we need variable stmt
         let src = getSourceFileOfNode(node)
         let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
         if (!doc) return "";
@@ -1400,6 +1404,8 @@ ${lbl}: .short 0xffff
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
+            } else if (decl.kind == SK.VariableDeclaration) {
+                return emitLocalLoad(decl as VariableDeclaration)
             } else {
                 throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
             }
