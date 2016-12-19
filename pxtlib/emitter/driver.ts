@@ -278,13 +278,13 @@ namespace ts.pxtc {
     }
 
     export function decompile(opts: CompileOptions, fileName: string) {
-        let resp = compile(opts);
+        const resp = compile(opts);
         if (!resp.success) return resp;
 
-        let file = resp.ast.getSourceFile(fileName);
-        let apis = getApiInfo(resp.ast);
-        let blocksInfo = pxtc.getBlocksInfo(apis);
-        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
+        const file = resp.ast.getSourceFile(fileName);
+        const apis = getApiInfo(resp.ast);
+        const blocksInfo = pxtc.getBlocksInfo(apis);
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
         return bresp;
     }
 

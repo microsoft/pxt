@@ -58,7 +58,11 @@ namespace ts.pxtc.decompiler {
         "Math.max": { blockId: "math_op2", block: "of %x|and %y", fields: `<field name="op">max</field>` }
     }
 
-    export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile): pxtc.CompileResult {
+    export interface DecompileBlocksOptions {
+        snippetMode?: boolean; // do not emit "on start"
+    }
+
+    export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions): pxtc.CompileResult {
         let stmts: ts.Statement[] = file.statements;
         let result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
@@ -66,8 +70,8 @@ namespace ts.pxtc.decompiler {
         }
         const fileText = file.getFullText();
         let output = ""
-        const scopes: { [index: string]: string }[] = [{}];
-        const takenNames: { [index: string]: boolean } = {}
+        const scopes: pxt.Map<string>[] = [{}];
+        const takenNames: pxt.Map<boolean> = {}
 
         emitBlockStatement(stmts, undefined, true, true);
 
@@ -177,7 +181,17 @@ ${output}</xml>`;
             });
 
             if (blockStatements.length > (partOfCurrentBlock ? 0 : 1)) {
+                // wrap statement in "on start" if top level
+                const emitOnStart = topLevel && !options.snippetMode;
+                if (emitOnStart) {
+                    openBlockTag(ts.pxtc.ON_START_TYPE);
+                    write(`<statement name="HANDLER">`)
+                }
                 emitStatementBlock(blockStatements.shift(), blockStatements, parent);
+                if (emitOnStart) {
+                    write(`</statement>`)
+                    closeBlockTag();
+                }
             }
 
             // Emit any output statements as standalone blocks
