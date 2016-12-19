@@ -74,11 +74,23 @@ namespace pxt.blocks {
 
     export function importXml(xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
-            let parser = new DOMParser();
-            let doc = parser.parseFromString(xml, "application/xml");
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xml, "application/xml");
+
+            // patch block types
+            const upgrades = (pxt.appTarget.compile && pxt.appTarget.compile.upgrades)
+                ? pxt.appTarget.compile.upgrades.filter(up => up.type == "blockId")
+                : [];
+            upgrades.forEach(up => Object.keys(up.map).forEach(type => {
+                Util.toArray(doc.querySelectorAll(`block[type=${type}]`))
+                    .forEach(blockNode => {
+                        blockNode.setAttribute("type", up.map[type]);
+                        pxt.debug(`patched block ${type} -> ${up.map[type]}`);
+                    });
+            }))
 
             // build upgrade map
-            let enums: Map<string> = {};
+            const enums: Map<string> = {};
             for (let k in info.apis.byQName) {
                 let api = info.apis.byQName[k];
                 if (api.kind == pxtc.SymbolKind.EnumMember)
@@ -87,7 +99,7 @@ namespace pxt.blocks {
             }
 
             // walk through blocks and patch enums
-            let blocks = doc.getElementsByTagName("block");
+            const blocks = doc.getElementsByTagName("block");
             for (let i = 0; i < blocks.length; ++i)
                 patchBlock(info, enums, blocks[i]);
 
