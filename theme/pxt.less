@@ -621,6 +621,15 @@ div.simframe > iframe {
     }
 }
 
+@media only screen and (max-width: @tabletBreakpoint) {
+    .ui.portrait.only {
+        display:block !important;
+    }
+    .ui.portrait.hide {
+        display:none !important;
+    }
+}
+
 /* Screens with decent vertical space */
 @media only screen and (max-height:@tallBreakpoint) {
     .ui.tall.only {
