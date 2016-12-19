@@ -33,11 +33,11 @@
    Breakpoints
 --------------------*/
 
-@mobileBreakpoint            : 64rem;
-@tabletBreakpoint            : 80rem;
-@computerBreakpoint          : 92rem;
-@largeMonitorBreakpoint      : 100em;
-@widescreenMonitorBreakpoint : 120rem;
+@mobileBreakpoint            : 63rem;
+@tabletBreakpoint            : 79rem;
+@computerBreakpoint          : 91rem;
+@largeMonitorBreakpoint      : 99rem;
+@widescreenMonitorBreakpoint : 119rem;
 
 /*******************************
      PXT Variables
