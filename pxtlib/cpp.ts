@@ -582,9 +582,12 @@ namespace pxt.cpp {
             res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
         } else {
             res.yotta.config = configJson;
+            let name = "pxt-app"
+            if (pxt.appTarget.compileService)
+                name = pxt.appTarget.compileService.yottaBinary
+                    .replace(/-combined/, "").replace(/\.hex$/, "")
             let moduleJson = {
-                "name": pxt.appTarget.compileService.yottaBinary
-                    .replace(/-combined/, "").replace(/\.hex$/, ""),
+                "name": name,
                 "version": "0.0.0",
                 "description": "Auto-generated. Do not edit.",
                 "license": "n/a",
