@@ -610,7 +610,7 @@ namespace pxt.cpp {
         } else {
             res.yotta.config = configJson;
             let name = "pxt-app"
-            if (pxt.appTarget.compileService)
+            if (pxt.appTarget.compileService && pxt.appTarget.compileService.yottaBinary)
                 name = pxt.appTarget.compileService.yottaBinary
                     .replace(/-combined/, "").replace(/\.hex$/, "")
             let moduleJson = {
