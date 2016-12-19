@@ -15,7 +15,6 @@ namespace pxt.blocks {
         const workspace = new Blockly.Workspace();
         try {
             const dom = Blockly.Xml.textToDom(xml);
-            patchFloatingBlocks(dom);
             Blockly.Xml.domToWorkspace(dom, workspace);
             return workspace;
         } catch (e) {
@@ -25,56 +24,70 @@ namespace pxt.blocks {
         }
     }
 
-    function patchFloatingBlocks(dom: Element) {
+    function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
         let onstart = dom.querySelector(`block[type=${ts.pxtc.ON_START_TYPE}]`)
         if (onstart) // nothing to doc
             return;
 
+        const blocks: Map<pxtc.SymbolInfo> = {};
+        info.blocks.forEach(b => blocks[b.attributes.blockId] = b);
+
         // walk top level blocks
         let newnodes: Element[] = [];
         let node = dom.firstElementChild;
+        let insertNode: Element = undefined;
         while (node) {
-            const next = node.nextElementSibling;
+            const nextNode = node.nextElementSibling;
             // does this block is disable or have s nested statement block?
-            if (!node.getAttribute("disabled") && !node.querySelector("statement")) {
+            const nodeType = node.getAttribute("type");
+            if (!node.getAttribute("disabled") && !node.querySelector("statement")
+                && (blocks[nodeType] && blocks[nodeType].retType == "void")) {
                 // old block, needs to be wrapped in onstart
-                onstart = dom.ownerDocument.createElement("block");
-                onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
-                let insertNode = dom.ownerDocument.createElement("statement");
-                insertNode.setAttribute("name", "HANDLER");
-                onstart.appendChild(insertNode);
-                insertNode.appendChild(node);
-                newnodes.push(onstart);
+                if (!onstart) {
+                    onstart = dom.ownerDocument.createElement("block");
+                    onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
+                    insertNode = dom.ownerDocument.createElement("statement");
+                    insertNode.setAttribute("name", "HANDLER");
+                    onstart.appendChild(insertNode);
+                    insertNode.appendChild(node);
+                    newnodes.push(onstart);
+
+                    insertNode = node;
+                } else {
+                    // add nested statement
+                    const next = dom.ownerDocument.createElement("next");
+                    next.appendChild(node);
+                    insertNode.appendChild(next);
+                    insertNode = node;
+                }
             }
-            node = next;
+            node = nextNode;
         }
 
         newnodes.forEach(n => dom.appendChild(n));
     }
 
-    export function importXml(xml: string, info?: pxtc.BlocksInfo, skipReport = false): string {
+    export function importXml(xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
             let parser = new DOMParser();
             let doc = parser.parseFromString(xml, "application/xml");
 
-            if (info) {
-                // build upgrade map
-                let enums: Map<string> = {};
-                for (let k in info.apis.byQName) {
-                    let api = info.apis.byQName[k];
-                    if (api.kind == pxtc.SymbolKind.EnumMember)
-                        enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)]
-                            = api.namespace + '.' + api.name;
-                }
-
-                // walk through blocks and patch enums
-                let blocks = doc.getElementsByTagName("block");
-                for (let i = 0; i < blocks.length; ++i)
-                    patchBlock(info, enums, blocks[i]);
+            // build upgrade map
+            let enums: Map<string> = {};
+            for (let k in info.apis.byQName) {
+                let api = info.apis.byQName[k];
+                if (api.kind == pxtc.SymbolKind.EnumMember)
+                    enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)]
+                        = api.namespace + '.' + api.name;
             }
 
+            // walk through blocks and patch enums
+            let blocks = doc.getElementsByTagName("block");
+            for (let i = 0; i < blocks.length; ++i)
+                patchBlock(info, enums, blocks[i]);
+
             // patch floating blocks
-            patchFloatingBlocks(doc.documentElement);
+            patchFloatingBlocks(doc.documentElement, info);
 
             // serialize and return
             return new XMLSerializer().serializeToString(doc);

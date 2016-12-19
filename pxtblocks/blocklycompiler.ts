@@ -1216,7 +1216,10 @@ namespace pxt.blocks {
         topBlocks.forEach(b => {
             const call = e.stdCallTable[b.type];
             // is this an event?
-            if (call && call.hasHandler && !call.attrs.blockAllowMultiple) {
+            if (call && call.hasHandler) {
+                // multiple calls allowed
+                if (call.attrs.blockAllowMultiple)
+                    return;
                 // compute key that identifies event call
                 // detect if same event is registered already   
                 const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
