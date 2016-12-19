@@ -1213,28 +1213,34 @@ namespace pxt.blocks {
 
         // update top blocks
         const events: Map<B.Block> = {};
+
+        function flagDuplicate(key: string, block: B.Block) {
+            const otherEvent = events[key];
+            if (otherEvent) {
+                // another block is already registered
+                block.setDisabled(true);
+                block.setWarningText(lf("This event is already used."))
+            } else {
+                block.setDisabled(false);
+                block.setWarningText(undefined);
+                events[key] = block;
+            }
+        }
+
         topBlocks.forEach(b => {
             const call = e.stdCallTable[b.type];
+            // multiple calls allowed
+            if (b.type == ts.pxtc.ON_START_TYPE)
+                flagDuplicate(ts.pxtc.ON_START_TYPE, b);
+            else if (call && call.attrs.blockAllowMultiple) return;
             // is this an event?
-            if (call && call.hasHandler) {
-                // multiple calls allowed
-                if (call.attrs.blockAllowMultiple)
-                    return;
+            else if (call && call.hasHandler) {
                 // compute key that identifies event call
                 // detect if same event is registered already   
                 const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
                 const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                     .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
-                const otherEvent = events[key];
-                if (otherEvent) {
-                    // another block is already registered
-                    b.setDisabled(true);
-                    b.setWarningText(lf("This event is already used."))
-                } else {
-                    b.setDisabled(false);
-                    b.setWarningText(undefined);
-                    events[key] = b;
-                }
+                flagDuplicate(key, b);
             } else {
                 // all non-events are disabled
                 let t = b;

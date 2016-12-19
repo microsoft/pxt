@@ -19,6 +19,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
+            <block type="${ts.pxtc.ON_START_TYPE}"></block>
         </category>
         <category name="Logic" nameid="logic" colour="210" category="49">
             <block type="controls_if" gap="8">

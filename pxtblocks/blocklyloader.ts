@@ -645,6 +645,7 @@ namespace pxt.blocks {
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
 
         initContextMenu();
+        initOnStart();
         initMath();
         initVariables();
         initLoops();
@@ -1201,6 +1202,34 @@ namespace pxt.blocks {
             return myParent === parent || isChild(myParent, parent);
         }
         return false;
+    }
+
+    function initOnStart() {
+        // pxt math_op2
+        Blockly.Blocks[ts.pxtc.ON_START_TYPE] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": lf("on start %1 %2"),
+                    "args0": [
+                        {
+                            "type": "input_dummy"
+                        },
+                        {
+                            "type": "input_statement",
+                            "name": "HANDLER"
+                        }
+                    ],
+                    "colour": blockColors['loops']
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.ON_START_TYPE,
+                    lf("on start event"),
+                    lf("Run code when the program starts"),
+                    '/blocks/on-start'
+                );
+            }
+        };
     }
 
     function initMath() {
