@@ -50,12 +50,15 @@ export interface UpdaterBase extends NodeJS.EventEmitter {
     setFeedURL(url: string): void;
 }
 
+export interface VersionInfo {
+    blacklist: string[];
+    latest: string;
+    prompt: string;
+}
+
 export interface ReleaseManifest {
-    aggressivePrompt: string;
-    blackList: string[];
-    latestRelease: string;
+    versions: { [major: string]: VersionInfo };
     timestamp?: string;
-    lastPromptedOn?: string;
 }
 
 export interface UpdateCacheInfo {
@@ -72,24 +75,9 @@ export interface UpdateEventInfo {
     targetVersion?: string;
 }
 
-export interface FeedUrlParams {
-    platform: string;
-    targetVersion: string;
-}
-
 export interface Update {
     url: string;
     version: string;
-}
-
-export interface GithubAsset {
-    browser_download_url: string;
-    name: string;
-    size: number;
-}
-
-export interface GithubTag {
-    assets: GithubAsset[];
 }
 
 // PXT interfaces

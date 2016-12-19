@@ -9,7 +9,7 @@
     "license": "MIT",
     "main": "src/main.js",
     "scripts": {
-        "manifestServer": "node ./dev_tools/manifestServer.js",
+        "manifest-server": "node ./dev_tools/manifest-server.js",
         "postinstall": "cd src && npm install",
         "rebuild-native": "node ./dev_tools/rebuild-native.js",
         "start": "node_modules/.bin/electron . --npm-start"

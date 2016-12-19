@@ -3628,7 +3628,6 @@ function initCommands() {
             buildInstaller: {
                 description: "('package' only) Also build the installer / zip redistributable for the built app",
                 aliases: ["i"],
-                argument: "buildInstaller"
             },product: {
                 description: "path to a product.json file to use instead of the target's default one",
                 aliases: ["p"],
