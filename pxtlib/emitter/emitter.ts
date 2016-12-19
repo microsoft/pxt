@@ -271,8 +271,10 @@ namespace ts.pxtc {
         blockNamespace?: string;
         blockIdentity?: string;
         blockAllowMultiple?: boolean;
-        fixedInstances?: string;
-        fixedInstance?: string;
+        fixedInstances?: boolean;
+        fixedInstance?: boolean;
+        indexedInstanceNS?: string;
+        indexedInstanceShim?: string;
         color?: string;
         icon?: string;
         imageLiteral?: number;
@@ -408,6 +410,7 @@ namespace ts.pxtc {
         if (!node || (node as any).isBogusFunction) return parseCommentString("")
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
+        // TODO maybe we can cache it?
         return res
     }
 
@@ -1203,7 +1206,19 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function mkSyntheticInt(v: number): LiteralExpression {
+            return <any>{
+                kind: SK.NumericLiteral,
+                text: v.toString()
+            }
+        }
+
         function emitLocalLoad(decl: VarOrParam) {
+            if (isGlobalVar(decl)) {
+                let attrs = parseComments(decl)
+                if (attrs.shim)
+                    return emitShim(decl, decl, [])
+            }
             let l = lookupCell(decl)
             recordUse(decl)
             let r = l.load()
@@ -1512,6 +1527,14 @@ ${lbl}: .short 0xffff
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
 
+            if (nm.indexOf('(') >= 0) {
+                let parse = /(.*)\((\d+)\)$/.exec(nm)
+                if (parse) {
+                    nm = parse[1]
+                    args.push(mkSyntheticInt(parseInt(parse[2])))
+                }
+            }
+
             if (nm == "TD_NOOP") {
                 assert(!hasRet)
                 return ir.numlit(0)
@@ -1523,10 +1546,10 @@ ${lbl}: .short 0xffff
             }
 
             if (opts.target.isNative) {
-                hex.validateShim(getDeclName(decl), attrs, hasRet, args.length);
+                hex.validateShim(getDeclName(decl), nm, hasRet, args.length);
             }
 
-            return rtcallMask(attrs.shim, args, attrs.callingConvention)
+            return rtcallMask(nm, args, attrs.callingConvention)
         }
 
         function isNumericLiteral(node: Expression) {
@@ -2081,7 +2104,7 @@ ${lbl}: .short 0xffff
             if (attrs.shim != null) {
                 if (opts.target.isNative) {
                     hex.validateShim(getDeclName(node),
-                        attrs,
+                        attrs.shim,
                         funcHasReturn(node),
                         getParameters(node).length);
                 }

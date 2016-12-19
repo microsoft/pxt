@@ -333,13 +333,13 @@ namespace ts.pxtc {
             oops();
         }
 
-        export function validateShim(funname: string, attrs: CommentAttrs, hasRet: boolean, numArgs: number) {
-            if (attrs.shim == "TD_ID" || attrs.shim == "TD_NOOP")
+        export function validateShim(funname: string, shimName: string, hasRet: boolean, numArgs: number) {
+            if (shimName == "TD_ID" || shimName == "TD_NOOP")
                 return
-            if (U.lookup(asmLabels, attrs.shim))
+            if (U.lookup(asmLabels, shimName))
                 return
-            let nm = `${funname}(...) (shim=${attrs.shim})`
-            let inf = lookupFunc(attrs.shim)
+            let nm = `${funname}(...) (shim=${shimName})`
+            let inf = lookupFunc(shimName)
             if (inf) {
                 if (!hasRet) {
                     if (inf.type != "P")
