@@ -51,7 +51,7 @@ export interface UpdaterBase extends NodeJS.EventEmitter {
 }
 
 export interface VersionInfo {
-    blacklist: string[];
+    banned: string[];
     latest: string;
     prompt: string;
 }
@@ -69,7 +69,6 @@ export interface UpdateCacheInfo {
 
 export interface UpdateEventInfo {
     appName?: string;
-    isBeta?: boolean;
     isCritical?: boolean;
     isInitialCheck?: boolean;
     targetVersion?: string;
@@ -91,7 +90,7 @@ export interface PxtCore {
 
 export interface ElectronMessage {
     type: string;
-    args?: any
+    args?: any;
 }
 
 export interface ElectronHandler { (args?: any): void }
@@ -100,20 +99,20 @@ export interface ElectronHandler { (args?: any): void }
 export interface ProductInformation {
     applicationName: string;
     dataFolderName: string;
-    darwinBundleIdentifier: string,
-    isBeta: boolean,
-    nameShort: string,
-    nameLong: string,
-    releaseManifestUrl?: string,
-    targetId: string,
-    updateDownloadUrl?: string,
-    version?: string,
-    win32AppId: string,
-    win32AppUserModelId: string,
-    win32DirName: string,
-    win32MutexName: string,
-    win32NameVersion: string,
-    win32RegValueName: string
+    darwinBundleIdentifier: string;
+    nameShort: string;
+    nameLong: string;
+    updateTag: string;
+    releaseManifestUrl?: string;
+    targetId: string;
+    updateDownloadUrl?: string;
+    version?: string;
+    win32AppId: string;
+    win32AppUserModelId: string;
+    win32DirName: string;
+    win32MutexName: string;
+    win32NameVersion: string;
+    win32RegValueName: string;
 }
 
 // Third-party interfaces

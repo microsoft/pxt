@@ -15,7 +15,7 @@ const target = require(product.targetId);
 // require.resolve() gives path to [target dir]/built/pxtrequire.js, so move up twice to get target root dir
 const targetDir = path.resolve(require.resolve(product.targetId), "..", "..");
 
-let pxtCore: I.PxtCore = target.pxtCore;
+const pxtCore: I.PxtCore = target.pxtCore;
 let appOptions: I.AppOptions = {};
 let win: Electron.BrowserWindow = null;
 let windowsMutex: Mutex = null;
@@ -23,7 +23,7 @@ let updateService: UpdateService = null;
 let messagingDelay = Promise.delay(5000);
 
 function parseArgs() {
-    let opts: minimist.Opts = {
+    const opts: minimist.Opts = {
         alias: {
             a: "debug-webapp",
             n: "npm-start",
@@ -53,7 +53,7 @@ function fixCwd(): void {
     }
 
     // At this point, we are not in a directory that is the root of the app, so we need to change cwd
-    let appPath = app.getAppPath();
+    const appPath = app.getAppPath();
 
     if (appPath !== process.cwd()) {
         console.log("Changing current working directory to " + appPath);
@@ -93,7 +93,7 @@ function createPxtHandlers(): I.Map<I.ElectronHandler> {
 }
 
 function registerUpdateHandlers(): void {
-    let events = [
+    const events = [
         "critical-update",
         "update-available",
         "update-not-available",
@@ -123,6 +123,7 @@ function main(): void {
             windowsMutex = new Mutex(product.win32MutexName);
         } catch (e) {
             // Continue normally, but user might need to manually close app in case of update
+            console.log("Unable to init Windows Mutex");
         }
     }
 
@@ -139,7 +140,7 @@ function main(): void {
 }
 
 function createWindow(): void {
-    let url = `file://${__dirname}/webview/index.html`;
+    const url = `file://${__dirname}/webview/index.html`;
 
     win = new BrowserWindow({
         width: 800,
@@ -156,7 +157,7 @@ function createWindow(): void {
             win.webContents.openDevTools({ mode: "detach" });
         }
 
-        let loadWebappMessage: I.WebviewStartMessage = {
+        const loadWebappMessage: I.WebviewStartMessage = {
             devtools: appOptions.debugWebapp,
             localtoken: pxtCore.globalConfig.localToken
         };

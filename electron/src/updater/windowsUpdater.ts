@@ -34,7 +34,7 @@ export class WindowsUpdater extends EventEmitter implements I.UpdaterBase {
      * installer for that update is downloaded to a cache in the temp folder. This method emits the same events as the
      * built-in Electron AutoUpdater:
      *   checking-for-update:  Emitted at the start of the method
-     *   update-not-available: Emitted if there is no update available or if there was an error
+     *   update-not-available: Emitted if there is no update available
      *   update-available:     Emitted when an update was found and is being downloaded
      *   update-downloaded:    Emitted by the downloadUpdate() method when the installer finishes downloading
      *   error:                Emitted when an error of any kind occurs
@@ -66,7 +66,6 @@ export class WindowsUpdater extends EventEmitter implements I.UpdaterBase {
                 return this.downloadUpdate(update);
             })
             .catch((e) => {
-                this.emit("update-not-available");
                 this.emit("error", e);
             })
             .finally(() => {

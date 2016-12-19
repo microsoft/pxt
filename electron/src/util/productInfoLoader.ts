@@ -11,6 +11,7 @@ try {
     const pkgJson = require(targetPkgJsonPath);
     product.version = pkgJson.version;
 } catch (e) {
+    console.log("Error setting product version: " + e);
 }
 
 export default product;

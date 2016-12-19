@@ -72,12 +72,12 @@ export class UpdateService extends EventEmitter {
     public initialCheck(): void {
         this.getReleaseManifest()
             .then((releaseManifest) => {
-                let targetVersion = this.getTargetRelease(releaseManifest);
-                let versionInfo = this.getCurrentVersionInfo(releaseManifest);
-                let criticalPrompt = versionInfo.blacklist.some((blacklistRange) => {
-                    return semver.satisfies(product.version, blacklistRange);
+                const targetVersion = this.getTargetRelease(releaseManifest);
+                const versionInfo = this.getCurrentVersionInfo(releaseManifest);
+                const criticalPrompt = versionInfo.banned.some((banRange) => {
+                    return semver.satisfies(product.version, banRange);
                 });
-                let aggressivePrompt = semver.lte(product.version, versionInfo.prompt);
+                const aggressivePrompt = semver.lte(product.version, versionInfo.prompt);
 
                 if (targetVersion) {
                     if (criticalPrompt) {
@@ -89,6 +89,7 @@ export class UpdateService extends EventEmitter {
             })
             .catch((e) => {
                 // In case of error, be permissive (swallow the error and let the app continue normally)
+                console.log("Error during initial version check: " + e);
             });
     }
 
@@ -99,7 +100,7 @@ export class UpdateService extends EventEmitter {
     public checkForUpdate(): void {
         this.getReleaseManifest()
             .then((releaseManifest) => {
-                let targetVersion = this.getTargetRelease(releaseManifest);
+                const targetVersion = this.getTargetRelease(releaseManifest);
 
                 if (targetVersion) {
                     this.emit("update-available", this.makeUpdateInfo(targetVersion));
@@ -109,6 +110,7 @@ export class UpdateService extends EventEmitter {
             })
             .catch((e) => {
                 this.emit("update-check-error");
+                console.log("Error during update check: " + e);
             });
     }
 
@@ -118,21 +120,21 @@ export class UpdateService extends EventEmitter {
      * download is complete, we install the update in the update-downloaded handler.
      */
     public update(targetVersion: string, isCritical: boolean = false): void {
-        let deferred = Utils.defer<void>();
+        const deferred = Utils.defer<void>();
 
         this.updaterImpl.addListener("update-downloaded", () => {
             this.updaterImpl.quitAndInstall();
         });
         this.updaterImpl.addListener("update-not-available", () => {
-            deferred.reject(null);
+            deferred.reject(new Error("Update is no longer available"));
         });
         this.updaterImpl.addListener("error", (e: Error) => {
-            deferred.reject(null);
+            deferred.reject(e);
         });
 
         try {
             let downloadUrl = product.updateDownloadUrl;
-            let platformString = product.isBeta ? process.platform + "-beta" : process.platform;
+            const platformString = product.updateTag ? `${process.platform}-${product.updateTag}` : process.platform;
 
             downloadUrl = downloadUrl.replace(/{{version}}/, targetVersion);
             downloadUrl = downloadUrl.replace(/{{platform}}/, platformString);
@@ -140,7 +142,7 @@ export class UpdateService extends EventEmitter {
             this.updaterImpl.setFeedURL(downloadUrl);
         } catch (e) {
             // On OSX, an error here means the current app isn't signed. Update is not possible.
-            deferred.reject(void 0);
+            deferred.reject(e);
         }
 
         // The following call downloads the release and emits "update-downloaded" when done
@@ -148,17 +150,18 @@ export class UpdateService extends EventEmitter {
 
         deferred.promise.catch((e) => {
             this.emit("update-download-error", isCritical);
+            console.log("Error during update: " + e);
         });
     }
 
     private getCurrentVersionInfo(releaseManifest: I.ReleaseManifest): I.VersionInfo {
-        let major = semver.major(product.version);
+        const major = semver.major(product.version);
 
         return releaseManifest.versions[major];
     }
 
     private getTargetRelease(releaseManifest: I.ReleaseManifest): string {
-        let versionInfo = this.getCurrentVersionInfo(releaseManifest);
+        const versionInfo = this.getCurrentVersionInfo(releaseManifest);
 
         if (versionInfo && semver.lt(product.version, versionInfo.latest)) {
             return versionInfo.latest;
@@ -170,7 +173,6 @@ export class UpdateService extends EventEmitter {
     private makeUpdateInfo(targetVersion: string, isInitialCheck: boolean = false): I.UpdateEventInfo {
         return {
             appName: product.nameLong,
-            isBeta: product.isBeta,
             isInitialCheck,
             targetVersion
         };
@@ -205,7 +207,7 @@ export class UpdateService extends EventEmitter {
                         }
 
                         // If not, propagate the error
-                        throw e;
+                        throw new Error("Error downloading the release manifest: " + e);
                     });
             });
     }
@@ -221,6 +223,7 @@ export class UpdateService extends EventEmitter {
                 return this.cacheReleaseManifest(releaseManifest)
                     .catch((e) => {
                         // No-op; failing to cache the manifest is not a critical error
+                        console.log("Error caching the release manifest: " + e);
                     })
                     .then(() => releaseManifest);
             });

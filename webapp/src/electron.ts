@@ -5,7 +5,6 @@ import Cloud = pxt.Cloud;
 
 interface UpdateEventInfo {
     appName?: string;
-    isBeta?: boolean;
     isCritical?: boolean;
     isInitialCheck?: boolean;
     targetVersion?: string;
@@ -25,7 +24,7 @@ export function init() {
         return;
     }
 
-    function onCriticalUpdate(args: any) {
+    function onCriticalUpdate(args: UpdateEventInfo) {
         core.confirmAsync({
             header: lf("Critical update required"),
             body: lf("To continue using {0}, you must install an update.", args.appName || lf("this application")),
@@ -48,12 +47,8 @@ export function init() {
         });
     }
 
-    function onUpdateAvailable(args: any) {
-        let header = lf("Version {0} available", args.targetVersion);
-
-        if (args.isBeta) {
-            header += " " + lf("(beta release)");
-        }
+    function onUpdateAvailable(args: UpdateEventInfo) {
+        const header = lf("Version {0} available", args.targetVersion);
 
         core.confirmAsync({
             header,
@@ -91,8 +86,8 @@ export function init() {
         displayUpdateError(lf("Unable to check for update"), lf("Ok"));
     }
 
-    function onUpdateDownloadError(args: any) {
-        let isCritical = args && args.isCritical;
+    function onUpdateDownloadError(args: UpdateEventInfo) {
+        const isCritical = args && args.isCritical;
 
         core.hideLoading();
         displayUpdateError(lf("There was an error downloading the update"), isCritical ? lf("Quit") : lf("Ok"))
@@ -126,7 +121,7 @@ export function init() {
     }
     electronSocket.onmessage = (ev) => {
         try {
-            let msg = JSON.parse(ev.data) as ElectronMessage;
+            const msg = JSON.parse(ev.data) as ElectronMessage;
 
             switch (msg.type) {
                 case "critical-update":
@@ -160,7 +155,7 @@ export function sendMessage(type: string, args?: any) {
         return;
     }
 
-    let message: ElectronMessage = {
+    const message: ElectronMessage = {
         type,
         args
     };

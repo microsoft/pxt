@@ -72,10 +72,10 @@ Some node modules have native components that need to be recompiled when you ins
 However, Electron apps bundle their own version of Node, which will most likely be different from the version you have installed on your machine.
 For this reason, we have a helper script that rebuilds the native modules against the installed Electron version:
 ```
-npm run rebuild-native
+npm run rebuildNative
 ```
 
-If you add a dependency that has native modules to either the app shell (`src/package.json`), to a target or to pxt-core, you may need to modify the `electron/dev_tools/rebuild-native.js` script.
+If you add a dependency that has native modules to either the app shell (`src/package.json`), to a target or to pxt-core, you may need to modify the `electron/dev_tools/rebuildNative.js` script.
 In that script, we maintain a list of known native modules that we manually clean up. You will need to find where the module keeps its built native components, and add an entry to the `knownNativeModules` array.
 
 For example, serialport, used by pxt-core, keeps its built components under `[serialport module root]/build/release`, so we added the following entry:

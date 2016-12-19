@@ -20,10 +20,10 @@
             "cwd": "${workspaceRoot}"
         },
         {
-            "name": "Debug rebuild-native.js",
+            "name": "Debug rebuildNative.js",
             "type": "node",
             "request": "launch",
-            "program": "${workspaceRoot}/dev_tools/rebuild-native.js",
+            "program": "${workspaceRoot}/dev_tools/rebuildNative.js",
             "cwd": "${workspaceRoot}"
         }
     ]
