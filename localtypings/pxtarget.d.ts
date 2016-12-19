@@ -41,6 +41,13 @@ declare namespace pxt {
         files: Map<string>;
     }
 
+    interface BlockToolboxDefinition {
+        namespace: string;
+        type: string;
+        gap?: number;
+        weight?: number;
+        fields?: Map<string>;
+    }
 
     interface RuntimeOptions {
         mathBlocks?: boolean;
@@ -49,14 +56,9 @@ declare namespace pxt {
         variablesBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
-
-        extraBlocks?: {
-            namespace: string;
-            type: string;
-            gap?: number;
-            weight?: number;
-            fields?: Map<string>;
-        }[]
+        extraBlocks?: BlockToolboxDefinition[];
+        onStartColor?: string;
+        onStartNamespace?: string;
     }
 
     interface AppAnalytics {

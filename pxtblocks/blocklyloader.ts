@@ -480,10 +480,41 @@ namespace pxt.blocks {
                 }
             })
 
-        // remove ununsed blocks
+        // remove unused blocks
         Object
             .keys(cachedBlocks).filter(k => !currentBlocks[k])
             .forEach(k => removeBlock(cachedBlocks[k].fn));
+
+
+        // add extra blocks
+        if (tb && pxt.appTarget.runtime) {
+            const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
+            extraBlocks.push({
+                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
+                weight: 10,
+                type: ts.pxtc.ON_START_TYPE
+            })
+            extraBlocks.forEach(eb => {
+                let cat = categoryElement(tb, eb.namespace);
+                if (cat) {
+                    let el = document.createElement("block");
+                    el.setAttribute("type", eb.type);
+                    el.setAttribute("weight", (eb.weight || 50).toString());
+                    if (eb.gap) el.setAttribute("gap", eb.gap.toString());
+                    if (eb.fields) {
+                        for (let f in eb.fields) {
+                            let fe = document.createElement("field");
+                            fe.setAttribute("name", f);
+                            fe.appendChild(document.createTextNode(eb.fields[f]));
+                            el.appendChild(fe);
+                        }
+                    }
+                    cat.appendChild(el);
+                } else {
+                    console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
+                }
+            })
+        }
 
         if (tb) {
             // remove unused categories
@@ -513,30 +544,6 @@ namespace pxt.blocks {
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
         // lf("{id:category}More\u2026")
-
-        // add extra blocks
-        if (tb && pxt.appTarget.runtime && pxt.appTarget.runtime.extraBlocks) {
-            pxt.appTarget.runtime.extraBlocks.forEach(eb => {
-                let cat = categoryElement(tb, eb.namespace);
-                if (cat) {
-                    let el = document.createElement("block");
-                    el.setAttribute("type", eb.type);
-                    el.setAttribute("weight", (eb.weight || 50).toString());
-                    if (eb.gap) el.setAttribute("gap", eb.gap.toString());
-                    if (eb.fields) {
-                        for (let f in eb.fields) {
-                            let fe = document.createElement("field");
-                            fe.setAttribute("name", f);
-                            fe.appendChild(document.createTextNode(eb.fields[f]));
-                            el.appendChild(fe);
-                        }
-                    }
-                    cat.appendChild(el);
-                } else {
-                    console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
-                }
-            })
-        }
 
         // update shadow types
         if (tb) {
@@ -1219,7 +1226,7 @@ namespace pxt.blocks {
                             "name": "HANDLER"
                         }
                     ],
-                    "colour": blockColors['loops']
+                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops']
                 });
 
                 setHelpResources(this,
