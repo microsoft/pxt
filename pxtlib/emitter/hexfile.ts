@@ -223,6 +223,20 @@ namespace ts.pxtc {
             return opts.flashCodeAlign || defaultPageSize
         }
 
+        // some hex files use '02' records instead of '04' record for addresses. go figure.
+        function patchSegmentHex(hex: string[]) {
+            for (let i = 0; i < hex.length; ++i) {
+                // :020000021000EC
+                if (hex[i][8] == '2') {
+                    let m = /^:02....02(....)..$/.exec(hex[i])
+                    U.assert(!!m)
+                    let upaddr = parseInt(m[1], 16) * 16
+                    U.assert((upaddr & 0xffff) == 0)
+                    hex[i] = hexBytes([0x02, 0x00, 0x00, 0x04, 0x00, upaddr >> 16])
+                }
+            }
+        }
+
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
@@ -231,6 +245,8 @@ namespace ts.pxtc {
             currentHexInfo = hexinfo;
 
             hex = hexinfo.hex;
+
+            patchSegmentHex(hex)
 
             let i = 0;
             let upperAddr = "0000"

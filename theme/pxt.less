@@ -198,6 +198,7 @@ div.simframe > iframe {
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
     background-color: #ccc;
+    box-shadow: 0 0 1px #ccc;    
     -webkit-box-shadow: 0 0 1px #ccc;
 }
 
@@ -535,7 +536,7 @@ div.simframe > iframe {
     #filelist {
         position:absolute;
         z-index:5;
-        bottom:3rem;
+        bottom:0rem;
         left:1rem;
         top:auto;
         width:auto;
@@ -616,6 +617,15 @@ div.simframe > iframe {
 
 @media only screen and (min-width: @tabletBreakpoint) {
     .ui.portrait.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (max-width: @tabletBreakpoint) {
+    .ui.portrait.only {
+        display:block !important;
+    }
+    .ui.portrait.hide {
         display:none !important;
     }
 }
