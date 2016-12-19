@@ -583,7 +583,8 @@ namespace pxt.cpp {
         } else {
             res.yotta.config = configJson;
             let moduleJson = {
-                "name": "pxt-microbit-app",
+                "name": pxt.appTarget.compileService.yottaBinary
+                    .replace(/-combined/, "").replace(/\.hex$/, ""),
                 "version": "0.0.0",
                 "description": "Auto-generated. Do not edit.",
                 "license": "n/a",
