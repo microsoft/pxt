@@ -71,7 +71,7 @@ export function startMonitor(sendMsgToListeners: (s: string) => void) {
 }
 
 export function hf2ConnectAsync(path: string) {
-    let h = new HF2.Wrapper(new HID_IO(path))
+    let h = new HF2.Wrapper(new HidIO(path))
     return h.reconnectAsync(true).then(() => h)
 }
 
@@ -104,7 +104,7 @@ export class HIDError extends Error {
     }
 }
 
-export class HID_IO implements HF2.PacketIO {
+export class HidIO implements HF2.PacketIO {
     dev: any;
 
     private buf = new U.PromiseBuffer<Uint8Array>();
