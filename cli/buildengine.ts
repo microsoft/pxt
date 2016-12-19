@@ -63,7 +63,8 @@ export var thisBuild = buildEngines['yotta']
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = buildEngines['yotta']
-    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget + "/source/pxt-microbit-app-combined.hex"
+    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget
+        + "/source/" + pxt.appTarget.compileService.yottaBinary;
 
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
@@ -275,6 +276,8 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         console.log(`rebuilding ${constName}...`)
         // TODO: DAL-specific code
         let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
+        if (!fs.existsSync(incPath))
+            incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/"
         let files = nodeutil.allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: Map<string> = {}
