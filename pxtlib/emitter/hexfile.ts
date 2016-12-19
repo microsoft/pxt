@@ -223,6 +223,20 @@ namespace ts.pxtc {
             return opts.flashCodeAlign || defaultPageSize
         }
 
+        // some hex files use '02' records instead of '04' record for addresses. go figure.
+        function patchSegmentHex(hex: string[]) {
+            for (let i = 0; i < hex.length; ++i) {
+                // :020000021000EC
+                if (hex[i][8] == '2') {
+                    let m = /^:02....02(....)..$/.exec(hex[i])
+                    U.assert(!!m)
+                    let upaddr = parseInt(m[1], 16) * 16
+                    U.assert((upaddr & 0xffff) == 0)
+                    hex[i] = hexBytes([0x02, 0x00, 0x00, 0x04, 0x00, upaddr >> 16])
+                }
+            }
+        }
+
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
@@ -231,6 +245,8 @@ namespace ts.pxtc {
             currentHexInfo = hexinfo;
 
             hex = hexinfo.hex;
+
+            patchSegmentHex(hex)
 
             let i = 0;
             let upperAddr = "0000"
@@ -333,13 +349,13 @@ namespace ts.pxtc {
             oops();
         }
 
-        export function validateShim(funname: string, attrs: CommentAttrs, hasRet: boolean, numArgs: number) {
-            if (attrs.shim == "TD_ID" || attrs.shim == "TD_NOOP")
+        export function validateShim(funname: string, shimName: string, hasRet: boolean, numArgs: number) {
+            if (shimName == "TD_ID" || shimName == "TD_NOOP")
                 return
-            if (U.lookup(asmLabels, attrs.shim))
+            if (U.lookup(asmLabels, shimName))
                 return
-            let nm = `${funname}(...) (shim=${attrs.shim})`
-            let inf = lookupFunc(attrs.shim)
+            let nm = `${funname}(...) (shim=${shimName})`
+            let inf = lookupFunc(shimName)
             if (inf) {
                 if (!hasRet) {
                     if (inf.type != "P")

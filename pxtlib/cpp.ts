@@ -193,6 +193,8 @@ namespace pxt.cpp {
             let currDocComment = ""
             let currAttrs = ""
             let inDocComment = false
+            let indexedInstanceAttrs: pxtc.CommentAttrs
+            let indexedInstanceIdx = -1
 
             // replace #if 0 .... #endif with newlines
             src = src.replace(/^\s*#\s*if\s+0\s*$[^]*?^\s*#\s*endif\s*$/mg, f => f.replace(/[^\n]/g, ""))
@@ -367,6 +369,7 @@ namespace pxt.cpp {
 
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
+                    indexedInstanceAttrs = null
                     let parsedAttrs = pxtc.parseCommentString(currAttrs)
                     if (!currNs) err("missing namespace declaration");
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
@@ -451,6 +454,30 @@ namespace pxt.cpp {
                     else
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
                     return;
+                }
+
+                m = /^\s*(\w+)\s+(\w+)\s*;/.exec(ln)
+                if (currAttrs && m) {
+                    let parsedAttrs = pxtc.parseCommentString(currAttrs)
+                    if (parsedAttrs.indexedInstanceNS) {
+                        indexedInstanceAttrs = parsedAttrs
+                        shimsDTS.setNs(parsedAttrs.indexedInstanceNS)
+                        indexedInstanceIdx = 0
+                    }
+                    let tp = m[1]
+                    let nm = m[2]
+
+                    if (indexedInstanceAttrs) {
+                        currAttrs = currAttrs.trim()
+                        currAttrs += ` fixedInstance shim=${indexedInstanceAttrs.indexedInstanceShim}(${indexedInstanceIdx++})`
+                        shimsDTS.write("")
+                        shimsDTS.write(currDocComment)
+                        shimsDTS.write(currAttrs)
+                        shimsDTS.write(`const ${nm}: ${mapType(tp)};`)
+                        currDocComment = ""
+                        currAttrs = ""
+                        return;
+                    }
                 }
 
                 if (currAttrs && ln.trim()) {
@@ -582,8 +609,12 @@ namespace pxt.cpp {
             res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
         } else {
             res.yotta.config = configJson;
+            let name = "pxt-app"
+            if (pxt.appTarget.compileService)
+                name = pxt.appTarget.compileService.yottaBinary
+                    .replace(/-combined/, "").replace(/\.hex$/, "")
             let moduleJson = {
-                "name": "pxt-microbit-app",
+                "name": name,
                 "version": "0.0.0",
                 "description": "Auto-generated. Do not edit.",
                 "license": "n/a",

@@ -27,6 +27,11 @@ namespace pxt {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
+        let cs = appTarget.compileService
+        if (cs) {
+            if (cs.yottaTarget && !cs.yottaBinary)
+                cs.yottaBinary = "pxt-microbit-app-combined.hex"
+        }
     }
 
     export interface PxtOptions {
@@ -51,7 +56,9 @@ namespace pxt {
             console.error(e);
             if (d) {
                 try {
-                    pxt.log(JSON.stringify(d, null, 2))
+                    // log it as object, so native object inspector can be used
+                    console.log(d)
+                    //pxt.log(JSON.stringify(d, null, 2))
                 } catch (e) { }
             }
         }
