@@ -1,4 +1,6 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
@@ -143,6 +145,8 @@
 </next>
 </block>
 </next>
+</block>
+</statement>
 </block>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
