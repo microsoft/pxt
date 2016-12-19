@@ -12,19 +12,19 @@ function msg(s: string): void {
 // start tests
 //
 
-var glb1: number;
-var s2: string;
-var x: number;
-var action: Action;
-var tot: string;
-var lazyAcc: number;
-var sum: number;
-var u8: uint8
-var i8: int8
-var u16: uint16
-var i16: int16
+let glb1: number;
+let s2: string;
+let x: number;
+let action: Action;
+let tot: string;
+let lazyAcc: number;
+let sum: number;
+let u8: uint8
+let i8: int8
+let u16: uint16
+let i16: int16
 
-var xyz = 12;
+let xyz = 12;
 
 console.log("Starting...")
 
@@ -334,7 +334,7 @@ function runTwice(fn: Action): void {
 }
 
 function iter(max: number, fn: (v: number) => void) {
-    for (var i = 0; i < max; ++i) {
+    for (let i = 0; i < max; ++i) {
         fn(i);
     }
 }
@@ -1472,7 +1472,7 @@ function incrXyz() {
     xyz++;
     return 0;
 }
-var unusedInit = incrXyz();
+let unusedInit = incrXyz();
 
 control.assert(xyz == 13, "init2")
 
