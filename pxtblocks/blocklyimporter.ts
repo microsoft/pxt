@@ -41,7 +41,8 @@ namespace pxt.blocks {
             // does this block is disable or have s nested statement block?
             const nodeType = node.getAttribute("type");
             if (!node.getAttribute("disabled") && !node.querySelector("statement")
-                && (blocks[nodeType] && blocks[nodeType].retType == "void")) {
+                && (pxt.blocks.buildinBlockStatements[nodeType] || (blocks[nodeType] && blocks[nodeType].retType == "void"))
+            ) {
                 // old block, needs to be wrapped in onstart
                 if (!onstart) {
                     onstart = dom.ownerDocument.createElement("block");
@@ -52,12 +53,16 @@ namespace pxt.blocks {
                     insertNode.appendChild(node);
                     newnodes.push(onstart);
 
+                    node.removeAttribute("x");
+                    node.removeAttribute("y");
                     insertNode = node;
                 } else {
                     // add nested statement
                     const next = dom.ownerDocument.createElement("next");
                     next.appendChild(node);
                     insertNode.appendChild(next);
+                    node.removeAttribute("x");
+                    node.removeAttribute("y");
                     insertNode = node;
                 }
             }

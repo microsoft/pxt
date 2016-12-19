@@ -40,6 +40,15 @@ namespace pxt.blocks {
     }> = {};
     Object.keys(Blockly.Blocks)
         .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
+    export const buildinBlockStatements: Map<boolean> = {
+        "controls_if": true,
+        "controls_for": true,
+        "controls_simple_for": true,
+        "controls_repeat_ext": true,
+        "variables_set": true,
+        "variables_change": true,
+        "device_while": true
+    }
 
     // blocks cached
     interface CachedBlock {
