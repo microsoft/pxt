@@ -448,8 +448,15 @@ namespace ts.pxtc {
                 }
                 let qName = getFullName(typechecker, stmt.symbol)
                 let si = createSymbolInfo(typechecker, qName, stmt)
-                if (si)
+                if (si) {
+                    let existing = U.lookup(res.byQName, qName)
+                    if (existing) {
+                        si.attributes = parseCommentString(
+                            existing.attributes._source + "\n" +
+                            si.attributes._source)
+                    }
                     res.byQName[qName] = si
+                }
             }
 
             if (stmt.kind == SK.ModuleDeclaration) {
@@ -480,6 +487,7 @@ namespace ts.pxtc {
         for (let qName in res.byQName) {
             let si = res.byQName[qName]
             si.qName = qName;
+            si.attributes._source = null
             if (si.extendsTypes && si.extendsTypes.length) toclose.push(si)
         }
 

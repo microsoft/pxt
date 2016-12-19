@@ -79,7 +79,20 @@ namespace ts.pxtc {
             if (b) return b.isRef
             U.oops("unbound type parameter: " + checker.typeToString(t))
         }
-        return !(t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
+        if (t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
+            return false
+
+        let sym = t.getSymbol()
+        if (sym) {
+            let decl: Declaration = sym.valueDeclaration || sym.declarations[0]
+            if (decl) {
+                let attrs = parseComments(decl)
+                if (attrs.noRefCounting)
+                    return false
+            }
+        }
+
+        return true
     }
 
     function isRefDecl(def: Declaration) {
@@ -275,6 +288,7 @@ namespace ts.pxtc {
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
+        noRefCounting?: boolean;
         color?: string;
         icon?: string;
         imageLiteral?: number;
@@ -293,6 +307,7 @@ namespace ts.pxtc {
         mutateDefaults?: string;
 
         _name?: string;
+        _source?: string;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -341,15 +356,28 @@ namespace ts.pxtc {
     export function getComments(node: Node) {
         if (node.kind == SK.VariableDeclaration)
             node = node.parent.parent // we need variable stmt
-        let src = getSourceFileOfNode(node)
-        let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
-        if (!doc) return "";
-        let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
-        return cmt;
+
+        let cmtCore = (node: Node) => {
+            let src = getSourceFileOfNode(node)
+            let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
+            if (!doc) return "";
+            let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
+            return cmt;
+        }
+
+        if (node.symbol && node.symbol.declarations.length > 1) {
+            return node.symbol.declarations.map(cmtCore).join("\n")
+        } else {
+            return cmtCore(node)
+        }
     }
 
     export function parseCommentString(cmt: string): CommentAttrs {
-        let res: CommentAttrs = { paramDefl: {}, callingConvention: ir.CallingConvention.Plain }
+        let res: CommentAttrs = {
+            paramDefl: {},
+            callingConvention: ir.CallingConvention.Plain,
+            _source: cmt
+        }
         let didSomething = true
         while (didSomething) {
             didSomething = false
@@ -406,11 +434,19 @@ namespace ts.pxtc {
         return parseCommentString(cmts)
     }
 
-    export function parseComments(node: Node): CommentAttrs {
-        if (!node || (node as any).isBogusFunction) return parseCommentString("")
+    interface NodeWithAttrs extends Node {
+        pxtCommentAttrs: CommentAttrs;
+    }
+
+    export function parseComments(node0: Node): CommentAttrs {
+        if (!node0 || (node0 as any).isBogusFunction) return parseCommentString("")
+        let node = node0 as NodeWithAttrs
+        let cached = node.pxtCommentAttrs
+        if (cached)
+            return cached
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
-        // TODO maybe we can cache it?
+        node.pxtCommentAttrs = res
         return res
     }
 
