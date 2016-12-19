@@ -29,6 +29,7 @@ namespace pxt.blocks {
         clean?: boolean;
         aspectRatio?: number;
         package?: string;
+        snippetMode?: boolean;
     }
 
     export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Flow }): HTMLElement {

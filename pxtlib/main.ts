@@ -291,10 +291,11 @@ namespace pxt {
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
                 U.userError("Invalid package name: " + this.config.name)
-            const targetVersion = this.config.targetVersion
-            if (targetVersion && semver.strcmp(targetVersion, appTarget.versions.target) > 0)
+            if (this.config.targetVersions
+                && this.config.targetVersions.target
+                && semver.strcmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
                 U.userError(lf("Package {0} requires target version {1} (you are running {2})",
-                    this.config.name, targetVersion, appTarget.versions.target))
+                    this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
         addMissingPackages(config: pxt.PackageConfig, ts: string) {
@@ -563,7 +564,7 @@ namespace pxt {
                             scriptId: this.config.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
                             editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
-                            targetVersion: pxt.appTarget.versions ? pxt.appTarget.versions.target : undefined
+                            targetVersions: pxt.appTarget.versions
                         })
                         const programText = JSON.stringify(files)
                         return lzmaCompressAsync(headerString + programText)
