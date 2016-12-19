@@ -1707,7 +1707,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideCancel: true,
             agreeLbl: lf("Ok"),
             htmlBody: `
-<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.appTarget.versions.target}</p>
+<p>${Util.htmlEscape(pxt.appTarget.name)} version: <a href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/${Util.htmlEscape(pxt.appTarget.versions.tag)}">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
+<p>PXT version: <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
 `
         }).done();
