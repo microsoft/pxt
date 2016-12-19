@@ -99,6 +99,15 @@ namespace ts.pxtc.Util {
         return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
+    export function memcpy(trg: Uint8Array, trgOff: number, src: Uint8Array, srcOff?: number, len?: number) {
+        if (srcOff === void 0)
+            srcOff = 0
+        if (len === void 0)
+            len = src.length - srcOff
+        for (let i = 0; i < len; ++i)
+            trg[trgOff + i] = src[srcOff + i]
+    }
+
     export function jsonMergeFrom(trg: any, src: any) {
         if (!src) return;
         Object.keys(src).forEach(k => {
@@ -489,6 +498,31 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export class PromiseBuffer<T> {
+        private waiting: ((v: T) => void)[] = [];
+        private available: T[] = [];
+
+        drain() {
+            this.waiting = []
+            this.available = []
+        }
+
+        push(v: T) {
+            let f = this.waiting.shift()
+            if (f) f(v)
+            else this.available.push(v)
+        }
+
+        shiftAsync() {
+            if (this.available.length > 0)
+                return Promise.resolve(this.available.shift())
+            else
+                return new Promise<T>(resolve => {
+                    this.waiting.push(resolve)
+                })
+        }
+    }
+
     export function now(): number {
         return Date.now();
     }
@@ -562,7 +596,7 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string) {
-            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+        return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
     }
 
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {

@@ -9,6 +9,7 @@ import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
 import * as os from 'os';
 import * as util from 'util';
+import * as hid from './hid';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -553,8 +554,21 @@ function initSocketServer() {
     wsserver.listen(3233, "127.0.0.1");
 }
 
+function sendSerialMsg(msg: string) {
+    //console.log('sending ' + msg);
+    wsSerialClients.forEach(function (client: any) {
+        client.send(msg);
+    })
+}
+
 function initSerialMonitor() {
     if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
+    if (pxt.appTarget.serial.useHF2) {
+        console.log('serial: monitoring HID ports...')
+        initSocketServer();
+        hid.startMonitor(sendSerialMsg)
+        return
+    }
 
     console.log('serial: monitoring ports...')
 
@@ -594,10 +608,7 @@ function initSerialMonitor() {
                         id: info.pnpId,
                         data: buffer.toString('utf8')
                     })
-                    //console.log('sending ' + msg);
-                    wsSerialClients.forEach(function (client: any) {
-                        client.send(msg);
-                    })
+                    sendSerialMsg(msg)
                 });
                 info.port.on('error', function () { close(info); });
                 info.port.on('close', function () { close(info); });

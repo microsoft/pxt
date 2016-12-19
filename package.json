@@ -20,6 +20,7 @@
     "README.md",
     "built/commandparser.js",
     "built/buildengine.js",
+    "built/hid.js",
     "built/pxt.js",
     "built/pxt-common.json",
     "built/blockly.d.ts",
@@ -66,6 +67,7 @@
     "faye-websocket": "^0.11.0",
     "highlight.js": "^9.7.0",
     "lzma": "^2.3.2",
+    "node-hid": "^0.5.2",
     "marked": "^0.3.5"
   },
   "optionalDependencies": {

@@ -64,6 +64,15 @@ namespace ts.pxtc {
             }
         }
 
+        export function parseFile(blocks: Uint8Array) {
+            let r: Block[] = []
+            for (let i = 0; i < blocks.length; i += 512) {
+                let b = parseBlock(blocks.slice(i, i + 512))
+                if (b) r.push(b)
+            }
+            return r
+        }
+
         function setWord(block: Uint8Array, ptr: number, v: number) {
             block[ptr] = (v & 0xff)
             block[ptr + 1] = ((v >> 8) & 0xff)

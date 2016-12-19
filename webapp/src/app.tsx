@@ -1505,6 +1505,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     compile(saveOnly = false) {
+        // the USB init has to be called from an event handler
+        if (/webusb=1/i.test(window.location.href)) {
+            pxt.usb.initAsync().catch(e => { })
+        }
+
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
         if (this.state.compiling) {

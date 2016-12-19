@@ -115,6 +115,15 @@ ${instructions.map((step: UploadInstructionStep, i: number) =>
     }).then(() => { });
 }
 
+function webusbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug('webusb deployment...');
+    core.infoNotification(lf("Flashing device..."));
+    let f = resp.outfiles[pxtc.BINARY_UF2]
+    let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
+    return pxt.usb.initAsync()
+        .then(dev => dev.flashAsync(blocks))
+}
+
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
@@ -139,7 +148,10 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function initCommandsAsync(): Promise<void> {
-    if (pxt.winrt.isWinRT()) { // window app
+    if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
+        pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+        pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    } else if (pxt.winrt.isWinRT()) { // window app
         pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js

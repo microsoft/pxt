@@ -19,6 +19,7 @@ import * as server from './server';
 import * as build from './buildengine';
 import * as electron from "./electron";
 import * as commandParser from './commandparser';
+import * as hid from './hid';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -3672,6 +3673,9 @@ function initCommands() {
     advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
 
     advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
+
+    advancedCommand("hidlist", "list HID devices", hid.listAsync)
+    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
 
     p.defineCommand({
         name: "pokerepo",
