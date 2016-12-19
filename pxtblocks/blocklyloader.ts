@@ -301,6 +301,14 @@ namespace pxt.blocks {
         }
     }
 
+    function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
+        if (specific == general) return true
+        let inf = apis.byQName[specific]
+        if (inf && inf.extendsTypes)
+            return inf.extendsTypes.indexOf(general) >= 0
+        return false
+    }
+
     function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
@@ -330,7 +338,32 @@ namespace pxt.blocks {
                     return;
                 }
                 let pr = attrNames[n];
-                if (/\[\]$/.test(pr.type)) { // Array type
+                let typeInfo = U.lookup(info.apis.byQName, pr.type)
+
+                let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
+                let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
+
+                if (isEnum || isFixed) {
+                    const syms = Util.values(info.apis.byQName)
+                        .filter(e =>
+                            isEnum ? e.namespace == pr.type
+                                : (e.kind == pxtc.SymbolKind.Variable
+                                    && e.attributes.fixedInstance
+                                    && isSubtype(info.apis, e.retType, typeInfo.qName)))
+                    if (syms.length == 0) {
+                        console.error(`no instances of ${typeInfo.qName} found`)
+                    }
+                    let dd = syms.map(v => [
+                        v.attributes.block || v.attributes.blockId || v.name,
+                        v.namespace + "." + v.name
+                    ]);
+                    i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
+                    // if a value is provided, move it first
+                    if (pr.shadowValue)
+                        dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
+                    i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
+
+                } else if (/\[\]$/.test(pr.type)) { // Array type
                     i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Array");
                 } else if (instance && n == "this") {
                     i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
@@ -347,19 +380,7 @@ namespace pxt.blocks {
                 } else if (pr.type == "string") {
                     i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "String");
                 } else {
-                    let prtype = Util.lookup(info.apis.byQName, pr.type);
-                    if (prtype && prtype.kind == pxtc.SymbolKind.Enum) {
-                        const dd = Util.values(info.apis.byQName)
-                            .filter(e => e.namespace == pr.type)
-                            .map(v => [v.attributes.block || v.attributes.blockId || v.name, v.namespace + "." + v.name]);
-                        i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
-                        // if a value is provided, move it first
-                        if (pr.shadowValue)
-                            dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
-                        i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
-                    } else {
-                        i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
-                    }
+                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
                 }
             }
         });
