@@ -378,7 +378,7 @@ div.simframe > iframe {
 *******************************/
 
 /* Large Monitor */
-@media only screen and (min-width: @largeMonitorBreakpoint) {
+@media only screen and (min-width: @largeMonitorEditorBreakpoint) {
     /* Layout */
     .sideDocs #maineditor {
         right:@sideBarWidth;
@@ -397,11 +397,11 @@ div.simframe > iframe {
 }
 
 /* Small Monitor */
-@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+@media only screen and (min-width: @computerEditorBreakpoint) and (max-width: @largestSmallMonitorEditorBreakpoint) {
 }
 
 /* Tablet */
-@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+@media only screen and (min-width: @tabletEditorBreakpoint) and (max-width: @largestTabletEditorBreakpoint) {
     /* Blockly */
     .blocklyTreeRow {
         padding-top: 0.75rem !important;
@@ -416,7 +416,7 @@ div.simframe > iframe {
 }
 
 /* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
+@media only screen and (max-width: @largestMobileEditorBreakpoint) {
     /* Blockly / Monaco Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
     #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
         padding: 0.3rem 0 0.3rem 0 !important;
@@ -428,7 +428,7 @@ div.simframe > iframe {
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
-@media only screen and (min-width: @computerBreakpoint) {
+@media only screen and (min-width: @computerEditorBreakpoint) {
     /* Blockly */
     .blocklyTreeRow {
         padding-top: 0.9rem !important;
@@ -443,7 +443,7 @@ div.simframe > iframe {
 }   
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
-@media only screen and (max-width: @largestSmallMonitor) {
+@media only screen and (max-width: @largestSmallMonitorEditorBreakpoint) {
     /* Layout */
     #filelist {
         bottom:3rem;
@@ -489,7 +489,7 @@ div.simframe > iframe {
 }
 
 /* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
+@media only screen and (max-width: @largestTabletEditorBreakpoint) {
     /* Organization logo */
     .organization {
         top:auto;
@@ -527,7 +527,7 @@ div.simframe > iframe {
 }
 
 /* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
+@media only screen and (max-width: @largestMobileEditorBreakpoint) {
     /* Top Menu */
     #maineditor {
         top:@mobileMenuHeight !important;
@@ -592,7 +592,7 @@ div.simframe > iframe {
     display:none !important;
 }
 
-@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
+@media only screen and (min-width: @largeMonitorEditorBreakpoint) and (min-height:30em) {
     .ui.widedesktop.only {
         display:block !important;
     }
@@ -602,26 +602,26 @@ div.simframe > iframe {
 }
 
 /* smaller desktop screen */
-@media only screen and (max-width: @computerBreakpoint), only screen and (max-aspect-ratio: 12/10) {
+@media only screen and (max-width: @computerEditorBreakpoint), only screen and (max-aspect-ratio: 12/10) {
     .ui.desktop.only {
         display:none !important;
     }
 }
 
 /* thin desktop portrait mode */
-@media only screen and (max-width: @tabletBreakpoint), only screen and (max-aspect-ratio: 7/10) {
+@media only screen and (max-width: @tabletEditorBreakpoint), only screen and (max-aspect-ratio: 7/10) {
     .ui.landscape.only {
         display:none !important;
     }
 }
 
-@media only screen and (min-width: @tabletBreakpoint) {
+@media only screen and (min-width: @tabletEditorBreakpoint) {
     .ui.portrait.only {
         display:none !important;
     }
 }
 
-@media only screen and (max-width: @tabletBreakpoint) {
+@media only screen and (max-width: @tabletEditorBreakpoint) {
     .ui.portrait.only {
         display:block !important;
     }
@@ -631,19 +631,19 @@ div.simframe > iframe {
 }
 
 /* Screens with decent vertical space */
-@media only screen and (max-height:@tallBreakpoint) {
+@media only screen and (max-height:@tallEditorBreakpoint) {
     .ui.tall.only {
         display:none !important;
     }
 }
 
-@media only screen and (min-width:@mobileBreakpoint) {
+@media only screen and (min-width:@mobileEditorBreakpoint) {
     .ui.thin.only {
         display:none !important;
     }
 }
 
-@media only screen and (max-width:@mobileBreakpoint) {
+@media only screen and (max-width:@mobileEditorBreakpoint) {
     .ui.wide.only {
         display:none !important;
     }

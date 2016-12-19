@@ -33,11 +33,19 @@
    Breakpoints
 --------------------*/
 
-@mobileBreakpoint            : 63rem;
-@tabletBreakpoint            : 79rem;
-@computerBreakpoint          : 91rem;
-@largeMonitorBreakpoint      : 99rem;
-@widescreenMonitorBreakpoint : 119rem;
+@mobileEditorBreakpoint            : 63rem;
+@tabletEditorBreakpoint            : 79rem;
+@computerEditorBreakpoint          : 91rem;
+@largeMonitorEditorBreakpoint      : 99rem;
+@widescreenMonitorEditorBreakpoint : 119rem;
+
+@tallEditorBreakpoint: 44rem;
+
+/* Responsive */
+@largestMobileEditorBreakpoint       : (@tabletEditorBreakpoint - 1px);
+@largestTabletEditorBreakpoint       : (@computerEditorBreakpoint - 1px);
+@largestSmallMonitorEditorBreakpoint :(@largeMonitorEditorBreakpoint - 1px);
+@largestLargeMonitorEditorBreakpoint : (@widescreenMonitorBreakpoint - 1px);
 
 /*******************************
      PXT Variables
@@ -52,8 +60,6 @@
 @sideBarWidth: 22rem;
 @simulatorWidth: 27rem;
 @simulatorWidthSmall: 20rem;
-
-@tallBreakpoint: 44rem;
 
 @simulatorBackground: #fff;
 
