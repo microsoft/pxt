@@ -3385,6 +3385,8 @@ function checkDocsAsync(): Promise<void> {
         // look for broken urls
         text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
+            // remove hash
+            url = url.replace(/#.*$/, '');
             if (!urls[url]) {
                 console.error(`${f}: broken link ${url}`);
                 broken++;
