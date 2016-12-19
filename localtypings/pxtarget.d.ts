@@ -165,14 +165,6 @@ declare namespace pxt {
         subitems?: DocMenuEntry[];
     }
 
-    interface TargetVersions {
-        target: string;
-        pxt: string;
-        tag?: string;
-        branch?: string;
-        commits?: string; // URL
-    }
-
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;
         bundleddirs: string[];

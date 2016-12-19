@@ -1361,7 +1361,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 const project: pxt.cpp.HexFile = {
                     meta: {
                         cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
-                        targetVersion: pxt.appTarget.versions.target,
+                        targetVersions: pxt.appTarget.versions,
                         editor: this.getPreferredEditor(),
                         name: mpkg.config.name
                     },

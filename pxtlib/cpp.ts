@@ -748,7 +748,7 @@ int main() {
     export interface HexFile {
         meta?: {
             cloudId: string;
-            targetVersion?: string;
+            targetVersions?: pxt.TargetVersions;
             editor: string;
             name: string;
         };
