@@ -24,7 +24,9 @@ namespace ts.pxtc.decompiler {
         ">": { type: "logic_compare", op: "GT" },
         ">=": { type: "logic_compare", op: "GTE" },
         "==": { type: "logic_compare", op: "EQ" },
+        "===": { type: "logic_compare", op: "EQ" },
         "!=": { type: "logic_compare", op: "NEQ" },
+        "!==": { type: "logic_compare", op: "NEQ" },
         "&&": { type: "logic_operation", op: "AND" },
         "||": { type: "logic_operation", op: "OR" },
     }
