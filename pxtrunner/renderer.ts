@@ -249,9 +249,10 @@ namespace pxt.runner {
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
         return renderNextSnippetAsync(options.blocksClass, (c, r) => {
-            let s = r.blocksSvg;
+            const s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            c.replaceWith(s);
+            const segment = $('<div class="ui segment"/>').append(s);
+            c.replaceWith(segment);
         }, { package: options.package, snippetMode: true });
     }
 
