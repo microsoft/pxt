@@ -257,7 +257,9 @@ namespace pxt.runner {
     }
 
     function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
-        if (!options.emPixels) options.emPixels = 14;
+        options = Util.clone(options);
+        options.emPixels = 10;
+        options.snippetMode = true;
 
         const $els = $(`:not(pre) > code`);
         let i = 0;
@@ -266,7 +268,7 @@ namespace pxt.runner {
             const $el = $($els[i++]);
             const text = $el.text();
             const m = /^\[([^\]]+)\]$/.exec(text);
-            if (!m) renderNextAsync();
+            if (!m) return renderNextAsync();
 
             const code = m[1];
             return pxt.runner.decompileToBlocksAsync(code, options)
