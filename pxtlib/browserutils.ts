@@ -1,5 +1,9 @@
+/// <reference path="../typings/winrt/winrt.d.ts"/>
 
 namespace pxt.BrowserUtils {
+    export function isWinRT(): boolean {
+        return typeof Windows !== "undefined";
+    }
 
     export function isIFrame(): boolean {
         try {
@@ -234,6 +238,20 @@ namespace pxt.BrowserUtils {
     export function suggestedBrowserPath(): string {
         let match = bestResourceForOsAndBrowser(pxt.appTarget.appTheme.browserSupport, "unsupported");
         return match ? match.path : null;
+    }
+
+    export function devicePixelRatio(): number {
+        if (typeof window === "undefined" || !window.screen) return 1;
+
+        if (window.screen.systemXDPI !== undefined
+            && window.screen.logicalXDPI !== undefined
+            && window.screen.systemXDPI > window.screen.logicalXDPI) {
+            return window.screen.systemXDPI / window.screen.logicalXDPI;
+        }
+        else if (window && window.devicePixelRatio !== undefined) {
+            return window.devicePixelRatio;
+        }
+        return 1;
     }
 
     export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {

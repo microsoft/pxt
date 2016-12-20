@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.5.87",
+  "version": "0.7.2",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -35,6 +35,7 @@
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
+    "built/electron.js",
     "built/web/fonts",
     "built/web/*.js",
     "built/web/*.css",
@@ -50,6 +51,8 @@
     "typings/marked",
     "typings/jquery",
     "typings/highlightjs",
+    "typings/winrt",
+    "localtypings/vscode-debug-protocol.d.ts",
     "docfiles",
     "theme"
   ],
@@ -71,7 +74,7 @@
   },
   "devDependencies": {
     "monaco-editor": "0.7.0",
-    "pxt-monaco-typescript": "2.0.1",
+    "pxt-monaco-typescript": "2.0.5",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",

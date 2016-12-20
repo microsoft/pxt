@@ -81,7 +81,7 @@ function htmlmsg(kind: string, msg: string) {
 }
 
 export function errorNotification(msg: string) {
-    pxt.tickEvent("notification.error", { message : msg })
+    pxt.tickEvent("notification.error", { message: msg })
     htmlmsg("err", msg)
 }
 
@@ -151,6 +151,7 @@ export interface DialogOptions {
     header: string;
     body?: string;
     htmlBody?: string;
+    copyable?: string;
     size?: string; // defaults to "small"
     onLoaded?: (_: JQuery) => void;
     buttons?: ButtonConfig[];
@@ -170,9 +171,16 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     <div class="content">
       ${options.body ? "<p>" + Util.htmlEscape(options.body) + "</p>" : ""}
       ${options.htmlBody || ""}
+      ${options.copyable ? `<div class="ui fluid action input">
+         <input class="linkinput" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
+         <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
+            ${lf("Copy")}
+            <i class="copy icon"></i>
+         </button>
+      </div>` : ``}
     </div>`
     html += `<div class="actions">`
-    html += logos
+    html += logos;
 
     if (!options.hideCancel) {
         options.buttons.push({
@@ -195,6 +203,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     html += `</div>`
 
     let modal = $(html)
+    if (options.copyable) enableCopyable(modal);
     let done = false
     $('#root').append(modal)
     if (options.onLoaded) options.onLoaded(modal)
@@ -243,6 +252,10 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         });
         mo.modal("show")
     })
+}
+
+export function hideDialog() {
+    $('.modal').modal("hide");
 }
 
 export function confirmAsync(options: ConfirmOptions): Promise<number> {
@@ -308,7 +321,7 @@ export function shareLinkAsync(options: ShareOptions) {
     <div class="content">
       <p>${Util.htmlEscape(options.body || "")}</p>
       <div class="ui fluid action input">
-         <input class="linkinput" type="text" value="${Util.htmlEscape(options.link)}">
+         <input class="linkinput" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.link)}">
          <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
             ${lf("Copy")}
             <i class="copy icon"></i>
@@ -324,20 +337,7 @@ export function shareLinkAsync(options: ShareOptions) {
   </div>
   `
     let modal = $(html)
-    let btn = modal.find('.copybtn')
-    btn.click(() => {
-        let inp = modal.find('.linkinput');
-        (inp[0] as HTMLInputElement).setSelectionRange(0, inp.val().length);
-        try {
-            document.execCommand("copy");
-            btn.popup({
-                on: "manual",
-                inline: true
-            })
-            btn.popup("show")
-        } catch (e) {
-        }
-    })
+    enableCopyable(modal);
     let done = false
     $('body').append(modal)
 
@@ -353,6 +353,24 @@ export function shareLinkAsync(options: ShareOptions) {
                 }
             },
         }).modal("show"))
+}
+
+function enableCopyable(modal: JQuery) {
+    let btn = modal.find('.copybtn')
+    btn.click(() => {
+        try {
+            let inp = modal.find('.linkinput')[0] as HTMLInputElement;
+            inp.focus();
+            inp.setSelectionRange(0, inp.value.length);
+            document.execCommand("copy");
+            btn.popup({
+                on: "manual",
+                inline: true
+            })
+            btn.popup("show")
+        } catch (e) {
+        }
+    })
 }
 
 export function scrollIntoView(item: JQuery, margin = 0) {

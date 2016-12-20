@@ -139,17 +139,11 @@ namespace pxt.cpp {
         }
 
         pxt.debug("Generating new extinfo")
-
-        let isPlatformio = false;
-        if (pxt.appTarget.compileService && pxt.appTarget.compileService.platformioIni) {
-            isPlatformio = true
-        }
-
-        if (isPlatformio) {
+        const res = pxtc.emptyExtInfo();
+        const isPlatformio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        if (isPlatformio)
             sourcePath = "/src/"
-        }
 
-        let res = pxtc.emptyExtInfo();
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
@@ -178,7 +172,7 @@ namespace pxt.cpp {
 
         // we sometimes append _ to C++ names to avoid name clashes
         function toJs(name: string) {
-            return name.trim().replace(/_$/, "")
+            return name.trim().replace(/[\_\*]$/, "")
         }
 
         for (const pkg of mainPkg.sortedDeps()) {
@@ -199,6 +193,8 @@ namespace pxt.cpp {
             let currDocComment = ""
             let currAttrs = ""
             let inDocComment = false
+            let indexedInstanceAttrs: pxtc.CommentAttrs
+            let indexedInstanceIdx = -1
 
             // replace #if 0 .... #endif with newlines
             src = src.replace(/^\s*#\s*if\s+0\s*$[^]*?^\s*#\s*endif\s*$/mg, f => f.replace(/[^\n]/g, ""))
@@ -373,6 +369,7 @@ namespace pxt.cpp {
 
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
+                    indexedInstanceAttrs = null
                     let parsedAttrs = pxtc.parseCommentString(currAttrs)
                     if (!currNs) err("missing namespace declaration");
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
@@ -457,6 +454,30 @@ namespace pxt.cpp {
                     else
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
                     return;
+                }
+
+                m = /^\s*(\w+)\s+(\w+)\s*;/.exec(ln)
+                if (currAttrs && m) {
+                    let parsedAttrs = pxtc.parseCommentString(currAttrs)
+                    if (parsedAttrs.indexedInstanceNS) {
+                        indexedInstanceAttrs = parsedAttrs
+                        shimsDTS.setNs(parsedAttrs.indexedInstanceNS)
+                        indexedInstanceIdx = 0
+                    }
+                    let tp = m[1]
+                    let nm = m[2]
+
+                    if (indexedInstanceAttrs) {
+                        currAttrs = currAttrs.trim()
+                        currAttrs += ` fixedInstance shim=${indexedInstanceAttrs.indexedInstanceShim}(${indexedInstanceIdx++})`
+                        shimsDTS.write("")
+                        shimsDTS.write(currDocComment)
+                        shimsDTS.write(currAttrs)
+                        shimsDTS.write(`const ${nm}: ${mapType(tp)};`)
+                        currDocComment = ""
+                        currAttrs = ""
+                        return;
+                    }
                 }
 
                 if (currAttrs && ln.trim()) {
@@ -576,11 +597,10 @@ namespace pxt.cpp {
 
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
-        res.yotta.config = U.jsonUnFlatten(optSettings)
-        let configJson = res.yotta.config
-
+        const configJson = U.jsonUnFlatten(optSettings)
         if (isPlatformio) {
-            let iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            const iniLines = pxt.appTarget.compileService.platformioIni.slice()
+            // TODO merge configjson
             iniLines.push("lib_deps =")
             U.iterMap(res.platformio.dependencies, (pkg, ver) => {
                 let pkgSpec = /[@#\/]/.test(ver) ? ver : pkg + "@" + ver
@@ -588,8 +608,13 @@ namespace pxt.cpp {
             })
             res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
         } else {
+            res.yotta.config = configJson;
+            let name = "pxt-app"
+            if (pxt.appTarget.compileService && pxt.appTarget.compileService.yottaBinary)
+                name = pxt.appTarget.compileService.yottaBinary
+                    .replace(/-combined/, "").replace(/\.hex$/, "")
             let moduleJson = {
-                "name": "pxt-microbit-app",
+                "name": name,
                 "version": "0.0.0",
                 "description": "Auto-generated. Do not edit.",
                 "license": "n/a",
@@ -623,7 +648,7 @@ int main() {
             config: compileService.serviceId,
             tag: compileService.gittag,
             replaceFiles: tmp,
-            dependencies: res.yotta.dependencies,
+            dependencies: (!isPlatformio ? res.yotta.dependencies : null)
         }
 
         let data = JSON.stringify(creq)
@@ -753,7 +778,7 @@ int main() {
     export interface HexFile {
         meta?: {
             cloudId: string;
-            targetVersion?: string;
+            targetVersions?: pxt.TargetVersions;
             editor: string;
             name: string;
         };
@@ -926,7 +951,13 @@ namespace pxt.hex {
         return host.cacheStoreAsync(newkey, newval)
             .then(() => host.cacheGetAsync(idxkey))
             .then(res => {
-                let keys: string[] = JSON.parse(res || "[]")
+                let keys: string[];
+                try { keys = JSON.parse(res || "[]") }
+                catch (e) {
+                    // cache entry is corrupted, clear cache so that it gets rebuilt
+                    console.error('invalid cache entry, clearing entry');
+                    keys = [];
+                }
                 keys = keys.filter(k => k != newkey)
                 keys.unshift(newkey)
                 let todel = keys.slice(maxLen)
@@ -939,7 +970,13 @@ namespace pxt.hex {
     export function recordGetAsync(host: Host, idxkey: string, newkey: string) {
         return host.cacheGetAsync(idxkey)
             .then(res => {
-                let keys: string[] = JSON.parse(res || "[]")
+                let keys: string[];
+                try { keys = JSON.parse(res || "[]") }
+                catch (e) {
+                    // cache entry is corrupted, clear cache so that it gets rebuilt
+                    console.error('invalid cache entry, clearing entry');
+                    return host.cacheStoreAsync(idxkey, "[]")
+                }
                 if (keys[0] != newkey) {
                     keys = keys.filter(k => k != newkey)
                     keys.unshift(newkey)
@@ -962,7 +999,13 @@ namespace pxt.hex {
         let key = "hex-" + extInfo.sha
         return host.cacheGetAsync(key)
             .then(res => {
-                let cachedMeta = res ? JSON.parse(res) : null
+                let cachedMeta: any;
+                try { cachedMeta = res ? JSON.parse(res) : null }
+                catch (e) {
+                    // cache entry is corrupted, clear cache so that it gets rebuilt
+                    console.log('invalid cache entry, clearing entry');
+                    cachedMeta = null;
+                }
                 if (cachedMeta && cachedMeta.hex) {
                     pxt.debug("cache hit, size=" + res.length)
                     cachedMeta.hex = decompressHex(cachedMeta.hex)

@@ -162,14 +162,16 @@ namespace pxt.runner {
         }
     }
 
-    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void, options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+    function renderNextSnippetAsync(cls: string,
+        render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
+        options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
         if (!cls) return Promise.resolve();
 
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
         if (!options.emPixels) options.emPixels = 14;
-        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
+        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Flow;
 
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
@@ -230,7 +232,7 @@ namespace pxt.runner {
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
-        }, { package: options.package });
+        }, { package: options.package, snippetMode: true });
     }
 
     function renderShuffleAsync(options: ClientRenderOptions): Promise<void> {
@@ -247,10 +249,11 @@ namespace pxt.runner {
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
         return renderNextSnippetAsync(options.blocksClass, (c, r) => {
-            let s = r.blocksSvg;
+            const s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            c.replaceWith(s);
-        }, { package: options.package });
+            const segment = $('<div class="ui segment"/>').append(s);
+            c.replaceWith(segment);
+        }, { package: options.package, snippetMode: true });
     }
 
     function renderProjectAsync(options: ClientRenderOptions): Promise<void> {
@@ -285,17 +288,15 @@ namespace pxt.runner {
 
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
         return renderNextSnippetAsync(cls, (c, r) => {
-            let cjs = r.compileJS;
+            const cjs = r.compileJS;
             if (!cjs) return;
-            let file = r.compileJS.ast.getSourceFile("main.ts");
-            let stmts = file.statements;
-            let ul = $('<div />').addClass('ui cards');
-
-            let addItem = (card: pxt.CodeCard) => {
+            const file = r.compileJS.ast.getSourceFile("main.ts");
+            const stmts = file.statements.slice(0).reverse();
+            const ul = $('<div />').addClass('ui cards');
+            const addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
-                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true }));
+                ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
             }
-
             stmts.forEach(stmt => {
                 let info = decompileCallInfo(stmt);
                 if (info) {
@@ -314,9 +315,8 @@ namespace pxt.runner {
                                     : undefined
                         })
                     } else if (block) {
-                        let card = U.clone(block.codeCard);
+                        let card = U.clone(block.codeCard) as pxt.CodeCard;
                         if (card) {
-                            card.link = true;
                             addItem(card);
                         }
                     } else {

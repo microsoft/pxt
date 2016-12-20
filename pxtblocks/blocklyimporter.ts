@@ -11,41 +11,107 @@ namespace pxt.blocks {
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
-    export function loadWorkspaceXml(xml: string) {
-        let workspace = new Blockly.Workspace();
+    export function loadWorkspaceXml(xml: string, skipReport = false) {
+        const workspace = new Blockly.Workspace();
         try {
-            Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xml), workspace);
+            const dom = Blockly.Xml.textToDom(xml);
+            Blockly.Xml.domToWorkspace(dom, workspace);
             return workspace;
         } catch (e) {
-            pxt.reportException(e, { xml: xml });
+            if (!skipReport)
+                pxt.reportException(e);
             return null;
         }
     }
 
+    function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
+        let onstart = dom.querySelector(`block[type=${ts.pxtc.ON_START_TYPE}]`)
+        if (onstart) // nothing to doc
+            return;
 
-    export function importXml(info: pxtc.BlocksInfo, xml: string): string {
+        const blocks: Map<pxtc.SymbolInfo> = {};
+        info.blocks.forEach(b => blocks[b.attributes.blockId] = b);
+
+        // walk top level blocks
+        let newnodes: Element[] = [];
+        let node = dom.firstElementChild;
+        let insertNode: Element = undefined;
+        while (node) {
+            const nextNode = node.nextElementSibling;
+            // does this block is disable or have s nested statement block?
+            const nodeType = node.getAttribute("type");
+            if (!node.getAttribute("disabled") && !node.querySelector("statement")
+                && (pxt.blocks.buildinBlockStatements[nodeType] || (blocks[nodeType] && blocks[nodeType].retType == "void"))
+            ) {
+                // old block, needs to be wrapped in onstart
+                if (!onstart) {
+                    onstart = dom.ownerDocument.createElement("block");
+                    onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
+                    insertNode = dom.ownerDocument.createElement("statement");
+                    insertNode.setAttribute("name", "HANDLER");
+                    onstart.appendChild(insertNode);
+                    insertNode.appendChild(node);
+                    newnodes.push(onstart);
+
+                    node.removeAttribute("x");
+                    node.removeAttribute("y");
+                    insertNode = node;
+                } else {
+                    // add nested statement
+                    const next = dom.ownerDocument.createElement("next");
+                    next.appendChild(node);
+                    insertNode.appendChild(next);
+                    node.removeAttribute("x");
+                    node.removeAttribute("y");
+                    insertNode = node;
+                }
+            }
+            node = nextNode;
+        }
+
+        newnodes.forEach(n => dom.appendChild(n));
+    }
+
+    export function importXml(xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
-            let parser = new DOMParser();
-            let doc = parser.parseFromString(xml, "application/xml");
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xml, "application/xml");
+
+            // patch block types
+            const upgrades = (pxt.appTarget.compile && pxt.appTarget.compile.upgrades)
+                ? pxt.appTarget.compile.upgrades.filter(up => up.type == "blockId")
+                : [];
+            upgrades.forEach(up => Object.keys(up.map).forEach(type => {
+                Util.toArray(doc.querySelectorAll(`block[type=${type}]`))
+                    .forEach(blockNode => {
+                        blockNode.setAttribute("type", up.map[type]);
+                        pxt.debug(`patched block ${type} -> ${up.map[type]}`);
+                    });
+            }))
 
             // build upgrade map
-            let enums: Map<string> = {};
+            const enums: Map<string> = {};
             for (let k in info.apis.byQName) {
                 let api = info.apis.byQName[k];
                 if (api.kind == pxtc.SymbolKind.EnumMember)
-                    enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)] = api.namespace + '.' + api.name;
+                    enums[api.namespace + '.' + (api.attributes.blockImportId || api.attributes.block || api.attributes.blockId || api.name)]
+                        = api.namespace + '.' + api.name;
             }
 
             // walk through blocks and patch enums
-            let blocks = doc.getElementsByTagName("block");
+            const blocks = doc.getElementsByTagName("block");
             for (let i = 0; i < blocks.length; ++i)
                 patchBlock(info, enums, blocks[i]);
+
+            // patch floating blocks
+            patchFloatingBlocks(doc.documentElement, info);
 
             // serialize and return
             return new XMLSerializer().serializeToString(doc);
         }
         catch (e) {
-            reportException(e, { xml: xml });
+            if (!skipReport)
+                reportException(e);
             return xml;
         }
     }
@@ -72,5 +138,16 @@ namespace pxt.blocks {
                   */
             }
         })
+    }
+
+    /**
+     * Convert blockly hue to rgb
+     */
+    export function convertColour(colour: string): string {
+        let hue = parseInt(colour);
+        if (!isNaN(hue)) {
+            return Blockly.hueToRgb(hue);
+        }
+        return colour;
     }
 }

@@ -6,6 +6,7 @@ namespace pxsim {
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
+        onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         simUrl?: string;
     }
 
@@ -19,6 +20,7 @@ namespace pxsim {
     export enum SimulatorDebuggerCommand {
         StepInto,
         StepOver,
+        StepOut,
         Resume,
         Pause
     }
@@ -203,7 +205,7 @@ namespace pxsim {
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
-            // first frame            
+            // first frame
             let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
@@ -248,6 +250,7 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
+                case 'simulator':  this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 default:
@@ -281,6 +284,10 @@ namespace pxsim {
                     msg = 'stepinto';
                     this.setState(SimulatorState.Running);
                     break;
+                case SimulatorDebuggerCommand.StepOut:
+                    msg = 'stepout';
+                    this.setState(SimulatorState.Running);
+                    break;
                 case SimulatorDebuggerCommand.StepOver:
                     msg = 'stepover';
                     this.setState(SimulatorState.Running);
@@ -293,7 +300,15 @@ namespace pxsim {
                     return;
             }
 
-            this.postDebuggerMessage(msg)
+            this.postMessage({type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
+        }
+
+        public setBreakpoints(breakPoints: number[]) {
+            this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
+        }
+
+        private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
+            if (this.options.onSimulatorCommand) this.options.onSimulatorCommand(msg);
         }
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {

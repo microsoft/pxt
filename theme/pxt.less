@@ -39,7 +39,12 @@
 }
 
 /* File list / Simulator layout */
+#simulator {
+    position: relative;
+    height: 100%;
+}
 #filelist {
+  width: 100%;
   left: 0;
   min-width: @simulatorWidth;
   max-width: @simulatorWidth;
@@ -82,6 +87,9 @@
     top: @mainMenuHeight;
     right: 2rem;
 }
+#getting-started-btn:not(.sideDocs) {
+    display: block;
+}
 
 /* Side Docs layout */
 #sidedocs {
@@ -89,7 +97,9 @@
   overflow-y: auto;
   right: 0;
   border:none;
-  height: calc(100% - (@mobileMenuHeight + 4.6rem));
+  top: 0;
+  padding-top: @mainMenuHeight;
+  height: 100%;
 }
 .rtl #sidedocs {
     right:auto;
@@ -138,6 +148,21 @@
     right:1rem;
 }
 
+/* Simulator */
+div.simframe {
+    border:none;
+    margin:0 0 0.5rem 0;
+    position: relative;
+    background:transparent;
+    width:100%;
+    padding-bottom: 81.96%;
+}
+
+div.simframe > iframe {
+    position:absolute;
+    top:0; left: 0; width:100%; height:100%;
+}
+
 /* Organization logo */
 .organization {
     position:absolute;
@@ -151,11 +176,49 @@
     left:2rem;
 }
 
+/* Help card */
+#helpcard {
+    position: absolute;
+    right: 7rem;
+    bottom: 2.2rem;
+    margin: 0;
+    z-index: 5;
+}
+.rtl #helpcard {
+    left:7rem;
+    right:auto;
+}
+
+/* Scrollbars */
+/* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
+::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 10px;
+}
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: #ccc;
+    box-shadow: 0 0 1px #ccc;    
+    -webkit-box-shadow: 0 0 1px #ccc;
+}
+
+/*******************************
+             Docs
+*******************************/
+
+#docs {
+    font-family: @docsPageFont !important;
+}
+
+#docs > h1,h2,h3,h4,h5,h6 {
+    font-family: @docsHeaderFont !important;
+}
+
 /*******************************
              Blockly
 *******************************/
 
-.blocklyToolboxDiv {
+.blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;
 }
 
@@ -204,16 +267,13 @@
     color: @trashIconColor;
 }
 
-/* The Add package button at the bottom of the toolbox */
-#blocklyAddPackage {
-    margin-top: 1rem;
+/* Blockly / Monaco Toolbox Buttons */
+#blocklyToolboxButtons, #monacoToolboxButtons {
+    margin-top: 0.5rem;
     margin-left: auto;
     margin-right: auto;
     font-size:3rem;
     text-align: center;
-}
-#blocklyAddPackage button {
-    color: @addPackageColor;
 }
 
 /*******************************
@@ -275,13 +335,50 @@
     background-color: #FFB900;
 }
 
+/* Monaco Toolbox */
+.monacoFlyout {
+    font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    background: rgba(221,221,221, 0.8);
+    overflow-x: visible;
+    overflow-y: auto;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.monacoFlyout div {
+    margin: 1.1rem;
+}
+
+.monacoDraggableBlock {
+    color: white;
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: solid 3px white;
+    cursor: pointer;
+    user-select: none;
+}
+
+.monacoDraggableBlock span.sig {
+    opacity: 0.7;
+}
+
+.monacoDraggableBlock span.docs {
+    display: block; /* enable as needed */
+    color: #ccc;
+    font-size:70%;
+    max-width: 22rem;
+}
+
+.monacoDraggableBlock:hover {
+    border: solid 3px #fc3 !important;
+}
 
 /*******************************
         Media Adjustments
 *******************************/
 
 /* Large Monitor */
-@media only screen and (min-width: @largeMonitorBreakpoint) {
+@media only screen and (min-width: @largeMonitorEditorBreakpoint) {
     /* Layout */
     .sideDocs #maineditor {
         right:@sideBarWidth;
@@ -297,18 +394,14 @@
     #sidedocspopout, #sidedocsexpand {
         display:block;
     }
-    /* Getting started button */
-    #getting-started-btn:not(.sideDocs) {
-        display: block;
-    }
 }
 
 /* Small Monitor */
-@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+@media only screen and (min-width: @computerEditorBreakpoint) and (max-width: @largestSmallMonitorEditorBreakpoint) {
 }
 
 /* Tablet */
-@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+@media only screen and (min-width: @tabletEditorBreakpoint) and (max-width: @largestTabletEditorBreakpoint) {
     /* Blockly */
     .blocklyTreeRow {
         padding-top: 0.75rem !important;
@@ -323,16 +416,23 @@
 }
 
 /* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
-
+@media only screen and (max-width: @largestMobileEditorBreakpoint) {
+    /* Blockly / Monaco Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
+    #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
+        padding: 0.3rem 0 0.3rem 0 !important;
+    }
+    /* Hide the getting started button in the mobile view */
+    #getting-started-btn {
+        display: none !important;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
-@media only screen and (min-width: @computerBreakpoint) {
+@media only screen and (min-width: @computerEditorBreakpoint) {
     /* Blockly */
     .blocklyTreeRow {
-        padding-top: 1rem !important;
-        padding-bottom: 2.5rem !important;
+        padding-top: 0.9rem !important;
+        padding-bottom: 2.3rem !important;
         border-left-width: 12px !important;
     }
     .blocklyTreeRoot div div div div .blocklyTreeRow {
@@ -343,7 +443,7 @@
 }   
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
-@media only screen and (max-width: @largestSmallMonitor) {
+@media only screen and (max-width: @largestSmallMonitorEditorBreakpoint) {
     /* Layout */
     #filelist {
         bottom:3rem;
@@ -356,6 +456,10 @@
     .rtl #maineditor {
         right:@simulatorWidthSmall;
         left:0;
+    }
+    /* Logo */
+    #logo .name {
+        display: none !important;
     }
     /* Organization logo */
     .organization {
@@ -376,14 +480,16 @@
     .blocklyTreeLabel {
         font-size:1rem;
     }
+    /* Help card */
+    #helpcard {
+        top: auto;
+        bottom: 2.2rem;
+        margin: 0;
+    }
 }
 
 /* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
-    /* Top Menu */
-    #maineditor {
-        top:@mobileMenuHeight !important;
-    }
+@media only screen and (max-width: @largestTabletEditorBreakpoint) {
     /* Organization logo */
     .organization {
         top:auto;
@@ -400,15 +506,37 @@
     .blocklyTreeLabel {
         font-size:1rem;
     }
+    /* Simulator */
+    div.simframe {
+        display:inline-block;
+        width: 18rem;
+        margin-right:0.5rem;
+    }
+    div.simframe:not(:first-child) {
+        display:none !important;
+    }
+    /* Help card */
+    #helpcard {
+        top: auto;
+        bottom: 2rem;
+        margin: 0;
+    }
+    .hideEditorFloats .editorFloat {
+        display:none;
+    }
 }
 
 /* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
+@media only screen and (max-width: @largestMobileEditorBreakpoint) {
+    /* Top Menu */
+    #maineditor {
+        top:@mobileMenuHeight !important;
+    }
     /* Layout */
     #filelist {
         position:absolute;
         z-index:5;
-        bottom:3rem;
+        bottom:0rem;
         left:1rem;
         top:auto;
         width:auto;
@@ -427,6 +555,11 @@
     #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
         bottom:2.3rem;
     }
+    /* Logo */
+    #logo {
+        font-size: 0rem;
+        padding-right: 0;
+    }
     /* Blockly */
     .blocklyTreeLabel {
         font-size: 0.75rem !important;
@@ -436,6 +569,18 @@
     }
     .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
         font-size: 0.75rem !important;
+    }
+    /* Simulator */
+    div.simframe {
+        display:inline-block;
+        width: 10rem;
+        margin-right:0.5rem;
+    }
+    div.simframe:not(:first-child) {
+        display:none !important;
+    }
+    div.simframe iframe.grayscale {
+        display:none !important;
     }
 }
 
@@ -447,7 +592,7 @@
     display:none !important;
 }
 
-@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
+@media only screen and (min-width: @largeMonitorEditorBreakpoint) and (min-height:30em) {
     .ui.widedesktop.only {
         display:block !important;
     }
@@ -457,38 +602,48 @@
 }
 
 /* smaller desktop screen */
-@media only screen and (max-width: @computerBreakpoint), only screen and (max-aspect-ratio: 12/10) {
+@media only screen and (max-width: @computerEditorBreakpoint), only screen and (max-aspect-ratio: 12/10) {
     .ui.desktop.only {
         display:none !important;
     }
 }
 
 /* thin desktop portrait mode */
-@media only screen and (max-width: @tabletBreakpoint), only screen and (max-aspect-ratio: 7/10) {
+@media only screen and (max-width: @tabletEditorBreakpoint), only screen and (max-aspect-ratio: 7/10) {
     .ui.landscape.only {
         display:none !important;
     }
 }
 
-@media only screen and (min-width: @tabletBreakpoint) {
+@media only screen and (min-width: @tabletEditorBreakpoint) {
     .ui.portrait.only {
         display:none !important;
     }
 }
 
-@media only screen and (max-height:45em) {
+@media only screen and (max-width: @tabletEditorBreakpoint) {
+    .ui.portrait.only {
+        display:block !important;
+    }
+    .ui.portrait.hide {
+        display:none !important;
+    }
+}
+
+/* Screens with decent vertical space */
+@media only screen and (max-height:@tallEditorBreakpoint) {
     .ui.tall.only {
         display:none !important;
     }
 }
 
-@media only screen and (min-width:@mobileBreakpoint) {
+@media only screen and (min-width:@mobileEditorBreakpoint) {
     .ui.thin.only {
         display:none !important;
     }
 }
 
-@media only screen and (max-width:@mobileBreakpoint) {
+@media only screen and (max-width:@mobileEditorBreakpoint) {
     .ui.wide.only {
         display:none !important;
     }

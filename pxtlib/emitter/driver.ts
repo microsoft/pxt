@@ -57,7 +57,9 @@ namespace ts.pxtc {
         quickFlash?: {
             words: number[];
             startAddr: number;
-        }
+        };
+        // client options
+        saveOnly?: boolean;
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
@@ -113,7 +115,9 @@ namespace ts.pxtc {
 
         //derived
         line: number;
-        character: number;
+        column: number;
+        endLine?: number;
+        endColumn?: number;
     }
 
     export interface KsDiagnostic extends LocationInfo {
@@ -125,11 +129,14 @@ namespace ts.pxtc {
     export function nodeLocationInfo(node: ts.Node) {
         let file = getSourceFileOfNode(node)
         const { line, character } = ts.getLineAndCharacterOfPosition(file, node.pos);
+        const { line: endLine, character: endChar } = ts.getLineAndCharacterOfPosition(file, node.end);
         let r: LocationInfo = {
             start: node.pos,
             length: node.end - node.pos,
             line: line,
-            character: character,
+            column: character,
+            endLine: endLine,
+            endColumn: endChar,
             fileName: file.fileName,
         }
         return r
@@ -150,7 +157,7 @@ namespace ts.pxtc {
                     start: d.start,
                     length: d.length,
                     line: 0,
-                    character: 0,
+                    column: 0,
                     messageText: d.messageText,
                     category: d.category,
                     fileName: "?",
@@ -164,7 +171,7 @@ namespace ts.pxtc {
                 start: d.start,
                 length: d.length,
                 line: pos.line,
-                character: pos.character,
+                column: pos.character,
                 messageText: d.messageText,
                 category: d.category,
                 fileName: d.file.fileName,
@@ -271,17 +278,29 @@ namespace ts.pxtc {
     }
 
     export function decompile(opts: CompileOptions, fileName: string) {
-        let resp = compile(opts);
+        const resp = compile(opts);
         if (!resp.success) return resp;
 
-        let file = resp.ast.getSourceFile(fileName);
-        let apis = getApiInfo(resp.ast);
-        let blocksInfo = pxtc.getBlocksInfo(apis);
-        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
+        const file = resp.ast.getSourceFile(fileName);
+        const apis = getApiInfo(resp.ast);
+        const blocksInfo = pxtc.getBlocksInfo(apis);
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
         return bresp;
     }
 
     function normalizePath(path: string): string {
-        return path.replace(/\\/g, "/")
+        path = path.replace(/\\/g, "/");
+
+        const parts: string[] = [];
+        path.split("/").forEach(part => {
+            if (part === ".." && parts.length) {
+                parts.pop();
+            }
+            else if (part !== ".") {
+                parts.push(part)
+            }
+        });
+
+        return parts.join("/");
     }
 }

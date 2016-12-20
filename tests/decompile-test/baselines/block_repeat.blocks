@@ -1,4 +1,6 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
 <block type="controls_simple_for">
 <field name="VAR">q</field>
 <value name="TO">
@@ -70,5 +72,7 @@
 </statement>
 </block>
 </next>
+</block>
+</statement>
 </block>
 </xml>

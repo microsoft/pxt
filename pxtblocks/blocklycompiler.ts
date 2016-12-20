@@ -9,6 +9,7 @@
 import B = Blockly;
 
 namespace pxt.blocks {
+
     export enum NT {
         Prefix, // op + map(children)
         Infix, // children.length == 2, child[0] op child[1]
@@ -208,29 +209,6 @@ namespace pxt.blocks {
         let e = new Error(msg);
         (<any>e).block = block;
         throw e;
-    }
-
-    namespace Errors {
-
-        export interface CompilationError {
-            msg: string;
-            block: B.Block;
-        }
-
-        let errors: CompilationError[] = [];
-
-        export function report(m: string, b: B.Block) {
-            errors.push({ msg: m, block: b });
-        }
-
-        export function clear() {
-            errors = [];
-        }
-
-        export function get() {
-            return errors;
-        }
-
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -480,10 +458,9 @@ namespace pxt.blocks {
                         }
                 }
             } catch (e) {
-                if ((<any>e).block)
-                    Errors.report(e + "", (<any>e).block);
-                else
-                    Errors.report(e + "", b);
+                const be = ((<any>e).block as B.Block) || b;
+                be.setWarningText(e + "");
+                e.push(be);
             }
         });
 
@@ -504,7 +481,15 @@ namespace pxt.blocks {
 
     function extractNumber(b: B.Block): number {
         let v = b.getFieldValue("NUM");
-        return parseFloat(v);
+        const parsed = parseFloat(v);
+        checkNumber(parsed);
+        return parsed;
+    }
+
+    function checkNumber(n: number) {
+        if (n === Infinity || n === NaN) {
+            U.userError(lf("Number entered is either too large or too small"));
+        }
     }
 
     function compileNumber(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -584,7 +569,9 @@ namespace pxt.blocks {
     function extractNumberLit(e: JsNode): number {
         if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
             return null
-        return parseInt(e.op)
+        const parsed = parseInt(e.op);
+        checkNumber(parsed);
+        return parsed;
     }
 
     function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -690,6 +677,7 @@ namespace pxt.blocks {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
+        errors: B.Block[];
     }
 
     export enum VarUsage {
@@ -715,7 +703,8 @@ namespace pxt.blocks {
         return {
             workspace: e.workspace,
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
-            stdCallTable: e.stdCallTable
+            stdCallTable: e.stdCallTable,
+            errors: e.errors
         };
     }
 
@@ -738,7 +727,8 @@ namespace pxt.blocks {
         return {
             workspace: w,
             bindings: [],
-            stdCallTable: {}
+            stdCallTable: {},
+            errors: []
         }
     };
 
@@ -879,12 +869,16 @@ namespace pxt.blocks {
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
+    function eventArgs(call: StdFunc): string[] {
+        return call.args.map(ar => ar.field).filter(ar => !!ar);
+    }
+
     function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let call = e.stdCallTable[b.type];
+        const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
-            return compileEvent(e, b, call.f, call.args.map(ar => ar.field).filter(ar => !!ar), call.namespace, comments)
+            return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
         else
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
@@ -937,16 +931,23 @@ namespace pxt.blocks {
         return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
     }
 
-    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
-        let bBody = b.getInputTargetBlock("HANDLER");
-        let compiledArgs: JsNode[] = args.map((arg: string) => {
-            // b.getFieldValue may be string, numbers
-            let argb = b.getInputTargetBlock(arg);
-            if (argb) return compileExpression(e, argb, comments);
-            return mkText(b.getFieldValue(arg))
-        });
-        let body = compileStatements(e, bBody);
+    function compileArg(e: Environment, b: B.Block, arg: string, comments: string[]): JsNode {
+        // b.getFieldValue may be string, numbers
+        const argb = b.getInputTargetBlock(arg);
+        if (argb) return compileExpression(e, argb, comments);
+        return mkText(b.getFieldValue(arg))
+    }
 
+    function compileStartEvent(e: Environment, b: B.Block): JsNode {
+        const bBody = b.getInputTargetBlock("HANDLER");
+        const body = compileStatements(e, bBody);
+        return body;
+    }
+
+    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
+        const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
+        const bBody = b.getInputTargetBlock("HANDLER");
+        const body = compileStatements(e, bBody);
         let argumentDeclaration: JsNode;
 
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
@@ -1001,6 +1002,7 @@ namespace pxt.blocks {
     export interface StdFunc {
         f: string;
         args: StdArg[];
+        attrs: ts.pxtc.CommentAttrs;
         isExtensionMethod?: boolean;
         imageLiteral?: number;
         hasHandler?: boolean;
@@ -1061,11 +1063,6 @@ namespace pxt.blocks {
         return mkBlock(stmts);
     }
 
-    function isTopBlock(b: B.Block): boolean {
-        if (!b.parentBlock_) return true;
-        return isTopBlock(b.parentBlock_);
-    }
-
     // This function creates an empty environment where type inference has NOT yet
     // been performed.
     // - All variables have been assigned an initial [Point] in the union-find.
@@ -1097,11 +1094,12 @@ namespace pxt.blocks {
                     e.stdCallTable[fn.attributes.blockId] = {
                         namespace: fn.namespace,
                         f: fn.name,
+                        args: args,
+                        attrs: fn.attributes,
                         isExtensionMethod: instance,
                         imageLiteral: fn.attributes.imageLiteral,
                         hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
-                        args: args,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
                 })
@@ -1166,30 +1164,45 @@ namespace pxt.blocks {
 
     function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
-            let e = mkEnv(w, blockInfo);
+            const e = mkEnv(w, blockInfo);
             infer(e, w);
 
-            // [stmtsHandlers] contains calls to register event handlers. They must be
-            // executed before the code that goes in the main function, as that latter
-            // code may block, and prevent the event handler from being registered.
-            let stmtsMain: JsNode[] = [];
-            w.getTopBlocks(true).map(b => {
-                let compiled = compileStatements(e, b)
-                if (compiled.type == NT.Block)
-                    append(stmtsMain, compiled.children);
-                else stmtsMain.push(compiled)
+            const stmtsMain: JsNode[] = [];
+
+            // all compiled top level blocks are event, move on start to bottom
+            const topblocks = w.getTopBlocks(true).sort((a, b) => {
+                return (a.type == ts.pxtc.ON_START_TYPE ? 1 : 0) - (b.type == ts.pxtc.ON_START_TYPE ? 1 : 0);
+            });
+
+            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
+
+            topblocks.forEach(b => {
+                if (b.type == ts.pxtc.ON_START_TYPE)
+                    append(stmtsMain, compileStartEvent(e, b).children);
+                else {
+                    const compiled = compileStatements(e, b)
+                    if (compiled.type == NT.Block)
+                        append(stmtsMain, compiled.children);
+                    else stmtsMain.push(compiled)
+                }
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
-            let stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
+            const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
                     // let btype = find(b.type);
                     // Not sure we need the type here - is is always number or boolean?
                     let defl = defaultValueForType(find(b.type))
                     let tp = ""
-                    if (defl.op == "null")
-                        tp = ": " + find(b.type).type
-                    return mkStmt(mkText("let " + b.name + tp + " = "), defaultValueForType(find(b.type)))
+                    if (defl.op == "null") {
+                        let tpname = find(b.type).type
+                        let tpinfo = blockInfo.apis.byQName[tpname]
+                        if (tpinfo && tpinfo.attributes.autoCreate)
+                            defl = mkText(tpinfo.attributes.autoCreate + "()")
+                        else
+                            tp = ": " + tpname
+                    }
+                    return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
             return stmtsVariables.concat(stmtsMain)
@@ -1198,6 +1211,51 @@ namespace pxt.blocks {
         }
 
         return [] // unreachable
+    }
+
+    function updateDisabledBlocks(e: Environment, allBlocks: B.Block[], topBlocks: B.Block[]) {
+        // unset disabled
+        allBlocks.forEach(b => b.setDisabled(false));
+
+        // update top blocks
+        const events: Map<B.Block> = {};
+
+        function flagDuplicate(key: string, block: B.Block) {
+            const otherEvent = events[key];
+            if (otherEvent) {
+                // another block is already registered
+                block.setDisabled(true);
+                block.setWarningText(lf("This event is already used."))
+            } else {
+                block.setDisabled(false);
+                block.setWarningText(undefined);
+                events[key] = block;
+            }
+        }
+
+        topBlocks.forEach(b => {
+            const call = e.stdCallTable[b.type];
+            // multiple calls allowed
+            if (b.type == ts.pxtc.ON_START_TYPE)
+                flagDuplicate(ts.pxtc.ON_START_TYPE, b);
+            else if (call && call.attrs.blockAllowMultiple) return;
+            // is this an event?
+            else if (call && call.hasHandler) {
+                // compute key that identifies event call
+                // detect if same event is registered already   
+                const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
+                const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
+                    .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
+                flagDuplicate(key, b);
+            } else {
+                // all non-events are disabled
+                let t = b;
+                while (t) {
+                    t.setDisabled(true);
+                    t = t.getNextBlock();
+                }
+            }
+        });
     }
 
     export interface SourceInterval {
@@ -1222,7 +1280,6 @@ namespace pxt.blocks {
     }
 
     export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
-        Errors.clear();
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 

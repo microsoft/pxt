@@ -17,6 +17,7 @@ import Map = pxt.Map;
 
 import * as server from './server';
 import * as build from './buildengine';
+import * as electron from "./electron";
 import * as commandParser from './commandparser';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
@@ -60,7 +61,7 @@ function reportDiagnosticSimply(diagnostic: pxtc.KsDiagnostic): void {
     let output = "";
 
     if (diagnostic.fileName) {
-        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.character + 1}): `;
+        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
     }
 
     const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
@@ -428,7 +429,7 @@ function travisAsync() {
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        let p = npmPublish ? runNpmAsync("publish") : Promise.resolve();
+        let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
         if (uploadLocs)
             p = p.then(() => execCrowdinAsync("upload", "built/strings.json"));
         return p;
@@ -445,7 +446,7 @@ function travisAsync() {
                 let trg = readLocalPxTarget()
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
-                        .then(() => npmPublish ? runNpmAsync("publish") : Promise.resolve())
+                        .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
@@ -461,7 +462,7 @@ function bumpPxtCoreDepAsync() {
     let gitPull = Promise.resolve()
 
     if (fs.existsSync("node_modules/pxt-core/.git")) {
-        gitPull = spawnAsync({
+        gitPull = nodeutil.spawnAsync({
             cmd: "git",
             args: ["pull"],
             cwd: "node_modules/pxt-core"
@@ -493,13 +494,13 @@ function updateAsync() {
     return Promise.resolve()
         .then(() => runGitAsync("pull"))
         .then(() => bumpPxtCoreDepAsync())
-        .then(() => runNpmAsync("install"));
+        .then(() => nodeutil.runNpmAsync("install"));
 }
 
 function justBumpPkgAsync() {
     ensurePkgDir()
     return Promise.resolve()
-        .then(() => spawnWithPipeAsync({
+        .then(() => nodeutil.spawnWithPipeAsync({
             cmd: "git",
             args: ["status", "--porcelain", "--untracked-files=no"]
         }))
@@ -534,7 +535,7 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
             .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
-            .then(() => runNpmAsync("version", "patch"))
+            .then(() => nodeutil.runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
     else {
@@ -543,17 +544,8 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
 }
 
 function runGitAsync(...args: string[]) {
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: "git",
-        args: args,
-        cwd: "."
-    })
-}
-
-function runNpmAsync(...args: string[]) {
-    console.log("npm", args);
-    return spawnAsync({
-        cmd: addCmd("npm"),
         args: args,
         cwd: "."
     })
@@ -729,7 +721,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         "-c", "user.name=" + user,
         "-c", "user.email=" + user + "@build.pxt.io",
     ]
-    let gitAsync = (args: string[]) => spawnAsync({
+    let gitAsync = (args: string[]) => nodeutil.spawnAsync({
         cmd: "git",
         cwd: trgPath,
         args: cred.concat(args)
@@ -745,7 +737,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                     throw U.userError(trgPath + " already exists; please remove it")
                 }
             } else {
-                return spawnAsync({
+                return nodeutil.spawnAsync({
                     cmd: "git",
                     args: cred.concat(["clone", "--depth", "3", repoUrl, trgPath]),
                     cwd: "."
@@ -1007,46 +999,6 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         .then(() => { });
 }
 
-export interface SpawnOptions {
-    cmd: string;
-    args: string[];
-    cwd?: string;
-    shell?: boolean;
-    pipe?: boolean;
-}
-
-export function spawnAsync(opts: SpawnOptions) {
-    opts.pipe = false
-    return spawnWithPipeAsync(opts)
-        .then(() => { })
-}
-
-export function spawnWithPipeAsync(opts: SpawnOptions) {
-    if (opts.pipe === undefined) opts.pipe = true
-    let info = opts.cmd + " " + opts.args.join(" ")
-    if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
-    console.log("[run] " + info)
-    return new Promise<Buffer>((resolve, reject) => {
-        let ch = child_process.spawn(opts.cmd, opts.args, {
-            cwd: opts.cwd,
-            env: process.env,
-            stdio: opts.pipe ? [process.stdin, "pipe", process.stderr] : "inherit",
-            shell: opts.shell || false
-        } as any)
-        let bufs: Buffer[] = []
-        if (opts.pipe)
-            ch.stdout.on('data', (buf: Buffer) => {
-                bufs.push(buf)
-                process.stdout.write(buf)
-            })
-        ch.on('close', (code: number) => {
-            if (code != 0)
-                reject(new Error("Exit code: " + code + " from " + info))
-            resolve(Buffer.concat(bufs))
-        });
-    })
-}
-
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
     return Promise.map(dirs, dn => readDirAsync(dn)
@@ -1080,15 +1032,11 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
 
     console.log(`building ${p}...`)
     dirsToWatch.push(p)
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     })
-}
-
-function addCmd(name: string) {
-    return name + (/^win/.test(process.platform) ? ".cmd" : "")
 }
 
 function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
@@ -1096,8 +1044,8 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
     if (!fs.existsSync(ksd + "/pxtlib/main.ts")) return Promise.resolve([]);
 
     console.log(`building ${ksd}...`);
-    return spawnAsync({
-        cmd: addCmd("jake"),
+    return nodeutil.spawnAsync({
+        cmd: nodeutil.addCmd("jake"),
         args: includeSourceMaps ? ["sourceMaps=true"] : [],
         cwd: ksd
     }).then(() => {
@@ -1239,7 +1187,7 @@ function buildSemanticUIAsync() {
     if (!dirty) return Promise.resolve();
 
     nodeutil.mkdirP(path.join("built", "web"));
-    return spawnAsync({
+    return nodeutil.spawnAsync({
         cmd: "node",
         args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
@@ -1561,13 +1509,14 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     }
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
         .then(() => server.serveAsync({
-            localToken: localToken,
             autoStart: !globalConfig.noAutoStart,
-            packaged: packaged,
             electron: !!parsed.flags["electron"],
-            externalHandlers: externalMessageHandlers || void 0,
+            localToken,
+            packaged,
+            electronHandlers,
             port: parsed.flags["port"] as number || 0,
-            browser: parsed.flags["browser"] as string
+            browser: parsed.flags["browser"] as string,
+            serial: !parsed.flags["noSerial"]
         }))
 }
 
@@ -2075,6 +2024,7 @@ enum BuildOption {
     Run,
     Deploy,
     Test,
+    DebugSim,
     GenDocs,
 }
 
@@ -2579,13 +2529,7 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
         process.exit(1);
     }
 
-    const testBlocksDir = path.relative(process.cwd(), path.join(dir, "testBlocks"));
-    let testBlocksDirExists = false;
-    try {
-        const stats = fs.statSync(testBlocksDir);
-        testBlocksDirExists = stats.isDirectory();
-    }
-    catch (e) { }
+    const testBlocksDir = getTestBlocksDir(dir);
 
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
@@ -2619,7 +2563,7 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
             return Promise.resolve()
         }
 
-        return decompileAsyncWorker(filename, testBlocksDirExists ? testBlocksDir : undefined)
+        return decompileAsyncWorker(filename, testBlocksDir)
             .then(decompiled => {
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (compareBaselines(decompiled, baseline)) {
@@ -2646,6 +2590,17 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
         });
 }
 
+function getTestBlocksDir(parentDirectory: string): string {
+    const testBlocksDir = path.relative(process.cwd(), path.join(parentDirectory, "testBlocks"));
+    let testBlocksDirExists = false;
+    try {
+        const stats = fs.statSync(testBlocksDir);
+        testBlocksDirExists = stats.isDirectory();
+    }
+    catch (e) { }
+    return testBlocksDirExists ? testBlocksDir : undefined;
+}
+
 function compareBaselines(a: string, b: string): boolean {
     // Ignore whitespace
     return a.replace(/\s/g, "") === b.replace(/\s/g, "")
@@ -2658,6 +2613,7 @@ function replaceFileExtension(file: string, extension: string) {
 function testDecompilerErrorsAsync(parsed: commandParser.ParsedCommand) {
     const filenames: string[] = [];
     const dir = parsed.arguments[0];
+    const testBlocksDir = getTestBlocksDir(path.resolve(dir, ".."));
 
     for (const file of fs.readdirSync(dir)) {
         if (file[0] == ".") {
@@ -2695,30 +2651,30 @@ function testDecompilerErrorsAsync(parsed: commandParser.ParsedCommand) {
             success = false;
         }
 
-        return Promise.mapSeries(cases, testCase => {
-            const pkg = new pxt.MainPackage(new SnippetHost("decompile-error-pkg", testCase.text, []));
+        let currentCase: string = undefined;
 
+        return Promise.mapSeries(cases, testCase => {
+            const pkg = new pxt.MainPackage(new SnippetHost("decompile-error-pkg", testCase.text, [testBlocksDir]));
+            currentCase = testCase.name;
             return pkg.getCompileOptionsAsync()
                 .then(opts => {
                     opts.ast = true;
-                    try {
-                        const decompiled = pxtc.decompile(opts, "main.ts");
-                        if (decompiled.success) {
-                            errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" expected a decompilation error but got none`);
-                            success = false;
-                        }
+                    const decompiled = pxtc.decompile(opts, "main.ts");
+                    if (decompiled.success) {
+                        errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" expected a decompilation error but got none`);
+                        success = false;
                     }
-                    catch (e) {
-                        errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" generated an exception: ${e}`);
-                        success = false
-                    }
-                });
+                })
         })
             .then(() => {
                 if (success) {
                     console.log(`decompiler error test OK: ${basename}`);
                 }
             })
+            .catch(e => {
+                errors.push(`decompiler error test FAILED; ${basename} case "${currentCase}" generated an exception: ${e}`);
+                success = false
+            });
     })
         .then(() => {
             if (errors.length) {
@@ -2882,19 +2838,13 @@ function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> 
                 if (resp.success) {
                     if (/^block/.test(snippet.type)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-                        let file = resp.ast.getSourceFile('main.ts');
-                        let apis = pxtc.getApiInfo(resp.ast);
-                        let blocksInfo = pxtc.getBlocksInfo(apis);
-                        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
-
-                        let success = !!bresp.outfiles['main.blocks']
-
-                        if (success) {
-                            return addSuccess(name)
-                        }
-                        else {
-                            return addFailure(name, bresp.diagnostics)
-                        }
+                        const file = resp.ast.getSourceFile('main.ts');
+                        const apis = pxtc.getApiInfo(resp.ast);
+                        const blocksInfo = pxtc.getBlocksInfo(apis);
+                        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
+                        const success = !!bresp.outfiles['main.blocks']
+                        if (success) return addSuccess(name)
+                        else return addFailure(name, bresp.diagnostics)
                     }
                     else {
                         return addSuccess(name)
@@ -2913,7 +2863,7 @@ function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> 
                         start: 1,
                         line: 1,
                         length: 1,
-                        character: 1
+                        column: 1
                     }
                 ])
             })
@@ -2951,7 +2901,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
-            if (target.hasHex && mode != BuildOption.Run)
+            if (target.hasHex && mode != BuildOption.Run && mode != BuildOption.DebugSim)
                 target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
@@ -2978,14 +2928,30 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
+            opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
             return pxtc.compile(opts);
         })
         .then((res): Promise<void | pxtc.CompileOptions> => {
-            U.iterMap(res.outfiles, (fn, c) =>
-                mainPkg.host().writeFile(mainPkg, "built/" + fn, c))
+            U.iterMap(res.outfiles, (fn, c) => {
+                if (fn !== pxtc.BINARY_JS) {
+                    mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
+                }
+                else {
+                    mainPkg.host().writeFile(mainPkg, "built/debug/" + fn, c);
+                }
+            });
+
             reportDiagnostics(res.diagnostics);
             if (!res.success) {
                 process.exit(1)
+            }
+
+            if (buildOpts.mode === BuildOption.DebugSim) {
+                mainPkg.host().writeFile(mainPkg, "built/debug/debugInfo.json", JSON.stringify({
+                    usedParts: pxtc.computeUsedParts(res, true),
+                    usedArguments: res.usedArguments,
+                    breakpoints: res.breakpoints
+                }));
             }
 
             console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
@@ -3176,7 +3142,12 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     forceCloudBuild = !!parsed.flags["cloud"];
 
-    return buildCoreAsync({ mode: BuildOption.JustBuild })
+    let mode = BuildOption.JustBuild;
+    if (parsed.flags["debug"]) {
+        mode = BuildOption.DebugSim;
+    }
+
+    return buildCoreAsync({ mode })
         .then((compileOpts) => { });
 }
 
@@ -3414,6 +3385,8 @@ function checkDocsAsync(): Promise<void> {
         // look for broken urls
         text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
+            // remove hash
+            url = url.replace(/#.*$/, '');
             if (!urls[url]) {
                 console.error(`${f}: broken link ${url}`);
                 broken++;
@@ -3573,7 +3546,8 @@ function initCommands() {
         name: "build",
         help: "build current package",
         flags: {
-            cloud: { description: "Force build to happen in the cloud" }
+            cloud: { description: "Force build to happen in the cloud" },
+            debug: { description: "Emit debug information with build" }
         }
     }, buildAsync);
 
@@ -3615,6 +3589,9 @@ function initCommands() {
                 description: "start the server without launching a browser",
                 aliases: ["no-browser"]
             },
+            noSerial: {
+                description: "do not monitor serial devices"
+            },
             sourceMaps: {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
@@ -3643,6 +3620,36 @@ function initCommands() {
             new: { description: "force the creation of a new gist" },
         }
     }, publishGistAsync)
+
+    p.defineCommand({
+        name: "electron",
+        help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
+        flags: {
+            buildInstaller: {
+                description: "('package' only) Also build the installer / zip redistributable for the built app",
+                aliases: ["i"],
+                argument: "buildInstaller"
+            },product: {
+                description: "path to a product.json file to use instead of the target's default one",
+                aliases: ["p"],
+                type: "string",
+                argument: "product"
+            },
+            pxtElectron: {
+                description: "path to the root of the PXT Electron app in the pxt repo",
+                aliases: ["e"],
+                type: "string",
+                argument: "pxtElectron"
+            },
+            release: {
+                description: "('package' only) Instead of using the current local target, use the published target from NPM (value format: <Target's NPM package>[@<Package version>])",
+                aliases: ["r"],
+                type: "string",
+                argument: "release"
+            }
+        },
+        argString: "<subcommand>"
+    }, electron.electronAsync);
 
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
@@ -3769,9 +3776,9 @@ function errorHandler(reason: any) {
     process.exit(20)
 }
 
-let externalMessageHandlers: pxt.Map<server.ExternalMessageHandler>;
+let electronHandlers: pxt.Map<server.ElectronHandler>;
 // called from pxt npm package
-export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), externalHandlers?: pxt.Map<server.ExternalMessageHandler>): Promise<void> {
+export function mainCli(targetDir: string, args: string[] = process.argv.slice(2), handlers?: pxt.Map<server.ElectronHandler>): Promise<void> {
     process.on("unhandledRejection", errorHandler);
     process.on('uncaughtException', errorHandler);
 
@@ -3782,10 +3789,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         return Promise.resolve();
     }
 
-    if (externalHandlers) {
-        externalMessageHandlers = externalHandlers;
-    }
-
+    electronHandlers = handlers;
     nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
@@ -3847,6 +3851,10 @@ function initGlobals() {
 
 initGlobals();
 initCommands();
+
+export function sendElectronMessage(message: server.ElectronMessage) {
+    server.sendElectronMessage(message);
+}
 
 if (require.main === module) {
     let targetdir = process.cwd()

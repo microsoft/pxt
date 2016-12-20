@@ -177,7 +177,7 @@ namespace pxt.runner {
                         //Set the custom code if provided for docs.
                         let epkg = getEditorPkg(mainPkg);
                         epkg.files["main.ts"] = code;
-                        //set the custom doc name from the URL.                        
+                        //set the custom doc name from the URL.
                         let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
                         epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
@@ -386,14 +386,14 @@ ${files["main.ts"]}
     const template = `
 <aside id=button class=box>
    <a class="ui primary button" href="@ARGS@">@BODY@</a>
-</aside>   
+</aside>
 
 <aside id=vimeo>
 <div class="ui two column stackable grid container">
 <div class="column">
     <div class="ui embed mdvid" data-source="vimeo" data-id="@ARGS@" data-placeholder="/thumbnail/1024/vimeo/@ARGS@" data-icon="video play">
     </div>
-</div></div>    
+</div></div>
 </aside>
 
 <aside id=youtube>
@@ -401,13 +401,13 @@ ${files["main.ts"]}
 <div class="column">
     <div class="ui embed mdvid" data-source="youtube" data-id="@ARGS@" data-placeholder="https://img.youtube.com/vi/@ARGS@/maxresdefault.jpg">
     </div>
-</div></div>    
+</div></div>
 </aside>
 
 <aside id=section>
     <!-- section @ARGS@ -->
 </aside>
-        
+
 <aside id=hide class=box>
     <div style='display:none'>
         @BODY@
@@ -517,7 +517,10 @@ ${files["main.ts"]}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initBlocks(blocksInfo);
-                        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                        let bresp = pxtc.decompiler.decompileToBlocks(
+                            blocksInfo,
+                            resp.ast.getSourceFile("main.ts"),
+                            { snippetMode: options && options.snippetMode })
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)

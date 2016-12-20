@@ -28,7 +28,9 @@ export class Editor extends srceditor.Editor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
     fileType: FileType = FileType.Unknown;
-    extraLibs: { [path: string]: monaco.IDisposable };
+    extraLibs: pxt.Map<monaco.IDisposable>;
+    blocksDict: { ns: string, meta: pxt.vs.BlockDefiniton }[];
+    definitions: pxt.Map<pxt.vs.NameDefiniton>;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -102,7 +104,7 @@ export class Editor extends srceditor.Editor {
                                 .then(() => this.parent.setFile(mainPkg.files[blockFile]));
                         })
                 }).catch(e => {
-                    pxt.reportException(e, { js: this.currFile.content });
+                    pxt.reportException(e);
                     core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
                 });
         });
@@ -124,7 +126,7 @@ export class Editor extends srceditor.Editor {
             size: "medium",
             hideCancel: !bf
         }).then(b => {
-            // discard                
+            // discard
             if (!b) {
                 pxt.tickEvent("typescript.keepText");
             } else {
@@ -134,24 +136,9 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    decompile(blockFile: string): Promise<boolean> {
-        let xml: string;
+    decompileAsync(blockFile: string): Promise<boolean> {
         return compiler.decompileAsync(blockFile)
-            .then(resp => {
-                return Promise.resolve(resp.success);
-            })
-    }
-
-    menu(): JSX.Element {
-        let editor = pkg.mainEditorPkg();
-        if (this.currFile != editor.files["main.ts"]) {
-            return (<sui.Item text={lf("Back to Code") } icon={"align left"} onClick={() => this.parent.setFile(editor.files["main.ts"]) } />);
-        }
-        else if (editor.files["main.blocks"]) { //if main.blocks file present
-            return (<sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" onClick={() => this.openBlocks() }
-                title={lf("Convert code to Blocks") } />);
-        }
-        return null;
+            .then(resp => resp.success);
     }
 
     undo() {
@@ -160,50 +147,57 @@ export class Editor extends srceditor.Editor {
 
     display() {
         return (
-            <div>
-                <div className='full-abs' id='monacoEditorInner' />
+            <div className='full-abs' id="monacoEditorArea">
+                <div id='monacoEditorToolbox' className='injectionDiv' />
+                <div id='monacoEditorInner' />
             </div>
         )
     }
 
     initEditorCss() {
-        let colorDict: { [ns: string]: { color: string, fns: string[] } } = {};
         let head = document.head || document.getElementsByTagName('head')[0],
             style = (document.getElementById('monacoeditorStyles') as HTMLStyleElement) || document.createElement('style');
         style.id = "monacoeditorStyles";
         style.type = 'text/css';
 
-        compiler.getBlocksAsync()
-            .then((blockInfo: pxtc.BlocksInfo) => {
-                if (!blockInfo) return;
-                blockInfo.blocks
-                    .forEach(fn => {
-                        let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                        let nsn = blockInfo.apis.byQName[ns];
-                        if (nsn) ns = nsn.attributes.block || ns;
-                        if (nsn && nsn.attributes.color) {
-                            if (!colorDict[ns])
-                                colorDict[ns] = { color: nsn.attributes.color, fns: [] };
-                            colorDict[ns].fns.push(fn.name);
-                        }
-                    });
-            }).then(() => {
-                let cssContent = "";
-                Object.keys(colorDict).forEach(function (ns) {
-                    let element = colorDict[ns];
-                    let color = element.color;
-                    let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.` + element.fns.join(', .token.ts.identifier.');
-                    cssContent += `${cssTag} { color: ${color}; }`;
-                })
-                return cssContent;
-            }).done((cssContent: string) => {
-                if (style.sheet) {
-                    style.textContent = cssContent;
-                } else {
-                    style.appendChild(document.createTextNode(cssContent));
-                }
-                head.appendChild(style);
-            });
+        const inverted = pxt.appTarget.appTheme.invertedMonaco;
+        const invertedColorluminosityMultipler = 0.6;
+        let cssContent = "";
+        let colorDict = this.blocksDict;
+        let fnDict = this.definitions;
+        colorDict.forEach(function (element) {
+            const hexcolor = pxt.blocks.convertColour(element.meta.commentAttr.color);
+            let cssTag = `.token.ts.identifier.${element.ns}, .token.ts.identifier.${Object.keys(fnDict[element.ns].fns).join(', .token.ts.identifier.')}`;
+            cssContent += `${cssTag} { color: ${inverted
+                ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
+                : hexcolor}; }`;
+        })
+        if (style.sheet) {
+            style.textContent = cssContent;
+        } else {
+            style.appendChild(document.createTextNode(cssContent));
+        }
+        head.appendChild(style);
+    }
+
+    static lightenColor(hex: string, luminosity: number): string {
+        // #ABC => ABC
+        hex = hex.replace(/[^0-9a-f]/gi, '');
+
+        // ABC => AABBCC
+        if (hex.length < 6)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+
+        // tweak
+        let rgb = "#";
+        for (let i = 0; i < 3; i++) {
+            let c = parseInt(hex.substr(i * 2, 2), 16);
+            c = Math.round(Math.min(Math.max(0, c + (c * luminosity)), 255));
+            let cStr = c.toString(16);
+            rgb += ("00" + cStr).substr(cStr.length);
+        }
+
+        return rgb;
     }
 
     textAndPosition(pos: monaco.IPosition) {
@@ -271,7 +265,10 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         this.extraLibs = Object.create(null);
-        this.editor = pxt.vs.initMonacoAsync(document.getElementById("monacoEditorInner"));
+        let editorArea = document.getElementById("monacoEditorArea");
+        let editorElement = document.getElementById("monacoEditorInner");
+
+        this.editor = pxt.vs.initMonacoAsync(editorElement);
         if (!this.editor) {
             // Todo: create a text area if we weren't able to load the monaco editor correctly.
             return;
@@ -366,6 +363,15 @@ export class Editor extends srceditor.Editor {
                 this.parent.settings.editorFontSize = currentFont;
                 this.forceDiagnosticsUpdate();
             }
+            // Update widgets
+            let toolbox = document.getElementById('monacoEditorToolbox');
+            toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+            let flyout = document.getElementById('monacoFlyoutWidget');
+            flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+        })
+
+        this.editor.onDidFocusEditorText(() => {
+            this.resetFlyout(true);
         })
 
         this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
@@ -384,24 +390,24 @@ export class Editor extends srceditor.Editor {
             });
             this.editorViewZones = [];
 
-            if (this.lastSet != null) {
-                this.lastSet = null
-            } else {
-                if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
-                    this.editor.setValue(" ");
-                }
-                this.updateDiagnostics();
-                this.changeCallback();
+            if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
+                this.editor.setValue(" ");
             }
+            this.updateDiagnostics();
+            this.changeCallback();
         });
 
         this.editorViewZones = [];
+
+        this.setupToolbox(editorArea);
 
         this.isReady = true
     }
 
     resize(e?: Event) {
-        this.editor.layout();
+        let monacoArea = document.getElementById('monacoEditorArea');
+        let monacoToolbox = document.getElementById('monacoEditorToolbox')
+        this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight });
     }
 
     zoomIn() {
@@ -434,6 +440,245 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    setupToolbox(editorElement: HTMLElement) {
+        // Monaco flyout widget
+        let flyoutWidget = {
+            getId: function (): string {
+                return 'pxt.flyout.widget';
+            },
+            getDomNode: function (): HTMLElement {
+                if (!this.domNode) {
+                    this.domNode = document.createElement('div');
+                    this.domNode.id = 'monacoFlyoutWidget';
+                    this.domNode.style.top = `0`;
+                    this.domNode.className = 'monacoFlyout';
+                    // Hide by default
+                    this.domNode.style.display = 'none';
+                    this.domNode.innerText = 'Flyout';
+                }
+                return this.domNode;
+            },
+            getPosition: function (): monaco.editor.IOverlayWidgetPosition {
+                return null;
+            }
+        };
+        this.editor.addOverlayWidget(flyoutWidget);
+    }
+
+    private selectedCategoryItem: HTMLElement;
+    private selectedCategoryRow: HTMLElement;
+    private selectedCategoryColor: string;
+
+    resetFlyout(clear?: boolean) {
+        // Hide the flyout
+        let flyout = document.getElementById('monacoFlyoutWidget');
+        flyout.innerHTML = '';
+        flyout.style.display = 'none';
+
+        // Hide the currnet toolbox category
+        if (this.selectedCategoryItem) {
+            this.selectedCategoryItem.style.background = 'none';
+            this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
+            this.selectedCategoryRow.className = 'blocklyTreeRow';
+        }
+
+        if (clear) {
+            this.selectedCategoryItem = null;
+            this.selectedCategoryRow = null;
+        }
+    }
+
+    updateToolbox() {
+        let appTheme = pxt.appTarget.appTheme;
+        if (!appTheme.monacoToolbox) return;
+        // Toolbox div
+        let toolbox = document.getElementById('monacoEditorToolbox');
+        // Move the monaco editor to make room for the toolbox div
+        this.editor.getLayoutInfo().glyphMarginLeft = 200;
+        this.editor.layout();
+        let monacoEditor = this;
+        // clear the toolbox
+        toolbox.innerHTML = '';
+
+        // Add an overlay widget for the toolbox
+        toolbox.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
+        let root = document.createElement('div');
+        root.className = 'blocklyTreeRoot';
+        toolbox.appendChild(root);
+        let group = document.createElement('div');
+        group.setAttribute('role', 'group');
+        root.appendChild(group);
+
+        let metaDef = this.blocksDict;
+        let fnDef = this.definitions;
+        metaDef.forEach(function (metaElement) {
+            let ns = metaElement.ns;
+            // Create a tree item
+            let treeitem = document.createElement('div');
+            let treerow = document.createElement('div');
+            treeitem.setAttribute('role', 'treeitem');
+            let fnElement = fnDef[ns];
+            let color = monacoEditor.convertColour(metaElement.meta.commentAttr.color);
+            treeitem.onclick = (ev: MouseEvent) => {
+                pxt.tickEvent("monaco.toolbox.click");
+
+                let monacoFlyout = document.getElementById('monacoFlyoutWidget');
+                monacoEditor.resetFlyout(false);
+
+                // Hide the toolbox if the current category is clicked twice
+                if (monacoEditor.selectedCategoryItem == treeitem) {
+                    monacoEditor.selectedCategoryItem = null;
+                    monacoFlyout.style.display = 'none';
+                    treerow.className = 'blocklyTreeRow';
+                    return;
+                } else {
+                    // Selected category
+                    treeitem.style.background = `${color}`;
+                    treerow.style.color = '#fff';
+                    treerow.className += ' blocklyTreeSelected';
+                    monacoEditor.selectedCategoryItem = treeitem;
+                    monacoEditor.selectedCategoryRow = treerow;
+                    if (appTheme.invertedToolbox) {
+                        // Inverted toolbox
+                        monacoEditor.selectedCategoryColor = '#fff';
+                    } else {
+                        monacoEditor.selectedCategoryColor = color;
+                    }
+                }
+
+                monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
+                monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
+                monacoFlyout.style.display = 'block';
+                monacoFlyout.className = 'monacoFlyout';
+
+                Object.keys(fnElement.fns).sort((f1, f2) => {
+                    // sort by fn weight
+                    const fn1 = fnElement.fns[f1];
+                    const fn2 = fnElement.fns[f2];
+                    const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
+                        + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
+                        + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
+                    const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
+                        + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
+                        + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
+                    return w2 - w1;
+                }).forEach((fn) => {
+                    let monacoBlock = document.createElement('div');
+                    monacoBlock.className = 'monacoDraggableBlock';
+
+                    monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
+                    monacoBlock.style.backgroundColor = `${color}`;
+                    monacoBlock.style.borderColor = `${color}`;
+
+                    const elem = fnElement.fns[fn];
+                    const sig = elem.sig;
+                    const snippet = elem.snippet;
+                    const comment = elem.comment;
+                    const metaData = elem.metaData;
+
+                    let methodToken = document.createElement('span');
+                    methodToken.innerText = fn;
+                    let sigToken = document.createElement('span'); sigToken.className = 'sig';
+                    // completion is a bit busted but looks better
+                    sigToken.innerText = snippet
+                        .replace(/^[^(]*\(/, '(')
+                        .replace(/^\s*\{\{\}\}\n/gm, '')
+                        .replace(/\{\n\}/g, '{}');
+                    const docToken = document.createElement('span'); docToken.className = 'docs';
+                    docToken.innerText = comment.split('.')[0];
+
+                    monacoBlock.title = comment;
+
+                    monacoBlock.onclick = (ev2: MouseEvent) => {
+                        pxt.tickEvent("monaco.toolbox.itemclick");
+
+                        monacoEditor.resetFlyout(true);
+
+                        let model = monacoEditor.editor.getModel();
+                        let currPos = monacoEditor.editor.getPosition();
+                        let cursor = model.getOffsetAt(currPos)
+                        let insertText = `${ns}.${snippet}\n`;
+
+                        if (insertText.indexOf('{{}}') > -1) {
+                            cursor += (insertText.indexOf('{{}}'));
+                            insertText = insertText.replace('{{}}', '');
+                        } else
+                            cursor += (insertText.length);
+                        monacoEditor.editor.executeEdits("", [
+                            {
+                                identifier: { major: 0, minor: 0 },
+                                range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
+                                text: insertText,
+                                forceMoveMarkers: false
+                            }
+                        ]);
+                        let endPos = model.getPositionAt(cursor);
+                        monacoEditor.editor.setPosition(endPos);
+                        monacoEditor.editor.focus();
+                        //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+                    };
+
+                    monacoBlock.appendChild(methodToken);
+                    monacoBlock.appendChild(sigToken);
+                    monacoBlock.appendChild(docToken);
+                    monacoFlyout.appendChild(monacoBlock);
+                })
+            };
+            group.appendChild(treeitem);
+            treerow.className = 'blocklyTreeRow';
+            treeitem.appendChild(treerow);
+            let icon = document.createElement('span');
+            let iconNone = document.createElement('span');
+            let label = document.createElement('span');
+
+            icon.className = 'blocklyTreeIcon';
+            icon.setAttribute('role', 'presentation');
+            iconNone.className = 'blocklyTreeIcon blocklyTreeIconNone';
+            iconNone.setAttribute('role', 'presentation');
+            iconNone.style.display = 'inline-block';
+
+            label.className = 'blocklyTreeLabel';
+            treerow.appendChild(icon);
+            treerow.appendChild(iconNone);
+            treerow.appendChild(label);
+
+            if (appTheme.coloredToolbox) {
+                // Colored toolbox
+                treerow.style.color = `${color}`;
+                treerow.style.borderLeft = `8px solid ${color}`;
+            } else if (appTheme.invertedToolbox) {
+                // Inverted toolbox
+                treerow.style.color = '#fff';
+                treerow.style.background = (color || '#ddd');
+            } else {
+                // Standard toolbox
+                treerow.style.borderLeft = `8px solid ${color}`;
+            }
+            treerow.style.paddingLeft = '0px';
+            label.innerText = `${Util.capitalize(ns)}`;
+        })
+
+        // Add the toolbox buttons
+        pxt.blocks.initToolboxButtons(toolbox, 'monacoToolboxButtons',
+            (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
+                (() => {
+                    this.parent.addPackage();
+                }) : null),
+            (!this.parent.getSandboxMode() ?
+                (() => {
+                    this.undo();
+                }) : null)
+        );
+    }
+
+    convertColour(colour: string) {
+        let hue = parseFloat(colour);
+        if (!isNaN(hue)) {
+            return Blockly.hueToRgb(hue);
+        }
+        return colour;
+    }
+
     getId() {
         return "monacoEditor"
     }
@@ -450,19 +695,53 @@ export class Editor extends srceditor.Editor {
         return true
     }
 
-    private lastSet: string;
     private setValue(v: string) {
-        this.lastSet = v;
-        if (v) this.editor.setValue(v);
-        else this.editor.setValue(" ");
+        this.editor.setValue(v);
     }
 
     overrideFile(content: string) {
         this.editor.setValue(content);
     }
 
+    compileBlocks() {
+        this.blocksDict = [];
+        let blockDefinitions: { [ns: string]: pxt.vs.BlockDefiniton } = {};
+        return compiler.getBlocksAsync()
+            .then((blockInfo: pxtc.BlocksInfo) => {
+                if (!blockInfo) return;
+                blockInfo.blocks.sort((f1, f2) => {
+                    let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
+                    let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
+                    if (ns1 && !ns2) return -1; if (ns2 && !ns1) return 1;
+                    let c = 0;
+                    if (ns1 && ns2) {
+                        c = (ns2.attributes.weight || 50) - (ns1.attributes.weight || 50);
+                        if (c != 0) return c;
+                    }
+                    c = (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
+                    return c;
+                }).forEach(fn => {
+                    let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                    let nsn = blockInfo.apis.byQName[ns];
+                    if (nsn) ns = nsn.attributes.block || ns;
+                    if (nsn && nsn.attributes.color) {
+                        blockDefinitions[ns] = {
+                            commentAttr: nsn.attributes
+                        };
+                    }
+                });
+                Object.keys(blockDefinitions).forEach((ns) => {
+                    this.blocksDict.push({
+                        ns: ns,
+                        meta: blockDefinitions[ns]
+                    });
+                })
+                return this.blocksDict;
+            });
+    }
+
     loadFile(file: pkg.File) {
-        this.initEditorCss();
+        let toolbox = document.getElementById('monacoEditorToolbox');
 
         let ext = file.getExtension()
         let modeMap: any = {
@@ -485,8 +764,21 @@ export class Editor extends srceditor.Editor {
         if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()), mode, monaco.Uri.parse(proto));
         if (model) this.editor.setModel(model);
 
-        if (mode == "typescript")
-            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly());
+        if (mode == "typescript") {
+            let promises: monaco.Promise<any>[] = [];
+            promises.push(this.compileBlocks());
+            promises.push(pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly()).then((definitions) => {
+                this.definitions = definitions;
+            }));
+
+            monaco.Promise.join(promises).done(() => {
+                this.initEditorCss();
+                if (!file.isReadonly()) {
+                    this.updateToolbox();
+                    this.resize();
+                }
+            });
+        }
 
         this.setValue(file.content)
         this.setDiagnostics(file, this.snapshotState())
@@ -502,6 +794,12 @@ export class Editor extends srceditor.Editor {
                 this.loadFile(this.currFile);
             }
         });
+
+        if (mode == "typescript" && !file.isReadonly()) {
+            toolbox.className = 'monacoToolboxDiv';
+        } else {
+            toolbox.className = 'monacoToolboxDiv hide';
+        }
 
         this.resize();
     }

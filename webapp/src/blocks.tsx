@@ -40,7 +40,7 @@ export class Editor extends srceditor.Editor {
             this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
             return this.compilationResult.source;
         } catch (e) {
-            pxt.reportException(e, { blocks: this.serializeBlocks(true) })
+            pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
             return '';
         }
@@ -62,11 +62,16 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
                     pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-                    if (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode()) {
-                        pxt.blocks.initAddPackage((ev: MouseEvent) => {
-                            this.parent.addPackage();
-                        });
-                    }
+                    pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
+                        (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
+                            (() => {
+                                this.parent.addPackage();
+                            }) : null),
+                        (!this.parent.getSandboxMode() ?
+                            (() => {
+                                this.undo();
+                            }) : null)
+                    );
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -110,10 +115,11 @@ export class Editor extends srceditor.Editor {
 
         this.editor.clear();
         try {
-            let text = s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
-            let xml = Blockly.Xml.textToDom(text);
+            const text = pxt.blocks.importXml(s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`, this.blockInfo, true);
+            const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
+            this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
         } catch (e) {
@@ -125,8 +131,18 @@ export class Editor extends srceditor.Editor {
         return true;
     }
 
+    private initLayout() {
+        // layout on first load if no data info
+        const needsLayout = this.editor.getTopBlocks(false).some(b => {
+            const tp = b.getBoundingRectangle().topLeft;
+            return tp.x == 0 && tp.y == 0
+        });
+        if (needsLayout)
+            pxt.blocks.layout.flow(this.editor);
+    }
+
     private reportDeprecatedBlocks() {
-        const deprecatedMap: { [index: string]: number } = {};
+        const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
 
         this.blockInfo.blocks.forEach(symbolInfo => {
@@ -391,8 +407,8 @@ export class Editor extends srceditor.Editor {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
 
-        // clear previous warnings
-        this.editor.getAllBlocks().forEach(b => b.setWarningText(null));
+        // clear previous warnings on non-disabled blocks
+        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => b.setWarningText(null));
         let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 
@@ -423,13 +439,6 @@ export class Editor extends srceditor.Editor {
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
         this.parent.openTypeScriptAsync().done();
-    }
-
-    menu() {
-        return (
-            <sui.Item text={lf("JavaScript") } class="javascript-menuitem" textClass="landscape only" icon="align left" onClick={() => this.openTypeScript() }
-                title={lf("Convert code to JavaScript") } />
-        )
     }
 
     cleanUpShadowBlocks() {

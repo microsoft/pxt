@@ -22,6 +22,8 @@ namespace pxt.workspace {
         blobCurrent: boolean;      // has the current version of the script been pushed to cloud
         isDeleted: boolean;
         saveId?: any;
+        // icon uri
+        icon?: string;
     }
 
     export type ScriptText = pxt.Map<string>;
@@ -36,5 +38,7 @@ namespace pxt.workspace {
         saveToCloudAsync(h: Header): Promise<void>;
         syncAsync(): Promise<void>;
         resetAsync(): Promise<void>;
+        // optional screenshot support
+        saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
     }
 }

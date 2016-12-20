@@ -23,7 +23,7 @@ let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
-let externalMessageHandlers: pxt.Map<ExternalMessageHandler> = {};
+let electronHandlers: pxt.Map<ElectronHandler> = {};
 
 export function forkPref() {
     if (pxt.appTarget.forkof)
@@ -102,13 +102,13 @@ function setupProjectsDir() {
     nodeutil.mkdirP(userProjectsDir);
 }
 
-let statAsync = Promise.promisify(fs.stat)
-let readdirAsync = Promise.promisify(fs.readdir)
-let readFileAsync = Promise.promisify(fs.readFile)
-let writeFileAsync: any = Promise.promisify(fs.writeFile)
+const statAsync = Promise.promisify(fs.stat)
+const readdirAsync = Promise.promisify(fs.readdir)
+const readFileAsync = Promise.promisify(fs.readFile)
+const writeFileAsync: any = Promise.promisify(fs.writeFile)
 
-function existsAsync(fn: string) {
-    return new Promise((resolve, reject) => {
+function existsAsync(fn: string): Promise<boolean> {
+    return new Promise<boolean>((resolve, reject) => {
         fs.exists(fn, resolve)
     })
 }
@@ -129,6 +129,7 @@ type FsPkg = pxt.FsPkg;
 
 function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
+    let r: FsPkg = undefined;
     return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
         .then(buf => {
             let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
@@ -150,17 +151,43 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
                                 })
                     }))
                 .then(files => {
-                    return {
+                    r = {
                         path: logicalDirname,
                         config: cfg,
                         files: files
-                    }
+                    };
+                    return existsAsync(path.join(dirname, "icon.jpeg"));
+                }).then(icon => {
+                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
+                    return r;
                 })
         })
 }
 
+function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, iconUri: string) {
+    console.log('writing screenshot...');
+    const dirname = path.join(userProjectsDir, logicalDirname)
+    nodeutil.mkdirP(dirname)
+
+    function writeUriAsync(name: string, uri: string) {
+        if (!uri) return Promise.resolve();
+        const m = uri.match(/^data:image\/(png|jpeg);base64,(.*)$/);
+        if (!m) return Promise.resolve();
+        const ext = m[1];
+        const data = m[2];
+        const fn = path.join(dirname, name + "." + ext);
+        console.log(`writing ${fn}`)
+        return writeFileAsync(fn, new Buffer(data, 'base64'));
+    }
+
+    return Promise.all([
+        writeUriAsync("screenshot", screenshotUri),
+        writeUriAsync("icon", iconUri)
+    ]).then(() => { });
+}
+
 function writePkgAsync(logicalDirname: string, data: FsPkg) {
-    let dirname = path.join(userProjectsDir, logicalDirname)
+    const dirname = path.join(userProjectsDir, logicalDirname)
 
     nodeutil.mkdirP(dirname)
 
@@ -242,13 +269,13 @@ function getCachedHexAsync(sha: string): Promise<any> {
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
-    let opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
-    let innerPath = elts.slice(2).join("/").replace(/^\//, "")
-    let filename = path.resolve(path.join(userProjectsDir, innerPath))
-    let meth = req.method.toUpperCase()
-    let cmd = meth + " " + elts[1]
+    const opts: pxt.Map<string> = querystring.parse(url.parse(req.url).query)
+    const innerPath = elts.slice(2).join("/").replace(/^\//, "")
+    const filename = path.resolve(path.join(userProjectsDir, innerPath))
+    const meth = req.method.toUpperCase()
+    const cmd = meth + " " + elts[1]
 
-    let readJsonAsync = () =>
+    const readJsonAsync = () =>
         nodeutil.readResAsync(req)
             .then(buf => JSON.parse(buf.toString("utf8")))
 
@@ -280,6 +307,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
                     boardCount: boardCount
                 };
             });
+    else if (cmd == "POST screenshot")
+        return readJsonAsync()
+            .then(d => writeScreenshotAsync(innerPath, d.screenshot, d.icon));
     else if (cmd == "GET compile")
         return getCachedHexAsync(innerPath)
             .then((res) => {
@@ -298,30 +328,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             .then(e => {
                 if (!e) throw throwError(404);
                 return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
-            });
-    } else if (cmd == "POST externalmsg") {
-        return readJsonAsync()
-            .then((data: ExternalMessageData) => {
-                if (!data || !data.messageType) {
-                    throw throwError(400);
-                }
-
-                let resultDeferred = Promise.defer<ExternalMessageResult>();
-
-                if (!externalMessageHandlers[data.messageType]) {
-                    resultDeferred.resolve({
-                        error: "noHandler"
-                    });
-                } else {
-                    externalMessageHandlers[data.messageType]((res) => {
-                        resultDeferred.resolve({
-                            error: res.error,
-                            result: res.result
-                        });
-                    }, data.args);
-                }
-
-                return resultDeferred.promise;
             });
     }
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
@@ -411,7 +417,10 @@ interface SerialPortInfo {
 }
 
 let wsSerialClients: WebSocket[] = [];
-let serialPorts: pxt.Map<SerialPortInfo> = {}
+let serialPorts: pxt.Map<SerialPortInfo> = {};
+let electronSocket: WebSocket = null;
+let webappReady = false;
+let electronPendingMessages: ElectronMessage[] = [];
 
 function initSocketServer() {
     console.log('starting local ws server at 3233...')
@@ -499,6 +508,30 @@ function initSocketServer() {
         })
     }
 
+    function startElectronChannel(request: any, socket: any, body: any) {
+        electronSocket = new WebSocket(request, socket, body);
+        electronSocket.onmessage = function (event: any) {
+            let messageInfo = JSON.parse(event.data) as ElectronMessage;
+
+            if (messageInfo.type === "ready") {
+                webappReady = true;
+                electronPendingMessages.forEach((m) => {
+                    sendElectronMessage(m);
+                });
+            } else if (electronHandlers[messageInfo.type]) {
+                electronHandlers[messageInfo.type](messageInfo.args);
+            }
+        };
+        electronSocket.onclose = function (event: any) {
+            console.log('Electron socket connection closed')
+            electronSocket = null;
+        };
+        electronSocket.onerror = function () {
+            console.log('Electron socket connection closed')
+            electronSocket = null;
+        };
+    }
+
     let wsserver = http.createServer();
     wsserver.on('upgrade', function (request: http.IncomingMessage, socket: WebSocket, body: any) {
         try {
@@ -508,6 +541,8 @@ function initSocketServer() {
                     startSerial(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/debug")
                     startDebug(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/electron")
+                    startElectronChannel(request, socket, body);
                 else console.log('refused connection at ' + request.url);
             }
         } catch (e) {
@@ -522,7 +557,6 @@ function initSerialMonitor() {
     if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
 
     console.log('serial: monitoring ports...')
-    initSocketServer();
 
     let SerialPort: any;
     try {
@@ -610,7 +644,6 @@ function openUrl(startUrl: string, browser: string) {
     }
 }
 
-
 function getBrowserLocation(browser: string) {
     let browserPath: string;
 
@@ -661,16 +694,11 @@ function getBrowserLocation(browser: string) {
     return browser;
 }
 
-export interface ExternalMessageData {
-    messageType: string;
-    args: any
+export interface ElectronMessage {
+    type: string;
+    args?: any
 }
-export interface ExternalMessageResult {
-    error?: any;
-    result?: any;
-}
-export interface ExternalCallback { (res: ExternalMessageResult): void }
-export interface ExternalMessageHandler { (cb: ExternalCallback, data?: ExternalMessageData): void }
+export interface ElectronHandler { (args?: any): void }
 
 export interface ServeOptions {
     localToken: string;
@@ -678,8 +706,18 @@ export interface ServeOptions {
     packaged?: boolean;
     electron?: boolean;
     browser?: string;
-    externalHandlers?: pxt.Map<ExternalMessageHandler>;
+    electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
+    serial?: boolean;
+}
+
+export function sendElectronMessage(message: ElectronMessage) {
+    if (!webappReady) {
+        electronPendingMessages.push(message);
+        return;
+    }
+
+    electronSocket.send(JSON.stringify(message));
 }
 
 let serveOptions: ServeOptions;
@@ -687,29 +725,30 @@ export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
     setupRootDir();
-    initSerialMonitor();
-
-    if (serveOptions.externalHandlers) {
-        externalMessageHandlers = serveOptions.externalHandlers;
+    initSocketServer();
+    if (serveOptions.serial)
+        initSerialMonitor();
+    if (serveOptions.electronHandlers) {
+        electronHandlers = serveOptions.electronHandlers;
     }
 
-    let server = http.createServer((req, res) => {
-        let error = (code: number, msg: string = null) => {
+    const server = http.createServer((req, res) => {
+        const error = (code: number, msg: string = null) => {
             res.writeHead(code, { "Content-Type": "text/plain" })
             res.end(msg || "Error " + code)
         }
 
-        let sendJson = (v: any) => {
+        const sendJson = (v: any) => {
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
             res.end(JSON.stringify(v))
         }
 
-        let sendHtml = (s: string) => {
+        const sendHtml = (s: string) => {
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf8' })
             res.end(s)
         }
 
-        let sendFile = (filename: string) => {
+        const sendFile = (filename: string) => {
             try {
                 let stat = fs.statSync(filename);
 
@@ -754,6 +793,12 @@ export function serveAsync(options: ServeOptions) {
                         console.log(err.stack)
                     }
                 })
+        }
+
+        if (elts[0] == "icon") {
+            const name = path.join(userProjectsDir, elts[1], "icon.jpeg");
+            return existsAsync(name)
+                .then(exists => exists ? sendFile(name) : error(404));
         }
 
         if (options.packaged) {
@@ -858,17 +903,22 @@ export function serveAsync(options: ServeOptions) {
         require(serverjs);
     }
 
-    server.listen(serveOptions.port, "127.0.0.1");
+    return new Promise<void>((resolve, reject) => {
+        server.on("error", reject);
+        server.listen(serveOptions.port, "127.0.0.1", () => {
+            let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
+            console.log(`---------------------------------------------`);
+            console.log(``);
+            console.log(`To launch the editor, open this URL:`);
+            console.log(start);
+            console.log(``);
+            console.log(`---------------------------------------------`);
 
-    let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
-    console.log(`---------------------------------------------`);
-    console.log(``);
-    console.log(`To launch the editor, open this URL:`);
-    console.log(start);
-    console.log(``);
-    console.log(`---------------------------------------------`);
-    if (options.autoStart)
-        openUrl(start, options.browser);
+            if (options.autoStart) {
+                openUrl(start, options.browser);
+            }
 
-    return new Promise<void>((resolve, reject) => { })
+            resolve();
+        });
+    });
 }

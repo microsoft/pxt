@@ -209,9 +209,11 @@ namespace pxt.blocks {
 
     class DestructuringMutator extends MutatorHelper {
         public static propertiesAttributeName = "callbackproperties";
+        public static renameAttributeName = "renamemap";
         private currentlyVisible: string[] = [];
         private parameters: string[];
         private parameterTypes: {[index: string]: string};
+        private parameterRenames: {[index: string]: string} = {};
 
         constructor(b: Blockly.Block, info: pxtc.SymbolInfo) {
             super(b, info);
@@ -232,7 +234,11 @@ namespace pxt.blocks {
             const declarationString =  this.parameters.map(param => {
                 const declaredName = this.block.getFieldValue(param);
                 const escapedParam = escapeVarName(param);
-                return declaredName === param ? escapedParam : `${param}: ${escapeVarName(declaredName)}`
+                if (declaredName !== param) {
+                    this.parameterRenames[param] = declaredName;
+                    return `${param}: ${escapeVarName(declaredName)}`;
+                }
+                return escapedParam;
             }).join(", ");
 
             return mkText(`({ ${declarationString} }) => `);
@@ -257,9 +263,20 @@ namespace pxt.blocks {
             const mutation = document.createElement("mutation");
             const attr = this.parameters.map(param => {
                 const varName = this.block.getFieldValue(param);
-                return varName !== param ? `${Util.htmlEscape(param)}:${Util.htmlEscape(varName)}` : Util.htmlEscape(param);
+                if (varName !== param) {
+                    this.parameterRenames[param] = Util.htmlEscape(varName);
+                }
+                return Util.htmlEscape(param);
             }).join(",");
             mutation.setAttribute(DestructuringMutator.propertiesAttributeName, attr);
+
+            for (const parameter in this.parameterRenames) {
+                if (parameter === this.parameterRenames[parameter]) {
+                    delete this.parameterRenames[parameter];
+                }
+            }
+
+            mutation.setAttribute(DestructuringMutator.renameAttributeName, JSON.stringify(this.parameterRenames));
 
             return mutation;
         }
@@ -271,6 +288,7 @@ namespace pxt.blocks {
                 const split = savedParameters.split(",");
                 const properties: NamedProperty[] = [];
                 split.forEach(saved => {
+                    // Parse the old way of storing renames to maintain backwards compatibility
                     const parts = saved.split(":");
                     if (this.info.parameters[0].properties.some(p => p.name === parts[0])) {
                         properties.push({
@@ -278,9 +296,30 @@ namespace pxt.blocks {
                             newName: parts[1]
                         });
                     }
-                })
+                });
+
+                this.parameterRenames = undefined;
+
+                if (xmlElement.hasAttribute(DestructuringMutator.renameAttributeName)) {
+                    try {
+                        this.parameterRenames = JSON.parse(xmlElement.getAttribute(DestructuringMutator.renameAttributeName));
+                    }
+                    catch (e) {
+                        console.warn("Ignoring invalid rename map in saved block mutation");
+                    }
+                }
+
+                this.parameterRenames = this.parameterRenames || {};
+
                 // Create the fields for each property with default variable names
-                this.parameters = properties.map(p => p.property);
+                this.parameters = [];
+                properties.forEach(prop => {
+                    this.parameters.push(prop.property);
+                    if (prop.newName && prop.newName !== prop.property) {
+                        this.parameterRenames[prop.property] === prop.newName;
+                    }
+                });
+
                 this.updateVisibleProperties();
 
                 // Override any names that the user has changed
@@ -328,13 +367,21 @@ namespace pxt.blocks {
             const dummyInput = this.block.inputList.filter(i => i.name === MutatorHelper.mutatedVariableInputName)[0];
             this.currentlyVisible.forEach(param => {
                 if (this.parameters.indexOf(param) === -1) {
+                    const name = this.block.getFieldValue(param);
+
+                    // Persist renames
+                    if (name !== param) {
+                        this.parameterRenames[param] = name;
+                    }
+
                     dummyInput.removeField(param);
                 }
             });
 
             this.parameters.forEach(param => {
                 if (this.currentlyVisible.indexOf(param) === -1) {
-                    dummyInput.appendField(new Blockly.FieldVariable(param), param);
+                    const fieldValue = this.parameterRenames[param] || param;
+                    dummyInput.appendField(new Blockly.FieldVariable(fieldValue), param);
                 }
             });
 

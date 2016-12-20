@@ -11,11 +11,11 @@ function parseMardown(md: string): Gallery[] {
     // second level titles are categories
     // ## foo bar
     // fenced code ```cards are sections of cards
-    let galleries: { name: string; cards: pxt.CodeCard[] }[] = [];
+    const galleries: { name: string; cards: pxt.CodeCard[] }[] = [];
     let incard = false;
     let name: string = undefined;
     let cards: string = "";
-    md.split('\n').forEach(line => {
+    md.split(/\r?\n/).forEach(line => {
         // new category
         if (/^##/.test(line)) {
             name = line.substr(2).trim();

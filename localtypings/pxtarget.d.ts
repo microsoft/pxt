@@ -41,6 +41,13 @@ declare namespace pxt {
         files: Map<string>;
     }
 
+    interface BlockToolboxDefinition {
+        namespace: string;
+        type: string;
+        gap?: number;
+        weight?: number;
+        fields?: Map<string>;
+    }
 
     interface RuntimeOptions {
         mathBlocks?: boolean;
@@ -49,14 +56,9 @@ declare namespace pxt {
         variablesBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
-
-        extraBlocks?: {
-            namespace: string;
-            type: string;
-            gap?: number;
-            weight?: number;
-            fields?: Map<string>;
-        }[]
+        extraBlocks?: BlockToolboxDefinition[];
+        onStartColor?: string;
+        onStartNamespace?: string;
     }
 
     interface AppAnalytics {
@@ -66,6 +68,7 @@ declare namespace pxt {
 
     interface AppSerial {
         manufacturerFilter?: string; // used by node-serial
+        nameFilter?: string; // regex to match devices
         log?: boolean;
     }
 
@@ -80,6 +83,7 @@ declare namespace pxt {
 
     interface AppSimulator {
         autoRun?: boolean;
+        stopOnChange?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
@@ -90,6 +94,7 @@ declare namespace pxt {
 
     interface TargetCompileService {
         yottaTarget?: string; // bbc-microbit-classic-gcc
+        yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         platformioIni?: string[];
@@ -151,6 +156,8 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         projectGallery?: string;
         crowdinProject?: string;
+        monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
+        blockHats?: boolean; // if true, event blocks have hats
     }
 
     interface DocMenuEntry {
@@ -158,14 +165,6 @@ declare namespace pxt {
         // needs to have one of `path` or `subitems` 
         path?: string;
         subitems?: DocMenuEntry[];
-    }
-
-    interface TargetVersions {
-        target: string;
-        pxt: string;
-        tag?: string;
-        branch?: string;
-        commits?: string; // URL
     }
 
     interface TargetBundle extends AppTarget {
@@ -188,7 +187,7 @@ declare namespace ts.pxtc {
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
-        flashCodeAlign?: number; // defualts to 1k
+        flashCodeAlign?: number; // defaults to 1k
         upgrades?: UpgradePolicy[];
     }
 
@@ -212,16 +211,7 @@ declare namespace ts.pxtc {
 
     interface UpgradePolicy {
         type: string;
-    }
-
-    interface PackageUpgradePolicy extends UpgradePolicy {
-        type: "package";
-        map: pxt.Map<string>;
-    }
-
-    interface APIUpgradePolicy extends UpgradePolicy {
-        type: "api";
-        map: pxt.Map<string>;
+        map?: pxt.Map<string>;
     }
 
     interface FuncInfo {
@@ -235,8 +225,8 @@ declare namespace ts.pxtc {
         functions: FuncInfo[];
         generatedFiles: pxt.Map<string>;
         extensionFiles: pxt.Map<string>;
-        yotta: pxt.YottaConfig;
-        platformio: pxt.PlatformIOConfig;
+        yotta?: pxt.YottaConfig;
+        platformio?: pxt.PlatformIOConfig;
         sha: string;
         compileData: string;
         shimsDTS: string;

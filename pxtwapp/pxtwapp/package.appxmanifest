@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
+  <Identity Name="d6f74a43-358f-4081-88bc-7b2242586346" Version="1.0.0.0" Publisher="CN=jhalleux" />
+  <mp:PhoneIdentity PhoneProductId="d6f74a43-358f-4081-88bc-7b2242586346" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Properties>
+    <DisplayName>pxtwapp</DisplayName>
+    <PublisherDisplayName>jhalleux</PublisherDisplayName>
+    <Logo>images\storelogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+  <Applications>
+    <Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1">
+      <uap:ApplicationContentUriRules>
+        <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
+      </uap:ApplicationContentUriRules>
+      <uap:VisualElements DisplayName="PXT Local Test App" Description="Test Application for PXT targets" BackgroundColor="transparent" Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png">
+        </uap:DefaultTile>
+        <uap:SplashScreen Image="images\splashscreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="pxthex">
+            <uap:DisplayName>pxt binary file</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType ContentType="application/x-microbit-hex">.hex</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClient" />
+    <uap:Capability Name="removableStorage" />
+    <DeviceCapability Name="bluetooth" />
+    <DeviceCapability Name="serialcommunication">
+      <Device Id="any">
+        <Function Type="name:serialPort" />
+      </Device>
+    </DeviceCapability>
+  </Capabilities>
+</Package>

@@ -24,18 +24,28 @@
      Fonts
 --------------------*/
 
-
 @importGoogleFonts: false;
+
+@docsHeaderFont: @headerFont;
+@docsPageFont: @pageFont;
 
 /*-------------------
    Breakpoints
 --------------------*/
 
-@mobileBreakpoint            : 576px; /*36rem*/
-@tabletBreakpoint            : 880px; /*55rem*/
-@computerBreakpoint          : 960px; /*64rem*/
-@largeMonitorBreakpoint      : 1472px; /*92rem*/
-@widescreenMonitorBreakpoint : 1920px;
+@mobileEditorBreakpoint            : 63rem;
+@tabletEditorBreakpoint            : 79rem;
+@computerEditorBreakpoint          : 91rem;
+@largeMonitorEditorBreakpoint      : 99rem;
+@widescreenMonitorEditorBreakpoint : 119rem;
+
+@tallEditorBreakpoint: 44rem;
+
+/* Responsive */
+@largestMobileEditorBreakpoint       : (@tabletEditorBreakpoint - 1px);
+@largestTabletEditorBreakpoint       : (@computerEditorBreakpoint - 1px);
+@largestSmallMonitorEditorBreakpoint :(@largeMonitorEditorBreakpoint - 1px);
+@largestLargeMonitorEditorBreakpoint : (@widescreenMonitorBreakpoint - 1px);
 
 /*******************************
      PXT Variables
@@ -56,4 +66,3 @@
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
 @blocklySvgColor: #fff;
 @trashIconColor: @primaryColor;
-@addPackageColor: @primaryColor;

@@ -12,7 +12,8 @@
  *   http://www.cs.cornell.edu/courses/cs414/2001fa/armcallconvention.pdf
  *
  * Cortex-M0 Technical Reference Manual: 3.3. Instruction set summary (cycle counts)
- *   http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0432c/CHDCICDF.html
+ *   http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0432c/CHDCICDF.html  // M0
+ *   http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0484c/CHDCICDF.html  // M0+
  */
 
 namespace ts.pxtc.thumb {
