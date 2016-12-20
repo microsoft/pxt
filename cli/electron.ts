@@ -116,7 +116,7 @@ function initAsync(): Promise<void> {
             return npm(pxtElectronPath, "install");
         })
         .then(() => npm(pxtElectronSrcPath, "link", process.cwd()))
-        .then(() => npm(pxtElectronPath, "run", "rebuildNative"))
+        .then(() => npm(pxtElectronPath, "run", "rebuildnative"))
         .then(() => console.log("\nWARNING: 'pxt electron init' can break 'pxt serve'. If you have problems with 'pxt serve', delete all node modules and reinstall them (for both the target and pxt-core)."));
 }
 
@@ -140,7 +140,7 @@ function packageAsync(parsed: p.ParsedCommand): Promise<void> {
 
     return buildPromise
         .then(() => npm(pxtElectronPath, "install"))
-        .then(() => npm(pxtElectronPath, "run", "rebuildNative"))
+        .then(() => npm(pxtElectronPath, "run", "rebuildnative"))
         .then(() => electronGulpTask("package"))
         .then(() => {
             if (parsed.flags["installer"]) {
