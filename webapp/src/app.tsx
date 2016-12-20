@@ -1969,7 +1969,7 @@ function initSerial() {
         return;
 
     pxt.debug('initializing serial pipe');
-    let ws = new WebSocket('ws://localhost:3233/' + Cloud.localToken + '/serial');
+    let ws = new WebSocket(`ws://localhost:${pxt.options.wsport}/${Cloud.localToken}/serial`);
     ws.onopen = (ev) => {
         pxt.debug('serial: socket opened');
     }
@@ -2170,6 +2170,9 @@ $(document).ready(() => {
         || pxt.BrowserUtils.isIFrame();
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
+
+    const wsportMatch = /ws=(\d+)/i.exec(window.location.href);
+    pxt.options.wsport = wsportMatch ? parseInt(wsportMatch[1]) : 3233;
 
     enableAnalytics()
     appcache.init();

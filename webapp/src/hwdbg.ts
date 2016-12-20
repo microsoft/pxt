@@ -39,7 +39,7 @@ function init() {
         if (!Cloud.isLocalHost() || !Cloud.localToken)
             return;
         pxt.debug('initializing debug pipe');
-        iface = workeriface.makeWebSocket('ws://localhost:3233/' + Cloud.localToken + '/debug')
+        iface = workeriface.makeWebSocket(`ws://localhost:${pxt.options.wsport}/${Cloud.localToken}/debug`)
     }
 }
 

@@ -39,6 +39,7 @@ namespace pxt {
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
+        wsport?: number;
     }
     export var options: PxtOptions = {};
 
