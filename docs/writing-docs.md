@@ -31,6 +31,10 @@ The following macros are custom extensions to markdown.
 See [blink lesson](https://m.pxt.io/lessons/blink/activity) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/lessons/blink/activity.md).
     
+## Inline code snippets
+
+If an inline code snippet start with `[` and ends with `]`, the doc engine will try to render it as a block. It must contains a value API call 
+to the desired block.
 
 ## Code snippets
 
