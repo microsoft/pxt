@@ -1684,7 +1684,7 @@ ${lbl}: .short 0xffff
             };
             (node as any).callInfo = callInfo
 
-            if (U.lookup(autoCreateFunctions, callInfo.qName))
+            if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
                 callInfo.isAutoCreate = true
 
             let bindings: TypeBinding[] = []
