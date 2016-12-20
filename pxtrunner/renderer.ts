@@ -274,7 +274,13 @@ namespace pxt.runner {
             return pxt.runner.decompileToBlocksAsync(code, options)
                 .then(r => {
                     if (r.blocksSvg) {
-                        $el.replaceWith($('<span class="block"/>').append(r.blocksSvg));
+                        let $newel = $('<span class="block"/>').append(r.blocksSvg);
+                        const file = r.compileJS.ast.getSourceFile("main.ts");
+                        const stmt = file.statements[0];
+                        const info = decompileCallInfo(stmt);
+                        if (info && info.attrs.help)
+                            $newel = $(`<a class="ui link"/>`).attr("href", `/reference/${info.attrs.help}`).append($newel);
+                        $el.replaceWith($newel);
                     }
                     return Promise.delay(1, renderNextAsync());
                 });
