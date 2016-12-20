@@ -110,7 +110,7 @@ export function init() {
     }
 
     pxt.log('initializing electron socket');
-    electronSocket = new WebSocket('ws://localhost:3233/' + Cloud.localToken + '/electron');
+    electronSocket = new WebSocket(`ws://localhost:${pxt.options.wsport}/${Cloud.localToken}/electron`);
     electronSocket.onopen = (ev) => {
         pxt.log('electron: socket opened');
         sendMessage("ready");
