@@ -22,12 +22,6 @@
 // @case: exponentiation
 { let x = 1 ** 1; }
 
-// @case: triple equals
-{ let x = 1 === 1; }
-
-// @case: not double equals
-{ let x = 1 !== 1; }
-
 // @case: void
 { let x = void 1; }
 
