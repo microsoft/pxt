@@ -256,6 +256,31 @@ namespace pxt.runner {
         }, { package: options.package, snippetMode: true });
     }
 
+    function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
+        if (!options.emPixels) options.emPixels = 14;
+
+        const $els = $(`:not(pre) > code`);
+        let i = 0;
+        function renderNextAsync(): Promise<void> {
+            if (i >= $els.length) return Promise.resolve();
+            const $el = $($els[i++]);
+            const text = $el.text();
+            const m = /^\[([^\]]+)\]$/.exec(text);
+            if (!m) renderNextAsync();
+
+            const code = m[1];
+            return pxt.runner.decompileToBlocksAsync(code, options)
+                .then(r => {
+                    if (r.blocksSvg) {
+                        $el.replaceWith($('<span class="block"/>').append(r.blocksSvg));
+                    }
+                    return Promise.delay(1, renderNextAsync());
+                });
+        }
+
+        return renderNextAsync();
+    }
+
     function renderProjectAsync(options: ClientRenderOptions): Promise<void> {
         if (!options.projectClass) return Promise.resolve();
 
@@ -466,6 +491,7 @@ namespace pxt.runner {
         }
 
         return Promise.resolve()
+            .then(() => renderInlineBlocksAsync(options))
             .then(() => renderShuffleAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
