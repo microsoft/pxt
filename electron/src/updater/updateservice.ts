@@ -5,12 +5,12 @@ import { EventEmitter } from "events";
 import * as fs from "fs";
 import * as I from "../typings/interfaces";
 import { tmpdir } from "os";
-import { OsxUpdater } from "./osxUpdater";
+import { OsxUpdater } from "./osxupdater";
 import * as path from "path";
-import product from "../util/productInfoLoader";
+import product from "../util/productloader";
 import * as semver from "semver";
-import * as Utils from "../util/electronUtils";
-import { WindowsUpdater } from "./windowsUpdater";
+import * as Utils from "../util/electronutils";
+import { WindowsUpdater } from "./windowsupdater";
 
 /**
  * This class is the main entry point for updates in the app. It is responsible for checking if updates are available,

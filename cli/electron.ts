@@ -31,7 +31,7 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     }
 
     // Validate current target
-    const needsCurrentTarget = (subcommand !== "build" && subcommand !== "dist") || !parsed.flags["release"];
+    const needsCurrentTarget = subcommand !== "package" || !parsed.flags["release"];
 
     if (needsCurrentTarget && (!fs.existsSync("pxtarget.json") || !fs.existsSync("package.json"))) {
         errorOut("This command requires to be in a valid target directory (pxtarget.json and package.json required)");

@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import * as fs from "fs";
 import * as I from "../typings/interfaces";
 import * as path from "path";
-import * as Utils from "../util/electronUtils";
+import * as Utils from "../util/electronutils";
 
 /**
  * Windows implementation of the AutoUpdater. This re-implements the built-in Electron AutoUpdater module for Windows.

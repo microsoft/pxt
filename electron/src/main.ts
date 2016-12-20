@@ -7,8 +7,8 @@ import { app, BrowserWindow, dialog, Menu } from "electron";
 import * as I from "./typings/interfaces";
 import * as minimist from "minimist";
 import * as path from "path";
-import product from "./util/productInfoLoader";
-import { UpdateService } from "./updater/updateService";
+import product from "./util/productloader";
+import { UpdateService } from "./updater/updateservice";
 import { Mutex } from 'windows-mutex';
 
 const target = require(product.targetId);
