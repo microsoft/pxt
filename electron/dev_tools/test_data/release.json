@@ -1,7 +1,11 @@
 {
-    "aggressivePrompt": "v1.0.0",
-    "blackList": [
-        "v0.6.0"
-    ],
-    "latestRelease": "v2.0.0"
+    "versions": {
+        "0": {
+            "latest": "v0.6.46",
+            "banned": [
+                "v0.6.45"
+            ],
+            "prompt": "v0.5.0"
+        }
+    }
 }

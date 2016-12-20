@@ -3625,21 +3625,21 @@ function initCommands() {
         name: "electron",
         help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
         flags: {
-            buildInstaller: {
+            appsrc: {
+                description: "path to the root of the PXT Electron app in the pxt repo",
+                aliases: ["a"],
+                type: "string",
+                argument: "appsrc"
+            },
+            installer: {
                 description: "('package' only) Also build the installer / zip redistributable for the built app",
                 aliases: ["i"],
-                argument: "buildInstaller"
-            },product: {
+            },
+            product: {
                 description: "path to a product.json file to use instead of the target's default one",
                 aliases: ["p"],
                 type: "string",
                 argument: "product"
-            },
-            pxtElectron: {
-                description: "path to the root of the PXT Electron app in the pxt repo",
-                aliases: ["e"],
-                type: "string",
-                argument: "pxtElectron"
             },
             release: {
                 description: "('package' only) Instead of using the current local target, use the published target from NPM (value format: <Target's NPM package>[@<Package version>])",

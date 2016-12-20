@@ -17,22 +17,18 @@ const tsb = require("gulp-tsb");
 
 // Important paths
 const srcRoot = path.join(__dirname, "src");
-const outRoot = process.argv[4] ? path.resolve(process.argv[4].replace(/^--/, "")) : null;
 const tsconfigJsonPath = path.join(__dirname, "tsconfig.json");
 const issPath = path.join(__dirname, "build", "win32", "pxt.iss");
 const innoSetupPath = path.join(path.dirname(path.dirname(require.resolve('innosetup-compiler'))), 'bin', 'ISCC.exe');
-const productJsonPath = path.resolve(process.argv[3].replace(/^--/, ""));
-
-if (!productJsonPath || !outRoot) {
-    throw new Error("Electron gulp tasks require 2 args: productJsonPath and outRoot");
-}
+let productJsonPath = null;
+let outRoot = null;
 
 // JSON data
 const pkg = require(path.join(__dirname, "package.json"));
-const product = require(productJsonPath);
 const tsConfig = require(tsconfigJsonPath).compilerOptions;
+let product = null;
 
-var compilation = tsb.create(tsConfig, /*verbose*/ true, /*json*/ false);
+let compilation = tsb.create(tsConfig, /*verbose*/ true, /*json*/ false);
 
 // Default task
 gulp.task("default", ["compile"]);
@@ -60,17 +56,42 @@ gulp.task("dist-all", ["dist-win"]);
 gulp.task("dist-win", ["clean-dist-win"], (cb) => { buildDistributable("win32", cb); });
 
 // ----------
+function getProduct() {
+    if (!process.argv[3]) {
+        throw new Error("This task requires the following args: --path/to/product.json")
+    }
+
+    if (!product) {
+        productJsonPath = path.resolve(process.argv[3].replace(/^--/, ""));
+        product = require(productJsonPath);
+    }
+
+    return product;
+}
+
+function getOutRoot() {
+    if (!process.argv[4]) {
+        throw new Error("This task requires the following args: --path/to/product.json --path/to/root_of_build_output")
+    }
+
+    if (!outRoot) {
+        outRoot = path.resolve(process.argv[4].replace(/^--/, ""));
+    }
+
+    return outRoot;
+}
+
 function cleanJsOutput() {
     glob.sync("src/**/*.js", { ignore: "src/node_modules{,/**}" })
         .forEach(f => rimraf.sync(f));
 }
 
 function getPackagePath(platform) {
-    return path.join(outRoot, `${product.applicationName}-${platform}-ia32`);
+    return path.join(getOutRoot(), `${getProduct().applicationName}-${platform}-ia32`);
 }
 
 function getDistributablePath(platform) {
-    let commonPath = path.join(outRoot, `${product.applicationName}-${platform}`);
+    const commonPath = path.join(getOutRoot(), `${getProduct().applicationName}-${platform}`);
 
     if (platform === "win32") {
         return commonPath + ".exe";
@@ -80,7 +101,7 @@ function getDistributablePath(platform) {
 }
 
 function cleanAll() {
-    rimraf.sync(outRoot);
+    rimraf.sync(getOutRoot());
 }
 
 function cleanDist(platform) {
@@ -94,10 +115,11 @@ function cleanPackage(platform) {
 }
 
 function compileTs() {
+    const productInfo = getProduct();
     let tsSrc = gulp.src(["src/**/*.ts", "!src/node_modules{,/**}"])
         .pipe(replace(/@@(.*)@@/g, (match, p1) => {
-            if (product[p1]) {
-                return product[p1];
+            if (productInfo[p1]) {
+                return productInfo[p1];
             } else {
                 return match;
             }
@@ -116,7 +138,8 @@ function packageApp(platform, cb) {
         return;
     }
 
-    let options = {
+    const productInfo = getProduct();
+    const options = {
         arch: "ia32",
         dir: srcRoot,
         ignore: [
@@ -124,8 +147,8 @@ function packageApp(platform, cb) {
             /typings/,
             /node-pre-gyp/
         ],
-        name: product.nameShort,
-        out: outRoot,
+        name: productInfo.nameShort,
+        out: getOutRoot(),
         platform: platform,
         prune: false
     };
@@ -139,12 +162,12 @@ function packageApp(platform, cb) {
 
         // Rename the packaged folder
         apps.forEach((a) => {
-            let newName = a.replace(product.nameShort, product.applicationName);
+            const newName = a.replace(productInfo.nameShort, productInfo.applicationName);
             fs.renameSync(a, newName);
             renamedPackages.push(path.basename(newName));
         });
 
-        console.log(`Packaged the following apps in ${path.basename(outRoot)}/:`);
+        console.log(`Packaged the following apps in ${path.basename(getOutRoot())}/:`);
         renamedPackages.forEach((app) => {
             console.log(`    ${app}`);
         });
@@ -164,7 +187,7 @@ function buildDistributable(platform, cb) {
 }
 
 function getTargetVersion() {
-    const targetPkgJsonPath = path.join(__dirname, "..", "node_modules", product.targetId, "package.json");
+    const targetPkgJsonPath = path.join(__dirname, "..", "node_modules", getProduct().targetId, "package.json");
 
     try {
         const pkgJson = require(targetPkgJsonPath);
@@ -176,6 +199,7 @@ function getTargetVersion() {
 
 function buildWin32Setup(cb) {
     const win32Package = getPackagePath("win32");
+    const productInfo = getProduct();
 
     if (!fs.existsSync(win32Package)) {
         cb(new Error("Packaged app missing, run 'gulp package-win' first"));
@@ -187,19 +211,19 @@ function buildWin32Setup(cb) {
     const installerBaseName = exeName.split(path.extname(exeName))[0];
 
     const definitions = {
-        NameLong: product.nameLong,
-        NameShort: product.nameShort,
+        NameLong: productInfo.nameLong,
+        NameShort: productInfo.nameShort,
         InstallerBaseName: installerBaseName,
-        DistDir: outRoot,
-        DirName: product.win32DirName,
+        DistDir: getOutRoot(),
+        DirName: productInfo.win32DirName,
         Version: version,
         RawVersion: version.replace(/-\w+$/, ""),
-        NameVersion: product.win32NameVersion,
-        ExeBasename: product.nameShort,
-        RegValueName: product.win32RegValueName,
-        AppMutex: product.win32MutexName,
-        AppId: product.win32AppId,
-        AppUserId: product.win32AppUserModelId,
+        NameVersion: productInfo.win32NameVersion,
+        ExeBasename: productInfo.nameShort,
+        RegValueName: productInfo.win32RegValueName,
+        AppMutex: productInfo.win32MutexName,
+        AppId: productInfo.win32AppId,
+        AppUserId: productInfo.win32AppUserModelId,
         SourceDir: win32Package,
         RepoDir: __dirname
     };

@@ -11,7 +11,7 @@
     "scripts": {
         "manifestServer": "node ./dev_tools/manifestServer.js",
         "postinstall": "cd src && npm install",
-        "rebuild-native": "node ./dev_tools/rebuild-native.js",
+        "rebuildNative": "node ./dev_tools/rebuildNative.js",
         "start": "node_modules/.bin/electron . --npm-start"
     },
     "devDependencies": {
