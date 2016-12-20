@@ -332,8 +332,19 @@ ${output}</xml>`;
                     break;
                 case SK.VariableDeclaration:
                     const decl = node as ts.VariableDeclaration;
-                    if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
-                        // Don't emit null initializers; They are implicit within the blocks. But do add a name to the scope
+                    let isAuto = false
+                    if (decl.initializer) {
+                        if (decl.initializer.kind === SyntaxKind.NullKeyword)
+                            isAuto = true
+                        else {
+                            const callInfo: pxtc.CallInfo = (decl.initializer as any).callInfo
+                            if (callInfo && callInfo.isAutoCreate)
+                                isAuto = true
+                        }
+                    }
+                    if (isAuto) {
+                        // Don't emit null or automatic initializers; 
+                        // They are implicit within the blocks. But do add a name to the scope
                         if (addVariableDeclaration(decl)) {
                             emitNextBlock(/*withinNextTag*/false)
                         }

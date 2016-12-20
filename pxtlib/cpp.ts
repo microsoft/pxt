@@ -172,7 +172,7 @@ namespace pxt.cpp {
 
         // we sometimes append _ to C++ names to avoid name clashes
         function toJs(name: string) {
-            return name.trim().replace(/_$/, "")
+            return name.trim().replace(/[\_\*]$/, "")
         }
 
         for (const pkg of mainPkg.sortedDeps()) {

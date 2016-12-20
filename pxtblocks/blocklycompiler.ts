@@ -1194,9 +1194,15 @@ namespace pxt.blocks {
                     // Not sure we need the type here - is is always number or boolean?
                     let defl = defaultValueForType(find(b.type))
                     let tp = ""
-                    if (defl.op == "null")
-                        tp = ": " + find(b.type).type
-                    return mkStmt(mkText("let " + b.name + tp + " = "), defaultValueForType(find(b.type)))
+                    if (defl.op == "null") {
+                        let tpname = find(b.type).type
+                        let tpinfo = blockInfo.apis.byQName[tpname]
+                        if (tpinfo && tpinfo.attributes.autoCreate)
+                            defl = mkText(tpinfo.attributes.autoCreate + "()")
+                        else
+                            tp = ": " + tpname
+                    }
+                    return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
             return stmtsVariables.concat(stmtsMain)

@@ -289,6 +289,7 @@ namespace ts.pxtc {
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
+        autoCreate?: string;
         noRefCounting?: boolean;
         color?: string;
         icon?: string;
@@ -323,6 +324,7 @@ namespace ts.pxtc {
         attrs: CommentAttrs;
         args: Expression[];
         isExpression: boolean;
+        isAutoCreate?: boolean;
     }
 
     export interface ClassInfo {
@@ -684,6 +686,7 @@ namespace ts.pxtc {
         let irCachesToClear: NodeWithCache[] = []
         let ifaceMembers: pxt.Map<number> = {}
         let nextIfaceMemberId = 0;
+        let autoCreateFunctions: pxt.Map<boolean> = {}
 
         lastNodeId = 0
         currNodeWave++
@@ -1136,6 +1139,8 @@ namespace ts.pxtc {
                     methods: [],
                     bindings: bindings
                 }
+                if (info.attrs.autoCreate)
+                    autoCreateFunctions[info.attrs.autoCreate] = true
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
@@ -1678,6 +1683,9 @@ ${lbl}: .short 0xffff
                 isExpression: hasRet
             };
             (node as any).callInfo = callInfo
+
+            if (U.lookup(autoCreateFunctions, callInfo.qName))
+                callInfo.isAutoCreate = true
 
             let bindings: TypeBinding[] = []
 
@@ -2990,7 +2998,9 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            //userError(9228, lf("interfaces are not currently supported"))
+            let attrs = parseComments(node)
+            if (attrs.autoCreate)
+                autoCreateFunctions[attrs.autoCreate] = true
         }
         function emitEnumDeclaration(node: EnumDeclaration) {
             //No code needs to be generated, enum names are replaced by constant values in generated code
