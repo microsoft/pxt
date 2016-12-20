@@ -258,7 +258,7 @@ namespace pxt.runner {
 
     function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
         options = Util.clone(options);
-        options.emPixels = 10;
+        options.emPixels = 18;
         options.snippetMode = true;
 
         const $els = $(`:not(pre) > code`);
