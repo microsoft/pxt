@@ -41,7 +41,7 @@ It can have one of the following values:
 * `"LZMA"` - LZMA raw compression
 
 Editors should always check if the project was meant for them (ie., `eURL` and
-`eVAR` have sensible values). If not, the editor should present the user with a
+`eVER` have sensible values). If not, the editor should present the user with a
 dialog with an option to redirect to `eURL` (where the file needs to be loaded
 again), or if it seems possible, with option to try to load the file in the current
 editor.
@@ -56,11 +56,11 @@ The interpretation of this section is editor-specific.
 
 In case of PXT, the text is always LZMA compressed. If `headerSize` field of JSON header
 is present and non-zero, then the first `headerSize` characters (not bytes) of the decompressed text
-contain a JSON object that logically extends fields of the JSON header (but it compressed).
-The remainder of the uncompressed text (possibly the whole thing) is JSON files -
-a map from file name to file contest for all files in the project.
+contain a JSON object that logically extends fields of the JSON header (but is compressed).
+The remainder of the uncompressed text (or the entire text, if there is no header) is JSON files -
+a map from file name to file content for all files in the project.
 
-In case of a scripting language, the text will probably be raw, uncompressed,
+In case of a scripting language, the text can be raw, uncompressed,
 and used straight by the interpreter.
 
 ## Caveats
