@@ -1103,6 +1103,16 @@ namespace pxt.blocks {
             };
             menuOptions.push(deleteOption);
 
+            const formatCodeOption = {
+                text: lf("Format Code"),
+                enabled: true,
+                callback: () => {
+                    pxt.tickEvent("blocks.context.format");
+                    pxt.blocks.layout.flow(this);
+                }
+            }
+            menuOptions.push(formatCodeOption);
+
             const shuffleOption = {
                 text: lf("Shuffle Blocks"),
                 enabled: topBlocks.length > 0,
