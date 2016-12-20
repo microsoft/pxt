@@ -27,6 +27,8 @@ namespace pxt {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
+        if (!trg.appTheme.embedUrl)
+            trg.appTheme.embedUrl = trg.appTheme.homeUrl
         let cs = appTarget.compileService
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
@@ -574,6 +576,9 @@ namespace pxt {
                                     headerSize: headerString.length,
                                     textSize: programText.length,
                                     name: this.config.name,
+                                    eURL: pxt.appTarget.appTheme.embedUrl,
+                                    eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
+                                    pxtTarget: appTarget.id,
                                 })
                                 opts.embedBlob = btoa(U.uint8ArrayToString(buf))
                             });

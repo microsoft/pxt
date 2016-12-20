@@ -127,7 +127,7 @@ namespace pxt.runner {
     }
 
     function initInnerAsync() {
-        pxt.appTarget = (window as any).pxtTargetBundle
+        pxt.setAppTarget((window as any).pxtTargetBundle)
         Util.assert(!!pxt.appTarget);
 
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);

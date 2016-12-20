@@ -1898,7 +1898,7 @@ function getEditor() {
 }
 
 function isHexFile(filename: string): boolean {
-    return /\.hex$/i.test(filename)
+    return /\.(hex|uf2)$/i.test(filename)
 }
 
 function isBlocksFile(filename: string): boolean {
