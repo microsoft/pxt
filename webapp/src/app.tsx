@@ -1087,7 +1087,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     removeFile(fn: pkg.File, skipConfirm = false) {
         const removeIt = () => {
             pkg.mainEditorPkg().removeFileAsync(fn.name)
-                .then(() => pkg.mainEditorPkg().saveFilesAsync())
+                .then(() => pkg.mainEditorPkg().saveFilesAsync(true))
                 .then(() => this.reloadHeaderAsync())
                 .done();
         }
@@ -1168,26 +1168,27 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 pkg.mainPkg.getCompileOptionsAsync()
                     .catch(e => {
                         if (e instanceof pxt.cpp.PkgConflictError) {
-                            let confl = e as pxt.cpp.PkgConflictError
-                            let remove = (lib: pxt.Package) => ({
+                            const confl = e as pxt.cpp.PkgConflictError
+                            const remove = (lib: pxt.Package) => ({
                                 label: lf("Remove {0}", lib.id),
                                 class: "pink", // don't make them red and scary
                                 icon: "trash",
                                 onclick: () => {
+                                    core.showLoading(lf("Removing {0}...", lib.id))
                                     pkg.mainEditorPkg().removeDepAsync(lib.id)
                                         .then(() => this.reloadHeaderAsync())
-                                        .done()
+                                        .done(() => core.hideLoading());
                                 }
                             })
                             core.dialogAsync({
                                 hideCancel: true,
                                 buttons: [
-                                    remove(confl.pkg0),
-                                    remove(confl.pkg1),
+                                    remove(confl.pkg1), // show later first in dialog
+                                    remove(confl.pkg0)
                                 ],
                                 header: lf("Packages cannot be used together"),
                                 body: lf("Packages '{0}' and '{1}' cannot be used together, because they use incompatible settings ({2}).",
-                                    confl.pkg0.id, confl.pkg1.id, confl.settingName)
+                                    confl.pkg1.id, confl.pkg0.id, confl.settingName)
                             })
                         }
                     })
