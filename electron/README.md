@@ -12,7 +12,6 @@ Once you have the above prerequisites:
 ```
 cd electron
 npm install
-npm install -g gulp
 ```
 
 ## Running current target in Electron app (equivalent of `pxt serve`)
@@ -47,14 +46,14 @@ The packaged app will be in `[Target directory]/electron-out`.
 
 > **NOTE 3:** Packaging the app undoes `pxt electron init`. This means you will need to re-run `pxt electron init` if you want to use `pxt electron run` again.
 
-> **NOTE 4:** Use the `--buildInstaller` flag to also build the distributable artifact for the app (.exe installer on Windows, zipped app bundle on Mac).
+> **NOTE 4:** Use the `--installer` flag to also build the distributable artifact for the app (.exe installer on Windows, zipped app bundle on Mac).
 
 You can also package the app for a published target instead of using your local target:
 ```
-pxt electron build --release <Target NPM package name>[@<NPM package version>]
+pxt electron package --release <Target NPM package name>[@<NPM package version>]
 ```
 
-In this case, the packaged app will be in `[PXT repo]/electron/out`.
+In this case, the packaged app will be in `[PXT repo]/electron/electron-out`.
 
 # Contributing to / modifying the Electron app
 
@@ -89,7 +88,7 @@ let knownNativeModules = [
 ```
 
 ## Debugging
-**Before you start, you must package the app for a target (`pxt electron build` in target directory).**
+**Before you can debug, you must have previously run `pxt electron package` or `pxt electron init` in the target directory.**
 
 You can debug the following processes:
 - Electron webview
@@ -99,7 +98,7 @@ You can debug the following processes:
 ### Electron webview
 To debug the Electron webview using the Chrome dev tools, run:
 ```
-cd electron
+cd [PXT root]/electron
 npm start -- --debug-webview
 ```
 
@@ -108,8 +107,8 @@ The webview is only a wrapper around the webapp. This won't let you debug the we
 ### PXT webapp
 To debug the PXT webapp for your packaged target using the Chrome dev tools, run:
 ```
-cd electron
-npm start -- --debug-webview
+cd [PXT root]/electron
+npm start -- --debug-webapp
 ```
 
 You can debug both the webview and the webapp at the same time, simply use both `-w` and `-a`.
@@ -119,7 +118,7 @@ You can debug the app shell using the VS Code debugger. To do this, you need to 
 Once you have the `electron` directory open in VS Code, launch the debug configuration "Debug main.js" (hit F5, select "Node" as the debugger, select the debug configuration, and hit F5 again).
 
 Put breakpoints in the following files:
-- `electron/src/main.js`
+- `[PXT root]/electron/src/main.js`
 - (NPM 3+) `electron/src/node_modules/pxt-core/built/*`
 - (NPM 2) `electron/src/node_modules/pxt-microbit/node_modules/pxt-core/built/*`
 

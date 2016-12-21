@@ -100,6 +100,7 @@ export interface ProductInformation {
     applicationName: string;
     dataFolderName: string;
     darwinBundleIdentifier: string;
+    icons: { [platform: string]: string };
     nameShort: string;
     nameLong: string;
     updateTag: string;

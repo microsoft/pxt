@@ -13,7 +13,7 @@ let pxtElectronSrcPath: string;
 let targetProductJson: string;
 let targetNpmPackageName: string;
 let isInit = false;
-let buildOut: string;
+let targetDir = process.cwd();
 
 function errorOut(msg: string): Promise<void> {
     console.error(msg);
@@ -83,9 +83,7 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     isInit = linkPath && path.resolve(linkPath) === path.resolve(process.cwd());
 
     if (parsed.flags["release"]) {
-        buildOut = "out";
-    } else {
-        buildOut = path.join(process.cwd(), "electron-out");
+        targetDir = pxtElectronPath;
     }
 
     // Invoke subcommand
@@ -93,7 +91,7 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
         case "init":
             return initAsync();
         case "run":
-            return runAsync();
+            return runAsync(parsed);
         case "package":
             return packageAsync(parsed);
         default:
@@ -120,27 +118,39 @@ function initAsync(): Promise<void> {
         .then(() => console.log("\nWARNING: 'pxt electron init' can break 'pxt serve'. If you have problems with 'pxt serve', delete all node modules and reinstall them (for both the target and pxt-core)."));
 }
 
-function runAsync(): Promise<void> {
+function runAsync(parsed: p.ParsedCommand): Promise<void> {
     if (!isInit) {
         return errorOut("Current target not linked in Electron app; did you run 'pxt electron init'?");
     }
 
-    return electronGulpTask("compile")
+    let compilePromise = Promise.resolve();
+
+    if (!parsed.flags["just"]) {
+        compilePromise = compilePromise.then(() => electronGulpTask("compile"));
+    }
+
+    return compilePromise
         .then(() => npm(pxtElectronPath, "run", "start"));
 }
 
 function packageAsync(parsed: p.ParsedCommand): Promise<void> {
-    let buildPromise = npm(pxtElectronSrcPath, "prune");
+    let installPromise = Promise.resolve();
 
-    if (parsed.flags["release"]) {
-        buildPromise = buildPromise.then(() => npm(pxtElectronSrcPath, "install", parsed.flags["release"] as string));
-    } else {
-        buildPromise = buildPromise.then(() => installLocalTargetAsync());
+    if (!parsed.flags["just"]) {
+        installPromise = installPromise.then(() => npm(pxtElectronSrcPath, "prune"));
+
+        if (parsed.flags["release"]) {
+            installPromise = installPromise.then(() => npm(pxtElectronSrcPath, "install", parsed.flags["release"] as string));
+        } else {
+            installPromise = installPromise.then(() => installLocalTargetAsync());
+        }
+
+        installPromise = installPromise
+            .then(() => npm(pxtElectronPath, "install"))
+            .then(() => npm(pxtElectronPath, "run", "rebuildnative"));
     }
 
-    return buildPromise
-        .then(() => npm(pxtElectronPath, "install"))
-        .then(() => npm(pxtElectronPath, "run", "rebuildnative"))
+    return installPromise
         .then(() => electronGulpTask("package"))
         .then(() => {
             if (parsed.flags["installer"]) {
@@ -198,7 +208,7 @@ function electronGulpTask(taskName: string): Promise<void> {
         args: [
             taskName,
             "--" + targetProductJson,
-            "--" + buildOut
+            "--" + targetDir
         ],
         cwd: pxtElectronPath
     });

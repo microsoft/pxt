@@ -3640,7 +3640,11 @@ function initCommands() {
             },
             installer: {
                 description: "('package' only) Also build the installer / zip redistributable for the built app",
-                aliases: ["i"],
+                aliases: ["i"]
+            },
+            just: {
+                description: "During 'run': skips TS compilation of app; During 'package': skips npm install and rebuilding native modules",
+                aliases: ["j"]
             },
             product: {
                 description: "path to a product.json file to use instead of the target's default one",
