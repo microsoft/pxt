@@ -285,6 +285,7 @@ namespace ts.pxtc {
         blockNamespace?: string;
         blockIdentity?: string;
         blockAllowMultiple?: boolean;
+        blockHidden?: boolean; // not available directly in toolbox
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         indexedInstanceNS?: string;

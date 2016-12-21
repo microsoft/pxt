@@ -142,7 +142,7 @@ namespace pxt.blocks {
     function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
-        if (fn.attributes.shim == "TD_ID")
+        if (fn.attributes.shim == "TD_ID" || fn.attributes.blockHidden)
             return;
 
         if (!fn.attributes.deprecated) {
