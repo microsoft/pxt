@@ -422,8 +422,8 @@ let electronSocket: WebSocket = null;
 let webappReady = false;
 let electronPendingMessages: ElectronMessage[] = [];
 
-function initSocketServer(wsport: number) {
-    console.log(`starting local ws server at ${wsport}...`)
+function initSocketServer(wsPort: number) {
+    console.log(`starting local ws server at ${wsPort}...`)
     const WebSocket = require('faye-websocket');
 
     function startSerial(request: any, socket: any, body: any) {
@@ -552,7 +552,7 @@ function initSocketServer(wsport: number) {
 
     return new Promise<void>((resolve, reject) => {
         wsserver.on("Error", reject);
-        wsserver.listen(wsport, "127.0.0.1", () => resolve());
+        wsserver.listen(wsPort, "127.0.0.1", () => resolve());
     });
 }
 
@@ -711,7 +711,7 @@ export interface ServeOptions {
     browser?: string;
     electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
-    wsport?: number;
+    wsPort?: number;
     serial?: boolean;
 }
 
@@ -728,9 +728,9 @@ let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
-    if (!serveOptions.wsport) serveOptions.wsport = 3233;
+    if (!serveOptions.wsPort) serveOptions.wsPort = 3233;
     setupRootDir();
-    const wsServerPromise = initSocketServer(serveOptions.wsport);
+    const wsServerPromise = initSocketServer(serveOptions.wsPort);
     if (serveOptions.serial)
         initSerialMonitor();
     if (serveOptions.electronHandlers) {
@@ -915,7 +915,7 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            let start = `http://localhost:${serveOptions.port}/#ws=${serveOptions.wsport}&local_token=${options.localToken}`;
+            let start = `http://localhost:${serveOptions.port}/#ws=${serveOptions.wsPort}&local_token=${options.localToken}`;
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);
