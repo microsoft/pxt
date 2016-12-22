@@ -1225,10 +1225,8 @@ namespace pxt.blocks {
             if (otherEvent) {
                 // another block is already registered
                 block.setDisabled(true);
-                block.setWarningText(lf("This event is already used."))
             } else {
                 block.setDisabled(false);
-                block.setWarningText(undefined);
                 events[key] = block;
             }
         }
