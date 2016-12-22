@@ -399,6 +399,11 @@ declare namespace Blockly {
         const MOVE: string;
         const UI: string;
         function setGroup(group: any): void;
+        function fire(ev: Abstract): void;
+        function disableOrphans(ev: Abstract): void;
+        class Abstract {
+            type: string;
+        }
     }
 
     namespace Toolbox {

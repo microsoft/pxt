@@ -365,6 +365,7 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
+            Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {
                 this.changeCallback();
             }
