@@ -9,6 +9,7 @@ import * as minimist from "minimist";
 import * as path from "path";
 import product from "./util/productloader";
 import { UpdateService } from "./updater/updateservice";
+import * as Utils from "./util/electronutils";
 import { Mutex } from 'windows-mutex';
 
 const target = require(product.targetId);
@@ -17,6 +18,9 @@ const targetDir = path.resolve(require.resolve(product.targetId), "..", "..");
 
 const pxtCore: I.PxtCore = target.pxtCore;
 let appOptions: I.AppOptions = {};
+let electronHandlers: I.Map<I.ElectronHandler>;
+let serverPort: number;
+let wsPort: number;
 let win: Electron.BrowserWindow = null;
 let windowsMutex: Mutex = null;
 let updateService: UpdateService = null;
@@ -65,7 +69,7 @@ function isUpdateEnabled() {
     return !!product.releaseManifestUrl && !!product.updateDownloadUrl;
 }
 
-function createPxtHandlers(): I.Map<I.ElectronHandler> {
+function createElectronHandlers(): I.Map<I.ElectronHandler> {
     let handlers: I.Map<I.ElectronHandler> = {};
 
     if (isUpdateEnabled()) {
@@ -113,9 +117,17 @@ function registerUpdateHandlers(): void {
     });
 }
 
+function startLocalServer(): Promise<void> {
+    serverPort = Utils.randomInt(49152, 65535);
+    wsPort = Utils.randomInt(49152, 65535);
+
+    return pxtCore.mainCli(targetDir, ["serve", "--no-browser", "--electron", "--port", serverPort.toString(), "--wsport", wsPort.toString()], electronHandlers);
+}
+
 function main(): void {
     parseArgs();
     fixCwd();
+    electronHandlers = createElectronHandlers();
 
     if (process.platform === "win32") {
         try {
@@ -127,7 +139,7 @@ function main(): void {
         }
     }
 
-    pxtCore.mainCli(targetDir, ["serve", "--no-browser", "--electron"], createPxtHandlers())
+    Utils.retryAsync(startLocalServer, () => true, 50, "Unable to find free TCP port", 20)
         .then(() => {
             createWindow();
 
@@ -136,6 +148,10 @@ function main(): void {
                 registerUpdateHandlers();
                 updateService.initialCheck();
             }
+        })
+        .catch((e) => {
+            dialog.showErrorBox("Unable to start app", "Please try again");
+            app.exit();
         });
 }
 
@@ -159,7 +175,9 @@ function createWindow(): void {
 
         const loadWebappMessage: I.WebviewStartMessage = {
             devtools: appOptions.debugWebapp,
-            localtoken: pxtCore.globalConfig.localToken
+            localtoken: pxtCore.globalConfig.localToken,
+            serverPort,
+            wsPort
         };
 
         win.webContents.send("start", loadWebappMessage);

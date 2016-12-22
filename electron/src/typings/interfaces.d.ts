@@ -42,6 +42,8 @@ export interface AppOptions {
 export interface WebviewStartMessage {
     devtools: boolean;
     localtoken: string;
+    serverPort: number;
+    wsPort: number;
 }
 
 export interface UpdaterBase extends NodeJS.EventEmitter {
