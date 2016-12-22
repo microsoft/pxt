@@ -85,7 +85,7 @@ declare namespace Blockly {
     }
 
     class FieldDropdown extends Field {
-        constructor(val: any[]);
+        constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][]);
     }
 
     class Block {
