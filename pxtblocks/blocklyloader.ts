@@ -1389,10 +1389,15 @@ namespace pxt.blocks {
 
     function initVariables() {
         let varname = lf("{id:var}item");
-        Blockly.Variables.flyoutCategory = function (workspace) {
+        Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
             let button = goog.dom.createDom('button');
             button.setAttribute('text', lf("Make a Variable"));
+            button.setAttribute('callbackKey', 'CREATE_VARIABLE');
+
+            Blockly.registerButtonCallback('CREATE_VARIABLE', function(button: Blockly.FlyoutButton) {
+                Blockly.Variables.createVariable(button.getTargetWorkspace());
+            });
             xmlList.push(button);
 
             let variableList = Blockly.Variables.allVariables(workspace);

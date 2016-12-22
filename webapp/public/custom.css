@@ -335,6 +335,7 @@ html {
 
 body.blocklyMinimalBody {
     min-width: initial;
+    overflow: initial;
 }
 
 @supports (-ms-accelerator:true) {

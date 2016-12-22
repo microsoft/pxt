@@ -36,6 +36,12 @@ declare namespace Blockly {
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
 
+    function registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
+
+    function alert(message: string, opt_callback?: () => void): void;
+    function confirm(message: string, callback: (response: boolean) => void): void;
+    function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
+
     let ALIGN_RIGHT: number;
 
     class FieldImage {
@@ -234,6 +240,10 @@ declare namespace Blockly {
         group?: string;
     }
 
+    class FlyoutButton {
+        getTargetWorkspace(): Blockly.Workspace;
+    }
+
     class Mutator extends Icon {
         /**
          * @param quarkNames: list of sub_blocks for toolbox in mutator workspace
@@ -350,6 +360,7 @@ declare namespace Blockly {
     namespace Variables {
         function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
     }
 
     namespace ContextMenu {

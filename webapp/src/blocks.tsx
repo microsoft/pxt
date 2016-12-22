@@ -141,6 +141,72 @@ export class Editor extends srceditor.Editor {
             pxt.blocks.layout.flow(this.editor);
     }
 
+    private initPrompts() {
+        // Overriding blockly prompts to use semantic modals
+
+        /**
+         * Wrapper to window.alert() that app developers may override to
+         * provide alternatives to the modal browser window.
+         * @param {string} message The message to display to the user.
+         * @param {function()=} opt_callback The callback when the alert is dismissed.
+         */
+        Blockly.alert = function(message, opt_callback) {
+            return core.dialogAsync({
+                hideCancel: true,
+                header: lf("Alert"),
+                body: message,
+                size: "small"
+            }).then(() => {
+                if (opt_callback) {
+                    opt_callback();
+                }
+            })
+        };
+
+        /**
+         * Wrapper to window.confirm() that app developers may override to
+         * provide alternatives to the modal browser window.
+         * @param {string} message The message to display to the user.
+         * @param {!function(boolean)} callback The callback for handling user response.
+         */
+        Blockly.confirm = function(message, callback) {
+            return core.confirmAsync({
+                header: lf("Confirm"),
+                body: message,
+                agreeLbl: lf("Yes"),
+                agreeClass: "cancel",
+                agreeIcon: "cancel",
+                disagreeLbl: lf("No"),
+                disagreeClass: "positive",
+                disagreeIcon: "checkmark",
+                size: "small"
+            }).then(b => {
+                callback(b == 0);
+            })
+        };
+
+        /**
+         * Wrapper to window.prompt() that app developers may override to provide
+         * alternatives to the modal browser window. Built-in browser prompts are
+         * often used for better text input experience on mobile device. We strongly
+         * recommend testing mobile when overriding this.
+         * @param {string} message The message to display to the user.
+         * @param {string} defaultValue The value to initialize the prompt with.
+         * @param {!function(string)} callback The callback for handling user reponse.
+         */
+        Blockly.prompt = function(message, defaultValue, callback) {
+            return core.promptAsync({
+                header: message,
+                defaultValue: defaultValue,
+                agreeLbl: lf("Ok"),
+                disagreeLbl: lf("Cancel"),
+                size: "small"
+            }).then(value => {
+                callback(value);
+            })
+        };
+    }
+
     private reportDeprecatedBlocks() {
         const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
@@ -351,6 +417,7 @@ export class Editor extends srceditor.Editor {
                 }
             }
         })
+        this.initPrompts();
         this.resize();
 
         this.isReady = true
