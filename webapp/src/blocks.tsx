@@ -235,41 +235,6 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    updateHelpCard(clear?: boolean) {
-        let selected = Blockly.selected;
-        let selectedType = selected ? selected.type : null;
-        if (selectedType != this.currentHelpCardType || clear) {
-            if (selected && selected.inputList && selected.codeCard && !clear) {
-                this.currentHelpCardType = selectedType;
-                //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
-                let props: any = {};
-                for (let i = 0; i < selected.inputList.length; i++) {
-                    let input = selected.inputList[i];
-                    for (let j = 0; j < input.fieldRow.length; j++) {
-                        let field = input.fieldRow[j];
-                        if (field.name != undefined && field.value_ != undefined) {
-                            props[field.name] = field.value_;
-                        }
-                    }
-                }
-
-                let card: pxt.CodeCard = selected.codeCard;
-                card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-                if (!selected.mutation) {
-                    card.blocksXml = this.updateFields(card.blocksXml, props);
-                }
-                else {
-                    card.blocksXml = this.updateFields(card.blocksXml, undefined, selected.mutation.mutationToDom());
-                }
-                this.parent.setHelpCard(card);
-            }
-            else {
-                this.currentHelpCardType = null;
-                this.parent.setHelpCard(null);
-            }
-        }
-    }
-
     contentSize(): { height: number; width: number } {
         if (this.editor) {
             return pxt.blocks.blocksMetrics(this.editor);
@@ -378,7 +343,6 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    this.updateHelpCard(ev.newValue != null);
                 }
                 else if (ev.element == 'commentOpen'
                     || ev.element == 'warningOpen') {
@@ -401,12 +365,9 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 else if (ev.element == 'selected') {
-                    this.updateHelpCard();
-
                     if (this.currentCommentOrWarning) {
                         this.currentCommentOrWarning.setVisible(false)
                     }
-
                     const selected = Blockly.selected
                     if (selected && selected.warning && typeof (selected.warning) !== "string") {
                         (selected.warning as Blockly.Icon).setVisible(true)
