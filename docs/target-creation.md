@@ -55,8 +55,8 @@ the ``id``, ``corpkg``, ``name`` and ``title`` fields to reflect your target inf
 Templates are the default projects for your target. There is one default blocks project, and one default JavaScript project.
 The initial templates are empty projects.
 
-* To change the default blocks project, modify the package under ``libs/templates/blocksprj``
-* To change the default JavaScript project, modify the package under ``libs/templates/tsprj``
+* To change the default blocks project, modify the package under ``libs/blocksprj``
+* To change the default JavaScript project, modify the package under ``libs/tsprj``
 
 ### Testing the target locally
 

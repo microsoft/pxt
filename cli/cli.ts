@@ -1297,7 +1297,7 @@ function buildTargetCoreAsync() {
             .then(testForBuildTargetAsync)
             .then((compileOpts) => {
                 // For the projects, we need to save the base HEX file to the offline HEX cache
-                if (isPrj) {
+                if (isPrj && pxt.appTarget.compile.hasHex) {
                     if (!compileOpts) {
                         console.error(`Failed to extract HEX image for project ${dirname}`);
                         return;
