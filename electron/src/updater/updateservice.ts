@@ -120,7 +120,7 @@ export class UpdateService extends EventEmitter {
      * version is a tag, the associated installer is downloaded and run.
      */
     public update(targetVersion: string, isCritical: boolean = false): void {
-        if (/^https?:\/\//.test(targetVersion)) {
+        if (/^https:\/\//.test(targetVersion)) {
             shell.openExternal(targetVersion);
 
             if (isCritical) {
@@ -181,9 +181,9 @@ export class UpdateService extends EventEmitter {
         const versionInfo = this.getCurrentVersionInfo(releaseManifest);
         let urlUpdate: string;
 
-        versionInfo.url && Object.keys(versionInfo.url).find((semverRange) => {
+        versionInfo.urls && Object.keys(versionInfo.urls).find((semverRange) => {
             if (semver.satisfies(product.version, semverRange)) {
-                urlUpdate = versionInfo.url[semverRange];
+                urlUpdate = versionInfo.urls[semverRange];
                 return true;
             }
 

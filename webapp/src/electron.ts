@@ -25,7 +25,7 @@ export function init() {
     }
 
     function onCriticalUpdate(args: UpdateEventInfo) {
-        const isUrl = /^https?:\/\//.test(args.targetVersion);
+        const isUrl = /^https:\/\//.test(args.targetVersion);
         let body = lf("To continue using {0}, you must install an update.", args.appName || lf("this application"));
         let agreeLbl = lf("Update");
 
@@ -57,7 +57,7 @@ export function init() {
     }
 
     function onUpdateAvailable(args: UpdateEventInfo) {
-        const isUrl = /^https?:\/\//.test(args.targetVersion);
+        const isUrl = /^https:\/\//.test(args.targetVersion);
         let header = lf("Version {0} available", args.targetVersion);
         let body = lf("A new version of {0} is ready to download and install. The app will restart during the update. Update now?", args.appName || lf("this application"));
         let agreeLbl = lf("Update");
