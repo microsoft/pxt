@@ -11,7 +11,7 @@ function start(event: Electron.IpcRendererEvent, message: WebviewStartMessage) {
         });
     }
 
-    webview.src = `http://localhost:3232/#local_token=${message.localtoken}&electron=1`;
+    webview.src = `http://localhost:${message.serverPort}/#ws=${message.wsPort}&local_token=${message.localtoken}&electron=1`;
 }
 
 function openInBrowser(event: Electron.WebViewElement.NewWindowEvent | Electron.WebViewElement.WillNavigateEvent): void {

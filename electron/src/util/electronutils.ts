@@ -34,6 +34,37 @@ export function defer<T>(): I.Deferred<T> {
     };
 }
 
+export function retryAsync<T>(func: () => Promise<T>, condition: (result: T) => boolean, maxIterations: number, failureMsg: string, delay: number = 100, iteration: number = 0): Promise<T> {
+    function newIteration() {
+        return Promise.delay(delay).then(() => retryAsync(func, condition, maxIterations, failureMsg, delay, iteration + 1));
+    }
+
+    if (iteration < maxIterations) {
+        return func()
+            .then(result => {
+                if (condition(result)) {
+                    return result;
+                }
+
+                return newIteration();
+            }, (e) => {
+                return newIteration();
+            });
+    }
+
+    return Promise.reject(new Error(failureMsg));
+}
+
+export function randomInt(minInclusive: number, maxInclusive: number): number {
+    if (minInclusive > maxInclusive) {
+        const tmp = minInclusive;
+        minInclusive = maxInclusive;
+        maxInclusive = tmp;
+    }
+
+    return Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive;
+}
+
 export function mkdirp(thePath: string) {
     if (thePath == ".") {
         return;
