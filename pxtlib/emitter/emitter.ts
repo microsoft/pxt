@@ -286,6 +286,7 @@ namespace ts.pxtc {
         blockIdentity?: string;
         blockAllowMultiple?: boolean;
         blockHidden?: boolean; // not available directly in toolbox
+        blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
