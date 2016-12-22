@@ -142,6 +142,10 @@ export interface ConfirmOptions extends DialogOptions {
     deleteLbl?: string;
 }
 
+export interface PromptOptions extends ConfirmOptions {
+    defaultValue: string;
+}
+
 export interface DialogOptions {
     hideCancel?: boolean;
     disagreeLbl?: string;
@@ -301,6 +305,38 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
             cb().done()
         }
     }).done()
+}
+
+export function promptAsync(options: PromptOptions): Promise<string> {
+    if (!options.buttons) options.buttons = []
+
+    let result = options.defaultValue;
+
+    if (!options.hideAgree) {
+        options.buttons.push({
+            label: options.agreeLbl || lf("Go ahead!"),
+            class: options.agreeClass,
+            icon: options.agreeIcon,
+            onclick: () => {
+                let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
+                result = dialogInput.value;
+            }
+        })
+    }
+
+    options.htmlBody = `<div class="ui fluid icon input">
+                            <input type="text" id="promptDialogInput" placeholder="${options.defaultValue}">
+                        </div>`;
+
+    options.onLoaded = () => {
+        let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
+        if (dialogInput) {
+            dialogInput.focus();
+        }
+    };
+
+    return dialogAsync(options)
+        .then(() => result)
 }
 
 export interface ShareOptions {
