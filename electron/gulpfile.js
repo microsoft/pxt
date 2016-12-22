@@ -21,6 +21,7 @@ const tsconfigJsonPath = path.join(__dirname, "tsconfig.json");
 const issPath = path.join(__dirname, "build", "win32", "pxt.iss");
 const innoSetupPath = path.join(path.dirname(path.dirname(require.resolve('innosetup-compiler'))), 'bin', 'ISCC.exe');
 let productJsonPath = null;
+let targetRoot = null;
 let outRoot = null;
 
 // JSON data
@@ -57,11 +58,11 @@ gulp.task("dist-win", ["clean-dist-win"], (cb) => { buildDistributable("win32", 
 
 // ----------
 function getProduct() {
-    if (!process.argv[3]) {
-        throw new Error("This task requires the following args: --path/to/product.json")
-    }
-
     if (!product) {
+        if (!process.argv[3]) {
+            throw new Error("This task requires the following args: --path/to/product.json");
+        }
+
         productJsonPath = path.resolve(process.argv[3].replace(/^--/, ""));
         product = require(productJsonPath);
     }
@@ -69,13 +70,21 @@ function getProduct() {
     return product;
 }
 
-function getOutRoot() {
-    if (!process.argv[4]) {
-        throw new Error("This task requires the following args: --path/to/product.json --path/to/root_of_build_output")
+function getTargetRoot() {
+    if (!targetRoot) {
+        if (!process.argv[4]) {
+            throw new Error("This task requires the following args: --path/to/product.json --path/to/root/of/target");
+        }
+
+        targetRoot = path.resolve(process.argv[4].replace(/^--/, ""));
     }
 
+    return targetRoot;
+}
+
+function getOutRoot() {
     if (!outRoot) {
-        outRoot = path.resolve(process.argv[4].replace(/^--/, ""));
+        outRoot = path.join(getTargetRoot(), "electron-out");
     }
 
     return outRoot;
@@ -139,7 +148,7 @@ function packageApp(platform, cb) {
     }
 
     const productInfo = getProduct();
-    const options = {
+    let options = {
         arch: "ia32",
         dir: srcRoot,
         ignore: [
@@ -152,6 +161,15 @@ function packageApp(platform, cb) {
         platform: platform,
         prune: false
     };
+
+    if (productInfo.icons && productInfo.icons[platform]) {
+        const iconPath = path.join(getTargetRoot(), productInfo.icons[platform]);
+
+        if (fs.existsSync(iconPath)) {
+            console.log("Using icon: " + iconPath);
+            options.icon = iconPath;
+        }
+    }
 
     electronPackager(options, (err, apps) => {
         if (err) {
