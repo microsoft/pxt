@@ -1515,7 +1515,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             packaged,
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
-            wsport: parsed.flags["wsport"] as number || 0,
+            wsPort: parsed.flags["wsport"] as number || 0,
             browser: parsed.flags["browser"] as string,
             serial: !parsed.flags["noSerial"]
         }))
