@@ -1,6 +1,7 @@
 "use strict";
 
 import * as Promise from "bluebird";
+import { app, shell } from "electron";
 import { EventEmitter } from "events";
 import * as fs from "fs";
 import * as I from "../typings/interfaces";
@@ -115,11 +116,20 @@ export class UpdateService extends EventEmitter {
     }
 
     /**
-     * Performs the update to the specified target version by using the AutoUpdater implementation for the current
-     * platform. By using the AutoUpdater.checkForUpdates(), any available update is downloaded automatically. When the
-     * download is complete, we install the update in the update-downloaded handler.
+     * Performs an update. If the target version is a URL, the URL is opened in the default browser. If the target
+     * version is a tag, the associated installer is downloaded and run.
      */
     public update(targetVersion: string, isCritical: boolean = false): void {
+        if (/^https:\/\//.test(targetVersion)) {
+            shell.openExternal(targetVersion);
+
+            if (isCritical) {
+                app.exit();
+            }
+
+            return;
+        }
+
         const deferred = Utils.defer<void>();
 
         this.updaterImpl.addListener("update-downloaded", () => {
@@ -149,7 +159,9 @@ export class UpdateService extends EventEmitter {
         this.updaterImpl.checkForUpdates();
 
         deferred.promise.catch((e) => {
-            this.emit("update-download-error", isCritical);
+            this.emit("update-download-error", {
+                isCritical
+            });
             console.log("Error during update: " + e);
         });
     }
@@ -160,8 +172,27 @@ export class UpdateService extends EventEmitter {
         return releaseManifest.versions[major];
     }
 
+    /**
+     * Decides which version to update to. First looks in the list of URLs to see if the current version is listed, and
+     * returns the URL to visit if found. If current version is not listed in the URL updates, then returns the latest
+     * version, if it is higher than the current version. Returns null if no update is available.
+     */
     private getTargetRelease(releaseManifest: I.ReleaseManifest): string {
         const versionInfo = this.getCurrentVersionInfo(releaseManifest);
+        let urlUpdate: string;
+
+        versionInfo.urls && Object.keys(versionInfo.urls).find((semverRange) => {
+            if (semver.satisfies(product.version, semverRange)) {
+                urlUpdate = versionInfo.urls[semverRange];
+                return true;
+            }
+
+            return false;
+        });
+
+        if (urlUpdate) {
+            return urlUpdate;
+        }
 
         if (versionInfo && semver.lt(product.version, versionInfo.latest)) {
             return versionInfo.latest;

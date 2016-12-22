@@ -56,6 +56,7 @@ export interface VersionInfo {
     banned: string[];
     latest: string;
     prompt: string;
+    urls: { [versionRange: string]: string };
 }
 
 export interface ReleaseManifest {
