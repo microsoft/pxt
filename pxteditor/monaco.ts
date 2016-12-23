@@ -18,7 +18,7 @@ namespace pxt.vs {
 
     export interface NameDefiniton {
         fns: { [fn: string]: MethodDef };
-        comment?: string;
+        metaData?: pxtc.CommentAttrs;
     }
 
     export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<{ [ns: string]: NameDefiniton }> {
@@ -77,7 +77,17 @@ namespace pxt.vs {
                                 };
                             }
 
-                            return monaco.Promise.join(item.childItems
+                            // metadata promise
+                            promises.push(client.getLeadingComments(fp, item.spans[0].start)
+                                .then((comments: string) => {
+                                    let meta: pxtc.CommentAttrs;
+                                    if (comments) {
+                                        definitions[item.text].metaData = pxtc.parseCommentString(comments);
+                                    }
+                            }));
+
+                            // function promises
+                            promises.push(monaco.Promise.join(item.childItems
                                 .filter(item => item.kind == 'function' && (item.kindModifiers.indexOf('export') > -1 || item.kindModifiers.indexOf('declare') > -1)).map((fn) => {
                                     // exported function 
                                     return client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text)
@@ -98,7 +108,8 @@ namespace pxt.vs {
                                                     }
                                                 });
                                         });
-                                }));
+                                })));
+                            return monaco.Promise.join(promises);
                         }));
                     });
                 });
