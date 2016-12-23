@@ -82,6 +82,11 @@ export interface Update {
     version: string;
 }
 
+export interface TelemetryEventInfo {
+    event: string;
+    data: Map<string | number | boolean>;
+}
+
 // PXT interfaces
 export interface PxtCore {
     globalConfig: {
