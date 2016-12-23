@@ -84,7 +84,7 @@ export interface Update {
 
 export interface TelemetryEventInfo {
     event: string;
-    data: Map<string | number | boolean>;
+    data: Map<string | number>;
 }
 
 // PXT interfaces

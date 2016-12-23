@@ -86,19 +86,19 @@ export class UpdateService extends EventEmitter {
                 if (targetVersion) {
                     if (criticalPrompt) {
                         Telemetry.tickEvent("electron.update.available", {
-                            initial: true,
-                            critical: true
+                            initial: "true",
+                            critical: "true"
                         });
                         this.emit("critical-update", this.makeUpdateInfo(targetVersion));
                     } else if (aggressivePrompt) {
                         Telemetry.tickEvent("electron.update.available", {
-                            initial: true
+                            initial: "true"
                         });
                         this.emit("update-available", this.makeUpdateInfo(targetVersion, /*isInitialCheck*/ true));
                     }
                 } else {
                     Telemetry.tickEvent("electron.update.notavailable", {
-                        initial: true
+                        initial: "true"
                     });
                 }
             })
@@ -140,7 +140,7 @@ export class UpdateService extends EventEmitter {
     public update(targetVersion: string, isCritical: boolean = false): void {
         if (/^https:\/\//.test(targetVersion)) {
             Telemetry.tickEvent("electron.update.websiteupdate", {
-                isCritical
+                critical: isCritical.toString()
             });
             shell.openExternal(targetVersion);
 
@@ -152,25 +152,25 @@ export class UpdateService extends EventEmitter {
         }
 
         Telemetry.tickEvent("electron.update.installerupdate", {
-            isCritical
+            critical: isCritical.toString()
         });
         const deferred = Utils.defer<void>();
 
         this.updaterImpl.addListener("update-downloaded", () => {
             Telemetry.tickEvent("electron.update.downloaded", {
-                isCritical
+                critical: isCritical.toString()
             });
             this.updaterImpl.quitAndInstall();
         });
         this.updaterImpl.addListener("update-not-available", () => {
             Telemetry.tickEvent("electron.update.nolongeravailable", {
-                isCritical
+                critical: isCritical.toString()
             });
             deferred.reject(new Error("Update is no longer available"));
         });
         this.updaterImpl.addListener("error", (e: Error) => {
             Telemetry.tickEvent("electron.update.updateerror", {
-                isCritical
+                critical: isCritical.toString()
             });
             deferred.reject(e);
         });
@@ -193,7 +193,7 @@ export class UpdateService extends EventEmitter {
 
         deferred.promise.catch((e) => {
             this.emit("update-download-error", {
-                isCritical
+                critical: isCritical.toString()
             });
             console.log("Error during update: " + e);
         });

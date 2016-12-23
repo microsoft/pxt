@@ -12,7 +12,7 @@ interface UpdateEventInfo {
 
 interface TelemetryEventInfo {
     event: string;
-    data: pxt.Map<string | number | boolean>;
+    data: pxt.Map<string | number>;
 }
 
 interface ElectronMessage {

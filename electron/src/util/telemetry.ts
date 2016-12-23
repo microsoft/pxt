@@ -10,7 +10,7 @@ export function init(pxt: I.PxtCore): void {
     pendingEvents.forEach((e) => tickEvent(e.event, e.data));
 }
 
-export function tickEvent(event: string, data?: I.Map<string | number | boolean>): void {
+export function tickEvent(event: string, data?: I.Map<string | number>): void {
     const eventInfo: I.TelemetryEventInfo = {
         event,
         data
