@@ -18,7 +18,7 @@
     margin-right: 0.25rem;
 }
 
-@media only screen and (max-width:@largestMobileScreen) {
+@media only screen and (max-width:@largestMobileEditorBreakpoint) {
     #menubar .ui.menu {
         height: @mobileMenuHeight !important;
     }
