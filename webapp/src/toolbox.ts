@@ -1,5 +1,5 @@
 export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
-        <category name="Control" nameid="control" colour="120" category="50">
+        <category name="Control" nameid="control" colour="43" category="50">
             <block type="${ts.pxtc.ON_START_TYPE}"></block>
             <block type="controls_repeat_ext" gap="8">
                 <value name="TIMES">
@@ -36,9 +36,9 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </value>
             </block>
         </category>
-        <category name="Data" nameid="variables" colour="330" custom="VARIABLE" category="48">
+        <category name="Data" nameid="variables" colour="28" custom="VARIABLE" category="48">
         </category>
-        <category name="Operators" nameid="operators" colour="230" category="47">
+        <category name="Operators" nameid="operators" colour="93" category="47">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">

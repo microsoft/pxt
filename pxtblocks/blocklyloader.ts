@@ -6,12 +6,12 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
     const blockColors: Map<number> = {
-        control: 120,
-        images: 45,
-        variables: 330,
+        control: 43,
+        variables: 28,
+        operators: 93,
+        images: 120,
         text: 160,
         lists: 260,
-        operators: 230
     }
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
