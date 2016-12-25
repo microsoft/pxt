@@ -1,13 +1,14 @@
 export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
-        <category name="Loops" nameid="loops" colour="120" category="50">
-            <block type="controls_repeat_ext">
+        <category name="Control" nameid="control" colour="120" category="50">
+            <block type="${ts.pxtc.ON_START_TYPE}"></block>
+            <block type="controls_repeat_ext" gap="8">
                 <value name="TIMES">
                     <shadow type="math_number">
                         <field name="NUM">4</field>
                     </shadow>
                 </value>
             </block>
-            <block type="device_while">
+            <block type="device_while" gap="8">
                 <value name="COND">
                     <shadow type="logic_boolean"></shadow>
                 </value>
@@ -19,8 +20,6 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
-        </category>
-        <category name="Logic" nameid="logic" colour="210" category="49">
             <block type="controls_if" gap="8">
                 <value name="IF0">
                     <shadow type="logic_boolean">
@@ -36,44 +35,10 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
-            <block type="logic_compare" gap="8">
-                <value name="A">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="B">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="logic_compare">
-                <field name="OP">LT</field>
-                <value name="A">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-                <value name="B">
-                    <shadow type="math_number">
-                        <field name="NUM">0</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="logic_operation" gap="8"></block>
-            <block type="logic_operation" gap="8">
-                <field name="OP">OR</field>
-            </block>
-            <block type="logic_negate"></block>
-            <block type="logic_boolean" gap="8"></block>
-            <block type="logic_boolean">
-                <field name="BOOL">FALSE</field>
-            </block>
         </category>
-        <category name="Variables" nameid="variables" colour="330" custom="VARIABLE" category="48">
+        <category name="Data" nameid="variables" colour="330" custom="VARIABLE" category="48">
         </category>
-        <category name="Math" nameid="math" colour="230" category="47">
+        <category name="Operators" nameid="operators" colour="230" category="47">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">
@@ -134,6 +99,40 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                         <field name="NUM">4</field>
                     </shadow>
                 </value>
+            </block>
+            <block type="logic_compare" gap="8">
+                <value name="A">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="B">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="logic_compare">
+                <field name="OP">LT</field>
+                <value name="A">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+                <value name="B">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="logic_operation" gap="8"></block>
+            <block type="logic_operation" gap="8">
+                <field name="OP">OR</field>
+            </block>
+            <block type="logic_negate"></block>
+            <block type="logic_boolean" gap="8"></block>
+            <block type="logic_boolean">
+                <field name="BOOL">FALSE</field>
             </block>
             <category colour="230" name="More\u2026" nameid="more\u2026">
                 <block type="math_modulo">
