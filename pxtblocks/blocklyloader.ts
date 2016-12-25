@@ -5,13 +5,12 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
-    const blockColors: Map<number> = {
-        control: 43,
-        variables: 28,
-        operators: 93,
-        images: 120,
-        text: 160,
-        lists: 260,
+    export const blockColors: Map<string> = {
+        control: "#E1A91A",
+        variables: "#EE7D16",
+        operators: "#5CB712",
+        text: "160",
+        lists: "260",
     }
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
@@ -670,15 +669,15 @@ namespace pxt.blocks {
         };
     }
 
-    function installHelpResources(id: string, name: string, tooltip: any, url: string) {
-        let block = Blockly.Blocks[id];
-        let old = block.init;
+    function installHelpResources(id: string, name: string, tooltip: any, url: string, color?: string) {
+        const block = Blockly.Blocks[id];
+        const old = block.init;
         if (!old) return;
-
         block.init = function () {
             old.call(this);
             let block = this;
             setHelpResources(this, id, name, goog.isFunction(tooltip) ? function () { return tooltip(block); } : tooltip, url);
+            if (color) this.setColour(color)
         }
     }
 
@@ -1381,6 +1380,8 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
+        (<any>Blockly.Blocks).variables.HUE = blockColors["variables"];
+
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
@@ -1525,6 +1526,8 @@ namespace pxt.blocks {
     }
 
     function initLogic() {
+        (<any>Blockly.Blocks).logic.HUE = blockColors["operators"];
+
         let msg: any = Blockly.Msg;
 
         // builtin controls_if
@@ -1540,7 +1543,8 @@ namespace pxt.blocks {
             'controls_if',
             lf("a conditional statement"),
             undefined,
-            "blocks/logic/if"
+            "blocks/logic/if",
+            blockColors["control"]
         );
 
         // builtin logic_compare

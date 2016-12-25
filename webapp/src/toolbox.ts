@@ -1,5 +1,5 @@
 export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
-        <category name="Control" nameid="control" colour="43" category="50">
+        <category name="Control" nameid="control" colour="${pxt.blocks.blockColors["control"]}" category="50">
             <block type="${ts.pxtc.ON_START_TYPE}"></block>
             <block type="controls_repeat_ext" gap="8">
                 <value name="TIMES">
@@ -36,9 +36,9 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </value>
             </block>
         </category>
-        <category name="Data" nameid="variables" colour="28" custom="VARIABLE" category="48">
+        <category name="Data" nameid="variables" colour="${pxt.blocks.blockColors["variables"]}" custom="VARIABLE" category="48">
         </category>
-        <category name="Operators" nameid="operators" colour="93" category="47">
+        <category name="Operators" nameid="operators" colour="${pxt.blocks.blockColors["operators"]}" category="47">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">
@@ -134,7 +134,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="logic_boolean">
                 <field name="BOOL">FALSE</field>
             </block>
-            <category colour="230" name="More\u2026" nameid="more\u2026">
+            <category colour="${pxt.blocks.blockColors["operators"]}" name="More\u2026" nameid="more\u2026">
                 <block type="math_modulo">
                     <value name="DIVIDEND">
                         <shadow type="math_number">
@@ -181,7 +181,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </block>
             </category>
         </category>
-        <category colour="160" name="Text" nameid="text" category="46">
+        <category colour="${pxt.blocks.blockColors["text"]}" name="Text" nameid="text" category="46">
             <block type="text"></block>
             <block type="text_length">
                 <value name="VALUE">
@@ -191,7 +191,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </value>
             </block>
         </category>
-        <category colour="260" name="Lists" nameid="lists" category="45">
+        <category colour="${pxt.blocks.blockColors["text"]}" name="Lists" nameid="lists" category="45">
             <block type="lists_create_with">
                 <mutation items="1"></mutation>
                 <value name="ADD0">
