@@ -1382,10 +1382,10 @@ namespace pxt.blocks {
     function initVariables() {
         (<any>Blockly.Blocks).variables.HUE = blockColors["variables"];
 
-        let varname = lf("{id:var}item");
+        const varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
-            let xmlList: HTMLElement[] = [];
-            let button = goog.dom.createDom('button');
+            const xmlList: HTMLElement[] = [];
+            const button = goog.dom.createDom('button');
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
@@ -1394,7 +1394,7 @@ namespace pxt.blocks {
             });
             xmlList.push(button);
 
-            let variableList = Blockly.Variables.allVariables(workspace);
+            const variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
@@ -1470,7 +1470,7 @@ namespace pxt.blocks {
         };
 
         // builtin variables_get
-        let msg: any = Blockly.Msg;
+        const msg: any = Blockly.Msg;
         msg.VARIABLES_GET_CREATE_SET = lf("Create 'set %1'");
         installHelpResources(
             'variables_get',
