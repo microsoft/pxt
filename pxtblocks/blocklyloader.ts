@@ -683,6 +683,8 @@ namespace pxt.blocks {
     }
 
     function initLoops() {
+        (<any>Blockly.Blocks).loops.HUE = blockColors["control"];
+
         let msg: any = Blockly.Msg;
 
         // builtin controls_repeat_ext
@@ -1240,6 +1242,7 @@ namespace pxt.blocks {
     }
 
     function initMath() {
+        (<any>Blockly.Blocks).math.HUE = blockColors["operators"];
         // pxt math_op2
         Blockly.Blocks['math_op2'] = {
             init: function () {
@@ -1385,7 +1388,7 @@ namespace pxt.blocks {
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-            Blockly.registerButtonCallback('CREATE_VARIABLE', function(button: Blockly.FlyoutButton) {
+            Blockly.registerButtonCallback('CREATE_VARIABLE', function (button: Blockly.FlyoutButton) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
             xmlList.push(button);
