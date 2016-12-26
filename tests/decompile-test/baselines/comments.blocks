@@ -1,4 +1,6 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
@@ -117,5 +119,7 @@
 </block>
 </next>
 <comment pinned="false">Single-line comment</comment>
+</block>
+</statement>
 </block>
 </xml>

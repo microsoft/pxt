@@ -40,6 +40,15 @@ namespace pxt.blocks {
     }> = {};
     Object.keys(Blockly.Blocks)
         .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
+    export const buildinBlockStatements: Map<boolean> = {
+        "controls_if": true,
+        "controls_for": true,
+        "controls_simple_for": true,
+        "controls_repeat_ext": true,
+        "variables_set": true,
+        "variables_change": true,
+        "device_while": true
+    }
 
     // blocks cached
     interface CachedBlock {
@@ -301,6 +310,14 @@ namespace pxt.blocks {
         }
     }
 
+    function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
+        if (specific == general) return true
+        let inf = apis.byQName[specific]
+        if (inf && inf.extendsTypes)
+            return inf.extendsTypes.indexOf(general) >= 0
+        return false
+    }
+
     function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, attrNames: Map<BlockParameter>) {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
@@ -330,7 +347,32 @@ namespace pxt.blocks {
                     return;
                 }
                 let pr = attrNames[n];
-                if (/\[\]$/.test(pr.type)) { // Array type
+                let typeInfo = U.lookup(info.apis.byQName, pr.type)
+
+                let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
+                let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
+
+                if (isEnum || isFixed) {
+                    const syms = Util.values(info.apis.byQName)
+                        .filter(e =>
+                            isEnum ? e.namespace == pr.type
+                                : (e.kind == pxtc.SymbolKind.Variable
+                                    && e.attributes.fixedInstance
+                                    && isSubtype(info.apis, e.retType, typeInfo.qName)))
+                    if (syms.length == 0) {
+                        console.error(`no instances of ${typeInfo.qName} found`)
+                    }
+                    let dd = syms.map(v => [
+                        v.attributes.block || v.attributes.blockId || v.name,
+                        v.namespace + "." + v.name
+                    ]);
+                    i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
+                    // if a value is provided, move it first
+                    if (pr.shadowValue)
+                        dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
+                    i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
+
+                } else if (/\[\]$/.test(pr.type)) { // Array type
                     i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Array");
                 } else if (instance && n == "this") {
                     i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
@@ -347,19 +389,7 @@ namespace pxt.blocks {
                 } else if (pr.type == "string") {
                     i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "String");
                 } else {
-                    let prtype = Util.lookup(info.apis.byQName, pr.type);
-                    if (prtype && prtype.kind == pxtc.SymbolKind.Enum) {
-                        const dd = Util.values(info.apis.byQName)
-                            .filter(e => e.namespace == pr.type)
-                            .map(v => [v.attributes.block || v.attributes.blockId || v.name, v.namespace + "." + v.name]);
-                        i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
-                        // if a value is provided, move it first
-                        if (pr.shadowValue)
-                            dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
-                        i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
-                    } else {
-                        i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
-                    }
+                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
                 }
             }
         });
@@ -450,10 +480,41 @@ namespace pxt.blocks {
                 }
             })
 
-        // remove ununsed blocks
+        // remove unused blocks
         Object
             .keys(cachedBlocks).filter(k => !currentBlocks[k])
             .forEach(k => removeBlock(cachedBlocks[k].fn));
+
+
+        // add extra blocks
+        if (tb && pxt.appTarget.runtime) {
+            const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
+            extraBlocks.push({
+                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
+                weight: 10,
+                type: ts.pxtc.ON_START_TYPE
+            })
+            extraBlocks.forEach(eb => {
+                let cat = categoryElement(tb, eb.namespace);
+                if (cat) {
+                    let el = document.createElement("block");
+                    el.setAttribute("type", eb.type);
+                    el.setAttribute("weight", (eb.weight || 50).toString());
+                    if (eb.gap) el.setAttribute("gap", eb.gap.toString());
+                    if (eb.fields) {
+                        for (let f in eb.fields) {
+                            let fe = document.createElement("field");
+                            fe.setAttribute("name", f);
+                            fe.appendChild(document.createTextNode(eb.fields[f]));
+                            el.appendChild(fe);
+                        }
+                    }
+                    cat.appendChild(el);
+                } else {
+                    console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
+                }
+            })
+        }
 
         if (tb) {
             // remove unused categories
@@ -483,30 +544,6 @@ namespace pxt.blocks {
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
         // lf("{id:category}More\u2026")
-
-        // add extra blocks
-        if (tb && pxt.appTarget.runtime && pxt.appTarget.runtime.extraBlocks) {
-            pxt.appTarget.runtime.extraBlocks.forEach(eb => {
-                let cat = categoryElement(tb, eb.namespace);
-                if (cat) {
-                    let el = document.createElement("block");
-                    el.setAttribute("type", eb.type);
-                    el.setAttribute("weight", (eb.weight || 50).toString());
-                    if (eb.gap) el.setAttribute("gap", eb.gap.toString());
-                    if (eb.fields) {
-                        for (let f in eb.fields) {
-                            let fe = document.createElement("field");
-                            fe.setAttribute("name", f);
-                            fe.appendChild(document.createTextNode(eb.fields[f]));
-                            el.appendChild(fe);
-                        }
-                    }
-                    cat.appendChild(el);
-                } else {
-                    console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
-                }
-            })
-        }
 
         // update shadow types
         if (tb) {
@@ -615,6 +652,7 @@ namespace pxt.blocks {
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
 
         initContextMenu();
+        initOnStart();
         initMath();
         initVariables();
         initLoops();
@@ -1171,6 +1209,34 @@ namespace pxt.blocks {
             return myParent === parent || isChild(myParent, parent);
         }
         return false;
+    }
+
+    function initOnStart() {
+        // pxt math_op2
+        Blockly.Blocks[ts.pxtc.ON_START_TYPE] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": lf("on start %1 %2"),
+                    "args0": [
+                        {
+                            "type": "input_dummy"
+                        },
+                        {
+                            "type": "input_statement",
+                            "name": "HANDLER"
+                        }
+                    ],
+                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops']
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.ON_START_TYPE,
+                    lf("on start event"),
+                    lf("Run code when the program starts"),
+                    '/blocks/on-start'
+                );
+            }
+        };
     }
 
     function initMath() {

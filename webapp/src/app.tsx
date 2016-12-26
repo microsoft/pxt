@@ -1260,7 +1260,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             compiler.getBlocksAsync()
                 .then(info => this.createProjectAsync({
                     filesOverride: {
-                        "main.blocks": pxt.blocks.importXml(info, data.source)
+                        "main.blocks": pxt.blocks.importXml(data.source, info)
                     }, name: data.meta.name
                 })).done(() => core.hideLoading());
             return;
@@ -1361,7 +1361,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 const project: pxt.cpp.HexFile = {
                     meta: {
                         cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
-                        targetVersion: pxt.appTarget.versions.target,
+                        targetVersions: pxt.appTarget.versions,
                         editor: this.getPreferredEditor(),
                         name: mpkg.config.name
                     },
@@ -1423,7 +1423,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     newEmptyProject(name?: string, documentation?: string) {
         this.newProject({
-            filesOverride: { "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\"></xml>" },
+            filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${ts.pxtc.ON_START_TYPE}"></block></xml>` },
             name, documentation
         })
     }
@@ -1712,7 +1712,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             hideCancel: true,
             agreeLbl: lf("Ok"),
             htmlBody: `
-<p>${Util.htmlEscape(pxt.appTarget.name)} version: ${pxt.appTarget.versions.target}</p>
+<p>${Util.htmlEscape(pxt.appTarget.name)} version: <a href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/${Util.htmlEscape(pxt.appTarget.versions.tag)}">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
+<p>PXT version: <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
 `
         }).done();

@@ -64,13 +64,13 @@ export class Editor extends srceditor.Editor {
                     pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
                     pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
                         (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
-                        (() => {
-                            this.parent.addPackage();
-                        }) : null),
+                            (() => {
+                                this.parent.addPackage();
+                            }) : null),
                         (!this.parent.getSandboxMode() ?
-                        (() => {
-                        this.undo();
-                        }) : null)
+                            (() => {
+                                this.undo();
+                            }) : null)
                     );
 
                     let xml = this.delayLoadXml;
@@ -115,8 +115,8 @@ export class Editor extends srceditor.Editor {
 
         this.editor.clear();
         try {
-            let text = s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
-            let xml = Blockly.Xml.textToDom(text);
+            const text = pxt.blocks.importXml(s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`, this.blockInfo, true);
+            const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
@@ -133,16 +133,16 @@ export class Editor extends srceditor.Editor {
 
     private initLayout() {
         // layout on first load if no data info
-        const layoutInfo = this.editor.getTopBlocks(false).some(b => {
+        const needsLayout = this.editor.getTopBlocks(false).some(b => {
             const tp = b.getBoundingRectangle().topLeft;
-            return tp.x != 0 || tp.y != 0
+            return tp.x == 0 && tp.y == 0
         });
-        if (!layoutInfo)
+        if (needsLayout)
             pxt.blocks.layout.flow(this.editor);
     }
 
     private reportDeprecatedBlocks() {
-        const deprecatedMap: { [index: string]: number } = {};
+        const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
 
         this.blockInfo.blocks.forEach(symbolInfo => {

@@ -41,6 +41,13 @@ declare namespace pxt {
         files: Map<string>;
     }
 
+    interface BlockToolboxDefinition {
+        namespace: string;
+        type: string;
+        gap?: number;
+        weight?: number;
+        fields?: Map<string>;
+    }
 
     interface RuntimeOptions {
         mathBlocks?: boolean;
@@ -49,14 +56,9 @@ declare namespace pxt {
         variablesBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
-
-        extraBlocks?: {
-            namespace: string;
-            type: string;
-            gap?: number;
-            weight?: number;
-            fields?: Map<string>;
-        }[]
+        extraBlocks?: BlockToolboxDefinition[];
+        onStartColor?: string;
+        onStartNamespace?: string;
     }
 
     interface AppAnalytics {
@@ -93,6 +95,7 @@ declare namespace pxt {
 
     interface TargetCompileService {
         yottaTarget?: string; // bbc-microbit-classic-gcc
+        yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         platformioIni?: string[];
@@ -163,14 +166,6 @@ declare namespace pxt {
         // needs to have one of `path` or `subitems` 
         path?: string;
         subitems?: DocMenuEntry[];
-    }
-
-    interface TargetVersions {
-        target: string;
-        pxt: string;
-        tag?: string;
-        branch?: string;
-        commits?: string; // URL
     }
 
     interface TargetBundle extends AppTarget {

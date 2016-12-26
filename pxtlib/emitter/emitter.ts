@@ -6,6 +6,7 @@ namespace ts.pxtc {
     export const oops = Util.oops;
     export import U = pxtc.Util;
 
+    export const ON_START_TYPE = "pxt-on-start";
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_ASM = "binary.asm";
@@ -79,7 +80,20 @@ namespace ts.pxtc {
             if (b) return b.isRef
             U.oops("unbound type parameter: " + checker.typeToString(t))
         }
-        return !(t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
+        if (t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
+            return false
+
+        let sym = t.getSymbol()
+        if (sym) {
+            let decl: Declaration = sym.valueDeclaration || sym.declarations[0]
+            if (decl) {
+                let attrs = parseComments(decl)
+                if (attrs.noRefCounting)
+                    return false
+            }
+        }
+
+        return true
     }
 
     function isRefDecl(def: Declaration) {
@@ -271,6 +285,12 @@ namespace ts.pxtc {
         blockNamespace?: string;
         blockIdentity?: string;
         blockAllowMultiple?: boolean;
+        fixedInstances?: boolean;
+        fixedInstance?: boolean;
+        indexedInstanceNS?: string;
+        indexedInstanceShim?: string;
+        autoCreate?: string;
+        noRefCounting?: boolean;
         color?: string;
         icon?: string;
         imageLiteral?: number;
@@ -289,6 +309,7 @@ namespace ts.pxtc {
         mutateDefaults?: string;
 
         _name?: string;
+        _source?: string;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -303,6 +324,7 @@ namespace ts.pxtc {
         attrs: CommentAttrs;
         args: Expression[];
         isExpression: boolean;
+        isAutoCreate?: boolean;
     }
 
     export interface ClassInfo {
@@ -335,15 +357,30 @@ namespace ts.pxtc {
     let typeBindings: TypeBinding[] = []
 
     export function getComments(node: Node) {
-        let src = getSourceFileOfNode(node)
-        let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
-        if (!doc) return "";
-        let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
-        return cmt;
+        if (node.kind == SK.VariableDeclaration)
+            node = node.parent.parent // we need variable stmt
+
+        let cmtCore = (node: Node) => {
+            let src = getSourceFileOfNode(node)
+            let doc = getLeadingCommentRangesOfNodeFromText(node, src.text)
+            if (!doc) return "";
+            let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
+            return cmt;
+        }
+
+        if (node.symbol && node.symbol.declarations.length > 1) {
+            return node.symbol.declarations.map(cmtCore).join("\n")
+        } else {
+            return cmtCore(node)
+        }
     }
 
     export function parseCommentString(cmt: string): CommentAttrs {
-        let res: CommentAttrs = { paramDefl: {}, callingConvention: ir.CallingConvention.Plain }
+        let res: CommentAttrs = {
+            paramDefl: {},
+            callingConvention: ir.CallingConvention.Plain,
+            _source: cmt
+        }
         let didSomething = true
         while (didSomething) {
             didSomething = false
@@ -400,10 +437,19 @@ namespace ts.pxtc {
         return parseCommentString(cmts)
     }
 
-    export function parseComments(node: Node): CommentAttrs {
-        if (!node || (node as any).isBogusFunction) return parseCommentString("")
+    interface NodeWithAttrs extends Node {
+        pxtCommentAttrs: CommentAttrs;
+    }
+
+    export function parseComments(node0: Node): CommentAttrs {
+        if (!node0 || (node0 as any).isBogusFunction) return parseCommentString("")
+        let node = node0 as NodeWithAttrs
+        let cached = node.pxtCommentAttrs
+        if (cached)
+            return cached
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
+        node.pxtCommentAttrs = res
         return res
     }
 
@@ -640,6 +686,7 @@ namespace ts.pxtc {
         let irCachesToClear: NodeWithCache[] = []
         let ifaceMembers: pxt.Map<number> = {}
         let nextIfaceMemberId = 0;
+        let autoCreateFunctions: pxt.Map<boolean> = {}
 
         lastNodeId = 0
         currNodeWave++
@@ -1092,6 +1139,8 @@ namespace ts.pxtc {
                     methods: [],
                     bindings: bindings
                 }
+                if (info.attrs.autoCreate)
+                    autoCreateFunctions[info.attrs.autoCreate] = true
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
@@ -1199,7 +1248,19 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function mkSyntheticInt(v: number): LiteralExpression {
+            return <any>{
+                kind: SK.NumericLiteral,
+                text: v.toString()
+            }
+        }
+
         function emitLocalLoad(decl: VarOrParam) {
+            if (isGlobalVar(decl)) {
+                let attrs = parseComments(decl)
+                if (attrs.shim)
+                    return emitShim(decl, decl, [])
+            }
             let l = lookupCell(decl)
             recordUse(decl)
             let r = l.load()
@@ -1400,6 +1461,8 @@ ${lbl}: .short 0xffff
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
+            } else if (decl.kind == SK.VariableDeclaration) {
+                return emitLocalLoad(decl as VariableDeclaration)
             } else {
                 throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
             }
@@ -1506,6 +1569,14 @@ ${lbl}: .short 0xffff
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
 
+            if (nm.indexOf('(') >= 0) {
+                let parse = /(.*)\((\d+)\)$/.exec(nm)
+                if (parse) {
+                    nm = parse[1]
+                    args.push(mkSyntheticInt(parseInt(parse[2])))
+                }
+            }
+
             if (nm == "TD_NOOP") {
                 assert(!hasRet)
                 return ir.numlit(0)
@@ -1517,10 +1588,10 @@ ${lbl}: .short 0xffff
             }
 
             if (opts.target.isNative) {
-                hex.validateShim(getDeclName(decl), attrs, hasRet, args.length);
+                hex.validateShim(getDeclName(decl), nm, hasRet, args.length);
             }
 
-            return rtcallMask(attrs.shim, args, attrs.callingConvention)
+            return rtcallMask(nm, args, attrs.callingConvention)
         }
 
         function isNumericLiteral(node: Expression) {
@@ -1612,6 +1683,9 @@ ${lbl}: .short 0xffff
                 isExpression: hasRet
             };
             (node as any).callInfo = callInfo
+
+            if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
+                callInfo.isAutoCreate = true
 
             let bindings: TypeBinding[] = []
 
@@ -2075,7 +2149,7 @@ ${lbl}: .short 0xffff
             if (attrs.shim != null) {
                 if (opts.target.isNative) {
                     hex.validateShim(getDeclName(node),
-                        attrs,
+                        attrs.shim,
                         funcHasReturn(node),
                         getParameters(node).length);
                 }
@@ -2924,7 +2998,9 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            //userError(9228, lf("interfaces are not currently supported"))
+            let attrs = parseComments(node)
+            if (attrs.autoCreate)
+                autoCreateFunctions[attrs.autoCreate] = true
         }
         function emitEnumDeclaration(node: EnumDeclaration) {
             //No code needs to be generated, enum names are replaced by constant values in generated code

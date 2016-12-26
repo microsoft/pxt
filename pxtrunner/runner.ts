@@ -517,7 +517,10 @@ ${files["main.ts"]}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initBlocks(blocksInfo);
-                        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, resp.ast.getSourceFile("main.ts"))
+                        let bresp = pxtc.decompiler.decompileToBlocks(
+                            blocksInfo,
+                            resp.ast.getSourceFile("main.ts"),
+                            { snippetMode: options && options.snippetMode })
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)

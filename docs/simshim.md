@@ -94,3 +94,84 @@ When PXT sees a call to function annotated with `shim=`, it will always use the
 shim in the native compilation. In simulator compilation it will use the shim only
 if the function has no body or empty body. If you don't want your simulator implementation
 to do anything, you can for example put a single `return` statement as the body.
+
+## Indexed Instances
+
+A typical pattern to expose pins on a device is something like follows:
+
+```cpp
+class DeviceIO {
+  public:
+    DevicePin pins[0];
+    //% indexedInstanceNS=pins indexedInstanceShim=pins::getPin
+    //%
+    DevicePin A0;
+    //%
+    DevicePin A1;
+    ...
+};
+
+namespace pins {
+  DeviceIO io;
+  //%
+  DevicePin *getPin(int id) {
+    // ... add range checking ...
+    return &io.pins[id];
+  }
+}
+
+namespace DevicePinMethods {
+  //% blockId=device_get_digital_pin block="digital read|pin %name" blockGap=8
+  //% blockNamespace=pins
+  int digitalRead(DevicePin *name) {
+    return name->getDigitalValue()
+  }
+  ...
+}
+```
+
+This will result in the following declarations being generated:
+
+```typescript
+declare namespace pins {
+    //% fixedInstance shim=pins::getPin(0)
+    const A0: DevicePin;
+    //% fixedInstance shim=pins::getPin(1)
+    const A1: DevicePin;
+    ...
+}
+
+declare interface DevicePin {
+    //% blockId=device_get_digital_pin block="digital read|pin %name" blockGap=8
+    //% blockNamespace=pins shim=DevicePinMethods::digitalRead
+    digitalRead(): number;
+    ...
+}
+```
+
+The `indexedInstanceShim` generates the `shim=...(no)` annotations.
+They instruct the access to the variable (which is read-only) to be
+compiled as call the the specified function with the specific literal
+argument. The `fixedInstance` annotation is automatically generated  
+[for blocks](/defining-blocks#Fixed-Instance-Set).
+
+The namespace `FooMethods` is turned into an `interface Foo`. These
+are usually used to wrap native C++ classes that require no reference
+counting. Thus, you also need to manually add the following TypeScript:
+
+```typescript
+//% noRefCounting
+interface DevicePin {
+    // no methods needed, they come from C++
+}
+```
+
+If you don't, the runtime will call method that do not exists and
+chaos will prevail (even though you might not see it at the beginning).
+
+You can also specify inheritance in such a declaration:
+
+```typescript
+//% noRefCounting
+interface AnalogPin extends DigitalPin {}
+```

@@ -9,6 +9,7 @@
 import B = Blockly;
 
 namespace pxt.blocks {
+
     export enum NT {
         Prefix, // op + map(children)
         Infix, // children.length == 2, child[0] op child[1]
@@ -937,6 +938,12 @@ namespace pxt.blocks {
         return mkText(b.getFieldValue(arg))
     }
 
+    function compileStartEvent(e: Environment, b: B.Block): JsNode {
+        const bBody = b.getInputTargetBlock("HANDLER");
+        const body = compileStatements(e, bBody);
+        return body;
+    }
+
     function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
         const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
         const bBody = b.getInputTargetBlock("HANDLER");
@@ -1157,45 +1164,45 @@ namespace pxt.blocks {
 
     function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
-            let e = mkEnv(w, blockInfo);
+            const e = mkEnv(w, blockInfo);
             infer(e, w);
 
-            let stmtsMain: JsNode[] = [];
+            const stmtsMain: JsNode[] = [];
 
-            // Sort so that top-level event handlers are emitted first. They must be
-            // executed before the code that goes in the main function, as that latter
-            // code may block and prevent the event handler from being registered.
-            let topblocks = w.getTopBlocks(true).sort((a, b) => {
-                const aCall = e.stdCallTable[a.type];
-                const bCall = e.stdCallTable[b.type];
-                if (aCall && aCall.hasHandler) {
-                    if (bCall && bCall.hasHandler) {
-                        return 0;
-                    }
-                    return -1;
-                }
-                return 1;
+            // all compiled top level blocks are event, move on start to bottom
+            const topblocks = w.getTopBlocks(true).sort((a, b) => {
+                return (a.type == ts.pxtc.ON_START_TYPE ? 1 : 0) - (b.type == ts.pxtc.ON_START_TYPE ? 1 : 0);
             });
 
-            disableDuplicateEvents(e, topblocks);
+            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
             topblocks.forEach(b => {
-                let compiled = compileStatements(e, b)
-                if (compiled.type == NT.Block)
-                    append(stmtsMain, compiled.children);
-                else stmtsMain.push(compiled)
+                if (b.type == ts.pxtc.ON_START_TYPE)
+                    append(stmtsMain, compileStartEvent(e, b).children);
+                else {
+                    const compiled = compileStatements(e, b)
+                    if (compiled.type == NT.Block)
+                        append(stmtsMain, compiled.children);
+                    else stmtsMain.push(compiled)
+                }
             });
 
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
-            let stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
+            const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
                     // let btype = find(b.type);
                     // Not sure we need the type here - is is always number or boolean?
                     let defl = defaultValueForType(find(b.type))
                     let tp = ""
-                    if (defl.op == "null")
-                        tp = ": " + find(b.type).type
-                    return mkStmt(mkText("let " + b.name + tp + " = "), defaultValueForType(find(b.type)))
+                    if (defl.op == "null") {
+                        let tpname = find(b.type).type
+                        let tpinfo = blockInfo.apis.byQName[tpname]
+                        if (tpinfo && tpinfo.attributes.autoCreate)
+                            defl = mkText(tpinfo.attributes.autoCreate + "()")
+                        else
+                            tp = ": " + tpname
+                    }
+                    return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
             return stmtsVariables.concat(stmtsMain)
@@ -1206,26 +1213,46 @@ namespace pxt.blocks {
         return [] // unreachable
     }
 
-    function disableDuplicateEvents(e: Environment, blocks: B.Block[]) {
-        // first go through events and disable duplicates
+    function updateDisabledBlocks(e: Environment, allBlocks: B.Block[], topBlocks: B.Block[]) {
+        // unset disabled
+        allBlocks.forEach(b => b.setDisabled(false));
+
+        // update top blocks
         const events: Map<B.Block> = {};
-        blocks.forEach(b => {
+
+        function flagDuplicate(key: string, block: B.Block) {
+            const otherEvent = events[key];
+            if (otherEvent) {
+                // another block is already registered
+                block.setDisabled(true);
+                block.setWarningText(lf("This event is already used."))
+            } else {
+                block.setDisabled(false);
+                block.setWarningText(undefined);
+                events[key] = block;
+            }
+        }
+
+        topBlocks.forEach(b => {
             const call = e.stdCallTable[b.type];
-            if (call && call.hasHandler && !call.attrs.blockAllowMultiple) {
+            // multiple calls allowed
+            if (b.type == ts.pxtc.ON_START_TYPE)
+                flagDuplicate(ts.pxtc.ON_START_TYPE, b);
+            else if (call && call.attrs.blockAllowMultiple) return;
+            // is this an event?
+            else if (call && call.hasHandler) {
                 // compute key that identifies event call
                 // detect if same event is registered already   
                 const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
                 const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                     .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
-                const otherEvent = events[key];
-                if (otherEvent) {
-                    // another block is already registered
-                    b.setDisabled(true);
-                    b.setWarningText(lf("This event is already used."))
-                } else {
-                    b.setDisabled(false);
-                    b.setWarningText(undefined);
-                    events[key] = b;
+                flagDuplicate(key, b);
+            } else {
+                // all non-events are disabled
+                let t = b;
+                while (t) {
+                    t.setDisabled(true);
+                    t = t.getNextBlock();
                 }
             }
         });

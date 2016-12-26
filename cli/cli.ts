@@ -2839,19 +2839,13 @@ function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> 
                 if (resp.success) {
                     if (/^block/.test(snippet.type)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-                        let file = resp.ast.getSourceFile('main.ts');
-                        let apis = pxtc.getApiInfo(resp.ast);
-                        let blocksInfo = pxtc.getBlocksInfo(apis);
-                        let bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file)
-
-                        let success = !!bresp.outfiles['main.blocks']
-
-                        if (success) {
-                            return addSuccess(name)
-                        }
-                        else {
-                            return addFailure(name, bresp.diagnostics)
-                        }
+                        const file = resp.ast.getSourceFile('main.ts');
+                        const apis = pxtc.getApiInfo(resp.ast);
+                        const blocksInfo = pxtc.getBlocksInfo(apis);
+                        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
+                        const success = !!bresp.outfiles['main.blocks']
+                        if (success) return addSuccess(name)
+                        else return addFailure(name, bresp.diagnostics)
                     }
                     else {
                         return addSuccess(name)
@@ -3386,6 +3380,8 @@ function checkDocsAsync(): Promise<void> {
         // look for broken urls
         text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
+            // remove hash
+            url = url.replace(/#.*$/, '');
             if (!urls[url]) {
                 console.error(`${f}: broken link ${url}`);
                 broken++;

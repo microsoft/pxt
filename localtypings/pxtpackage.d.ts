@@ -3,6 +3,14 @@ declare namespace pxt {
         [index: string]: T;
     }
 
+    interface TargetVersions {
+        target: string;
+        pxt: string;
+        tag?: string;
+        branch?: string;
+        commits?: string; // URL
+    }
+
     /**
      * The schema for the pxt.json package files
      */
@@ -12,7 +20,7 @@ declare namespace pxt {
         installedVersion?: string;
         // semver description for support target version
         documentation?: string; // doc page to open when loading project
-        targetVersion?: string;
+        targetVersions?: TargetVersions; // versions of the target/pxt the package was compiled against
         description?: string;
         dependencies: Map<string>;
         license?: string;

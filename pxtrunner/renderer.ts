@@ -162,7 +162,9 @@ namespace pxt.runner {
         }
     }
 
-    function renderNextSnippetAsync(cls: string, render: (container: JQuery, r: pxt.runner.DecompileResult) => void, options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+    function renderNextSnippetAsync(cls: string,
+        render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
+        options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
         if (!cls) return Promise.resolve();
 
         let $el = $("." + cls).first();
@@ -230,7 +232,7 @@ namespace pxt.runner {
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
-        }, { package: options.package });
+        }, { package: options.package, snippetMode: true });
     }
 
     function renderShuffleAsync(options: ClientRenderOptions): Promise<void> {
@@ -247,10 +249,11 @@ namespace pxt.runner {
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
         return renderNextSnippetAsync(options.blocksClass, (c, r) => {
-            let s = r.blocksSvg;
+            const s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            c.replaceWith(s);
-        }, { package: options.package });
+            const segment = $('<div class="ui segment"/>').append(s);
+            c.replaceWith(segment);
+        }, { package: options.package, snippetMode: true });
     }
 
     function renderProjectAsync(options: ClientRenderOptions): Promise<void> {
