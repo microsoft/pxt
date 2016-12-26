@@ -116,10 +116,8 @@ namespace pxt.HF2 {
             Version: string;
             Features: string;
         };
-        VersionParsed: string;
         Model: string;
         BoardID: string;
-        FlashSize: string;
     }
 
     export class Wrapper {
