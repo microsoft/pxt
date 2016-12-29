@@ -571,6 +571,85 @@ namespace pxt.blocks {
             trashDiv.appendChild(trashIcon);
             $('.blocklyToolboxDiv').append(trashDiv);
         }
+
+        initSearch(blockInfo, workspace, tb, toolbox);
+    }
+
+    function initSearch(blockInfo: pxtc.BlocksInfo, workspace: Blockly.Workspace, tb: Element, toolbox: Element) {
+        if (!$(`#blocklySearchArea`).length) {
+            let blocklySearchArea = document.createElement('div');
+            blocklySearchArea.id = 'blocklySearchArea';
+
+            let blocklySearchInput = document.createElement('div');
+            blocklySearchInput.className = 'ui fluid icon input';
+
+            let blocklySearchInputField = document.createElement('input');
+            blocklySearchInputField.type = 'text';
+            blocklySearchInputField.placeholder = lf("Search...");
+            blocklySearchInputField.className = 'blocklySearchInputField';
+
+            let tbCache = tb;
+            blocklySearchInputField.oninput = Util.debounce(() => {
+                let searchField = $('.blocklySearchInputField');
+                let searchVal = searchField.val().toLowerCase();
+
+                if (searchVal != '') {
+                    pxt.tickEvent("blocks.search");
+                    let searchTb = tb ? <Element>tb.cloneNode(true) : undefined;
+
+                    blockInfo.blocks
+                        .filter(fn => fn.namespace.indexOf(searchVal) > -1 || fn.name.toLowerCase().indexOf(searchVal) > -1)
+                        .forEach(fn => {
+                            let pnames = parameterNames(fn);
+                            let block = createToolboxBlock(blockInfo, fn, pnames);
+
+                            if (!fn.attributes.deprecated) {
+                                let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                                let catName = 'Search';
+                                let category = categoryElement(searchTb, catName);
+
+                                if (!category) {
+                                    let categories = getChildCategories(searchTb)
+                                    let parentCategoryList = searchTb;
+
+                                    const nsWeight = 101; // Show search category on top
+                                    const locCatName = lf("Search");
+                                    category = createCategoryElement(locCatName, catName, nsWeight);
+                                    category.setAttribute("expanded", 'true');
+                                    category.setAttribute("colour", '#000');
+
+                                    // Insert the category based on weight
+                                    let ci = 0;
+                                    for (ci = 0; ci < categories.length; ++ci) {
+                                        let cat = categories[ci];
+                                        if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
+                                            parentCategoryList.insertBefore(category, cat);
+                                            break;
+                                        }
+                                    }
+                                    if (ci == categories.length)
+                                        parentCategoryList.appendChild(category);
+                                }
+
+                                category.appendChild(block);
+                            }
+                        })
+                    workspace.updateToolbox(searchTb);
+                } else {
+                    // Clearing search
+                    workspace.updateToolbox(tbCache);
+                }
+                // Search
+            }, 500, false);
+
+            let blocklySearchInputIcon = document.createElement('i');
+            blocklySearchInputIcon.className = 'search icon';
+
+            blocklySearchInput.appendChild(blocklySearchInputField);
+            blocklySearchInput.appendChild(blocklySearchInputIcon);
+            blocklySearchArea.appendChild(blocklySearchInput);
+            $('.blocklyToolboxDiv').prepend(blocklySearchArea);
+        }
     }
 
     export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: MouseEvent) => void, undoCallback: (ev?: MouseEvent) => void): void {
@@ -660,6 +739,7 @@ namespace pxt.blocks {
         initText();
         initDrag();
         initToolboxColor();
+        initExpandToolbox();
 
         Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
     }
@@ -1614,5 +1694,44 @@ namespace pxt.blocks {
             lf("Returns the number of letters (including spaces) in the provided text."),
             "reference/types/string-functions"
         );
+    }
+
+    function initExpandToolbox() {
+        // The following ensures the flyout is updated is cleared or expanded when the toolbox is updated. 
+
+        /**
+         * Modify the block tree on the existing toolbox.
+         * @param {Node|string} tree DOM tree of blocks, or text representation of same.
+         */
+        (Blockly as any).WorkspaceSvg.prototype.updateToolbox = function(tree: any) {
+            tree = (Blockly as any).Options.parseToolboxTree(tree);
+            if (!tree) {
+                if (this.options.languageTree) {
+                    throw 'Can\'t nullify an existing toolbox.';
+                }
+                return;  // No change (null to null).
+            }
+            if (!this.options.languageTree) {
+                    throw 'Existing toolbox is null.  Can\'t create new toolbox.';
+            }
+            if (tree.getElementsByTagName('category').length) {
+                if (!this.toolbox_) {
+                    throw 'Existing toolbox has no categories.  Can\'t change mode.';
+                }
+                this.options.languageTree = tree;
+                let openNode = this.toolbox_.populate_(tree);
+                if (openNode)
+                    this.toolbox_.tree_.setSelectedItem(openNode);
+                else
+                    this.toolbox_.flyout_.hide();
+                this.toolbox_.addColour_();
+            } else {
+                if (!this.flyout_) {
+                    throw 'Existing toolbox has categories.  Can\'t change mode.';
+                }
+                this.options.languageTree = tree;
+                this.flyout_.show(tree.childNodes);
+            }
+        };
     }
 }
