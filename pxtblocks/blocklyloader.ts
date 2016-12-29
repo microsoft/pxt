@@ -59,6 +59,8 @@ namespace pxt.blocks {
     let cachedBlocks: Map<CachedBlock> = {};
     let cachedToolbox: string = "";
 
+    const maxSearchBlocks = 7;
+
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
         return b ? b.fn : undefined;
@@ -442,7 +444,7 @@ namespace pxt.blocks {
             e.parentNode.removeChild(e);
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -572,16 +574,17 @@ namespace pxt.blocks {
             $('.blocklyToolboxDiv').append(trashDiv);
         }
 
-        initSearch(blockInfo, workspace, tb, toolbox);
+        return tb;
     }
 
-    function initSearch(blockInfo: pxtc.BlocksInfo, workspace: Blockly.Workspace, tb: Element, toolbox: Element) {
+    export function initSearch(workspace: Blockly.Workspace, tb: Element, searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
         if (!$(`#blocklySearchArea`).length) {
             let blocklySearchArea = document.createElement('div');
             blocklySearchArea.id = 'blocklySearchArea';
 
             let blocklySearchInput = document.createElement('div');
-            blocklySearchInput.className = 'ui fluid icon input';
+            let origClassName = 'ui fluid icon input';
+            blocklySearchInput.className = origClassName;
 
             let blocklySearchInputField = document.createElement('input');
             blocklySearchInputField.type = 'text';
@@ -591,56 +594,61 @@ namespace pxt.blocks {
             let tbCache = tb;
             blocklySearchInputField.oninput = Util.debounce(() => {
                 let searchField = $('.blocklySearchInputField');
-                let searchVal = searchField.val().toLowerCase();
+                let searchFor = searchField.val().toLowerCase();
+                blocklySearchInput.className += ' loading';
 
-                if (searchVal != '') {
+                if (searchFor != '') {
                     pxt.tickEvent("blocks.search");
                     let searchTb = tb ? <Element>tb.cloneNode(true) : undefined;
 
-                    blockInfo.blocks
-                        .filter(fn => fn.namespace.indexOf(searchVal) > -1 || fn.name.toLowerCase().indexOf(searchVal) > -1)
-                        .forEach(fn => {
+                    let catName = 'Search';
+                    let category = categoryElement(searchTb, catName);
+
+                    if (!category) {
+                        let categories = getChildCategories(searchTb)
+                        let parentCategoryList = searchTb;
+
+                        const nsWeight = 101; // Show search category on top
+                        const locCatName = lf("Search");
+                        category = createCategoryElement(locCatName, catName, nsWeight);
+                        category.setAttribute("expanded", 'true');
+                        category.setAttribute("colour", '#000');
+
+                        // Insert the category based on weight
+                        let ci = 0;
+                        for (ci = 0; ci < categories.length; ++ci) {
+                            let cat = categories[ci];
+                            if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
+                                parentCategoryList.insertBefore(category, cat);
+                                break;
+                            }
+                        }
+                        if (ci == categories.length)
+                            parentCategoryList.appendChild(category);
+                    }
+
+                    searchAsync(searchFor).then((blocks) => {
+                        if (!blocks) return;
+                        for (let i = 0; i < Math.min(blocks.length, maxSearchBlocks); i++) {
+                            let fn = blocks[i];
                             let pnames = parameterNames(fn);
-                            let block = createToolboxBlock(blockInfo, fn, pnames);
+                            let block = createToolboxBlock(this.blockInfo, fn, pnames);
 
                             if (!fn.attributes.deprecated) {
-                                let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                                let catName = 'Search';
-                                let category = categoryElement(searchTb, catName);
-
-                                if (!category) {
-                                    let categories = getChildCategories(searchTb)
-                                    let parentCategoryList = searchTb;
-
-                                    const nsWeight = 101; // Show search category on top
-                                    const locCatName = lf("Search");
-                                    category = createCategoryElement(locCatName, catName, nsWeight);
-                                    category.setAttribute("expanded", 'true');
-                                    category.setAttribute("colour", '#000');
-
-                                    // Insert the category based on weight
-                                    let ci = 0;
-                                    for (ci = 0; ci < categories.length; ++ci) {
-                                        let cat = categories[ci];
-                                        if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
-                                            parentCategoryList.insertBefore(category, cat);
-                                            break;
-                                        }
-                                    }
-                                    if (ci == categories.length)
-                                        parentCategoryList.appendChild(category);
-                                }
-
                                 category.appendChild(block);
                             }
-                        })
-                    workspace.updateToolbox(searchTb);
+                        }
+                    }).finally(() => {
+                        workspace.updateToolbox(searchTb);
+                        blocklySearchInput.className = origClassName;
+                    })
                 } else {
                     // Clearing search
                     workspace.updateToolbox(tbCache);
+                    blocklySearchInput.className = origClassName;
                 }
                 // Search
-            }, 500, false);
+            }, 200, false);
 
             let blocklySearchInputIcon = document.createElement('i');
             blocklySearchInputIcon.className = 'search icon';

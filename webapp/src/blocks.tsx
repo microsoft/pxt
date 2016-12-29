@@ -7,6 +7,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
+import * as data from "./data";
 import defaultToolbox from "./toolbox"
 
 import Util = pxt.Util;
@@ -61,7 +62,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
                     pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
                         (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                             (() => {
@@ -72,6 +73,13 @@ export class Editor extends srceditor.Editor {
                                 this.undo();
                             }) : null)
                     );
+                    pxt.blocks.initSearch(this.editor, tb, (searchFor: string) => {
+                        return new Promise<pxtc.SymbolInfo[]>((resolve, reject) => {
+                            data.getAsync(`block-search:${searchFor}`).then((fns) => {
+                                resolve(fns);
+                            })
+                        });
+                    });
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -514,3 +522,13 @@ export class Editor extends srceditor.Editor {
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 }
+
+// block-search:<searchFor>
+data.mountVirtualApi("block-search", {
+    getAsync: query => {
+        return compiler.getBlocksAsync()
+         .then(blockInfo => pxt.blocks.search.searchAsync(data.stripProtocol(query), blockInfo))
+         .catch(core.handleNetworkError)
+    },
+    expirationTime: p => 60 * 1000,
+})
