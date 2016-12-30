@@ -148,6 +148,7 @@ export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
 
 let firstTypecheck: Promise<void>;
 let cachedApis: pxtc.ApisInfo;
+let cachedBlocks: pxtc.BlocksInfo;
 let refreshApis = false;
 
 function waitForFirstTypecheckAsync() {
@@ -168,7 +169,8 @@ function ensureApisInfoAsync(): Promise<void> {
 }
 
 export function apiSearchAsync(searchFor: string) {
-    return workerOpAsync("apiSearch", { search: searchFor });
+    return ensureApisInfoAsync()
+        .then(() => workerOpAsync("apiSearch", { search: searchFor }));
 }
 
 export function typecheckAsync() {
@@ -191,12 +193,14 @@ export function getApisInfoAsync() {
 }
 
 export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
-    return getApisInfoAsync()
-        .then(info => pxtc.getBlocksInfo(info));
+    return cachedBlocks
+        ? Promise.resolve(cachedBlocks)
+        : getApisInfoAsync().then(info => cachedBlocks = pxtc.getBlocksInfo(info));
 }
 
 export function newProject() {
     firstTypecheck = null;
     cachedApis = null;
+    cachedBlocks = null;
     workerOpAsync("reset", {}).done();
 }
