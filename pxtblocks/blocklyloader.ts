@@ -629,6 +629,12 @@ namespace pxt.blocks {
 
                     searchAsync(searchFor).then(([blocks, blockInfo]) => {
                         if (!blocks) return;
+                        if (blocks.length == 0) {
+                            let label = goog.dom.createDom('label');
+                            label.setAttribute('text', lf("No search results..."));
+                            category.appendChild(label);
+                            return;
+                        }
                         for (let i = 0; i < Math.min(blocks.length, maxSearchBlocks); i++) {
                             let fn = blocks[i];
                             let pnames = parameterNames(fn);
