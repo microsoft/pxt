@@ -630,7 +630,7 @@ namespace ts.pxtc.service {
     let service: LanguageService;
     let host: Host;
     let lastApiInfo: ApisInfo;
-    let fuse: Fuse;
+    let lastFuse: Fuse;
 
     export interface OpArg {
         fileName?: string;
@@ -728,37 +728,41 @@ namespace ts.pxtc.service {
             return patchUpDiagnostics(allD)
         },
 
-        apiInfo: () => (lastApiInfo = getApiInfo(service.getProgram())),
+        apiInfo: () => {
+            lastFuse = undefined;
+            return lastApiInfo = getApiInfo(service.getProgram());
+        },
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
             const blockInfo = getBlocksInfo(lastApiInfo); // cache
-            const fuseOptions = {
-                shouldSort: true,
-                threshold: 0.6,
-                location: 0,
-                distance: 100,
-                maxPatternLength: 32,
-                minMatchCharLength: 1,
-                keys: [
-                    { name: 'name', weight: 0.7 },
-                    { name: 'attributes.weight', weight: 0.3 },
-                    { name: 'namespace', weight: 0.2 },
-                    { name: 'attributes.block', weight: 0.6 },
-                    { name: 'attributes.jsDoc', weight: 0.1 }
-                ]
-            };
-            if (!fuse) fuse = new Fuse(blockInfo.blocks, fuseOptions);
-
+            if (!lastFuse) {
+                const fuseOptions = {
+                    shouldSort: true,
+                    threshold: 0.6,
+                    location: 0,
+                    distance: 100,
+                    maxPatternLength: 32,
+                    minMatchCharLength: 1,
+                    keys: [
+                        { name: 'name', weight: 0.7 },
+                        { name: 'attributes.weight', weight: 0.3 },
+                        { name: 'namespace', weight: 0.2 },
+                        { name: 'attributes.block', weight: 0.6 },
+                        { name: 'attributes.jsDoc', weight: 0.1 }
+                    ]
+                };
+                lastFuse = new Fuse(blockInfo.blocks, fuseOptions);
+            }
             const sorter = (fn: pxtc.SymbolInfo): number => {
                 // sort by namespace weight
                 let nsn = blockInfo.apis.byQName[fn.namespace.split('.')[0]];
                 return nsn && nsn.attributes ? nsn.attributes.weight || 50 : 50;
             }
-            const fns = fuse.search(search)
+            const fns = lastFuse.search(search)
                 .slice(0, SEARCH_RESULT_COUNT)
                 .sort((l, r) => - sorter(l) + sorter(r));
-            return [fns, blockInfo];
+            return fns;
         }
     }
 

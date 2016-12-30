@@ -75,7 +75,7 @@ export class Editor extends srceditor.Editor {
                     );
                     pxt.blocks.initSearch(this.editor, tb,
                         searchFor => compiler.apiSearchAsync(searchFor)
-                            .then((fns: [pxtc.SymbolInfo[], pxtc.BlocksInfo]) => fns));
+                            .then((fns: pxtc.SymbolInfo[]) => fns));
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;

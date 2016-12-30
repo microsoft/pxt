@@ -575,7 +575,9 @@ namespace pxt.blocks {
         return tb;
     }
 
-    export function initSearch(workspace: Blockly.Workspace, tb: Element, searchAsync: (searchFor: string) => Promise<[pxtc.SymbolInfo[], pxtc.BlocksInfo]>) {
+    export function initSearch(
+        workspace: Blockly.Workspace, tb: Element,
+        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
         if ($(`#blocklySearchArea`).length) return;
 
         let blocklySearchArea = document.createElement('div');
@@ -626,7 +628,7 @@ namespace pxt.blocks {
                         parentCategoryList.appendChild(category);
                 }
 
-                searchAsync(searchFor).then(([blocks, blockInfo]) => {
+                searchAsync(searchFor).then(blocks => {
                     if (!blocks) return;
                     if (blocks.length == 0) {
                         let label = goog.dom.createDom('label');
@@ -638,7 +640,7 @@ namespace pxt.blocks {
                         let pnames = parameterNames(fn);
                         let block = createToolboxBlock(this.blockInfo, fn, pnames);
 
-                        if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
+                        if (injectBlockDefinition(this.blockInfo, fn, pnames, block)) {
                             if (!fn.attributes.deprecated) {
                                 if (fn.attributes.mutateDefaults) {
                                     const mutationValues = fn.attributes.mutateDefaults.split(";");
