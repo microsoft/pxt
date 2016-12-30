@@ -129,6 +129,10 @@ namespace ts.pxtc {
         return placeholderChar;
     }
 
+    export function renderCall(apiInfo: pxtc.ApisInfo, si: SymbolInfo): string {
+        return `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
+    }
+
     export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
         if (si.parameters) {
             let imgLit = !!si.attributes.imageLiteral
@@ -303,6 +307,9 @@ namespace ts.pxtc {
         const namespaces = infos.filter(si => si.kind == SymbolKind.Module).sort(compareSymbol);
         const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember).sort(compareSymbol);
 
+        const calls: pxt.Map<string> = {};
+        infos.filter(si => !!si.qName).forEach(si => calls[si.qName] = renderCall(apiInfo, si));
+
         let locStrings: pxt.Map<string> = {};
         let jsdocStrings: pxt.Map<string> = {};
         let helpPages: pxt.Map<string> = {};
@@ -378,7 +385,7 @@ namespace ts.pxtc {
                 writeLoc(si);
                 if (si.attributes.help)
                     nsHelpPages[si.name] = si.attributes.help;
-                let call = `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
+                const call = calls[si.qName];
                 if (i == 0)
                     writeRef(call);
                 writeNs(call)
