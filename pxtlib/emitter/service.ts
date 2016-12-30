@@ -630,6 +630,7 @@ namespace ts.pxtc.service {
     let service: LanguageService;
     let host: Host;
     let lastApiInfo: ApisInfo;
+    let fuse: Fuse;
 
     export interface OpArg {
         fileName?: string;
@@ -747,7 +748,7 @@ namespace ts.pxtc.service {
                     { name: 'attributes.jsDoc', weight: 0.1 }
                 ]
             };
-            let fuse = new Fuse(blockInfo.blocks, fuseOptions);
+            if (!fuse) fuse = new Fuse(blockInfo.blocks, fuseOptions);
 
             const sorter = (fn: pxtc.SymbolInfo): number => {
                 // sort by namespace weight

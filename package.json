@@ -51,6 +51,7 @@
     "typings/marked",
     "typings/jquery",
     "typings/highlightjs",
+    "typings/fuse.js",
     "typings/winrt",
     "localtypings/vscode-debug-protocol.d.ts",
     "docfiles",
