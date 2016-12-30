@@ -740,9 +740,9 @@ namespace ts.pxtc.service {
                 maxPatternLength: 32,
                 minMatchCharLength: 1,
                 keys: [
-                    { name: 'name', weight: 0.5 },
-                    { name: 'attributes.weight', weight: 0.5 },
-                    { name: 'namespace', weight: 0.1 },
+                    { name: 'name', weight: 0.7 },
+                    { name: 'attributes.weight', weight: 0.3 },
+                    { name: 'namespace', weight: 0.2 },
                     { name: 'attributes.block', weight: 0.6 },
                     { name: 'attributes.jsDoc', weight: 0.1 }
                 ]
@@ -752,7 +752,7 @@ namespace ts.pxtc.service {
             const sorter = (fn: pxtc.SymbolInfo): number => {
                 // sort by namespace weight
                 let nsn = blockInfo.apis.byQName[fn.namespace.split('.')[0]];
-                return nsn.attributes.weight || 50;
+                return nsn && nsn.attributes ? nsn.attributes.weight || 50 : 50;
             }
             const fns = fuse.search(search)
                 .slice(0, SEARCH_RESULT_COUNT)
