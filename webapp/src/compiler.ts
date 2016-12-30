@@ -167,6 +167,10 @@ function ensureApisInfoAsync(): Promise<void> {
     else return Promise.resolve()
 }
 
+export function apiSearchAsync(searchFor: string) {
+    return workerOpAsync("apiSearch", { search: searchFor });
+}
+
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => {

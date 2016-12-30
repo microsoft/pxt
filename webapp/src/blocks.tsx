@@ -526,8 +526,7 @@ export class Editor extends srceditor.Editor {
 // block-search:<searchFor>
 data.mountVirtualApi("block-search", {
     getAsync: query => {
-        return compiler.getBlocksAsync()
-         .then(blockInfo => pxt.blocks.search.searchAsync(data.stripProtocol(query), blockInfo))
+        return compiler.apiSearchAsync(data.stripProtocol(query))
          .catch(core.handleNetworkError)
     },
     expirationTime: p => 60 * 1000,

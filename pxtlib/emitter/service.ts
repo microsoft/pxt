@@ -529,13 +529,13 @@ namespace ts.pxtc {
         return typechecker.getFullyQualifiedName(symbol);
     }
 
-    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, lastApiInfo: ApisInfo) {
+    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo) {
         let typechecker = program.getTypeChecker()
 
         for (let s of symbols) {
             let qName = getFullName(typechecker, s)
 
-            if (!r.isMemberCompletion && Util.lookup(lastApiInfo.byQName, qName))
+            if (!r.isMemberCompletion && Util.lookup(apiInfo.byQName, qName))
                 continue; // global symbol
 
             if (Util.lookup(r.entries, qName))
@@ -634,6 +634,7 @@ namespace ts.pxtc.service {
         fileContent?: string;
         position?: number;
         options?: CompileOptions;
+        search?: string;
     }
 
     function fileDiags(fn: string) {
@@ -656,7 +657,7 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    let operations: pxt.Map<(v: OpArg) => any> = {
+    const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
             host.setOpts(emptyOptions)
@@ -724,9 +725,25 @@ namespace ts.pxtc.service {
             return patchUpDiagnostics(allD)
         },
 
-        apiInfo: () => {
-            return (lastApiInfo = getApiInfo(service.getProgram()))
-        },
+        apiInfo: () => (lastApiInfo = getApiInfo(service.getProgram())),
+        apiSearch: v => {
+            const search = v.search;
+            const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
+                // TOOD: fuzzy match
+                const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
+                    + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
+                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0;
+
+                // TODO: weight by namespace weight
+                return score * (fn.attributes.weight || 50)
+            }
+
+            const blockInfo = getBlocksInfo(lastApiInfo); // cache
+            const fns = blockInfo.blocks
+                .sort((l, r) => - scorer(l, search) + scorer(r, search))
+                .slice(0, 7);
+            return [fns, blockInfo];
+        }
     }
 
     export function performOperation(op: string, arg: OpArg) {
