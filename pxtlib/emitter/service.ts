@@ -727,6 +727,7 @@ namespace ts.pxtc.service {
 
         apiInfo: () => (lastApiInfo = getApiInfo(service.getProgram())),
         apiSearch: v => {
+            const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
             const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
                 // TOOD: fuzzy match
@@ -741,7 +742,7 @@ namespace ts.pxtc.service {
             const blockInfo = getBlocksInfo(lastApiInfo); // cache
             const fns = blockInfo.blocks
                 .sort((l, r) => - scorer(l, search) + scorer(r, search))
-                .slice(0, 7);
+                .slice(0, SEARCH_RESULT_COUNT);
             return [fns, blockInfo];
         }
     }

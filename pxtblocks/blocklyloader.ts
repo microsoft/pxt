@@ -59,8 +59,6 @@ namespace pxt.blocks {
     let cachedBlocks: Map<CachedBlock> = {};
     let cachedToolbox: string = "";
 
-    const maxSearchBlocks = 7;
-
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
         return b ? b.fn : undefined;
@@ -635,8 +633,7 @@ namespace pxt.blocks {
                             category.appendChild(label);
                             return;
                         }
-                        for (let i = 0; i < Math.min(blocks.length, maxSearchBlocks); i++) {
-                            let fn = blocks[i];
+                        blocks.forEach((fn) => {
                             let pnames = parameterNames(fn);
                             let block = createToolboxBlock(this.blockInfo, fn, pnames);
 
@@ -655,7 +652,7 @@ namespace pxt.blocks {
                                     }
                                 }
                             }
-                        }
+                        })
                     }).finally(() => {
                         // update shadow types
                         if (tb) {
