@@ -731,6 +731,7 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
+            const blockInfo = getBlocksInfo(lastApiInfo); // cache
             const fuseOptions = {
                 shouldSort: true,
                 threshold: 0.6,
@@ -739,33 +740,23 @@ namespace ts.pxtc.service {
                 maxPatternLength: 32,
                 minMatchCharLength: 1,
                 keys: [
-                    "name",
-                    "namespace",
-                    "attributes.block"
+                    { name: 'name', weight: 0.5 },
+                    { name: 'attributes.weight', weight: 0.5 },
+                    { name: 'namespace', weight: 0.1 },
+                    { name: 'attributes.block', weight: 0.6 },
+                    { name: 'attributes.jsDoc', weight: 0.1 }
                 ]
             };
-            const blockInfo = getBlocksInfo(lastApiInfo); // cache
             let fuse = new Fuse(blockInfo.blocks, fuseOptions);
 
-            /*
-            const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
-                // TOOD: fuzzy match
-                let fuseResults = fuse.search(searchFor);
-                const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
-                    + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
-                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0
-                            + fuseResults.indexOf(fn) > -1 ? 1000 : 0;
-
-                // TODO: weight by namespace weight
-                return score * (fn.attributes.weight || 50)
+            const sorter = (fn: pxtc.SymbolInfo): number => {
+                // sort by namespace weight
+                let nsn = blockInfo.apis.byQName[fn.namespace.split('.')[0]];
+                return nsn.attributes.weight || 50;
             }
-
-            const fns = blockInfo.blocks
-                .sort((l, r) => - scorer(l, search) + scorer(r, search))
-                .slice(0, SEARCH_RESULT_COUNT);
-            */
             const fns = fuse.search(search)
-                .slice(0, SEARCH_RESULT_COUNT);
+                .slice(0, SEARCH_RESULT_COUNT)
+                .sort((l, r) => - sorter(l) + sorter(r));
             return [fns, blockInfo];
         }
     }
