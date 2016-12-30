@@ -1,3 +1,5 @@
+/// <reference path="../../typings/fuse/index.d.ts" />
+
 namespace ts.pxtc {
     export interface ParameterDesc {
         name: string;
@@ -729,19 +731,40 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
+            const fuseOptions = {
+                shouldSort: true,
+                threshold: 0.6,
+                location: 0,
+                distance: 100,
+                maxPatternLength: 32,
+                minMatchCharLength: 1,
+                keys: [
+                    "name",
+                    "namespace",
+                    "attributes.block"
+                ]
+            };
+            const blockInfo = getBlocksInfo(lastApiInfo); // cache
+            let fuse = new Fuse(blockInfo.blocks, fuseOptions);
+
+            /*
             const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
                 // TOOD: fuzzy match
+                let fuseResults = fuse.search(searchFor);
                 const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
                     + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
-                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0;
+                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0
+                            + fuseResults.indexOf(fn) > -1 ? 1000 : 0;
 
                 // TODO: weight by namespace weight
                 return score * (fn.attributes.weight || 50)
             }
 
-            const blockInfo = getBlocksInfo(lastApiInfo); // cache
             const fns = blockInfo.blocks
                 .sort((l, r) => - scorer(l, search) + scorer(r, search))
+                .slice(0, SEARCH_RESULT_COUNT);
+            */
+            const fns = fuse.search(search)
                 .slice(0, SEARCH_RESULT_COUNT);
             return [fns, blockInfo];
         }
