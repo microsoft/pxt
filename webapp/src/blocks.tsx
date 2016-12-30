@@ -73,13 +73,9 @@ export class Editor extends srceditor.Editor {
                                 this.undo();
                             }) : null)
                     );
-                    pxt.blocks.initSearch(this.editor, tb, (searchFor: string) => {
-                        return new Promise<[pxtc.SymbolInfo[], pxtc.BlocksInfo]>((resolve, reject) => {
-                            data.getAsync(`block-search:${searchFor}`).then((fns) => {
-                                resolve(fns);
-                            })
-                        });
-                    });
+                    pxt.blocks.initSearch(this.editor, tb,
+                        searchFor => compiler.apiSearchAsync(searchFor)
+                            .then((fns: [pxtc.SymbolInfo[], pxtc.BlocksInfo]) => fns));
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -158,7 +154,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} message The message to display to the user.
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
-        Blockly.alert = function(message, opt_callback) {
+        Blockly.alert = function (message, opt_callback) {
             return core.dialogAsync({
                 hideCancel: true,
                 header: lf("Alert"),
@@ -177,7 +173,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} message The message to display to the user.
          * @param {!function(boolean)} callback The callback for handling user response.
          */
-        Blockly.confirm = function(message, callback) {
+        Blockly.confirm = function (message, callback) {
             return core.confirmAsync({
                 header: lf("Confirm"),
                 body: message,
@@ -202,7 +198,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} defaultValue The value to initialize the prompt with.
          * @param {!function(string)} callback The callback for handling user reponse.
          */
-        Blockly.prompt = function(message, defaultValue, callback) {
+        Blockly.prompt = function (message, defaultValue, callback) {
             return core.promptAsync({
                 header: message,
                 defaultValue: defaultValue,
@@ -522,12 +518,3 @@ export class Editor extends srceditor.Editor {
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 }
-
-// block-search:<searchFor>
-data.mountVirtualApi("block-search", {
-    getAsync: query => {
-        return compiler.apiSearchAsync(data.stripProtocol(query))
-         .catch(core.handleNetworkError)
-    },
-    expirationTime: p => 60 * 1000,
-})
