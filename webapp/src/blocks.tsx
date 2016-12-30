@@ -23,6 +23,7 @@ export class Editor extends srceditor.Editor {
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
+    diagnosticsOutOfDate = false;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -37,6 +38,9 @@ export class Editor extends srceditor.Editor {
     }
 
     saveToTypeScript(): string {
+        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => b.setWarningText(null));
+        this.diagnosticsOutOfDate = false;
+
         try {
             this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
             return this.compilationResult.source;
@@ -481,8 +485,14 @@ export class Editor extends srceditor.Editor {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
 
-        // clear previous warnings on non-disabled blocks
-        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => b.setWarningText(null));
+        if (this.diagnosticsOutOfDate) {
+            // clear previous warnings on non-disabled blocks
+            this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => b.setWarningText(null));
+        }
+        else {
+            this.diagnosticsOutOfDate = true;
+        }
+
         let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 

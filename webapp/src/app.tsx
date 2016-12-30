@@ -1625,7 +1625,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
-                this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(pkg.mainPkg, opts.debug, resp)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
@@ -2175,7 +2174,7 @@ $(document).ready(() => {
 
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        window.location.hash = window.location.hash.replace(wsPortMatch[0], ""); 
+        window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
     } else {
         pxt.options.wsPort = 3233;
     }
