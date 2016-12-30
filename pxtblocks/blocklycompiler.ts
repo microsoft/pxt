@@ -570,7 +570,14 @@ namespace pxt.blocks {
 
             const compiled = compileExpression(e, val, comments);
             if (!last) {
-                last = compiled
+                if (val.type.indexOf("text") === 0) {
+                    last = compiled;
+                }
+                else {
+                    // If we don't start with a string, then the TS won't match
+                    // the implied semantics of the blocks
+                    last = H.mkSimpleCall("+", [mkText("\"\""), compiled]);
+                }
             }
             else {
                 last = H.mkSimpleCall("+", [last, compiled]);
