@@ -442,7 +442,7 @@ namespace pxt.blocks {
             e.parentNode.removeChild(e);
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): void {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -571,6 +571,119 @@ namespace pxt.blocks {
             trashDiv.appendChild(trashIcon);
             $('.blocklyToolboxDiv').append(trashDiv);
         }
+
+        return tb;
+    }
+
+    export function initSearch(
+        workspace: Blockly.Workspace, tb: Element,
+        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
+        if ($(`#blocklySearchArea`).length) return;
+
+        let blocklySearchArea = document.createElement('div');
+        blocklySearchArea.id = 'blocklySearchArea';
+
+        let blocklySearchInput = document.createElement('div');
+        let origClassName = 'ui fluid icon input';
+        blocklySearchInput.className = origClassName;
+
+        let blocklySearchInputField = document.createElement('input');
+        blocklySearchInputField.type = 'text';
+        blocklySearchInputField.placeholder = lf("Search...");
+        blocklySearchInputField.className = 'blocklySearchInputField';
+
+        let tbCache = tb;
+        blocklySearchInputField.oninput = Util.debounce(() => {
+            let searchField = $('.blocklySearchInputField');
+            let searchFor = searchField.val().toLowerCase();
+            blocklySearchInput.className += ' loading';
+
+            if (searchFor != '') {
+                pxt.tickEvent("blocks.search");
+                let searchTb = tb ? <Element>tb.cloneNode(true) : undefined;
+
+                let catName = 'Search';
+                let category = categoryElement(searchTb, catName);
+
+                if (!category) {
+                    let categories = getChildCategories(searchTb)
+                    let parentCategoryList = searchTb;
+
+                    const nsWeight = 101; // Show search category on top
+                    const locCatName = lf("Search");
+                    category = createCategoryElement(locCatName, catName, nsWeight);
+                    category.setAttribute("expanded", 'true');
+                    category.setAttribute("colour", '#000');
+
+                    // Insert the category based on weight
+                    let ci = 0;
+                    for (ci = 0; ci < categories.length; ++ci) {
+                        let cat = categories[ci];
+                        if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
+                            parentCategoryList.insertBefore(category, cat);
+                            break;
+                        }
+                    }
+                    if (ci == categories.length)
+                        parentCategoryList.appendChild(category);
+                }
+
+                searchAsync(searchFor).then(blocks => {
+                    if (!blocks) return;
+                    if (blocks.length == 0) {
+                        let label = goog.dom.createDom('label');
+                        label.setAttribute('text', lf("No search results..."));
+                        category.appendChild(label);
+                        return;
+                    }
+                    blocks.forEach((fn) => {
+                        let pnames = parameterNames(fn);
+                        let block = createToolboxBlock(this.blockInfo, fn, pnames);
+
+                        if (injectBlockDefinition(this.blockInfo, fn, pnames, block)) {
+                            if (!fn.attributes.deprecated) {
+                                if (fn.attributes.mutateDefaults) {
+                                    const mutationValues = fn.attributes.mutateDefaults.split(";");
+                                    mutationValues.forEach(mutation => {
+                                        const mutatedBlock = block.cloneNode(true);
+                                        mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
+                                        category.appendChild(mutatedBlock);
+                                    });
+                                }
+                                else {
+                                    category.appendChild(block);
+                                }
+                            }
+                        }
+                    })
+                }).finally(() => {
+                    // update shadow types
+                    if (tb) {
+                        $(tb).find('shadow:empty').each((i, shadow) => {
+                            let type = shadow.getAttribute('type');
+                            let b = $(tb).find(`block[type="${type}"]`)[0];
+                            if (b) shadow.innerHTML = b.innerHTML;
+                        })
+
+                        workspace.updateToolbox(searchTb);
+                        blocklySearchInput.className = origClassName;
+                    }
+                })
+            } else {
+                // Clearing search
+                workspace.updateToolbox(tbCache);
+                blocklySearchInput.className = origClassName;
+            }
+            // Search
+        }, 200, false);
+
+        let blocklySearchInputIcon = document.createElement('i');
+        blocklySearchInputIcon.className = 'search icon';
+
+        blocklySearchInput.appendChild(blocklySearchInputField);
+        blocklySearchInput.appendChild(blocklySearchInputIcon);
+        blocklySearchArea.appendChild(blocklySearchInput);
+        $('.blocklyToolboxDiv').prepend(blocklySearchArea);
     }
 
     export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: MouseEvent) => void, undoCallback: (ev?: MouseEvent) => void): void {
@@ -660,6 +773,7 @@ namespace pxt.blocks {
         initText();
         initDrag();
         initToolboxColor();
+        initExpandToolbox();
 
         Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
     }
@@ -1395,7 +1509,7 @@ namespace pxt.blocks {
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-            Blockly.registerButtonCallback('CREATE_VARIABLE', function(button: Blockly.FlyoutButton) {
+            Blockly.registerButtonCallback('CREATE_VARIABLE', function (button: Blockly.FlyoutButton) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
             xmlList.push(button);
@@ -1614,5 +1728,44 @@ namespace pxt.blocks {
             lf("Returns the number of letters (including spaces) in the provided text."),
             "reference/types/string-functions"
         );
+    }
+
+    function initExpandToolbox() {
+        // The following ensures the flyout is updated is cleared or expanded when the toolbox is updated. 
+
+        /**
+         * Modify the block tree on the existing toolbox.
+         * @param {Node|string} tree DOM tree of blocks, or text representation of same.
+         */
+        (Blockly as any).WorkspaceSvg.prototype.updateToolbox = function (tree: any) {
+            tree = (Blockly as any).Options.parseToolboxTree(tree);
+            if (!tree) {
+                if (this.options.languageTree) {
+                    throw 'Can\'t nullify an existing toolbox.';
+                }
+                return;  // No change (null to null).
+            }
+            if (!this.options.languageTree) {
+                throw 'Existing toolbox is null.  Can\'t create new toolbox.';
+            }
+            if (tree.getElementsByTagName('category').length) {
+                if (!this.toolbox_) {
+                    throw 'Existing toolbox has no categories.  Can\'t change mode.';
+                }
+                this.options.languageTree = tree;
+                let openNode = this.toolbox_.populate_(tree);
+                if (openNode)
+                    this.toolbox_.tree_.setSelectedItem(openNode);
+                else
+                    this.toolbox_.flyout_.hide();
+                this.toolbox_.addColour_();
+            } else {
+                if (!this.flyout_) {
+                    throw 'Existing toolbox has categories.  Can\'t change mode.';
+                }
+                this.options.languageTree = tree;
+                this.flyout_.show(tree.childNodes);
+            }
+        };
     }
 }

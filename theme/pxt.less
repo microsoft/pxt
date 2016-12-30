@@ -87,6 +87,10 @@
     top: @mainMenuHeight;
     right: 2rem;
 }
+.rtl #getting-started-btn {
+    right: auto;
+    left: 2rem;
+}
 #getting-started-btn:not(.sideDocs) {
     display: block;
 }
@@ -249,6 +253,14 @@ div.simframe > iframe {
     fill: none !important;
 }
 
+.blocklyFlyoutLabelText {
+    fill: white !important;
+    font-size:1rem;
+}
+.blocklyFlyoutLabelText:hover {
+    fill: white !important;
+}
+
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
 .blocklyTreeRoot div div div div .blocklyTreeRow {
     border-left-width: 12px !important;
@@ -281,6 +293,12 @@ div.simframe > iframe {
     margin-right: auto;
     font-size:3rem;
     text-align: center;
+}
+
+/* Blockly Search bar */
+.blocklySearchInputField {
+    border: 0 !important;
+    border-radius: 0 !important;
 }
 
 /*******************************

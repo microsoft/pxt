@@ -345,6 +345,11 @@ namespace ts.pxtc {
         ctor?: ir.Procedure;
     }
 
+    export interface BinaryExpressionInfo {
+        leftType: string;
+        rightType: string;
+    }
+
     let lf = assembler.lf;
     let checker: TypeChecker;
     let lastSecondaryError: string
@@ -2486,6 +2491,12 @@ ${lbl}: .short 0xffff
 
             let lt = typeOf(node.left)
             let rt = typeOf(node.right)
+
+            if (node.operatorToken.kind == SK.PlusToken) {
+                if (lt.flags & TypeFlags.String || rt.flags & TypeFlags.String) {
+                    (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
+                }
+            }
 
             let shim = (n: string) => rtcallMask(n, [node.left, node.right]);
 
