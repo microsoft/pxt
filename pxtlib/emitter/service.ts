@@ -47,6 +47,7 @@ namespace ts.pxtc {
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
+        blocksById: pxt.Map<SymbolInfo>;
     }
 
     export interface CompletionEntry {
@@ -127,6 +128,10 @@ namespace ts.pxtc {
         if (m)
             return `(${m[1]}) => {\n    ${cursorMarker}\n}`
         return placeholderChar;
+    }
+
+    export function renderCall(apiInfo: pxtc.ApisInfo, si: SymbolInfo): string {
+        return `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
     }
 
     export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
@@ -283,11 +288,13 @@ namespace ts.pxtc {
         return null;
     }
 
-    export function getBlocksInfo(info: ApisInfo) {
+    export function getBlocksInfo(info: ApisInfo): BlocksInfo {
+        const blocks = pxtc.Util.values(info.byQName)
+            .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember));
         return {
             apis: info,
-            blocks: pxtc.Util.values(info.byQName)
-                .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember))
+            blocks,
+            blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId)
         }
     }
 
@@ -302,6 +309,9 @@ namespace ts.pxtc {
         const infos = Util.values(apiInfo.byQName);
         const namespaces = infos.filter(si => si.kind == SymbolKind.Module).sort(compareSymbol);
         const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember).sort(compareSymbol);
+
+        const calls: pxt.Map<string> = {};
+        infos.filter(si => !!si.qName).forEach(si => calls[si.qName] = renderCall(apiInfo, si));
 
         let locStrings: pxt.Map<string> = {};
         let jsdocStrings: pxt.Map<string> = {};
@@ -378,7 +388,7 @@ namespace ts.pxtc {
                 writeLoc(si);
                 if (si.attributes.help)
                     nsHelpPages[si.name] = si.attributes.help;
-                let call = `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
+                const call = calls[si.qName];
                 if (i == 0)
                     writeRef(call);
                 writeNs(call)
@@ -522,13 +532,13 @@ namespace ts.pxtc {
         return typechecker.getFullyQualifiedName(symbol);
     }
 
-    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, lastApiInfo: ApisInfo) {
+    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo) {
         let typechecker = program.getTypeChecker()
 
         for (let s of symbols) {
             let qName = getFullName(typechecker, s)
 
-            if (!r.isMemberCompletion && Util.lookup(lastApiInfo.byQName, qName))
+            if (!r.isMemberCompletion && Util.lookup(apiInfo.byQName, qName))
                 continue; // global symbol
 
             if (Util.lookup(r.entries, qName))
@@ -621,12 +631,14 @@ namespace ts.pxtc.service {
     let service: LanguageService;
     let host: Host;
     let lastApiInfo: ApisInfo;
+    let lastBlocksInfo: BlocksInfo;
 
     export interface OpArg {
         fileName?: string;
         fileContent?: string;
         position?: number;
         options?: CompileOptions;
+        search?: string;
     }
 
     function fileDiags(fn: string) {
@@ -649,7 +661,9 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    let operations: pxt.Map<(v: OpArg) => any> = {
+    const blocksInfoOp = () => lastBlocksInfo || (lastBlocksInfo = getBlocksInfo(lastApiInfo));
+
+    const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
             host.setOpts(emptyOptions)
@@ -718,8 +732,29 @@ namespace ts.pxtc.service {
         },
 
         apiInfo: () => {
-            return (lastApiInfo = getApiInfo(service.getProgram()))
+            lastBlocksInfo = undefined;
+            return lastApiInfo = getApiInfo(service.getProgram());
         },
+        blocksInfo: blocksInfoOp,
+        apiSearch: v => {
+            const SEARCH_RESULT_COUNT = 7;
+            const search = v.search;
+            // TODO: override this function with fuse to change scoring
+            const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
+                const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
+                    + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
+                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0;
+
+                // TODO: weight by namespace weight
+                return score * (fn.attributes.weight || 50)
+            }
+
+            const blockInfo = blocksInfoOp(); // cache
+            const fns = blockInfo.blocks
+                .sort((l, r) => - scorer(l, search) + scorer(r, search))
+                .slice(0, SEARCH_RESULT_COUNT);
+            return fns;
+        }
     }
 
     export function performOperation(op: string, arg: OpArg) {

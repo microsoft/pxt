@@ -8,6 +8,7 @@ CACHE:
 /cdn/highlight.js/highlight.pack.js
 /cdn/lzma/lzma_worker-min.js
 /cdn/jquery.js
+/cdn/fuse.min.js
 /cdn/pxtlib.js
 /cdn/pxtblocks.js
 /cdn/pxtwinrt.js
