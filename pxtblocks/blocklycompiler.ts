@@ -557,6 +557,28 @@ namespace pxt.blocks {
         return H.mkStringLiteral(b.getFieldValue("TEXT"));
     }
 
+    function compileTextJoin(e: Environment, b: B.Block, comments: string[]): JsNode {
+        let last: JsNode;
+        let i = 0;
+        while (true) {
+            const val = b.getInputTargetBlock("ADD" + i);
+            i++;
+
+            if (!val) {
+                break;
+            }
+
+            const compiled = compileExpression(e, val, comments);
+            if (!last) {
+                last = compiled
+            }
+            else {
+                last = H.mkSimpleCall("+", [last, compiled]);
+            }
+        }
+        return last;
+    }
+
     function compileBoolean(e: Environment, b: B.Block, comments: string[]): JsNode {
         return H.mkBooleanLiteral(b.getFieldValue("BOOL") == "TRUE");
     }
@@ -645,6 +667,8 @@ namespace pxt.blocks {
                 expr = compileVariableGet(e, b); break;
             case "text":
                 expr = compileText(e, b, comments); break;
+            case "text_join":
+                expr = compileTextJoin(e, b, comments); break;
             case "lists_create_with":
                 expr = compileCreateList(e, b, comments); break;
             default:
@@ -1240,7 +1264,7 @@ namespace pxt.blocks {
             // is this an event?
             else if (call && call.hasHandler) {
                 // compute key that identifies event call
-                // detect if same event is registered already   
+                // detect if same event is registered already
                 const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
                 const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                     .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
