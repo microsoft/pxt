@@ -3,15 +3,15 @@
 
 namespace pxt.blocks.search {
 
-    export function searchAsync(searchFor: string, blockInfo: pxtc.BlocksInfo): Promise<pxtc.SymbolInfo[]> {
-        return new Promise<pxtc.SymbolInfo[]>((resolve, reject) => {
+    export function searchAsync(searchFor: string, blockInfo: pxtc.BlocksInfo): Promise<[pxtc.SymbolInfo[], pxtc.BlocksInfo]> {
+        return new Promise<[pxtc.SymbolInfo[], pxtc.BlocksInfo]>((resolve, reject) => {
             let fns: pxtc.SymbolInfo[] = [];
-            blockInfo.blocks
+        blockInfo.blocks
                 .filter(fn => fn.namespace.indexOf(searchFor) > -1 || fn.name.toLowerCase().indexOf(searchFor) > -1)
                 .forEach(fn => {
                     fns.push(fn);
                 })
-            resolve(fns);
+            resolve([fns, blockInfo]);
         })
     }
 }

@@ -577,7 +577,7 @@ namespace pxt.blocks {
         return tb;
     }
 
-    export function initSearch(workspace: Blockly.Workspace, tb: Element, searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
+    export function initSearch(workspace: Blockly.Workspace, tb: Element, searchAsync: (searchFor: string) => Promise<[pxtc.SymbolInfo[], pxtc.BlocksInfo]>) {
         if (!$(`#blocklySearchArea`).length) {
             let blocklySearchArea = document.createElement('div');
             blocklySearchArea.id = 'blocklySearchArea';
@@ -627,20 +627,41 @@ namespace pxt.blocks {
                             parentCategoryList.appendChild(category);
                     }
 
-                    searchAsync(searchFor).then((blocks) => {
+                    searchAsync(searchFor).then(([blocks, blockInfo]) => {
                         if (!blocks) return;
                         for (let i = 0; i < Math.min(blocks.length, maxSearchBlocks); i++) {
                             let fn = blocks[i];
                             let pnames = parameterNames(fn);
                             let block = createToolboxBlock(this.blockInfo, fn, pnames);
 
-                            if (!fn.attributes.deprecated) {
-                                category.appendChild(block);
+                            if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
+                                if (!fn.attributes.deprecated) {
+                                    if (fn.attributes.mutateDefaults) {
+                                        const mutationValues = fn.attributes.mutateDefaults.split(";");
+                                        mutationValues.forEach(mutation => {
+                                            const mutatedBlock = block.cloneNode(true);
+                                            mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
+                                            category.appendChild(mutatedBlock);
+                                        });
+                                    }
+                                    else {
+                                        category.appendChild(block);
+                                    }
+                                }
                             }
                         }
                     }).finally(() => {
-                        workspace.updateToolbox(searchTb);
-                        blocklySearchInput.className = origClassName;
+                        // update shadow types
+                        if (tb) {
+                            $(tb).find('shadow:empty').each((i, shadow) => {
+                                let type = shadow.getAttribute('type');
+                                let b = $(tb).find(`block[type="${type}"]`)[0];
+                                if (b) shadow.innerHTML = b.innerHTML;
+                            })
+
+                            workspace.updateToolbox(searchTb);
+                            blocklySearchInput.className = origClassName;
+                        }
                     })
                 } else {
                     // Clearing search

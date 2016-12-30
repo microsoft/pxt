@@ -74,7 +74,7 @@ export class Editor extends srceditor.Editor {
                             }) : null)
                     );
                     pxt.blocks.initSearch(this.editor, tb, (searchFor: string) => {
-                        return new Promise<pxtc.SymbolInfo[]>((resolve, reject) => {
+                        return new Promise<[pxtc.SymbolInfo[], pxtc.BlocksInfo]>((resolve, reject) => {
                             data.getAsync(`block-search:${searchFor}`).then((fns) => {
                                 resolve(fns);
                             })
