@@ -88,7 +88,7 @@ export class Editor extends srceditor.Editor {
                     let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (oldJs == js) {
+                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(js, 0).formatted) {
                             console.log('js not changed, skipping decompile');
                             pxt.tickEvent("typescript.noChanges")
                             return this.parent.setFile(mainPkg.files[blockFile]);
