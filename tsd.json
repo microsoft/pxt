@@ -28,9 +28,6 @@
     },
     "winrt/winrt.d.ts": {
       "commit": "ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
-    },
-    "fuse/index.d.ts": {
-      "commit": "daf9bd392f4c8469ddc8849ee198bbdd1e57c7f4"
     }
   }
 }

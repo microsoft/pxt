@@ -1,5 +1,3 @@
-/// <reference path="../../typings/fuse/index.d.ts" />
-
 namespace ts.pxtc {
     export interface ParameterDesc {
         name: string;
@@ -634,7 +632,6 @@ namespace ts.pxtc.service {
     let host: Host;
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
-    let lastFuse: Fuse;
 
     export interface OpArg {
         fileName?: string;
@@ -735,7 +732,6 @@ namespace ts.pxtc.service {
         },
 
         apiInfo: () => {
-            lastFuse = undefined;
             lastBlocksInfo = undefined;
             return lastApiInfo = getApiInfo(service.getProgram());
         },
@@ -743,27 +739,20 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            if (!lastFuse) {
-                const blockInfo = blocksInfoOp(); // cache
-                const fuseOptions = {
-                    shouldSort: true,
-                    threshold: 0.6,
-                    location: 0,
-                    distance: 100,
-                    maxPatternLength: 32,
-                    minMatchCharLength: 1,
-                    keys: [
-                        { name: 'name', weight: 0.7 },
-                        { name: 'attributes.weight', weight: 0.3 },
-                        { name: 'namespace', weight: 0.2 },
-                        { name: 'attributes.block', weight: 0.6 },
-                        { name: 'attributes.jsDoc', weight: 0.1 }
-                    ]
-                };
-                lastFuse = new Fuse(blockInfo.blocks, fuseOptions);
+            // TODO: override this function with fuse to change scoring
+            const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
+                const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
+                    + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
+                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0;
+
+                // TODO: weight by namespace weight
+                return score * (fn.attributes.weight || 50)
             }
-            const fns = lastFuse.search(search)
-                .slice(0, SEARCH_RESULT_COUNT)
+
+            const blockInfo = blocksInfoOp(); // cache
+            const fns = blockInfo.blocks
+                .sort((l, r) => - scorer(l, search) + scorer(r, search))
+                .slice(0, SEARCH_RESULT_COUNT);
             return fns;
         }
     }

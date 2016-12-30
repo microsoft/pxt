@@ -51,7 +51,6 @@
     "typings/marked",
     "typings/jquery",
     "typings/highlightjs",
-    "typings/fuse.js",
     "typings/winrt",
     "localtypings/vscode-debug-protocol.d.ts",
     "docfiles",
@@ -67,8 +66,7 @@
     "faye-websocket": "^0.11.0",
     "highlight.js": "^9.7.0",
     "lzma": "^2.3.2",
-    "marked": "^0.3.5",
-    "fuse.js": "2.6.1"
+    "marked": "^0.3.5"
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",
