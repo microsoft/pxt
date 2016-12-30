@@ -49,6 +49,7 @@ namespace ts.pxtc {
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
+        blocksById: pxt.Map<SymbolInfo>;
     }
 
     export interface CompletionEntry {
@@ -289,11 +290,13 @@ namespace ts.pxtc {
         return null;
     }
 
-    export function getBlocksInfo(info: ApisInfo) {
+    export function getBlocksInfo(info: ApisInfo): BlocksInfo {
+        const blocks = pxtc.Util.values(info.byQName)
+            .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember));
         return {
             apis: info,
-            blocks: pxtc.Util.values(info.byQName)
-                .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember))
+            blocks,
+            blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId)
         }
     }
 
@@ -630,6 +633,7 @@ namespace ts.pxtc.service {
     let service: LanguageService;
     let host: Host;
     let lastApiInfo: ApisInfo;
+    let lastBlocksInfo: BlocksInfo;
     let lastFuse: Fuse;
 
     export interface OpArg {
@@ -659,6 +663,8 @@ namespace ts.pxtc.service {
         isRightOfDot: boolean;
         isJsDocTagName: boolean;
     }
+
+    const blocksInfoOp = () => lastBlocksInfo || (lastBlocksInfo = getBlocksInfo(lastApiInfo));
 
     const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
@@ -730,13 +736,15 @@ namespace ts.pxtc.service {
 
         apiInfo: () => {
             lastFuse = undefined;
+            lastBlocksInfo = undefined;
             return lastApiInfo = getApiInfo(service.getProgram());
         },
+        blocksInfo: blocksInfoOp,
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            const blockInfo = getBlocksInfo(lastApiInfo); // cache
             if (!lastFuse) {
+                const blockInfo = blocksInfoOp(); // cache
                 const fuseOptions = {
                     shouldSort: true,
                     threshold: 0.6,
@@ -754,14 +762,8 @@ namespace ts.pxtc.service {
                 };
                 lastFuse = new Fuse(blockInfo.blocks, fuseOptions);
             }
-            const sorter = (fn: pxtc.SymbolInfo): number => {
-                // sort by namespace weight
-                let nsn = blockInfo.apis.byQName[fn.namespace.split('.')[0]];
-                return nsn && nsn.attributes ? nsn.attributes.weight || 50 : 50;
-            }
             const fns = lastFuse.search(search)
                 .slice(0, SEARCH_RESULT_COUNT)
-                .sort((l, r) => - sorter(l) + sorter(r));
             return fns;
         }
     }
