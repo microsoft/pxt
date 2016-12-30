@@ -565,7 +565,12 @@ namespace pxt.blocks {
             i++;
 
             if (!val) {
-                break;
+                if (i < b.inputList.length) {
+                    continue;
+                }
+                else {
+                    break;
+                }
             }
 
             const compiled = compileExpression(e, val, comments);
@@ -576,13 +581,18 @@ namespace pxt.blocks {
                 else {
                     // If we don't start with a string, then the TS won't match
                     // the implied semantics of the blocks
-                    last = H.mkSimpleCall("+", [mkText("\"\""), compiled]);
+                    last = H.mkSimpleCall("+", [H.mkStringLiteral(""), compiled]);
                 }
             }
             else {
                 last = H.mkSimpleCall("+", [last, compiled]);
             }
         }
+
+        if (!last) {
+            return H.mkStringLiteral("");
+        }
+
         return last;
     }
 
