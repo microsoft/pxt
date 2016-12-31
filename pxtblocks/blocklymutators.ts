@@ -233,10 +233,10 @@ namespace pxt.blocks {
 
             const declarationString =  this.parameters.map(param => {
                 const declaredName = this.block.getFieldValue(param);
-                const escapedParam = escapeVarName(param, this.block);
+                const escapedParam = escapeVarName(param, e);
                 if (declaredName !== param) {
                     this.parameterRenames[param] = declaredName;
-                    return `${param}: ${escapeVarName(declaredName, this.block)}`;
+                    return `${param}: ${escapeVarName(declaredName, e)}`;
                 }
                 return escapedParam;
             }).join(", ");
