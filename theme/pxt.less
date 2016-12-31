@@ -180,6 +180,14 @@ div.simframe > iframe {
     left:2rem;
 }
 
+/* Menu */ 
+// Add a transition between the blocks / js menu item toggle options
+.ui.inverted.menu .item.blocks-menuitem, .ui.inverted.menu .item.javascript-menuitem {
+    -webkit-transition: background 1s; /* Safari */
+    transition: background 1s;
+    transition-timing-function: ease-in;
+}
+
 /* Help card */
 #helpcard {
     position: absolute;
