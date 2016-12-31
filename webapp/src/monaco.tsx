@@ -529,7 +529,7 @@ export class Editor extends srceditor.Editor {
             let treerow = document.createElement('div');
             treeitem.setAttribute('role', 'treeitem');
             let fnElement = fnDef[ns];
-            let color = monacoEditor.convertColour(metaElement.metaData.color);
+            let color = pxt.blocks.convertColour(metaElement.metaData.color);
             treeitem.onclick = (ev: MouseEvent) => {
                 pxt.tickEvent("monaco.toolbox.click");
 
@@ -680,14 +680,6 @@ export class Editor extends srceditor.Editor {
                     this.undo();
                 }) : null)
         );
-    }
-
-    convertColour(colour: string) {
-        let hue = parseFloat(colour);
-        if (!isNaN(hue)) {
-            return Blockly.hueToRgb(hue);
-        }
-        return colour;
     }
 
     getId() {
