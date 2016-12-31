@@ -706,7 +706,7 @@ namespace pxt.blocks {
                 pxt.BrowserUtils.isTouchEnabled() ?
                     addPackageButton.ontouchstart = addCallback
                     : addPackageButton.onclick = addCallback;
-                addPackageButton.className = 'ui icon button blocklyToolboxButton blocklyAddPackageButton';
+                addPackageButton.className = 'ui icon button small blocklyToolboxButton blocklyAddPackageButton';
                 let addpackageIcon = document.createElement('i');
                 addpackageIcon.className = 'plus icon';
                 addPackageButton.appendChild(addpackageIcon);
@@ -725,7 +725,7 @@ namespace pxt.blocks {
                 pxt.BrowserUtils.isTouchEnabled() ?
                     undoButton.ontouchstart = undoCallback
                     : undoButton.onclick = undoCallback;
-                undoButton.className = 'ui icon button blocklyToolboxButton blocklyUndoButton';
+                undoButton.className = 'ui icon button small blocklyToolboxButton blocklyUndoButton';
                 let undoIcon = document.createElement('i');
                 undoIcon.className = 'undo icon';
                 undoButton.appendChild(undoIcon);

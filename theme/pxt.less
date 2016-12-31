@@ -465,10 +465,28 @@ div.simframe > iframe {
     #sidedocspopout, #sidedocsexpand {
         display:block;
     }
+    /* Blockly */
+    .blocklyTreeRow {
+        width: 230px;
+    }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons {
+        margin-right: 2rem;
+        margin-left: 2rem;
+    }
 }
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    /* Blockly row */
+    .blocklyTreeRow {
+        width: 230px;
+    }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons, #monacoToolboxButtons {
+        margin-right: 1rem;
+        margin-left: 1rem;
+    }
 }
 
 /* Tablet */
@@ -483,6 +501,11 @@ div.simframe > iframe {
         border-left-width: 18px !important;
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
+    }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons, #monacoToolboxButtons {
+        margin-right: 0.5rem;
+        margin-left: 0.5rem;
     }
 }
 
@@ -549,7 +572,7 @@ div.simframe > iframe {
     /* Organization logo */
     .organization {
         right:auto;
-        top:auto;
+        top:auto !important;
         left:1.5rem;
         bottom:0.5rem;
     }
@@ -577,7 +600,7 @@ div.simframe > iframe {
 @media only screen and (max-width: @largestTabletScreen) {
     /* Organization logo */
     .organization {
-        top:auto;
+        top:auto !important;
         left:0.5rem;
         right: auto;
         bottom: 0.5rem;
@@ -610,7 +633,7 @@ div.simframe > iframe {
         position:absolute;
         z-index:5;
         bottom:1rem;
-        left:1rem;
+        left:3rem;
         top:auto;
         width:auto;
         min-width: inherit;
@@ -619,7 +642,7 @@ div.simframe > iframe {
     }
     .rtl #filelist {
         left:auto;
-        right:1rem;
+        right:3rem;
     }
     #maineditor, .rtl #maineditor {
         left: 0;
@@ -658,6 +681,10 @@ div.simframe > iframe {
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
         display:none;
+    }
+    /* Organization */
+    .organization {
+        top: auto !important;
     }
 }
 
