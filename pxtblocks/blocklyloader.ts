@@ -679,6 +679,9 @@ namespace pxt.blocks {
 
         blocklySearchInputField.oninput = searchHandler;
         blocklySearchInputField.onchange = searchHandler;
+        pxt.BrowserUtils.isTouchEnabled() ?
+            blocklySearchInputField.ontouchstart = searchHandler
+            : blocklySearchInputField.onclick = searchHandler;
 
         let blocklySearchInputIcon = document.createElement('i');
         blocklySearchInputIcon.className = 'search icon';
