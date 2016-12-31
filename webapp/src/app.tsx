@@ -1625,6 +1625,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
+                this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(pkg.mainPkg, opts.debug, resp)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
@@ -1810,8 +1811,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
-                        <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
+                        <sui.Item class="editor-menuitem">
+                            <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
+                            <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
+                        </sui.Item>
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...")} class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
@@ -2174,7 +2177,7 @@ $(document).ready(() => {
 
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
+        window.location.hash = window.location.hash.replace(wsPortMatch[0], ""); 
     } else {
         pxt.options.wsPort = 3233;
     }
