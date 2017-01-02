@@ -27,3 +27,8 @@
 .ui.inverted.menu .active.item {
     background: rgba(255, 255, 255, 0.30);
 }
+
+/* Tutorial mode */
+.tutorial .ui.inverted.menu {
+    background: @mainMenuTutorialBackground !important;
+}

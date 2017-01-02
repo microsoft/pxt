@@ -62,6 +62,12 @@ interface IAppState {
     sideDocsLoadUrl?: string; // set once to load the side docs frame
     sideDocsCollapsed?: boolean;
 
+    tutorial?: string; // tutorial
+    tutorialName?: string; // tutorial title
+    tutorialSteps?: string[]; // tutorial steps
+    tutorialStep?: number; // current tutorial page
+    tutorialMd?: string; // current tutorial md
+
     running?: boolean;
     compiling?: boolean;
     publishing?: boolean;
@@ -624,6 +630,128 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     }
 }
 
+class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    openTutorialStep(step: number) {
+        pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorial, step: step });
+        this.props.parent.setState({tutorialStep: step})
+        this.props.parent.setTutorialStep(step);
+    }
+
+    render() {
+        const state = this.props.parent.state;
+        const targetTheme = pxt.appTarget.appTheme;
+        const tutorialSteps = state.tutorialSteps;
+        const currentStep = state.tutorialStep;
+        const tutorialName = state.tutorialName;
+
+        return <div className="ui item">
+                    <div className="ui item">
+                        {tutorialName}
+                    </div>
+                    <div className="ui item tutorial-menuitem">
+                        {tutorialSteps.map((step, index) =>
+                            <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index)}/>
+                        ) }
+                    </div>
+                </div>;
+    }
+}
+
+class TutorialContent extends data.Component<ISettingsProps, {}> {
+    public static notify(message: pxsim.SimulatorMessage) {
+        let sd = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
+    }
+
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    setMarkdown(md: string) {
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
+        this.setUrl(url);
+    }
+
+    private setUrl(url: string) {
+        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (el) el.src = url;
+        else this.props.parent.setState({ tutorialMd: url });
+    }
+
+    renderCore() {
+        const state = this.props.parent.state;
+        const docsUrl = state.tutorialMd;
+        if (!docsUrl) return null;
+
+        return <iframe id="tutorialcontent" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
+    }
+}
+
+class TutorialCard extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    previousTutorialStep() {
+        const currentStep = this.props.parent.state.tutorialStep;
+        const previousStep = currentStep - 1;
+
+        pxt.tickEvent(`tutorial.previous`, { tutorial: this.props.parent.state.tutorial, step: previousStep });
+        this.props.parent.setState({tutorialStep: previousStep})
+        this.props.parent.setTutorialStep(previousStep);
+    }
+
+    nextTutorialStep() {
+        const currentStep = this.props.parent.state.tutorialStep;
+        const nextStep = currentStep + 1;
+
+        pxt.tickEvent(`tutorial.next`, { tutorial: this.props.parent.state.tutorial, step: nextStep });
+        this.props.parent.setState({tutorialStep: nextStep})
+        this.props.parent.setTutorialStep(nextStep);
+    }
+
+    setMarkdown(tutorialMd: string) {
+        let tc = this.refs["tutorialcontent"] as TutorialContent;
+        if (!tc) return;
+        tc.setMarkdown(tutorialMd);
+    }
+
+    render() {
+        const state = this.props.parent.state;
+        const currentStep = state.tutorialStep;
+        const maxSteps = state.tutorialSteps.length;
+        const hasPrevious = currentStep != 0;
+        const hasNext = currentStep != maxSteps - 1;
+
+        return <div id="tutorialcard" className="ui ">
+                    <div className="ui raised fluid card">
+                        <div className="content">
+                            <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
+                        </div>
+                        <div className="extra content">
+                            <div className="ui two buttons">
+                                {hasPrevious ? <button className="ui icon red button" onClick={() => this.previousTutorialStep()}>
+                                    <i className="left chevron icon"></i>
+                                    Previous
+                                </button> : undefined }
+                                {hasNext ? <button className="ui right icon green button" onClick={() => this.nextTutorialStep()}>
+                                    Next
+                                    <i className="right chevron icon"></i>
+                                </button> : undefined }
+                            </div>
+                        </div>
+                    </div>
+                </div> ;
+    }
+}
+
 class SideDocs extends data.Component<ISettingsProps, {}> {
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
@@ -1119,6 +1247,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (!sd) return;
         if (path) sd.setPath(path);
         else sd.collapse();
+    }
+
+    setTutorialStep(step: number) {
+        let tutorialMd = this.state.tutorialSteps[step];
+        let tc = this.refs["tutorialcard"] as TutorialCard;
+        if (!tc) return;
+        if (step > -1) tc.setMarkdown(tutorialMd);
+        //else tc.collapse();
     }
 
     reloadHeaderAsync() {
@@ -1725,8 +1861,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
         Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        this.setSideDoc(targetTheme.sideDoc);
-        this.setState({ sideDocsCollapsed: false })
+        //this.setSideDoc(targetTheme.sideDoc);
+        //this.setState({ sideDocsCollapsed: false })
+        this.startTutorial(targetTheme.sideDoc);
     }
 
     gettingStartedLink() {
@@ -1734,6 +1871,72 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const targetTheme = pxt.appTarget.appTheme;
         Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
         window.open(targetTheme.sideDoc)
+    }
+
+    startTutorial(tutorialId: string) {
+        pxt.tickEvent("tutorial.start");
+        core.showLoading(lf("starting tutorial..."));
+        this.startTutorialAsync(tutorialId)
+            .then(() => Promise.delay(500))
+            .done(() => core.hideLoading());
+    }
+
+    startTutorialAsync(tutorialId: string): Promise<void> {
+        let title = tutorialId;
+        let result: string[] = [];
+
+        return pxt.Cloud.downloadMarkdownAsync(tutorialId)
+            .then(md => {
+                let titleRegex = /^#(.*)/g.exec(md);
+                if (!titleRegex || titleRegex.length < 1) return;
+                title = titleRegex[1];
+
+                let steps = md.split('###');
+                // TODO: remove this log
+                console.log(steps);
+                for (let step = 1; step < steps.length; step++) {
+                    let stepmd = `###${steps[step]}`;
+                    result.push(stepmd);
+                }
+                //TODO: parse for tutoral options, mainly initial blocks
+            }).then(() => {
+                return this.createProjectAsync({
+                    filesOverride: {
+                        "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">",
+                        "main.ts": "  "
+                    },
+                    name: tutorialId
+                });
+            }).finally(() => {
+                this.setState({tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result})
+                this.setTutorialStep(0);
+            });
+    }
+
+    exitTutorial() {
+        pxt.tickEvent("tutorial.exit");
+        core.showLoading(lf("exiting tutorial..."));
+        this.exitTutorialAsync()
+            .then(() => Promise.delay(500))
+            .done(() => core.hideLoading());
+        // TODO: decide whether or not to push the hash to the url when entering / exiting tutorial mode
+        //history.pushState("", document.title, window.location.pathname);
+    }
+
+    exitTutorialAsync() {
+        // deleting tutorial files
+        let curr = pkg.mainEditorPkg().header
+        curr.isDeleted = true
+        return workspace.saveAsync(curr, {})
+            .then(() => {
+                if (workspace.getHeaders().length > 0) {
+                    this.scriptSearch.showOpenProject();
+                } else {
+                    this.newProject();
+                }
+            }).finally(() => {
+                this.setState({ tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1});
+            });
     }
 
     getSandboxMode() {
@@ -1764,8 +1967,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
-        const gettingStarted = !sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
+        const tutorial = this.state.tutorial && this.state.tutorial.length > 0;
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
+        const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const blockActive = this.editor == this.blocksEditor
@@ -1789,7 +1993,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -1810,13 +2014,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        <sui.Item class="editor-menuitem">
+                        {sandbox || tutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
+                        {tutorial ? undefined : <sui.Item class="editor-menuitem">
                             <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
                             <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
-                        </sui.Item>
+                        </sui.Item> }
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...")} class="more-dropdown-menuitem">
+                        {sandbox || tutorial ? undefined : <sui.DropdownMenuItem icon='setting' class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -1839,6 +2043,16 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span>
+                        </div> : undefined }
+                        {tutorial ? <TutorialMenuItem parent={this} /> : undefined }
+                        {tutorial ? <div className="right menu">
+                            <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() }/>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
                         </div> : undefined }
                     </div>
                 </div>
@@ -1873,6 +2087,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                    {tutorial ? <TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                     {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
@@ -1885,7 +2100,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                </div> : undefined}
+                </div> : undefined }
             </div>
         );
     }
@@ -2133,6 +2348,10 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
+            break;
+        case "tutorial":
+            pxt.tickEvent("hash.tutorial")
+            editor.startTutorial(hash.arg);
             break;
         case "sandbox":
         case "pub":

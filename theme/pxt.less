@@ -131,6 +131,33 @@
     left:1.25rem;
 }
 
+/* Tutorial Mode */
+.tutorial-menuitem > .selected {
+    background-color: @primaryColor !important;
+    padding: 1.3rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+}
+
+#tutorialcard {
+    position: absolute;
+    top: 1rem;
+    z-index:9;
+    right: 1rem;
+}
+.rtl #tutorialcard {
+    right: auto;
+    left: 1rem;
+}
+
+#tutorialcontent {
+    display: block;
+    width: 100%;
+    overflow-y: auto;
+    border:none;
+    height: 100%;
+}
+
 /* Cookie Message */
 #cookiemsg {
    position: absolute;

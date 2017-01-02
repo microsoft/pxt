@@ -4,4 +4,7 @@
 
 /* PXT Variables */
 
+@invertedBackground: @mainMenuInvertedBackground;
 @mainMenuMinHeight: @minHeight;
+
+@mainMenuTutorialBackground: @invertedBackground;
