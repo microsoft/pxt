@@ -1,4 +1,4 @@
-/// <reference path="../typings/winrt/winrt.d.ts"/>
+/// <reference path="../typings/globals/winrt/index.d.ts"/>
 
 namespace pxt.BrowserUtils {
     export function isWinRT(): boolean {

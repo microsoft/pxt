@@ -3,7 +3,7 @@ node_js:
   - "5.7.0"
 before_script:
   - "npm install"
-  - "tsd reinstall"
+  - "typings install"
 sudo: false
 notifications:
   email:

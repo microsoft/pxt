@@ -1,5 +1,5 @@
-/// <reference path="../../built/pxtarget.d.ts"/>
-/// <reference path="../../built/pxtpackage.d.ts"/>
+/// <reference path="../../localtypings/pxtarget.d.ts"/>
+/// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
 namespace ts.pxtc {
     export const assert = Util.assert;

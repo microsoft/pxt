@@ -1,6 +1,6 @@
-/// <reference path="../built/blockly.d.ts" />
+/// <reference path="../localtypings/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../typings/jquery/jquery.d.ts" />
+/// <reference path="../typings/globals/jquery/index.d.ts" />
 
 namespace pxt.blocks {
     let workspace: B.Workspace;
