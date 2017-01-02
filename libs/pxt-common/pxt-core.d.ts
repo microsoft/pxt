@@ -19,31 +19,32 @@ interface Array<T> {
     /**
       * Removes the last element from an array and returns it.
       */
-    //% helper=arrayPop weight=74
+    //% shim=Array_::pop weight=74
     //% blockId="array_pop" block="pop last item from %this" blockNamespace="lists"
     pop(): T;
 
     /**
-      * Reverses the elements in an Array.
+      * Reverses the elements in an Array. The first array element becomes the last, and the last array element becomes the first.
       */
     //% helper=arrayReverse weight=10
     //% blockId="array_reverse" block="reverse %this" blockNamespace="lists"
     reverse(): void;
 
     /**
-      * Removes the first element from an array and returns it.
+      * Removes the first element from an array and returns that element. This method changes the length of the array.
       */
     //% helper=arrayShift weight=70
     //% blockId="array_shift" block="shift first item from %this" blockNamespace="lists"
     shift(): T;
 
     /**
-      * Inserts new elements at the start of an array.
-      * @param items  Elements to insert at the start of the Array.
+      * Adds one element to the beginning of an array and returns the new length of the array.
+      * @param element to insert at the start of the Array.
       */
     //% helper=arrayUnshift weight=69
     //% blockId="array_unshift" block="unshift into %this|with first item %item" blockNamespace="lists"
-    unshift(item:T): void;
+    //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
+    unshift(value:T): number; 
 
     /**
       * Returns a section of an array.
@@ -61,6 +62,13 @@ interface Array<T> {
       */
     //% helper=arraySplice weight=40
     splice(start: number, deleteCount: number): void;
+
+    /**
+      * Sorts the elements of an array in place and returns the array. The sort is not necessarily stable. 
+      * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
+      */
+    //% helper=arraySort weight=40
+    sort(callbackfn?: (value1: T, value2: T) => number): T[];
 
     /**
       * Calls a defined callback function on each element of an array, and returns an array that contains the results.
@@ -92,7 +100,16 @@ interface Array<T> {
     /** Removes the object at position index. */
     //% shim=Array_::removeAt weight=49
     //% blockId="array_removeat" block="remove from %this|at %index" blockNamespace="lists"
-    removeAt(index:number) : void;
+    removeAt(index:number) : T;
+
+    /**
+     * Insert the value at a particular index, increases length by 1
+     * @param index the zero-based position in the list to insert the value, eg: 0
+     * @param the value to insert, eg: 0
+     */
+    //% shim=Array_::insertAt weight=84
+    //% blockId="array_insertAt" block="insert in %this|at %index|with value %value" blockNamespace="lists"
+    insertAt(index:number, value: T) : void;
 
     /**
       * Returns the index of the first occurrence of a value in an array.
