@@ -6,5 +6,3 @@
 
 @invertedBackground: @mainMenuInvertedBackground;
 @mainMenuMinHeight: @minHeight;
-
-@mainMenuTutorialBackground: @invertedBackground;
