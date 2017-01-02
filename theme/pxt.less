@@ -133,7 +133,7 @@
 
 /* Tutorial Mode */
 .tutorial-menuitem > .selected {
-    background-color: @primaryColor !important;
+    background-color: @tutorialSelectedMenuColor !important;
     padding: 1.3rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
@@ -209,7 +209,7 @@ div.simframe > iframe {
 
 /* Menu */ 
 .ui.menu .item.editor-menuitem {
-    background: @primaryColor !important;
+    background: @mainMenuBlocksJsToggleColor !important;
     margin: 0.5rem;
     padding: 0.7rem;
     border-radius: 0.5rem;
@@ -496,8 +496,8 @@ div.simframe > iframe {
     .blocklyTreeRow {
         width: 230px;
     }
-    /* Blockly Toolbox buttons */
-    #blocklyToolboxButtons {
+    /* Toolbox buttons */
+    #blocklyToolboxButtons, #monacoToolboxButtons {
         margin-right: 2rem;
         margin-left: 2rem;
     }
@@ -551,8 +551,8 @@ div.simframe > iframe {
         padding: 0.4em !important;
     }
     .ui.menu .item.editor-menuitem {
-        margin-top: (@mobileMenuHeight/6) !important;
-        margin-bottom: (@mobileMenuHeight/6) !important;
+        margin-top: ((@mobileMenuHeight - 2.5rem)/2) !important;
+        margin-bottom: ((@mobileMenuHeight - 2.5rem)/2) !important;
     }
     /* Logo */
     .ui.item.logo img {

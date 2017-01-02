@@ -45,18 +45,46 @@
      PXT Variables
 *******************************/
 
+/*-------------------
+   Menu
+--------------------*/
+
+@mainMenuInvertedBackground: @black;
+@mainMenuTutorialBackground: @orange;
+
 @mainMenuHeight: 4.4rem;
 @mobileMenuHeight: 4.4rem;
 
-@sidedocsButtonsTop: (@mainMenuHeight + 1rem);
-@sidedocsButtonsRight: 4.25rem;
+@mainMenuBlocksJsToggleColor: @primaryColor;
+
+@tutorialSelectedMenuColor: @primaryColor;
+
+/*-------------------
+   Layout
+--------------------*/
 
 @sideBarWidth: 22rem;
 @simulatorWidth: 27rem;
 @simulatorWidthSmall: 20rem;
 
+/*-------------------
+   Background
+--------------------*/
+
 @simulatorBackground: #fff;
+@blocklySvgColor: #fff;
+
+/*-------------------
+   Side Docs
+--------------------*/
+
+@sidedocsButtonsTop: (@mainMenuHeight + 1rem);
+@sidedocsButtonsRight: 4.25rem;
+
+/*-------------------
+   Editor
+--------------------*/
 
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
-@blocklySvgColor: #fff;
 @trashIconColor: @primaryColor;
+
