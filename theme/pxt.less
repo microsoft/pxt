@@ -217,6 +217,14 @@ div.simframe > iframe {
 .ui.menu.fixed .item.blocks-menuitem, .ui.menu.fixed .item.javascript-menuitem {
     border-radius: 0.2rem !important;
 }
+.ui.inverted.menu .item.blocks-menuitem {
+    border-top-right-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+}
+.ui.inverted.menu .item.javascript-menuitem {
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+}
 
 // Add a transition between the blocks / js menu item toggle options
 .ui.inverted.menu .item.blocks-menuitem, .ui.inverted.menu .item.javascript-menuitem {
@@ -301,6 +309,7 @@ div.simframe > iframe {
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;
+    z-index: 10;
 }
 
 .blocklySvg {
