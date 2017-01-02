@@ -29,6 +29,12 @@ namespace pxt.blocks {
 
     const MAX_COMMENT_LINE_LENGTH = 50;
 
+    const reservedWords = ["break", "case", "catch", "class", "const", "continue", "debugger",
+        "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally",
+        "for", "function", "if", "import", "in", "instanceof", "new", "null", "return",
+        "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while",
+        "with"];
+
 
     function stringLit(s: string) {
         if (s.length > 20 && /\n/.test(s))
@@ -301,7 +307,7 @@ namespace pxt.blocks {
             return find((<any>b).p);
 
         if (b.type == "variables_get")
-            return find(lookup(e, escapeVarName(b.getFieldValue("VAR"))).type);
+            return find(lookup(e, escapeVarName(b.getFieldValue("VAR"), e)).type);
 
         assert(!b.outputConnection || b.outputConnection.check_ && b.outputConnection.check_.length > 0);
 
@@ -422,7 +428,7 @@ namespace pxt.blocks {
                         break;
                     case "variables_set":
                     case "variables_change":
-                        let x = escapeVarName(b.getFieldValue("VAR"));
+                        let x = escapeVarName(b.getFieldValue("VAR"), e);
                         let p1 = lookup(e, x).type;
                         attachPlaceholderIf(e, b, "VALUE");
                         let rhs = b.getInputTargetBlock("VALUE");
@@ -557,6 +563,45 @@ namespace pxt.blocks {
         return H.mkStringLiteral(b.getFieldValue("TEXT"));
     }
 
+    function compileTextJoin(e: Environment, b: B.Block, comments: string[]): JsNode {
+        let last: JsNode;
+        let i = 0;
+        while (true) {
+            const val = b.getInputTargetBlock("ADD" + i);
+            i++;
+
+            if (!val) {
+                if (i < b.inputList.length) {
+                    continue;
+                }
+                else {
+                    break;
+                }
+            }
+
+            const compiled = compileExpression(e, val, comments);
+            if (!last) {
+                if (val.type.indexOf("text") === 0) {
+                    last = compiled;
+                }
+                else {
+                    // If we don't start with a string, then the TS won't match
+                    // the implied semantics of the blocks
+                    last = H.mkSimpleCall("+", [H.mkStringLiteral(""), compiled]);
+                }
+            }
+            else {
+                last = H.mkSimpleCall("+", [last, compiled]);
+            }
+        }
+
+        if (!last) {
+            return H.mkStringLiteral("");
+        }
+
+        return last;
+    }
+
     function compileBoolean(e: Environment, b: B.Block, comments: string[]): JsNode {
         return H.mkBooleanLiteral(b.getFieldValue("BOOL") == "TRUE");
     }
@@ -645,6 +690,8 @@ namespace pxt.blocks {
                 expr = compileVariableGet(e, b); break;
             case "text":
                 expr = compileText(e, b, comments); break;
+            case "text_join":
+                expr = compileTextJoin(e, b, comments); break;
             case "lists_create_with":
                 expr = compileCreateList(e, b, comments); break;
             default:
@@ -678,6 +725,12 @@ namespace pxt.blocks {
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
         errors: B.Block[];
+        renames: RenameMap;
+    }
+
+    export interface RenameMap {
+        oldToNew: Map<string>;
+        takenNames: Map<boolean>;
     }
 
     export enum VarUsage {
@@ -704,7 +757,8 @@ namespace pxt.blocks {
             workspace: e.workspace,
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
             stdCallTable: e.stdCallTable,
-            errors: e.errors
+            errors: e.errors,
+            renames: e.renames
         };
     }
 
@@ -728,7 +782,11 @@ namespace pxt.blocks {
             workspace: w,
             bindings: [],
             stdCallTable: {},
-            errors: []
+            errors: [],
+            renames: {
+                oldToNew: {},
+                takenNames: {}
+            }
         }
     };
 
@@ -766,7 +824,7 @@ namespace pxt.blocks {
     }
 
     function compileControlsFor(e: Environment, b: B.Block, comments: string[]): JsNode[] {
-        let bVar = escapeVarName(b.getFieldValue("VAR"));
+        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
         let bTo = b.getInputTargetBlock("TO");
         let bDo = b.getInputTargetBlock("DO");
         let bBy = b.getInputTargetBlock("BY");
@@ -821,16 +879,39 @@ namespace pxt.blocks {
     }
 
     // convert to javascript friendly name
-    export function escapeVarName(name: string): string {
+    export function escapeVarName(name: string, e: Environment): string {
         if (!name) return '_';
+
+        if (e.renames.oldToNew[name]) {
+            return e.renames.oldToNew[name];
+        }
+
         let n = name.split(/[^a-zA-Z0-9_$]+/)
             //.map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1)) breaks roundtrip...
             .join('');
+
+        if (/\d/.test(n.charAt(0)) || isReservedWord(name)) {
+            n = "_" + n;
+        }
+
+        if (e.renames.takenNames[n]) {
+            let i = 2;
+
+            while (e.renames.takenNames[n + i]) {
+                i++;
+            }
+
+            n += i;
+        }
+
+        e.renames.oldToNew[name] = n;
+        e.renames.takenNames[n] = true;
+
         return n;
     }
 
     function compileVariableGet(e: Environment, b: B.Block): JsNode {
-        let name = escapeVarName(b.getFieldValue("VAR"));
+        let name = escapeVarName(b.getFieldValue("VAR"), e);
         let binding = lookup(e, name);
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
@@ -839,7 +920,7 @@ namespace pxt.blocks {
     }
 
     function compileSet(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let bVar = escapeVarName(b.getFieldValue("VAR"));
+        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         let isDef = false
@@ -859,7 +940,7 @@ namespace pxt.blocks {
     }
 
     function compileChange(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let bVar = escapeVarName(b.getFieldValue("VAR"));
+        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
         let bExpr = b.getInputTargetBlock("VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned)
@@ -1108,7 +1189,7 @@ namespace pxt.blocks {
             if (!b)
                 return false;
             else if ((b.type == "controls_for" || b.type == "controls_simple_for")
-                && escapeVarName(b.getFieldValue("VAR")) == name)
+                && escapeVarName(b.getFieldValue("VAR"), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
                 return true;
@@ -1131,14 +1212,14 @@ namespace pxt.blocks {
         // collect local variables.
         w.getAllBlocks().forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for") {
-                let x = escapeVarName(b.getFieldValue("VAR"));
+                let x = escapeVarName(b.getFieldValue("VAR"), e);
                 trackLocalDeclaration(x, pNumber.type);
             }
             else if (isMutatingBlock(b)) {
                 const declarations = b.mutation.getDeclaredVariables();
                 if (declarations) {
                     for (const varName in declarations) {
-                        trackLocalDeclaration(escapeVarName(varName), declarations[varName]);
+                        trackLocalDeclaration(escapeVarName(varName, e), declarations[varName]);
                     }
                 }
             }
@@ -1148,7 +1229,7 @@ namespace pxt.blocks {
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
         w.getAllBlocks().forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
-                let x = escapeVarName(b.getFieldValue("VAR"));
+                let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (lookup(e, x) == null)
                     e = extend(e, x, null);
 
@@ -1240,7 +1321,7 @@ namespace pxt.blocks {
             // is this an event?
             else if (call && call.hasHandler) {
                 // compute key that identifies event call
-                // detect if same event is registered already   
+                // detect if same event is registered already
                 const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
                 const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                     .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
@@ -1525,5 +1606,9 @@ namespace pxt.blocks {
             return false;
         }
         return text.substr(text.length - suffix.length) === suffix;
+    }
+
+    function isReservedWord(str: string) {
+        return reservedWords.indexOf(str) !== -1;
     }
 }

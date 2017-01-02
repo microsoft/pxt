@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.7.9",
+  "version": "0.7.13",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -89,6 +89,16 @@
     "webfonts-generator": "^0.3.3"
   },
   "scripts": {
-    "test": "jake travis --trace"
+    "test": "jake travis --trace",
+    "clean": "jake clean",
+    "lint": "jake lint",
+    "start": "jake default",
+    "test:all": "jake test",
+    "test:decompiler": "jake testdecompiler",
+    "test:decompiler-errors": "jake testdecompilererrors",
+    "test:err": "jake testerr",
+    "test:fmt": "jake testfmt",
+    "test:lang": "jake testlang",
+    "update": "jake update"
   }
 }

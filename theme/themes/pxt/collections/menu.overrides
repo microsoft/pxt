@@ -18,8 +18,12 @@
     margin-right: 0.25rem;
 }
 
-@media only screen and (max-width:@largestMobileEditorBreakpoint) {
+@media only screen and (max-width: @largestMobileScreen) {
     #menubar .ui.menu {
         height: @mobileMenuHeight !important;
     }
+}
+
+.ui.inverted.menu .active.item {
+    background: rgba(255, 255, 255, 0.30);
 }

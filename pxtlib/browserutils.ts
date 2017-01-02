@@ -92,6 +92,10 @@ namespace pxt.BrowserUtils {
         return !!navigator && /Epiphany/i.test(navigator.userAgent);
     }
 
+    export function isTouchEnabled(): boolean {
+        return ('ontouchstart' in document.documentElement);
+    }
+
     export function os(): string {
         if (isWindows()) return "windows";
         else if (isMac()) return "mac";

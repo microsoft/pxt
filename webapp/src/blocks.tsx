@@ -7,6 +7,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
+import * as data from "./data";
 import defaultToolbox from "./toolbox"
 
 import Util = pxt.Util;
@@ -61,7 +62,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
                     pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
                         (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                             (() => {
@@ -72,6 +73,9 @@ export class Editor extends srceditor.Editor {
                                 this.undo();
                             }) : null)
                     );
+                    pxt.blocks.initSearch(this.editor, tb,
+                        searchFor => compiler.apiSearchAsync(searchFor)
+                            .then((fns: pxtc.SymbolInfo[]) => fns));
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -150,7 +154,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} message The message to display to the user.
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
-        Blockly.alert = function(message, opt_callback) {
+        Blockly.alert = function (message, opt_callback) {
             return core.dialogAsync({
                 hideCancel: true,
                 header: lf("Alert"),
@@ -169,7 +173,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} message The message to display to the user.
          * @param {!function(boolean)} callback The callback for handling user response.
          */
-        Blockly.confirm = function(message, callback) {
+        Blockly.confirm = function (message, callback) {
             return core.confirmAsync({
                 header: lf("Confirm"),
                 body: message,
@@ -194,7 +198,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} defaultValue The value to initialize the prompt with.
          * @param {!function(string)} callback The callback for handling user reponse.
          */
-        Blockly.prompt = function(message, defaultValue, callback) {
+        Blockly.prompt = function (message, defaultValue, callback) {
             return core.promptAsync({
                 header: message,
                 defaultValue: defaultValue,
@@ -370,7 +374,9 @@ export class Editor extends srceditor.Editor {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
-                pxt.tickEvent("blocks.create");
+                let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
+                let blockId = ev.xml.getAttribute('type');
+                pxt.tickEvent("blocks.create", {category: lastCategory, block: blockId});
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
