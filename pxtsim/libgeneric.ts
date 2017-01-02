@@ -20,7 +20,7 @@ namespace pxsim {
             this.data = [];
         }
 
-        isValidIndex(x : number) {
+        isValidIndex(x: number) {
             return (x >= 0 && x < this.data.length && this.data.hasOwnProperty(x as any));
         }
 
