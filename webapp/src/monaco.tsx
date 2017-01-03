@@ -1,4 +1,4 @@
-/// <reference path="../../built/monaco.d.ts" />
+/// <reference path="../../localtypings/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 
 
@@ -88,7 +88,7 @@ export class Editor extends srceditor.Editor {
                     let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (oldJs == js) {
+                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(js, 0).formatted) {
                             console.log('js not changed, skipping decompile');
                             pxt.tickEvent("typescript.noChanges")
                             return this.parent.setFile(mainPkg.files[blockFile]);
@@ -529,7 +529,7 @@ export class Editor extends srceditor.Editor {
             let treerow = document.createElement('div');
             treeitem.setAttribute('role', 'treeitem');
             let fnElement = fnDef[ns];
-            let color = monacoEditor.convertColour(metaElement.metaData.color);
+            let color = pxt.blocks.convertColour(metaElement.metaData.color);
             treeitem.onclick = (ev: MouseEvent) => {
                 pxt.tickEvent("monaco.toolbox.click");
 
@@ -680,14 +680,6 @@ export class Editor extends srceditor.Editor {
                     this.undo();
                 }) : null)
         );
-    }
-
-    convertColour(colour: string) {
-        let hue = parseFloat(colour);
-        if (!isNaN(hue)) {
-            return Blockly.hueToRgb(hue);
-        }
-        return colour;
     }
 
     getId() {

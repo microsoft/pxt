@@ -1,4 +1,4 @@
-/// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 
 namespace pxt.workspace {
