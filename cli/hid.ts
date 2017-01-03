@@ -76,7 +76,7 @@ export function hf2ConnectAsync(path: string) {
 }
 
 let hf2Dev: Promise<HF2.Wrapper>
-export function hf2DeviceAsync(path: string = null) {
+export function hf2DeviceAsync(path: string = null): Promise<HF2.Wrapper> {
     if (!hf2Dev) {
         let devs = getHF2Devices()
         if (devs.length == 0)
