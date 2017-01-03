@@ -627,7 +627,7 @@ namespace pxt.blocks {
         blocklySearchInputField.placeholder = lf("Search...");
         blocklySearchInputField.className = 'blocklySearchInputField';
 
-        cachedSearchTb = tb;
+        pxt.blocks.cachedSearchTb = tb;
         const searchHandler = Util.debounce(() => {
             let searchField = $('.blocklySearchInputField');
             let searchFor = searchField.val().toLowerCase();
@@ -706,7 +706,7 @@ namespace pxt.blocks {
                 })
             } else {
                 // Clearing search
-                workspace.updateToolbox(cachedSearchTb);
+                workspace.updateToolbox(pxt.blocks.cachedSearchTb);
                 blocklySearchInput.className = origClassName;
             }
             // Search
