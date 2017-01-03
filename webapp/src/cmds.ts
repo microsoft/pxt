@@ -2,6 +2,7 @@
 import * as core from "./core";
 import * as pkg from "./package";
 import * as hwdbg from "./hwdbg";
+import * as hidbridge from "./hidbridge";
 import Cloud = pxt.Cloud;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
@@ -124,6 +125,15 @@ function webusbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .then(dev => dev.flashAsync(blocks))
 }
 
+function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug('HID deployment...');
+    core.infoNotification(lf("Flashing device..."));
+    let f = resp.outfiles[pxtc.BINARY_UF2]
+    let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
+    return hidbridge.initAsync()
+        .then(dev => dev.flashAsync(blocks))
+}
+
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
@@ -148,18 +158,18 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function initCommandsAsync(): Promise<void> {
+    pxt.commands.browserDownloadAsync = browserDownloadAsync;
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
-        pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    } else if (hidbridge.shouldUse()) {
+        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // window app
         pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
-        pxt.commands.browserDownloadAsync = browserDownloadAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
-        pxt.commands.browserDownloadAsync = browserDownloadAsync;
     }
 
     return Promise.resolve();

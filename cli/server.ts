@@ -458,6 +458,64 @@ function initSocketServer(wsPort: number) {
         return r
     }
 
+    function startHID(request: any, socket: any, body: any) {
+        let ws = new WebSocket(request, socket, body);
+        let hios: pxt.Map<hid.HidIO> = {};
+        ws.on('open', () => {
+            ws.send(JSON.stringify({ id: "ready" }))
+        })
+        ws.on('message', function (event: any) {
+            try {
+                let msg = JSON.parse(event.data);
+                console.log("HIDMSG", msg.op, objToString(msg.arg))
+                Promise.resolve()
+                    .then(() => {
+                        let hio = hios[msg.arg.path]
+                        if (!hio && msg.arg.path)
+                            hios[msg.arg.path] = hio = new hid.HidIO(msg.arg.path)
+                        switch (msg.op) {
+                            case "send":
+                                return hio.sendPacketAsync(new Buffer(msg.arg.data) as any)
+                                    .then(() => ({}))
+                            case "recv":
+                                return hio.recvPacketAsync()
+                                    .then(d => ({ data: new Buffer(d).toString("base64") }))
+                            case "list":
+                                return { devices: hid.getHF2Devices() } as any
+                        }
+                    })
+                    .then(resp => {
+                        console.log("HIDRESP", objToString(resp))
+                        ws.send(JSON.stringify({
+                            op: msg.op,
+                            id: msg.id,
+                            result: resp
+                        }))
+                    }, error => {
+                        console.log("HIDERR", error.stack)
+                        ws.send(JSON.stringify({
+                            result: {
+                                errorMessage: error.message || "Error",
+                                errorStackTrace: error.stack,
+                            },
+                            op: msg.op,
+                            id: msg.id
+                        }))
+                    })
+            } catch (e) {
+                console.log("ws hid error", e.stack)
+            }
+        });
+        ws.on('close', function (event: any) {
+            console.log('ws hid connection closed')
+            ws = null;
+        });
+        ws.on('error', function () {
+            console.log('ws hid connection closed')
+            ws = null;
+        })
+    }
+
     function startDebug(request: any, socket: any, body: any) {
         let ws = new WebSocket(request, socket, body);
         let dapjs: any
@@ -542,6 +600,8 @@ function initSocketServer(wsPort: number) {
                     startSerial(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/debug")
                     startDebug(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/hid")
+                    startHID(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/electron")
                     startElectronChannel(request, socket, body);
                 else console.log('refused connection at ' + request.url);
@@ -567,9 +627,8 @@ function sendSerialMsg(msg: string) {
 function initSerialMonitor() {
     if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
     if (pxt.appTarget.serial.useHF2) {
-        console.log('serial: monitoring HID ports...')
-        initSocketServer();
-        hid.startMonitor(sendSerialMsg)
+        //console.log('serial: monitoring HID ports...')
+        //hid.startMonitor(sendSerialMsg)
         return
     }
 

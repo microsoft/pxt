@@ -12,7 +12,7 @@ export interface Iface {
     recvHandler: (v: any) => void;
 }
 
-export function wrap(send: (v: any) => void): Iface {
+export function wrap(send: (v: any) => void, nolock = false): Iface {
     let pendingMsgs: pxt.Map<(v: any) => void> = {}
     let msgId = 0;
     let q = new U.PromiseQueue();
@@ -20,7 +20,8 @@ export function wrap(send: (v: any) => void): Iface {
     let initPromise = new Promise<void>((resolve, reject) => {
         pendingMsgs["ready"] = resolve;
     })
-    q.enqueue("main", () => initPromise)
+    if (!nolock)
+        q.enqueue("main", () => initPromise)
 
     let recvHandler = (data: any) => {
         if (pendingMsgs.hasOwnProperty(data.id)) {
@@ -31,7 +32,7 @@ export function wrap(send: (v: any) => void): Iface {
     };
 
     function opAsync(op: string, arg: any) {
-        return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
+        let dowork = () => new Promise<any>((resolve, reject) => {
             let id = "" + msgId++
             pendingMsgs[id] = v => {
                 if (!v) {
@@ -45,7 +46,11 @@ export function wrap(send: (v: any) => void): Iface {
                 }
             }
             send({ id, op, arg })
-        }))
+        })
+        if (nolock)
+            return dowork()
+        else
+            return q.enqueue("main", dowork)
     }
 
     return { opAsync, recvHandler }
@@ -60,14 +65,14 @@ export function makeWebWorker(workerFile: string) {
     return iface
 }
 
-export function makeWebSocket(url: string) {
+export function makeWebSocket(url: string, nolock = false) {
     let ws = new WebSocket(url)
     let sendq: string[] = []
     let iface = wrap(v => {
         let s = JSON.stringify(v)
         if (sendq) sendq.push(s)
         else ws.send(s)
-    })
+    }, nolock)
     ws.onmessage = ev => {
         iface.recvHandler(JSON.parse(ev.data))
     }

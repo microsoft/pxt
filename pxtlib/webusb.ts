@@ -3,6 +3,7 @@ namespace pxt.usb {
     export class USBError extends Error {
         constructor(msg: string) {
             super(msg)
+            this.message = msg
         }
     }
 
@@ -141,7 +142,7 @@ namespace pxt.usb {
                     let isHID = (iface: USBInterface) =>
                         iface.alternates[0].interfaceClass == 0xff &&
                         iface.alternates[0].interfaceSubclass == 42;
-                        //iface.alternates[0].endpoints[0].type == "interrupt";
+                    //iface.alternates[0].endpoints[0].type == "interrupt";
                     let hid = dev.configurations[0].interfaces.filter(isHID)[0]
                     if (!hid)
                         this.error("cannot find USB HID interface")

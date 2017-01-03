@@ -101,6 +101,7 @@ export function connectSerial(w: HF2.Wrapper) {
 export class HIDError extends Error {
     constructor(m: string) {
         super(m)
+        this.message = m
     }
 }
 
@@ -132,7 +133,9 @@ export class HidIO implements HF2.PacketIO {
     }
 
     error(msg: string): any {
-        throw new HIDError("HID error on " + this.path + ": " + msg)
+        let fullmsg = "HID error on " + this.path + ": " + msg
+        console.error(fullmsg)
+        throw new HIDError(fullmsg)
     }
 
     reconnectAsync(): Promise<HF2.PacketIO> {
