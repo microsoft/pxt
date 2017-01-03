@@ -545,7 +545,7 @@ ${files["main.ts"]}
                                 window.parent.postMessage(<pxsim.TutorialToolboxMessage>{
                                     type: "tutorial",
                                     tutorial: tutorialid,
-                                    subtype: "tutorialloaded",
+                                    subtype: "tutorialtoolbox",
                                     data: toolboxSubset
                             }, "*");
                         }

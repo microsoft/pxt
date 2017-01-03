@@ -86,7 +86,7 @@ namespace pxsim {
     }
 
     export interface TutorialToolboxMessage extends TutorialMessage {
-        subtype: "tutorialloaded";
+        subtype: "tutorialtoolbox";
         data: {[index: string]: number };
     }
 
