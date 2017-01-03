@@ -74,12 +74,14 @@ class BridgeIO implements pxt.HF2.PacketIO {
         return iface.opAsync("recv", {
             path: this.dev.path
         }).then((resp: any) => {
-            return U.stringToUint8Array(btoa(resp.data))
+            return U.stringToUint8Array(atob(resp.data))
         })
     }
 
     initAsync() {
-        return Promise.resolve()
+        return iface.opAsync("init", {
+            path: this.dev.path
+        })
     }
 }
 

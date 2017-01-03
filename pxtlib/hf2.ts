@@ -319,8 +319,8 @@ namespace pxt.HF2 {
                     this.bootloaderMode = binfo[0] == HF2_MODE_BOOTLOADER;
                     this.pageSize = read32(binfo, 4)
                     this.flashSize = read32(binfo, 8) * this.pageSize
-                    this.maxMsgSize = read32(binfo, 12) * this.pageSize
-                    console.log(`Connected; flash ${this.flashSize / 1024}kB`)
+                    this.maxMsgSize = read32(binfo, 12)
+                    console.log(`Connected; maxMsg ${this.maxMsgSize} bytes; flash ${this.flashSize / 1024}kB`)
                     return this.talkAsync(HF2_CMD_INFO)
                 })
                 .then(buf => {

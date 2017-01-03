@@ -113,6 +113,7 @@ export class HidIO implements HF2.PacketIO {
     constructor(private path: string) {
         this.dev = new HID.HID(path)
         this.dev.on("data", (buf: Buffer) => {
+            //console.log("RECV: " + buf.toString("hex"))
             this.buf.push(new Uint8Array(buf))
         })
         this.dev.on("error", (err: Error) => {
@@ -120,7 +121,12 @@ export class HidIO implements HF2.PacketIO {
         })
     }
 
+    reset() {
+        this.buf.drain()
+    }
+
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
+        //console.log("SEND: " + new Buffer(pkt).toString("hex"))
         let lst = [0]
         for (let i = 0; i < 64; ++i)
             lst.push(pkt[i] || 0)

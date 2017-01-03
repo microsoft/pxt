@@ -458,24 +458,27 @@ function initSocketServer(wsPort: number) {
         return r
     }
 
+    let hios: pxt.Map<hid.HidIO> = {};
     function startHID(request: any, socket: any, body: any) {
         let ws = new WebSocket(request, socket, body);
-        let hios: pxt.Map<hid.HidIO> = {};
         ws.on('open', () => {
             ws.send(JSON.stringify({ id: "ready" }))
         })
         ws.on('message', function (event: any) {
             try {
                 let msg = JSON.parse(event.data);
-                console.log("HIDMSG", msg.op, objToString(msg.arg))
+                //console.log("HIDMSG", msg.op, objToString(msg.arg))
                 Promise.resolve()
                     .then(() => {
                         let hio = hios[msg.arg.path]
                         if (!hio && msg.arg.path)
                             hios[msg.arg.path] = hio = new hid.HidIO(msg.arg.path)
                         switch (msg.op) {
+                            case "init":
+                                hio.reset()
+                                return {}
                             case "send":
-                                return hio.sendPacketAsync(new Buffer(msg.arg.data) as any)
+                                return hio.sendPacketAsync(new Buffer(msg.arg.data, "base64") as any)
                                     .then(() => ({}))
                             case "recv":
                                 return hio.recvPacketAsync()
@@ -485,7 +488,7 @@ function initSocketServer(wsPort: number) {
                         }
                     })
                     .then(resp => {
-                        console.log("HIDRESP", objToString(resp))
+                        //console.log("HIDRESP", objToString(resp))
                         ws.send(JSON.stringify({
                             op: msg.op,
                             id: msg.id,
