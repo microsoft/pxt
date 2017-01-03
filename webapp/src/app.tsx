@@ -1,4 +1,4 @@
-/// <reference path="../../built/pxtpackage.d.ts"/>
+/// <reference path="../../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
@@ -1796,7 +1796,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <span id="logo" className="ui item logo">
                                 {targetTheme.logo || targetTheme.portraitLogo
                                     ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
-                                    : <span>{targetTheme.name}</span>}
+                                    : <span className="name">{targetTheme.name}</span>}
                                 {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                             </span> }
                         <div className="ui item portrait only">
@@ -1862,7 +1862,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                             {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Run") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
                         </div>
-                        <div className="ui item portait hide">
+                        <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
                         </div>

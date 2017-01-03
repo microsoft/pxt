@@ -1,4 +1,4 @@
-/// <reference path="../built/blockly.d.ts" />
+/// <reference path="../localtypings/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
 import Util = pxt.Util;
 
@@ -593,7 +593,7 @@ namespace pxt.blocks {
         blocklySearchInputField.className = 'blocklySearchInputField';
 
         let tbCache = tb;
-        blocklySearchInputField.oninput = Util.debounce(() => {
+        const searchHandler = Util.debounce(() => {
             let searchField = $('.blocklySearchInputField');
             let searchFor = searchField.val().toLowerCase();
             blocklySearchInput.className += ' loading';
@@ -677,6 +677,12 @@ namespace pxt.blocks {
             // Search
         }, 200, false);
 
+        blocklySearchInputField.oninput = searchHandler;
+        blocklySearchInputField.onchange = searchHandler;
+        pxt.BrowserUtils.isTouchEnabled() ?
+            blocklySearchInputField.ontouchstart = searchHandler
+            : blocklySearchInputField.onclick = searchHandler;
+
         let blocklySearchInputIcon = document.createElement('i');
         blocklySearchInputIcon.className = 'search icon';
 
@@ -686,7 +692,7 @@ namespace pxt.blocks {
         $('.blocklyToolboxDiv').prepend(blocklySearchArea);
     }
 
-    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: MouseEvent) => void, undoCallback: (ev?: MouseEvent) => void): void {
+    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: Event) => void, undoCallback: (ev?: Event) => void): void {
         if (!$(`#${id}`).length) {
             let blocklyToolboxButtons = document.createElement('div');
             blocklyToolboxButtons.id = id;
@@ -700,8 +706,10 @@ namespace pxt.blocks {
                 addPackageButton.setAttribute('role', 'button');
                 addPackageButton.setAttribute('aria-label', lf("Add Package..."));
                 addPackageButton.setAttribute('title', lf("Add Package..."));
-                addPackageButton.onclick = addCallback;
-                addPackageButton.className = 'ui icon button blocklyToolboxButton blocklyAddPackageButton';
+                pxt.BrowserUtils.isTouchEnabled() ?
+                    addPackageButton.ontouchstart = addCallback
+                    : addPackageButton.onclick = addCallback;
+                addPackageButton.className = 'ui icon button small blocklyToolboxButton blocklyAddPackageButton';
                 let addpackageIcon = document.createElement('i');
                 addpackageIcon.className = 'plus icon';
                 addPackageButton.appendChild(addpackageIcon);
@@ -717,8 +725,10 @@ namespace pxt.blocks {
                 undoButton.setAttribute('role', 'button');
                 undoButton.setAttribute('aria-label', lf("Undo"));
                 undoButton.setAttribute('title', lf("Undo"));
-                undoButton.onclick = undoCallback;
-                undoButton.className = 'ui icon button blocklyToolboxButton blocklyUndoButton';
+                pxt.BrowserUtils.isTouchEnabled() ?
+                    undoButton.ontouchstart = undoCallback
+                    : undoButton.onclick = undoCallback;
+                undoButton.className = 'ui icon button small blocklyToolboxButton blocklyUndoButton';
                 let undoIcon = document.createElement('i');
                 undoIcon.className = 'undo icon';
                 undoButton.appendChild(undoIcon);
