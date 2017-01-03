@@ -488,6 +488,7 @@ function initSocketServer(wsPort: number) {
                         }
                     })
                     .then(resp => {
+                        if (!ws) return;
                         //console.log("HIDRESP", objToString(resp))
                         ws.send(JSON.stringify({
                             op: msg.op,
@@ -496,6 +497,7 @@ function initSocketServer(wsPort: number) {
                         }))
                     }, error => {
                         console.log("HIDERR", error.stack)
+                        if (!ws) return;
                         ws.send(JSON.stringify({
                             result: {
                                 errorMessage: error.message || "Error",

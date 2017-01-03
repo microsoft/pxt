@@ -292,8 +292,18 @@ namespace pxt.HF2 {
             return this.lock.enqueue("out", () => loop(0))
         }
 
+        switchToBootloaderAsync() {
+            if (this.bootloaderMode)
+                return Promise.resolve()
+            return this.talkAsync(HF2_CMD_START_FLASH)
+                .then(() => this.initAsync())
+                .then(() => {
+                    if (!this.bootloaderMode)
+                        this.error("cannot switch into bootloader mode")
+                })
+        }
+
         flashAsync(blocks: pxtc.UF2.Block[]) {
-            U.assert(this.bootloaderMode)
             let loopAsync = (pos: number): Promise<void> => {
                 if (pos >= blocks.length)
                     return Promise.resolve()
@@ -305,7 +315,8 @@ namespace pxt.HF2 {
                 return this.talkAsync(HF2_CMD_WRITE_FLASH_PAGE, buf)
                     .then(() => loopAsync(pos + 1))
             }
-            return loopAsync(0)
+            return this.switchToBootloaderAsync()
+                .then(() => loopAsync(0))
                 .then(() =>
                     this.talkAsync(HF2_CMD_RESET_INTO_APP)
                         .catch(e => { }))
