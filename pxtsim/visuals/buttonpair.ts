@@ -1,4 +1,4 @@
-/// <reference path="../../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../../typings/globals/bluebird/index.d.ts"/>
 
 namespace pxsim.visuals {
     export function mkBtnSvg(xy: Coord): SVGAndSize<SVGGElement> {

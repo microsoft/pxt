@@ -1,4 +1,4 @@
-/// <reference path="../../built/monaco.d.ts" />
+/// <reference path="../../localtypings/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 
 

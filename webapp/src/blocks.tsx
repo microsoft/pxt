@@ -1,5 +1,5 @@
-/// <reference path="../../built/blockly.d.ts" />
-/// <reference path="../../typings/jquery/jquery.d.ts" />
+/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
 import * as pkg from "./package";

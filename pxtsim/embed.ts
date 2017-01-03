@@ -1,4 +1,4 @@
-/// <reference path="../built/pxtparts.d.ts"/>
+/// <reference path="../localtypings/pxtparts.d.ts"/>
 
 namespace pxsim {
     export interface SimulatorMessage {

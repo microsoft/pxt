@@ -1,4 +1,4 @@
-/// <reference path="../../built/pxtpackage.d.ts"/>
+/// <reference path="../../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
