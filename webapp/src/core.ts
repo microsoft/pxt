@@ -1,5 +1,5 @@
-/// <reference path="../../typings/react/react.d.ts" />
-/// <reference path="../../typings/react/react-dom.d.ts" />
+/// <reference path="../../typings/globals/react/index.d.ts" />
+/// <reference path="../../typings/globals/react-dom/index.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";

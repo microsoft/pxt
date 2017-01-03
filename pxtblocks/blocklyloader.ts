@@ -1,4 +1,4 @@
-/// <reference path="../built/blockly.d.ts" />
+/// <reference path="../localtypings/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
 import Util = pxt.Util;
 
