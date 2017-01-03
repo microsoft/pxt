@@ -1,4 +1,4 @@
-/// <reference path="../built/pxtarget.d.ts"/>
+/// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
@@ -703,7 +703,37 @@ int main() {
         return r
     }
 
-    function extractSource(hexfile: string): { meta: string; text: Uint8Array; } {
+    interface RawEmbed {
+        meta: string;
+        text: Uint8Array;
+    }
+
+    function extractSourceFromBin(bin: Uint8Array): RawEmbed {
+        let magic = [0x41, 0x14, 0x0E, 0x2F, 0xB8, 0x2F, 0xA2, 0xBB]
+        outer: for (let p = 0; p < bin.length; p += 16) {
+            if (bin[p] != magic[0])
+                continue
+            for (let i = 0; i < magic.length; ++i)
+                if (bin[p + i] != magic[i])
+                    continue outer
+            let metaLen = bin[p + 8] | (bin[p + 9] << 8)
+            let textLen = bin[p + 10] | (bin[p + 11] << 8) | (bin[p + 12] << 16) | (bin[p + 13] << 24)
+            // TODO test in iOS Safari
+            p += 16
+            let end = p + metaLen + textLen
+            if (end > bin.length)
+                continue
+            let bufmeta = bin.slice(p, p + metaLen)
+            let buftext = bin.slice(p + metaLen, end)
+            return {
+                meta: fromUTF8Bytes(bufmeta),
+                text: buftext
+            }
+        }
+        return null
+    }
+
+    function extractSource(hexfile: string): RawEmbed {
         if (!hexfile) return undefined;
 
         let metaLen = 0
@@ -764,35 +794,50 @@ int main() {
         });
     }
 
-    export function unpackSourceFromHexAsync(dat: ArrayLike<number>): Promise<HexFile> { // string[] (guid)
-        let str = fromUTF8Bytes(dat);
-        let tmp = extractSource(str || "")
-        if (!tmp) return undefined
+    export function unpackSourceFromHexAsync(dat: Uint8Array): Promise<HexFile> { // string[] (guid)
+        let rawEmbed: RawEmbed
 
-        if (!tmp.meta || !tmp.text) {
+        let bin = ts.pxtc.UF2.toBin(dat)
+        if (bin) {
+            rawEmbed = extractSourceFromBin(bin)
+        } else {
+            let str = fromUTF8Bytes(dat);
+            rawEmbed = extractSource(str || "")
+        }
+
+        if (!rawEmbed) return undefined
+
+        if (!rawEmbed.meta || !rawEmbed.text) {
             pxt.debug("This .hex file doesn't contain source.")
             return undefined;
         }
 
-        let hd: { compression: string; headerSize: number; metaSize: number; editor: string; target?: string; } = JSON.parse(tmp.meta)
+        let hd: {
+            compression: string;
+            headerSize: number;
+            metaSize: number;
+            editor: string;
+            target?: string;
+        } = JSON.parse(rawEmbed.meta)
         if (!hd) {
             pxt.debug("This .hex file is not valid.")
             return undefined;
         }
         else if (hd.compression == "LZMA") {
-            return lzmaDecompressAsync(tmp.text)
+            return lzmaDecompressAsync(rawEmbed.text)
                 .then(res => {
                     if (!res) return null;
-                    let meta = res.slice(0, hd.headerSize || hd.metaSize);
+                    let meta = res.slice(0, hd.headerSize || hd.metaSize || 0);
                     let text = res.slice(meta.length);
-                    let metajs = JSON.parse(meta);
-                    return { meta: metajs, source: text }
+                    if (meta)
+                        Util.jsonCopyFrom(hd, JSON.parse(meta))
+                    return { meta: hd as any, source: text }
                 })
         } else if (hd.compression) {
             pxt.debug(`Compression type ${hd.compression} not supported.`)
             return undefined
         } else {
-            return Promise.resolve({ source: fromUTF8Bytes(tmp.text) });
+            return Promise.resolve({ source: fromUTF8Bytes(rawEmbed.text) });
         }
     }
 }

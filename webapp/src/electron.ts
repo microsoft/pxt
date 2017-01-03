@@ -5,7 +5,6 @@ import Cloud = pxt.Cloud;
 
 interface UpdateEventInfo {
     appName?: string;
-    isBeta?: boolean;
     isCritical?: boolean;
     isInitialCheck?: boolean;
     targetVersion?: string;
@@ -25,11 +24,20 @@ export function init() {
         return;
     }
 
-    function onCriticalUpdate(args: any) {
+    function onCriticalUpdate(args: UpdateEventInfo) {
+        const isUrl = /^https:\/\//.test(args.targetVersion);
+        let body = lf("To continue using {0}, you must install an update.", args.appName || lf("this application"));
+        let agreeLbl = lf("Update");
+
+        if (isUrl) {
+            body = lf("To continue using {0}, you must install an update from the website.", args.appName || lf("this application"));
+            agreeLbl = lf("Go to website");
+        }
+
         core.confirmAsync({
             header: lf("Critical update required"),
-            body: lf("To continue using {0}, you must install an update.", args.appName || lf("this application")),
-            agreeLbl: lf("Update"),
+            body,
+            agreeLbl,
             disagreeLbl: lf("Quit"),
             disagreeClass: "red",
             size: "medium"
@@ -48,17 +56,22 @@ export function init() {
         });
     }
 
-    function onUpdateAvailable(args: any) {
+    function onUpdateAvailable(args: UpdateEventInfo) {
+        const isUrl = /^https:\/\//.test(args.targetVersion);
         let header = lf("Version {0} available", args.targetVersion);
+        let body = lf("A new version of {0} is ready to download and install. The app will restart during the update. Update now?", args.appName || lf("this application"));
+        let agreeLbl = lf("Update");
 
-        if (args.isBeta) {
-            header += " " + lf("(beta release)");
+        if (isUrl) {
+            header = lf("Update available from website");
+            body = lf("A new version of {0} is available from the website.", args.appName || lf("this application"));
+            agreeLbl = lf("Go to website");
         }
 
         core.confirmAsync({
             header,
-            body: lf("A new version of {0} is ready to download and install. The app will restart during the update. Update now?", args.appName || lf("this application")),
-            agreeLbl: lf("Update"),
+            body,
+            agreeLbl,
             disagreeLbl: lf("Not now"),
             size: "medium"
         }).then(b => {
@@ -69,8 +82,16 @@ export function init() {
                     pxt.tickEvent("update.refused");
                 }
             } else {
-                pxt.tickEvent("update.accepted");
-                core.showLoading(lf("Downloading update..."));
+                if (args.isInitialCheck) {
+                    pxt.tickEvent("update.acceptedInitial");
+                } else {
+                    pxt.tickEvent("update.accepted");
+                }
+
+                if (!isUrl) {
+                    core.showLoading(lf("Downloading update..."));
+                }
+
                 sendMessage("update", {
                     targetVersion: args.targetVersion
                 });
@@ -91,8 +112,8 @@ export function init() {
         displayUpdateError(lf("Unable to check for update"), lf("Ok"));
     }
 
-    function onUpdateDownloadError(args: any) {
-        let isCritical = args && args.isCritical;
+    function onUpdateDownloadError(args: UpdateEventInfo) {
+        const isCritical = args && args.isCritical;
 
         core.hideLoading();
         displayUpdateError(lf("There was an error downloading the update"), isCritical ? lf("Quit") : lf("Ok"))
@@ -115,7 +136,7 @@ export function init() {
     }
 
     pxt.log('initializing electron socket');
-    electronSocket = new WebSocket('ws://localhost:3233/' + Cloud.localToken + '/electron');
+    electronSocket = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/electron`);
     electronSocket.onopen = (ev) => {
         pxt.log('electron: socket opened');
         sendMessage("ready");
@@ -126,7 +147,7 @@ export function init() {
     }
     electronSocket.onmessage = (ev) => {
         try {
-            let msg = JSON.parse(ev.data) as ElectronMessage;
+            const msg = JSON.parse(ev.data) as ElectronMessage;
 
             switch (msg.type) {
                 case "critical-update":
@@ -160,7 +181,7 @@ export function sendMessage(type: string, args?: any) {
         return;
     }
 
-    let message: ElectronMessage = {
+    const message: ElectronMessage = {
         type,
         args
     };

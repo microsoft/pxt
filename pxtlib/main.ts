@@ -1,8 +1,7 @@
-/// <reference path="../typings/bluebird/bluebird.d.ts"/>
-/// <reference path="../built/pxtpackage.d.ts"/>
-/// <reference path="../built/pxtparts.d.ts"/>
-/// <reference path="../built/pxtarget.d.ts"/>
-/// <reference path="../built/pxtpackage.d.ts"/>
+/// <reference path="../typings/globals/bluebird/index.d.ts"/>
+/// <reference path="../localtypings/pxtpackage.d.ts"/>
+/// <reference path="../localtypings/pxtparts.d.ts"/>
+/// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt {
@@ -27,6 +26,8 @@ namespace pxt {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
+        if (!trg.appTheme.embedUrl)
+            trg.appTheme.embedUrl = trg.appTheme.homeUrl
         let cs = appTarget.compileService
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
@@ -37,6 +38,7 @@ namespace pxt {
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device
+        wsPort?: number;
     }
     export var options: PxtOptions = {};
 
@@ -574,6 +576,9 @@ namespace pxt {
                                     headerSize: headerString.length,
                                     textSize: programText.length,
                                     name: this.config.name,
+                                    eURL: pxt.appTarget.appTheme.embedUrl,
+                                    eVER: pxt.appTarget.versions ? pxt.appTarget.versions.target : "",
+                                    pxtTarget: appTarget.id,
                                 })
                                 opts.embedBlob = btoa(U.uint8ArrayToString(buf))
                             });

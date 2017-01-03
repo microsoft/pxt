@@ -73,6 +73,41 @@ namespace ts.pxtc {
             return r
         }
 
+        export function toBin(blocks: Uint8Array): Uint8Array {
+            if (blocks.length < 512)
+                return null
+            let curraddr = -1
+            let appstartaddr = -1
+            let bufs: Uint8Array[] = []
+            for (let i = 0; i < blocks.length; ++i) {
+                let ptr = i * 512
+                let bl = parseBlock(blocks.slice(ptr, ptr + 512))
+                if (!bl) continue
+                if (curraddr == -1) {
+                    curraddr = bl.targetAddr
+                    appstartaddr = curraddr
+                }
+                let padding = bl.targetAddr - curraddr
+                if (padding < 0 || padding % 4 || padding > 1024 * 1024)
+                    continue
+                if (padding > 0)
+                    bufs.push(new Uint8Array(padding))
+                bufs.push(blocks.slice(ptr + 32, ptr + 32 + bl.payloadSize))
+                curraddr = bl.targetAddr + bl.payloadSize
+            }
+            let len = 0
+            for (let b of bufs) len += b.length
+            if (len == 0)
+                return null
+            let r = new Uint8Array(len)
+            let dst = 0
+            for (let b of bufs) {
+                for (let i = 0; i < b.length; ++i)
+                    r[dst++] = b[i]
+            }
+            return r
+        }
+
         function setWord(block: Uint8Array, ptr: number, v: number) {
             block[ptr] = (v & 0xff)
             block[ptr + 1] = ((v >> 8) & 0xff)

@@ -1,4 +1,5 @@
 out
+electron-out
 node_modules
 npm-debug.log
 projects

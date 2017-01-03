@@ -1,5 +1,5 @@
-/// <reference path="../../typings/react/react.d.ts" />
-/// <reference path="../../typings/react/react-dom.d.ts" />
+/// <reference path="../../typings/globals/react/index.d.ts" />
+/// <reference path="../../typings/globals/react-dom/index.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
@@ -17,11 +17,11 @@ export type Component<S, T> = data.Component<S, T>;
 
 export function hideLoading() {
     $('.ui.page.dimmer .loadingcontent').remove();
-    $('body').dimmer('hide');
+    $('body.dimmable').dimmer('hide');
 }
 
 export function showLoading(msg: string) {
-    $('body').dimmer('show');
+    $('body.dimmable').dimmer('show');
     $('.ui.page.dimmer').html(`
   <div class="content loadingcontent">
     <div class="ui text large loader msg">{lf("Please wait")}</div>
@@ -140,6 +140,10 @@ export interface ConfirmOptions extends DialogOptions {
     agreeClass?: string;
     hideAgree?: boolean;
     deleteLbl?: string;
+}
+
+export interface PromptOptions extends ConfirmOptions {
+    defaultValue: string;
 }
 
 export interface DialogOptions {
@@ -303,6 +307,38 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
     }).done()
 }
 
+export function promptAsync(options: PromptOptions): Promise<string> {
+    if (!options.buttons) options.buttons = []
+
+    let result = options.defaultValue;
+
+    if (!options.hideAgree) {
+        options.buttons.push({
+            label: options.agreeLbl || lf("Go ahead!"),
+            class: options.agreeClass,
+            icon: options.agreeIcon,
+            onclick: () => {
+                let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
+                result = dialogInput.value;
+            }
+        })
+    }
+
+    options.htmlBody = `<div class="ui fluid icon input">
+                            <input type="text" id="promptDialogInput" placeholder="${options.defaultValue}">
+                        </div>`;
+
+    options.onLoaded = () => {
+        let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
+        if (dialogInput) {
+            dialogInput.focus();
+        }
+    };
+
+    return dialogAsync(options)
+        .then(() => result)
+}
+
 export interface ShareOptions {
     header: string;
     body?: string;
@@ -339,7 +375,7 @@ export function shareLinkAsync(options: ShareOptions) {
     let modal = $(html)
     enableCopyable(modal);
     let done = false
-    $('body').append(modal)
+    $('body.dimmable').append(modal)
 
     return new Promise((resolve, reject) =>
         modal.modal({

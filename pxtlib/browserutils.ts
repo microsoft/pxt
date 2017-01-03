@@ -1,4 +1,4 @@
-/// <reference path="../typings/winrt/winrt.d.ts"/>
+/// <reference path="../typings/globals/winrt/index.d.ts"/>
 
 namespace pxt.BrowserUtils {
     export function isWinRT(): boolean {
@@ -90,6 +90,10 @@ namespace pxt.BrowserUtils {
     //Epiphany also lies about being Chrome, Safari, and Chromium
     export function isEpiphany(): boolean {
         return !!navigator && /Epiphany/i.test(navigator.userAgent);
+    }
+
+    export function isTouchEnabled(): boolean {
+        return ('ontouchstart' in document.documentElement);
     }
 
     export function os(): string {

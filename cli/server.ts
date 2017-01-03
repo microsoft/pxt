@@ -1,4 +1,4 @@
-/// <reference path="../typings/node/node.d.ts"/>
+/// <reference path="../typings/globals/node/index.d.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -423,8 +423,8 @@ let electronSocket: WebSocket = null;
 let webappReady = false;
 let electronPendingMessages: ElectronMessage[] = [];
 
-function initSocketServer() {
-    console.log('starting local ws server at 3233...')
+function initSocketServer(wsPort: number) {
+    console.log(`starting local ws server at ${wsPort}...`)
     const WebSocket = require('faye-websocket');
 
     function startSerial(request: any, socket: any, body: any) {
@@ -551,7 +551,10 @@ function initSocketServer() {
         }
     });
 
-    wsserver.listen(3233, "127.0.0.1");
+    return new Promise<void>((resolve, reject) => {
+        wsserver.on("Error", reject);
+        wsserver.listen(wsPort, "127.0.0.1", () => resolve());
+    });
 }
 
 function sendSerialMsg(msg: string) {
@@ -631,7 +634,7 @@ function initSerialMonitor() {
 }
 
 function openUrl(startUrl: string, browser: string) {
-    if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_]+$/.test(startUrl)) {
+    if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_&]+$/.test(startUrl)) {
         console.error("invalid URL to open: " + startUrl)
         return
     }
@@ -719,6 +722,7 @@ export interface ServeOptions {
     browser?: string;
     electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
+    wsPort?: number;
     serial?: boolean;
 }
 
@@ -735,8 +739,9 @@ let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
+    if (!serveOptions.wsPort) serveOptions.wsPort = 3233;
     setupRootDir();
-    initSocketServer();
+    const wsServerPromise = initSocketServer(serveOptions.wsPort);
     if (serveOptions.serial)
         initSerialMonitor();
     if (serveOptions.electronHandlers) {
@@ -914,10 +919,14 @@ export function serveAsync(options: ServeOptions) {
         require(serverjs);
     }
 
-    return new Promise<void>((resolve, reject) => {
+    const serverPromise = new Promise<void>((resolve, reject) => {
         server.on("error", reject);
-        server.listen(serveOptions.port, "127.0.0.1", () => {
-            let start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}`;
+        server.listen(serveOptions.port, "127.0.0.1", () => resolve());
+    });
+
+    return Promise.all([wsServerPromise, serverPromise])
+        .then(() => {
+            let start = `http://localhost:${serveOptions.port}/#ws=${serveOptions.wsPort}&local_token=${options.localToken}`;
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);
@@ -928,8 +937,5 @@ export function serveAsync(options: ServeOptions) {
             if (options.autoStart) {
                 openUrl(start, options.browser);
             }
-
-            resolve();
         });
-    });
 }

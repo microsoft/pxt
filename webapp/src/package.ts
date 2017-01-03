@@ -156,12 +156,12 @@ export class EditorPackage {
 
     removeDepAsync(pkgid: string) {
         return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
-            .then(() => this.saveFilesAsync());
+            .then(() => this.saveFilesAsync(true));
     }
 
     addDepAsync(pkgid: string, pkgversion: string) {
         return this.updateConfigAsync(cfg => cfg.dependencies[pkgid] = pkgversion)
-            .then(() => this.saveFilesAsync());
+            .then(() => this.saveFilesAsync(true));
     }
 
     getKsPkg() {
@@ -230,7 +230,7 @@ export class EditorPackage {
         return Util.mapMap(this.files, (k, f) => f.content)
     }
 
-    saveFilesAsync() {
+    saveFilesAsync(immediate?: boolean) {
         if (!this.header) return Promise.resolve();
 
         let cfgFile = this.files[pxt.CONFIG_NAME]
@@ -242,7 +242,7 @@ export class EditorPackage {
             }
         }
         return workspace.saveAsync(this.header, this.getAllFiles())
-            .then(() => this.scheduleSave())
+            .then(() => immediate ? this.savePkgAsync() : this.scheduleSave())
     }
 
     sortedFiles() {

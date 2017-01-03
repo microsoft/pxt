@@ -42,6 +42,8 @@ export interface AppOptions {
 export interface WebviewStartMessage {
     devtools: boolean;
     localtoken: string;
+    serverPort: number;
+    wsPort: number;
 }
 
 export interface UpdaterBase extends NodeJS.EventEmitter {
@@ -50,12 +52,16 @@ export interface UpdaterBase extends NodeJS.EventEmitter {
     setFeedURL(url: string): void;
 }
 
+export interface VersionInfo {
+    banned: string[];
+    latest: string;
+    prompt: string;
+    urls: { [versionRange: string]: string };
+}
+
 export interface ReleaseManifest {
-    aggressivePrompt: string;
-    blackList: string[];
-    latestRelease: string;
+    versions: { [major: string]: VersionInfo };
     timestamp?: string;
-    lastPromptedOn?: string;
 }
 
 export interface UpdateCacheInfo {
@@ -66,30 +72,14 @@ export interface UpdateCacheInfo {
 
 export interface UpdateEventInfo {
     appName?: string;
-    isBeta?: boolean;
     isCritical?: boolean;
     isInitialCheck?: boolean;
     targetVersion?: string;
 }
 
-export interface FeedUrlParams {
-    platform: string;
-    targetVersion: string;
-}
-
 export interface Update {
     url: string;
     version: string;
-}
-
-export interface GithubAsset {
-    browser_download_url: string;
-    name: string;
-    size: number;
-}
-
-export interface GithubTag {
-    assets: GithubAsset[];
 }
 
 // PXT interfaces
@@ -103,7 +93,7 @@ export interface PxtCore {
 
 export interface ElectronMessage {
     type: string;
-    args?: any
+    args?: any;
 }
 
 export interface ElectronHandler { (args?: any): void }
@@ -112,20 +102,21 @@ export interface ElectronHandler { (args?: any): void }
 export interface ProductInformation {
     applicationName: string;
     dataFolderName: string;
-    darwinBundleIdentifier: string,
-    isBeta: boolean,
-    nameShort: string,
-    nameLong: string,
-    releaseManifestUrl?: string,
-    targetId: string,
-    updateDownloadUrl?: string,
-    version?: string,
-    win32AppId: string,
-    win32AppUserModelId: string,
-    win32DirName: string,
-    win32MutexName: string,
-    win32NameVersion: string,
-    win32RegValueName: string
+    darwinBundleIdentifier: string;
+    icons: { [platform: string]: string };
+    nameShort: string;
+    nameLong: string;
+    updateTag: string;
+    releaseManifestUrl?: string;
+    targetId: string;
+    updateDownloadUrl?: string;
+    version?: string;
+    win32AppId: string;
+    win32AppUserModelId: string;
+    win32DirName: string;
+    win32MutexName: string;
+    win32NameVersion: string;
+    win32RegValueName: string;
 }
 
 // Third-party interfaces

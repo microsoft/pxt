@@ -1,4 +1,8 @@
 {
+    "exclude": [
+        "node_modules",
+        "src/node_modules"
+    ],
     "compilerOptions": {
         "module": "commonjs",
         "noImplicitAny": true,

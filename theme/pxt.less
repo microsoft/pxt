@@ -87,6 +87,10 @@
     top: @mainMenuHeight;
     right: 2rem;
 }
+.rtl #getting-started-btn {
+    right: auto;
+    left: 2rem;
+}
 #getting-started-btn:not(.sideDocs) {
     display: block;
 }
@@ -176,6 +180,32 @@ div.simframe > iframe {
     left:2rem;
 }
 
+/* Menu */ 
+.ui.menu .item.editor-menuitem {
+    background: @primaryColor !important;
+    margin: 0.5rem;
+    padding: 0.7rem;
+    border-radius: 0.5rem;
+}
+.ui.menu.fixed .item.blocks-menuitem, .ui.menu.fixed .item.javascript-menuitem {
+    border-radius: 0.2rem !important;
+}
+.ui.inverted.menu .item.blocks-menuitem {
+    border-top-right-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+}
+.ui.inverted.menu .item.javascript-menuitem {
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+}
+
+// Add a transition between the blocks / js menu item toggle options
+.ui.inverted.menu .item.blocks-menuitem, .ui.inverted.menu .item.javascript-menuitem {
+    -webkit-transition: background 1s; /* Safari */
+    transition: background 1s;
+    transition-timing-function: ease-in;
+}
+
 /* Help card */
 #helpcard {
     position: absolute;
@@ -187,6 +217,34 @@ div.simframe > iframe {
 .rtl #helpcard {
     left:7rem;
     right:auto;
+}
+
+/* Logo */
+.ui.item.logo {
+    font-size: 2.8rem;
+    margin: 0;
+    padding: 0 0.3rem;
+}
+.ui.item.logo .name {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
+    color: #666666;
+    padding: 0 0.3rem;
+}
+.ui.item.logo svg {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.ui.item.logo img {
+    max-height: 2.5rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
+.modal img.ui.logo {
+    max-width: 10em;
+    max-height: 3em;
+    vertical-align: middle;
 }
 
 /* Scrollbars */
@@ -214,12 +272,17 @@ div.simframe > iframe {
     font-family: @docsHeaderFont !important;
 }
 
+#docs span.block {
+    display:inline-block;
+    vertical-align: middle;
+}
 /*******************************
              Blockly
 *******************************/
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;
+    z-index: 10;
 }
 
 .blocklySvg {
@@ -240,6 +303,17 @@ div.simframe > iframe {
 
 .blocklyFlyoutButton {
     fill: rgb(165, 91, 128) !important;
+}
+.blocklyFlyoutButtonShadow {
+    fill: none !important;
+}
+
+.blocklyFlyoutLabelText {
+    fill: white !important;
+    font-size:1rem;
+}
+.blocklyFlyoutLabelText:hover {
+    fill: white !important;
 }
 
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
@@ -274,6 +348,12 @@ div.simframe > iframe {
     margin-right: auto;
     font-size:3rem;
     text-align: center;
+}
+
+/* Blockly Search bar */
+.blocklySearchInputField {
+    border: 0 !important;
+    border-radius: 0 !important;
 }
 
 /*******************************
@@ -350,10 +430,10 @@ div.simframe > iframe {
 }
 
 .monacoDraggableBlock {
-    color: white;
+    color: @white;
     padding: 0.6rem;
     border-radius: 8px;
-    border: solid 3px white;
+    border: solid 3px @white;
     cursor: pointer;
     user-select: none;
 }
@@ -364,7 +444,7 @@ div.simframe > iframe {
 
 .monacoDraggableBlock span.docs {
     display: block; /* enable as needed */
-    color: #ccc;
+    color: @white;
     font-size:70%;
     max-width: 22rem;
 }
@@ -378,7 +458,7 @@ div.simframe > iframe {
 *******************************/
 
 /* Large Monitor */
-@media only screen and (min-width: @largeMonitorEditorBreakpoint) {
+@media only screen and (min-width: @largeMonitorBreakpoint) {
     /* Layout */
     .sideDocs #maineditor {
         right:@sideBarWidth;
@@ -394,14 +474,32 @@ div.simframe > iframe {
     #sidedocspopout, #sidedocsexpand {
         display:block;
     }
+    /* Blockly */
+    .blocklyTreeRow {
+        width: 230px;
+    }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons {
+        margin-right: 2rem;
+        margin-left: 2rem;
+    }
 }
 
 /* Small Monitor */
-@media only screen and (min-width: @computerEditorBreakpoint) and (max-width: @largestSmallMonitorEditorBreakpoint) {
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    /* Blockly row */
+    .blocklyTreeRow {
+        width: 230px;
+    }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons, #monacoToolboxButtons {
+        margin-right: 1rem;
+        margin-left: 1rem;
+    }
 }
 
 /* Tablet */
-@media only screen and (min-width: @tabletEditorBreakpoint) and (max-width: @largestTabletEditorBreakpoint) {
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     /* Blockly */
     .blocklyTreeRow {
         padding-top: 0.75rem !important;
@@ -413,10 +511,15 @@ div.simframe > iframe {
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
     }
+    /* Blockly Toolbox buttons */
+    #blocklyToolboxButtons, #monacoToolboxButtons {
+        margin-right: 0.5rem;
+        margin-left: 0.5rem;
+    }
 }
 
 /* Mobile */
-@media only screen and (max-width: @largestMobileEditorBreakpoint) {
+@media only screen and (max-width: @largestMobileScreen) {
     /* Blockly / Monaco Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
     #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
         padding: 0.3rem 0 0.3rem 0 !important;
@@ -425,10 +528,24 @@ div.simframe > iframe {
     #getting-started-btn {
         display: none !important;
     }
+    /* Menu spacing */
+    .ui.menu .item {
+        padding: 0.4em !important;
+    }
+    .ui.menu .item.editor-menuitem {
+        margin-top: (@mobileMenuHeight/6) !important;
+        margin-bottom: (@mobileMenuHeight/6) !important;
+    }
+    /* Logo */
+    .ui.item.logo img {
+        max-height: 2.5rem;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
-@media only screen and (min-width: @computerEditorBreakpoint) {
+@media only screen and (min-width: @computerBreakpoint) {
     /* Blockly */
     .blocklyTreeRow {
         padding-top: 0.9rem !important;
@@ -443,7 +560,7 @@ div.simframe > iframe {
 }   
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
-@media only screen and (max-width: @largestSmallMonitorEditorBreakpoint) {
+@media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
     #filelist {
         bottom:3rem;
@@ -464,7 +581,7 @@ div.simframe > iframe {
     /* Organization logo */
     .organization {
         right:auto;
-        top:auto;
+        top:auto !important;
         left:1.5rem;
         bottom:0.5rem;
     }
@@ -489,10 +606,10 @@ div.simframe > iframe {
 }
 
 /* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletEditorBreakpoint) {
+@media only screen and (max-width: @largestTabletScreen) {
     /* Organization logo */
     .organization {
-        top:auto;
+        top:auto !important;
         left:0.5rem;
         right: auto;
         bottom: 0.5rem;
@@ -506,28 +623,16 @@ div.simframe > iframe {
     .blocklyTreeLabel {
         font-size:1rem;
     }
-    /* Simulator */
-    div.simframe {
-        display:inline-block;
-        width: 18rem;
-        margin-right:0.5rem;
-    }
-    div.simframe:not(:first-child) {
-        display:none !important;
-    }
     /* Help card */
     #helpcard {
         top: auto;
         bottom: 2rem;
         margin: 0;
     }
-    .hideEditorFloats .editorFloat {
-        display:none;
-    }
 }
 
 /* Mobile */
-@media only screen and (max-width: @largestMobileEditorBreakpoint) {
+@media only screen and (max-width: @largestMobileScreen) {
     /* Top Menu */
     #maineditor {
         top:@mobileMenuHeight !important;
@@ -536,8 +641,8 @@ div.simframe > iframe {
     #filelist {
         position:absolute;
         z-index:5;
-        bottom:0rem;
-        left:1rem;
+        bottom:1rem;
+        left:3rem;
         top:auto;
         width:auto;
         min-width: inherit;
@@ -546,7 +651,7 @@ div.simframe > iframe {
     }
     .rtl #filelist {
         left:auto;
-        right:1rem;
+        right:3rem;
     }
     #maineditor, .rtl #maineditor {
         left: 0;
@@ -582,6 +687,14 @@ div.simframe > iframe {
     div.simframe iframe.grayscale {
         display:none !important;
     }
+    /* Hide floating editors */
+    .hideEditorFloats .editorFloat {
+        display:none;
+    }
+    /* Organization */
+    .organization {
+        top: auto !important;
+    }
 }
 
 /*******************************
@@ -592,9 +705,9 @@ div.simframe > iframe {
     display:none !important;
 }
 
-@media only screen and (min-width: @largeMonitorEditorBreakpoint) and (min-height:30em) {
+@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
     .ui.widedesktop.only {
-        display:block !important;
+        display:inherit !important;
     }
     .ui.widedesktop.hide {
         display:none !important;
@@ -602,28 +715,29 @@ div.simframe > iframe {
 }
 
 /* smaller desktop screen */
-@media only screen and (max-width: @computerEditorBreakpoint), only screen and (max-aspect-ratio: 12/10) {
+@media only screen and (max-width: @computerBreakpoint), only screen and (max-aspect-ratio: 12/10) {
     .ui.desktop.only {
         display:none !important;
     }
 }
 
 /* thin desktop portrait mode */
-@media only screen and (max-width: @tabletEditorBreakpoint), only screen and (max-aspect-ratio: 7/10) {
+@media only screen and (max-width: @tabletBreakpoint), only screen and (max-aspect-ratio: 7/10) {
     .ui.landscape.only {
         display:none !important;
     }
 }
 
-@media only screen and (min-width: @tabletEditorBreakpoint) {
+@media only screen and (min-width: @tabletBreakpoint) {
     .ui.portrait.only {
         display:none !important;
     }
 }
 
-@media only screen and (max-width: @tabletEditorBreakpoint) {
+/* Mobile */
+@media only screen and (max-width: @tabletBreakpoint) {
     .ui.portrait.only {
-        display:block !important;
+        display:inherit !important;
     }
     .ui.portrait.hide {
         display:none !important;
@@ -631,19 +745,19 @@ div.simframe > iframe {
 }
 
 /* Screens with decent vertical space */
-@media only screen and (max-height:@tallEditorBreakpoint) {
+@media only screen and (max-height: @tallEditorBreakpoint) {
     .ui.tall.only {
         display:none !important;
     }
 }
 
-@media only screen and (min-width:@mobileEditorBreakpoint) {
+@media only screen and (min-width: @mobileBreakpoint) {
     .ui.thin.only {
         display:none !important;
     }
 }
 
-@media only screen and (max-width:@mobileEditorBreakpoint) {
+@media only screen and (max-width: @mobileBreakpoint) {
     .ui.wide.only {
         display:none !important;
     }

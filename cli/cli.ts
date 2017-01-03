@@ -1,4 +1,4 @@
-/// <reference path="../typings/node/node.d.ts"/>
+/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
@@ -214,7 +214,7 @@ function pkginfoAsync(repopath: string) {
     const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
         console.log(`name: ${cfg.name}`)
         console.log(`description: ${cfg.description}`)
-        console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
+        console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
     return pxt.packagesConfigAsync()
@@ -1298,7 +1298,7 @@ function buildTargetCoreAsync() {
             .then(testForBuildTargetAsync)
             .then((compileOpts) => {
                 // For the projects, we need to save the base HEX file to the offline HEX cache
-                if (isPrj) {
+                if (isPrj && pxt.appTarget.compile.hasHex) {
                     if (!compileOpts) {
                         console.error(`Failed to extract HEX image for project ${dirname}`);
                         return;
@@ -1339,7 +1339,7 @@ function buildTargetCoreAsync() {
             const targetjson = JSON.stringify(cfg, null, 2)
             fs.writeFileSync("built/target.json", targetjson)
             fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
-            pxt.appTarget = cfg; // make sure we're using the latest version
+            pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
@@ -1516,6 +1516,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             packaged,
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
+            wsPort: parsed.flags["wsport"] as number || 0,
             browser: parsed.flags["browser"] as string,
             serial: !parsed.flags["noSerial"]
         }))
@@ -3235,32 +3236,38 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         return files
     }
 
+    const unpackHexAsync = (buf: Buffer) =>
+        pxt.cpp.unpackSourceFromHexAsync(buf as any)
+            .then(data => {
+                if (!data) return null
+                if (!data.meta) data.meta = {} as any
+                let id = data.meta.cloudId || "?"
+                console.log(`.hex cloudId: ${id}`)
+                let files: Map<string> = null
+                try {
+                    files = JSON.parse(data.source)
+                } catch (e) {
+                    files = oneFile(data.source, data.meta.editor)
+                }
+                return {
+                    projects: [
+                        {
+                            name: data.meta.name,
+                            files: files
+                        }
+                    ]
+                }
+            })
+
     return Promise.resolve()
         .then(() => {
             let str = buf.toString("utf8")
             if (str[0] == ":") {
                 console.log("Detected .hex file.")
-                return pxt.cpp.unpackSourceFromHexAsync(buf)
-                    .then(data => {
-                        if (!data) return null
-                        if (!data.meta) data.meta = {} as any
-                        let id = data.meta.cloudId || "?"
-                        console.log(`.hex cloudId: ${id}`)
-                        let files: Map<string> = null
-                        try {
-                            files = JSON.parse(data.source)
-                        } catch (e) {
-                            files = oneFile(data.source, data.meta.editor)
-                        }
-                        return {
-                            projects: [
-                                {
-                                    name: data.meta.name,
-                                    files: files
-                                }
-                            ]
-                        }
-                    })
+                return unpackHexAsync(buf)
+            } else if (str[0] == "U") {
+                console.log("Detected .uf2 file.")
+                return unpackHexAsync(buf)
             } else if (str[0] == "{") {  // JSON
                 console.log("Detected .json file.")
                 return JSON.parse(str)
@@ -3449,7 +3456,7 @@ function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
             console.log(``)
             console.log(`    https://gist.github.com/${published_id}`);
             console.log(``)
-            console.log(`To share your project, go to ${pxt.appTarget.appTheme.homeUrl}#pub:gh/gists/${published_id}`)
+            console.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
             if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
 
             // Save gist id to pxt.json
@@ -3604,6 +3611,12 @@ function initCommands() {
                 type: "number",
                 argument: "port"
             },
+            wsport: {
+                description: "port to bind websocket server, default 3233",
+                aliases: ["w"],
+                type: "number",
+                argument: "wsport"
+            },
             electron: { description: "used to indicate that the server is being started in the context of an electron app" }
         }
     }, serveAsync);
@@ -3620,21 +3633,25 @@ function initCommands() {
         name: "electron",
         help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
         flags: {
-            buildInstaller: {
+            appsrc: {
+                description: "path to the root of the PXT Electron app in the pxt repo",
+                aliases: ["a"],
+                type: "string",
+                argument: "appsrc"
+            },
+            installer: {
                 description: "('package' only) Also build the installer / zip redistributable for the built app",
-                aliases: ["i"],
-                argument: "buildInstaller"
-            },product: {
+                aliases: ["i"]
+            },
+            just: {
+                description: "During 'run': skips TS compilation of app; During 'package': skips npm install and rebuilding native modules",
+                aliases: ["j"]
+            },
+            product: {
                 description: "path to a product.json file to use instead of the target's default one",
                 aliases: ["p"],
                 type: "string",
                 argument: "product"
-            },
-            pxtElectron: {
-                description: "path to the root of the PXT Electron app in the pxt repo",
-                aliases: ["e"],
-                type: "string",
-                argument: "pxtElectron"
             },
             release: {
                 description: "('package' only) Instead of using the current local target, use the published target from NPM (value format: <Target's NPM package>[@<Package version>])",

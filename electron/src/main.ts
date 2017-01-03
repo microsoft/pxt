@@ -7,23 +7,27 @@ import { app, BrowserWindow, dialog, Menu } from "electron";
 import * as I from "./typings/interfaces";
 import * as minimist from "minimist";
 import * as path from "path";
-import product from "./util/productInfoLoader";
-import { UpdateService } from "./updater/updateService";
+import product from "./util/productloader";
+import { UpdateService } from "./updater/updateservice";
+import * as Utils from "./util/electronutils";
 import { Mutex } from 'windows-mutex';
 
 const target = require(product.targetId);
 // require.resolve() gives path to [target dir]/built/pxtrequire.js, so move up twice to get target root dir
 const targetDir = path.resolve(require.resolve(product.targetId), "..", "..");
 
-let pxtCore: I.PxtCore = target.pxtCore;
+const pxtCore: I.PxtCore = target.pxtCore;
 let appOptions: I.AppOptions = {};
+let electronHandlers: I.Map<I.ElectronHandler>;
+let serverPort: number;
+let wsPort: number;
 let win: Electron.BrowserWindow = null;
 let windowsMutex: Mutex = null;
 let updateService: UpdateService = null;
-let messagingDelay = Promise.delay(5000);
+let messagingDelay = Promise.delay(15000);
 
 function parseArgs() {
-    let opts: minimist.Opts = {
+    const opts: minimist.Opts = {
         alias: {
             a: "debug-webapp",
             n: "npm-start",
@@ -53,7 +57,7 @@ function fixCwd(): void {
     }
 
     // At this point, we are not in a directory that is the root of the app, so we need to change cwd
-    let appPath = app.getAppPath();
+    const appPath = app.getAppPath();
 
     if (appPath !== process.cwd()) {
         console.log("Changing current working directory to " + appPath);
@@ -65,7 +69,7 @@ function isUpdateEnabled() {
     return !!product.releaseManifestUrl && !!product.updateDownloadUrl;
 }
 
-function createPxtHandlers(): I.Map<I.ElectronHandler> {
+function createElectronHandlers(): I.Map<I.ElectronHandler> {
     let handlers: I.Map<I.ElectronHandler> = {};
 
     if (isUpdateEnabled()) {
@@ -93,7 +97,7 @@ function createPxtHandlers(): I.Map<I.ElectronHandler> {
 }
 
 function registerUpdateHandlers(): void {
-    let events = [
+    const events = [
         "critical-update",
         "update-available",
         "update-not-available",
@@ -113,9 +117,17 @@ function registerUpdateHandlers(): void {
     });
 }
 
+function startLocalServer(): Promise<void> {
+    serverPort = Utils.randomInt(49152, 65535);
+    wsPort = Utils.randomInt(49152, 65535);
+
+    return pxtCore.mainCli(targetDir, ["serve", "--no-browser", "--electron", "--port", serverPort.toString(), "--wsport", wsPort.toString()], electronHandlers);
+}
+
 function main(): void {
     parseArgs();
     fixCwd();
+    electronHandlers = createElectronHandlers();
 
     if (process.platform === "win32") {
         try {
@@ -123,10 +135,11 @@ function main(): void {
             windowsMutex = new Mutex(product.win32MutexName);
         } catch (e) {
             // Continue normally, but user might need to manually close app in case of update
+            console.log("Unable to init Windows Mutex");
         }
     }
 
-    pxtCore.mainCli(targetDir, ["serve", "--no-browser", "--electron"], createPxtHandlers())
+    Utils.retryAsync(startLocalServer, () => true, 50, "Unable to find free TCP port", 20)
         .then(() => {
             createWindow();
 
@@ -135,11 +148,15 @@ function main(): void {
                 registerUpdateHandlers();
                 updateService.initialCheck();
             }
+        })
+        .catch((e) => {
+            dialog.showErrorBox("Unable to start app", "Please try again");
+            app.exit();
         });
 }
 
 function createWindow(): void {
-    let url = `file://${__dirname}/webview/index.html`;
+    const url = `file://${__dirname}/webview/index.html`;
 
     win = new BrowserWindow({
         width: 800,
@@ -156,9 +173,11 @@ function createWindow(): void {
             win.webContents.openDevTools({ mode: "detach" });
         }
 
-        let loadWebappMessage: I.WebviewStartMessage = {
+        const loadWebappMessage: I.WebviewStartMessage = {
             devtools: appOptions.debugWebapp,
-            localtoken: pxtCore.globalConfig.localToken
+            localtoken: pxtCore.globalConfig.localToken,
+            serverPort,
+            wsPort
         };
 
         win.webContents.send("start", loadWebappMessage);

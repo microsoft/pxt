@@ -1,5 +1,5 @@
-/// <reference path="../../built/blockly.d.ts" />
-/// <reference path="../../typings/jquery/jquery.d.ts" />
+/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
 import * as pkg from "./package";
@@ -7,6 +7,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
+import * as data from "./data";
 import defaultToolbox from "./toolbox"
 
 import Util = pxt.Util;
@@ -61,7 +62,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
                     pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
                         (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                             (() => {
@@ -72,6 +73,9 @@ export class Editor extends srceditor.Editor {
                                 this.undo();
                             }) : null)
                     );
+                    pxt.blocks.initSearch(this.editor, tb,
+                        searchFor => compiler.apiSearchAsync(searchFor)
+                            .then((fns: pxtc.SymbolInfo[]) => fns));
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -139,6 +143,72 @@ export class Editor extends srceditor.Editor {
         });
         if (needsLayout)
             pxt.blocks.layout.flow(this.editor);
+    }
+
+    private initPrompts() {
+        // Overriding blockly prompts to use semantic modals
+
+        /**
+         * Wrapper to window.alert() that app developers may override to
+         * provide alternatives to the modal browser window.
+         * @param {string} message The message to display to the user.
+         * @param {function()=} opt_callback The callback when the alert is dismissed.
+         */
+        Blockly.alert = function (message, opt_callback) {
+            return core.dialogAsync({
+                hideCancel: true,
+                header: lf("Alert"),
+                body: message,
+                size: "small"
+            }).then(() => {
+                if (opt_callback) {
+                    opt_callback();
+                }
+            })
+        };
+
+        /**
+         * Wrapper to window.confirm() that app developers may override to
+         * provide alternatives to the modal browser window.
+         * @param {string} message The message to display to the user.
+         * @param {!function(boolean)} callback The callback for handling user response.
+         */
+        Blockly.confirm = function (message, callback) {
+            return core.confirmAsync({
+                header: lf("Confirm"),
+                body: message,
+                agreeLbl: lf("Yes"),
+                agreeClass: "cancel",
+                agreeIcon: "cancel",
+                disagreeLbl: lf("No"),
+                disagreeClass: "positive",
+                disagreeIcon: "checkmark",
+                size: "small"
+            }).then(b => {
+                callback(b == 0);
+            })
+        };
+
+        /**
+         * Wrapper to window.prompt() that app developers may override to provide
+         * alternatives to the modal browser window. Built-in browser prompts are
+         * often used for better text input experience on mobile device. We strongly
+         * recommend testing mobile when overriding this.
+         * @param {string} message The message to display to the user.
+         * @param {string} defaultValue The value to initialize the prompt with.
+         * @param {!function(string)} callback The callback for handling user reponse.
+         */
+        Blockly.prompt = function (message, defaultValue, callback) {
+            return core.promptAsync({
+                header: message,
+                defaultValue: defaultValue,
+                agreeLbl: lf("Ok"),
+                disagreeLbl: lf("Cancel"),
+                size: "small"
+            }).then(value => {
+                callback(value);
+            })
+        };
     }
 
     private reportDeprecatedBlocks() {
@@ -299,11 +369,14 @@ export class Editor extends srceditor.Editor {
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
         this.editor.addChangeListener((ev) => {
+            Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
-                pxt.tickEvent("blocks.create");
+                let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
+                let blockId = ev.xml.getAttribute('type');
+                pxt.tickEvent("blocks.create", {category: lastCategory, block: blockId});
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
@@ -351,6 +424,7 @@ export class Editor extends srceditor.Editor {
                 }
             }
         })
+        this.initPrompts();
         this.resize();
 
         this.isReady = true

@@ -36,19 +36,6 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
-            <block type="controls_if">
-                <mutation else="1" elseif="1"></mutation>
-                <value name="IF0">
-                    <shadow type="logic_boolean">
-                        <field name="BOOL">TRUE</field>
-                    </shadow>
-                </value>
-                <value name="IF1">
-                    <shadow type="logic_boolean">
-                        <field name="BOOL">TRUE</field>
-                    </shadow>
-                </value>
-            </block>
             <block type="logic_compare" gap="8">
                 <value name="A">
                     <shadow type="math_number">

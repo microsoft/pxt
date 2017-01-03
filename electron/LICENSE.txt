@@ -1,4 +1,4 @@
-pxt-electron
+PXT Electron App
 
 The MIT License (MIT)
 

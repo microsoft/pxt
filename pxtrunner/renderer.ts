@@ -256,6 +256,39 @@ namespace pxt.runner {
         }, { package: options.package, snippetMode: true });
     }
 
+    function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
+        options = Util.clone(options);
+        options.emPixels = 18;
+        options.snippetMode = true;
+
+        const $els = $(`:not(pre) > code`);
+        let i = 0;
+        function renderNextAsync(): Promise<void> {
+            if (i >= $els.length) return Promise.resolve();
+            const $el = $($els[i++]);
+            const text = $el.text();
+            const m = /^\[([^\]]+)\]$/.exec(text);
+            if (!m) return renderNextAsync();
+
+            const code = m[1];
+            return pxt.runner.decompileToBlocksAsync(code, options)
+                .then(r => {
+                    if (r.blocksSvg) {
+                        let $newel = $('<span class="block"/>').append(r.blocksSvg);
+                        const file = r.compileJS.ast.getSourceFile("main.ts");
+                        const stmt = file.statements[0];
+                        const info = decompileCallInfo(stmt);
+                        if (info && info.attrs.help)
+                            $newel = $(`<a class="ui link"/>`).attr("href", `/reference/${info.attrs.help}`).append($newel);
+                        $el.replaceWith($newel);
+                    }
+                    return Promise.delay(1, renderNextAsync());
+                });
+        }
+
+        return renderNextAsync();
+    }
+
     function renderProjectAsync(options: ClientRenderOptions): Promise<void> {
         if (!options.projectClass) return Promise.resolve();
 
@@ -466,6 +499,7 @@ namespace pxt.runner {
         }
 
         return Promise.resolve()
+            .then(() => renderInlineBlocksAsync(options))
             .then(() => renderShuffleAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
