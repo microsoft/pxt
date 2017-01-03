@@ -66,7 +66,7 @@ interface IAppState {
     tutorialName?: string; // tutorial title
     tutorialSteps?: string[]; // tutorial steps
     tutorialStep?: number; // current tutorial page
-    tutorialMd?: string; // current tutorial md
+    tutorialUrl?: string; // current tutorial url
 
     running?: boolean;
     compiling?: boolean;
@@ -671,23 +671,23 @@ class TutorialContent extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    setMarkdown(md: string) {
+    setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
         const mode = this.props.parent.editor == this.props.parent.blocksEditor
             ? "blocks" : "js";
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
+        const url = `${docsUrl}#tutorial:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     private setUrl(url: string) {
         let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
         if (el) el.src = url;
-        else this.props.parent.setState({ tutorialMd: url });
+        else this.props.parent.setState({ tutorialUrl: url });
     }
 
     renderCore() {
         const state = this.props.parent.state;
-        const docsUrl = state.tutorialMd;
+        const docsUrl = state.tutorialUrl;
         if (!docsUrl) return null;
 
         return <iframe id="tutorialcontent" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
@@ -717,10 +717,10 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         this.props.parent.setTutorialStep(nextStep);
     }
 
-    setMarkdown(tutorialMd: string) {
+    setPath(path: string) {
         let tc = this.refs["tutorialcontent"] as TutorialContent;
         if (!tc) return;
-        tc.setMarkdown(tutorialMd);
+        tc.setPath(path);
     }
 
     render() {
@@ -1250,11 +1250,32 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setTutorialStep(step: number) {
-        let tutorialMd = this.state.tutorialSteps[step];
         let tc = this.refs["tutorialcard"] as TutorialCard;
         if (!tc) return;
-        if (step > -1) tc.setMarkdown(tutorialMd);
+        if (step > -1) {
+            // Notify tutorial content pane
+            TutorialContent.notify({
+                type: "tutorial",
+                tutorial: this.state.tutorial,
+                subtype: "tutorialstep",
+                step: step
+            } as pxsim.TutorialStepChangeMessage)
+        }
         //else tc.collapse();
+    }
+
+    handleMessage(msg: pxsim.SimulatorMessage) {
+        switch (msg.type) {
+            case "tutorial":
+                let t = msg as pxsim.TutorialMessage;
+                switch (t.subtype) {
+                    case 'tutorialtoolbox':
+                        let tt = msg as pxsim.TutorialToolboxMessage;
+                        this.editor.filterToolboxBlocks(tt.data);
+                        break;
+                }
+                break;
+        }
     }
 
     reloadHeaderAsync() {
@@ -1892,8 +1913,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 title = titleRegex[1];
 
                 let steps = md.split('###');
-                // TODO: remove this log
-                console.log(steps);
                 for (let step = 1; step < steps.length; step++) {
                     let stepmd = `###${steps[step]}`;
                     result.push(stepmd);
@@ -1909,6 +1928,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 });
             }).finally(() => {
                 this.setState({tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result})
+
+                let tc = this.refs["tutorialcard"] as TutorialCard;
+                tc.setPath(this.state.tutorial);
+
                 this.setTutorialStep(0);
             });
     }
@@ -2500,8 +2523,16 @@ $(document).ready(() => {
         if (!m) {
             return;
         }
+        if (m.type == "tutorial") {
+            if (theEditor && theEditor.editor)
+                theEditor.handleMessage(m);
+        }
         if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
             SideDocs.notify({
+                type: "localtoken",
+                localToken: Cloud.localToken
+            } as pxsim.SimulatorDocMessage);
+            TutorialContent.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);

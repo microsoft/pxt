@@ -575,6 +575,41 @@ namespace pxt.blocks {
         return tb;
     }
 
+    export function filterToolbox(workspace: Blockly.Workspace, toolbox: Element, blockSubset: { [index: string]: number }, reset: boolean = false): Element {
+        if (reset) {
+            workspace.updateToolbox(toolbox);
+            return;
+        }
+        let tb = <Element>toolbox.cloneNode(true);
+        let keepcategories: { [index: string]: number } = {};
+        let categories = tb.querySelectorAll("category");
+        let blocks = tb.querySelectorAll("block");
+        for (let bi = 0; bi < blocks.length; ++bi) {
+            let blk = blocks.item(bi);
+            let type = blk.getAttribute("type");
+            let catName = blk.parentElement.getAttribute("name");
+            let sticky = blk.getAttribute("sticky");
+            if (!blockSubset[type] && !sticky) {
+                blk.parentNode.removeChild(blk);
+            } else {
+                keepcategories[catName] = 1;
+                if (type.indexOf("variables") == 0) {
+                    keepcategories["Variables"] = 1;
+                }
+            }
+        }
+        for (let ci = 0; ci < categories.length; ++ci) {
+            let cat = categories.item(ci);
+            let catName = cat.getAttribute("name");
+            if (!keepcategories[catName] && catName != "Advanced") {
+                cat.parentNode.removeChild(cat);
+            }
+        }
+        workspace.updateToolbox(tb);
+        return tb;
+    }
+
+    export let cachedSearchTb: Element;
     export function initSearch(
         workspace: Blockly.Workspace, tb: Element,
         searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
@@ -592,7 +627,7 @@ namespace pxt.blocks {
         blocklySearchInputField.placeholder = lf("Search...");
         blocklySearchInputField.className = 'blocklySearchInputField';
 
-        let tbCache = tb;
+        cachedSearchTb = tb;
         const searchHandler = Util.debounce(() => {
             let searchField = $('.blocklySearchInputField');
             let searchFor = searchField.val().toLowerCase();
@@ -671,7 +706,7 @@ namespace pxt.blocks {
                 })
             } else {
                 // Clearing search
-                workspace.updateToolbox(tbCache);
+                workspace.updateToolbox(cachedSearchTb);
                 blocklySearchInput.className = origClassName;
             }
             // Search

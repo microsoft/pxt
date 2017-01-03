@@ -298,6 +298,16 @@ namespace pxt.runner {
                     window.open(url, "_blank");
                 }
                 break;
+            case "tutorial":
+                let t = m as pxsim.TutorialMessage;
+                switch (t.subtype) {
+                    case "tutorialstep":
+                    let ts = t as pxsim.TutorialStepChangeMessage;
+                    let content = document.getElementById('content');
+                    renderTutorialAsync(content, ts.tutorial, ts.step);
+                    break;
+                }
+                break;
             case "localtoken":
                 let dm = m as pxsim.SimulatorDocMessage;
                 if (dm && dm.localToken) {
@@ -317,6 +327,8 @@ namespace pxt.runner {
                     switch (doctype) {
                         case "doc":
                             return renderDocAsync(content, src);
+                        case "tutorial":
+                            return renderTutorialAsync(content, src, 0);
                         default:
                             return renderMarkdownAsync(content, src);
                     }
@@ -345,7 +357,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -490,6 +502,62 @@ ${files["main.ts"]}
             // enable embeds
             ($(content).find('.ui.embed') as any).embed();
         });
+    }
+
+    export function renderTutorialAsync(content: HTMLElement, tutorialid: string, step: number): Promise<void> {
+        tutorialid = tutorialid.replace(/^\//, "");
+        return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
+            .then(tutorialmd => {
+                let steps = tutorialmd.split('###');
+                steps = steps.slice(1, steps.length);
+                tutorialmd = steps[step];
+
+                // Extract toolbox block ids
+                let uptoSteps = steps.slice(0, step + 1).join();
+                uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
+
+                let regex = /```(sim|blocks|shuffle)\n([\s\S]*?)\n```/gmi;
+                let match: RegExpExecArray;
+                let code = "";
+                let foundCode = false;
+                while ((match = regex.exec(uptoSteps)) != null) {
+                    code += match[2] + "\n";
+                    foundCode = true;
+                }
+                if (foundCode) {
+                    // Convert all blocks to blocks
+                    return pxt.runner.decompileToBlocksAsync(code, {
+                        emPixels: 14,
+                        layout: pxt.blocks.BlockLayout.Flow,
+                        package: undefined
+                    }).then((r) => {
+                        let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
+                        let toolboxSubset: { [index: string]: number } = {};
+                        if (blocksxml) {
+                            let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
+                            let allblocks = headless.getAllBlocks();
+                            for (let bi = 0; bi < allblocks.length; ++bi) {
+                                let blk = allblocks[bi];
+                                toolboxSubset[blk.type] = 1;
+                            }
+                        }
+                        if (toolboxSubset != {}) {
+                                window.parent.postMessage(<pxsim.TutorialToolboxMessage>{
+                                    type: "tutorial",
+                                    tutorial: tutorialid,
+                                    subtype: "tutorialloaded",
+                                    data: toolboxSubset
+                            }, "*");
+                        }
+                    }).then(() => {
+                        // Render current step
+                        return renderMarkdownAsync(content, steps[step]);
+                    })
+                } else {
+                    // Render current step
+                    return renderMarkdownAsync(content, steps[step]);
+                }
+            })
     }
 
     export interface DecompileResult {

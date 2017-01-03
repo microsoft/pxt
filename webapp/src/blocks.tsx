@@ -23,6 +23,7 @@ export class Editor extends srceditor.Editor {
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
+    filteredBlocks: { [index: string]: number };
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -73,6 +74,10 @@ export class Editor extends srceditor.Editor {
                                 this.undo();
                             }) : null)
                     );
+                    if (this.filteredBlocks) {
+                        let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, this.filteredBlocks, false);
+                        pxt.blocks.cachedSearchTb = filteredTb;
+                    }
                     pxt.blocks.initSearch(this.editor, tb,
                         searchFor => compiler.apiSearchAsync(searchFor)
                             .then((fns: pxtc.SymbolInfo[]) => fns));
@@ -518,5 +523,14 @@ export class Editor extends srceditor.Editor {
     cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
+    }
+
+    filterToolboxBlocks(blockSubset: { [index: string]: number }): void {
+        this.filteredBlocks = blockSubset;
+        if (!this.isFirstBlocklyLoad) {
+            let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
+            let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, blockSubset, false);
+            pxt.blocks.cachedSearchTb = filteredTb;
+        }
     }
 }
