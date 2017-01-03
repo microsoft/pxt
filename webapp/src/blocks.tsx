@@ -77,6 +77,7 @@ export class Editor extends srceditor.Editor {
                     if (this.filteredBlocks) {
                         let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, this.filteredBlocks, false);
                         pxt.blocks.cachedSearchTb = filteredTb;
+                        this.filteredBlocks = null;
                     }
                     pxt.blocks.initSearch(this.editor, tb,
                         searchFor => compiler.apiSearchAsync(searchFor)
@@ -480,6 +481,10 @@ export class Editor extends srceditor.Editor {
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
+
+        if (!this.parent.state.tutorial) {
+            this.filterToolboxBlocks(null);
+        }
     }
 
     setDiagnostics(file: pkg.File) {
@@ -529,7 +534,7 @@ export class Editor extends srceditor.Editor {
         this.filteredBlocks = blockSubset;
         if (!this.isFirstBlocklyLoad) {
             let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-            let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, blockSubset, false);
+            let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, blockSubset, blockSubset == null);
             pxt.blocks.cachedSearchTb = filteredTb;
         }
     }
