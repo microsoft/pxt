@@ -535,7 +535,7 @@ export class Editor extends srceditor.Editor {
         if (!this.isFirstBlocklyLoad) {
             let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
             let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, blockSubset, blockSubset == null);
-            pxt.blocks.cachedSearchTb = filteredTb;
+            pxt.blocks.cachedSearchTb = blockSubset == null ? tb : filteredTb;
         }
     }
 }
