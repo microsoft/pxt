@@ -526,7 +526,7 @@ namespace pxt.blocks {
             if (!config.logicBlocks) removeCategory(tb, "Logic");
             if (!config.loopsBlocks) removeCategory(tb, "Loops");
 
-            // Load localized names for default categories   
+            // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
@@ -1323,7 +1323,28 @@ namespace pxt.blocks {
             }
 
             oldSetSelectedItem.call(that, a);
-        }
+        };
+
+        // Fix highlighting bug in edge
+        (<any>Blockly).Flyout.prototype.addBlockListeners_ = function(root: any, block: any, rect: any) {
+            this.listeners_.push((<any>Blockly).bindEventWithChecks_(root, 'mousedown', null,
+                this.blockMouseDown_(block)));
+            this.listeners_.push((<any>Blockly).bindEventWithChecks_(rect, 'mousedown', null,
+                this.blockMouseDown_(block)));
+            this.listeners_.push(Blockly.bindEvent_(root, 'mouseover', block,
+                select));
+            this.listeners_.push(Blockly.bindEvent_(rect, 'mouseover', block,
+                select));
+
+            const that = this;
+            function select() {
+                if (that._selectedItem && that._selectedItem.svgGroup_) {
+                    that._selectedItem.removeSelect();
+                }
+                that._selectedItem = block;
+                that._selectedItem.addSelect();
+            }
+        };
     }
 
     function collapseMoreCategory(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
@@ -1741,7 +1762,7 @@ namespace pxt.blocks {
     }
 
     function initExpandToolbox() {
-        // The following ensures the flyout is updated is cleared or expanded when the toolbox is updated. 
+        // The following ensures the flyout is updated is cleared or expanded when the toolbox is updated.
 
         /**
          * Modify the block tree on the existing toolbox.
