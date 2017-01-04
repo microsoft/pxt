@@ -247,7 +247,8 @@ export class Editor extends srceditor.Editor {
                 header: "JavaScript",
                 javascript: 1,
                 typeScript: pxt.blocks.compileBlock(selected, this.blockInfo).source,
-                url: card.url
+                url: card.url,
+                title: lf("Selected Blocks converted to JavaScript")
             }
         }
         this.parent.setHelpCard(card);

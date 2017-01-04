@@ -1119,7 +1119,9 @@ namespace pxt.blocks {
             case 'device_while':
                 r = compileWhile(e, b, comments);
                 break;
-
+            case ts.pxtc.ON_START_TYPE:
+                r = compileStartEvent(e, b).children;
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
