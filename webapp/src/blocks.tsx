@@ -365,28 +365,7 @@ export class Editor extends srceditor.Editor {
     prepareBlockly(showCategories: boolean = true) {
         let blocklyDiv = document.getElementById('blocksEditor');
         blocklyDiv.innerHTML = '';
-        let toolboxDiv = showCategories ?
-            document.getElementById('blocklyToolboxDefinitionCategory')
-            : document.getElementById('blocklyToolboxDefinitionFlyout');
-        let blocklyOptions: Blockly.Options = {
-            toolbox: toolboxDiv,
-            scrollbars: true,
-            media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
-            sound: true,
-            trashcan: false,
-            collapse: false,
-            comments: true,
-            disable: false,
-            zoom: {
-                enabled: true,
-                controls: true,
-                /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
-                maxScale: 2.5,
-                minScale: .2,
-                scaleSpeed: 1.05
-            },
-            rtl: Util.userLanguageRtl()
-        };
+        let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
@@ -547,6 +526,34 @@ export class Editor extends srceditor.Editor {
     cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
+    }
+
+    getBlocklyOptions(showCategories: boolean = true) {
+        let toolbox = showCategories ?
+                document.getElementById('blocklyToolboxDefinitionCategory')
+                : document.getElementById('blocklyToolboxDefinitionFlyout');
+        let zoomEnabled = showCategories;
+        let controlsEnabled = showCategories;
+        let blocklyOptions: Blockly.Options = {
+            toolbox: toolbox,
+            scrollbars: true,
+            media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
+            sound: true,
+            trashcan: false,
+            collapse: false,
+            comments: true,
+            disable: false,
+            zoom: {
+                enabled: zoomEnabled,
+                controls: controlsEnabled,
+                /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
+                maxScale: 2.5,
+                minScale: .2,
+                scaleSpeed: 1.05
+            },
+            rtl: Util.userLanguageRtl()
+        };
+        return blocklyOptions;
     }
 
     getDefaultToolbox(showCategories: boolean = true): HTMLElement {
