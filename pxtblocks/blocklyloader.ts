@@ -139,7 +139,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories: boolean) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.shim == "TD_ID" || fn.attributes.blockHidden)
@@ -152,54 +152,63 @@ namespace pxt.blocks {
             let catName = ts.pxtc.blocksCategory(fn);
             let category = categoryElement(tb, catName);
 
-            if (!category) {
-                let categories = getChildCategories(tb)
-                let parentCategoryList = tb;
+            if (showCategories) {
+                if (!category) {
+                    let categories = getChildCategories(tb)
+                    let parentCategoryList = tb;
 
-                pxt.debug('toolbox: adding category ' + ns)
+                    pxt.debug('toolbox: adding category ' + ns)
 
-                const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-                const locCatName = (nsn ? nsn.attributes.block : "") || catName;
-                category = createCategoryElement(locCatName, catName, nsWeight);
+                    const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
+                    const locCatName = (nsn ? nsn.attributes.block : "") || catName;
+                    category = createCategoryElement(locCatName, catName, nsWeight);
 
-                if (nsn && nsn.attributes.color) {
-                    category.setAttribute("colour", nsn.attributes.color);
-                }
-                else if (blockColors[ns]) {
-                    category.setAttribute("colour", blockColors[ns].toString());
-                }
-
-                if (nsn && nsn.attributes.advanced) {
-                    parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE")
-                    categories = getChildCategories(parentCategoryList)
-                }
-
-                // Insert the category based on weight
-                let ci = 0;
-                for (ci = 0; ci < categories.length; ++ci) {
-                    let cat = categories[ci];
-                    if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
-                        parentCategoryList.insertBefore(category, cat);
-                        break;
+                    if (nsn && nsn.attributes.color) {
+                        category.setAttribute("colour", nsn.attributes.color);
                     }
-                }
-                if (ci == categories.length)
-                    parentCategoryList.appendChild(category);
-            }
-            if (fn.attributes.advanced) {
-                category = getOrAddSubcategory(category, lf("More\u2026"), "More\u2026", 1, category.getAttribute("colour"))
-            }
+                    else if (blockColors[ns]) {
+                        category.setAttribute("colour", blockColors[ns].toString());
+                    }
 
+                    if (nsn && nsn.attributes.advanced) {
+                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE")
+                        categories = getChildCategories(parentCategoryList)
+                    }
+
+                    // Insert the category based on weight
+                    let ci = 0;
+                    for (ci = 0; ci < categories.length; ++ci) {
+                        let cat = categories[ci];
+                        if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
+                            parentCategoryList.insertBefore(category, cat);
+                            break;
+                        }
+                    }
+                    if (ci == categories.length)
+                        parentCategoryList.appendChild(category);
+                }
+                if (fn.attributes.advanced) {
+                    category = getOrAddSubcategory(category, lf("More\u2026"), "More\u2026", 1, category.getAttribute("colour"))
+                }
+            }
             if (fn.attributes.mutateDefaults) {
                 const mutationValues = fn.attributes.mutateDefaults.split(";");
                 mutationValues.forEach(mutation => {
                     const mutatedBlock = block.cloneNode(true);
                     mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
-                    category.appendChild(mutatedBlock);
+                    if (showCategories) {
+                        category.appendChild(mutatedBlock);
+                    } else {
+                        tb.appendChild(mutatedBlock);
+                    }
                 });
             }
             else {
-                category.appendChild(block);
+                if (showCategories) {
+                    category.appendChild(block);
+                } else {
+                    tb.appendChild(block);
+                }
             }
         }
     }
@@ -442,8 +451,7 @@ namespace pxt.blocks {
             e.parentNode.removeChild(e);
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): Element {
-        init();
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
 
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
@@ -474,7 +482,7 @@ namespace pxt.blocks {
                     let block = createToolboxBlock(blockInfo, fn, pnames);
                     if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
                         if (tb && (!fn.attributes.debug || dbg))
-                            injectToolbox(tb, blockInfo, fn, block);
+                            injectToolbox(tb, blockInfo, fn, block, showCategories);
                         currentBlocks[fn.attributes.blockId] = 1;
                     }
                 }
@@ -485,7 +493,6 @@ namespace pxt.blocks {
             .keys(cachedBlocks).filter(k => !currentBlocks[k])
             .forEach(k => removeBlock(cachedBlocks[k].fn));
 
-
         // add extra blocks
         if (tb && pxt.appTarget.runtime) {
             const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
@@ -495,28 +502,32 @@ namespace pxt.blocks {
                 type: ts.pxtc.ON_START_TYPE
             })
             extraBlocks.forEach(eb => {
-                let cat = categoryElement(tb, eb.namespace);
-                if (cat) {
-                    let el = document.createElement("block");
-                    el.setAttribute("type", eb.type);
-                    el.setAttribute("weight", (eb.weight || 50).toString());
-                    if (eb.gap) el.setAttribute("gap", eb.gap.toString());
-                    if (eb.fields) {
-                        for (let f in eb.fields) {
-                            let fe = document.createElement("field");
-                            fe.setAttribute("name", f);
-                            fe.appendChild(document.createTextNode(eb.fields[f]));
-                            el.appendChild(fe);
-                        }
+                let el = document.createElement("block");
+                el.setAttribute("type", eb.type);
+                el.setAttribute("weight", (eb.weight || 50).toString());
+                if (eb.gap) el.setAttribute("gap", eb.gap.toString());
+                if (eb.fields) {
+                    for (let f in eb.fields) {
+                        let fe = document.createElement("field");
+                        fe.setAttribute("name", f);
+                        fe.appendChild(document.createTextNode(eb.fields[f]));
+                        el.appendChild(fe);
                     }
-                    cat.appendChild(el);
+                }
+                if (showCategories) {
+                    let cat = categoryElement(tb, eb.namespace);
+                    if (cat) {
+                        cat.appendChild(el);
+                    } else {
+                        console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
+                    }
                 } else {
-                    console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
+                    tb.appendChild(el);
                 }
             })
         }
 
-        if (tb) {
+        if (tb && showCategories) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
             if (!config.mathBlocks) removeCategory(tb, "Math");
@@ -552,13 +563,45 @@ namespace pxt.blocks {
                 let b = $(tb).find(`block[type="${type}"]`)[0];
                 if (b) shadow.innerHTML = b.innerHTML;
             })
+        }
 
-            // update toolbox
-            if (tb.innerHTML != cachedToolbox && workspace) {
-                cachedToolbox = tb.innerHTML;
-                workspace.updateToolbox(tb)
+        // Filter the blocks
+        if (blockSubset) {
+            let keepcategories: { [index: string]: number } = {};
+            let categories = tb.querySelectorAll("category");
+            let blocks = tb.querySelectorAll("block");
+            for (let bi = 0; bi < blocks.length; ++bi) {
+                let blk = blocks.item(bi);
+                let type = blk.getAttribute("type");
+                let catName = blk.parentElement.getAttribute("name");
+                let sticky = blk.getAttribute("sticky");
+                if (!blockSubset[type] && !sticky) {
+                    blk.parentNode.removeChild(blk);
+                } else {
+                    keepcategories[catName] = 1;
+                    if (type.indexOf("variables") == 0) {
+                        keepcategories["Variables"] = 1;
+                    }
+                }
+            }
+            if (showCategories) {
+                for (let ci = 0; ci < categories.length; ++ci) {
+                    let cat = categories.item(ci);
+                    let catName = cat.getAttribute("name");
+                    if (!keepcategories[catName] && catName != Util.lf("{id:category}Advanced")) {
+                        cat.parentNode.removeChild(cat);
+                    }
+                }
             }
         }
+
+        return tb;
+    }
+
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+        init();
+
+        let tb = createToolbox(blockInfo, toolbox, showCategories, blockSubset);
 
         // add trash icon to toolbox
         if (!$('#blocklyTrashIcon').length) {
@@ -575,43 +618,8 @@ namespace pxt.blocks {
         return tb;
     }
 
-    export function filterToolbox(workspace: Blockly.Workspace, toolbox: Element, blockSubset: { [index: string]: number }, reset: boolean = false): Element {
-        if (reset) {
-            workspace.updateToolbox(toolbox);
-            return;
-        }
-        let tb = <Element>toolbox.cloneNode(true);
-        let keepcategories: { [index: string]: number } = {};
-        let categories = tb.querySelectorAll("category");
-        let blocks = tb.querySelectorAll("block");
-        for (let bi = 0; bi < blocks.length; ++bi) {
-            let blk = blocks.item(bi);
-            let type = blk.getAttribute("type");
-            let catName = blk.parentElement.getAttribute("name");
-            let sticky = blk.getAttribute("sticky");
-            if (!blockSubset[type] && !sticky) {
-                blk.parentNode.removeChild(blk);
-            } else {
-                keepcategories[catName] = 1;
-                if (type.indexOf("variables") == 0) {
-                    keepcategories["Variables"] = 1;
-                }
-            }
-        }
-        for (let ci = 0; ci < categories.length; ++ci) {
-            let cat = categories.item(ci);
-            let catName = cat.getAttribute("name");
-            if (!keepcategories[catName] && catName != "Advanced") {
-                cat.parentNode.removeChild(cat);
-            }
-        }
-        workspace.updateToolbox(tb);
-        return tb;
-    }
-
     export let cachedSearchTb: Element;
-    export function initSearch(
-        workspace: Blockly.Workspace, tb: Element,
+    export function initSearch(workspace: Blockly.Workspace, tb: Element,
         searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
         if ($(`#blocklySearchArea`).length) return;
 
@@ -1004,8 +1012,8 @@ namespace pxt.blocks {
      * the trash icon should only show when a user drags a block that is already in the workspace.
      */
     function initDrag() {
-        const calculateDistance = (elem: any, mouseX: any) => {
-            return Math.floor(mouseX - (elem.offset().left + (elem.width() / 2)));
+        const calculateDistance = (elemBounds: any, mouseX: any) => {
+            return Math.floor(mouseX - (elemBounds.left + (elemBounds.width / 2)));
         }
         /**
          * Track a drag of an object on this workspace.
@@ -1014,17 +1022,19 @@ namespace pxt.blocks {
          */
         let moveDrag = (<any>Blockly).WorkspaceSvg.prototype.moveDrag;
         (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function (e: any) {
-            const blocklyTreeRoot = $('.blocklyTreeRoot');
-            const trashIcon = $("#blocklyTrashIcon");
-            const distance = calculateDistance(blocklyTreeRoot, e.pageX);
-            if (distance < 200) {
-                const opacity = distance / 200;
-                trashIcon.css('opacity', 1 - opacity);
-                trashIcon.show();
-                blocklyTreeRoot.css('opacity', opacity);
-            } else {
-                trashIcon.hide();
-                blocklyTreeRoot.css('opacity', 1);
+            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
+            const trashIcon = document.getElementById("blocklyTrashIcon");
+            if (blocklyTreeRoot && trashIcon) {
+                const distance = calculateDistance(blocklyTreeRoot.getBoundingClientRect(), e.pageX);
+                if (distance < 200) {
+                    const opacity = distance / 200;
+                    trashIcon.style.opacity = `${1 - opacity}`;
+                    trashIcon.style.display = 'block';
+                    blocklyTreeRoot.style.opacity = `${opacity}`;
+                } else {
+                    trashIcon.style.display = 'none';
+                    blocklyTreeRoot.style.opacity = '1';
+                }
             }
             return moveDrag.call(this, e);
         };
@@ -1035,8 +1045,12 @@ namespace pxt.blocks {
          */
         let terminateDrag_ = (<any>Blockly).terminateDrag_;
         (<any>Blockly).terminateDrag_ = function () {
-            $("#blocklyTrashIcon").hide();
-            $('.blocklyTreeRoot').css('opacity', 1);
+            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
+            const trashIcon = document.getElementById("blocklyTrashIcon");
+            if (trashIcon) {
+                trashIcon.style.display = 'none';
+                blocklyTreeRoot.style.opacity = '1';
+            }
             terminateDrag_.call(this);
         }
     }
@@ -1109,9 +1123,13 @@ namespace pxt.blocks {
              * @param {goog.ui.tree.BaseNode} node The item to select.
              * @override
              */
-            let setSelectedItem = (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem;
-            (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
+            let setSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+            Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
                 let toolbox = this.toolbox_;
+                if (node == this.selectedItem_ || node == toolbox.tree_) {
+                    return;
+                }
+
                 // Capture the last category and reset it after Blockly's setSelectedItem has been called.
                 let lastCategory = toolbox.lastCategory_;
                 setSelectedItem.call(this, node);
@@ -1350,8 +1368,12 @@ namespace pxt.blocks {
 
         // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
         const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
-        (<any>Blockly).Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
+        Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
             const that = <Blockly.Toolbox.TreeControl>this;
+            let toolbox = (that as any).toolbox_;
+            if (a == that.selectedItem_ || a == toolbox.tree_) {
+                return;
+            }
 
             if (a === null) {
                 collapseMoreCategory(that.selectedItem_);

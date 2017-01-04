@@ -302,9 +302,16 @@ namespace pxt.runner {
                 let t = m as pxsim.TutorialMessage;
                 switch (t.subtype) {
                     case "tutorialstep":
-                    let ts = t as pxsim.TutorialStepChangeMessage;
-                    let content = document.getElementById('content');
-                    renderTutorialAsync(content, ts.tutorial, ts.step);
+                        let ts = t as pxsim.TutorialStepChangeMessage;
+                        let loading = document.getElementById('loading');
+                        let content = document.getElementById('content');
+                        $(content).hide()
+                        $(loading).show()
+                        renderTutorialAsync(content, ts.tutorial, ts.step)
+                            .finally(() => {
+                                $(loading).hide();
+                                $(content).show();
+                            });
                     break;
                 }
                 break;
@@ -508,15 +515,16 @@ ${files["main.ts"]}
         tutorialid = tutorialid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
-                let steps = tutorialmd.split('###');
+                let steps = tutorialmd.split(/\###.*(?!$)/i);
+                if (steps.length < 1) return;
+                let options = steps[0];
                 steps = steps.slice(1, steps.length);
-                tutorialmd = steps[step];
 
                 // Extract toolbox block ids
                 let uptoSteps = steps.slice(0, step + 1).join();
                 uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
 
-                let regex = /```(sim|blocks|shuffle)\n([\s\S]*?)\n```/gmi;
+                let regex = /```(sim|block|blocks|shuffle)\n([\s\S]*?)\n```/gmi;
                 let match: RegExpExecArray;
                 let code = "";
                 let foundCode = false;

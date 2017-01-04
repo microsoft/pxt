@@ -66,6 +66,7 @@ interface IAppState {
     tutorialName?: string; // tutorial title
     tutorialSteps?: string[]; // tutorial steps
     tutorialStep?: number; // current tutorial page
+    tutorialReady?: boolean; // current tutorial page
     tutorialUrl?: string; // current tutorial url
 
     running?: boolean;
@@ -637,12 +638,13 @@ class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
 
     openTutorialStep(step: number) {
         pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorial, step: step });
-        this.props.parent.setState({tutorialStep: step})
+        this.props.parent.setState({tutorialStep: step, tutorialReady: false})
         this.props.parent.setTutorialStep(step);
     }
 
     render() {
         const state = this.props.parent.state;
+        const tutorialReady = state.tutorialReady;
         const targetTheme = pxt.appTarget.appTheme;
         const tutorialSteps = state.tutorialSteps;
         const currentStep = state.tutorialStep;
@@ -654,11 +656,17 @@ class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
                     </div>
                     <div className="ui item tutorial-menuitem">
                         {tutorialSteps.map((step, index) =>
-                            <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index)}/>
+                            <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index)}/>
                         ) }
                     </div>
                 </div>;
     }
+}
+
+interface TutorialOptions {
+    tutorialId: string;
+    tutorialName: string;
+    showCategories?: boolean;
 }
 
 class TutorialContent extends data.Component<ISettingsProps, {}> {
@@ -704,7 +712,7 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const previousStep = currentStep - 1;
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: this.props.parent.state.tutorial, step: previousStep });
-        this.props.parent.setState({tutorialStep: previousStep})
+        this.props.parent.setState({tutorialStep: previousStep, tutorialReady: false})
         this.props.parent.setTutorialStep(previousStep);
     }
 
@@ -713,8 +721,12 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const nextStep = currentStep + 1;
 
         pxt.tickEvent(`tutorial.next`, { tutorial: this.props.parent.state.tutorial, step: nextStep });
-        this.props.parent.setState({tutorialStep: nextStep})
+        this.props.parent.setState({tutorialStep: nextStep, tutorialReady: false})
         this.props.parent.setTutorialStep(nextStep);
+    }
+
+    finishTutorial() {
+        this.props.parent.exitTutorial();
     }
 
     setPath(path: string) {
@@ -725,10 +737,12 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     render() {
         const state = this.props.parent.state;
+        const tutorialReady = state.tutorialReady;
         const currentStep = state.tutorialStep;
         const maxSteps = state.tutorialSteps.length;
         const hasPrevious = currentStep != 0;
         const hasNext = currentStep != maxSteps - 1;
+        const hasFinish = currentStep == maxSteps - 1;
 
         return <div id="tutorialcard" className="ui ">
                     <div className="ui raised fluid card">
@@ -737,13 +751,17 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
                         </div>
                         <div className="extra content">
                             <div className="ui two buttons">
-                                {hasPrevious ? <button className="ui icon red button" onClick={() => this.previousTutorialStep()}>
+                                {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep()}>
                                     <i className="left chevron icon"></i>
                                     Previous
                                 </button> : undefined }
-                                {hasNext ? <button className="ui right icon green button" onClick={() => this.nextTutorialStep()}>
+                                {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep()}>
                                     Next
                                     <i className="right chevron icon"></i>
+                                </button> : undefined }
+                                {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial()}>
+                                    Finish
+                                    <i className="left checkmark icon"></i>
                                 </button> : undefined }
                             </div>
                         </div>
@@ -1001,7 +1019,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     componentDidUpdate() {
         this.saveSettings()
-        this.editor.domUpdate();
+        if (!this.state.tutorial)
+            this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
     }
 
@@ -1250,10 +1269,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setTutorialStep(step: number) {
+        // save 
+        this.saveFile();
+        // Notify tutorial content pane
         let tc = this.refs["tutorialcard"] as TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            // Notify tutorial content pane
             TutorialContent.notify({
                 type: "tutorial",
                 tutorial: this.state.tutorial,
@@ -1261,7 +1282,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 step: step
             } as pxsim.TutorialStepChangeMessage)
         }
-        //else tc.collapse();
     }
 
     handleMessage(msg: pxsim.SimulatorMessage) {
@@ -1271,7 +1291,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 switch (t.subtype) {
                     case 'tutorialtoolbox':
                         let tt = msg as pxsim.TutorialToolboxMessage;
-                        this.editor.filterToolboxBlocks(tt.data);
+                        let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
+                        this.editor.filterToolbox(tt.data, showCategories, false);
+                        this.setState({tutorialReady: true});
+                        core.hideLoading();
                         break;
                 }
                 break;
@@ -1898,8 +1921,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
         this.startTutorialAsync(tutorialId)
-            .then(() => Promise.delay(500))
-            .done(() => core.hideLoading());
+            .then(() => Promise.delay(500));
     }
 
     startTutorialAsync(tutorialId: string): Promise<void> {
@@ -1919,6 +1941,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 }
                 //TODO: parse for tutoral options, mainly initial blocks
             }).then(() => {
+                this.setState({tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result})
+                let tc = this.refs["tutorialcard"] as TutorialCard;
+                tc.setPath(tutorialId);
+            }).then(() => {
                 return this.createProjectAsync({
                     filesOverride: {
                         "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">",
@@ -1926,13 +1952,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     },
                     name: tutorialId
                 });
-            }).finally(() => {
-                this.setState({tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result})
-
-                let tc = this.refs["tutorialcard"] as TutorialCard;
-                tc.setPath(this.state.tutorial);
-
-                this.setTutorialStep(0);
             });
     }
 
@@ -1990,7 +2009,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const tutorial = this.state.tutorial && this.state.tutorial.length > 0;
+        const tutorial = this.state.tutorial && this.state.tutorialSteps.length > 0;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");

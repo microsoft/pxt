@@ -88,6 +88,7 @@ namespace pxsim {
     export interface TutorialToolboxMessage extends TutorialMessage {
         subtype: "tutorialtoolbox";
         data: {[index: string]: number };
+        showCategories?: boolean;
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {

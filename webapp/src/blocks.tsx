@@ -15,6 +15,7 @@ let lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
+    currFile: pkg.File;
     delayLoadXml: string;
     loadingXml: boolean;
     blockInfo: pxtc.BlocksInfo;
@@ -23,7 +24,9 @@ export class Editor extends srceditor.Editor {
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
-    filteredBlocks: { [index: string]: number };
+    blockSubset: { [index: string]: number };
+    showToolboxCategories: boolean = true;
+    showToolboxButtons: boolean = true;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -63,25 +66,29 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-                    pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
-                        (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
-                            (() => {
-                                this.parent.addPackage();
-                            }) : null),
-                        (!this.parent.getSandboxMode() ?
-                            (() => {
-                                this.undo();
-                            }) : null)
-                    );
-                    if (this.filteredBlocks) {
-                        let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, this.filteredBlocks, false);
-                        pxt.blocks.cachedSearchTb = filteredTb;
-                        this.filteredBlocks = null;
+                    let showCategories = this.showToolboxCategories;
+                    let showToolboxButtons = this.showToolboxButtons;
+                    let showSearch = true;
+                    let toolbox = this.getDefaultToolbox(showCategories);
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.blockSubset);
+                    this.updateToolbox(tb, showCategories, showToolboxButtons);
+                    if (showCategories && showToolboxButtons) {
+                        pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
+                            (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
+                                (() => {
+                                    this.parent.addPackage();
+                                }) : null),
+                            (!this.parent.getSandboxMode() ?
+                                (() => {
+                                    this.undo();
+                                }) : null)
+                        );
                     }
-                    pxt.blocks.initSearch(this.editor, tb,
-                        searchFor => compiler.apiSearchAsync(searchFor)
-                            .then((fns: pxtc.SymbolInfo[]) => fns));
+                    if (showCategories && showSearch) {
+                        pxt.blocks.initSearch(this.editor, tb,
+                            searchFor => compiler.apiSearchAsync(searchFor)
+                                .then((fns: pxtc.SymbolInfo[]) => fns));
+                    }
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -350,8 +357,17 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
+        this.prepareBlockly();
+
+        this.isReady = true
+    }
+
+    prepareBlockly(showCategories: boolean = true) {
         let blocklyDiv = document.getElementById('blocksEditor');
-        let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
+        blocklyDiv.innerHTML = '';
+        let toolboxDiv = showCategories ?
+            document.getElementById('blocklyToolboxDefinitionCategory')
+            : document.getElementById('blocklyToolboxDefinitionFlyout');
         let blocklyOptions: Blockly.Options = {
             toolbox: toolboxDiv,
             scrollbars: true,
@@ -380,7 +396,11 @@ export class Editor extends srceditor.Editor {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
-                let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
+                let lastCategory = (this.editor as any).toolbox_ ?
+                                    ((this.editor as any).toolbox_.lastCategory_ ?
+                                    (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
+                                    : 'unknown')
+                                    : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
                 pxt.tickEvent("blocks.create", {category: lastCategory, block: blockId});
                 if (ev.xml.tagName == 'SHADOW')
@@ -432,8 +452,6 @@ export class Editor extends srceditor.Editor {
         })
         this.initPrompts();
         this.resize();
-
-        this.isReady = true
     }
 
     resize(e?: Event) {
@@ -482,9 +500,10 @@ export class Editor extends srceditor.Editor {
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
 
-        if (!this.parent.state.tutorial) {
-            this.filterToolboxBlocks(null);
+        if (this.currFile && this.currFile != file) {
+            this.filterToolbox(null);
         }
+        this.currFile = file;
     }
 
     setDiagnostics(file: pkg.File) {
@@ -530,12 +549,36 @@ export class Editor extends srceditor.Editor {
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 
-    filterToolboxBlocks(blockSubset: { [index: string]: number }): void {
-        this.filteredBlocks = blockSubset;
-        if (!this.isFirstBlocklyLoad) {
-            let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-            let filteredTb = pxt.blocks.filterToolbox(this.editor, tb, blockSubset, blockSubset == null);
-            pxt.blocks.cachedSearchTb = blockSubset == null ? tb : filteredTb;
+    getDefaultToolbox(showCategories: boolean = true): HTMLElement {
+        return showCategories ?
+            defaultToolbox.documentElement
+            : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
+    }
+
+    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {
+        this.blockSubset = blockSubset;
+        let toolbox = this.getDefaultToolbox(showCategories);
+        if (!this.blockInfo) return;
+        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, showCategories, blockSubset);
+        this.updateToolbox(tb, showCategories, showToolboxButtons);
+
+        pxt.blocks.cachedSearchTb = tb;
+        return tb;
+    }
+
+    updateToolbox(tb: Element, showCategories: boolean = true, showToolboxButtons: boolean = true) {
+        pxt.debug('updating toolbox');
+        if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
+            // Toolbox is consistent with current mode, safe to update
+            this.editor.updateToolbox(tb);
+        } else {
+            // Toolbox mode is different, need to refresh.
+            this.editor = undefined;
+            this.showToolboxCategories = showCategories;
+            this.showToolboxButtons = showToolboxButtons;
+            this.delayLoadXml = this.currFile.content;
+            this.prepareBlockly(showCategories);
+            this.domUpdate();
         }
     }
 }

@@ -70,5 +70,7 @@ export class Editor {
 
     highlightStatement(brk: pxtc.LocationInfo) { }
 
-    filterToolboxBlocks(blockSubset: { [index: string]: number }): void { }
+    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {
+        return null
+    }
 }
