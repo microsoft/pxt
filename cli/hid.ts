@@ -110,19 +110,21 @@ export class HidIO implements HF2.PacketIO {
 
     private buf = new U.PromiseBuffer<Uint8Array>();
 
-    constructor(private path: string) {
+    constructor(private path: string, public onData: (v: (Buffer | Error)) => void = null) {
+        if (!this.onData)
+            this.onData = v => {
+                if (v instanceof Error)
+                    this.buf.pushError(v)
+                else
+                    this.buf.push(new Uint8Array(v))
+            }
         this.connect()
     }
 
     private connect() {
         this.dev = new HID.HID(this.path)
-        this.dev.on("data", (buf: Buffer) => {
-            //console.log("RECV: " + buf.toString("hex"))
-            this.buf.push(new Uint8Array(buf))
-        })
-        this.dev.on("error", (err: Error) => {
-            this.buf.pushError(err)
-        })
+        this.dev.on("data", this.onData)
+        this.dev.on("error", this.onData)
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {

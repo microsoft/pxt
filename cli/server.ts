@@ -472,17 +472,31 @@ function initSocketServer(wsPort: number) {
                     .then(() => {
                         let hio = hios[msg.arg.path]
                         if (!hio && msg.arg.path)
-                            hios[msg.arg.path] = hio = new hid.HidIO(msg.arg.path)
+                            hios[msg.arg.path] = hio = new hid.HidIO(msg.arg.path, v => { })
                         switch (msg.op) {
                             case "init":
                                 return hio.reconnectAsync()
-                                    .then(() => ({}))
+                                    .then(() => {
+                                        hio.onData = v => {
+                                            if (!ws) return
+                                            ws.send(JSON.stringify({
+                                                op: "data",
+                                                path: msg.arg.path,
+                                                result: Buffer.isBuffer(v) ?
+                                                    {
+                                                        data: v.toString("hex")
+                                                    } :
+                                                    {
+                                                        errorMessage: v.message || "Error",
+                                                        errorStackTrace: v.stack,
+                                                    }
+                                            }))
+                                        }
+                                        return {}
+                                    })
                             case "send":
                                 return hio.sendPacketAsync(new Buffer(msg.arg.data, "hex") as any)
                                     .then(() => ({}))
-                            case "recv":
-                                return hio.recvPacketAsync()
-                                    .then(d => d == null ? {} : { data: new Buffer(d).toString("hex") })
                             case "list":
                                 return { devices: hid.getHF2Devices() } as any
                         }

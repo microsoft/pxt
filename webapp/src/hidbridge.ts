@@ -98,5 +98,9 @@ let initPromise: Promise<pxt.HF2.Wrapper>
 export function initAsync() {
     if (!initPromise)
         initPromise = hf2Async()
+            .catch(err => {
+                initPromise = null
+                return Promise.reject(err)
+            })
     return initPromise
 }

@@ -345,7 +345,7 @@ namespace pxt.HF2 {
                     let n = Date.now()
                     let t0 = n - start
                     let t1 = n - fstart
-                    log(`Flashing done. ${Math.round(blocks.length * this.pageSize / t1 * 1000 / 1024)} kB/s. Resetting. Time: ${t0}ms (reset ${t0 - t1}ms)`)
+                    log(`Flashing done at ${Math.round(blocks.length * this.pageSize / t1 * 1000 / 1024)} kB/s in ${t0}ms (reset ${t0 - t1}ms). Resetting.`)
                 })
                 .then(() =>
                     this.talkAsync(HF2_CMD_RESET_INTO_APP)
