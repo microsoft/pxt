@@ -22,7 +22,6 @@ export class Editor extends srceditor.Editor {
     isFirstBlocklyLoad = true;
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
-    currentHelpCardType: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -240,38 +239,19 @@ export class Editor extends srceditor.Editor {
     }
 
     updateHelpCard(clear?: boolean) {
-        let selected = Blockly.selected;
-        let selectedType = selected ? selected.type : null;
-        if (selectedType != this.currentHelpCardType || clear) {
-            if (selected && selected.inputList && selected.codeCard && !clear) {
-                this.currentHelpCardType = selectedType;
-                //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
-                let props: any = {};
-                for (let i = 0; i < selected.inputList.length; i++) {
-                    let input = selected.inputList[i];
-                    for (let j = 0; j < input.fieldRow.length; j++) {
-                        let field = input.fieldRow[j];
-                        if (field.name != undefined && field.value_ != undefined) {
-                            props[field.name] = field.value_;
-                        }
-                    }
-                }
-
-                let card: pxt.CodeCard = selected.codeCard;
-                card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-                if (!selected.mutation) {
-                    card.blocksXml = this.updateFields(card.blocksXml, props);
-                }
-                else {
-                    card.blocksXml = this.updateFields(card.blocksXml, undefined, selected.mutation.mutationToDom());
-                }
-                this.parent.setHelpCard(card);
-            }
-            else {
-                this.currentHelpCardType = null;
-                this.parent.setHelpCard(null);
+        let card: pxt.CodeCard = undefined;
+        const selected: B.Block = Blockly.selected;
+        if (!clear && selected && (card = (selected as any).codeCard)) {
+            // render js only
+            card = {
+                header: "JavaScript",
+                javascript: 1,
+                typeScript: pxt.blocks.compileBlock(selected, this.blockInfo).source,
+                url: card.url,
+                title: lf("Selected Blocks converted to JavaScript")
             }
         }
+        this.parent.setHelpCard(card);
     }
 
     contentSize(): { height: number; width: number } {
@@ -376,7 +356,7 @@ export class Editor extends srceditor.Editor {
             if (ev.type == 'create') {
                 let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickEvent("blocks.create", {category: lastCategory, block: blockId});
+                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }

@@ -1119,7 +1119,9 @@ namespace pxt.blocks {
             case 'device_while':
                 r = compileWhile(e, b, comments);
                 break;
-
+            case ts.pxtc.ON_START_TYPE:
+                r = compileStartEvent(e, b).children;
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
@@ -1243,6 +1245,14 @@ namespace pxt.blocks {
         return e;
     }
 
+    export function compileBlock(b: B.Block, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+        const w = b.workspace;
+        const e = mkEnv(w, blockInfo);
+        infer(e, w);
+        const compiled = compileStatementBlock(e, b)
+        return tdASTtoTS(compiled);
+    }
+
     function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
             const e = mkEnv(w, blockInfo);
@@ -1362,49 +1372,49 @@ namespace pxt.blocks {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
+    const infixPriTable: Map<number> = {
+        // 0 = comma/sequence
+        // 1 = spread (...)
+        // 2 = yield, yield*
+        // 3 = assignment
+        "=": 3,
+        "+=": 3,
+        "-=": 3,
+        // 4 = conditional (?:)
+        "||": 5,
+        "&&": 6,
+        "|": 7,
+        "^": 8,
+        "&": 9,
+        // 10 = equality
+        "==": 10,
+        "!=": 10,
+        "===": 10,
+        "!==": 10,
+        // 11 = comparison (excludes in, instanceof)
+        "<": 11,
+        ">": 11,
+        "<=": 11,
+        ">=": 11,
+        // 12 = bitise shift
+        ">>": 12,
+        ">>>": 12,
+        "<<": 12,
+        "+": 13,
+        "-": 13,
+        "*": 14,
+        "/": 14,
+        "%": 14,
+        "!": 15,
+        ".": 18,
+    }
+
     function tdASTtoTS(app: JsNode[]): BlockCompilationResult {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
-        let infixPriTable: Map<number> = {
-            // 0 = comma/sequence
-            // 1 = spread (...)
-            // 2 = yield, yield*
-            // 3 = assignment
-            "=": 3,
-            "+=": 3,
-            "-=": 3,
-            // 4 = conditional (?:)
-            "||": 5,
-            "&&": 6,
-            "|": 7,
-            "^": 8,
-            "&": 9,
-            // 10 = equality
-            "==": 10,
-            "!=": 10,
-            "===": 10,
-            "!==": 10,
-            // 11 = comparison (excludes in, instanceof)
-            "<": 11,
-            ">": 11,
-            "<=": 11,
-            ">=": 11,
-            // 12 = bitise shift
-            ">>": 12,
-            ">>>": 12,
-            "<<": 12,
-            "+": 13,
-            "-": 13,
-            "*": 14,
-            "/": 14,
-            "%": 14,
-            "!": 15,
-            ".": 18,
-        }
-
 
         function flatten(e0: JsNode) {
             function rec(e: JsNode, outPrio: number) {
