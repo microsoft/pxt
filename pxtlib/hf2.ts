@@ -121,7 +121,7 @@ namespace pxt.HF2 {
     }
 
     export class Wrapper {
-        private cmdSeq = 0;
+        private cmdSeq = U.randomUint32();
         constructor(public io: PacketIO) {
             this.startLoop()
         }
@@ -168,7 +168,7 @@ namespace pxt.HF2 {
             let len = 8
             if (data) len += data.length
             let pkt = new Uint8Array(len)
-            let seq = ++this.cmdSeq
+            let seq = ++this.cmdSeq & 0xffff
             write32(pkt, 0, cmd);
             write16(pkt, 4, seq);
             write16(pkt, 6, 0);
