@@ -349,7 +349,9 @@ namespace pxt.HF2 {
                 })
                 .then(() =>
                     this.talkAsync(HF2_CMD_RESET_INTO_APP)
-                        .catch(e => { }))
+                        .catch(e => {
+                            // error expected here - device is resetting
+                        }))
                 .then(() => { })
         }
 

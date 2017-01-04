@@ -492,23 +492,27 @@ namespace ts.pxtc.Util {
     }
 
     export class PromiseQueue {
-        promises: pxt.Map<Promise<any>> = {};
+        promises: pxt.Map<(() => Promise<any>)[]> = {};
 
         enqueue<T>(id: string, f: () => Promise<T>): Promise<T> {
-            if (!this.promises.hasOwnProperty(id)) {
-                this.promises[id] = Promise.resolve()
-            }
-            let newOne = this.promises[id]
-                .catch(e => {
-                    Util.nextTick(() => { throw e })
-                })
-                .then(() => f().then(v => {
-                    if (this.promises[id] === newOne)
-                        delete this.promises[id];
-                    return v;
-                }))
-            this.promises[id] = newOne;
-            return newOne;
+            return new Promise<T>((resolve, reject) => {
+                let arr = this.promises[id]
+                if (!arr) {
+                    arr = this.promises[id] = []
+                }
+                arr.push(() =>
+                    f()
+                        .finally(() => {
+                            arr.shift()
+                            if (arr.length == 0)
+                                delete this.promises[id]
+                            else
+                                arr[0]()
+                        })
+                        .then(resolve, reject))
+                if (arr.length == 1)
+                    arr[0]()
+            })
         }
     }
 
