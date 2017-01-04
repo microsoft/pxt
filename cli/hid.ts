@@ -121,7 +121,7 @@ export class HidIO implements HF2.PacketIO {
             this.buf.push(new Uint8Array(buf))
         })
         this.dev.on("error", (err: Error) => {
-            console.log("HID error", err.message)
+            this.buf.pushError(err)
         })
     }
 

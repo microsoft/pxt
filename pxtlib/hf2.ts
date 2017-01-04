@@ -120,6 +120,10 @@ namespace pxt.HF2 {
         BoardID: string;
     }
 
+    function log(msg: string) {
+        console.log("HF2: " + msg)
+    }
+
     export class Wrapper {
         private cmdSeq = U.randomUint32();
         constructor(public io: PacketIO) {
@@ -178,8 +182,6 @@ namespace pxt.HF2 {
             let handleReturnAsync = (): Promise<Uint8Array> =>
                 this.msgs.shiftAsync(1000) // we wait up to a second
                     .then(res => {
-                        if (res == null)
-                            this.error("timeout waiting for response")
                         if (read16(res, 0) != seq) {
                             if (numSkipped < 3) {
                                 numSkipped++
@@ -255,7 +257,7 @@ namespace pxt.HF2 {
                                 return Promise.resolve(r)
                             }
                         }, err => {
-                            console.log("Error", err)
+                            this.msgs.pushError(err)
                             return Promise.delay(300)
                                 .then(() => null)
                         })
@@ -282,7 +284,6 @@ namespace pxt.HF2 {
             let frame = new Uint8Array(64)
             let loop = (pos: number): Promise<void> => {
                 let len = buf.length - pos
-                //console.log(`rem len ${len}`)
                 if (len <= 0) return Promise.resolve()
                 if (len > 63) {
                     len = 63
@@ -303,6 +304,7 @@ namespace pxt.HF2 {
         switchToBootloaderAsync() {
             if (this.bootloaderMode)
                 return Promise.resolve()
+            log(`Switching into bootloader mode`)
             return this.talkAsync(HF2_CMD_START_FLASH)
                 .then(() => this.initAsync())
                 .then(() => {
@@ -330,9 +332,13 @@ namespace pxt.HF2 {
                     .then(() => loopAsync(pos + 1))
             }
             return this.switchToBootloaderAsync()
+                .then(() => {
+                    let size = blocks.length * this.pageSize
+                    log(`Starting flash (${Math.round(size / 1024)}kB).`)
+                })
                 .then(() => loopAsync(0))
                 .then(() => {
-                    console.log(`Flashed ${blocks.length} pages; resetting.`)
+                    log(`Flashing done. Resetting.`)
                 })
                 .then(() =>
                     this.talkAsync(HF2_CMD_RESET_INTO_APP)
@@ -348,7 +354,7 @@ namespace pxt.HF2 {
                     this.pageSize = read32(binfo, 4)
                     this.flashSize = read32(binfo, 8) * this.pageSize
                     this.maxMsgSize = read32(binfo, 12)
-                    console.log(`HID Connected; maxMsg ${this.maxMsgSize} bytes; flash ${this.flashSize / 1024}kB`)
+                    log(`Connected; msgSize ${this.maxMsgSize}B; flash ${this.flashSize / 1024}kB; ${this.bootloaderMode ? "bootloader" : "application"} mode`)
                     return this.talkAsync(HF2_CMD_INFO)
                 })
                 .then(buf => {
@@ -365,7 +371,7 @@ namespace pxt.HF2 {
                         Version: m[1],
                         Features: m[2],
                     }
-                    //console.log("Device info", this.info)
+                    log("Board-ID: " + this.info.BoardID)
                 })
         }
 

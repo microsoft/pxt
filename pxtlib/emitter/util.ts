@@ -499,15 +499,20 @@ namespace ts.pxtc.Util {
     }
 
     export class PromiseBuffer<T> {
-        private waiting: ((v: T) => void)[] = [];
-        private available: T[] = [];
+        private waiting: ((v: (T | Error)) => void)[] = [];
+        private available: (T | Error)[] = [];
 
         drain() {
             for (let f of this.waiting) {
-                f(null)
+                f(new Error("Promise Buffer Reset"))
             }
             this.waiting = []
             this.available = []
+        }
+
+
+        pushError(v: Error) {
+            this.push(v as any)
         }
 
         push(v: T) {
@@ -517,18 +522,26 @@ namespace ts.pxtc.Util {
         }
 
         shiftAsync(timeout = 0) {
-            if (this.available.length > 0)
-                return Promise.resolve(this.available.shift())
-            else
+            if (this.available.length > 0) {
+                let v = this.available.shift()
+                if (v instanceof Error)
+                    return Promise.reject<T>(v)
+                else
+                    return Promise.resolve<T>(v)
+            } else
                 return new Promise<T>((resolve, reject) => {
-                    this.waiting.push(resolve)
+                    let f = (v: (T | Error)) => {
+                        if (v instanceof Error) reject(v)
+                        else resolve(v)
+                    }
+                    this.waiting.push(f)
                     if (timeout > 0) {
                         Promise.delay(timeout)
                             .then(() => {
-                                let idx = this.waiting.indexOf(resolve)
+                                let idx = this.waiting.indexOf(f)
                                 if (idx >= 0) {
                                     this.waiting.splice(idx, 1)
-                                    resolve(null)
+                                    reject(new Error("Timeout"))
                                 }
                             })
                     }
