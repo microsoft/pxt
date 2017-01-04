@@ -1913,16 +1913,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
         Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        //this.setSideDoc(targetTheme.sideDoc);
-        //this.setState({ sideDocsCollapsed: false })
         this.startTutorial(targetTheme.sideDoc);
-    }
-
-    gettingStartedLink() {
-        pxt.tickEvent("btn.gettingstartedlink");
-        const targetTheme = pxt.appTarget.appTheme;
-        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        window.open(targetTheme.sideDoc)
     }
 
     startTutorial(tutorialId: string) {
@@ -1969,8 +1960,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.exitTutorialAsync()
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading());
-        // TODO: decide whether or not to push the hash to the url when entering / exiting tutorial mode
-        //history.pushState("", document.title, window.location.pathname);
     }
 
     exitTutorialAsync() {
@@ -1980,7 +1969,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.scriptSearch.showOpenProject();
+                    this.loadHeaderAsync(workspace.getHeaders()[0]);
                 } else {
                     this.newProject();
                 }
@@ -2106,15 +2095,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </div> : undefined }
                     </div>
                 </div>
-                {gettingStarted && sideDocs ?
+                {gettingStarted ?
                     <div id="getting-started-btn">
-                        <sui.Button class="bottom attached widedesktop only getting-started-btn green " title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
-                        <sui.Button class="bottom attached widedesktop hide getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
-                    </div>
-                    : undefined }
-                {gettingStarted && !sideDocs ?
-                    <div id="getting-started-btn">
-                        <sui.Button class="bottom attached getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
+                        <sui.Button class="bottom attached getting-started-btn green " title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined }
                 <div id="simulator">

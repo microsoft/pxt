@@ -535,13 +535,12 @@ export class Editor extends srceditor.Editor {
         let zoomEnabled = showCategories;
         let controlsEnabled = showCategories;
         let scrollEnabled = showCategories;
-        let trashcanEnabled = !showCategories;
         let blocklyOptions: Blockly.Options = {
             toolbox: toolbox,
             scrollbars: scrollEnabled,
             media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
             sound: true,
-            trashcan: trashcanEnabled,
+            trashcan: false,
             collapse: false,
             comments: true,
             disable: false,
