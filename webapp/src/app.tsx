@@ -760,8 +760,8 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
                                     <i className="right chevron icon"></i>
                                 </button> : undefined }
                                 {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial()}>
-                                    Finish
                                     <i className="left checkmark icon"></i>
+                                    Finish
                                 </button> : undefined }
                             </div>
                         </div>

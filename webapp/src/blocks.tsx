@@ -534,12 +534,14 @@ export class Editor extends srceditor.Editor {
                 : document.getElementById('blocklyToolboxDefinitionFlyout');
         let zoomEnabled = showCategories;
         let controlsEnabled = showCategories;
+        let scrollEnabled = showCategories;
+        let trashcanEnabled = !showCategories;
         let blocklyOptions: Blockly.Options = {
             toolbox: toolbox,
-            scrollbars: true,
+            scrollbars: scrollEnabled,
             media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
             sound: true,
-            trashcan: false,
+            trashcan: trashcanEnabled,
             collapse: false,
             comments: true,
             disable: false,
