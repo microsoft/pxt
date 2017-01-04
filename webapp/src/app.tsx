@@ -1816,7 +1816,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
                         </sui.Item>
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...")} class="more-dropdown-menuitem">
+                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -2177,7 +2177,7 @@ $(document).ready(() => {
 
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        window.location.hash = window.location.hash.replace(wsPortMatch[0], ""); 
+        window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
     } else {
         pxt.options.wsPort = 3233;
     }

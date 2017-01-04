@@ -78,9 +78,9 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             </div>
             <div className="content">
                 {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-                <div className="meta">
+                {card.time ? <div className="meta">
                     {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
-                </div>
+                </div> : undefined}
                 {card.description ? <div className="description">{card.description}</div> : null}
             </div>
         </div>;
