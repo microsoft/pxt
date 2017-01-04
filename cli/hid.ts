@@ -38,38 +38,6 @@ export function getHF2Devices() {
     return devices.filter(d => (d.release & 0xff00) == 0x4200)
 }
 
-export function startMonitor(sendMsgToListeners: (s: string) => void) {
-    let openDevs: pxt.Map<Promise<HF2.Wrapper>> = {};
-    const check = () => {
-        let devs = getHF2Devices().filter(d => !openDevs[d.path])
-        for (let d of devs) {
-            openDevs[d.path] = hf2ConnectAsync(d.path)
-                .then(w => {
-                    w.onSerial = (arr, iserr) => {
-                        let buf = new Buffer(arr)
-                        let m = {
-                            type: 'serial',
-                            id: d.path,
-                            data: buf.toString('utf8'),
-                            isStdError: iserr
-                        }
-                        sendMsgToListeners(JSON.stringify(m))
-                    }
-                    return w
-                })
-        }
-    }
-
-    try {
-        check()
-    } catch (e) {
-        console.warn("failed to get HF2 devices: " + e.message)
-        return
-    }
-
-    setInterval(check, 3000);
-}
-
 export function hf2ConnectAsync(path: string) {
     let h = new HF2.Wrapper(new HidIO(path))
     return h.reconnectAsync(true).then(() => h)
@@ -108,23 +76,20 @@ export class HIDError extends Error {
 export class HidIO implements HF2.PacketIO {
     dev: any;
 
-    private buf = new U.PromiseBuffer<Uint8Array>();
+    onData = (v: Uint8Array) => { };
+    onError = (e: Error) => { };
 
-    constructor(private path: string, public onData: (v: (Buffer | Error)) => void = null) {
-        if (!this.onData)
-            this.onData = v => {
-                if (v instanceof Error)
-                    this.buf.pushError(v)
-                else
-                    this.buf.push(new Uint8Array(v))
-            }
+    constructor(private path: string) {
         this.connect()
     }
 
     private connect() {
         this.dev = new HID.HID(this.path)
-        this.dev.on("data", (v: any) => this.onData(v))
-        this.dev.on("error", (v: any) => this.onData(v))
+        this.dev.on("data", (v: Buffer) => {
+            //console.log("got", v.toString("hex"))
+            this.onData(new Uint8Array(v))
+        })
+        this.dev.on("error", (v: Error) => this.onError(v))
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
@@ -138,18 +103,13 @@ export class HidIO implements HF2.PacketIO {
             })
     }
 
-    recvPacketAsync(): Promise<Uint8Array> {
-        return this.buf.shiftAsync()
-    }
-
     error(msg: string): any {
         let fullmsg = "HID error on " + this.path + ": " + msg
         console.error(fullmsg)
         throw new HIDError(fullmsg)
     }
 
-    reconnectAsync(): Promise<HF2.PacketIO> {
-        this.buf.drain()
+    reconnectAsync(): Promise<void> {
         // see https://github.com/node-hid/node-hid/issues/61
         this.dev.removeAllListeners("data");
         this.dev.removeAllListeners("error");
@@ -159,7 +119,6 @@ export class HidIO implements HF2.PacketIO {
             .then(() => {
                 this.dev.close()
                 this.connect()
-                return this
             })
     }
 }

@@ -458,7 +458,7 @@ function initSocketServer(wsPort: number) {
         return r
     }
 
-    let hios: pxt.Map<hid.HidIO> = {};
+    let hios: pxt.Map<Promise<pxt.HF2.Wrapper>> = {};
     function startHID(request: any, socket: any, body: any) {
         let ws = new WebSocket(request, socket, body);
         ws.on('open', () => {
@@ -472,32 +472,33 @@ function initSocketServer(wsPort: number) {
                     .then(() => {
                         let hio = hios[msg.arg.path]
                         if (!hio && msg.arg.path)
-                            hios[msg.arg.path] = hio = new hid.HidIO(msg.arg.path, v => { })
+                            hios[msg.arg.path] = hio = hid.hf2ConnectAsync(msg.arg.path)
+                        return hio
+                    })
+                    .then(hio => {
                         switch (msg.op) {
                             case "init":
                                 return hio.reconnectAsync()
                                     .then(() => {
-                                        hio.onData = v => {
+                                        hio.onSerial = (v, isErr) => {
                                             if (!ws) return
                                             ws.send(JSON.stringify({
-                                                op: "data",
-                                                result: Buffer.isBuffer(v) ?
-                                                    {
-                                                        path: msg.arg.path,
-                                                        data: v.toString("hex")
-                                                    } :
-                                                    {
-                                                        path: msg.arg.path,
-                                                        errorMessage: v.message || "Error",
-                                                        errorStackTrace: v.stack,
-                                                    }
+                                                op: "serial",
+                                                result: {
+                                                    isError: isErr,
+                                                    path: msg.arg.path,
+                                                    data: U.toHex(v),
+                                                }
                                             }))
                                         }
                                         return {}
                                     })
-                            case "send":
-                                return hio.sendPacketAsync(new Buffer(msg.arg.data, "hex") as any)
-                                    .then(() => ({}))
+                            case "talk":
+                                return Promise.mapSeries(msg.arg.cmds, (obj: any) =>
+                                    hio.talkAsync(obj.cmd, U.fromHex(obj.data))
+                                        .then(res => ({ data: U.toHex(res) })))
+                            case "sendserial":
+                                return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError)
                             case "list":
                                 return { devices: hid.getHF2Devices() } as any
                         }
@@ -647,8 +648,6 @@ function sendSerialMsg(msg: string) {
 function initSerialMonitor() {
     if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
     if (pxt.appTarget.serial.useHF2) {
-        //console.log('serial: monitoring HID ports...')
-        //hid.startMonitor(sendSerialMsg)
         return
     }
 

@@ -29,9 +29,11 @@ export class HIDError extends Error {
 let bridgeByPath: pxt.Map<BridgeIO> = {}
 
 interface OOB {
+    op: string;
     result: {
         path: string;
         data?: string;
+        isError?: boolean;
         errorMessage?: string;
         errorStackTrace?: string;
     }
@@ -73,17 +75,27 @@ export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
 }
 
 class BridgeIO implements pxt.HF2.PacketIO {
-    private buf = new U.PromiseBuffer<Uint8Array>();
+    onData = (v: Uint8Array) => { };
+    onError = (e: Error) => { };
+    onSerial = (v: Uint8Array, isErr: boolean) => { };
 
     constructor(public dev: HidDevice) {
     }
 
     onOOB(v: OOB) {
-        if (v.result.errorMessage) {
-            this.buf.pushError(new Error(v.result.errorMessage))
-        } else {
-            this.buf.push(U.fromHex(v.result.data))
+        if (v.op == "serial") {
+            this.onSerial(U.fromHex(v.result.data), v.result.isError)
         }
+    }
+
+    talksAsync(cmds: pxt.HF2.TalkArgs[]): Promise<Uint8Array[]> {
+        return iface.opAsync("talk", {
+            path: this.dev.path,
+            cmds: cmds.map(c => ({ cmd: c.cmd, data: c.data ? U.toHex(c.data) : "" }))
+        })
+            .then(resp => {
+                return resp.map((v: any) => U.fromHex(v.data))
+            })
     }
 
     error(msg: string) {
@@ -92,19 +104,18 @@ class BridgeIO implements pxt.HF2.PacketIO {
 
     reconnectAsync() {
         return this.initAsync()
-            .then(() => this)
     }
 
-    sendPacketAsync(pkt: Uint8Array) {
-        Util.assert(pkt.length <= 64)
-        return iface.opAsync("send", {
+    sendPacketAsync(pkt: Uint8Array): Promise<void> {
+        throw new Error("should use talksAsync()!")
+    }
+
+    sendSerialAsync(buf: Uint8Array, useStdErr: boolean): Promise<void> {
+        return iface.opAsync("sendserial", {
             path: this.dev.path,
-            data: U.toHex(pkt)
+            data: U.toHex(buf),
+            isError: useStdErr
         })
-    }
-
-    recvPacketAsync(): Promise<Uint8Array> {
-        return this.buf.shiftAsync()
     }
 
     initAsync() {

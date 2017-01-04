@@ -4,15 +4,26 @@ namespace pxt.HF2 {
         ATMEL = 0x03EB,
         ARDUINO = 0x2341,
         ADAFRUIT = 0x239A,
-        NXP = 0x0d28, // aka Freescale, KL26 etc
+        NXP = 0x0D28, // aka Freescale, KL26 etc
     }
 
 
+    export interface TalkArgs {
+        cmd: number;
+        data?: Uint8Array;
+    }
+
     export interface PacketIO {
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
-        recvPacketAsync(): Promise<Uint8Array>;
+        onData: (v: Uint8Array) => void;
+        onError: (e: Error) => void;
         error(msg: string): any;
-        reconnectAsync(): Promise<PacketIO>;
+        reconnectAsync(): Promise<void>;
+
+        // these are implemneted by HID-bridge
+        talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
+        sendSerialAsync?(buf: Uint8Array, useStdErr: boolean): Promise<void>;
+        onSerial?: (v: Uint8Array, isErr: boolean) => void;
     }
 
     const HF2_CMD_BININFO = 0x0001 // no arguments
@@ -127,7 +138,39 @@ namespace pxt.HF2 {
     export class Wrapper {
         private cmdSeq = U.randomUint32();
         constructor(public io: PacketIO) {
-            this.startLoop()
+            let frames: Uint8Array[] = []
+            io.onSerial = (b, e) => this.onSerial(b, e)
+            io.onData = buf => {
+                let tp = buf[0] & HF2_FLAG_MASK
+                let len = buf[0] & 63
+                //console.log(`msg tp=${tp} len=${len}`)
+                let frame = new Uint8Array(len)
+                U.memcpy(frame, 0, buf, 1, len)
+                if (tp & HF2_FLAG_SERIAL_OUT) {
+                    this.onSerial(frame, tp == HF2_FLAG_SERIAL_ERR)
+                    return
+                }
+                frames.push(frame)
+                if (tp == HF2_FLAG_CMDPKT_BODY) {
+                    return
+                } else {
+                    U.assert(tp == HF2_FLAG_CMDPKT_LAST)
+                    let total = 0
+                    for (let f of frames) total += f.length
+                    let r = new Uint8Array(total)
+                    let ptr = 0
+                    for (let f of frames) {
+                        U.memcpy(r, ptr, f)
+                        ptr += f.length
+                    }
+                    frames = []
+                    this.msgs.push(r)
+                }
+            }
+            io.onError = err => {
+                log("recv error: " + err.message)
+                //this.msgs.pushError(err)
+            }
         }
 
         private lock = new U.PromiseQueue();
@@ -135,7 +178,7 @@ namespace pxt.HF2 {
         info: BootloaderInfo;
         pageSize: number;
         flashSize: number;
-        maxMsgSize: number = 63; // before we know, we assume 63
+        maxMsgSize: number = 63; // when running in forwarding mode, we do not really know
         bootloaderMode = false;
         msgs = new U.PromiseBuffer<Uint8Array>()
 
@@ -158,8 +201,8 @@ namespace pxt.HF2 {
             let pio = this.io
             this.io = null
             return pio.reconnectAsync()
-                .then(io => {
-                    this.io = io
+                .then(() => {
+                    this.io = pio
                     return this.initAsync()
                 })
         }
@@ -169,6 +212,10 @@ namespace pxt.HF2 {
         }
 
         talkAsync(cmd: number, data?: Uint8Array) {
+            if (this.io.talksAsync)
+                return this.io.talksAsync([{ cmd, data }])
+                    .then(v => v[0])
+
             let len = 8
             if (data) len += data.length
             let pkt = new Uint8Array(len)
@@ -185,7 +232,7 @@ namespace pxt.HF2 {
                         if (read16(res, 0) != seq) {
                             if (numSkipped < 3) {
                                 numSkipped++
-                                console.error(`HF2 message out of sync, (${seq} vs ${read16(res, 0)}); will re-try`)
+                                log(`message out of sync, (${seq} vs ${read16(res, 0)}); will re-try`)
                                 return handleReturnAsync()
                             }
                             this.error("out of sync")
@@ -217,71 +264,14 @@ namespace pxt.HF2 {
             return this.sendMsgCoreAsync(buf)
         }
 
-        private startLoop() {
-            const msgAsync = () => {
-                let frames: Uint8Array[] = []
-                let loop = (): Promise<Uint8Array> =>
-                    Promise.resolve()
-                        .then(() => {
-                            if (this.io == null)
-                                return Promise.delay(300)
-                                    .then(() => null)
-                            else
-                                return this.io.recvPacketAsync()
-                        })
-                        .then(buf => {
-                            if (!buf) return null
-                            let tp = buf[0] & HF2_FLAG_MASK
-                            let len = buf[0] & 63
-                            //console.log(`msg tp=${tp} len=${len}`)
-                            let frame = new Uint8Array(len)
-                            for (let i = 0; i < len; ++i)
-                                frame[i] = buf[i + 1]
-                            if (tp & HF2_FLAG_SERIAL_OUT) {
-                                this.onSerial(frame, tp == HF2_FLAG_SERIAL_ERR)
-                                return loop()
-                            }
-                            frames.push(frame)
-                            if (tp == HF2_FLAG_CMDPKT_BODY) {
-                                return loop()
-                            } else {
-                                U.assert(tp == HF2_FLAG_CMDPKT_LAST)
-                                let total = 0
-                                for (let f of frames) total += f.length
-                                let r = new Uint8Array(total)
-                                let ptr = 0
-                                for (let f of frames) {
-                                    U.memcpy(r, ptr, f)
-                                    ptr += f.length
-                                }
-                                return Promise.resolve(r)
-                            }
-                        }, err => {
-                            log("recv error: " + err.message)
-                            // this.msgs.pushError(err)
-                            return Promise.delay(300)
-                                .then(() => null)
-                        })
-                return loop()
-            }
-
-            let loop = () =>
-                msgAsync()
-                    .then(buf => {
-                        if (buf)
-                            this.msgs.push(buf)
-                        loop()
-                    })
-
-            loop()
-        }
-
         sendSerialAsync(buf: Uint8Array, useStdErr = false) {
+            if (this.io.sendSerialAsync)
+                return this.io.sendSerialAsync(buf, useStdErr)
             return this.sendMsgCoreAsync(buf, useStdErr ? 2 : 1)
         }
 
         private sendMsgCoreAsync(buf: Uint8Array, serial: number = 0) {
-            Util.assert(buf.length <= this.maxMsgSize)
+            // Util.assert(buf.length <= this.maxMsgSize)
             let frame = new Uint8Array(64)
             let loop = (pos: number): Promise<void> => {
                 let len = buf.length - pos

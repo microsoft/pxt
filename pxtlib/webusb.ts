@@ -95,11 +95,15 @@ namespace pxt.usb {
     }
 
     class HID implements HF2.PacketIO {
+        ready = false;
         altIface: USBAlternateInterface;
         epIn: USBEndpoint;
         epOut: USBEndpoint;
+        onData = (v: Uint8Array) => { };
+        onError = (e: Error) => { };
 
         constructor(public dev: USBDevice) {
+            this.readLoop()
         }
 
         error(msg: string) {
@@ -107,9 +111,14 @@ namespace pxt.usb {
         }
 
         reconnectAsync() {
+            this.ready = false
             return this.dev.close()
                 .then(() => Promise.delay(500))
-                .then(getHidAsync)
+                .then(requestDeviceAsync)
+                .then(dev => {
+                    this.dev = dev
+                    return this.initAsync()
+                })
         }
 
         sendPacketAsync(pkt: Uint8Array) {
@@ -121,7 +130,24 @@ namespace pxt.usb {
                 })
         }
 
-        recvPacketAsync(): Promise<Uint8Array> {
+        private readLoop() {
+            let loop = (): void => {
+                if (!this.ready)
+                    Promise.delay(300).then(loop)
+                else
+                    this.recvPacketAsync()
+                        .then(buf => {
+                            this.onData(buf)
+                            loop()
+                        }, err => {
+                            this.onError(err)
+                            Promise.delay(300).then(loop)
+                        })
+            }
+            loop()
+        }
+
+        private recvPacketAsync(): Promise<Uint8Array> {
             return this.dev.transferIn(this.epIn.endpointNumber, 64)
                 .then(res => {
                     if (res.status != "ok")
@@ -156,6 +182,7 @@ namespace pxt.usb {
                     //console.log("USB-device", dev)
                     return dev.claimInterface(hid.interfaceNumber)
                 })
+                .then(() => { this.ready = true })
         }
     }
 
