@@ -66,7 +66,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
         Util.assert(pkt.length <= 64)
         return iface.opAsync("send", {
             path: this.dev.path,
-            data: btoa(U.uint8ArrayToString(pkt))
+            data: U.toHex(pkt)
         })
     }
 
@@ -74,7 +74,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
         return iface.opAsync("recv", {
             path: this.dev.path
         }).then((resp: any) => {
-            return U.stringToUint8Array(atob(resp.data))
+            return U.fromHex(resp.data)
         })
     }
 

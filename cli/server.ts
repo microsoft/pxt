@@ -478,11 +478,11 @@ function initSocketServer(wsPort: number) {
                                 return hio.reconnectAsync()
                                     .then(() => ({}))
                             case "send":
-                                return hio.sendPacketAsync(new Buffer(msg.arg.data, "base64") as any)
+                                return hio.sendPacketAsync(new Buffer(msg.arg.data, "hex") as any)
                                     .then(() => ({}))
                             case "recv":
                                 return hio.recvPacketAsync()
-                                    .then(d => d == null ? {} : { data: new Buffer(d).toString("base64") })
+                                    .then(d => d == null ? {} : { data: new Buffer(d).toString("hex") })
                             case "list":
                                 return { devices: hid.getHF2Devices() } as any
                         }
@@ -496,7 +496,7 @@ function initSocketServer(wsPort: number) {
                             result: resp
                         }))
                     }, error => {
-                        console.log("HIDERR", error.stack)
+                        console.log("HIDERR", error.message)
                         if (!ws) return;
                         ws.send(JSON.stringify({
                             result: {

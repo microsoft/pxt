@@ -477,6 +477,20 @@ namespace ts.pxtc.Util {
         return res;
     }
 
+    export function toHex(bytes: Uint8Array) {
+        let r = ""
+        for (let i = 0; i < bytes.length; ++i)
+            r += ("0" + bytes[i].toString(16)).slice(-2)
+        return r
+    }
+
+    export function fromHex(hex: string) {
+        let r = new Uint8Array(hex.length >> 1)
+        for (let i = 0; i < hex.length; i += 2)
+            r[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
+        return r
+    }
+
     export class PromiseQueue {
         promises: pxt.Map<Promise<any>> = {};
 
