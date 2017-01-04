@@ -257,7 +257,8 @@ namespace pxt.HF2 {
                                 return Promise.resolve(r)
                             }
                         }, err => {
-                            this.msgs.pushError(err)
+                            log("recv error: " + err.message)
+                            // this.msgs.pushError(err)
                             return Promise.delay(300)
                                 .then(() => null)
                         })
@@ -320,6 +321,8 @@ namespace pxt.HF2 {
         }
 
         flashAsync(blocks: pxtc.UF2.Block[]) {
+            let start = Date.now()
+            let fstart = 0
             let loopAsync = (pos: number): Promise<void> => {
                 if (pos >= blocks.length)
                     return Promise.resolve()
@@ -335,10 +338,14 @@ namespace pxt.HF2 {
                 .then(() => {
                     let size = blocks.length * this.pageSize
                     log(`Starting flash (${Math.round(size / 1024)}kB).`)
+                    fstart = Date.now()
                 })
                 .then(() => loopAsync(0))
                 .then(() => {
-                    log(`Flashing done. Resetting.`)
+                    let n = Date.now()
+                    let t0 = n - start
+                    let t1 = n - fstart
+                    log(`Flashing done. ${Math.round(blocks.length * this.pageSize / t1 * 1000 / 1024)} kB/s. Resetting. Time: ${t0}ms (reset ${t0 - t1}ms)`)
                 })
                 .then(() =>
                     this.talkAsync(HF2_CMD_RESET_INTO_APP)

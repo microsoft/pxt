@@ -1535,7 +1535,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 resp.saveOnly = saveOnly
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
-                        core.warningNotification(lf(".hex file upload, please try again."));
+                        core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
                     })
             }).catch((e: Error) => {

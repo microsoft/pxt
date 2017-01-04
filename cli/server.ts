@@ -467,7 +467,7 @@ function initSocketServer(wsPort: number) {
         ws.on('message', function (event: any) {
             try {
                 let msg = JSON.parse(event.data);
-                //console.log("HIDMSG", msg.op, objToString(msg.arg))
+                //console.log("HIDMSG", msg.op) // , objToString(msg.arg))
                 Promise.resolve()
                     .then(() => {
                         let hio = hios[msg.arg.path]
