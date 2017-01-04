@@ -244,7 +244,8 @@ export class Editor extends srceditor.Editor {
         if (card) {
             card = {
                 description: card.description,
-                typeScript: pxt.blocks.compileBlock(selected, this.blockInfo).source
+                typeScript: pxt.blocks.compileBlock(selected, this.blockInfo).source,
+                url: card.url
             }
         }
         this.parent.setHelpCard(card);
