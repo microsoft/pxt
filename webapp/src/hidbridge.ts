@@ -26,18 +26,40 @@ export class HIDError extends Error {
     }
 }
 
+let bridgeByPath: pxt.Map<BridgeIO> = {}
+
+interface OOB {
+    result: {
+        path: string;
+        data?: string;
+        errorMessage?: string;
+        errorStackTrace?: string;
+    }
+}
+
+function onOOB(v: OOB) {
+    let b = U.lookup(bridgeByPath, v.result.path)
+    if (b) {
+        b.onOOB(v)
+    } else {
+        console.error("Dropping data for " + v.result.path)
+    }
+}
+
 function init() {
     if (!iface) {
         if (!Cloud.isLocalHost() || !Cloud.localToken)
             return;
         pxt.debug('initializing hid pipe');
-        iface = workeriface.makeWebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/hid`, true)
+        iface = workeriface.makeWebSocket(
+            `ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/hid`, onOOB)
     }
 }
 
 export function shouldUse() {
     return pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && Cloud.isLocalHost() && !!Cloud.localToken
 }
+
 
 export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
     init()
@@ -47,10 +69,21 @@ export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
             if (d0) return new BridgeIO(d0)
             else throw new Error("No device connected")
         })
+        .then(b => b.initAsync().then(() => b))
 }
 
 class BridgeIO implements pxt.HF2.PacketIO {
+    private buf = new U.PromiseBuffer<Uint8Array>();
+
     constructor(public dev: HidDevice) {
+    }
+
+    onOOB(v: OOB) {
+        if (v.result.errorMessage) {
+            this.buf.pushError(new Error(v.result.errorMessage))
+        } else {
+            this.buf.push(U.fromHex(v.result.data))
+        }
     }
 
     error(msg: string) {
@@ -71,14 +104,11 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 
     recvPacketAsync(): Promise<Uint8Array> {
-        return iface.opAsync("recv", {
-            path: this.dev.path
-        }).then((resp: any) => {
-            return U.fromHex(resp.data)
-        })
+        return this.buf.shiftAsync()
     }
 
     initAsync() {
+        bridgeByPath[this.dev.path] = this
         return iface.opAsync("init", {
             path: this.dev.path
         })

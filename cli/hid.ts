@@ -123,8 +123,8 @@ export class HidIO implements HF2.PacketIO {
 
     private connect() {
         this.dev = new HID.HID(this.path)
-        this.dev.on("data", this.onData)
-        this.dev.on("error", this.onData)
+        this.dev.on("data", (v: any) => this.onData(v))
+        this.dev.on("error", (v: any) => this.onData(v))
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {

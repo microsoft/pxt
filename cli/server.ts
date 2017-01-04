@@ -481,12 +481,13 @@ function initSocketServer(wsPort: number) {
                                             if (!ws) return
                                             ws.send(JSON.stringify({
                                                 op: "data",
-                                                path: msg.arg.path,
                                                 result: Buffer.isBuffer(v) ?
                                                     {
+                                                        path: msg.arg.path,
                                                         data: v.toString("hex")
                                                     } :
                                                     {
+                                                        path: msg.arg.path,
                                                         errorMessage: v.message || "Error",
                                                         errorStackTrace: v.stack,
                                                     }

@@ -12,7 +12,7 @@ export interface Iface {
     recvHandler: (v: any) => void;
 }
 
-export function wrap(send: (v: any) => void, nolock = false): Iface {
+export function wrap(send: (v: any) => void): Iface {
     let pendingMsgs: pxt.Map<(v: any) => void> = {}
     let msgId = 0;
     let q = new U.PromiseQueue();
@@ -20,8 +20,7 @@ export function wrap(send: (v: any) => void, nolock = false): Iface {
     let initPromise = new Promise<void>((resolve, reject) => {
         pendingMsgs["ready"] = resolve;
     })
-    if (!nolock)
-        q.enqueue("main", () => initPromise)
+    q.enqueue("main", () => initPromise)
 
     let recvHandler = (data: any) => {
         if (pendingMsgs.hasOwnProperty(data.id)) {
@@ -32,15 +31,13 @@ export function wrap(send: (v: any) => void, nolock = false): Iface {
     };
 
     function opAsync(op: string, arg: any) {
-        let dowork = () => new Promise<any>((resolve, reject) => {
+        return q.enqueue("main", () => new Promise<any>((resolve, reject) => {
             let id = "" + msgId++
             pendingMsgs[id] = v => {
                 if (!v) {
-                    // Do not report this, if it gets cought
                     //pxt.reportError("worker", "no response")
                     reject(new Error("no response"))
                 } else if (v.errorMessage) {
-                    // Ditto
                     //pxt.reportError("worker", v.errorMessage)
                     reject(new Error(v.errorMessage))
                 } else {
@@ -48,11 +45,7 @@ export function wrap(send: (v: any) => void, nolock = false): Iface {
                 }
             }
             send({ id, op, arg })
-        })
-        if (nolock)
-            return dowork()
-        else
-            return q.enqueue("main", dowork)
+        }))
     }
 
     return { opAsync, recvHandler }
@@ -67,16 +60,21 @@ export function makeWebWorker(workerFile: string) {
     return iface
 }
 
-export function makeWebSocket(url: string, nolock = false) {
+export function makeWebSocket(url: string, onOOB: (v: any) => void = null) {
     let ws = new WebSocket(url)
     let sendq: string[] = []
     let iface = wrap(v => {
         let s = JSON.stringify(v)
         if (sendq) sendq.push(s)
         else ws.send(s)
-    }, nolock)
+    })
     ws.onmessage = ev => {
-        iface.recvHandler(JSON.parse(ev.data))
+        let js = JSON.parse(ev.data)
+        if (onOOB && js.id == null) {
+            onOOB(js)
+        } else {
+            iface.recvHandler(js)
+        }
     }
     ws.onopen = (ev) => {
         pxt.debug('socket opened');
