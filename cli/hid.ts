@@ -111,7 +111,11 @@ export class HidIO implements HF2.PacketIO {
     private buf = new U.PromiseBuffer<Uint8Array>();
 
     constructor(private path: string) {
-        this.dev = new HID.HID(path)
+        this.connect()
+    }
+
+    private connect() {
+        this.dev = new HID.HID(this.path)
         this.dev.on("data", (buf: Buffer) => {
             //console.log("RECV: " + buf.toString("hex"))
             this.buf.push(new Uint8Array(buf))
@@ -121,17 +125,15 @@ export class HidIO implements HF2.PacketIO {
         })
     }
 
-    reset() {
-        this.buf.drain()
-    }
-
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
         //console.log("SEND: " + new Buffer(pkt).toString("hex"))
-        let lst = [0]
-        for (let i = 0; i < 64; ++i)
-            lst.push(pkt[i] || 0)
-        this.dev.write(lst)
         return Promise.resolve()
+            .then(() => {
+                let lst = [0]
+                for (let i = 0; i < 64; ++i)
+                    lst.push(pkt[i] || 0)
+                this.dev.write(lst)
+            })
     }
 
     recvPacketAsync(): Promise<Uint8Array> {
@@ -145,8 +147,18 @@ export class HidIO implements HF2.PacketIO {
     }
 
     reconnectAsync(): Promise<HF2.PacketIO> {
-        // TODO
-        return Promise.resolve(this)
+        this.buf.drain()
+        // see https://github.com/node-hid/node-hid/issues/61
+        this.dev.removeAllListeners("data");
+        this.dev.removeAllListeners("error");
+        let pkt = new Uint8Array([0x48])
+        this.sendPacketAsync(pkt).catch(e => { })
+        return Promise.delay(100)
+            .then(() => {
+                this.dev.close()
+                this.connect()
+                return this
+            })
     }
 }
 

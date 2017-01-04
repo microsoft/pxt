@@ -503,6 +503,9 @@ namespace ts.pxtc.Util {
         private available: T[] = [];
 
         drain() {
+            for (let f of this.waiting) {
+                f(null)
+            }
             this.waiting = []
             this.available = []
         }
@@ -513,12 +516,22 @@ namespace ts.pxtc.Util {
             else this.available.push(v)
         }
 
-        shiftAsync() {
+        shiftAsync(timeout = 0) {
             if (this.available.length > 0)
                 return Promise.resolve(this.available.shift())
             else
-                return new Promise<T>(resolve => {
+                return new Promise<T>((resolve, reject) => {
                     this.waiting.push(resolve)
+                    if (timeout > 0) {
+                        Promise.delay(timeout)
+                            .then(() => {
+                                let idx = this.waiting.indexOf(resolve)
+                                if (idx >= 0) {
+                                    this.waiting.splice(idx, 1)
+                                    resolve(null)
+                                }
+                            })
+                    }
                 })
         }
     }

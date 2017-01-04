@@ -174,37 +174,45 @@ namespace pxt.HF2 {
             write16(pkt, 6, 0);
             if (data)
                 U.memcpy(pkt, 8, data, 0, data.length)
+            let numSkipped = 0
+            let handleReturnAsync = (): Promise<Uint8Array> =>
+                this.msgs.shiftAsync(1000) // we wait up to a second
+                    .then(res => {
+                        if (res == null)
+                            this.error("timeout waiting for response")
+                        if (read16(res, 0) != seq) {
+                            if (numSkipped < 3) {
+                                numSkipped++
+                                console.error(`HF2 message out of sync, (${seq} vs ${read16(res, 0)}); will re-try`)
+                                return handleReturnAsync()
+                            }
+                            this.error("out of sync")
+                        }
+                        let info = ""
+                        if (res[3])
+                            info = "; info=" + res[3]
+                        switch (res[2]) {
+                            case HF2_STATUS_OK:
+                                return res.slice(4)
+                            case HF2_STATUS_INVALID_CMD:
+                                this.error("invalid command" + info)
+                                break
+                            case HF2_STATUS_EXEC_ERR:
+                                this.error("execution error" + info)
+                                break
+                            default:
+                                this.error("error " + res[2] + info)
+                                break
+                        }
+                        return null
+                    })
+
             return this.sendMsgAsync(pkt)
-                .then(() => this.recvMsgAsync())
-                .then(res => {
-                    if (read16(res, 0) != seq)
-                        this.error("out of sync")
-                    let info = ""
-                    if (res[3])
-                        info = "; info=" + res[3]
-                    switch (res[2]) {
-                        case HF2_STATUS_OK:
-                            return res.slice(4)
-                        case HF2_STATUS_INVALID_CMD:
-                            this.error("invalid command" + info)
-                            break
-                        case HF2_STATUS_EXEC_ERR:
-                            this.error("execution error" + info)
-                            break
-                        default:
-                            this.error("error " + res[2] + info)
-                            break
-                    }
-                    return null
-                })
+                .then(handleReturnAsync)
         }
 
         private sendMsgAsync(buf: Uint8Array) {
             return this.sendMsgCoreAsync(buf)
-        }
-
-        private recvMsgAsync() {
-            return this.msgs.shiftAsync()
         }
 
         private startLoop() {
@@ -303,6 +311,12 @@ namespace pxt.HF2 {
                 })
         }
 
+        reflashAsync(blocks: pxtc.UF2.Block[]) {
+            return this.flashAsync(blocks)
+                .then(() => Promise.delay(500))
+                .then(() => this.reconnectAsync())
+        }
+
         flashAsync(blocks: pxtc.UF2.Block[]) {
             let loopAsync = (pos: number): Promise<void> => {
                 if (pos >= blocks.length)
@@ -317,10 +331,13 @@ namespace pxt.HF2 {
             }
             return this.switchToBootloaderAsync()
                 .then(() => loopAsync(0))
+                .then(() => {
+                    console.log(`Flashed ${blocks.length} pages; resetting.`)
+                })
                 .then(() =>
                     this.talkAsync(HF2_CMD_RESET_INTO_APP)
                         .catch(e => { }))
-                .then(() => this.reconnectAsync())
+                .then(() => { })
         }
 
         private initAsync() {
@@ -331,7 +348,7 @@ namespace pxt.HF2 {
                     this.pageSize = read32(binfo, 4)
                     this.flashSize = read32(binfo, 8) * this.pageSize
                     this.maxMsgSize = read32(binfo, 12)
-                    console.log(`Connected; maxMsg ${this.maxMsgSize} bytes; flash ${this.flashSize / 1024}kB`)
+                    console.log(`HID Connected; maxMsg ${this.maxMsgSize} bytes; flash ${this.flashSize / 1024}kB`)
                     return this.talkAsync(HF2_CMD_INFO)
                 })
                 .then(buf => {
@@ -348,7 +365,7 @@ namespace pxt.HF2 {
                         Version: m[1],
                         Features: m[2],
                     }
-                    console.log("Device info", this.info)
+                    //console.log("Device info", this.info)
                 })
         }
 

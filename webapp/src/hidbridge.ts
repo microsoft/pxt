@@ -58,8 +58,8 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 
     reconnectAsync() {
-        // TODO?
-        return Promise.resolve(this)
+        return this.initAsync()
+            .then(() => this)
     }
 
     sendPacketAsync(pkt: Uint8Array) {

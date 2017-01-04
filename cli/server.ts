@@ -475,14 +475,14 @@ function initSocketServer(wsPort: number) {
                             hios[msg.arg.path] = hio = new hid.HidIO(msg.arg.path)
                         switch (msg.op) {
                             case "init":
-                                hio.reset()
-                                return {}
+                                return hio.reconnectAsync()
+                                    .then(() => ({}))
                             case "send":
                                 return hio.sendPacketAsync(new Buffer(msg.arg.data, "base64") as any)
                                     .then(() => ({}))
                             case "recv":
                                 return hio.recvPacketAsync()
-                                    .then(d => ({ data: new Buffer(d).toString("base64") }))
+                                    .then(d => d == null ? {} : { data: new Buffer(d).toString("base64") })
                             case "list":
                                 return { devices: hid.getHF2Devices() } as any
                         }

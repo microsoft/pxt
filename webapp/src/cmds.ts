@@ -122,7 +122,7 @@ function webusbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
     return pxt.usb.initAsync()
-        .then(dev => dev.flashAsync(blocks))
+        .then(dev => dev.reflashAsync(blocks))
 }
 
 function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
@@ -131,7 +131,7 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
-        .then(dev => dev.flashAsync(blocks))
+        .then(dev => dev.reflashAsync(blocks))
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
