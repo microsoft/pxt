@@ -566,6 +566,8 @@ export class Editor extends srceditor.Editor {
 
     filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {
         this.blockSubset = blockSubset;
+        this.showToolboxCategories = showCategories;
+        this.showToolboxButtons = showToolboxButtons;
         let toolbox = this.getDefaultToolbox(showCategories);
         if (!this.blockInfo) return;
         let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, showCategories, blockSubset);
@@ -583,8 +585,6 @@ export class Editor extends srceditor.Editor {
         } else {
             // Toolbox mode is different, need to refresh.
             this.editor = undefined;
-            this.showToolboxCategories = showCategories;
-            this.showToolboxButtons = showToolboxButtons;
             this.delayLoadXml = this.currFile.content;
             this.prepareBlockly(showCategories);
             this.domUpdate();

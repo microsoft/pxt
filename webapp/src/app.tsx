@@ -671,8 +671,8 @@ interface TutorialOptions {
 
 class TutorialContent extends data.Component<ISettingsProps, {}> {
     public static notify(message: pxsim.SimulatorMessage) {
-        let sd = document.getElementById("tutorialcontent") as HTMLIFrameElement;
-        if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
+        let tc = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (tc && tc.contentWindow) tc.contentWindow.postMessage(message, "*");
     }
 
     constructor(props: ISettingsProps) {
@@ -693,12 +693,20 @@ class TutorialContent extends data.Component<ISettingsProps, {}> {
         else this.props.parent.setState({ tutorialUrl: url });
     }
 
+    public static refresh() {
+        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (el && el.contentWindow) {
+            el.parentElement.style.height = "";
+            el.parentElement.style.height = el.contentWindow.document.body.scrollHeight + "px";
+        }
+    }
+
     renderCore() {
         const state = this.props.parent.state;
         const docsUrl = state.tutorialUrl;
         if (!docsUrl) return null;
 
-        return <iframe id="tutorialcontent" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
+        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh()} src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
     }
 }
 
@@ -746,7 +754,7 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
 
         return <div id="tutorialcard" className="ui ">
                     <div className="ui raised fluid card">
-                        <div className="content">
+                        <div className="ui">
                             <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
                         </div>
                         <div className="extra content">
@@ -1019,8 +1027,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     componentDidUpdate() {
         this.saveSettings()
-        if (!this.state.tutorial)
-            this.editor.domUpdate();
+        this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
     }
 
@@ -1294,6 +1301,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
                         this.editor.filterToolbox(tt.data, showCategories, false);
                         this.setState({tutorialReady: true});
+                        TutorialContent.refresh();
                         core.hideLoading();
                         break;
                 }

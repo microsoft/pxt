@@ -144,18 +144,35 @@
     top: 1rem;
     z-index:9;
     right: 1rem;
+    min-width: 320px;
 }
 .rtl #tutorialcard {
     right: auto;
     left: 1rem;
 }
+#tutorialcard .ui.card {
+    padding: 2px;
+}
 
 #tutorialcontent {
     display: block;
     width: 100%;
-    overflow-y: auto;
+    overflow:hidden;
     border:none;
     height: 100%;
+}
+
+body#docs.tutorial {
+    overflow-y: hidden;
+}
+#docs.tutorial .ui.segment {
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+}
+#docs.tutorial #content{
+    margin-bottom: 0.5rem !important;
 }
 
 /* Cookie Message */

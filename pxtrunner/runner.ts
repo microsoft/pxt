@@ -335,6 +335,8 @@ namespace pxt.runner {
                         case "doc":
                             return renderDocAsync(content, src);
                         case "tutorial":
+                            let body = $('body');
+                            body.addClass('tutorial');
                             return renderTutorialAsync(content, src, 0);
                         default:
                             return renderMarkdownAsync(content, src);
@@ -526,45 +528,40 @@ ${files["main.ts"]}
 
                 let regex = /```(sim|block|blocks|shuffle)\n([\s\S]*?)\n```/gmi;
                 let match: RegExpExecArray;
-                let code = "";
-                let foundCode = false;
+                let code = '';
                 while ((match = regex.exec(uptoSteps)) != null) {
                     code += match[2] + "\n";
-                    foundCode = true;
                 }
-                if (foundCode) {
-                    // Convert all blocks to blocks
-                    return pxt.runner.decompileToBlocksAsync(code, {
-                        emPixels: 14,
-                        layout: pxt.blocks.BlockLayout.Flow,
-                        package: undefined
-                    }).then((r) => {
-                        let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
-                        let toolboxSubset: { [index: string]: number } = {};
-                        if (blocksxml) {
-                            let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
-                            let allblocks = headless.getAllBlocks();
-                            for (let bi = 0; bi < allblocks.length; ++bi) {
-                                let blk = allblocks[bi];
-                                toolboxSubset[blk.type] = 1;
-                            }
-                        }
-                        if (toolboxSubset != {}) {
-                                window.parent.postMessage(<pxsim.TutorialToolboxMessage>{
-                                    type: "tutorial",
-                                    tutorial: tutorialid,
-                                    subtype: "tutorialtoolbox",
-                                    data: toolboxSubset
-                            }, "*");
-                        }
-                    }).then(() => {
-                        // Render current step
-                        return renderMarkdownAsync(content, steps[step]);
-                    })
-                } else {
-                    // Render current step
-                    return renderMarkdownAsync(content, steps[step]);
-                }
+                // Render current step
+                return renderMarkdownAsync(content, steps[step])
+                    .then(() => {
+                        if (code == '') return;
+                        // Convert all blocks to blocks
+                        return pxt.runner.decompileToBlocksAsync(code, {
+                            emPixels: 14,
+                            layout: pxt.blocks.BlockLayout.Flow,
+                            package: undefined
+                        }).then((r) => {
+                                let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
+                                let toolboxSubset: { [index: string]: number } = {};
+                                if (blocksxml) {
+                                    let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
+                                    let allblocks = headless.getAllBlocks();
+                                    for (let bi = 0; bi < allblocks.length; ++bi) {
+                                        let blk = allblocks[bi];
+                                        toolboxSubset[blk.type] = 1;
+                                    }
+                                }
+                                if (toolboxSubset != {}) {
+                                        window.parent.postMessage(<pxsim.TutorialToolboxMessage>{
+                                            type: "tutorial",
+                                            tutorial: tutorialid,
+                                            subtype: "tutorialtoolbox",
+                                            data: toolboxSubset
+                                    }, "*");
+                                }
+                        })
+                    });
             })
     }
 
