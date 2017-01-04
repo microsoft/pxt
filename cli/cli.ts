@@ -3161,15 +3161,21 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
-    return buildTargetDocsAsync(!!parsed.flags["docs"], !!parsed.flags["locs"], parsed.flags["files"] as string);
+    return buildTargetDocsAsync(
+        !!parsed.flags["docs"],
+        !!parsed.flags["locs"],
+        parsed.flags["files"] as string,
+        !!parsed.flags["create"]
+        );
 }
 
-export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string): Promise<void> {
+export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {
     const build = () => buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
         locs,
-        fileFilter
+        fileFilter,
+        createOnly
     }).then((compileOpts) => { });
     // from target location?
     if (fs.existsSync("pxtarget.json"))
@@ -3731,7 +3737,8 @@ function initCommands() {
         flags: {
             docs: { description: "produce docs files" },
             loc: { description: "produce localization files" },
-            files: { description: "file name filter (regex)", type: "string", argument: "files" }
+            files: { description: "file name filter (regex)", type: "string", argument: "files" },
+            create: { description: "only write new files" }
         },
         advanced: true
     }, gendocsAsync);
