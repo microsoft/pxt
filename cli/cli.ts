@@ -2922,6 +2922,7 @@ interface BuildCoreOptions {
     locs?: boolean;
     docs?: boolean;
     fileFilter?: string;
+    createOnly?: boolean;
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOptions> {
@@ -2977,11 +2978,13 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
                         Object.keys(md).filter(fn => !filterRx.test(fn)).forEach(fn => delete md[fn]);
                     }
                     mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
-                    for (let fn in md) {
-                        let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
-                        let ffn = folder + fn;
-                        mainPkg.host().writeFile(mainPkg, ffn, md[fn])
-                        console.log(`generated ${ffn}; size=${md[fn].length}`)
+                    for (const fn in md) {
+                        const folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                        const ffn = path.join(folder, fn);
+                        if (!buildOpts.createOnly || !fs.existsSync(ffn)) {
+                            mainPkg.host().writeFile(mainPkg, ffn, md[fn])
+                            console.log(`generated ${ffn}; size=${md[fn].length}`)
+                        }
                     }
                     return null
                 case BuildOption.Deploy:
