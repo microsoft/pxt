@@ -242,6 +242,7 @@ export class Editor extends srceditor.Editor {
         const selected: B.Block = Blockly.selected;
         let card: pxt.CodeCard = (selected as any).codeCard;
         if (card) {
+            // render js only
             card = {
                 description: card.description,
                 typeScript: pxt.blocks.compileBlock(selected, this.blockInfo).source,

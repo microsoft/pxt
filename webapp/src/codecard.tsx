@@ -54,7 +54,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
             if (card.hardware && !card.software) color = 'black';
             else if (card.software && !card.hardware) color = 'teal';
         }
-        const renderMd = (md: string) => md.replace('`', '');
+        const renderMd = (md: string) => md.replace(/`/g, '');
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
