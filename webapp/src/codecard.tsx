@@ -71,19 +71,20 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                     {card.header}
                 </div> : null }
-            <div className={"ui image" + (card.responsive ? " tall landscape only" : "") }>
+            <div className={"ui image"}>
                 {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
                 {card.imageUrl ? <img src={card.imageUrl} className="ui image" /> : null}
             </div>
-            <div className="content">
-                {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-                {card.time ? <div className="meta">
-                    {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
-                </div> : undefined}
-                {card.description ? <div className="description">{renderMd(card.description)}</div> : null}
-            </div>
+            {card.shortName || card.name || card.description ?
+                <div className="content">
+                    {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
+                    {card.time ? <div className="meta tall">
+                        {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
+                    </div> : undefined}
+                    {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
+                </div> : undefined }
         </div>;
 
         if (!card.onClick && url) {

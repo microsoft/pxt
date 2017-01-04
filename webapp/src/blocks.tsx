@@ -239,12 +239,13 @@ export class Editor extends srceditor.Editor {
     }
 
     updateHelpCard(clear?: boolean) {
+        let card: pxt.CodeCard = undefined;
         const selected: B.Block = Blockly.selected;
-        let card: pxt.CodeCard = (selected as any).codeCard;
-        if (card) {
+        if (!clear && selected && (card = (selected as any).codeCard)) {
             // render js only
             card = {
-                description: card.description,
+                header: "JavaScript",
+                javascript: 1,
                 typeScript: pxt.blocks.compileBlock(selected, this.blockInfo).source,
                 url: card.url
             }
