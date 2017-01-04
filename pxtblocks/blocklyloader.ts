@@ -279,9 +279,12 @@ namespace pxt.blocks {
         return true;
     }
 
-    function initField(i: any, ni: number, fn: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string): any {
-        if (ni == 0 && fn.attributes.icon)
-            i.appendField(iconToFieldImage(fn.attributes.icon))
+    function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
+        if (ni == 0) {
+            const icon = fn.attributes.icon || ns.attributes.icon;
+            if (icon)
+                i.appendField(iconToFieldImage(icon));
+        }
         if (pre)
             i.appendField(pre);
         if (right)
@@ -336,7 +339,7 @@ namespace pxt.blocks {
         parseFields(fn.attributes.block).map(field => {
             let i: any;
             if (!field.p) {
-                i = initField(block.appendDummyInput(), field.ni, fn, field.n);
+                i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, field.n);
             } else {
                 // find argument
                 let pre = field.pre;
@@ -366,30 +369,30 @@ namespace pxt.blocks {
                         v.attributes.block || v.attributes.blockId || v.name,
                         v.namespace + "." + v.name
                     ]);
-                    i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
+                    i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     // if a value is provided, move it first
                     if (pr.shadowValue)
                         dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
                     i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
                 } else if (/\[\]$/.test(pr.type)) { // Array type
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Array");
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
                 } else if (instance && n == "this") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
                 } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();
                         if (pre) i.appendField(pre)
                         i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
                     }
-                    else i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Number");
+                    else i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Number");
                 }
                 else if (pr.type == "boolean") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Boolean");
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Boolean");
                 } else if (pr.type == "string") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "String");
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "String");
                 } else {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
                 }
             }
         });
