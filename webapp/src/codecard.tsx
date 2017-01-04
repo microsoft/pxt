@@ -47,13 +47,14 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
     }
 
     render() {
-        let card = this.props
-        let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];
+        const card = this.props
+        const promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];
         let color = card.color || "";
         if (!color) {
             if (card.hardware && !card.software) color = 'black';
             else if (card.software && !card.hardware) color = 'teal';
         }
+        const renderMd = (md: string) => md.replace('`', '');
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
             : undefined;
         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
@@ -81,7 +82,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 {card.time ? <div className="meta">
                     {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
                 </div> : undefined}
-                {card.description ? <div className="description">{card.description}</div> : null}
+                {card.description ? <div className="description">{renderMd(card.description)}</div> : null}
             </div>
         </div>;
 
