@@ -376,6 +376,44 @@ div.simframe > iframe {
     border-radius: 0 !important;
 }
 
+/* Blockly toolbox icons */
+.blocklyTreeIcon {
+    opacity: 1;
+    margin: 0em 0.25rem 0em 0em;
+    width: 1.18em;
+    font-family: 'Icons';
+    font-style: normal;
+    font-weight: normal;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    backface-visibility: hidden;
+}
+.blocklyTreeSelected .blocklyTreeIcon{
+    color: white;
+}
+.blocklyTreeIcon.blocklyTreeIconloops::before {
+    content: "\f01e";
+}
+.blocklyTreeIcon.blocklyTreeIconmath::before {
+    content: "\f1ec";
+}
+.blocklyTreeIcon.blocklyTreeIconlogic::before {
+    content: "\f074";
+}
+.blocklyTreeIcon.blocklyTreeIconvariables::before {
+    content: "\f039";
+}
+.blocklyTreeIcon.blocklyTreeIcontext::before {
+    content: "\f035";
+}
+.blocklyTreeIcon.blocklyTreeIconlists::before {
+    content: "\f0cb";
+}
+
 /*******************************
         Monaco Editor
 *******************************/
