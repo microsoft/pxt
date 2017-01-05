@@ -135,7 +135,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
-            <category colour="230" name="More\u2026" nameid="more\u2026">
+            <category colour="230" name="More" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
                 <block type="math_modulo">
                     <value name="DIVIDEND">
                         <shadow type="math_number">

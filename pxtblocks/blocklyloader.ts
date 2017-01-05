@@ -183,9 +183,7 @@ namespace pxt.blocks {
                     }
 
                     if (nsn && nsn.attributes.advanced) {
-                        const advancedIconClassName = `blocklyTreeIconadvanced`;
-                        injectToolboxIconCss(advancedIconClassName, "\uf013");
-                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", advancedIconClassName)
+                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", 'blocklyTreeIconadvanced')
                         categories = getChildCategories(parentCategoryList)
                     }
 
@@ -202,9 +200,7 @@ namespace pxt.blocks {
                         parentCategoryList.appendChild(category);
                 }
                 if (fn.attributes.advanced) {
-                    const moreIconClassName = `blocklyTreeIconmore`;
-                    injectToolboxIconCss(moreIconClassName, "\uf141");
-                    category = getOrAddSubcategory(category, lf("More"), "More", 1, category.getAttribute("colour"), moreIconClassName)
+                    category = getOrAddSubcategory(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
                 }
             }
             if (fn.attributes.mutateDefaults) {
