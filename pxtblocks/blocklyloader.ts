@@ -298,9 +298,6 @@ namespace pxt.blocks {
     }
 
     function mkCard(fn: pxtc.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
-        let xml = blockXml.outerHTML
-            // remove IE11
-            .replace(/^<\?[^>]*>/, '');
         return {
             name: fn.namespace + '.' + fn.name,
             shortName: fn.name,
@@ -444,6 +441,7 @@ namespace pxt.blocks {
 
     export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): Element {
         init();
+        initTooltip(blockInfo);
 
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
@@ -785,7 +783,6 @@ namespace pxt.blocks {
         initDrag();
         initToolboxColor();
         initExpandToolbox();
-        initTooltip();
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
@@ -1761,7 +1758,7 @@ namespace pxt.blocks {
         );
     }
 
-    function initTooltip() {
+    function initTooltip(blockInfo: pxtc.BlocksInfo) {
         // TODO: update this when pulling new blockly
         /**
          * Create the tooltip and show it.
@@ -1775,9 +1772,17 @@ namespace pxt.blocks {
             // Erase all existing text.
             goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
             // Get the new text.
-            const card = Blockly.Tooltip.element_.codeCard;
+            const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
             if (card) {
-                const cardEl = pxt.docs.codeCard.render(card, { shortName: true })
+                let r = {
+                    header: "JavaScript",
+                    javascript: 1,
+                    title: lf("Selected Blocks converted to JavaScript")
+                }
+                const cardEl = pxt.docs.codeCard.render({
+                    header: card.description,
+                    typeScript: pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
+                })
                 Blockly.Tooltip.DIV.appendChild(cardEl);
             } else {
                 let tip = Blockly.Tooltip.element_.tooltip;
