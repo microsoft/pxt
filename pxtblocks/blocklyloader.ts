@@ -281,7 +281,7 @@ namespace pxt.blocks {
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
         if (ni == 0) {
-            const icon = fn.attributes.icon || ns.attributes.icon;
+            const icon = ns.attributes.icon;
             if (icon)
                 i.appendField(iconToFieldImage(icon));
         }
