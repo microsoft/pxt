@@ -5,14 +5,12 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
-    const blockColors: Map<number> = {
-        loops: 120,
-        images: 45,
-        variables: 330,
-        text: 160,
-        lists: 260,
-        math: 230,
-        logic: 210
+    export const blockColors: Map<string> = {
+        control: "#E1A91A",
+        variables: "#EE7D16",
+        operators: "#5CB712",
+        text: "160",
+        lists: "260",
     }
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
@@ -487,11 +485,6 @@ namespace pxt.blocks {
         // add extra blocks
         if (tb && pxt.appTarget.runtime) {
             const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
-            extraBlocks.push({
-                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
-                weight: 10,
-                type: ts.pxtc.ON_START_TYPE
-            })
             extraBlocks.forEach(eb => {
                 let cat = categoryElement(tb, eb.namespace);
                 if (cat) {
@@ -517,12 +510,8 @@ namespace pxt.blocks {
         if (tb) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
-            if (!config.mathBlocks) removeCategory(tb, "Math");
             if (!config.textBlocks) removeCategory(tb, "Text");
             if (!config.listsBlocks) removeCategory(tb, "Lists");
-            if (!config.variablesBlocks) removeCategory(tb, "Variables");
-            if (!config.logicBlocks) removeCategory(tb, "Logic");
-            if (!config.loopsBlocks) removeCategory(tb, "Loops");
 
             // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
@@ -801,19 +790,21 @@ namespace pxt.blocks {
         };
     }
 
-    function installHelpResources(id: string, name: string, tooltip: any, url: string) {
-        let block = Blockly.Blocks[id];
-        let old = block.init;
+    function installHelpResources(id: string, name: string, tooltip: any, url: string, color?: string) {
+        const block = Blockly.Blocks[id];
+        const old = block.init;
         if (!old) return;
-
         block.init = function () {
             old.call(this);
             let block = this;
             setHelpResources(this, id, name, goog.isFunction(tooltip) ? function () { return tooltip(block); } : tooltip, url);
+            if (color) this.setColour(color)
         }
     }
 
     function initLoops() {
+        (<any>Blockly.Blocks).loops.HUE = blockColors["control"];
+
         let msg: any = Blockly.Msg;
 
         // builtin controls_repeat_ext
@@ -840,7 +831,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['loops']
+                    "colour": blockColors["control"]
                 });
                 this.appendStatementInput("DO")
                     .appendField(lf("{id:while}do"));
@@ -881,7 +872,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['loops'],
+                    "colour": blockColors["control"],
                     "inputsInline": true
                 });
                 this.appendStatementInput('DO')
@@ -1378,7 +1369,7 @@ namespace pxt.blocks {
                             "name": "HANDLER"
                         }
                     ],
-                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops']
+                    "colour": blockColors["control"]
                 });
 
                 setHelpResources(this,
@@ -1392,6 +1383,7 @@ namespace pxt.blocks {
     }
 
     function initMath() {
+        (<any>Blockly.Blocks).math.HUE = blockColors["operators"];
         // pxt math_op2
         Blockly.Blocks['math_op2'] = {
             init: function () {
@@ -1419,7 +1411,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": blockColors['math']
+                    "colour": blockColors["operators"]
                 });
 
                 let thisBlock = this;
@@ -1448,7 +1440,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": blockColors['math']
+                    "colour": blockColors["operators"]
                 });
 
                 setHelpResources(this,
@@ -1474,7 +1466,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": blockColors['math']
+                    "colour": blockColors["operators"]
                 });
 
                 setHelpResources(this,
@@ -1520,7 +1512,7 @@ namespace pxt.blocks {
         );
 
         // builtin math_modulo
-        msg.MATH_MODULO_TITLE = lf("remainder of %1 ÷ %2");
+        msg.MATH_MODULO_TITLE = lf("%1 mod %2");
         installHelpResources(
             'math_modulo',
             lf("division remainder"),
@@ -1530,10 +1522,12 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
-        let varname = lf("{id:var}item");
+        (<any>Blockly.Blocks).variables.HUE = blockColors["variables"];
+
+        const varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
-            let xmlList: HTMLElement[] = [];
-            let button = goog.dom.createDom('button');
+            const xmlList: HTMLElement[] = [];
+            const button = goog.dom.createDom('button');
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
@@ -1542,7 +1536,7 @@ namespace pxt.blocks {
             });
             xmlList.push(button);
 
-            let variableList = Blockly.Variables.allVariables(workspace);
+            const variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
@@ -1618,7 +1612,7 @@ namespace pxt.blocks {
         };
 
         // builtin variables_get
-        let msg: any = Blockly.Msg;
+        const msg: any = Blockly.Msg;
         msg.VARIABLES_GET_CREATE_SET = lf("Create 'set %1'");
         installHelpResources(
             'variables_get',
@@ -1660,7 +1654,7 @@ namespace pxt.blocks {
                     "inputsInline": true,
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['variables']
+                    "colour": blockColors["variables"]
                 });
 
                 setHelpResources(this,
@@ -1674,6 +1668,8 @@ namespace pxt.blocks {
     }
 
     function initLogic() {
+        (<any>Blockly.Blocks).logic.HUE = blockColors["operators"];
+
         let msg: any = Blockly.Msg;
 
         // builtin controls_if
@@ -1689,7 +1685,8 @@ namespace pxt.blocks {
             'controls_if',
             lf("a conditional statement"),
             undefined,
-            "blocks/logic/if"
+            "blocks/logic/if",
+            blockColors["control"]
         );
 
         // builtin logic_compare

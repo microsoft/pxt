@@ -50,15 +50,9 @@ declare namespace pxt {
     }
 
     interface RuntimeOptions {
-        mathBlocks?: boolean;
         textBlocks?: boolean;
         listsBlocks?: boolean;
-        variablesBlocks?: boolean;
-        logicBlocks?: boolean;
-        loopsBlocks?: boolean;
         extraBlocks?: BlockToolboxDefinition[];
-        onStartColor?: string;
-        onStartNamespace?: string;
     }
 
     interface AppAnalytics {
