@@ -4,12 +4,13 @@
 
 import * as Promise from "bluebird";
 import { app, BrowserWindow, dialog, Menu } from "electron";
+import * as Utils from "./util/electronutils";
 import * as I from "./typings/interfaces";
 import * as minimist from "minimist";
 import * as path from "path";
 import product from "./util/productloader";
+import * as Telemetry from "./util/telemetry";
 import { UpdateService } from "./updater/updateservice";
-import * as Utils from "./util/electronutils";
 import { Mutex } from 'windows-mutex';
 
 const target = require(product.targetId);
@@ -139,6 +140,12 @@ function main(): void {
         }
     }
 
+    Telemetry.init(pxtCore);
+    Telemetry.tickEvent("electron.app.details", {
+        id: process.platform === "win32" ? product.win32AppId : product.darwinBundleIdentifier,
+        name: product.nameLong,
+        platform: process.platform
+    });
     Utils.retryAsync(startLocalServer, () => true, 50, "Unable to find free TCP port", 20)
         .then(() => {
             createWindow();
@@ -147,6 +154,8 @@ function main(): void {
                 updateService = new UpdateService();
                 registerUpdateHandlers();
                 updateService.initialCheck();
+            } else {
+                Telemetry.tickEvent("electron.update.disabled");
             }
         })
         .catch((e) => {

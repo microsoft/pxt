@@ -256,6 +256,23 @@ ${output}</xml>`;
                     return error(n, Util.lf("Could not find operator {0}", op))
                 }
 
+                // Could be string concatenation
+                if (isTextJoin(n)) {
+                    const args: ts.Node[] = [];
+                    collectTextJoinArgs(n, args);
+
+                    openBlockTag("text_join");
+                    write(`<mutation items="${args.length}"></mutation>`)
+
+                    for (let i = 0; i < args.length; i++) {
+                        emitValue("ADD" + i, args[i], ShadowType.String);
+                    }
+
+
+                    closeBlockTag();
+                    return;
+                }
+
                 openBlockTag(npp.type)
 
                 if (npp.op) {
@@ -268,6 +285,28 @@ ${output}</xml>`;
                 emitValue(npp.rightName || "B", n.right, shadowType);
 
                 closeBlockTag()
+            }
+
+            function isTextJoin(n: ts.Node): n is ts.BinaryExpression {
+                if (n.kind === SK.BinaryExpression) {
+                    const b = n as ts.BinaryExpression;
+                    if (b.operatorToken.getText() === "+") {
+                        const info: BinaryExpressionInfo = (n as any).exprInfo;
+                        return !!info;
+                    }
+                }
+
+                return false;
+            }
+
+            function collectTextJoinArgs(n: ts.Node, result: ts.Node[]) {
+                if (isTextJoin(n)) {
+                    collectTextJoinArgs(n.left, result);
+                    collectTextJoinArgs(n.right, result)
+                }
+                else {
+                    result.push(n);
+                }
             }
 
             function emitPrefixUnaryExpression(node: PrefixUnaryExpression) {
@@ -345,7 +384,7 @@ ${output}</xml>`;
                         }
                     }
                     if (isAuto) {
-                        // Don't emit null or automatic initializers; 
+                        // Don't emit null or automatic initializers;
                         // They are implicit within the blocks. But do add a name to the scope
                         if (addVariableDeclaration(decl)) {
                             emitNextBlock(/*withinNextTag*/false)

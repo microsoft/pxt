@@ -1,4 +1,4 @@
-///<reference path='../built/blockly.d.ts'/>
+///<reference path='../localtypings/blockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
@@ -26,14 +26,22 @@ namespace pxt.blocks {
 
     function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
         let onstart = dom.querySelector(`block[type=${ts.pxtc.ON_START_TYPE}]`)
-        if (onstart) // nothing to doc
+        if (onstart) { // nothing to doc        
+            onstart.setAttribute("deletable", "false");
             return;
+        }
+
+        let newnodes: Element[] = [];
+
+        onstart = dom.ownerDocument.createElement("block");
+        onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
+        onstart.setAttribute("deletable", "false");
+        newnodes.push(onstart);
 
         const blocks: Map<pxtc.SymbolInfo> = {};
         info.blocks.forEach(b => blocks[b.attributes.blockId] = b);
 
         // walk top level blocks
-        let newnodes: Element[] = [];
         let node = dom.firstElementChild;
         let insertNode: Element = undefined;
         while (node) {
@@ -44,14 +52,11 @@ namespace pxt.blocks {
                 && (pxt.blocks.buildinBlockStatements[nodeType] || (blocks[nodeType] && blocks[nodeType].retType == "void"))
             ) {
                 // old block, needs to be wrapped in onstart
-                if (!onstart) {
-                    onstart = dom.ownerDocument.createElement("block");
-                    onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
+                if (!insertNode) {
                     insertNode = dom.ownerDocument.createElement("statement");
                     insertNode.setAttribute("name", "HANDLER");
                     onstart.appendChild(insertNode);
                     insertNode.appendChild(node);
-                    newnodes.push(onstart);
 
                     node.removeAttribute("x");
                     node.removeAttribute("y");

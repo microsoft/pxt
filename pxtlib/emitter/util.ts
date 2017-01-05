@@ -1,4 +1,4 @@
-/// <reference path="../../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../../typings/globals/bluebird/index.d.ts"/>
 
 namespace ts.pxtc {
     export var __dummy = 42;
@@ -345,6 +345,13 @@ namespace ts.pxtc.Util {
             if (diff < 60 * 60 * 24 * 365) return lf("{0} month{0:s} ago", Math.floor(diff / 60 / 60 / 24 / 30))
             return lf("{0} year{0:s} ago", Math.floor(diff / 60 / 60 / 24 / 365))
         }
+    }
+
+    export function unicodeToChar(text: string) {
+        let r = /\\u([\d\w]{4})/gi;
+        return text.replace(r, function (match, grp) {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
     }
 
     export function escapeForRegex(str: string) {

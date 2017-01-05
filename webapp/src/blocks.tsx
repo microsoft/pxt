@@ -1,5 +1,5 @@
-/// <reference path="../../built/blockly.d.ts" />
-/// <reference path="../../typings/jquery/jquery.d.ts" />
+/// <reference path="../../localtypings/blockly.d.ts" />
+/// <reference path="../../typings/globals/jquery/index.d.ts" />
 
 import * as React from "react";
 import * as pkg from "./package";
@@ -7,6 +7,7 @@ import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
+import * as data from "./data";
 import defaultToolbox from "./toolbox"
 
 import Util = pxt.Util;
@@ -21,7 +22,6 @@ export class Editor extends srceditor.Editor {
     isFirstBlocklyLoad = true;
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
-    currentHelpCardType: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -61,7 +61,7 @@ export class Editor extends srceditor.Editor {
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
                     pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
                         (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                             (() => {
@@ -72,6 +72,9 @@ export class Editor extends srceditor.Editor {
                                 this.undo();
                             }) : null)
                     );
+                    pxt.blocks.initSearch(this.editor, tb,
+                        searchFor => compiler.apiSearchAsync(searchFor)
+                            .then((fns: pxtc.SymbolInfo[]) => fns));
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -115,13 +118,14 @@ export class Editor extends srceditor.Editor {
 
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`, this.blockInfo, true);
+            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
+            this.ensureOnStart();
         } catch (e) {
             pxt.log(e);
         }
@@ -150,7 +154,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} message The message to display to the user.
          * @param {function()=} opt_callback The callback when the alert is dismissed.
          */
-        Blockly.alert = function(message, opt_callback) {
+        Blockly.alert = function (message, opt_callback) {
             return core.dialogAsync({
                 hideCancel: true,
                 header: lf("Alert"),
@@ -169,7 +173,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} message The message to display to the user.
          * @param {!function(boolean)} callback The callback for handling user response.
          */
-        Blockly.confirm = function(message, callback) {
+        Blockly.confirm = function (message, callback) {
             return core.confirmAsync({
                 header: lf("Confirm"),
                 body: message,
@@ -194,7 +198,7 @@ export class Editor extends srceditor.Editor {
          * @param {string} defaultValue The value to initialize the prompt with.
          * @param {!function(string)} callback The callback for handling user reponse.
          */
-        Blockly.prompt = function(message, defaultValue, callback) {
+        Blockly.prompt = function (message, defaultValue, callback) {
             return core.promptAsync({
                 header: message,
                 defaultValue: defaultValue,
@@ -232,41 +236,6 @@ export class Editor extends srceditor.Editor {
 
         if (deprecatedBlocksFound) {
             pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
-        }
-    }
-
-    updateHelpCard(clear?: boolean) {
-        let selected = Blockly.selected;
-        let selectedType = selected ? selected.type : null;
-        if (selectedType != this.currentHelpCardType || clear) {
-            if (selected && selected.inputList && selected.codeCard && !clear) {
-                this.currentHelpCardType = selectedType;
-                //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
-                let props: any = {};
-                for (let i = 0; i < selected.inputList.length; i++) {
-                    let input = selected.inputList[i];
-                    for (let j = 0; j < input.fieldRow.length; j++) {
-                        let field = input.fieldRow[j];
-                        if (field.name != undefined && field.value_ != undefined) {
-                            props[field.name] = field.value_;
-                        }
-                    }
-                }
-
-                let card: pxt.CodeCard = selected.codeCard;
-                card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-                if (!selected.mutation) {
-                    card.blocksXml = this.updateFields(card.blocksXml, props);
-                }
-                else {
-                    card.blocksXml = this.updateFields(card.blocksXml, undefined, selected.mutation.mutationToDom());
-                }
-                this.parent.setHelpCard(card);
-            }
-            else {
-                this.currentHelpCardType = null;
-                this.parent.setHelpCard(null);
-            }
         }
     }
 
@@ -339,6 +308,12 @@ export class Editor extends srceditor.Editor {
         return this.editor ? this.editor.isDragging() : false;
     }
 
+    ensureOnStart() {
+        this.editor.getTopBlocks(false)
+            .filter(b => b.type == ts.pxtc.ON_START_TYPE)
+            .forEach(b => b.setDeletable(!!b.disabled));
+    }
+
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
         let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
@@ -370,7 +345,9 @@ export class Editor extends srceditor.Editor {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
-                pxt.tickEvent("blocks.create");
+                let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
+                let blockId = ev.xml.getAttribute('type');
+                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
@@ -378,7 +355,6 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    this.updateHelpCard(ev.newValue != null);
                 }
                 else if (ev.element == 'commentOpen'
                     || ev.element == 'warningOpen') {
@@ -401,12 +377,9 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 else if (ev.element == 'selected') {
-                    this.updateHelpCard();
-
                     if (this.currentCommentOrWarning) {
                         this.currentCommentOrWarning.setVisible(false)
                     }
-
                     const selected = Blockly.selected
                     if (selected && selected.warning && typeof (selected.warning) !== "string") {
                         (selected.warning as Blockly.Icon).setVisible(true)

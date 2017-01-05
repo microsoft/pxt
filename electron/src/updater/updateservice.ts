@@ -2,6 +2,7 @@
 
 import * as Promise from "bluebird";
 import { app, shell } from "electron";
+import * as Utils from "../util/electronutils";
 import { EventEmitter } from "events";
 import * as fs from "fs";
 import * as I from "../typings/interfaces";
@@ -10,7 +11,7 @@ import { OsxUpdater } from "./osxupdater";
 import * as path from "path";
 import product from "../util/productloader";
 import * as semver from "semver";
-import * as Utils from "../util/electronutils";
+import * as Telemetry from "../util/telemetry";
 import { WindowsUpdater } from "./windowsupdater";
 
 /**
@@ -63,6 +64,8 @@ export class UpdateService extends EventEmitter {
                 this.updaterImpl = new OsxUpdater();
                 break;
         }
+
+        Telemetry.tickEvent("electron.update.enabled");
     }
 
     /**
@@ -82,15 +85,27 @@ export class UpdateService extends EventEmitter {
 
                 if (targetVersion) {
                     if (criticalPrompt) {
+                        Telemetry.tickEvent("electron.update.available", {
+                            initial: "true",
+                            critical: "true"
+                        });
                         this.emit("critical-update", this.makeUpdateInfo(targetVersion));
                     } else if (aggressivePrompt) {
+                        Telemetry.tickEvent("electron.update.available", {
+                            initial: "true"
+                        });
                         this.emit("update-available", this.makeUpdateInfo(targetVersion, /*isInitialCheck*/ true));
                     }
+                } else {
+                    Telemetry.tickEvent("electron.update.notavailable", {
+                        initial: "true"
+                    });
                 }
             })
             .catch((e) => {
                 // In case of error, be permissive (swallow the error and let the app continue normally)
                 console.log("Error during initial version check: " + e);
+                Telemetry.tickEvent("electron.update.initialcheckfailed");
             });
     }
 
@@ -104,12 +119,15 @@ export class UpdateService extends EventEmitter {
                 const targetVersion = this.getTargetRelease(releaseManifest);
 
                 if (targetVersion) {
+                    Telemetry.tickEvent("electron.update.available");
                     this.emit("update-available", this.makeUpdateInfo(targetVersion));
                 } else {
+                    Telemetry.tickEvent("electron.update.notavailable");
                     this.emit("update-not-available");
                 }
             })
             .catch((e) => {
+                Telemetry.tickEvent("electron.update.checkerror");
                 this.emit("update-check-error");
                 console.log("Error during update check: " + e);
             });
@@ -121,6 +139,9 @@ export class UpdateService extends EventEmitter {
      */
     public update(targetVersion: string, isCritical: boolean = false): void {
         if (/^https:\/\//.test(targetVersion)) {
+            Telemetry.tickEvent("electron.update.websiteupdate", {
+                critical: isCritical.toString()
+            });
             shell.openExternal(targetVersion);
 
             if (isCritical) {
@@ -130,15 +151,27 @@ export class UpdateService extends EventEmitter {
             return;
         }
 
+        Telemetry.tickEvent("electron.update.installerupdate", {
+            critical: isCritical.toString()
+        });
         const deferred = Utils.defer<void>();
 
         this.updaterImpl.addListener("update-downloaded", () => {
+            Telemetry.tickEvent("electron.update.downloaded", {
+                critical: isCritical.toString()
+            });
             this.updaterImpl.quitAndInstall();
         });
         this.updaterImpl.addListener("update-not-available", () => {
+            Telemetry.tickEvent("electron.update.nolongeravailable", {
+                critical: isCritical.toString()
+            });
             deferred.reject(new Error("Update is no longer available"));
         });
         this.updaterImpl.addListener("error", (e: Error) => {
+            Telemetry.tickEvent("electron.update.updateerror", {
+                critical: isCritical.toString()
+            });
             deferred.reject(e);
         });
 
@@ -160,7 +193,7 @@ export class UpdateService extends EventEmitter {
 
         deferred.promise.catch((e) => {
             this.emit("update-download-error", {
-                isCritical
+                critical: isCritical.toString()
             });
             console.log("Error during update: " + e);
         });
@@ -231,6 +264,8 @@ export class UpdateService extends EventEmitter {
 
                 return this.downloadReleaseManifest()
                     .catch((e) => {
+                        Telemetry.tickEvent("electron.update.downloadmanifesterror");
+
                         // Error downloading a new manifest; if we had one in the cache, fallback to that even if it
                         // was outdated
                         if (releaseManifest) {
@@ -253,6 +288,8 @@ export class UpdateService extends EventEmitter {
             .then((releaseManifest) => {
                 return this.cacheReleaseManifest(releaseManifest)
                     .catch((e) => {
+                        Telemetry.tickEvent("electron.update.cachemanifesterror");
+
                         // No-op; failing to cache the manifest is not a critical error
                         console.log("Error caching the release manifest: " + e);
                     })

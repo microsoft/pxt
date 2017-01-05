@@ -1,5 +1,5 @@
 /// <reference path="../../built/typescriptServices.d.ts"/>
-/// <reference path="../../built/pxtarget.d.ts"/>
+/// <reference path="../../localtypings/pxtarget.d.ts"/>
 
 // Enforce order:
 /// <reference path="util.ts"/>
