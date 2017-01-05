@@ -18,6 +18,7 @@ export class Editor extends srceditor.Editor {
     currFile: pkg.File;
     delayLoadXml: string;
     loadingXml: boolean;
+    loadingXmlPromise: Promise<any>;
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
@@ -27,6 +28,7 @@ export class Editor extends srceditor.Editor {
     blockSubset: { [index: string]: number };
     showToolboxCategories: boolean = true;
     showToolboxButtons: boolean = true;
+    cachedToolbox: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -62,7 +64,7 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            let promise = compiler.getBlocksAsync()
+            this.loadingXmlPromise = compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
@@ -102,10 +104,11 @@ export class Editor extends srceditor.Editor {
                 });
 
             if (this.isFirstBlocklyLoad) {
-                core.showLoadingAsync(lf("loading..."), promise).done();
+                core.showLoadingAsync(lf("loading..."), this.loadingXmlPromise).done();
             } else {
-                promise.done();
+                this.loadingXmlPromise.done();
             }
+            this.loadingXmlPromise = null;
         }
     }
 
@@ -579,11 +582,18 @@ export class Editor extends srceditor.Editor {
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
             // Toolbox is consistent with current mode, safe to update
+            if (tb.innerHTML == this.cachedToolbox) return;
+            this.cachedToolbox = tb.innerHTML;
             this.editor.updateToolbox(tb);
         } else {
             // Toolbox mode is different, need to refresh.
             this.editor = undefined;
             this.delayLoadXml = this.currFile.content;
+            this.loadingXml = false;
+            if (this.loadingXmlPromise) {
+                this.loadingXmlPromise.cancel();
+                this.loadingXmlPromise = null;
+            }
             this.prepareBlockly(showCategories);
             this.domUpdate();
         }
