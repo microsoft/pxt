@@ -649,6 +649,8 @@ namespace pxt.blocks {
                     category = createCategoryElement(locCatName, catName, nsWeight);
                     category.setAttribute("expanded", 'true');
                     category.setAttribute("colour", '#000');
+                    category.setAttribute("iconclass", 'blocklyTreeIconsearch');
+                    category.setAttribute("expandedclass", 'blocklyTreeIconsearch');
 
                     // Insert the category based on weight
                     let ci = 0;
