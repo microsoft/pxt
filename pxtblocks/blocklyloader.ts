@@ -172,16 +172,18 @@ namespace pxt.blocks {
                     else if (blockColors[ns]) {
                         category.setAttribute("colour", blockColors[ns].toString());
                     }
-
                     if (nsn && nsn.attributes.icon) {
-                        let nsnIconClassName = `blocklyTreeIcon${nsn.name}`;
+                        const nsnIconClassName = `blocklyTreeIcon${nsn.name}`;
                         injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
+                    } else {
+                        category.setAttribute("iconclass", `blocklyTreeIconDefault`);
+                        category.setAttribute("expandedclass", `blocklyTreeIconDefault`);
                     }
 
                     if (nsn && nsn.attributes.advanced) {
-                        let advancedIconClassName = `blocklyTreeIconadvanced`;
+                        const advancedIconClassName = `blocklyTreeIconadvanced`;
                         injectToolboxIconCss(advancedIconClassName, "\uf013");
                         parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", advancedIconClassName)
                         categories = getChildCategories(parentCategoryList)
@@ -200,7 +202,9 @@ namespace pxt.blocks {
                         parentCategoryList.appendChild(category);
                 }
                 if (fn.attributes.advanced) {
-                    category = getOrAddSubcategory(category, lf("More\u2026"), "More\u2026", 1, category.getAttribute("colour"))
+                    const moreIconClassName = `blocklyTreeIconmore`;
+                    injectToolboxIconCss(moreIconClassName, "\uf141");
+                    category = getOrAddSubcategory(category, lf("More"), "More", 1, category.getAttribute("colour"), moreIconClassName)
                 }
             }
             if (fn.attributes.mutateDefaults) {
@@ -329,7 +333,7 @@ namespace pxt.blocks {
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
         if (ni == 0) {
-            const icon = ns.attributes.icon;
+            const icon = ns && ns.attributes.icon ? ns.attributes.icon : null;
             if (icon)
                 i.appendField(iconToFieldImage(icon));
         }
@@ -693,6 +697,8 @@ namespace pxt.blocks {
                     category = createCategoryElement(locCatName, catName, nsWeight);
                     category.setAttribute("expanded", 'true');
                     category.setAttribute("colour", '#000');
+                    category.setAttribute("iconclass", 'blocklyTreeIconsearch');
+                    category.setAttribute("expandedclass", 'blocklyTreeIconsearch');
 
                     // Insert the category based on weight
                     let ci = 0;

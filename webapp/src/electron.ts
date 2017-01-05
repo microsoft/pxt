@@ -10,9 +10,14 @@ interface UpdateEventInfo {
     targetVersion?: string;
 }
 
+interface TelemetryEventInfo {
+    event: string;
+    data: pxt.Map<string | number>;
+}
+
 interface ElectronMessage {
     type: string;
-    args?: UpdateEventInfo;
+    args?: UpdateEventInfo | TelemetryEventInfo;
 }
 
 let electronSocket: WebSocket = null;
@@ -151,10 +156,10 @@ export function init() {
 
             switch (msg.type) {
                 case "critical-update":
-                    onCriticalUpdate(msg.args);
+                    onCriticalUpdate(msg.args as UpdateEventInfo);
                     break;
                 case "update-available":
-                    onUpdateAvailable(msg.args);
+                    onUpdateAvailable(msg.args as UpdateEventInfo);
                     break;
                 case "update-not-available":
                     onUpdateNotAvailable();
@@ -163,8 +168,17 @@ export function init() {
                     onUpdateCheckError();
                     break;
                 case "update-download-error":
-                    onUpdateDownloadError(msg.args);
+                    onUpdateDownloadError(msg.args as UpdateEventInfo);
                     break;
+                case "telemetry":
+                    const telemetryInfo = msg.args as TelemetryEventInfo;
+
+                    if (!telemetryInfo) {
+                        pxt.debug('invalid telemetry message: ' + ev.data);
+                        return;
+                    }
+
+                    pxt.tickEvent(telemetryInfo.event, telemetryInfo.data);
                 default:
                     pxt.debug('unknown electron message: ' + ev.data);
                     break;
