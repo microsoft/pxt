@@ -20,12 +20,14 @@ namespace pxsim {
             this.data = [];
         }
 
+        isValidIndex(x: number) {
+            return (x >= 0 && x < this.data.length && this.data.hasOwnProperty(x as any));
+        }
+
         print() {
             console.log(`RefCollection id:${this.id} refs:${this.refcnt} len:${this.data.length} flags:${this.flags} d0:${this.data[0]}`)
         }
     }
-
-
 
     export namespace Array_ {
         export function mk(f: number) {
@@ -36,17 +38,24 @@ namespace pxsim {
             return c.data.length;
         }
 
+        export function setLength(c: RefCollection, x: number) {
+            c.data.length = x ;
+        }
+
+
         export function push(c: RefCollection, x: any) {
             if (c.flags & 1) incr(x);
             c.data.push(x);
         }
 
-        export function in_range(c: RefCollection, x: number) {
-            return (0 <= x && x < c.data.length);
+        export function pop(c: RefCollection, x: any) {
+            let ret = c.data.pop();
+            if (c.flags & 1) decr(ret);
+            return ret;
         }
 
         export function getAt(c: RefCollection, x: number) {
-            if (in_range(c, x)) {
+            if (c.isValidIndex(x)) {
                 let tmp = c.data[x];
                 if (c.flags & 1) incr(tmp);
                 return tmp;
@@ -57,18 +66,25 @@ namespace pxsim {
         }
 
         export function removeAt(c: RefCollection, x: number) {
-            if (!in_range(c, x))
-                return;
-
-            if (c.flags & 1) decr(c.data[x]);
-            c.data.splice(x, 1)
-        }
-
-        export function setAt(c: RefCollection, x: number, y: any) {
-            if (!in_range(c, x))
+            if (!c.isValidIndex(x))
                 return;
 
             if (c.flags & 1) {
+                decr(c.data[x]);
+            }
+            let ret = c.data.splice(x, 1)
+
+            return ret[0]; //return the deleted element.
+        }
+
+        export function insertAt(c: RefCollection, x: number, y: number) {
+            if (c.flags & 1) incr(y);
+            c.data.splice(x, 0, y);
+        }
+
+        export function setAt(c: RefCollection, x: number, y: any) {
+            if (c.isValidIndex(x) && (c.flags & 1)) {
+                //if there is an existing element handle refcount
                 decr(c.data[x]);
                 incr(y);
             }
@@ -76,8 +92,6 @@ namespace pxsim {
         }
 
         export function indexOf(c: RefCollection, x: any, start: number) {
-            if (!in_range(c, start))
-                return -1;
             return c.data.indexOf(x, start)
         }
 

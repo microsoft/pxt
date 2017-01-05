@@ -13,28 +13,6 @@ body {
   overflow-scrolling: touch;
 }
 
-
-.ui.item.logo {
-    font-size: 2.8rem;
-    margin: 0;
-    padding: 0 0.3rem;
-}
-.ui.item.logo .name {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
-    color: #666666;
-    padding: 0 0.3rem;
-}
-.ui.item.logo svg {
-    width: 1.2rem;
-    height: 1.2rem;
-}
-
-.ui.item.logo img {
-    max-height: 2.5rem;
-    margin-left: 1rem;
-    margin-right: 1rem;
-}
-
 .rtl #fileNameInput {
     text-align: right;
 }
@@ -108,12 +86,6 @@ body {
 
 .rtl .ui.menu .ui.dropdown .menu > .item .icon:not(.dropdown) {
     margin: 0.0em 0.0em 0.0em 0.75em
-}
-
-.modal img.ui.logo {
-    max-width: 10em;
-    max-height: 3em;
-    vertical-align: middle;
 }
 
 .ui.logs {

@@ -1,4 +1,4 @@
-/// <reference path="../../built/monaco.d.ts" />
+/// <reference path="../../localtypings/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 
 
@@ -29,7 +29,6 @@ export class Editor extends srceditor.Editor {
     currFile: pkg.File;
     fileType: FileType = FileType.Unknown;
     extraLibs: pxt.Map<monaco.IDisposable>;
-    blocksDict: { ns: string, meta: pxt.vs.BlockDefiniton }[];
     definitions: pxt.Map<pxt.vs.NameDefiniton>;
 
     hasBlocks() {
@@ -89,7 +88,7 @@ export class Editor extends srceditor.Editor {
                     let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (oldJs == js) {
+                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(js, 0).formatted) {
                             console.log('js not changed, skipping decompile');
                             pxt.tickEvent("typescript.noChanges")
                             return this.parent.setFile(mainPkg.files[blockFile]);
@@ -163,14 +162,16 @@ export class Editor extends srceditor.Editor {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
         const invertedColorluminosityMultipler = 0.6;
         let cssContent = "";
-        let colorDict = this.blocksDict;
         let fnDict = this.definitions;
-        colorDict.forEach(function (element) {
-            const hexcolor = pxt.blocks.convertColour(element.meta.commentAttr.color);
-            let cssTag = `.token.ts.identifier.${element.ns}, .token.ts.identifier.${Object.keys(fnDict[element.ns].fns).join(', .token.ts.identifier.')}`;
-            cssContent += `${cssTag} { color: ${inverted
-                ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
-                : hexcolor}; }`;
+        Object.keys(fnDict).forEach((ns) => {
+            let element = fnDict[ns];
+            if (element.metaData && element.metaData.color && element.fns) {
+                const hexcolor = pxt.blocks.convertColour(element.metaData.color);
+                let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.${Object.keys(element.fns).join(', .token.ts.identifier.')}`;
+                cssContent += `${cssTag} { color: ${inverted
+                    ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
+                    : hexcolor}; }`;
+            }
         })
         if (style.sheet) {
             style.textContent = cssContent;
@@ -509,16 +510,26 @@ export class Editor extends srceditor.Editor {
         group.setAttribute('role', 'group');
         root.appendChild(group);
 
-        let metaDef = this.blocksDict;
         let fnDef = this.definitions;
-        metaDef.forEach(function (metaElement) {
-            let ns = metaElement.ns;
+        Object.keys(fnDef).sort((f1, f2) => {
+            // sort by fn weight
+            const fn1 = fnDef[f1];
+            const fn2 = fnDef[f2];
+            const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
+                + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
+                + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
+            const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
+                + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
+                + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
+            return w2 - w1;
+        }).filter(ns => fnDef[ns].metaData != null && fnDef[ns].metaData.color != null).forEach(function (ns) {
+            let metaElement = fnDef[ns];
             // Create a tree item
             let treeitem = document.createElement('div');
             let treerow = document.createElement('div');
             treeitem.setAttribute('role', 'treeitem');
             let fnElement = fnDef[ns];
-            let color = monacoEditor.convertColour(metaElement.meta.commentAttr.color);
+            let color = pxt.blocks.convertColour(metaElement.metaData.color);
             treeitem.onclick = (ev: MouseEvent) => {
                 pxt.tickEvent("monaco.toolbox.click");
 
@@ -671,14 +682,6 @@ export class Editor extends srceditor.Editor {
         );
     }
 
-    convertColour(colour: string) {
-        let hue = parseFloat(colour);
-        if (!isNaN(hue)) {
-            return Blockly.hueToRgb(hue);
-        }
-        return colour;
-    }
-
     getId() {
         return "monacoEditor"
     }
@@ -703,53 +706,18 @@ export class Editor extends srceditor.Editor {
         this.editor.setValue(content);
     }
 
-    compileBlocks() {
-        this.blocksDict = [];
-        let blockDefinitions: { [ns: string]: pxt.vs.BlockDefiniton } = {};
-        return compiler.getBlocksAsync()
-            .then((blockInfo: pxtc.BlocksInfo) => {
-                if (!blockInfo) return;
-                blockInfo.blocks.sort((f1, f2) => {
-                    let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
-                    let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
-                    if (ns1 && !ns2) return -1; if (ns2 && !ns1) return 1;
-                    let c = 0;
-                    if (ns1 && ns2) {
-                        c = (ns2.attributes.weight || 50) - (ns1.attributes.weight || 50);
-                        if (c != 0) return c;
-                    }
-                    c = (f2.attributes.weight || 50) - (f1.attributes.weight || 50);
-                    return c;
-                }).forEach(fn => {
-                    let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                    let nsn = blockInfo.apis.byQName[ns];
-                    if (nsn) ns = nsn.attributes.block || ns;
-                    if (nsn && nsn.attributes.color) {
-                        blockDefinitions[ns] = {
-                            commentAttr: nsn.attributes
-                        };
-                    }
-                });
-                Object.keys(blockDefinitions).forEach((ns) => {
-                    this.blocksDict.push({
-                        ns: ns,
-                        meta: blockDefinitions[ns]
-                    });
-                })
-                return this.blocksDict;
-            });
-    }
-
     loadFile(file: pkg.File) {
         let toolbox = document.getElementById('monacoEditorToolbox');
 
         let ext = file.getExtension()
         let modeMap: any = {
             "cpp": "cpp",
+            "h": "cpp",
             "json": "json",
             "md": "text",
             "ts": "typescript",
             "js": "javascript",
+            "svg": "xml",
             "blocks": "xml",
             "asm": "asm"
         }
@@ -764,19 +732,13 @@ export class Editor extends srceditor.Editor {
         if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()), mode, monaco.Uri.parse(proto));
         if (model) this.editor.setModel(model);
 
-        if (mode == "typescript") {
-            let promises: monaco.Promise<any>[] = [];
-            promises.push(this.compileBlocks());
-            promises.push(pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly()).then((definitions) => {
+        if (mode == "typescript" && !file.isReadonly()) {
+            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
+            .then((definitions) => {
                 this.definitions = definitions;
-            }));
-
-            monaco.Promise.join(promises).done(() => {
                 this.initEditorCss();
-                if (!file.isReadonly()) {
-                    this.updateToolbox();
-                    this.resize();
-                }
+                this.updateToolbox();
+                this.resize();
             });
         }
 
@@ -802,6 +764,7 @@ export class Editor extends srceditor.Editor {
         }
 
         this.resize();
+        this.resetFlyout(true);
     }
 
     snapshotState() {

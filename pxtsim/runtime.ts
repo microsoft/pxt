@@ -1,5 +1,5 @@
-/// <reference path="../typings/bluebird/bluebird.d.ts"/>
-/// <reference path="../built/pxtparts.d.ts"/>
+/// <reference path="../typings/globals/bluebird/index.d.ts"/>
+/// <reference path="../localtypings/pxtparts.d.ts"/>
 
 namespace pxsim {
     export namespace U {

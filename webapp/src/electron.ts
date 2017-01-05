@@ -25,10 +25,19 @@ export function init() {
     }
 
     function onCriticalUpdate(args: UpdateEventInfo) {
+        const isUrl = /^https:\/\//.test(args.targetVersion);
+        let body = lf("To continue using {0}, you must install an update.", args.appName || lf("this application"));
+        let agreeLbl = lf("Update");
+
+        if (isUrl) {
+            body = lf("To continue using {0}, you must install an update from the website.", args.appName || lf("this application"));
+            agreeLbl = lf("Go to website");
+        }
+
         core.confirmAsync({
             header: lf("Critical update required"),
-            body: lf("To continue using {0}, you must install an update.", args.appName || lf("this application")),
-            agreeLbl: lf("Update"),
+            body,
+            agreeLbl,
             disagreeLbl: lf("Quit"),
             disagreeClass: "red",
             size: "medium"
@@ -48,12 +57,21 @@ export function init() {
     }
 
     function onUpdateAvailable(args: UpdateEventInfo) {
-        const header = lf("Version {0} available", args.targetVersion);
+        const isUrl = /^https:\/\//.test(args.targetVersion);
+        let header = lf("Version {0} available", args.targetVersion);
+        let body = lf("A new version of {0} is ready to download and install. The app will restart during the update. Update now?", args.appName || lf("this application"));
+        let agreeLbl = lf("Update");
+
+        if (isUrl) {
+            header = lf("Update available from website");
+            body = lf("A new version of {0} is available from the website.", args.appName || lf("this application"));
+            agreeLbl = lf("Go to website");
+        }
 
         core.confirmAsync({
             header,
-            body: lf("A new version of {0} is ready to download and install. The app will restart during the update. Update now?", args.appName || lf("this application")),
-            agreeLbl: lf("Update"),
+            body,
+            agreeLbl,
             disagreeLbl: lf("Not now"),
             size: "medium"
         }).then(b => {
@@ -64,8 +82,16 @@ export function init() {
                     pxt.tickEvent("update.refused");
                 }
             } else {
-                pxt.tickEvent("update.accepted");
-                core.showLoading(lf("Downloading update..."));
+                if (args.isInitialCheck) {
+                    pxt.tickEvent("update.acceptedInitial");
+                } else {
+                    pxt.tickEvent("update.accepted");
+                }
+
+                if (!isUrl) {
+                    core.showLoading(lf("Downloading update..."));
+                }
+
                 sendMessage("update", {
                     targetVersion: args.targetVersion
                 });

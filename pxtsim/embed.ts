@@ -1,4 +1,4 @@
-/// <reference path="../built/pxtparts.d.ts"/>
+/// <reference path="../localtypings/pxtparts.d.ts"/>
 
 namespace pxsim {
     export interface SimulatorMessage {
@@ -75,7 +75,7 @@ namespace pxsim {
     }
 
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
-        type: "streenshot";
+        type: "screenshot";
         data: string;
     }
 

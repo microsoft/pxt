@@ -1,6 +1,6 @@
-/// <reference path='../typings/marked/marked.d.ts' />
-/// <reference path='../typings/highlightjs/highlightjs.d.ts' />
-/// <reference path='../built/pxtarget.d.ts' />
+/// <reference path='../typings/globals/marked/index.d.ts' />
+/// <reference path='../typings/globals/highlightjs/index.d.ts' />
+/// <reference path='../localtypings/pxtarget.d.ts' />
 /// <reference path="emitter/util.ts"/>
 
 namespace pxt.docs {

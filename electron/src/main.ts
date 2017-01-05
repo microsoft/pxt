@@ -24,7 +24,7 @@ let wsPort: number;
 let win: Electron.BrowserWindow = null;
 let windowsMutex: Mutex = null;
 let updateService: UpdateService = null;
-let messagingDelay = Promise.delay(10000);
+let messagingDelay = Promise.delay(15000);
 
 function parseArgs() {
     const opts: minimist.Opts = {

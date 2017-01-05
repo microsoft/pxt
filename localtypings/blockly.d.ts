@@ -302,6 +302,7 @@ declare namespace Blockly {
             viewTop: number;
             viewWidth: number;
         }
+        variableIndexOf(name: string): number;
     }
 
     class WorkspaceSvg {

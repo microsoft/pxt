@@ -1,5 +1,5 @@
-/// <reference path="../../built/pxtarget.d.ts"/>
-/// <reference path="../../built/pxtpackage.d.ts"/>
+/// <reference path="../../localtypings/pxtarget.d.ts"/>
+/// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
 namespace ts.pxtc {
     export const assert = Util.assert;
@@ -343,6 +343,11 @@ namespace ts.pxtc {
         itableInfo?: string[];
         bindings: TypeBinding[];
         ctor?: ir.Procedure;
+    }
+
+    export interface BinaryExpressionInfo {
+        leftType: string;
+        rightType: string;
     }
 
     let lf = assembler.lf;
@@ -2486,6 +2491,12 @@ ${lbl}: .short 0xffff
 
             let lt = typeOf(node.left)
             let rt = typeOf(node.right)
+
+            if (node.operatorToken.kind == SK.PlusToken) {
+                if (lt.flags & TypeFlags.String || rt.flags & TypeFlags.String) {
+                    (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
+                }
+            }
 
             let shim = (n: string) => rtcallMask(n, [node.left, node.right]);
 
