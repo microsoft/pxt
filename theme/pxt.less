@@ -213,6 +213,7 @@ div.simframe > iframe {
     bottom: 2.2rem;
     margin: 0;
     z-index: 5;
+    font-size:0.8rem;
 }
 .rtl #helpcard {
     left:7rem;
@@ -247,6 +248,18 @@ div.simframe > iframe {
     vertical-align: middle;
 }
 
+/* code card */
+
+.ui.card .image pre {
+    margin-left:0.5rem;
+    margin-right:0.5rem;
+    color: #000;
+    font-size:0.7rem;
+    white-space: pre-wrap;
+    max-height: 10rem;
+    overflow-y: hidden;
+}
+
 /* Scrollbars */
 /* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
 ::-webkit-scrollbar {
@@ -279,6 +292,13 @@ div.simframe > iframe {
 /*******************************
              Blockly
 *******************************/
+
+.blocklyTooltipDiv {
+    border:none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;

@@ -57,8 +57,6 @@ interface IAppState {
     currFile?: pkg.File;
     fileState?: string;
     showFiles?: boolean;
-    helpCard?: pxt.CodeCard;
-    helpCardClick?: (e: React.MouseEvent) => boolean;
     sideDocsLoadUrl?: string; // set once to load the side docs frame
     sideDocsCollapsed?: boolean;
 
@@ -1047,7 +1045,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         this.setState({
             currFile: fn,
-            helpCard: undefined,
             showBlocks: false
         })
         //this.fireResize();
@@ -1134,7 +1131,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         this.setState({
-            helpCard: undefined,
             showFiles: false
         })
         return pkg.loadPkgAsync(h.id)
@@ -1693,14 +1689,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
 
-    setHelpCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
-        if (pxt.options.light) return; // avoid rendering blocks in low-end devices
-        this.setState({
-            helpCard: card,
-            helpCardClick: onClick
-        })
-    }
-
     about() {
         pxt.tickEvent("menu.about");
         core.confirmAsync({
@@ -1816,7 +1804,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
                         </sui.Item>
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...")} class="more-dropdown-menuitem">
+                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -1855,7 +1843,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     : undefined }
                 <div id="simulator">
                     <div id="filelist" className="ui items" role="complementary">
-                        <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
+                        <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item portrait hide">
                             {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : ""}
@@ -1874,7 +1862,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui widedesktop hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui widedesktop only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
@@ -2177,7 +2164,7 @@ $(document).ready(() => {
 
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        window.location.hash = window.location.hash.replace(wsPortMatch[0], ""); 
+        window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
     } else {
         pxt.options.wsPort = 3233;
     }
