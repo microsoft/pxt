@@ -8,6 +8,7 @@ let pendingEvents: I.TelemetryEventInfo[] = [];
 export function init(pxt: I.PxtCore): void {
     pxtCore = pxt;
     pendingEvents.forEach((e) => tickEvent(e.event, e.data));
+    pendingEvents = [];
 }
 
 export function tickEvent(event: string, data?: I.Map<string | number>): void {
