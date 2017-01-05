@@ -141,15 +141,30 @@
 
 #tutorialcard {
     position: absolute;
-    top: 1rem;
     z-index:9;
-    right: 1rem;
     min-width: 320px;
 }
-.rtl #tutorialcard {
+#tutorialcard.top {
+    /* top right */
+    top: 1rem;
+    right: 1rem;
+}
+.rtl #tutorialcard.top {
+    /* bottom left */
     right: auto;
     left: 1rem;
 }
+#tutorialcard.bottom {
+    /* bottom right */
+    bottom: 1rem;
+    right: 1rem;
+}
+.rtl #tutorialcard.bottom {
+    /* bottom left */
+    right: auto;
+    left: 1rem;
+}
+
 #tutorialcard .ui.card {
     padding: 2px;
 }

@@ -68,6 +68,7 @@ interface IAppState {
     tutorialStep?: number; // current tutorial page
     tutorialReady?: boolean; // current tutorial page
     tutorialUrl?: string; // current tutorial url
+    tutorialCardLocation?: string; // current card location
 
     running?: boolean;
     compiling?: boolean;
@@ -747,12 +748,13 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const state = this.props.parent.state;
         const tutorialReady = state.tutorialReady;
         const currentStep = state.tutorialStep;
+        const cardLocation = state.tutorialCardLocation || 'bottom';
         const maxSteps = state.tutorialSteps.length;
         const hasPrevious = currentStep != 0;
         const hasNext = currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
 
-        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${tutorialReady ? 'visible active' : 'hidden'}`}>
+        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} ${tutorialReady ? 'visible active' : 'hidden'}`}>
                     <div className="ui raised fluid card">
                         <div className="ui">
                             <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
@@ -1300,7 +1302,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
                         this.editor.filterToolbox(tt.data, showCategories, false);
-                        this.setState({tutorialReady: true});
+                        this.setState({tutorialReady: true, tutorialCardLocation: tt.location});
                         TutorialContent.refresh();
                         core.hideLoading();
                         break;
@@ -1938,7 +1940,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     let stepmd = `###${steps[step]}`;
                     result.push(stepmd);
                 }
-                //TODO: parse for tutoral options, mainly initial blocks
+                //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
                 this.setState({tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result})
                 let tc = this.refs["tutorialcard"] as TutorialCard;
@@ -2006,7 +2008,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const tutorial = this.state.tutorial && this.state.tutorialSteps.length > 0;
+        const tutorial = this.state.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");

@@ -557,7 +557,8 @@ ${files["main.ts"]}
                                             type: "tutorial",
                                             tutorial: tutorialid,
                                             subtype: "steploaded",
-                                            data: toolboxSubset
+                                            data: toolboxSubset,
+                                            location: "bottom"
                                     }, "*");
                                 }
                         })
