@@ -1759,6 +1759,14 @@ namespace pxt.blocks {
     }
 
     function initTooltip(blockInfo: pxtc.BlocksInfo) {
+
+        const renderTip = (el: any) => {
+            let tip = el.tooltip;
+            while (goog.isFunction(tip)) {
+                tip = tip();
+            }
+            return tip;
+        }
         // TODO: update this when pulling new blockly
         /**
          * Create the tooltip and show it.
@@ -1774,21 +1782,13 @@ namespace pxt.blocks {
             // Get the new text.
             const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
             if (card) {
-                let r = {
-                    header: "JavaScript",
-                    javascript: 1,
-                    title: lf("Selected Blocks converted to JavaScript")
-                }
                 const cardEl = pxt.docs.codeCard.render({
-                    header: card.description,
+                    header: card.description || renderTip(Blockly.Tooltip.element_),
                     typeScript: pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
                 })
                 Blockly.Tooltip.DIV.appendChild(cardEl);
             } else {
-                let tip = Blockly.Tooltip.element_.tooltip;
-                while (goog.isFunction(tip)) {
-                    tip = tip();
-                }
+                let tip = renderTip(Blockly.Tooltip.element_);
                 tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
                 // Create new text, line by line.
                 let lines = tip.split('\n');
