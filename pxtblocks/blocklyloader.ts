@@ -128,13 +128,17 @@ namespace pxt.blocks {
         return block;
     }
 
-    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string): Element {
+    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string, iconClass?: string): Element {
         const result = document.createElement("category");
         result.setAttribute("name", name);
         result.setAttribute("nameid", nameid.toLowerCase());
         result.setAttribute("weight", weight.toString());
         if (colour) {
             result.setAttribute("colour", colour);
+        }
+        if (iconClass) {
+            result.setAttribute("iconclass", iconClass);
+            result.setAttribute("expandedclass", iconClass);
         }
         return result;
     }
@@ -168,9 +172,17 @@ namespace pxt.blocks {
                 else if (blockColors[ns]) {
                     category.setAttribute("colour", blockColors[ns].toString());
                 }
+                if (nsn && nsn.attributes.icon) {
+                    let nsnIconClassName = `blocklyTreeIcon${nsn.name}`;
+                    injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
+                    category.setAttribute("iconclass", nsnIconClassName);
+                    category.setAttribute("expandedclass", nsnIconClassName);
+                }
 
                 if (nsn && nsn.attributes.advanced) {
-                    parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE")
+                    let advancedIconClassName = `blocklyTreeIconadvanced`;
+                    injectToolboxIconCss(advancedIconClassName, "\uf013");
+                    parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", advancedIconClassName)
                     categories = getChildCategories(parentCategoryList)
                 }
 
@@ -204,6 +216,33 @@ namespace pxt.blocks {
         }
     }
 
+    export function injectToolboxIconCss(className: string, i: string): void {
+        let head = document.head || document.getElementsByTagName('head')[0];
+        let style = document.getElementById('blocklyToolboxIcons') as HTMLStyleElement;
+
+        if (!style) {
+            style = document.createElement('style');
+            style.id = "blocklyToolboxIcons";
+            style.type = 'text/css';
+            head.appendChild(style);
+        }
+
+        if (style.innerText.indexOf(className) > -1) return;
+
+        const icon = Util.unicodeToChar(i);
+        const cssContent = style.innerText + `
+            .blocklyTreeIcon.${className}::before {
+                content: "${icon}";
+            }
+        `;
+
+        if (style.sheet) {
+            style.textContent = cssContent;
+        } else {
+            style.appendChild(document.createTextNode(cssContent));
+        }
+    }
+
     let iconCanvasCache: Map<string> = {};
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let url = iconCanvasCache[c];
@@ -234,13 +273,13 @@ namespace pxt.blocks {
         return result;
     }
 
-    function getOrAddSubcategory(parent: Element, name: string, nameid: string, weight: number, colour?: string) {
+    function getOrAddSubcategory(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
         const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
         if (existing) {
             return existing;
         }
 
-        const newCategory = createCategoryElement(name, nameid, weight, colour);
+        const newCategory = createCategoryElement(name, nameid, weight, colour, iconClass);
         parent.appendChild(newCategory)
 
         return newCategory;
@@ -787,6 +826,7 @@ namespace pxt.blocks {
         initDrag();
         initToolboxColor();
         initExpandToolbox();
+        initToolboxIconPatch();
 
         Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
     }
@@ -1800,6 +1840,104 @@ namespace pxt.blocks {
                 this.options.languageTree = tree;
                 this.flyout_.show(tree.childNodes);
             }
+        };
+    }
+
+    function initToolboxIconPatch() {
+        // The following patches the blockly toolbox render logic to include toolbox icons
+
+        /**
+         * Sync trees of the toolbox.
+         * @param {!Node} treeIn DOM tree of blocks.
+         * @param {!Blockly.Toolbox.TreeControl} treeOut
+         * @param {string} pathToMedia
+         * @return {Node} Tree node to open at startup (or null).
+         * @private
+         */
+        (Blockly as any).Toolbox.prototype.syncTrees_ = function(treeIn: any, treeOut: any, pathToMedia: any) {
+            let openNode: any = null;
+            let lastElement: any = null;
+            for (let i = 0, childIn: any; childIn = treeIn.childNodes[i]; i++) {
+                if (!childIn.tagName) {
+                // Skip over text.
+                continue;
+                }
+                switch (childIn.tagName.toUpperCase()) {
+                case 'CATEGORY':
+                    let childOut = this.tree_.createNode(childIn.getAttribute('name'));
+                    childOut.blocks = [];
+                    treeOut.add(childOut);
+                    let custom = childIn.getAttribute('custom');
+                    if (custom) {
+                        // Variables and procedures are special dynamic categories.
+                        childOut.blocks = custom;
+                    } else {
+                        let newOpenNode = this.syncTrees_(childIn, childOut, pathToMedia);
+                        if (newOpenNode) {
+                            openNode = newOpenNode;
+                        }
+                    }
+                    let colour = childIn.getAttribute('colour');
+                    if ((goog as any).isString(colour)) {
+                        if (colour.match(/^#[0-9a-fA-F]{6}$/)) {
+                            childOut.hexColour = colour;
+                        } else {
+                            childOut.hexColour = Blockly.hueToRgb(colour);
+                        }
+                        this.hasColours_ = true;
+                    } else {
+                        childOut.hexColour = '';
+                    }
+                    let iconClass = childIn.getAttribute('iconclass');
+                    if ((goog as any).isString(iconClass)) {
+                        childOut.setIconClass(this.config_['cssTreeIcon'] + ' ' + iconClass);
+                    }
+                    let expandedClass = childIn.getAttribute('expandedclass');
+                    if ((goog as any).isString(expandedClass)) {
+                        childOut.setExpandedIconClass(this.config_['cssTreeIcon'] + ' ' + expandedClass);
+                    }
+                    if (childIn.getAttribute('expanded') == 'true') {
+                        if (childOut.blocks.length) {
+                            // This is a category that directly contians blocks.
+                            // After the tree is rendered, open this category and show flyout.
+                            openNode = childOut;
+                        }
+                        childOut.setExpanded(true);
+                    } else {
+                        childOut.setExpanded(false);
+                    }
+                    lastElement = childIn;
+                    break;
+                case 'SEP':
+                        if (lastElement) {
+                            if (lastElement.tagName.toUpperCase() == 'CATEGORY') {
+                                // Separator between two categories.
+                                // <sep></sep>
+                                treeOut.add(new (Blockly as any).Toolbox.TreeSeparator(
+                                    this.treeSeparatorConfig_));
+                        } else {
+                            // Change the gap between two blocks.
+                            // <sep gap="36"></sep>
+                            // The default gap is 24, can be set larger or smaller.
+                            // Note that a deprecated method is to add a gap to a block.
+                            // <block type="math_arithmetic" gap="8"></block>
+                            let newGap = parseFloat(childIn.getAttribute('gap'));
+                            if (!isNaN(newGap) && lastElement) {
+                                lastElement.setAttribute('gap', newGap);
+                            }
+                        }
+                    }
+                    break;
+                case 'BLOCK':
+                case 'SHADOW':
+                case 'LABEL':
+                case 'BUTTON':
+                    treeOut.blocks.push(childIn);
+                    lastElement = childIn;
+                    break;
+                }
+            }
+            return openNode;
         };
     }
 }

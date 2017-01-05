@@ -284,9 +284,9 @@ html {
     text-align:right;
 }
 
-/* This prevents the arrow icon from showing for categories that have subcategories in the toolbox */
+/* This ensures built-in blockly toolbox icons are hidden */
 .blocklyTreeIcon {
-    opacity: 0 !important;
+    background: none !important;
 }
 
 /* This is to ensure the leds inside showLeds fill the entire checkbox */
