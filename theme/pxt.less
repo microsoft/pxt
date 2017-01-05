@@ -272,6 +272,7 @@ div.simframe > iframe {
     bottom: 2.2rem;
     margin: 0;
     z-index: 5;
+    font-size:0.8rem;
 }
 .rtl #helpcard {
     left:7rem;
@@ -306,6 +307,18 @@ div.simframe > iframe {
     vertical-align: middle;
 }
 
+/* code card */
+
+.ui.card .image pre {
+    margin-left:0.5rem;
+    margin-right:0.5rem;
+    color: #000;
+    font-size:0.7rem;
+    white-space: pre-wrap;
+    max-height: 10rem;
+    overflow-y: hidden;
+}
+
 /* Scrollbars */
 /* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
 ::-webkit-scrollbar {
@@ -338,6 +351,13 @@ div.simframe > iframe {
 /*******************************
              Blockly
 *******************************/
+
+.blocklyTooltipDiv {
+    border:none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;
@@ -413,6 +433,44 @@ div.simframe > iframe {
 .blocklySearchInputField {
     border: 0 !important;
     border-radius: 0 !important;
+}
+
+/* Blockly toolbox icons */
+.blocklyTreeIcon {
+    opacity: 1;
+    margin: 0em 0.25rem 0em 0em;
+    width: 1.18em;
+    font-family: 'Icons';
+    font-style: normal;
+    font-weight: normal;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    backface-visibility: hidden;
+}
+.blocklyTreeSelected .blocklyTreeIcon{
+    color: white;
+}
+.blocklyTreeIcon.blocklyTreeIconloops::before {
+    content: "\f01e";
+}
+.blocklyTreeIcon.blocklyTreeIconmath::before {
+    content: "\f1ec";
+}
+.blocklyTreeIcon.blocklyTreeIconlogic::before {
+    content: "\f074";
+}
+.blocklyTreeIcon.blocklyTreeIconvariables::before {
+    content: "\f039";
+}
+.blocklyTreeIcon.blocklyTreeIcontext::before {
+    content: "\f035";
+}
+.blocklyTreeIcon.blocklyTreeIconlists::before {
+    content: "\f0cb";
 }
 
 /*******************************

@@ -127,13 +127,17 @@ namespace pxt.blocks {
         return block;
     }
 
-    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string): Element {
+    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string, iconClass?: string): Element {
         const result = document.createElement("category");
         result.setAttribute("name", name);
         result.setAttribute("nameid", nameid.toLowerCase());
         result.setAttribute("weight", weight.toString());
         if (colour) {
             result.setAttribute("colour", colour);
+        }
+        if (iconClass) {
+            result.setAttribute("iconclass", iconClass);
+            result.setAttribute("expandedclass", iconClass);
         }
         return result;
     }
@@ -169,8 +173,17 @@ namespace pxt.blocks {
                         category.setAttribute("colour", blockColors[ns].toString());
                     }
 
+                    if (nsn && nsn.attributes.icon) {
+                        let nsnIconClassName = `blocklyTreeIcon${nsn.name}`;
+                        injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
+                        category.setAttribute("iconclass", nsnIconClassName);
+                        category.setAttribute("expandedclass", nsnIconClassName);
+                    }
+
                     if (nsn && nsn.attributes.advanced) {
-                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE")
+                        let advancedIconClassName = `blocklyTreeIconadvanced`;
+                        injectToolboxIconCss(advancedIconClassName, "\uf013");
+                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", advancedIconClassName)
                         categories = getChildCategories(parentCategoryList)
                     }
 
@@ -212,6 +225,33 @@ namespace pxt.blocks {
         }
     }
 
+    export function injectToolboxIconCss(className: string, i: string): void {
+        let head = document.head || document.getElementsByTagName('head')[0];
+        let style = document.getElementById('blocklyToolboxIcons') as HTMLStyleElement;
+
+        if (!style) {
+            style = document.createElement('style');
+            style.id = "blocklyToolboxIcons";
+            style.type = 'text/css';
+            head.appendChild(style);
+        }
+
+        if (style.innerText.indexOf(className) > -1) return;
+
+        const icon = Util.unicodeToChar(i);
+        const cssContent = style.innerText + `
+            .blocklyTreeIcon.${className}::before {
+                content: "${icon}";
+            }
+        `;
+
+        if (style.sheet) {
+            style.textContent = cssContent;
+        } else {
+            style.appendChild(document.createTextNode(cssContent));
+        }
+    }
+
     let iconCanvasCache: Map<string> = {};
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let url = iconCanvasCache[c];
@@ -242,13 +282,13 @@ namespace pxt.blocks {
         return result;
     }
 
-    function getOrAddSubcategory(parent: Element, name: string, nameid: string, weight: number, colour?: string) {
+    function getOrAddSubcategory(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
         const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
         if (existing) {
             return existing;
         }
 
-        const newCategory = createCategoryElement(name, nameid, weight, colour);
+        const newCategory = createCategoryElement(name, nameid, weight, colour, iconClass);
         parent.appendChild(newCategory)
 
         return newCategory;
@@ -287,9 +327,12 @@ namespace pxt.blocks {
         return true;
     }
 
-    function initField(i: any, ni: number, fn: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string): any {
-        if (ni == 0 && fn.attributes.icon)
-            i.appendField(iconToFieldImage(fn.attributes.icon))
+    function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
+        if (ni == 0) {
+            const icon = ns.attributes.icon;
+            if (icon)
+                i.appendField(iconToFieldImage(icon));
+        }
         if (pre)
             i.appendField(pre);
         if (right)
@@ -306,9 +349,6 @@ namespace pxt.blocks {
     }
 
     function mkCard(fn: pxtc.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
-        let xml = blockXml.outerHTML
-            // remove IE11
-            .replace(/^<\?[^>]*>/, '');
         return {
             name: fn.namespace + '.' + fn.name,
             shortName: fn.name,
@@ -344,7 +384,7 @@ namespace pxt.blocks {
         parseFields(fn.attributes.block).map(field => {
             let i: any;
             if (!field.p) {
-                i = initField(block.appendDummyInput(), field.ni, fn, field.n);
+                i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, field.n);
             } else {
                 // find argument
                 let pre = field.pre;
@@ -374,30 +414,30 @@ namespace pxt.blocks {
                         v.attributes.block || v.attributes.blockId || v.name,
                         v.namespace + "." + v.name
                     ]);
-                    i = initField(block.appendDummyInput(), field.ni, fn, pre, true);
+                    i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     // if a value is provided, move it first
                     if (pr.shadowValue)
                         dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
                     i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
                 } else if (/\[\]$/.test(pr.type)) { // Array type
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Array");
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
                 } else if (instance && n == "this") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
                 } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();
                         if (pre) i.appendField(pre)
                         i.appendField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), p);
                     }
-                    else i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Number");
+                    else i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Number");
                 }
                 else if (pr.type == "boolean") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "Boolean");
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Boolean");
                 } else if (pr.type == "string") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, "String");
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "String");
                 } else {
-                    i = initField(block.appendValueInput(p), field.ni, fn, pre, true, pr.type);
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
                 }
             }
         });
@@ -451,6 +491,7 @@ namespace pxt.blocks {
     }
 
     export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+        init();
 
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
@@ -495,11 +536,6 @@ namespace pxt.blocks {
         // add extra blocks
         if (tb && pxt.appTarget.runtime) {
             const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
-            extraBlocks.push({
-                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
-                weight: 10,
-                type: ts.pxtc.ON_START_TYPE
-            })
             extraBlocks.forEach(eb => {
                 let el = document.createElement("block");
                 el.setAttribute("type", eb.type);
@@ -536,7 +572,7 @@ namespace pxt.blocks {
             if (!config.logicBlocks) removeCategory(tb, "Logic");
             if (!config.loopsBlocks) removeCategory(tb, "Loops");
 
-            // Load localized names for default categories   
+            // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
@@ -599,6 +635,7 @@ namespace pxt.blocks {
 
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
         init();
+        initTooltip(blockInfo);
 
         let tb = createToolbox(blockInfo, toolbox, showCategories, blockSubset);
 
@@ -815,6 +852,7 @@ namespace pxt.blocks {
         }
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
+        Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
 
         initContextMenu();
         initOnStart();
@@ -826,8 +864,7 @@ namespace pxt.blocks {
         initDrag();
         initToolboxColor();
         initExpandToolbox();
-
-        Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
+        initToolboxIconPatch();
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
@@ -1379,7 +1416,28 @@ namespace pxt.blocks {
             }
 
             oldSetSelectedItem.call(that, a);
-        }
+        };
+
+        // Fix highlighting bug in edge
+        (<any>Blockly).Flyout.prototype.addBlockListeners_ = function (root: any, block: any, rect: any) {
+            this.listeners_.push((<any>Blockly).bindEventWithChecks_(root, 'mousedown', null,
+                this.blockMouseDown_(block)));
+            this.listeners_.push((<any>Blockly).bindEventWithChecks_(rect, 'mousedown', null,
+                this.blockMouseDown_(block)));
+            this.listeners_.push(Blockly.bindEvent_(root, 'mouseover', block,
+                select));
+            this.listeners_.push(Blockly.bindEvent_(rect, 'mouseover', block,
+                select));
+
+            const that = this;
+            function select() {
+                if (that._selectedItem && that._selectedItem.svgGroup_) {
+                    that._selectedItem.removeSelect();
+                }
+                that._selectedItem = block;
+                that._selectedItem.addSelect();
+            }
+        };
     }
 
     function collapseMoreCategory(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
@@ -1796,8 +1854,85 @@ namespace pxt.blocks {
         );
     }
 
+    function initTooltip(blockInfo: pxtc.BlocksInfo) {
+
+        const renderTip = (el: any) => {
+            let tip = el.tooltip;
+            while (goog.isFunction(tip)) {
+                tip = tip();
+            }
+            return tip;
+        }
+        // TODO: update this when pulling new blockly
+        /**
+         * Create the tooltip and show it.
+         * @private
+         */
+        Blockly.Tooltip.show_ = function () {
+            Blockly.Tooltip.poisonedElement_ = Blockly.Tooltip.element_;
+            if (!Blockly.Tooltip.DIV) {
+                return;
+            }
+            // Erase all existing text.
+            goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
+            // Get the new text.
+            const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
+            if (card) {
+                const cardEl = pxt.docs.codeCard.render({
+                    header: card.description || renderTip(Blockly.Tooltip.element_),
+                    typeScript: pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
+                })
+                Blockly.Tooltip.DIV.appendChild(cardEl);
+            } else {
+                let tip = renderTip(Blockly.Tooltip.element_);
+                tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
+                // Create new text, line by line.
+                let lines = tip.split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    let div = document.createElement('div');
+                    div.appendChild(document.createTextNode(lines[i]));
+                    Blockly.Tooltip.DIV.appendChild(div);
+                }
+            }
+            let rtl = Blockly.Tooltip.element_.RTL;
+            let windowSize = goog.dom.getViewportSize();
+            // Display the tooltip.
+            Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
+            Blockly.Tooltip.DIV.style.display = 'block';
+            Blockly.Tooltip.visible = true;
+            // Move the tooltip to just below the cursor.
+            let anchorX = Blockly.Tooltip.lastX_;
+            if (rtl) {
+                anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
+            } else {
+                anchorX += Blockly.Tooltip.OFFSET_X;
+            }
+            let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
+
+            if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
+                windowSize.height + window.scrollY) {
+                // Falling off the bottom of the screen; shift the tooltip up.
+                anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+            }
+            if (rtl) {
+                // Prevent falling off left edge in RTL mode.
+                anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
+            } else {
+                if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
+                    windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
+                    // Falling off the right edge of the screen;
+                    // clamp the tooltip on the edge.
+                    anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
+                        2 * Blockly.Tooltip.MARGINS;
+                }
+            }
+            Blockly.Tooltip.DIV.style.top = anchorY + 'px';
+            Blockly.Tooltip.DIV.style.left = anchorX + 'px';
+        }
+    }
+
     function initExpandToolbox() {
-        // The following ensures the flyout is updated is cleared or expanded when the toolbox is updated. 
+        // The following ensures the flyout is updated is cleared or expanded when the toolbox is updated.
 
         /**
          * Modify the block tree on the existing toolbox.
@@ -1832,6 +1967,104 @@ namespace pxt.blocks {
                 this.options.languageTree = tree;
                 this.flyout_.show(tree.childNodes);
             }
+        };
+    }
+
+    function initToolboxIconPatch() {
+        // The following patches the blockly toolbox render logic to include toolbox icons
+
+        /**
+         * Sync trees of the toolbox.
+         * @param {!Node} treeIn DOM tree of blocks.
+         * @param {!Blockly.Toolbox.TreeControl} treeOut
+         * @param {string} pathToMedia
+         * @return {Node} Tree node to open at startup (or null).
+         * @private
+         */
+        (Blockly as any).Toolbox.prototype.syncTrees_ = function(treeIn: any, treeOut: any, pathToMedia: any) {
+            let openNode: any = null;
+            let lastElement: any = null;
+            for (let i = 0, childIn: any; childIn = treeIn.childNodes[i]; i++) {
+                if (!childIn.tagName) {
+                // Skip over text.
+                continue;
+                }
+                switch (childIn.tagName.toUpperCase()) {
+                case 'CATEGORY':
+                    let childOut = this.tree_.createNode(childIn.getAttribute('name'));
+                    childOut.blocks = [];
+                    treeOut.add(childOut);
+                    let custom = childIn.getAttribute('custom');
+                    if (custom) {
+                        // Variables and procedures are special dynamic categories.
+                        childOut.blocks = custom;
+                    } else {
+                        let newOpenNode = this.syncTrees_(childIn, childOut, pathToMedia);
+                        if (newOpenNode) {
+                            openNode = newOpenNode;
+                        }
+                    }
+                    let colour = childIn.getAttribute('colour');
+                    if ((goog as any).isString(colour)) {
+                        if (colour.match(/^#[0-9a-fA-F]{6}$/)) {
+                            childOut.hexColour = colour;
+                        } else {
+                            childOut.hexColour = Blockly.hueToRgb(colour);
+                        }
+                        this.hasColours_ = true;
+                    } else {
+                        childOut.hexColour = '';
+                    }
+                    let iconClass = childIn.getAttribute('iconclass');
+                    if ((goog as any).isString(iconClass)) {
+                        childOut.setIconClass(this.config_['cssTreeIcon'] + ' ' + iconClass);
+                    }
+                    let expandedClass = childIn.getAttribute('expandedclass');
+                    if ((goog as any).isString(expandedClass)) {
+                        childOut.setExpandedIconClass(this.config_['cssTreeIcon'] + ' ' + expandedClass);
+                    }
+                    if (childIn.getAttribute('expanded') == 'true') {
+                        if (childOut.blocks.length) {
+                            // This is a category that directly contians blocks.
+                            // After the tree is rendered, open this category and show flyout.
+                            openNode = childOut;
+                        }
+                        childOut.setExpanded(true);
+                    } else {
+                        childOut.setExpanded(false);
+                    }
+                    lastElement = childIn;
+                    break;
+                case 'SEP':
+                        if (lastElement) {
+                            if (lastElement.tagName.toUpperCase() == 'CATEGORY') {
+                                // Separator between two categories.
+                                // <sep></sep>
+                                treeOut.add(new (Blockly as any).Toolbox.TreeSeparator(
+                                    this.treeSeparatorConfig_));
+                        } else {
+                            // Change the gap between two blocks.
+                            // <sep gap="36"></sep>
+                            // The default gap is 24, can be set larger or smaller.
+                            // Note that a deprecated method is to add a gap to a block.
+                            // <block type="math_arithmetic" gap="8"></block>
+                            let newGap = parseFloat(childIn.getAttribute('gap'));
+                            if (!isNaN(newGap) && lastElement) {
+                                lastElement.setAttribute('gap', newGap);
+                            }
+                        }
+                    }
+                    break;
+                case 'BLOCK':
+                case 'SHADOW':
+                case 'LABEL':
+                case 'BUTTON':
+                    treeOut.blocks.push(childIn);
+                    lastElement = childIn;
+                    break;
+                }
+            }
+            return openNode;
         };
     }
 }

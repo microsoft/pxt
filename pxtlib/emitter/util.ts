@@ -347,6 +347,13 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function unicodeToChar(text: string) {
+        let r = /\\u([\d\w]{4})/gi;
+        return text.replace(r, function (match, grp) {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
+    }
+
     export function escapeForRegex(str: string) {
         return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     }
