@@ -131,6 +131,65 @@
     left:1.25rem;
 }
 
+/* Tutorial Mode */
+.tutorial-menuitem > .selected {
+    background-color: @tutorialSelectedMenuColor !important;
+    padding: 1.3rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+}
+
+#tutorialcard {
+    position: absolute;
+    z-index:9;
+    min-width: 320px;
+}
+#tutorialcard.top {
+    /* top right */
+    top: 1rem;
+    right: 1rem;
+}
+.rtl #tutorialcard.top {
+    /* bottom left */
+    right: auto;
+    left: 1rem;
+}
+#tutorialcard.bottom {
+    /* bottom right */
+    bottom: 1rem;
+    right: 1rem;
+}
+.rtl #tutorialcard.bottom {
+    /* bottom left */
+    right: auto;
+    left: 1rem;
+}
+
+#tutorialcard .ui.card {
+    padding: 2px;
+}
+
+#tutorialcontent {
+    display: block;
+    width: 100%;
+    overflow:hidden;
+    border:none;
+    height: 100%;
+}
+
+body#docs.tutorial {
+    overflow-y: hidden;
+}
+#docs.tutorial .ui.segment {
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+}
+#docs.tutorial #content{
+    margin-bottom: 0.5rem !important;
+}
+
 /* Cookie Message */
 #cookiemsg {
    position: absolute;
@@ -182,7 +241,7 @@ div.simframe > iframe {
 
 /* Menu */ 
 .ui.menu .item.editor-menuitem {
-    background: @primaryColor !important;
+    background: @mainMenuBlocksJsToggleColor !important;
     margin: 0.5rem;
     padding: 0.7rem;
     border-radius: 0.5rem;
@@ -543,8 +602,8 @@ div.simframe > iframe {
     .blocklyTreeRow {
         width: 230px;
     }
-    /* Blockly Toolbox buttons */
-    #blocklyToolboxButtons {
+    /* Toolbox buttons */
+    #blocklyToolboxButtons, #monacoToolboxButtons {
         margin-right: 2rem;
         margin-left: 2rem;
     }
@@ -589,17 +648,16 @@ div.simframe > iframe {
     #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
         padding: 0.3rem 0 0.3rem 0 !important;
     }
-    /* Hide the getting started button in the mobile view */
     #getting-started-btn {
-        display: none !important;
+        top: @mobileMenuHeight;
     }
     /* Menu spacing */
     .ui.menu .item {
         padding: 0.4em !important;
     }
     .ui.menu .item.editor-menuitem {
-        margin-top: (@mobileMenuHeight/6) !important;
-        margin-bottom: (@mobileMenuHeight/6) !important;
+        margin-top: ((@mobileMenuHeight - 2.5rem)/2) !important;
+        margin-bottom: ((@mobileMenuHeight - 2.5rem)/2) !important;
     }
     /* Logo */
     .ui.item.logo img {

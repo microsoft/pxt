@@ -79,6 +79,24 @@ namespace pxsim {
         data: string;
     }
 
+    export interface TutorialMessage extends SimulatorMessage {
+        type: "tutorial";
+        tutorial: string;
+        subtype: string;
+    }
+
+    export interface TutorialStepLoadedMessage extends TutorialMessage {
+        subtype: "steploaded";
+        data: {[index: string]: number };
+        showCategories?: boolean;
+        location?: string;
+    }
+
+    export interface TutorialStepChangeMessage extends TutorialMessage {
+        subtype: "stepchange";
+        step: number;
+    }
+
     export namespace Embed {
         export function start() {
             window.addEventListener("message", receiveMessage, false);
