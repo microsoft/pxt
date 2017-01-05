@@ -22,7 +22,6 @@ export class Editor extends srceditor.Editor {
     isFirstBlocklyLoad = true;
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
-    currentHelpCardType: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -341,7 +340,7 @@ export class Editor extends srceditor.Editor {
             if (ev.type == 'create') {
                 let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickEvent("blocks.create", {category: lastCategory, block: blockId});
+                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
