@@ -298,9 +298,6 @@ namespace pxt.blocks {
     }
 
     function mkCard(fn: pxtc.SymbolInfo, blockXml: HTMLElement): pxt.CodeCard {
-        let xml = blockXml.outerHTML
-            // remove IE11
-            .replace(/^<\?[^>]*>/, '');
         return {
             name: fn.namespace + '.' + fn.name,
             shortName: fn.name,
@@ -444,6 +441,7 @@ namespace pxt.blocks {
 
     export function initBlocks(blockInfo: pxtc.BlocksInfo, workspace?: Blockly.Workspace, toolbox?: Element): Element {
         init();
+        initTooltip(blockInfo);
 
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
@@ -773,6 +771,7 @@ namespace pxt.blocks {
         }
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
+        Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
 
         initContextMenu();
         initOnStart();
@@ -784,8 +783,6 @@ namespace pxt.blocks {
         initDrag();
         initToolboxColor();
         initExpandToolbox();
-
-        Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
@@ -1326,7 +1323,7 @@ namespace pxt.blocks {
         };
 
         // Fix highlighting bug in edge
-        (<any>Blockly).Flyout.prototype.addBlockListeners_ = function(root: any, block: any, rect: any) {
+        (<any>Blockly).Flyout.prototype.addBlockListeners_ = function (root: any, block: any, rect: any) {
             this.listeners_.push((<any>Blockly).bindEventWithChecks_(root, 'mousedown', null,
                 this.blockMouseDown_(block)));
             this.listeners_.push((<any>Blockly).bindEventWithChecks_(rect, 'mousedown', null,
@@ -1759,6 +1756,83 @@ namespace pxt.blocks {
             lf("Returns the number of letters (including spaces) in the provided text."),
             "reference/types/string-functions"
         );
+    }
+
+    function initTooltip(blockInfo: pxtc.BlocksInfo) {
+
+        const renderTip = (el: any) => {
+            let tip = el.tooltip;
+            while (goog.isFunction(tip)) {
+                tip = tip();
+            }
+            return tip;
+        }
+        // TODO: update this when pulling new blockly
+        /**
+         * Create the tooltip and show it.
+         * @private
+         */
+        Blockly.Tooltip.show_ = function () {
+            Blockly.Tooltip.poisonedElement_ = Blockly.Tooltip.element_;
+            if (!Blockly.Tooltip.DIV) {
+                return;
+            }
+            // Erase all existing text.
+            goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
+            // Get the new text.
+            const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
+            if (card) {
+                const cardEl = pxt.docs.codeCard.render({
+                    header: card.description || renderTip(Blockly.Tooltip.element_),
+                    typeScript: pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
+                })
+                Blockly.Tooltip.DIV.appendChild(cardEl);
+            } else {
+                let tip = renderTip(Blockly.Tooltip.element_);
+                tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
+                // Create new text, line by line.
+                let lines = tip.split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    let div = document.createElement('div');
+                    div.appendChild(document.createTextNode(lines[i]));
+                    Blockly.Tooltip.DIV.appendChild(div);
+                }
+            }
+            let rtl = Blockly.Tooltip.element_.RTL;
+            let windowSize = goog.dom.getViewportSize();
+            // Display the tooltip.
+            Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
+            Blockly.Tooltip.DIV.style.display = 'block';
+            Blockly.Tooltip.visible = true;
+            // Move the tooltip to just below the cursor.
+            let anchorX = Blockly.Tooltip.lastX_;
+            if (rtl) {
+                anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
+            } else {
+                anchorX += Blockly.Tooltip.OFFSET_X;
+            }
+            let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
+
+            if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
+                windowSize.height + window.scrollY) {
+                // Falling off the bottom of the screen; shift the tooltip up.
+                anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+            }
+            if (rtl) {
+                // Prevent falling off left edge in RTL mode.
+                anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
+            } else {
+                if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
+                    windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
+                    // Falling off the right edge of the screen;
+                    // clamp the tooltip on the edge.
+                    anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
+                        2 * Blockly.Tooltip.MARGINS;
+                }
+            }
+            Blockly.Tooltip.DIV.style.top = anchorY + 'px';
+            Blockly.Tooltip.DIV.style.left = anchorX + 'px';
+        }
     }
 
     function initExpandToolbox() {
