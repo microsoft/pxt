@@ -175,6 +175,7 @@ export function init() {
 
                     if (!telemetryInfo) {
                         pxt.debug('invalid telemetry message: ' + ev.data);
+                        return;
                     }
 
                     pxt.tickEvent(telemetryInfo.event, telemetryInfo.data);
