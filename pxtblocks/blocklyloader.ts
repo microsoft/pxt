@@ -489,11 +489,6 @@ namespace pxt.blocks {
         // add extra blocks
         if (tb && pxt.appTarget.runtime) {
             const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
-            extraBlocks.push({
-                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
-                weight: 10,
-                type: ts.pxtc.ON_START_TYPE
-            })
             extraBlocks.forEach(eb => {
                 let cat = categoryElement(tb, eb.namespace);
                 if (cat) {

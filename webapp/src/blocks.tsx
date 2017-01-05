@@ -119,13 +119,14 @@ export class Editor extends srceditor.Editor {
 
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`, this.blockInfo, true);
+            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
+            this.ensureOnStart();
         } catch (e) {
             pxt.log(e);
         }
@@ -343,6 +344,12 @@ export class Editor extends srceditor.Editor {
         return this.editor ? this.editor.isDragging() : false;
     }
 
+    ensureOnStart() {
+        this.editor.getTopBlocks(false)
+            .filter(b => b.type == ts.pxtc.ON_START_TYPE)
+            .forEach(b => b.setDeletable(!!b.disabled));
+    }
+
     prepare() {
         let blocklyDiv = document.getElementById('blocksEditor');
         let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
@@ -376,7 +383,7 @@ export class Editor extends srceditor.Editor {
             if (ev.type == 'create') {
                 let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickEvent("blocks.create", {category: lastCategory, block: blockId});
+                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
