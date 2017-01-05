@@ -26,8 +26,10 @@ namespace pxt.blocks {
 
     function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
         let onstart = dom.querySelector(`block[type=${ts.pxtc.ON_START_TYPE}]`)
-        if (onstart) // nothing to doc
+        if (onstart) { // nothing to doc        
+            onstart.setAttribute("deletable", "false")
             return;
+        }
 
         const blocks: Map<pxtc.SymbolInfo> = {};
         info.blocks.forEach(b => blocks[b.attributes.blockId] = b);
@@ -47,6 +49,7 @@ namespace pxt.blocks {
                 if (!onstart) {
                     onstart = dom.ownerDocument.createElement("block");
                     onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
+                    onstart.setAttribute("deletable", "false");
                     insertNode = dom.ownerDocument.createElement("statement");
                     insertNode.setAttribute("name", "HANDLER");
                     onstart.appendChild(insertNode);
