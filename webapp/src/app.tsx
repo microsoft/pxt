@@ -752,7 +752,7 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const hasNext = currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
 
-        return <div id="tutorialcard" className="ui ">
+        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${tutorialReady ? 'visible active' : 'hidden'}`}>
                     <div className="ui raised fluid card">
                         <div className="ui">
                             <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
@@ -1276,8 +1276,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     setTutorialStep(step: number) {
-        // save 
-        this.saveFile();
+        // save and typecheck
+        this.typecheckNow();
         // Notify tutorial content pane
         let tc = this.refs["tutorialcard"] as TutorialCard;
         if (!tc) return;
@@ -1285,7 +1285,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             TutorialContent.notify({
                 type: "tutorial",
                 tutorial: this.state.tutorial,
-                subtype: "tutorialstep",
+                subtype: "stepchange",
                 step: step
             } as pxsim.TutorialStepChangeMessage)
         }
@@ -1296,8 +1296,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             case "tutorial":
                 let t = msg as pxsim.TutorialMessage;
                 switch (t.subtype) {
-                    case 'tutorialtoolbox':
-                        let tt = msg as pxsim.TutorialToolboxMessage;
+                    case 'steploaded':
+                        let tt = msg as pxsim.TutorialStepLoadedMessage;
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
                         this.editor.filterToolbox(tt.data, showCategories, false);
                         this.setState({tutorialReady: true});

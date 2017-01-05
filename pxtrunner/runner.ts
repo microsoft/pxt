@@ -301,7 +301,7 @@ namespace pxt.runner {
             case "tutorial":
                 let t = m as pxsim.TutorialMessage;
                 switch (t.subtype) {
-                    case "tutorialstep":
+                    case "stepchange":
                         let ts = t as pxsim.TutorialStepChangeMessage;
                         let loading = document.getElementById('loading');
                         let content = document.getElementById('content');
@@ -553,10 +553,10 @@ ${files["main.ts"]}
                                     }
                                 }
                                 if (toolboxSubset != {}) {
-                                        window.parent.postMessage(<pxsim.TutorialToolboxMessage>{
+                                        window.parent.postMessage(<pxsim.TutorialStepLoadedMessage>{
                                             type: "tutorial",
                                             tutorial: tutorialid,
-                                            subtype: "tutorialtoolbox",
+                                            subtype: "steploaded",
                                             data: toolboxSubset
                                     }, "*");
                                 }

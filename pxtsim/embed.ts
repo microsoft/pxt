@@ -85,14 +85,14 @@ namespace pxsim {
         subtype: string;
     }
 
-    export interface TutorialToolboxMessage extends TutorialMessage {
-        subtype: "tutorialtoolbox";
+    export interface TutorialStepLoadedMessage extends TutorialMessage {
+        subtype: "steploaded";
         data: {[index: string]: number };
         showCategories?: boolean;
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
-        subtype: "tutorialstep";
+        subtype: "stepchange";
         step: number;
     }
 
