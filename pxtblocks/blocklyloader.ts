@@ -177,6 +177,9 @@ namespace pxt.blocks {
                     injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                     category.setAttribute("iconclass", nsnIconClassName);
                     category.setAttribute("expandedclass", nsnIconClassName);
+                } else {
+                    category.setAttribute("iconclass", `blocklyTreeIconDefault`);
+                    category.setAttribute("expandedclass", `blocklyTreeIconDefault`);
                 }
 
                 if (nsn && nsn.attributes.advanced) {
