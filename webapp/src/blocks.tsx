@@ -118,13 +118,14 @@ export class Editor extends srceditor.Editor {
 
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`, this.blockInfo, true);
+            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
+            this.ensureOnStart();
         } catch (e) {
             pxt.log(e);
         }
@@ -305,6 +306,12 @@ export class Editor extends srceditor.Editor {
 
     isIncomplete() {
         return this.editor ? this.editor.isDragging() : false;
+    }
+
+    ensureOnStart() {
+        this.editor.getTopBlocks(false)
+            .filter(b => b.type == ts.pxtc.ON_START_TYPE)
+            .forEach(b => b.setDeletable(!!b.disabled));
     }
 
     prepare() {
