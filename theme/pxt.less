@@ -391,9 +391,13 @@ div.simframe > iframe {
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
     backface-visibility: hidden;
+    font-size: 1.2rem;
 }
 .blocklyTreeSelected .blocklyTreeIcon{
     color: white;
+}
+.blocklyTreeIcon.blocklyTreeIconsearch::before {
+    content: "\f002";
 }
 .blocklyTreeIcon.blocklyTreeIconloops::before {
     content: "\f01e";
@@ -599,6 +603,19 @@ div.simframe > iframe {
         max-height: 2.5rem;
         margin-left: 0.5rem;
         margin-right: 0.5rem;
+    }
+    /* Hide the blockly toolbox labels */
+    .blocklyTreeLabel {
+        display: none !important;
+    }
+    .blocklyTreeIcon {
+        font-size: 1.5rem;
+    }
+    .blocklyTreeRow {
+        height: 2rem;
+    }
+    .blocklyToolboxDiv, .monacoToolboxDiv{
+        width: 50px;
     }
 }
 
