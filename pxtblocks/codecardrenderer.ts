@@ -1,31 +1,6 @@
 namespace pxt.docs.codeCard {
 
-    let repeat = pxt.Util.repeatMap;
-
-    interface SocialNetwork {
-        parse: (text: string) => { source: string; id: string }
-    }
-
-    let socialNetworks: SocialNetwork[] = [{
-        parse: text => {
-            let links: string[] = [];
-            if (text)
-                text.replace(/https?:\/\/(youtu\.be\/([a-z0-9\-_]+))|(www\.youtube\.com\/watch\?v=([a-z0-9\-_]+))/i,
-                    (m, m2, id1, m3, id2) => {
-                        let ytid = id1 || id2;
-                        links.push(ytid); return ''
-                    });
-            if (links[0]) return { source: 'youtube', id: links[0] };
-            else return undefined;
-        }
-    }, {
-            parse: text => {
-                let m = /https?:\/\/vimeo\.com\/\S*?(\d{6,})/i.exec(text)
-                if (m) return { source: "vimeo", id: m[1] };
-                else return undefined;
-            }
-        }
-    ];
+    const repeat = pxt.Util.repeatMap;
 
     export interface CodeCardRenderOptions {
         hideHeader?: boolean;
@@ -34,7 +9,6 @@ namespace pxt.docs.codeCard {
 
     export function render(card: pxt.CodeCard, options: CodeCardRenderOptions = {}): HTMLElement {
         const repeat = pxt.Util.repeatMap;
-        const promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];
         let color = card.color || "";
         if (!color) {
             if (card.hardware && !card.software) color = 'black';
@@ -76,13 +50,6 @@ namespace pxt.docs.codeCard {
         }
 
         let img = div(r, "ui image" + (card.responsive ? " tall landscape only" : ""));
-        if (promo) {
-            let promoDiv = div(img, "ui embed");
-            promoDiv.dataset["source"] = promo.source;
-            promoDiv.dataset["id"] = promo.id;
-
-            ($(promoDiv) as any).embed();
-        }
 
         if (card.blocksXml) {
             let svg = pxt.blocks.render(card.blocksXml);
@@ -108,21 +75,22 @@ namespace pxt.docs.codeCard {
             img.appendChild(image)
         }
 
-
-        let ct = div(r, "ui content");
         const name = (options.shortName ? card.shortName : '') || card.name;
-        if (name) {
-            if (url && !link) a(ct, url, name, 'header');
-            else div(ct, 'header', 'div', name);
-        }
-        if (card.time) {
-            let meta = div(ct, "ui meta");
-            let m = div(meta, "date", "span");
-            m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
-        }
-        if (card.description) {
-            let descr = div(ct, 'ui description');
-            descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
+        if (name || card.description) {
+            let ct = div(r, "ui content");
+            if (name) {
+                if (url && !link) a(ct, url, name, 'header');
+                else div(ct, 'header', 'div', name);
+            }
+            if (card.time) {
+                let meta = div(ct, "ui meta");
+                let m = div(meta, "date", "span");
+                m.appendChild(document.createTextNode(pxt.Util.timeSince(card.time)));
+            }
+            if (card.description) {
+                let descr = div(ct, 'ui description');
+                descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
+            }
         }
 
         return r;

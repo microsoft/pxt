@@ -3,34 +3,8 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as blockspreview from "./blockspreview"
 
-let lf = pxt.Util.lf;
-let repeat = pxt.Util.repeatMap;
-
-interface SocialNetwork {
-    parse: (text: string) => { source: string; id: string }
-}
-
-let socialNetworks: SocialNetwork[] = [{
-    parse: text => {
-        let links: string[] = [];
-        if (text)
-            text.replace(/https?:\/\/(youtu\.be\/([a-z0-9\-_]+))|(www\.youtube\.com\/watch\?v=([a-z0-9\-_]+))/i,
-                (m, m2, id1, m3, id2) => {
-                    let ytid = id1 || id2;
-                    links.push(ytid); return ''
-                });
-        if (links[0]) return { source: 'youtube', id: links[0] };
-        else return undefined;
-    }
-}, {
-        parse: text => {
-            let m = /https?:\/\/vimeo\.com\/\S*?(\d{6,})/i.exec(text)
-            if (m) return { source: "vimeo", id: m[1] };
-            else return undefined;
-        }
-    }
-];
-
+const lf = pxt.Util.lf;
+const repeat = pxt.Util.repeatMap;
 
 export interface CodeCardState { }
 
@@ -48,7 +22,6 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
 
     render() {
         let card = this.props
-        let promo = socialNetworks.map(sn => sn.parse(card.promoUrl)).filter(p => !!p)[0];
         let color = card.color || "";
         if (!color) {
             if (card.hardware && !card.software) color = 'black';
@@ -71,7 +44,6 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.header}
                 </div> : null }
             <div className={"ui image" + (card.responsive ? " tall landscape only" : "") }>
-                {promo ? <div key="promoembed" className="ui embed" data-source={promo.source} data-id={promo.id}></div> : null}
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
                 {card.imageUrl ? <img src={card.imageUrl} className="ui image" /> : null}

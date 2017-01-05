@@ -66,7 +66,6 @@ declare namespace pxt {
 
         color?: string; // one of semantic ui colors
         description?: string;
-        promoUrl?: string;
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;
