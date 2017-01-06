@@ -7,6 +7,7 @@ namespace pxt.workspace {
         name: string;
         meta: pxt.Cloud.JsonScriptMeta;
         editor: string;
+        temporary?: boolean; // don't serialize project
         // older script might miss this
         target: string;
         pubId: string; // for published scripts

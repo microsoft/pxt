@@ -954,6 +954,7 @@ interface ProjectCreationOptions {
     name?: string;
     documentation?: string;
     filesOverride?: pxt.Map<string>;
+    temporary?: boolean;
 }
 
 
@@ -1639,9 +1640,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             editor: options.prj.id,
             pubId: "",
             pubCurrent: false,
-            target: pxt.appTarget.id
-        }, files)
-            .then(hd => this.loadHeaderAsync(hd))
+            target: pxt.appTarget.id,
+            temporary: options.temporary
+        }, files).then(hd => this.loadHeaderAsync(hd))
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
@@ -1939,7 +1940,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">",
                         "main.ts": "  "
                     },
-                    name: tutorialId
+                    name: tutorialId,
+                    temporary: true
                 });
             });
     }
@@ -1953,7 +1955,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     exitTutorialAsync() {
-        // deleting tutorial files
+        // tutorial project is temporary, no need to delete
         let curr = pkg.mainEditorPkg().header
         curr.isDeleted = true
         return workspace.saveAsync(curr, {})
