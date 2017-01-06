@@ -312,7 +312,7 @@ namespace pxt.runner {
                                 $(loading).hide();
                                 $(content).show();
                             });
-                    break;
+                        break;
                 }
                 break;
             case "localtoken":
@@ -401,7 +401,7 @@ ${files["main.ts"]}
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(docid, editorLocale, pxt.Util.localizeLive)
-            .then(md => renderMarkdownAsync(content, md, docid))
+            .then(md => renderMarkdownAsync(content, md, { path: docid }))
     }
 
     const template = `
@@ -474,7 +474,13 @@ ${files["main.ts"]}
 @breadcrumb@
 @body@`;
 
-    export function renderMarkdownAsync(content: HTMLElement, md: string, path?: string): Promise<void> {
+    export interface RenderMarkdownOptions {
+        path?: string;
+        tutorial?: boolean;
+    }
+
+    export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
+        const path = options.path;
         const parts = (path || '').split('/');
         const bc = !path ? null : parts.map((e, i) => {
             return {
@@ -501,6 +507,7 @@ ${files["main.ts"]}
             snippetReplaceParent: true,
             simulator: true,
             hex: true,
+            tutorial: !!options.tutorial,
             showJavaScript: languageMode == LanguageMode.TypeScript,
             hexName: pxt.appTarget.id
         }).then(() => {
@@ -533,7 +540,7 @@ ${files["main.ts"]}
                     code += match[2] + "\n";
                 }
                 // Render current step
-                return renderMarkdownAsync(content, steps[step])
+                return renderMarkdownAsync(content, steps[step], { tutorial: true })
                     .then(() => {
                         if (code == '') return;
                         // Convert all blocks to blocks
@@ -542,25 +549,25 @@ ${files["main.ts"]}
                             layout: pxt.blocks.BlockLayout.Flow,
                             package: undefined
                         }).then((r) => {
-                                let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
-                                let toolboxSubset: { [index: string]: number } = {};
-                                if (blocksxml) {
-                                    let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
-                                    let allblocks = headless.getAllBlocks();
-                                    for (let bi = 0; bi < allblocks.length; ++bi) {
-                                        let blk = allblocks[bi];
-                                        toolboxSubset[blk.type] = 1;
-                                    }
+                            let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
+                            let toolboxSubset: { [index: string]: number } = {};
+                            if (blocksxml) {
+                                let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
+                                let allblocks = headless.getAllBlocks();
+                                for (let bi = 0; bi < allblocks.length; ++bi) {
+                                    let blk = allblocks[bi];
+                                    toolboxSubset[blk.type] = 1;
                                 }
-                                if (toolboxSubset != {}) {
-                                        window.parent.postMessage(<pxsim.TutorialStepLoadedMessage>{
-                                            type: "tutorial",
-                                            tutorial: tutorialid,
-                                            subtype: "steploaded",
-                                            data: toolboxSubset,
-                                            location: "bottom"
-                                    }, "*");
-                                }
+                            }
+                            if (toolboxSubset != {}) {
+                                window.parent.postMessage(<pxsim.TutorialStepLoadedMessage>{
+                                    type: "tutorial",
+                                    tutorial: tutorialid,
+                                    subtype: "steploaded",
+                                    data: toolboxSubset,
+                                    location: "bottom"
+                                }, "*");
+                            }
                         })
                     });
             })

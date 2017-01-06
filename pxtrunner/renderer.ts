@@ -12,6 +12,7 @@ namespace pxt.runner {
         linksClass?: string;
         namespacesClass?: string;
         codeCardClass?: string;
+        tutorial?: boolean;
         snippetReplaceParent?: boolean;
         simulator?: boolean;
         hex?: boolean;
@@ -187,6 +188,16 @@ namespace pxt.runner {
     }
 
     function renderSnippetsAsync(options: ClientRenderOptions): Promise<void> {
+        if (options.tutorial) {
+            // don't render chrome for tutorials
+            return renderNextSnippetAsync(options.snippetClass, (c, r) => {
+                const s = r.blocksSvg;
+                if (options.snippetReplaceParent) c = c.parent();
+                const segment = $('<div class="ui segment"/>').append(s);
+                c.replaceWith(segment);
+            }, { package: options.package, snippetMode: false });
+        }
+
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
