@@ -343,7 +343,7 @@ ${pkg}
         const writeApi = (ns: SymbolInfo, si: SymbolInfo, call: string) => {
             if (!options.docs || !si.qName) return;
             let api =
-                `# ${si.name.replace(/[A-Z]/g, function(m) { return ' ' + m; })}
+                `# ${si.name.replace(/[A-Z]/g, function (m) { return ' ' + m; })}
 
 ${si.attributes.jsDoc.split(/\n\./)[0]}
 
@@ -774,17 +774,21 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
+            const blockInfo = blocksInfoOp(); // cache
+
             // TODO: override this function with fuse to change scoring
             const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
-                const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
-                    + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
-                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0;
+                const nsInfo = blockInfo.apis.byQName[fn.namespace];
+                const score =
+                    (fn.name.indexOf(searchFor) > -1 ? 5 : 0)
+                    + (fn.namespace.indexOf(searchFor) > -1 ? 1 : 0)
+                    + ((fn.attributes.block || "").indexOf(searchFor) > -1 ? 10 : 0);
 
-                // TODO: weight by namespace weight
-                return score * (fn.attributes.weight || 50)
+                const weight = (nsInfo ? (nsInfo.attributes.weight || 50) : 50) * 100 + (fn.attributes.weight || 50);
+
+                return score * weight;
             }
 
-            const blockInfo = blocksInfoOp(); // cache
             const fns = blockInfo.blocks
                 .sort((l, r) => - scorer(l, search) + scorer(r, search))
                 .slice(0, SEARCH_RESULT_COUNT);
