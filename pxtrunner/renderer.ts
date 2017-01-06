@@ -278,6 +278,14 @@ namespace pxt.runner {
             if (i >= $els.length) return Promise.resolve();
             const $el = $($els[i++]);
             const text = $el.text();
+            const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
+            if (mbtn) {
+                const lev = mbtn[1].length == 1 ? "primary" : "";
+                const txt = mbtn[2];
+                $el.replaceWith($(`<button class="ui button ${lev}"/>`).text(U.rlf(txt)));
+                return renderNextAsync();
+            }
+
             const m = /^\[([^\]]+)\]$/.exec(text);
             if (!m) return renderNextAsync();
 
