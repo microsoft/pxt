@@ -1,3 +1,5 @@
+/// <reference path="../../typings/globals/fusejs/index.d.ts" />
+
 namespace ts.pxtc {
     export interface ParameterDesc {
         name: string;
@@ -667,6 +669,7 @@ namespace ts.pxtc.service {
     let host: Host;
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
+    let lastFuse: Fuse;
 
     export interface OpArg {
         fileName?: string;
@@ -768,6 +771,7 @@ namespace ts.pxtc.service {
 
         apiInfo: () => {
             lastBlocksInfo = undefined;
+            lastFuse = undefined;
             return lastApiInfo = getApiInfo(service.getProgram());
         },
         blocksInfo: blocksInfoOp,
@@ -776,31 +780,27 @@ namespace ts.pxtc.service {
             const search = v.search;
             const blockInfo = blocksInfoOp(); // cache
 
-            // TODO: override this function with fuse to change scoring
-            const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
-                const fnw = fn.attributes.weight || 50;
-                if (fnw < 0) return 0;
-
-                const score =
-                    (fn.name.indexOf(searchFor) > -1 ? 5 : 0)
-                    + (fn.namespace.indexOf(searchFor) > -1 ? 3 : 0)
-                    + ((fn.attributes.block || "").indexOf(searchFor) > -1 ? 10 : 0)
-                    + (fn.attributes.jsDoc.indexOf(searchFor) > -1 ? 1 : 0);
-
-                const nsInfo = blockInfo.apis.byQName[fn.namespace];
-                const nsw = nsInfo ? (nsInfo.attributes.weight || 50) : 50;
-                const ad = (nsInfo ? nsInfo.attributes.advanced : false) || fn.attributes.advanced
-                const weight = (nsw * 1000 + fnw) * (ad ? 1 : 1e6);
-
-                return score * weight;
+            if (!lastFuse) {
+                const blockInfo = blocksInfoOp(); // cache
+                const fuseOptions = {
+                    shouldSort: true,
+                    threshold: 0.6,
+                    location: 0,
+                    distance: 100,
+                    maxPatternLength: 32,
+                    minMatchCharLength: 1,
+                    keys: [
+                        { name: 'name', weight: 0.5 },
+                        { name: 'namespace', weight: 0.3 },
+                        { name: 'attributes.weight', weight: 0.2 },
+                        { name: 'attributes.block', weight: 0.7 },
+                        { name: 'attributes.jsDoc', weight: 0.1 }
+                    ]
+                };
+                lastFuse = new Fuse(blockInfo.blocks, fuseOptions);
             }
-            const scores: pxt.Map<number> = {};
-            blockInfo.blocks.forEach(b => scores[b.qName] = scorer(b, search));
-
-            const fns = blockInfo.blocks
-                .filter(b => scores[b.qName] > 0)
-                .sort((l, r) => - scores[l.qName] + scores[r.qName])
-                .slice(0, SEARCH_RESULT_COUNT);
+            const fns = lastFuse.search(search)
+                .slice(0, SEARCH_RESULT_COUNT)
             return fns;
         }
     }
