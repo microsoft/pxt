@@ -778,19 +778,28 @@ namespace ts.pxtc.service {
 
             // TODO: override this function with fuse to change scoring
             const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
-                const nsInfo = blockInfo.apis.byQName[fn.namespace];
+                const fnw = fn.attributes.weight || 50;
+                if (fnw < 0) return 0;
+
                 const score =
                     (fn.name.indexOf(searchFor) > -1 ? 5 : 0)
-                    + (fn.namespace.indexOf(searchFor) > -1 ? 1 : 0)
-                    + ((fn.attributes.block || "").indexOf(searchFor) > -1 ? 10 : 0);
+                    + (fn.namespace.indexOf(searchFor) > -1 ? 3 : 0)
+                    + ((fn.attributes.block || "").indexOf(searchFor) > -1 ? 10 : 0)
+                    + (fn.attributes.jsDoc.indexOf(searchFor) > -1 ? 1 : 0);
 
-                const weight = (nsInfo ? (nsInfo.attributes.weight || 50) : 50) * 100 + (fn.attributes.weight || 50);
+                const nsInfo = blockInfo.apis.byQName[fn.namespace];
+                const nsw = nsInfo ? (nsInfo.attributes.weight || 50) : 50;
+                const ad = (nsInfo ? nsInfo.attributes.advanced : false) || fn.attributes.advanced
+                const weight = (nsw * 1000 + fnw) * (ad ? 1 : 1e6);
 
                 return score * weight;
             }
+            const scores: pxt.Map<number> = {};
+            blockInfo.blocks.forEach(b => scores[b.qName] = scorer(b, search));
 
             const fns = blockInfo.blocks
-                .sort((l, r) => - scorer(l, search) + scorer(r, search))
+                .filter(b => scores[b.qName] > 0)
+                .sort((l, r) => - scores[l.qName] + scores[r.qName])
                 .slice(0, SEARCH_RESULT_COUNT);
             return fns;
         }
