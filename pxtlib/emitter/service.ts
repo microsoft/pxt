@@ -343,7 +343,7 @@ ${pkg}
         const writeApi = (ns: SymbolInfo, si: SymbolInfo, call: string) => {
             if (!options.docs || !si.qName) return;
             let api =
-                `# ${si.name.replace(/[A-Z]/g, function(m) { return ' ' + m; })}
+                `# ${si.name.replace(/[A-Z]/g, function (m) { return ' ' + m; })}
 
 ${si.attributes.jsDoc.split(/\n\./)[0]}
 
@@ -774,19 +774,32 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
+            const blockInfo = blocksInfoOp(); // cache
+
             // TODO: override this function with fuse to change scoring
             const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
-                const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
-                    + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
-                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0;
+                const fnw = fn.attributes.weight || 50;
+                if (fnw < 0) return 0;
 
-                // TODO: weight by namespace weight
-                return score * (fn.attributes.weight || 50)
+                const score =
+                    (fn.name.indexOf(searchFor) > -1 ? 5 : 0)
+                    + (fn.namespace.indexOf(searchFor) > -1 ? 3 : 0)
+                    + ((fn.attributes.block || "").indexOf(searchFor) > -1 ? 10 : 0)
+                    + (fn.attributes.jsDoc.indexOf(searchFor) > -1 ? 1 : 0);
+
+                const nsInfo = blockInfo.apis.byQName[fn.namespace];
+                const nsw = nsInfo ? (nsInfo.attributes.weight || 50) : 50;
+                const ad = (nsInfo ? nsInfo.attributes.advanced : false) || fn.attributes.advanced
+                const weight = (nsw * 1000 + fnw) * (ad ? 1 : 1e6);
+
+                return score * weight;
             }
+            const scores: pxt.Map<number> = {};
+            blockInfo.blocks.forEach(b => scores[b.qName] = scorer(b, search));
 
-            const blockInfo = blocksInfoOp(); // cache
             const fns = blockInfo.blocks
-                .sort((l, r) => - scorer(l, search) + scorer(r, search))
+                .filter(b => scores[b.qName] > 0)
+                .sort((l, r) => - scores[l.qName] + scores[r.qName])
                 .slice(0, SEARCH_RESULT_COUNT);
             return fns;
         }
