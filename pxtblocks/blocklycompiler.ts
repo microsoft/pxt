@@ -269,10 +269,10 @@ namespace pxt.blocks {
     }
 
     // Ground types.
-    function mkPoint(t: string, x?:string): Point {
-        return new Point(null, t, x);
+    function mkPoint(t: string): Point {
+        return new Point(null, t);
     }
-    const pNumber = mkPoint("number", "x");
+    const pNumber = mkPoint("number");
     const pBoolean = mkPoint("boolean");
     const pString = mkPoint("string");
     const pUnit = mkPoint("void");
