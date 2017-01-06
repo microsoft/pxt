@@ -88,6 +88,8 @@ function fetchTextRevAsync(e: HeaderWithScript) {
 }
 
 function saveCoreAsync(h: Header, text?: ScriptText) {
+    if (h.temporary) return Promise.resolve();
+
     let e = lookup(h.id)
 
     U.assert(e.header === h)
