@@ -82,38 +82,6 @@ code:before, code:after {
     content: "\00a0";
 }
 
-
-.avatar {
-    position: relative;
-}
-
-#root .avatar .message {
-    margin-left: 4em;
-    margin-bottom: 1em;                    
-}
-
-.avatar .avatar-image {
-    position: absolute;
-    left: 0;
-    top: 1em;
-    width: 3em;
-    height: 3em;
-    background-image: url(https://az851932.vo.msecnd.net/pub/nbduqpku/logo-solid.svg);
-}
-
-.avatar .message:after {
-    top: 1.1em;
-    left: -1em;
-    bottom: auto;
-    border-width: 0px 1em 0.7em 0;
-    border-color: rgba(0, 0, 0, 0) #EEE;
-    content: '';
-    position: absolute;
-    border-style: solid;
-    display: block;
-    width: 0;
-}
-
 .ui[class*="5:3"].embed {
     padding-bottom: 83%;
     background:transparent !important;
