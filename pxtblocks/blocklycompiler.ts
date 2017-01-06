@@ -256,14 +256,14 @@ namespace pxt.blocks {
     }
 
     function union(p1: Point, p2: Point) {
-        p1 = find(p1);
-        p2 = find(p2);
-        assert(p1.link == null && p2.link == null);
-        if (p1 == p2)
+        let _p1 = find(p1);
+        let _p2 = find(p2);
+        assert(_p1.link == null && _p2.link == null);
+        if (_p1 == _p2)
             return;
 
-        let t = unify(p1.type, p2.type);
-        p1.link = p2;
+        let t = unify(_p1.type, _p2.type);
+        p1.link = _p2;
         p1.type = null;
         p2.type = t;
     }
@@ -272,10 +272,10 @@ namespace pxt.blocks {
     function mkPoint(t: string): Point {
         return new Point(null, t);
     }
-    let pNumber = mkPoint("number");
-    let pBoolean = mkPoint("boolean");
-    let pString = mkPoint("string");
-    let pUnit = mkPoint("void");
+    const pNumber = mkPoint("number");
+    const pBoolean = mkPoint("boolean");
+    const pString = mkPoint("string");
+    const pUnit = mkPoint("void");
 
     function ground(t?: string): Point {
         if (!t) return mkPoint(t);
@@ -368,7 +368,7 @@ namespace pxt.blocks {
     }
 
     function infer(e: Environment, w: B.Workspace) {
-        w.getAllBlocks().forEach((b: B.Block) => {
+        w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -1212,7 +1212,7 @@ namespace pxt.blocks {
         }
 
         // collect local variables.
-        w.getAllBlocks().forEach(b => {
+        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 trackLocalDeclaration(x, pNumber.type);
@@ -1229,7 +1229,7 @@ namespace pxt.blocks {
 
         // determine for-loop compatibility: for each get or
         // set block, 1) make sure that the variable is bound, then 2) mark the variable if needed.
-        w.getAllBlocks().forEach(b => {
+        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "variables_get" || b.type == "variables_set" || b.type == "variables_change") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (lookup(e, x) == null)
