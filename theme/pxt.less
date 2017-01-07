@@ -474,7 +474,7 @@ div.simframe > iframe {
 /* Blockly toolbox icons */
 .blocklyTreeIcon {
     opacity: 1;
-    margin: -0.25em 0.25em 0.0em 0.25em;
+    margin: -0.2em 0.25em 0.0em 0.25em;
     width: 1.18em;
     font-family: 'Icons';
     font-style: normal;
@@ -643,7 +643,7 @@ div.simframe > iframe {
     }
     /* Blockly */
     .blocklyTreeRow {
-        width: 230px;
+        min-width: 200px;
     }
     /* Toolbox buttons */
     #blocklyToolboxButtons, #monacoToolboxButtons {
@@ -656,7 +656,7 @@ div.simframe > iframe {
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     /* Blockly row */
     .blocklyTreeRow {
-        width: 230px;
+        min-width: 200px;
     }
     /* Blockly Toolbox buttons */
     #blocklyToolboxButtons, #monacoToolboxButtons {
@@ -669,8 +669,8 @@ div.simframe > iframe {
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     /* Blockly */
     .blocklyTreeRow {
-        padding-top: 0.75rem !important;
-        padding-bottom: 2rem !important;
+        padding-top: 0.25rem !important;
+        padding-bottom: 1.5rem !important;
         border-left-width: 12px !important;
     }
     .blocklyTreeRoot div div div div .blocklyTreeRow {
@@ -731,8 +731,8 @@ div.simframe > iframe {
 @media only screen and (min-width: @computerBreakpoint) {
     /* Blockly */
     .blocklyTreeRow {
-        padding-top: 0.9rem !important;
-        padding-bottom: 2.3rem !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 2.0rem !important;
         border-left-width: 12px !important;
     }
     .blocklyTreeRoot div div div div .blocklyTreeRow {
@@ -881,6 +881,14 @@ div.simframe > iframe {
         right: auto;
         left:1rem;
     }
+    /* Blockly toolbox */
+    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
+        z-index:10;
+        position:fixed;
+        top: 0;
+        height: 100% !important;
+        bottom:0;
+    }
 }
 
 /* Mobile */
@@ -899,6 +907,9 @@ div.simframe > iframe {
     }
     .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
         font-size: 0.75rem !important;
+    }
+    #blocklyTrashIcon {
+        font-size: 3rem;
     }
     /* Organization */
     .organization {
