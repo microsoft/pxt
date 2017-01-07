@@ -33,11 +33,13 @@
    Breakpoints
 --------------------*/
 
+/*
 @mobileBreakpoint            : unit( (63 * @emSize), px);
 @tabletBreakpoint            : unit( (79 * @emSize), px);
 @computerBreakpoint          : unit( (91 * @emSize), px);
 @largeMonitorBreakpoint      : unit( (99 * @emSize), px);
 @widescreenMonitorBreakpoint : unit( (119 * @emSize), px);
+*/
 
 @tallEditorBreakpoint: 44rem;
 
@@ -52,8 +54,8 @@
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
 
-@mainMenuHeight: 4.4rem;
-@mobileMenuHeight: 4.4rem;
+@mainMenuHeight: 5.0rem;
+@mobileMenuHeight: 3.5rem;
 
 @mainMenuBlocksJsToggleColor: @primaryColor;
 
@@ -72,6 +74,7 @@
 --------------------*/
 
 @simulatorBackground: #fff;
+@editorToolsBackground: @simulatorBackground;
 @blocklySvgColor: #fff;
 
 /*-------------------

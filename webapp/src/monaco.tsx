@@ -144,6 +144,10 @@ export class Editor extends srceditor.Editor {
         this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
     }
 
+    redo() {
+        this.editor.trigger('keyboard', monaco.editor.Handler.Redo, null)
+    }
+
     display() {
         return (
             <div className='full-abs' id="monacoEditorArea">
@@ -679,10 +683,6 @@ export class Editor extends srceditor.Editor {
             (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                 (() => {
                     this.parent.addPackage();
-                }) : null),
-            (!this.parent.getSandboxMode() ?
-                (() => {
-                    this.undo();
                 }) : null)
         );
     }

@@ -773,7 +773,7 @@ namespace pxt.blocks {
         $('.blocklyToolboxDiv').prepend(blocklySearchArea);
     }
 
-    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: Event) => void, undoCallback: (ev?: Event) => void): void {
+    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: Event) => void): void {
         if (!$(`#${id}`).length) {
             let blocklyToolboxButtons = document.createElement('div');
             blocklyToolboxButtons.id = id;
@@ -796,25 +796,6 @@ namespace pxt.blocks {
                 addPackageButton.appendChild(addpackageIcon);
                 addButtonDiv.appendChild(addPackageButton);
                 blocklyToolboxButtons.appendChild(addButtonDiv);
-            }
-
-            if (undoCallback) {
-                // add "undo" button to toolbox
-                let undoButtonDiv = document.createElement('div');
-                undoButtonDiv.className = 'column';
-                let undoButton = document.createElement('button');
-                undoButton.setAttribute('role', 'button');
-                undoButton.setAttribute('aria-label', lf("Undo"));
-                undoButton.setAttribute('title', lf("Undo"));
-                pxt.BrowserUtils.isTouchEnabled() ?
-                    undoButton.ontouchstart = undoCallback
-                    : undoButton.onclick = undoCallback;
-                undoButton.className = 'ui icon button small blocklyToolboxButton blocklyUndoButton';
-                let undoIcon = document.createElement('i');
-                undoIcon.className = 'undo icon';
-                undoButton.appendChild(undoIcon);
-                undoButtonDiv.appendChild(undoButton);
-                blocklyToolboxButtons.appendChild(undoButtonDiv);
             }
 
             toolbox.appendChild(blocklyToolboxButtons);

@@ -190,8 +190,12 @@ svg.ui.trend.black polyline {
 .sandboxfooter {
     position:absolute;
     bottom:1rem;
-    left:1rem;
+    right:1rem;
     z-index:5;
+}
+.rtl .sandboxfooter{
+    right: auto;
+    left:1rem;
 }
 
 .grayscale {

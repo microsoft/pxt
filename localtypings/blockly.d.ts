@@ -291,8 +291,9 @@ declare namespace Blockly {
         getCanvas(): any;
         getParentSvg(): Element;
         zoom(x: number, y: number, type: number): void;
+        zoomCenter(type: number): void;
         highlightBlock(id: string): void;
-        undo(): void;
+        undo(redo?: boolean): void;
         redo(): void;
         clearUndo(): void;
         isDragging(): boolean;
