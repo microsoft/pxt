@@ -780,27 +780,49 @@ namespace ts.pxtc.service {
             const search = v.search;
             const blockInfo = blocksInfoOp(); // cache
 
+            const fnweight = (fn: ts.pxtc.SymbolInfo): number => {
+                const fnw = fn.attributes.weight || 50;
+                const nsInfo = blockInfo.apis.byQName[fn.namespace];
+                const nsw = nsInfo ? (nsInfo.attributes.weight || 50) : 50;
+                const ad = (nsInfo ? nsInfo.attributes.advanced : false) || fn.attributes.advanced
+                const weight = (nsw * 1000 + fnw) * (ad ? 1 : 1e6);
+                return weight;
+            }
+
             if (!lastFuse) {
-                const blockInfo = blocksInfoOp(); // cache
+                const blockInfo = blocksInfoOp(); // cache  
+                const weights: pxt.Map<number> = {};
+                let mw = 0;
+                blockInfo.blocks.forEach(b => {
+                    const w = weights[b.qName] = fnweight(b);
+                    mw = Math.max(mw, w);
+                });
                 const fuseOptions = {
                     shouldSort: true,
                     threshold: 0.6,
                     location: 0,
                     distance: 100,
-                    maxPatternLength: 32,
-                    minMatchCharLength: 1,
+                    maxPatternLength: 16,
+                    minMatchCharLength: 2,
+                    findAllMatches: false,
+                    caseSensitive: false,
                     keys: [
                         { name: 'name', weight: 0.5 },
                         { name: 'namespace', weight: 0.3 },
-                        { name: 'attributes.weight', weight: 0.2 },
                         { name: 'attributes.block', weight: 0.7 },
                         { name: 'attributes.jsDoc', weight: 0.1 }
-                    ]
+                    ],
+                    sortFn: function (a: any, b: any): number {
+                        const wa = weights[a.item.qName] / mw;
+                        const wb = weights[b.item.qName] / mw;
+                        // allow 10% wiggle room for weights
+                        return a.score * (1 + wa / 10) - b.score * (1 + wb / 10);
+                    }
                 };
                 lastFuse = new Fuse(blockInfo.blocks, fuseOptions);
             }
             const fns = lastFuse.search(search)
-                .slice(0, SEARCH_RESULT_COUNT)
+                .slice(0, SEARCH_RESULT_COUNT);
             return fns;
         }
     }
