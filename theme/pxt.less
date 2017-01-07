@@ -131,6 +131,65 @@
     left:1.25rem;
 }
 
+/* Tutorial Mode */
+.tutorial-menuitem > .selected {
+    background-color: @tutorialSelectedMenuColor !important;
+    padding: 1.3rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+}
+
+#tutorialcard {
+    position: absolute;
+    z-index:9;
+    min-width: 320px;
+}
+#tutorialcard.top {
+    /* top right */
+    top: 1rem;
+    right: 1rem;
+}
+.rtl #tutorialcard.top {
+    /* bottom left */
+    right: auto;
+    left: 1rem;
+}
+#tutorialcard.bottom {
+    /* bottom right */
+    bottom: 1rem;
+    right: 1rem;
+}
+.rtl #tutorialcard.bottom {
+    /* bottom left */
+    right: auto;
+    left: 1rem;
+}
+
+#tutorialcard .ui.card {
+    padding: 2px;
+}
+
+#tutorialcontent {
+    display: block;
+    width: 100%;
+    overflow:hidden;
+    border:none;
+    height: 100%;
+}
+
+body#docs.tutorial {
+    overflow-y: hidden;
+}
+#docs.tutorial .ui.segment {
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+}
+#docs.tutorial #content{
+    margin-bottom: 0.5rem !important;
+}
+
 /* Cookie Message */
 #cookiemsg {
    position: absolute;
@@ -182,7 +241,7 @@ div.simframe > iframe {
 
 /* Menu */ 
 .ui.menu .item.editor-menuitem {
-    background: @primaryColor !important;
+    background: @mainMenuBlocksJsToggleColor !important;
     margin: 0.5rem;
     padding: 0.7rem;
     border-radius: 0.5rem;
@@ -213,6 +272,7 @@ div.simframe > iframe {
     bottom: 2.2rem;
     margin: 0;
     z-index: 5;
+    font-size:0.8rem;
 }
 .rtl #helpcard {
     left:7rem;
@@ -245,6 +305,18 @@ div.simframe > iframe {
     max-width: 10em;
     max-height: 3em;
     vertical-align: middle;
+}
+
+/* code card */
+
+.ui.card .image pre {
+    margin-left:0.5rem;
+    margin-right:0.5rem;
+    color: #000;
+    font-size:0.7rem;
+    white-space: pre-wrap;
+    max-height: 10rem;
+    overflow-y: hidden;
 }
 
 /* Scrollbars */
@@ -280,9 +352,16 @@ div.simframe > iframe {
              Blockly
 *******************************/
 
+.blocklyTooltipDiv {
+    border:none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
+
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;
-    z-index: 10;
+    z-index: 1;
 }
 
 .blocklySvg {
@@ -354,6 +433,57 @@ div.simframe > iframe {
 .blocklySearchInputField {
     border: 0 !important;
     border-radius: 0 !important;
+}
+
+/* Blockly toolbox icons */
+.blocklyTreeIcon {
+    opacity: 1;
+    margin: 0em 0.25rem 0em 0em;
+    width: 1.18em;
+    font-family: 'Icons';
+    font-style: normal;
+    font-weight: normal;
+    text-decoration: inherit;
+    text-align: center;
+    speak: none;
+    font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    backface-visibility: hidden;
+    font-size: 1.2rem;
+}
+.blocklyTreeSelected .blocklyTreeIcon{
+    color: white;
+}
+.blocklyTreeIcon.blocklyTreeIconsearch::before {
+    content: "\f002";
+}
+.blocklyTreeIcon.blocklyTreeIconDefault::before {
+    content: "\f12e";
+}
+.blocklyTreeIcon.blocklyTreeIconadvanced::before {
+    content: "\f141";
+}
+.blocklyTreeIcon.blocklyTreeIconmore::before {
+    content: "\f141";
+}
+.blocklyTreeIcon.blocklyTreeIconloops::before {
+    content: "\f01e";
+}
+.blocklyTreeIcon.blocklyTreeIconmath::before {
+    content: "\f1ec";
+}
+.blocklyTreeIcon.blocklyTreeIconlogic::before {
+    content: "\f074";
+}
+.blocklyTreeIcon.blocklyTreeIconvariables::before {
+    content: "\f039";
+}
+.blocklyTreeIcon.blocklyTreeIcontext::before {
+    content: "\f035";
+}
+.blocklyTreeIcon.blocklyTreeIconlists::before {
+    content: "\f0cb";
 }
 
 /*******************************
@@ -478,8 +608,8 @@ div.simframe > iframe {
     .blocklyTreeRow {
         width: 230px;
     }
-    /* Blockly Toolbox buttons */
-    #blocklyToolboxButtons {
+    /* Toolbox buttons */
+    #blocklyToolboxButtons, #monacoToolboxButtons {
         margin-right: 2rem;
         margin-left: 2rem;
     }
@@ -524,23 +654,35 @@ div.simframe > iframe {
     #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
         padding: 0.3rem 0 0.3rem 0 !important;
     }
-    /* Hide the getting started button in the mobile view */
     #getting-started-btn {
-        display: none !important;
+        top: @mobileMenuHeight;
     }
     /* Menu spacing */
     .ui.menu .item {
         padding: 0.4em !important;
     }
     .ui.menu .item.editor-menuitem {
-        margin-top: (@mobileMenuHeight/6) !important;
-        margin-bottom: (@mobileMenuHeight/6) !important;
+        margin-top: ((@mobileMenuHeight - 2.5rem)/2) !important;
+        margin-bottom: ((@mobileMenuHeight - 2.5rem)/2) !important;
     }
     /* Logo */
     .ui.item.logo img {
         max-height: 2.5rem;
         margin-left: 0.5rem;
         margin-right: 0.5rem;
+    }
+    /* Hide the blockly toolbox labels */
+    .blocklyTreeLabel {
+        display: none !important;
+    }
+    .blocklyTreeIcon {
+        font-size: 1.5rem;
+    }
+    .blocklyTreeRow {
+        height: 2rem;
+    }
+    .blocklyToolboxDiv, .monacoToolboxDiv{
+        width: 50px;
     }
 }
 

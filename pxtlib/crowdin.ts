@@ -29,6 +29,7 @@ namespace pxt.crowdin {
             if (!info) throw new Error("info failed")
 
             const todo = info.languages;
+            pxt.log('languages: ' + todo.map(l => l.code).join(', '));
             const nextFile = (): Promise<void> => {
                 const item = todo.pop();
                 if (!item) return Promise.resolve();
@@ -38,7 +39,7 @@ namespace pxt.crowdin {
                     export_translated_only: options.translatedOnly ? "1" : "0",
                     export_approved_only: options.validatedOnly ? "1" : "0"
                 });
-                pxt.log(`downloading ${item.name} (${todo.length} more)`)
+                pxt.log(`downloading ${item.name} - ${item.code} (${todo.length} more)`)
                 return Util.httpGetTextAsync(exportFileUri).then((transationsText) => {
                     try {
                         const translations = JSON.parse(transationsText) as Map<string>;

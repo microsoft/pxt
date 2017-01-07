@@ -93,7 +93,7 @@ function platformioUploadAsync(r: pxtc.CompileResult) {
     let buildEngine = buildEngines['platformio']
     let prevHex = fs.readFileSync(pioFirmwareHex())
     fs.writeFileSync(pioFirmwareHex(), r.outfiles[pxtc.BINARY_HEX])
-    return runPlatformioAsync(["run", "--target", "upload", "-v"])
+    return runPlatformioAsync(["run", "--target", "upload", "--target", "nobuild", "-v"])
         .finally(() => {
             console.log('Restoring ' + pioFirmwareHex())
             fs.writeFileSync(pioFirmwareHex(), prevHex)

@@ -8,6 +8,7 @@
     "react-dom": "github:DefinitelyTyped/DefinitelyTyped/react/react-dom.d.ts#717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf",
     "marked": "github:DefinitelyTyped/DefinitelyTyped/marked/marked.d.ts#418e6719c3d9444629dea0d27bebf9cfda9c6c45",
     "highlightjs": "github:DefinitelyTyped/DefinitelyTyped/highlightjs/highlightjs.d.ts#7de6c3dd94feaeb21f20054b9f30d5dabc5efabd",
-    "winrt": "github:DefinitelyTyped/DefinitelyTyped/winrt/winrt.d.ts#ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
+    "winrt": "github:DefinitelyTyped/DefinitelyTyped/winrt/winrt.d.ts#ec9eb4b28c74665a602c22db3457f0a76fa0fa23",
+    "fusejs": "github:DefinitelyTyped/DefinitelyTyped/fuse/index.d.ts#daf9bd392f4c8469ddc8849ee198bbdd1e57c7f4"
   }
 }

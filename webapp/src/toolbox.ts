@@ -1,5 +1,5 @@
 export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
-        <category name="Loops" nameid="loops" colour="120" category="50">
+        <category name="Loops" nameid="loops" colour="120" category="50" iconclass="blocklyTreeIconloops">
             <block type="controls_repeat_ext">
                 <value name="TIMES">
                     <shadow type="math_number">
@@ -20,7 +20,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </value>
             </block>
         </category>
-        <category name="Logic" nameid="logic" colour="210" category="49">
+        <category name="Logic" nameid="logic" colour="210" category="49" iconclass="blocklyTreeIconlogic">
             <block type="controls_if" gap="8">
                 <value name="IF0">
                     <shadow type="logic_boolean">
@@ -71,9 +71,9 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 <field name="BOOL">FALSE</field>
             </block>
         </category>
-        <category name="Variables" nameid="variables" colour="330" custom="VARIABLE" category="48">
+        <category name="Variables" nameid="variables" colour="330" custom="VARIABLE" category="48" iconclass="blocklyTreeIconvariables">
         </category>
-        <category name="Math" nameid="math" colour="230" category="47">
+        <category name="Math" nameid="math" colour="230" category="47" iconclass="blocklyTreeIconmath" expandedclass="blocklyTreeIconmath">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
                     <shadow type="math_number">
@@ -135,7 +135,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
-            <category colour="230" name="More\u2026" nameid="more\u2026">
+            <category colour="230" name="More" nameid="more" iconclass="blocklyTreeIconmore" expandedclass="blocklyTreeIconmore">
                 <block type="math_modulo">
                     <value name="DIVIDEND">
                         <shadow type="math_number">
@@ -182,7 +182,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </block>
             </category>
         </category>
-        <category colour="160" name="Text" nameid="text" category="46">
+        <category colour="160" name="Text" nameid="text" category="46" iconclass="blocklyTreeIcontext">
             <block type="text"></block>
             <block type="text_length">
                 <value name="VALUE">
@@ -192,7 +192,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </value>
             </block>
         </category>
-        <category colour="260" name="Lists" nameid="lists" category="45">
+        <category colour="260" name="Lists" nameid="lists" category="45" iconclass="blocklyTreeIconlists">
             <block type="lists_create_with">
                 <mutation items="1"></mutation>
                 <value name="ADD0">

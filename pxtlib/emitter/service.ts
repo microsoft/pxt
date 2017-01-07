@@ -1,3 +1,5 @@
+/// <reference path="../../typings/globals/fusejs/index.d.ts" />
+
 namespace ts.pxtc {
     export interface ParameterDesc {
         name: string;
@@ -313,10 +315,11 @@ namespace ts.pxtc {
         const calls: pxt.Map<string> = {};
         infos.filter(si => !!si.qName).forEach(si => calls[si.qName] = renderCall(apiInfo, si));
 
-        let locStrings: pxt.Map<string> = {};
-        let jsdocStrings: pxt.Map<string> = {};
-        let helpPages: pxt.Map<string> = {};
+        const locStrings: pxt.Map<string> = {};
+        const jsdocStrings: pxt.Map<string> = {};
+        const helpPages: pxt.Map<string> = {};
         let reference = ""
+        const nameToFilename = (n: string) => n.replace(/([A-Z])/g, function (m) { return '-' + m.toLowerCase(); });
         const writeRef = (s: string) => reference += s + "\n"
         const writeLoc = (si: SymbolInfo) => {
             if (!options.locs || !si.qName) {
@@ -335,9 +338,41 @@ namespace ts.pxtc {
                     jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
                 })
         }
+        const sipkg = pkg && pkg != "core" ? `\`\`\`package
+${pkg}
+\`\`\`
+` : '';
+        const writeApi = (ns: SymbolInfo, si: SymbolInfo, call: string) => {
+            if (!options.docs || !si.qName) return;
+            let api =
+                `# ${si.name.replace(/[A-Z]/g, function (m) { return ' ' + m; })}
+
+${si.attributes.jsDoc.split(/\n\./)[0]}
+
+\`\`\`sig
+${call}
+\`\`\`
+
+## Parameters
+${(si.parameters || []).map(p => `
+* **${p.name}**: [${p.type}](/reference/blocks/${p.type}), ${p.description}`)}
+
+## Example
+
+\`\`\`blocks
+${call}
+\`\`\`
+
+## See Also
+
+${ns.namespace ? `[${ns.namespace}](/reference/${nameToFilename(ns.namespace)})` : ``}
+${sipkg}
+`;
+            files[`reference/${nameToFilename(ns.name)}/${nameToFilename(si.name)}.md`] = api;
+        }
         const mapLocs = (m: pxt.Map<string>, name: string) => {
             if (!options.locs) return;
-            let locs: pxt.Map<string> = {};
+            const locs: pxt.Map<string> = {};
             Object.keys(m).sort().forEach(l => locs[l] = m[l]);
             files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
         }
@@ -360,8 +395,8 @@ namespace ts.pxtc {
         writeRef('')
         writeRef('```namespaces')
         for (const ns of namespaces) {
-            let nsHelpPages: pxt.Map<string> = {};
-            let syms = infos
+            const nsHelpPages: pxt.Map<string> = {};
+            const syms = infos
                 .filter(si => si.namespace == ns.name && !!si.attributes.jsDoc)
                 .sort(compareSymbol)
             if (!syms.length) continue;
@@ -371,7 +406,7 @@ namespace ts.pxtc {
             helpPages[ns.name] = ns.name.replace(`\s+`, `-`);
 
             let nsmd = "";
-            let writeNs = (s: string) => {
+            const writeNs = (s: string) => {
                 nsmd += s + "\n"
             }
 
@@ -392,12 +427,14 @@ namespace ts.pxtc {
                 if (i == 0)
                     writeRef(call);
                 writeNs(call)
+                if (!si.attributes.help)
+                    writeApi(ns, si, call)
             })
             writeNs('```')
             writePackage(writeNs);
             writeHelpPages(nsHelpPages, writeNs);
             if (options.docs)
-                files["reference/" + ns.name + '.md'] = nsmd;
+                files["reference/" + nameToFilename(ns.name) + '.md'] = nsmd;
         }
         if (options.locs)
             enumMembers.forEach(em => {
@@ -632,6 +669,7 @@ namespace ts.pxtc.service {
     let host: Host;
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
+    let lastFuse: Fuse;
 
     export interface OpArg {
         fileName?: string;
@@ -733,25 +771,57 @@ namespace ts.pxtc.service {
 
         apiInfo: () => {
             lastBlocksInfo = undefined;
+            lastFuse = undefined;
             return lastApiInfo = getApiInfo(service.getProgram());
         },
         blocksInfo: blocksInfoOp,
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            // TODO: override this function with fuse to change scoring
-            const scorer = (fn: pxtc.SymbolInfo, searchFor: string): number => {
-                const score = fn.name.indexOf(searchFor) > -1 ? 500 : 0
-                    + fn.namespace.indexOf(searchFor) > -1 ? 100 : 0
-                        + (fn.attributes.block || "").indexOf(searchFor) > -1 ? 600 : 0;
+            const blockInfo = blocksInfoOp(); // cache
 
-                // TODO: weight by namespace weight
-                return score * (fn.attributes.weight || 50)
+            const fnweight = (fn: ts.pxtc.SymbolInfo): number => {
+                const fnw = fn.attributes.weight || 50;
+                const nsInfo = blockInfo.apis.byQName[fn.namespace];
+                const nsw = nsInfo ? (nsInfo.attributes.weight || 50) : 50;
+                const ad = (nsInfo ? nsInfo.attributes.advanced : false) || fn.attributes.advanced
+                const weight = (nsw * 1000 + fnw) * (ad ? 1 : 1e6);
+                return weight;
             }
 
-            const blockInfo = blocksInfoOp(); // cache
-            const fns = blockInfo.blocks
-                .sort((l, r) => - scorer(l, search) + scorer(r, search))
+            if (!lastFuse) {
+                const blockInfo = blocksInfoOp(); // cache  
+                const weights: pxt.Map<number> = {};
+                let mw = 0;
+                blockInfo.blocks.forEach(b => {
+                    const w = weights[b.qName] = fnweight(b);
+                    mw = Math.max(mw, w);
+                });
+                const fuseOptions = {
+                    shouldSort: true,
+                    threshold: 0.6,
+                    location: 0,
+                    distance: 100,
+                    maxPatternLength: 16,
+                    minMatchCharLength: 2,
+                    findAllMatches: false,
+                    caseSensitive: false,
+                    keys: [
+                        { name: 'name', weight: 0.5 },
+                        { name: 'namespace', weight: 0.3 },
+                        { name: 'attributes.block', weight: 0.7 },
+                        { name: 'attributes.jsDoc', weight: 0.1 }
+                    ],
+                    sortFn: function (a: any, b: any): number {
+                        const wa = 1 - weights[a.item.qName] / mw;
+                        const wb = 1 - weights[b.item.qName] / mw;
+                        // allow 10% wiggle room for weights
+                        return a.score * (1 + wa / 10) - b.score * (1 + wb / 10);
+                    }
+                };
+                lastFuse = new Fuse(blockInfo.blocks, fuseOptions);
+            }
+            const fns = lastFuse.search(search)
                 .slice(0, SEARCH_RESULT_COUNT);
             return fns;
         }

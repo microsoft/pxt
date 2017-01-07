@@ -128,6 +128,8 @@ function getTextAsync(id: string): Promise<ScriptText> {
 }
 
 function saveCoreAsync(h: Header, text?: ScriptText) {
+    if (h.temporary) return Promise.resolve();
+
     let e = lookup(h.id)
 
     U.assert(e.header === h)
@@ -177,7 +179,7 @@ function saveAsync(h: Header, text: ScriptText) {
 }
 
 function installAsync(h0: InstallHeader, text: ScriptText) {
-    let h = <Header>h0
+    const h = <Header>h0
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (lookup(path)) {
         let n = 2
@@ -190,7 +192,7 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
     h.target = currentTarget;
-    let e: HeaderWithScript = {
+    const e: HeaderWithScript = {
         id: h.id,
         header: h,
         text: text,
@@ -222,6 +224,7 @@ function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
 function resetAsync() {
     return db.destroyAsync()
         .then(() => {
+            allScripts = [];
             pxt.storage.clearLocal();
             data.clearCache();
         })

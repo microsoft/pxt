@@ -15,14 +15,20 @@ let lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
+    currFile: pkg.File;
     delayLoadXml: string;
     loadingXml: boolean;
+    loadingXmlPromise: Promise<any>;
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
+    blockSubset: { [index: string]: number };
+    showToolboxCategories: boolean = true;
+    showToolboxButtons: boolean = true;
+    cachedToolbox: string;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -58,24 +64,33 @@ export class Editor extends srceditor.Editor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loading);
 
-            let promise = compiler.getBlocksAsync()
+            this.loadingXmlPromise = compiler.getBlocksAsync()
                 .finally(() => { this.loadingXml = false })
                 .then(bi => {
                     this.blockInfo = bi;
-                    let tb = pxt.blocks.initBlocks(this.blockInfo, this.editor, defaultToolbox.documentElement)
-                    pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
-                        (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
-                            (() => {
-                                this.parent.addPackage();
-                            }) : null),
-                        (!this.parent.getSandboxMode() ?
-                            (() => {
-                                this.undo();
-                            }) : null)
-                    );
-                    pxt.blocks.initSearch(this.editor, tb,
-                        searchFor => compiler.apiSearchAsync(searchFor)
-                            .then((fns: pxtc.SymbolInfo[]) => fns));
+                    let showCategories = this.showToolboxCategories;
+                    let showToolboxButtons = this.showToolboxButtons;
+                    let showSearch = true;
+                    let toolbox = this.getDefaultToolbox(showCategories);
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.blockSubset);
+                    this.updateToolbox(tb, showCategories, showToolboxButtons);
+                    if (showCategories && showToolboxButtons) {
+                        pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
+                            (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
+                                (() => {
+                                    this.parent.addPackage();
+                                }) : null),
+                            (!this.parent.getSandboxMode() ?
+                                (() => {
+                                    this.undo();
+                                }) : null)
+                        );
+                    }
+                    if (showCategories && showSearch) {
+                        pxt.blocks.initSearch(this.editor, tb,
+                            searchFor => compiler.apiSearchAsync(searchFor)
+                                .then((fns: pxtc.SymbolInfo[]) => fns));
+                    }
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -89,10 +104,11 @@ export class Editor extends srceditor.Editor {
                 });
 
             if (this.isFirstBlocklyLoad) {
-                core.showLoadingAsync(lf("loading..."), promise).done();
+                core.showLoadingAsync(lf("loading..."), this.loadingXmlPromise).done();
             } else {
-                promise.done();
+                this.loadingXmlPromise.done();
             }
+            this.loadingXmlPromise = null;
         }
     }
 
@@ -119,13 +135,14 @@ export class Editor extends srceditor.Editor {
 
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(s || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`, this.blockInfo, true);
+            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
+            this.ensureOnStart();
         } catch (e) {
             pxt.log(e);
         }
@@ -239,41 +256,6 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    updateHelpCard(clear?: boolean) {
-        let selected = Blockly.selected;
-        let selectedType = selected ? selected.type : null;
-        if (selectedType != this.currentHelpCardType || clear) {
-            if (selected && selected.inputList && selected.codeCard && !clear) {
-                this.currentHelpCardType = selectedType;
-                //Unfortunately Blockly doesn't provide an API for getting all of the fields of a blocks
-                let props: any = {};
-                for (let i = 0; i < selected.inputList.length; i++) {
-                    let input = selected.inputList[i];
-                    for (let j = 0; j < input.fieldRow.length; j++) {
-                        let field = input.fieldRow[j];
-                        if (field.name != undefined && field.value_ != undefined) {
-                            props[field.name] = field.value_;
-                        }
-                    }
-                }
-
-                let card: pxt.CodeCard = selected.codeCard;
-                card.description = goog.isFunction(selected.tooltip) ? selected.tooltip() : selected.tooltip;
-                if (!selected.mutation) {
-                    card.blocksXml = this.updateFields(card.blocksXml, props);
-                }
-                else {
-                    card.blocksXml = this.updateFields(card.blocksXml, undefined, selected.mutation.mutationToDom());
-                }
-                this.parent.setHelpCard(card);
-            }
-            else {
-                this.currentHelpCardType = null;
-                this.parent.setHelpCard(null);
-            }
-        }
-    }
-
     contentSize(): { height: number; width: number } {
         if (this.editor) {
             return pxt.blocks.blocksMetrics(this.editor);
@@ -343,28 +325,22 @@ export class Editor extends srceditor.Editor {
         return this.editor ? this.editor.isDragging() : false;
     }
 
+    ensureOnStart() {
+        this.editor.getTopBlocks(false)
+            .filter(b => b.type == ts.pxtc.ON_START_TYPE)
+            .forEach(b => b.setDeletable(!!b.disabled));
+    }
+
     prepare() {
+        this.prepareBlockly();
+
+        this.isReady = true
+    }
+
+    prepareBlockly(showCategories: boolean = true) {
         let blocklyDiv = document.getElementById('blocksEditor');
-        let toolboxDiv = document.getElementById('blocklyToolboxDefinition');
-        let blocklyOptions: Blockly.Options = {
-            toolbox: toolboxDiv,
-            scrollbars: true,
-            media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
-            sound: true,
-            trashcan: false,
-            collapse: false,
-            comments: true,
-            disable: false,
-            zoom: {
-                enabled: true,
-                controls: true,
-                /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
-                maxScale: 2.5,
-                minScale: .2,
-                scaleSpeed: 1.05
-            },
-            rtl: Util.userLanguageRtl()
-        };
+        blocklyDiv.innerHTML = '';
+        let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
@@ -374,9 +350,13 @@ export class Editor extends srceditor.Editor {
                 this.changeCallback();
             }
             if (ev.type == 'create') {
-                let lastCategory = (this.editor as any).toolbox_.lastCategory_ ? (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim() : 'unknown';
+                let lastCategory = (this.editor as any).toolbox_ ?
+                                    ((this.editor as any).toolbox_.lastCategory_ ?
+                                    (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
+                                    : 'unknown')
+                                    : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickEvent("blocks.create", {category: lastCategory, block: blockId});
+                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
@@ -384,7 +364,6 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    this.updateHelpCard(ev.newValue != null);
                 }
                 else if (ev.element == 'commentOpen'
                     || ev.element == 'warningOpen') {
@@ -407,12 +386,9 @@ export class Editor extends srceditor.Editor {
                     }
                 }
                 else if (ev.element == 'selected') {
-                    this.updateHelpCard();
-
                     if (this.currentCommentOrWarning) {
                         this.currentCommentOrWarning.setVisible(false)
                     }
-
                     const selected = Blockly.selected
                     if (selected && selected.warning && typeof (selected.warning) !== "string") {
                         (selected.warning as Blockly.Icon).setVisible(true)
@@ -426,8 +402,6 @@ export class Editor extends srceditor.Editor {
         })
         this.initPrompts();
         this.resize();
-
-        this.isReady = true
     }
 
     resize(e?: Event) {
@@ -475,6 +449,11 @@ export class Editor extends srceditor.Editor {
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
+
+        if (this.currFile && this.currFile != file) {
+            this.filterToolbox(null);
+        }
+        this.currFile = file;
     }
 
     setDiagnostics(file: pkg.File) {
@@ -518,5 +497,73 @@ export class Editor extends srceditor.Editor {
     cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
+    }
+
+    getBlocklyOptions(showCategories: boolean = true) {
+        let toolbox = showCategories ?
+                document.getElementById('blocklyToolboxDefinitionCategory')
+                : document.getElementById('blocklyToolboxDefinitionFlyout');
+        let zoomEnabled = showCategories;
+        let controlsEnabled = showCategories;
+        let blocklyOptions: Blockly.Options = {
+            toolbox: toolbox,
+            scrollbars: true,
+            media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
+            sound: true,
+            trashcan: false,
+            collapse: false,
+            comments: true,
+            disable: false,
+            zoom: {
+                enabled: zoomEnabled,
+                controls: controlsEnabled,
+                /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
+                maxScale: 2.5,
+                minScale: .2,
+                scaleSpeed: 1.05
+            },
+            rtl: Util.userLanguageRtl()
+        };
+        return blocklyOptions;
+    }
+
+    getDefaultToolbox(showCategories: boolean = true): HTMLElement {
+        return showCategories ?
+            defaultToolbox.documentElement
+            : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
+    }
+
+    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {
+        this.blockSubset = blockSubset;
+        this.showToolboxCategories = showCategories;
+        this.showToolboxButtons = showToolboxButtons;
+        let toolbox = this.getDefaultToolbox(showCategories);
+        if (!this.blockInfo) return;
+        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, showCategories, blockSubset);
+        this.updateToolbox(tb, showCategories, showToolboxButtons);
+
+        pxt.blocks.cachedSearchTb = tb;
+        return tb;
+    }
+
+    updateToolbox(tb: Element, showCategories: boolean = true, showToolboxButtons: boolean = true) {
+        pxt.debug('updating toolbox');
+        if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
+            // Toolbox is consistent with current mode, safe to update
+            if (tb.innerHTML == this.cachedToolbox) return;
+            this.cachedToolbox = tb.innerHTML;
+            this.editor.updateToolbox(tb);
+        } else {
+            // Toolbox mode is different, need to refresh.
+            this.editor = undefined;
+            this.delayLoadXml = this.currFile.content;
+            this.loadingXml = false;
+            if (this.loadingXmlPromise) {
+                this.loadingXmlPromise.cancel();
+                this.loadingXmlPromise = null;
+            }
+            this.prepareBlockly(showCategories);
+            this.domUpdate();
+        }
     }
 }
