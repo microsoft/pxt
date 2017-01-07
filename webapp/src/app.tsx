@@ -301,48 +301,40 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         return (
             <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
+                {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
+                    <div className="ui vertial segment">
+                        <sui.Button
+                            icon="file outline"
+                            text={lf("New") }
+                            title={lf("Creates a new empty project") }
+                            onClick={() => newProject() } />
+                        <sui.Button
+                            icon="save"
+                            text={lf("Save") }
+                            title={lf("Saves current project to a.hex file") }
+                            onClick={() => saveProject() } />
+                        <sui.Button
+                            icon="options"
+                            text={lf("Rename...") }
+                            title={lf("Rename the current project") }
+                            onClick={() => renameProject() } />
+                    </div> : undefined}
+                <div className="ui vertial segment">
                 {this.state.search ? <div className="ui search">
                     <div className="ui fluid action input" role="search">
+                        {pxt.appTarget.compile ?
+                            <sui.Button
+                                icon="upload"
+                                text={lf("Import") }
+                                title={lf("Open .hex files on your computer") }
+                                onClick={() => importHex() } /> : undefined}
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
-                        <button title={lf("Search") } className="ui right primary labeled icon button" onClick={upd}>
+                        <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                             <i className="search icon"></i>
-                            {lf("Search") }
                         </button>
                     </div>
                 </div> : undefined }
                 <div className="ui cards">
-                    {pxt.appTarget.compile && !this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
-                        <codecard.CodeCardView
-                            color="pink"
-                            key="importhex"
-                            name={lf("Import from file...") }
-                            description={lf("Open .hex files on your computer") }
-                            onClick={() => importHex() }
-                            /> : undefined}
-                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
-                        <codecard.CodeCardView
-                            color="pink"
-                            key="newproject"
-                            name={lf("New Project...") }
-                            description={lf("Creates a new empty project") }
-                            onClick={() => newProject() }
-                            /> : undefined}
-                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
-                        <codecard.CodeCardView
-                            color="pink"
-                            key="saveproject"
-                            name={lf("Save Project...") }
-                            description={lf("Saves current project to a.hex file") }
-                            onClick={() => saveProject() }
-                            /> : undefined}
-                    {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
-                        <codecard.CodeCardView
-                            color="pink"
-                            key="renameproject"
-                            name={lf("Rename Project...") }
-                            description={lf("Rename the current project") }
-                            onClick={() => renameProject() }
-                            /> : undefined}
                     {bundles.map(scr =>
                         <codecard.CodeCardView
                             key={'bundled' + scr.name}
@@ -415,6 +407,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                         </div>
                     </div>
                     : undefined }
+                </div>
             </sui.Modal >
         );
     }
@@ -637,7 +630,7 @@ class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
 
     openTutorialStep(step: number) {
         pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorial, step: step });
-        this.props.parent.setState({tutorialStep: step, tutorialReady: false})
+        this.props.parent.setState({ tutorialStep: step, tutorialReady: false })
         this.props.parent.setTutorialStep(step);
     }
 
@@ -650,15 +643,15 @@ class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
         const tutorialName = state.tutorialName;
 
         return <div className="ui item">
-                    <div className="ui item">
-                        {tutorialName}
-                    </div>
-                    <div className="ui item tutorial-menuitem">
-                        {tutorialSteps.map((step, index) =>
-                            <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index)}/>
-                        ) }
-                    </div>
-                </div>;
+            <div className="ui item">
+                {tutorialName}
+            </div>
+            <div className="ui item tutorial-menuitem">
+                {tutorialSteps.map((step, index) =>
+                    <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index) }/>
+                ) }
+            </div>
+        </div>;
     }
 }
 
@@ -705,7 +698,7 @@ class TutorialContent extends data.Component<ISettingsProps, {}> {
         const docsUrl = state.tutorialUrl;
         if (!docsUrl) return null;
 
-        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh()} src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
+        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh() } src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
     }
 }
 
@@ -719,7 +712,7 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const previousStep = currentStep - 1;
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: this.props.parent.state.tutorial, step: previousStep });
-        this.props.parent.setState({tutorialStep: previousStep, tutorialReady: false})
+        this.props.parent.setState({ tutorialStep: previousStep, tutorialReady: false })
         this.props.parent.setTutorialStep(previousStep);
     }
 
@@ -728,7 +721,7 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const nextStep = currentStep + 1;
 
         pxt.tickEvent(`tutorial.next`, { tutorial: this.props.parent.state.tutorial, step: nextStep });
-        this.props.parent.setState({tutorialStep: nextStep, tutorialReady: false})
+        this.props.parent.setState({ tutorialStep: nextStep, tutorialReady: false })
         this.props.parent.setTutorialStep(nextStep);
     }
 
@@ -753,28 +746,28 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const hasFinish = currentStep == maxSteps - 1;
 
         return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} ${tutorialReady ? 'visible active' : 'hidden'}`}>
-                    <div className="ui raised fluid card">
-                        <div className="ui">
-                            <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
-                        </div>
-                        <div className="extra content">
-                            <div className="ui two buttons">
-                                {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep()}>
-                                    <i className="left chevron icon"></i>
-                                    Previous
-                                </button> : undefined }
-                                {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep()}>
-                                    Next
-                                    <i className="right chevron icon"></i>
-                                </button> : undefined }
-                                {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial()}>
-                                    <i className="left checkmark icon"></i>
-                                    Finish
-                                </button> : undefined }
-                            </div>
-                        </div>
+            <div className="ui raised fluid card">
+                <div className="ui">
+                    <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
+                </div>
+                <div className="extra content">
+                    <div className="ui two buttons">
+                        {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep() }>
+                            <i className="left chevron icon"></i>
+                            Previous
+                        </button> : undefined }
+                        {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep() }>
+                            Next
+                            <i className="right chevron icon"></i>
+                        </button> : undefined }
+                        {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial() }>
+                            <i className="left checkmark icon"></i>
+                            Finish
+                        </button> : undefined }
                     </div>
-                </div> ;
+                </div>
+            </div>
+        </div>;
     }
 }
 
@@ -1300,7 +1293,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
                         this.editor.filterToolbox(tt.data, showCategories, false);
-                        this.setState({tutorialReady: true, tutorialCardLocation: tt.location});
+                        this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
                         TutorialContent.refresh();
                         core.hideLoading();
                         break;
@@ -1931,7 +1924,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 }
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
-                this.setState({tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result})
+                this.setState({ tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result })
                 let tc = this.refs["tutorialcard"] as TutorialCard;
                 tc.setPath(tutorialId);
             }).then(() => {
@@ -1966,7 +1959,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     this.newProject();
                 }
             }).finally(() => {
-                this.setState({ tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1});
+                this.setState({ tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
             });
     }
 
