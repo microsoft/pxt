@@ -187,17 +187,6 @@ svg.ui.trend.black polyline {
     stroke:#000;
 }
 
-.sandboxfooter {
-    position:absolute;
-    bottom:1rem;
-    right:1rem;
-    z-index:5;
-}
-.rtl .sandboxfooter{
-    right: auto;
-    left:1rem;
-}
-
 .grayscale {
     -moz-filter: grayscale(1);
     -webkit-filter: grayscale(1);

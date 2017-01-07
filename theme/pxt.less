@@ -325,6 +325,18 @@ div.simframe > iframe {
     vertical-align: middle;
 }
 
+/* Sandbox */
+.sandboxfooter {
+    position:absolute;
+    bottom:1rem;
+    left:1rem;
+    z-index:5;
+}
+.rtl .sandboxfooter{
+    left: auto;
+    right:1rem;
+}
+
 /* code card */
 
 .ui.card .image pre {
@@ -859,6 +871,15 @@ div.simframe > iframe {
     }
     #getting-started-btn {
         top: @mobileMenuHeight;
+    }
+    /* Sandbox */
+    .sandboxfooter {
+        left: auto;
+        right:1rem;
+    }
+    .rtl .sandboxfooter{
+        right: auto;
+        left:1rem;
     }
 }
 
