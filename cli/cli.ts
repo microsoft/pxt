@@ -1,4 +1,4 @@
-/// <reference path="../typings/node/node.d.ts"/>
+/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
@@ -277,7 +277,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         case "download": {
             if (!args[1]) throw new Error("output path missing");
             const fn = path.basename(args[0]);
-            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0], { translatedOnly: true, validatedOnly: false })
+            return pxt.crowdin.downloadTranslationsAsync(prj, key, args[0], { translatedOnly: true, validatedOnly: true })
                 .then(r => {
                     Object.keys(r).forEach(k => {
                         const rtranslations = stringifyTranslations(r[k]);
@@ -2921,6 +2921,8 @@ interface BuildCoreOptions {
     // docs
     locs?: boolean;
     docs?: boolean;
+    fileFilter?: string;
+    createOnly?: boolean;
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOptions> {
@@ -2959,24 +2961,30 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
-                    let apiInfo = pxtc.getApiInfo(res.ast)
+                    const apiInfo = pxtc.getApiInfo(res.ast)
                     // keeps apis from this module only
-                    for (let infok in apiInfo.byQName) {
-                        let info = apiInfo.byQName[infok];
+                    for (const infok in apiInfo.byQName) {
+                        const info = apiInfo.byQName[infok];
                         if (info.pkg &&
                             info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                     }
-                    let md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, {
+                    const md = pxtc.genMarkdown(mainPkg.config.name, apiInfo, {
                         package: mainPkg.config.name != pxt.appTarget.corepkg,
                         locs: buildOpts.locs,
                         docs: buildOpts.docs
                     })
+                    if (buildOpts.fileFilter) {
+                        const filterRx = new RegExp(buildOpts.fileFilter, "i");
+                        Object.keys(md).filter(fn => !filterRx.test(fn)).forEach(fn => delete md[fn]);
+                    }
                     mainPkg.host().writeFile(mainPkg, "built/apiinfo.json", JSON.stringify(apiInfo, null, 1))
-                    for (let fn in md) {
-                        let folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
-                        let ffn = folder + fn;
-                        mainPkg.host().writeFile(mainPkg, ffn, md[fn])
-                        console.log(`generated ${ffn}; size=${md[fn].length}`)
+                    for (const fn in md) {
+                        const folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
+                        const ffn = path.join(folder, fn);
+                        if (!buildOpts.createOnly || !fs.existsSync(ffn)) {
+                            mainPkg.host().writeFile(mainPkg, ffn, md[fn])
+                            console.log(`generated ${ffn}; size=${md[fn].length}`)
+                        }
                     }
                     return null
                 case BuildOption.Deploy:
@@ -3153,14 +3161,21 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
-    return buildTargetDocsAsync(!!parsed.flags["docs"], !!parsed.flags["locs"]);
+    return buildTargetDocsAsync(
+        !!parsed.flags["docs"],
+        !!parsed.flags["locs"],
+        parsed.flags["files"] as string,
+        !!parsed.flags["create"]
+        );
 }
 
-export function buildTargetDocsAsync(docs: boolean, locs: boolean): Promise<void> {
+export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {
     const build = () => buildCoreAsync({
         mode: BuildOption.GenDocs,
         docs,
-        locs
+        locs,
+        fileFilter,
+        createOnly
     }).then((compileOpts) => { });
     // from target location?
     if (fs.existsSync("pxtarget.json"))
@@ -3722,6 +3737,8 @@ function initCommands() {
         flags: {
             docs: { description: "produce docs files" },
             loc: { description: "produce localization files" },
+            files: { description: "file name filter (regex)", type: "string", argument: "files" },
+            create: { description: "only write new files" }
         },
         advanced: true
     }, gendocsAsync);

@@ -33,36 +33,58 @@
    Breakpoints
 --------------------*/
 
-@mobileEditorBreakpoint            : 63rem;
-@tabletEditorBreakpoint            : 79rem;
-@computerEditorBreakpoint          : 91rem;
-@largeMonitorEditorBreakpoint      : 99rem;
-@widescreenMonitorEditorBreakpoint : 119rem;
+@mobileBreakpoint            : unit( (63 * @emSize), px);
+@tabletBreakpoint            : unit( (79 * @emSize), px);
+@computerBreakpoint          : unit( (91 * @emSize), px);
+@largeMonitorBreakpoint      : unit( (99 * @emSize), px);
+@widescreenMonitorBreakpoint : unit( (119 * @emSize), px);
 
 @tallEditorBreakpoint: 44rem;
-
-/* Responsive */
-@largestMobileEditorBreakpoint       : (@tabletEditorBreakpoint - 1px);
-@largestTabletEditorBreakpoint       : (@computerEditorBreakpoint - 1px);
-@largestSmallMonitorEditorBreakpoint :(@largeMonitorEditorBreakpoint - 1px);
-@largestLargeMonitorEditorBreakpoint : (@widescreenMonitorBreakpoint - 1px);
 
 /*******************************
      PXT Variables
 *******************************/
 
-@mainMenuHeight: 3.6rem;
+/*-------------------
+   Menu
+--------------------*/
+
+@mainMenuInvertedBackground: @black;
+@mainMenuTutorialBackground: @orange;
+
+@mainMenuHeight: 4.4rem;
 @mobileMenuHeight: 4.4rem;
+
+@mainMenuBlocksJsToggleColor: @primaryColor;
+
+@tutorialSelectedMenuColor: @primaryColor;
+
+/*-------------------
+   Layout
+--------------------*/
+
+@sideBarWidth: 20rem;
+@simulatorWidth: 23rem;
+@simulatorWidthSmall: 20rem;
+
+/*-------------------
+   Background
+--------------------*/
+
+@simulatorBackground: #fff;
+@blocklySvgColor: #fff;
+
+/*-------------------
+   Side Docs
+--------------------*/
 
 @sidedocsButtonsTop: (@mainMenuHeight + 1rem);
 @sidedocsButtonsRight: 4.25rem;
 
-@sideBarWidth: 22rem;
-@simulatorWidth: 27rem;
-@simulatorWidthSmall: 20rem;
-
-@simulatorBackground: #fff;
+/*-------------------
+   Editor
+--------------------*/
 
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
-@blocklySvgColor: #fff;
 @trashIconColor: @primaryColor;
+

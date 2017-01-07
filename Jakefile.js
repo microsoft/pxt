@@ -91,20 +91,14 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-file('built/blockly.d.ts', ['localtypings/blockly.d.ts'], function () { ju.cpR('localtypings/blockly.d.ts', 'built/blockly.d.ts') })
-file('built/monaco.d.ts', ['localtypings/monaco.d.ts'], function () { ju.cpR('localtypings/monaco.d.ts', 'built/monaco.d.ts') })
-file('built/pxtparts.d.ts', ['localtypings/pxtparts.d.ts'], function () { ju.cpR('localtypings/pxtparts.d.ts', 'built/pxtparts.d.ts') })
-file('built/pxtarget.d.ts', ['built/blockly.d.ts', 'built/pxtpackage.d.ts', 'built/pxtparts.d.ts', 'localtypings/pxtarget.d.ts'], function () { ju.cpR('localtypings/pxtarget.d.ts', 'built/pxtarget.d.ts') })
-file('built/pxtpackage.d.ts', ['localtypings/pxtpackage.d.ts'], function () { ju.cpR('localtypings/pxtpackage.d.ts', 'built/pxtpackage.d.ts') })
-
-compileDir("pxtlib", ["built/pxtarget.d.ts", "built/pxtparts.d.ts", "built/pxtpackage.d.ts", "built/typescriptServices.d.ts"])
+compileDir("pxtlib", ["built/typescriptServices.d.ts"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
-compileDir("pxtblocks", ["built/pxtlib.js", "built/blockly.d.ts"])
+compileDir("pxtblocks", ["built/pxtlib.js"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
-compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js", "built/monaco.d.ts"])
+compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
-compileDir("backendutils", ["built/pxtarget.d.ts", 'pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
+compileDir("backendutils", ['pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
 
 task("travis", ["lint", "test", "upload"])
 
@@ -247,6 +241,7 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
+    jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")

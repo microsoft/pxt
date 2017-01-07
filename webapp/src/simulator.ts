@@ -1,5 +1,5 @@
 /// <reference path="../../built/pxtsim.d.ts" />
-/// <reference path="../../built/pxtparts.d.ts" />
+/// <reference path="../../localtypings/pxtparts.d.ts" />
 
 import * as core from "./core";
 import U = pxt.U

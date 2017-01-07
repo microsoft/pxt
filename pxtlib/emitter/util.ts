@@ -1,4 +1,4 @@
-/// <reference path="../../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../../typings/globals/bluebird/index.d.ts"/>
 
 namespace ts.pxtc {
     export var __dummy = 42;
@@ -347,6 +347,13 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function unicodeToChar(text: string) {
+        let r = /\\u([\d\w]{4})/gi;
+        return text.replace(r, function (match, grp) {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
+    }
+
     export function escapeForRegex(str: string) {
         return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     }
@@ -567,7 +574,7 @@ namespace ts.pxtc.Util {
 
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
-        if (!/^(es|pt|zh)/i.test(code))
+        if (!/^(es|pt|zh|sv|si)/i.test(code))
             code = code.split("-")[0]
 
         if (live) {

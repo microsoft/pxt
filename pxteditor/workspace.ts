@@ -1,4 +1,4 @@
-/// <reference path="../typings/bluebird/bluebird.d.ts"/>
+/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 
 namespace pxt.workspace {
@@ -7,6 +7,7 @@ namespace pxt.workspace {
         name: string;
         meta: pxt.Cloud.JsonScriptMeta;
         editor: string;
+        temporary?: boolean; // don't serialize project
         // older script might miss this
         target: string;
         pubId: string; // for published scripts

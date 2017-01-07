@@ -1,4 +1,4 @@
-/// <reference path="../typings/node/node.d.ts"/>
+/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
@@ -92,7 +92,7 @@ function platformioUploadAsync(r: pxtc.CompileResult) {
     let buildEngine = buildEngines['platformio']
     let prevHex = fs.readFileSync(pioFirmwareHex())
     fs.writeFileSync(pioFirmwareHex(), r.outfiles[pxtc.BINARY_HEX])
-    return runPlatformioAsync(["run", "--target", "upload", "-v"])
+    return runPlatformioAsync(["run", "--target", "upload", "--target", "nobuild", "-v"])
         .finally(() => {
             console.log('Restoring ' + pioFirmwareHex())
             fs.writeFileSync(pioFirmwareHex(), prevHex)

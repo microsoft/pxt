@@ -1,4 +1,4 @@
-/// <reference path="../../built/pxtpackage.d.ts"/>
+/// <reference path="../../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
@@ -57,10 +57,16 @@ interface IAppState {
     currFile?: pkg.File;
     fileState?: string;
     showFiles?: boolean;
-    helpCard?: pxt.CodeCard;
-    helpCardClick?: (e: React.MouseEvent) => boolean;
     sideDocsLoadUrl?: string; // set once to load the side docs frame
     sideDocsCollapsed?: boolean;
+
+    tutorial?: string; // tutorial
+    tutorialName?: string; // tutorial title
+    tutorialSteps?: string[]; // tutorial steps
+    tutorialStep?: number; // current tutorial page
+    tutorialReady?: boolean; // current tutorial page
+    tutorialUrl?: string; // current tutorial url
+    tutorialCardLocation?: string; // current card location
 
     running?: boolean;
     compiling?: boolean;
@@ -624,6 +630,154 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     }
 }
 
+class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    openTutorialStep(step: number) {
+        pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorial, step: step });
+        this.props.parent.setState({tutorialStep: step, tutorialReady: false})
+        this.props.parent.setTutorialStep(step);
+    }
+
+    render() {
+        const state = this.props.parent.state;
+        const tutorialReady = state.tutorialReady;
+        const targetTheme = pxt.appTarget.appTheme;
+        const tutorialSteps = state.tutorialSteps;
+        const currentStep = state.tutorialStep;
+        const tutorialName = state.tutorialName;
+
+        return <div className="ui item">
+                    <div className="ui item">
+                        {tutorialName}
+                    </div>
+                    <div className="ui item tutorial-menuitem">
+                        {tutorialSteps.map((step, index) =>
+                            <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index)}/>
+                        ) }
+                    </div>
+                </div>;
+    }
+}
+
+interface TutorialOptions {
+    tutorialId: string;
+    tutorialName: string;
+    showCategories?: boolean;
+}
+
+class TutorialContent extends data.Component<ISettingsProps, {}> {
+    public static notify(message: pxsim.SimulatorMessage) {
+        let tc = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (tc && tc.contentWindow) tc.contentWindow.postMessage(message, "*");
+    }
+
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    setPath(path: string) {
+        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
+        const mode = this.props.parent.editor == this.props.parent.blocksEditor
+            ? "blocks" : "js";
+        const url = `${docsUrl}#tutorial:${path}:${mode}:${pxt.Util.localeInfo()}`;
+        this.setUrl(url);
+    }
+
+    private setUrl(url: string) {
+        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (el) el.src = url;
+        else this.props.parent.setState({ tutorialUrl: url });
+    }
+
+    public static refresh() {
+        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (el && el.contentWindow) {
+            el.parentElement.style.height = "";
+            el.parentElement.style.height = el.contentWindow.document.body.scrollHeight + "px";
+        }
+    }
+
+    renderCore() {
+        const state = this.props.parent.state;
+        const docsUrl = state.tutorialUrl;
+        if (!docsUrl) return null;
+
+        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh()} src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
+    }
+}
+
+class TutorialCard extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    previousTutorialStep() {
+        const currentStep = this.props.parent.state.tutorialStep;
+        const previousStep = currentStep - 1;
+
+        pxt.tickEvent(`tutorial.previous`, { tutorial: this.props.parent.state.tutorial, step: previousStep });
+        this.props.parent.setState({tutorialStep: previousStep, tutorialReady: false})
+        this.props.parent.setTutorialStep(previousStep);
+    }
+
+    nextTutorialStep() {
+        const currentStep = this.props.parent.state.tutorialStep;
+        const nextStep = currentStep + 1;
+
+        pxt.tickEvent(`tutorial.next`, { tutorial: this.props.parent.state.tutorial, step: nextStep });
+        this.props.parent.setState({tutorialStep: nextStep, tutorialReady: false})
+        this.props.parent.setTutorialStep(nextStep);
+    }
+
+    finishTutorial() {
+        this.props.parent.exitTutorial();
+    }
+
+    setPath(path: string) {
+        let tc = this.refs["tutorialcontent"] as TutorialContent;
+        if (!tc) return;
+        tc.setPath(path);
+    }
+
+    render() {
+        const state = this.props.parent.state;
+        const tutorialReady = state.tutorialReady;
+        const currentStep = state.tutorialStep;
+        const cardLocation = state.tutorialCardLocation || 'bottom';
+        const maxSteps = state.tutorialSteps.length;
+        const hasPrevious = currentStep != 0;
+        const hasNext = currentStep != maxSteps - 1;
+        const hasFinish = currentStep == maxSteps - 1;
+
+        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} ${tutorialReady ? 'visible active' : 'hidden'}`}>
+                    <div className="ui raised fluid card">
+                        <div className="ui">
+                            <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
+                        </div>
+                        <div className="extra content">
+                            <div className="ui two buttons">
+                                {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep()}>
+                                    <i className="left chevron icon"></i>
+                                    Previous
+                                </button> : undefined }
+                                {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep()}>
+                                    Next
+                                    <i className="right chevron icon"></i>
+                                </button> : undefined }
+                                {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial()}>
+                                    <i className="left checkmark icon"></i>
+                                    Finish
+                                </button> : undefined }
+                            </div>
+                        </div>
+                    </div>
+                </div> ;
+    }
+}
+
 class SideDocs extends data.Component<ISettingsProps, {}> {
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
@@ -800,6 +954,7 @@ interface ProjectCreationOptions {
     name?: string;
     documentation?: string;
     filesOverride?: pxt.Map<string>;
+    temporary?: boolean;
 }
 
 
@@ -1047,7 +1202,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         this.setState({
             currFile: fn,
-            helpCard: undefined,
             showBlocks: false
         })
         //this.fireResize();
@@ -1121,6 +1275,40 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         else sd.collapse();
     }
 
+    setTutorialStep(step: number) {
+        // save and typecheck
+        this.typecheckNow();
+        // Notify tutorial content pane
+        let tc = this.refs["tutorialcard"] as TutorialCard;
+        if (!tc) return;
+        if (step > -1) {
+            TutorialContent.notify({
+                type: "tutorial",
+                tutorial: this.state.tutorial,
+                subtype: "stepchange",
+                step: step
+            } as pxsim.TutorialStepChangeMessage)
+        }
+    }
+
+    handleMessage(msg: pxsim.SimulatorMessage) {
+        switch (msg.type) {
+            case "tutorial":
+                let t = msg as pxsim.TutorialMessage;
+                switch (t.subtype) {
+                    case 'steploaded':
+                        let tt = msg as pxsim.TutorialStepLoadedMessage;
+                        let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
+                        this.editor.filterToolbox(tt.data, showCategories, false);
+                        this.setState({tutorialReady: true, tutorialCardLocation: tt.location});
+                        TutorialContent.refresh();
+                        core.hideLoading();
+                        break;
+                }
+                break;
+        }
+    }
+
     reloadHeaderAsync() {
         return this.loadHeaderAsync(this.state.header)
     }
@@ -1134,7 +1322,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         this.setState({
-            helpCard: undefined,
             showFiles: false
         })
         return pkg.loadPkgAsync(h.id)
@@ -1453,9 +1640,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             editor: options.prj.id,
             pubId: "",
             pubCurrent: false,
-            target: pxt.appTarget.id
-        }, files)
-            .then(hd => this.loadHeaderAsync(hd))
+            target: pxt.appTarget.id,
+            temporary: options.temporary
+        }, files).then(hd => this.loadHeaderAsync(hd))
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
@@ -1693,14 +1880,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             })
     }
 
-    setHelpCard(card: pxt.CodeCard, onClick?: (e: React.MouseEvent) => boolean) {
-        if (pxt.options.light) return; // avoid rendering blocks in low-end devices
-        this.setState({
-            helpCard: card,
-            helpCardClick: onClick
-        })
-    }
-
     about() {
         pxt.tickEvent("menu.about");
         core.confirmAsync({
@@ -1725,15 +1904,70 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
         Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        this.setSideDoc(targetTheme.sideDoc);
-        this.setState({ sideDocsCollapsed: false })
+        this.startTutorial(targetTheme.sideDoc);
     }
 
-    gettingStartedLink() {
-        pxt.tickEvent("btn.gettingstartedlink");
-        const targetTheme = pxt.appTarget.appTheme;
-        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        window.open(targetTheme.sideDoc)
+    startTutorial(tutorialId: string) {
+        pxt.tickEvent("tutorial.start");
+        core.showLoading(lf("starting tutorial..."));
+        this.startTutorialAsync(tutorialId)
+            .then(() => Promise.delay(500));
+    }
+
+    startTutorialAsync(tutorialId: string): Promise<void> {
+        let title = tutorialId;
+        let result: string[] = [];
+
+        return pxt.Cloud.downloadMarkdownAsync(tutorialId)
+            .then(md => {
+                let titleRegex = /^#(.*)/g.exec(md);
+                if (!titleRegex || titleRegex.length < 1) return;
+                title = titleRegex[1];
+
+                let steps = md.split('###');
+                for (let step = 1; step < steps.length; step++) {
+                    let stepmd = `###${steps[step]}`;
+                    result.push(stepmd);
+                }
+                //TODO: parse for tutorial options, mainly initial blocks
+            }).then(() => {
+                this.setState({tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result})
+                let tc = this.refs["tutorialcard"] as TutorialCard;
+                tc.setPath(tutorialId);
+            }).then(() => {
+                return this.createProjectAsync({
+                    filesOverride: {
+                        "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">",
+                        "main.ts": "  "
+                    },
+                    name: tutorialId,
+                    temporary: true
+                });
+            });
+    }
+
+    exitTutorial() {
+        pxt.tickEvent("tutorial.exit");
+        core.showLoading(lf("exiting tutorial..."));
+        this.exitTutorialAsync()
+            .then(() => Promise.delay(500))
+            .done(() => core.hideLoading());
+    }
+
+    exitTutorialAsync() {
+        // tutorial project is temporary, no need to delete
+        let curr = pkg.mainEditorPkg().header
+        curr.isDeleted = true
+        return workspace.saveAsync(curr, {})
+            .then(() => {
+                if (workspace.getHeaders().length > 0) {
+                    this.loadHeaderAsync(workspace.getHeaders()[0]);
+                } else {
+                    this.newProject();
+                }
+            }).finally(() => {
+                this.setState({ tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1});
+            });
     }
 
     getSandboxMode() {
@@ -1764,8 +1998,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const makeTooltip = lf("Open assembly instructions");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox;
-        const gettingStarted = !sandbox && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
+        const tutorial = this.state.tutorial;
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
+        const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const blockActive = this.editor == this.blocksEditor
@@ -1789,14 +2024,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
                             <span id="logo" className="ui item logo">
                                 {targetTheme.logo || targetTheme.portraitLogo
                                     ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
-                                    : <span>{targetTheme.name}</span>}
+                                    : <span className="name">{targetTheme.name}</span>}
                                 {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                             </span> }
                         <div className="ui item portrait only">
@@ -1810,11 +2045,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        {sandbox ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
-                        <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
+                        {sandbox || tutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
+                        {tutorial ? undefined : <sui.Item class="editor-menuitem">
+                            <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
+                            <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
+                        </sui.Item> }
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
-                        {sandbox ? undefined : <sui.DropdownMenuItem icon='setting' class="more-dropdown-menuitem">
+                        {sandbox || tutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -1838,29 +2075,33 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/>
                             <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span>
                         </div> : undefined }
+                        {tutorial ? <TutorialMenuItem parent={this} /> : undefined }
+                        {tutorial ? <div className="right menu">
+                            <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() }/>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                            <div className="ui item widedesktop only"></div>
+                        </div> : undefined }
                     </div>
                 </div>
-                {gettingStarted && sideDocs ?
+                {gettingStarted ?
                     <div id="getting-started-btn">
-                        <sui.Button class="bottom attached widedesktop only getting-started-btn green " title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
-                        <sui.Button class="bottom attached widedesktop hide getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
-                    </div>
-                    : undefined }
-                {gettingStarted && !sideDocs ?
-                    <div id="getting-started-btn">
-                        <sui.Button class="bottom attached getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStartedLink() } />
+                        <sui.Button class="bottom attached getting-started-btn green " title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined }
                 <div id="simulator">
                     <div id="filelist" className="ui items" role="complementary">
-                        <div id="boardview" className={`ui vertical editorFloat ${this.state.helpCard ? "landscape only " : ""}`}>
+                        <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item portrait hide">
                             {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : ""}
                             {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                             {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Run") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
                         </div>
-                        <div className="ui item portait hide">
+                        <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
                         </div>
@@ -1871,8 +2112,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                    {tutorial ? <TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
-                    {this.state.helpCard ? <div id="helpcard" className="ui editorFloat wide only"><codecard.CodeCardView responsive={true} onClick={this.state.helpCardClick} {...this.state.helpCard} target={pxt.appTarget.id} /></div> : null }
                 </div>
                 {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui widedesktop hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui widedesktop only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
@@ -1883,7 +2124,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                </div> : undefined}
+                </div> : undefined }
             </div>
         );
     }
@@ -2132,6 +2373,10 @@ function handleHash(hash: { cmd: string; arg: string }) {
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
             break;
+        case "tutorial":
+            pxt.tickEvent("hash.tutorial")
+            editor.startTutorial(hash.arg);
+            break;
         case "sandbox":
         case "pub":
         case "edit":
@@ -2175,7 +2420,7 @@ $(document).ready(() => {
 
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
-        window.location.hash = window.location.hash.replace(wsPortMatch[0], ""); 
+        window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
     } else {
         pxt.options.wsPort = 3233;
     }
@@ -2279,8 +2524,16 @@ $(document).ready(() => {
         if (!m) {
             return;
         }
+        if (m.type == "tutorial") {
+            if (theEditor && theEditor.editor)
+                theEditor.handleMessage(m);
+        }
         if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
             SideDocs.notify({
+                type: "localtoken",
+                localToken: Cloud.localToken
+            } as pxsim.SimulatorDocMessage);
+            TutorialContent.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);

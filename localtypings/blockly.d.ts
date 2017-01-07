@@ -13,6 +13,8 @@ declare namespace goog {
 
     namespace dom {
         function createDom(name: string, ns?: string, children?: any): HTMLElement;
+        function removeChildren(el: Element): void;
+        function getViewportSize(): any;
     }
 
     namespace math {
@@ -43,6 +45,10 @@ declare namespace Blockly {
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
     let ALIGN_RIGHT: number;
+
+    namespace utils {
+        function wrap(tip: string, limit: number): string;
+    }
 
     class FieldImage {
         constructor(url: string, width: number, height: number, def: string);
@@ -302,6 +308,7 @@ declare namespace Blockly {
             viewTop: number;
             viewWidth: number;
         }
+        variableIndexOf(name: string): number;
     }
 
     class WorkspaceSvg {
@@ -429,4 +436,6 @@ declare namespace Blockly {
             setSelectedItem(t: TreeNode): void;
         }
     }
+
+    var Tooltip: any;
 }

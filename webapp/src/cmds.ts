@@ -94,11 +94,11 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
         htmlBody: `        
 <div class="ui styled fluid accordion">
 ${instructions.map((step: UploadInstructionStep, i: number) =>
-            `<div class="title ${i == 0 ? "active" : ""}">
+            `<div class="title">
   <i class="dropdown icon"></i>
   ${step.title}
 </div>
-<div class="content ${i == 0 ? "active" : ""}">
+<div class="content">
     ${step.body ? step.body : ""}
     ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}" class="ui centered large image" />` : ""}
 </div>`).join('')}
