@@ -813,8 +813,8 @@ namespace ts.pxtc.service {
                         { name: 'attributes.jsDoc', weight: 0.1 }
                     ],
                     sortFn: function (a: any, b: any): number {
-                        const wa = weights[a.item.qName] / mw;
-                        const wb = weights[b.item.qName] / mw;
+                        const wa = 1 - weights[a.item.qName] / mw;
+                        const wb = 1 - weights[b.item.qName] / mw;
                         // allow 10% wiggle room for weights
                         return a.score * (1 + wa / 10) - b.score * (1 + wb / 10);
                     }
