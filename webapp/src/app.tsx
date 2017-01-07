@@ -882,7 +882,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                             <sui.Button icon='save' class="red large grey" title={lf("Save")} onClick={() => this.saveFile()} />
                                         </div>
                                         <div className="column">
-                                            <sui.Button icon='announcement' class="blue large grey" title={lf("Feedback")} onClick={() => this.sendFeedback()} />
+                                            <sui.Button icon='comment' class="blue large grey" title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
                                         </div>
                                     </div>
                                 </div>
@@ -918,7 +918,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 <sui.Button icon='zoom out' class="large grey" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
                             </div>
                             <div className="column two wide">
-                                <sui.Button icon='announcement' class="blue large grey" title={lf("Feedback")} onClick={() => this.sendFeedback()} />
+                                <sui.Button icon='comment' class="blue large grey" title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
                             </div>
                         </div>
                     </div>
@@ -2250,7 +2250,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="right menu">
                             {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
                             {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
-                            {!sandbox ? <span className="ui item"><sui.Button class="portrait only getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span>: undefined }
+                            {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="portrait only getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span>: undefined }
                         </div>
                         {tutorial ? <TutorialMenuItem parent={this} /> : undefined }
                         {tutorial ? <div className="right menu">
