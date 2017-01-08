@@ -777,12 +777,14 @@ namespace pxt.blocks {
         if (!$(`#${id}`).length) {
             let blocklyToolboxButtons = document.createElement('div');
             blocklyToolboxButtons.id = id;
-            blocklyToolboxButtons.className = 'ui equal width stackable grid blocklyToolboxButtons';
+            blocklyToolboxButtons.className = 'ui grid padded blocklyToolboxButtons';
 
             if (addCallback) {
                 // add "Add package" button to toolbox
                 let addButtonDiv = document.createElement('div');
-                addButtonDiv.className = 'column';
+                addButtonDiv.className = 'left floated row';
+                let addButtonColumnDiv = document.createElement('div');
+                addButtonColumnDiv.className = 'column';
                 let addPackageButton = document.createElement('button');
                 addPackageButton.setAttribute('role', 'button');
                 addPackageButton.setAttribute('aria-label', lf("Add Package..."));
@@ -790,11 +792,12 @@ namespace pxt.blocks {
                 pxt.BrowserUtils.isTouchEnabled() ?
                     addPackageButton.ontouchstart = addCallback
                     : addPackageButton.onclick = addCallback;
-                addPackageButton.className = 'ui icon button small blocklyToolboxButton blocklyAddPackageButton';
+                addPackageButton.className = 'ui icon button mini blocklyToolboxButton blocklyAddPackageButton';
                 let addpackageIcon = document.createElement('i');
                 addpackageIcon.className = 'plus icon';
                 addPackageButton.appendChild(addpackageIcon);
-                addButtonDiv.appendChild(addPackageButton);
+                addButtonColumnDiv.appendChild(addPackageButton);
+                addButtonDiv.appendChild(addButtonColumnDiv);
                 blocklyToolboxButtons.appendChild(addButtonDiv);
             }
 
@@ -1074,6 +1077,7 @@ namespace pxt.blocks {
         }
     }
 
+    let lastInvertedCategory: any;
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
 
@@ -1101,7 +1105,9 @@ namespace pxt.blocks {
                         } else {
                             element.style.borderLeft = border;
                         }
-                        element.style.color = (child.hexColour || '#000');
+                        if (this.hasColours_) {
+                            element.style.color = (child.hexColour || '#000');
+                        }
                     }
                     this.addColour_(child);
                 }
@@ -1120,14 +1126,6 @@ namespace pxt.blocks {
                     let element = child.getRowElement();
                     let onlyChild = children.length == 1;
                     if (element) {
-                        let nextElement = element.parentNode.nextSibling;
-                        let previousElement = element.parentNode.previousSibling;
-                        if (!nextElement && !onlyChild) {
-                            element.className += ' blocklyTreeRowBottom';
-                        }
-                        if (!previousElement && !onlyChild) {
-                            element.className += ' blocklyTreeRowTop';
-                        }
                         if (this.hasColours_) {
                             element.style.color = '#fff';
                             element.style.background = (child.hexColour || '#ddd');
@@ -1143,6 +1141,7 @@ namespace pxt.blocks {
              * @override
              */
             let setSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+            let editor = this;
             Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
                 let toolbox = this.toolbox_;
                 if (node == this.selectedItem_ || node == toolbox.tree_) {
@@ -1150,11 +1149,11 @@ namespace pxt.blocks {
                 }
 
                 // Capture the last category and reset it after Blockly's setSelectedItem has been called.
-                let lastCategory = toolbox.lastCategory_;
+                editor.lastInvertedCategory = toolbox.lastCategory_;
                 setSelectedItem.call(this, node);
-                if (lastCategory) {
+                if (editor.lastInvertedCategory) {
                     // reset last category colour
-                    lastCategory.getRowElement().style.backgroundColor = lastCategory.hexColour;
+                    editor.lastInvertedCategory.getRowElement().style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
                 }
             };
         }
@@ -1387,15 +1386,17 @@ namespace pxt.blocks {
 
         // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
         const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+        let editor = this;
         Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
             const that = <Blockly.Toolbox.TreeControl>this;
             let toolbox = (that as any).toolbox_;
             if (a == that.selectedItem_ || a == toolbox.tree_) {
                 return;
             }
-
+            
             if (a === null) {
                 collapseMoreCategory(that.selectedItem_);
+                editor.lastInvertedCategory = that.selectedItem_;
             }
 
             oldSetSelectedItem.call(that, a);

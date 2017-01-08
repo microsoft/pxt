@@ -854,35 +854,34 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 <div className="ui grid">
                                     <div className="four column row">
                                         <div className="column">
-                                            <sui.Button icon='undo' class="large grey" title={lf("Undo")} onClick={() => this.undo()} />
+                                            <sui.Button icon='undo' class="large editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
                                         </div>
                                         <div className="column">
-                                            <sui.Button icon='repeat' class="large grey" title={lf("Redo")} onClick={() => this.redo()} />
+                                            <sui.Button icon='repeat' class="large editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
                                         </div>
                                         <div className="column">
-                                            <sui.Button icon='zoom' class="large grey" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                                            <sui.Button icon='zoom' class="large editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
                                         </div>
                                         <div className="column">
-                                            <sui.Button icon='zoom out' class="large grey" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                            <sui.Button icon='zoom out' class="large editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
                                         </div>
                                     </div>
                                     <div className="four column row">
                                         <div className="eight wide column">
-                                            <div className={`ui large left icon fluid input`} title={lf("Pick a name for your project") }>
+                                            <div className={`ui large left icon fluid input projectname-input`} title={lf("Pick a name for your project") }>
                                                 <input id="fileNameInput"
                                                     type="text"
                                                     placeholder={lf("Pick a name...") }
                                                     value={state.projectName || ''}
                                                     onChange={(e) => this.saveProjectName((e.target as any).value) }>
                                                 </input>
-                                                <i className="icon font"></i>
                                             </div>
                                         </div>
                                         <div className="column">
-                                            <sui.Button icon='save' class="red large grey" title={lf("Save")} onClick={() => this.saveFile()} />
+                                            <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
                                         </div>
                                         <div className="column">
-                                            <sui.Button icon='comment' class="blue large grey" title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
+                                            <sui.Button icon='smile' class="large editortools-btn feedback-editortools-btn" title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
                                         </div>
                                     </div>
                                 </div>
@@ -890,35 +889,37 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         </div>
                     </div>
                     <div className="column computer only">
-                        <div className="ui relaxed divided grid">
+                        <div className="ui grid">
                             <div className="column four wide">
-                                <div className={`ui large left icon fluid input`} title={lf("Pick a name for your project") }>
+                                <div className={`ui small left icon fluid input projectname-input`} title={lf("Pick a name for your project") }>
                                     <input id="fileNameInput"
                                         type="text"
                                         placeholder={lf("Pick a name...") }
                                         value={state.projectName || ''}
                                         onChange={(e) => this.saveProjectName((e.target as any).value) }>
                                     </input>
-                                    <i className="icon font"></i>
                                 </div>
                             </div>
-                            <div className="column two wide">
-                                <sui.Button icon='save' class="red large grey" title={lf("Save")} onClick={() => this.saveFile()} />
+                            <div className="column">
+                                <sui.Button icon='save' class="small editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
+                            </div>
+                            <div className="column five wide">
+
+                            </div>
+                            <div className="column">
+                                <sui.Button icon='undo' class="small editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                            </div>
+                            <div className="column">
+                                <sui.Button icon='repeat' class="small editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
+                            </div>
+                            <div className="column">
+                                <sui.Button icon='zoom' class="small editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                            </div>
+                            <div className="column">
+                                <sui.Button icon='zoom out' class="small editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
                             </div>
                             <div className="column two wide">
-                                <sui.Button icon='undo' class="large grey" title={lf("Undo")} onClick={() => this.undo()} />
-                            </div>
-                            <div className="column two wide">
-                                <sui.Button icon='repeat' class="large grey" title={lf("Redo")} onClick={() => this.redo()} />
-                            </div>
-                            <div className="column two wide">
-                                <sui.Button icon='zoom' class="large grey" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
-                            </div>
-                            <div className="column two wide">
-                                <sui.Button icon='zoom out' class="large grey" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
-                            </div>
-                            <div className="column two wide">
-                                <sui.Button icon='comment' class="blue large grey" title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
+                                <sui.Button icon='smile' class="small right floated editortools-btn feedback-editortools-btn " title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
                             </div>
                         </div>
                     </div>
@@ -2250,7 +2251,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="right menu">
                             {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
                             {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
-                            {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="portrait only getting-started-btn green" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span>: undefined }
+                            {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="portrait only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span>: undefined }
                         </div>
                         {tutorial ? <TutorialMenuItem parent={this} /> : undefined }
                         {tutorial ? <div className="right menu">
@@ -2266,7 +2267,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 </div>
                 {gettingStarted ?
                     <div id="getting-started-btn">
-                        <sui.Button class="portrait hide bottom attached getting-started-btn green " title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
+                        <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
                     : undefined }
                 <div id="simulator">

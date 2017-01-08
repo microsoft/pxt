@@ -233,7 +233,7 @@ div.simframe > iframe {
 /* Organization logo */
 .organization {
     position:absolute;
-    top:1rem;
+    top:1.3rem;
     right:2rem;
     height:2rem;
     z-index:102;
@@ -276,7 +276,8 @@ div.simframe > iframe {
     bottom:0;
     left: 0;
     right:0;
-    z-index:4;
+    z-index:3;
+    height:4rem;
     background-color: @editorToolsBackground;
 }
 #blocksArea, #monacoEditor, #pxtJsonEditor {
@@ -362,6 +363,23 @@ div.simframe > iframe {
     box-shadow: 0 0 1px #ccc;    
     -webkit-box-shadow: 0 0 1px #ccc;
 }
+
+/* Button Colors */
+.ui.button.editortools-btn {
+    &:extend(.grey all);
+}
+.ui.button.getting-started-btn {
+    &:extend(.green all);
+}
+.ui.button.download-button {
+    &:extend(.green all);
+}
+/* Blockly Toolbox Buttons */
+.ui.button.blocklyAddPackageButton {
+    &:extend(.grey all);
+    &:extend(.circular all);
+}
+
 
 /*******************************
              Docs
@@ -458,11 +476,8 @@ div.simframe > iframe {
 
 /* Blockly / Monaco Toolbox Buttons */
 #blocklyToolboxButtons, #monacoToolboxButtons {
-    margin-top: 0.5rem;
-    margin-left: auto;
-    margin-right: auto;
+    margin-top: 0.1rem;
     font-size:3rem;
-    text-align: center;
 }
 
 /* Blockly Search bar */
@@ -645,11 +660,6 @@ div.simframe > iframe {
     .blocklyTreeRow {
         min-width: 200px;
     }
-    /* Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 2rem;
-        margin-left: 2rem;
-    }
 }
 
 /* Small Monitor */
@@ -657,11 +667,6 @@ div.simframe > iframe {
     /* Blockly row */
     .blocklyTreeRow {
         min-width: 200px;
-    }
-    /* Blockly Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 1rem;
-        margin-left: 1rem;
     }
 }
 
@@ -678,19 +683,10 @@ div.simframe > iframe {
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
     }
-    /* Blockly Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 0.5rem;
-        margin-left: 0.5rem;
-    }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    /* Blockly / Monaco Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
-    #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
-        padding: 0.3rem 0 0.3rem 0 !important;
-    }
     /* Logo */
     .ui.item.logo img {
         max-height: 2.5rem;
@@ -718,8 +714,8 @@ div.simframe > iframe {
     .blocklyTreeRoot div div div div .blocklyTreeRow {
         border-left-width: 8px !important;
     }
-    .blocklyToolboxDiv, .monacoToolboxDiv{
-        width: 3.5rem;
+    .blocklyTreeRow{
+        padding-right: 0;
     }
     /* Hide the blockly toolbox search */
     #blocklySearchArea {
@@ -746,7 +742,6 @@ div.simframe > iframe {
 @media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
     #filelist {
-        bottom:3rem;
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
     }
@@ -815,6 +810,9 @@ div.simframe > iframe {
     /* Layout */
     #filelist {
         position:absolute;
+        padding: 0;
+        margin: 1em;
+        padding-bottom: 1em;
         z-index:5;
         bottom:0rem;
         left:0rem;
@@ -836,7 +834,7 @@ div.simframe > iframe {
         bottom: 0rem;
     }
     #editortools {
-        height: 15rem;
+        height: 14rem;
     }
     #blocksArea, #monacoEditor, #pxtJsonEditor {
         bottom: 14rem !important;
@@ -917,6 +915,10 @@ div.simframe > iframe {
     }
     .blocklyTreeIcon {
         margin: 0.25em 0.25em 0.0em 0.0em;
+    }
+    /* Remove margin around the blockly add package buttons */
+    .blocklyAddPackageButton {
+        margin-left: 0 !important;
     }
 }
 

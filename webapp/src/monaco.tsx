@@ -549,7 +549,6 @@ export class Editor extends srceditor.Editor {
                     return;
                 } else {
                     // Selected category
-                    treeitem.style.background = `${color}`;
                     treerow.style.color = '#fff';
                     treerow.className += ' blocklyTreeSelected';
                     monacoEditor.selectedCategoryItem = treeitem;
