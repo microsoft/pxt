@@ -656,7 +656,8 @@ namespace pxt.blocks {
 
     export let cachedSearchTb: Element;
     export function initSearch(workspace: Blockly.Workspace, tb: Element,
-        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
+        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>,
+        updateToolbox: (tb: Element) => void) {
         if ($(`#blocklySearchArea`).length) return;
 
         let blocklySearchArea = document.createElement('div');
@@ -746,13 +747,13 @@ namespace pxt.blocks {
                             if (b) shadow.innerHTML = b.innerHTML;
                         })
 
-                        workspace.updateToolbox(searchTb);
+                        updateToolbox(searchTb);
                         blocklySearchInput.className = origClassName;
                     }
                 })
             } else {
                 // Clearing search
-                workspace.updateToolbox(pxt.blocks.cachedSearchTb);
+                updateToolbox(pxt.blocks.cachedSearchTb);
                 blocklySearchInput.className = origClassName;
             }
             // Search
@@ -792,7 +793,7 @@ namespace pxt.blocks {
                 pxt.BrowserUtils.isTouchEnabled() ?
                     addPackageButton.ontouchstart = addCallback
                     : addPackageButton.onclick = addCallback;
-                addPackageButton.className = 'ui icon button mini blocklyToolboxButton blocklyAddPackageButton';
+                addPackageButton.className = 'ui icon button small blocklyToolboxButton blocklyAddPackageButton';
                 let addpackageIcon = document.createElement('i');
                 addpackageIcon.className = 'plus icon';
                 addPackageButton.appendChild(addpackageIcon);

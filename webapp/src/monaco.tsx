@@ -470,7 +470,6 @@ export class Editor extends srceditor.Editor {
         this.editor.addOverlayWidget(flyoutWidget);
     }
 
-    private selectedCategoryItem: HTMLElement;
     private selectedCategoryRow: HTMLElement;
     private selectedCategoryColor: string;
 
@@ -481,14 +480,13 @@ export class Editor extends srceditor.Editor {
         flyout.style.display = 'none';
 
         // Hide the currnet toolbox category
-        if (this.selectedCategoryItem) {
-            this.selectedCategoryItem.style.background = 'none';
+        if (this.selectedCategoryRow) {
+            this.selectedCategoryRow.style.background = 'none';
             this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
             this.selectedCategoryRow.className = 'blocklyTreeRow';
         }
 
         if (clear) {
-            this.selectedCategoryItem = null;
             this.selectedCategoryRow = null;
         }
     }
@@ -542,16 +540,16 @@ export class Editor extends srceditor.Editor {
                 monacoEditor.resetFlyout(false);
 
                 // Hide the toolbox if the current category is clicked twice
-                if (monacoEditor.selectedCategoryItem == treeitem) {
-                    monacoEditor.selectedCategoryItem = null;
+                if (monacoEditor.selectedCategoryRow == treeitem) {
+                    monacoEditor.selectedCategoryRow = null;
                     monacoFlyout.style.display = 'none';
                     treerow.className = 'blocklyTreeRow';
                     return;
                 } else {
                     // Selected category
+                    treerow.style.background = `${color}`;
                     treerow.style.color = '#fff';
                     treerow.className += ' blocklyTreeSelected';
-                    monacoEditor.selectedCategoryItem = treeitem;
                     monacoEditor.selectedCategoryRow = treerow;
                     if (appTheme.invertedToolbox) {
                         // Inverted toolbox

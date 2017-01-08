@@ -851,7 +851,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 </div>
                             </div>
                             <div className="eight wide mobile ten wide tablet column">
-                                <div className="ui grid">
+                                <div className="ui grid container">
                                     <div className="four column row">
                                         <div className="column">
                                             <sui.Button icon='undo' class="large editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
@@ -906,17 +906,17 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="column five wide">
 
                             </div>
-                            <div className="column">
-                                <sui.Button icon='undo' class="small editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                            <div className="column two wide">
+                                <div className="ui icon buttons">
+                                    <sui.Button icon='undo' class="small editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                                    <sui.Button icon='repeat' class="small editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
+                                </div>
                             </div>
-                            <div className="column">
-                                <sui.Button icon='repeat' class="small editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
-                            </div>
-                            <div className="column">
-                                <sui.Button icon='zoom' class="small editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
-                            </div>
-                            <div className="column">
-                                <sui.Button icon='zoom out' class="small editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                            <div className="column two wide">
+                                <div className="ui icon buttons">
+                                    <sui.Button icon='zoom' class="small editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                                    <sui.Button icon='zoom out' class="small editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                </div>
                             </div>
                             <div className="column two wide">
                                 <sui.Button icon='smile' class="small right floated editortools-btn feedback-editortools-btn " title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />

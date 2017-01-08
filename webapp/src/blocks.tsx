@@ -85,7 +85,8 @@ export class Editor extends srceditor.Editor {
                     if (showCategories && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
-                                .then((fns: pxtc.SymbolInfo[]) => fns));
+                                .then((fns: pxtc.SymbolInfo[]) => fns),
+                            searchTb => this.updateToolbox(searchTb, showCategories));
                     }
 
                     let xml = this.delayLoadXml;
