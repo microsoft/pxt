@@ -361,7 +361,6 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    this.resize();
                 }
                 else if (ev.element == 'commentOpen'
                     || ev.element == 'warningOpen') {

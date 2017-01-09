@@ -827,7 +827,6 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
     toggleCollapse() {
         const state = this.props.parent.state;
         this.props.parent.setState({collapseEditorTools: !state.collapseEditorTools});
-        this.props.parent.fireResize();
     }
 
     render() {
@@ -1266,6 +1265,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '')
+        this.editor.resize();
     }
 
     fireResize() {
