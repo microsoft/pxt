@@ -306,25 +306,29 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                         <sui.Button
                             icon="file outline"
                             text={lf("New") }
+                            class="large new-projectbtn"
                             title={lf("Creates a new empty project") }
                             onClick={() => newProject() } />
                         <sui.Button
                             icon="save"
                             text={lf("Save") }
+                            class="large save-projectbtn"
                             title={lf("Saves current project to a.hex file") }
                             onClick={() => saveProject() } />
                         <sui.Button
                             icon="options"
                             text={lf("Rename...") }
+                            class="large rename-projectbtn"
                             title={lf("Rename the current project") }
                             onClick={() => renameProject() } />
                     </div> : undefined}
                 <div className="ui vertial segment">
                 {this.state.search ? <div className="ui search">
-                    <div className="ui fluid action input" role="search">
+                    <div className="ui fluid action input left labeled" role="search">
                         {pxt.appTarget.compile ?
                             <sui.Button
                                 icon="upload"
+                                class="label"
                                 text={lf("Import") }
                                 title={lf("Open .hex files on your computer") }
                                 onClick={() => importHex() } /> : undefined}
