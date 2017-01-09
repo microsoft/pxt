@@ -873,7 +873,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 </div>
                             </div>
                             <div className="column">
-                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class={`small editortools-btn collapse-editortools-btn ${hideEditorFloats ? 'disabled' : ''}`} title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                <sui.Button icon={collapsed ? 'angle up' : 'angle down'} class={`small editortools-btn collapse-editortools-btn ${hideEditorFloats ? 'disabled' : ''}`} title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                             </div>
                         </div> :
                         <div className="ui equal width grid">
@@ -886,7 +886,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                             <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
                                             <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
                                             <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
-                                            <sui.Button icon={collapsed ? 'expand' : 'compress'} class="editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                            <sui.Button icon={collapsed ? 'angle up' : 'angle down'} class="editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                                         </div>
                                     </div>
                                 </div>
@@ -924,7 +924,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 </div>
                             </div>
                             <div className="column two wide">
-                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class={`large editortools-btn collapse-editortools-btn ${hideEditorFloats ? 'disabled' : ''}`} title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                <sui.Button icon={collapsed ? 'angle up' : 'angle down'} class={`large editortools-btn collapse-editortools-btn ${hideEditorFloats ? 'disabled' : ''}`} title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                             </div>
                         </div>
                         : <div className="ui grid">
@@ -961,7 +961,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                             </div>
                                         </div>
                                         <div className="column">
-                                            <sui.Button icon={collapsed ? 'expand' : 'compress'} class="large editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                            <sui.Button icon={collapsed ? 'angle up' : 'angle down'} class="large editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                                         </div>
                                     </div>
                                     <div className="centered row" style={{paddingTop: 0}}>
