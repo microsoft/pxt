@@ -899,29 +899,27 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                     </div>
                     <div className="column tablet only">
                         {collapsed ?
-                        <div className="ui equal width grid">
-                            <div className="left aligned column">
-                                <div className="ui icon large buttons">
-                                    {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
-                                    {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
-                                </div>
+                        <div className="ui grid seven column">
+                            <div className="left aligned six wide column">
+                                {compileBtn ? <sui.Button role="menuitem" class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
+                                {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
                             </div>
-                            <div className="column">
+                            <div className="column two wide">
                                 <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
                             </div>
-                            <div className="column">
+                            <div className="column three wide">
                                 <div className="ui icon large buttons">
                                     <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
                                     <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
                                 </div>
                             </div>
-                            <div className="column">
+                            <div className="column three wide">
                                 <div className="ui icon large buttons">
                                     <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
                                     <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
                                 </div>
                             </div>
-                            <div className="column">
+                            <div className="column two wide">
                                 <sui.Button icon={collapsed ? 'expand' : 'compress'} class="large editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                             </div>
                         </div>
