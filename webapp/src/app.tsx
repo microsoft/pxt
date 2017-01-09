@@ -820,8 +820,11 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         this.props.parent.editor.zoomOut();
     }
 
-    sendFeedback() {
-        pxt.tickEvent("editortools.sendFeedback");
+    startStopSimulator() {
+        const state = this.props.parent.state;
+        if (!state.running && state.collapseEditorTools)
+            this.props.parent.setState({collapseEditorTools: false});
+        this.props.parent.startStopSimulator();
     }
 
     toggleCollapse() {
@@ -831,6 +834,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
 
     render() {
         const state = this.props.parent.state;
+        const hideEditorFloats = state.hideEditorFloats;
         const collapsed = state.hideEditorFloats || state.collapseEditorTools;
         const isEditor = this.props.parent.editor == this.props.parent.blocksEditor || this.props.parent.editor == this.props.parent.textEditor;
         if (!isEditor) return <div />;
@@ -853,7 +857,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="left aligned column">
                                 <div className="ui icon small buttons">
                                     {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
-                                    {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                    {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                 </div>
                             </div>
                             <div className="column">
@@ -869,7 +873,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 </div>
                             </div>
                             <div className="column">
-                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class="small editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class={`small editortools-btn collapse-editortools-btn ${hideEditorFloats ? 'disabled' : ''}`} title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                             </div>
                         </div> :
                         <div className="ui equal width grid">
@@ -902,7 +906,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         <div className="ui grid seven column">
                             <div className="left aligned six wide column">
                                 {compileBtn ? <sui.Button role="menuitem" class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
-                                {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                             </div>
                             <div className="column two wide">
                                 <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
@@ -920,7 +924,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 </div>
                             </div>
                             <div className="column two wide">
-                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class="large editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class={`large editortools-btn collapse-editortools-btn ${hideEditorFloats ? 'disabled' : ''}`} title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                             </div>
                         </div>
                         : <div className="ui grid">
