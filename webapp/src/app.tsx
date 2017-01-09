@@ -775,7 +775,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
 
     saveFile() {
         pxt.tickEvent("editortools.save");
-        this.props.parent.saveFile();
+        this.props.parent.compile(true);
     }
 
     openSettings() {
@@ -804,6 +804,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
     }
 
     startStopSimulator() {
+        pxt.tickEvent("editortools.startStopSimulator");
         const state = this.props.parent.state;
         if (!state.running && state.collapseEditorTools)
             this.props.parent.setState({collapseEditorTools: false});
@@ -812,6 +813,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
 
     toggleCollapse() {
         const state = this.props.parent.state;
+        pxt.tickEvent("editortools.toggleCollapse", {'collapsed': '' + !state.collapseEditorTools});
         this.props.parent.setState({collapseEditorTools: !state.collapseEditorTools});
     }
 
@@ -913,40 +915,44 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         : <div className="ui grid">
                             <div className="four wide column">
                             </div>
-                            <div className="five wide column">
+                            <div className="twelve wide column">
                                 <div className="ui grid right aligned">
-                                    <div className="equal width row">
-                                        <div className="left aligned column">
-                                            {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
-                                        </div>
-                                        <div className="column">
-                                            <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
-                                        </div>
-                                    </div>
-                                    <div className="row" style={{paddingTop: 0}}>
-                                        <div className="column">
+                                    <div className="five column row">
+                                        <div className="six wide column">
                                             {compileBtn ? <sui.Button role="menuitem" class={`large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="seven wide column">
-                                <div className="ui grid">
-                                    <div className="three column row">
-                                        <div className="column">
-                                            <div className="ui icon large vertical buttons">
+                                        <div className="two wide left aligned column">
+                                            {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                        </div>
+                                        <div className="three wide column">
+                                            <div className="ui icon large buttons">
                                                 <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
                                                 <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
                                             </div>
                                         </div>
-                                        <div className="column">
-                                            <div className="ui icon large vertical buttons">
+                                        <div className="three wide column">
+                                            <div className="ui icon large buttons">
                                                 <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
                                                 <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
                                             </div>
                                         </div>
-                                        <div className="column">
+                                        <div className="two wide column">
                                             <sui.Button icon={collapsed ? 'angle up' : 'angle down'} class="large editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                        </div>
+                                    </div>
+                                    <div className="two column row" style={{paddingTop: 0}}>
+                                        <div className="six wide column">
+                                            <div className="ui item large fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
+                                                <input id="fileNameInput"
+                                                    type="text"
+                                                    placeholder={lf("Pick a name...") }
+                                                    value={state.projectName || ''}
+                                                    onChange={(e) => this.saveProjectName((e.target as any).value) }>
+                                                </input>
+                                            </div>
+                                        </div>
+                                        <div className="left aligned column">
+                                            <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
                                         </div>
                                     </div>
                                 </div>
@@ -958,27 +964,21 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="left aligned column one wide">
                                 <sui.Button icon={state.collapseEditorTools ? 'angle right' : 'angle left'} class={`small editortools-btn collapse-editortools-btn`} title={state.collapseEditorTools ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
                             </div>
-                            {state.collapseEditorTools ?
-                                <div className="column four wide">
-                                    <div className={`ui large left fluid input projectname-input projectname-computer-collapsed`} title={lf("Pick a name for your project") }>
-                                        <input id="fileNameInput"
-                                            type="text"
-                                            placeholder={lf("Pick a name...") }
-                                            value={state.projectName || ''}
-                                            onChange={(e) => this.saveProjectName((e.target as any).value) }>
-                                        </input>
-                                    </div>
-                                </div> : undefined }
-                            {state.collapseEditorTools ?
-                                <div className="left aligned column">
-                                    <sui.Button icon='save' class="small editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
-                                </div> : undefined }
-                            {state.collapseEditorTools ?
-                                <div className="column six wide">
-                                </div> : undefined }
-                            {!state.collapseEditorTools ?
-                                <div className="column ten wide">
-                                </div> : undefined }
+                            <div className={`column ${state.collapseEditorTools ? 'three' : 'five'} wide`}>
+                                <div className={`ui large left fluid input projectname-input projectname-computer`} title={lf("Pick a name for your project") }>
+                                    <input id="fileNameInput"
+                                        type="text"
+                                        placeholder={lf("Pick a name...") }
+                                        value={state.projectName || ''}
+                                        onChange={(e) => this.saveProjectName((e.target as any).value) }>
+                                    </input>
+                                </div>
+                            </div>
+                            <div className="left aligned column">
+                                <sui.Button icon='save' class="small editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
+                            </div>
+                            <div className={`column ${state.collapseEditorTools ? 'six' : 'four'} wide`}>
+                            </div>
                             <div className="column two wide">
                                 <div className="ui icon small buttons">
                                     <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
@@ -2319,14 +2319,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                             { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
                         </sui.DropdownMenuItem>}
-                        <div className="ui item mini input projectname-input projectname-tablet tablet only" title={lf("Pick a name for your project") }>
-                            <input id="fileNameInput"
-                                type="text"
-                                placeholder={lf("Pick a name...") }
-                                value={this.state.projectName || ''}
-                                onChange={(e) => this.updateHeaderName((e.target as any).value) }>
-                            </input>
-                        </div>
                         <div className="right menu">
                             {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
                             {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
@@ -2351,23 +2343,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     : undefined }
                 <div id="simulator">
                     <div id="filelist" className="ui items" role="complementary">
-                        <div className="ui item landscape only">
-                            <div className="ui grid container">
-                                <div className="twelve wide column">
-                                    <div className={`ui fluid input projectname-input projectname-computer-sim`} title={lf("Pick a name for your project") }>
-                                        <input id="fileNameInput"
-                                            type="text"
-                                            placeholder={lf("Pick a name...") }
-                                            value={this.state.projectName || ''}
-                                            onChange={(e) => this.updateHeaderName((e.target as any).value) }>
-                                        </input>
-                                    </div>
-                                </div>
-                                <div className="four wide column">
-                                    <sui.Button icon='save' class="small editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
-                                </div>
-                            </div>
-                        </div>
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item portrait hide">
