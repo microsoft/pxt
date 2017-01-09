@@ -1394,7 +1394,7 @@ namespace pxt.blocks {
             if (a == that.selectedItem_ || a == toolbox.tree_) {
                 return;
             }
-            
+
             if (a === null) {
                 collapseMoreCategory(that.selectedItem_);
                 editor.lastInvertedCategory = that.selectedItem_;
