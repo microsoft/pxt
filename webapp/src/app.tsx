@@ -960,7 +960,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             </div>
                             {state.collapseEditorTools ?
                                 <div className="column four wide">
-                                    <div className={`ui large left fluid input projectname-input`} title={lf("Pick a name for your project") }>
+                                    <div className={`ui large left fluid input projectname-input projectname-computer-collapsed`} title={lf("Pick a name for your project") }>
                                         <input id="fileNameInput"
                                             type="text"
                                             placeholder={lf("Pick a name...") }
@@ -977,7 +977,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 <div className="column six wide">
                                 </div> : undefined }
                             {!state.collapseEditorTools ?
-                                <div className="column eleven wide">
+                                <div className="column ten wide">
                                 </div> : undefined }
                             <div className="column two wide">
                                 <div className="ui icon small buttons">
@@ -2319,7 +2319,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                             { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
                         </sui.DropdownMenuItem>}
-                        <div className="ui item mini input projectname-input tablet only" title={lf("Pick a name for your project") }>
+                        <div className="ui item mini input projectname-input projectname-tablet tablet only" title={lf("Pick a name for your project") }>
                             <input id="fileNameInput"
                                 type="text"
                                 placeholder={lf("Pick a name...") }
@@ -2354,7 +2354,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="ui item landscape only">
                             <div className="ui grid container">
                                 <div className="twelve wide column">
-                                    <div className={`ui large fluid input projectname-input`} title={lf("Pick a name for your project") }>
+                                    <div className={`ui fluid input projectname-input projectname-computer-sim`} title={lf("Pick a name for your project") }>
                                         <input id="fileNameInput"
                                             type="text"
                                             placeholder={lf("Pick a name...") }
