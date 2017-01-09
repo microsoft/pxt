@@ -550,8 +550,9 @@ export class Editor extends srceditor.Editor {
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
             // Toolbox is consistent with current mode, safe to update
-            if (tb.innerHTML == this.cachedToolbox) return;
-            this.cachedToolbox = tb.innerHTML;
+            let tbString = new XMLSerializer().serializeToString(tb);
+            if (tbString == this.cachedToolbox) return;
+            this.cachedToolbox = tbString;
             this.editor.updateToolbox(tb);
         } else {
             // Toolbox mode is different, need to refresh.
