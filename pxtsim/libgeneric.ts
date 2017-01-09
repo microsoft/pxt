@@ -2,14 +2,14 @@ namespace pxsim {
     // A ref-counted collection of either primitive or ref-counted objects (String, Image,
     // user-defined record, another collection)
     export class RefCollection extends RefObject {
-        private data: any[] = []; 
+        private data: any[] = [];
         //undefiend or null values need to be handled specially to support default values
         //default values of boolean, string, number & object arrays are respectively, false, null, 0, null
         //All of the default values are implemented by mapping undefined\null to zero.
 
         // 1 - collection of refs (need decr)
         // 2 - collection of strings (in fact we always have 3, never 2 alone)
-        
+
         constructor(public flags: number) {
             super();
         }
@@ -40,15 +40,15 @@ namespace pxsim {
             return x;
         }
 
-        getLength(){
+        getLength() {
             return this.data.length;
         }
-        
+
         setLength(x: number) {
             this.data.length = x;
         }
 
-        getAt(x:number) {
+        getAt(x: number) {
             if (this.data[x] != undefined) {
                 return this.data[x];
             }
@@ -65,7 +65,7 @@ namespace pxsim {
 
         removeAt(x: number) {
             let ret = this.data.splice(x, 1)
-            if (ret[0] == undefined) { 
+            if (ret[0] == undefined) {
                 return 0;
             }
             return ret[0]; //return the deleted element.
@@ -74,14 +74,14 @@ namespace pxsim {
         indexOf(x: number, start: number) {
             if (x != 0) {
                 return this.data.indexOf(x, start);
-            }   
+            }
             //As we treat undefined same as 0 which is default value for all the arrays, will need to search both.
             let defaultValueIndex = this.data.indexOf(x, start);
             let undefinedIndex = this.data.indexOf(undefined, start);
-            
+
             if (defaultValueIndex < undefinedIndex) {
                 return defaultValueIndex;
-            }  
+            }
             return undefinedIndex;
         }
 
