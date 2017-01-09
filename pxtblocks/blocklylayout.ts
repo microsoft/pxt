@@ -1,5 +1,20 @@
 
 namespace pxt.blocks.layout {
+    export function alignBlocks(oldWs: B.Workspace, newWs: B.Workspace) {
+        let changed = false;
+        const newBlocks = newWs.getTopBlocks(false);
+        oldWs.getTopBlocks(false).forEach(ob => {
+            const otp = ob.xy_;
+            if (otp && otp.x != 0 && otp.y != 0) {
+                const newBlock = newBlocks.filter(nb => ob.type == nb.type)[0];
+                if (newBlock) {
+                    newBlock.xy_ = otp;
+                    changed = true;
+                }
+            }
+        })
+        return changed;
+    }
 
     declare function unescape(escapeUri: string): string;
 

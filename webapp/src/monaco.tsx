@@ -94,7 +94,7 @@ export class Editor extends srceditor.Editor {
                             return this.parent.setFile(mainPkg.files[blockFile]);
                         }
                     }
-                    return compiler.decompileAsync(this.currFile.name)
+                    return compiler.decompileAsync(this.currFile.name, oldWorkspace, blockFile)
                         .then(resp => {
                             if (!resp.success) return failedAsync(blockFile);
                             xml = resp.outfiles[blockFile];
@@ -520,10 +520,10 @@ export class Editor extends srceditor.Editor {
             const fn2 = fnDef[f2];
             const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
                 + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
-                + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
+            + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
             const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
                 + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
-                + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
+            + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
             return w2 - w1;
         }).filter(ns => fnDef[ns].metaData != null && fnDef[ns].metaData.color != null).forEach(function (ns) {
             let metaElement = fnDef[ns];
@@ -573,10 +573,10 @@ export class Editor extends srceditor.Editor {
                     const fn2 = fnElement.fns[f2];
                     const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
                         + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
-                        + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
+                    + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
                     const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
                         + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
-                        + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
+                    + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
                     return w2 - w1;
                 }).forEach((fn) => {
                     let monacoBlock = document.createElement('div');
@@ -672,7 +672,7 @@ export class Editor extends srceditor.Editor {
             }
             if (icon) {
                 // Inject css
-                pxt.blocks.injectToolboxIconCss(`blocklyTreeIcon${ns}`,icon);
+                pxt.blocks.injectToolboxIconCss(`blocklyTreeIcon${ns}`, icon);
             }
             treerow.style.paddingLeft = '0px';
             label.innerText = `${Util.capitalize(ns)}`;
@@ -739,12 +739,12 @@ export class Editor extends srceditor.Editor {
 
         if (mode == "typescript" && !file.isReadonly()) {
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
-            .then((definitions) => {
-                this.definitions = definitions;
-                this.initEditorCss();
-                this.updateToolbox();
-                this.resize();
-            });
+                .then((definitions) => {
+                    this.definitions = definitions;
+                    this.initEditorCss();
+                    this.updateToolbox();
+                    this.resize();
+                });
         }
 
         this.setValue(file.content)
