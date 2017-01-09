@@ -27,8 +27,12 @@ export function serialAsync() {
         })
 }
 
+function hex(n: number) {
+    return ("000" + n.toString(16)).slice(-4)
+}
+
 export function deviceInfo(h: HidDevice) {
-    return `${h.product}`
+    return `${h.product} (by ${h.manufacturer} at USB ${hex(h.vendorId)}:${hex(h.productId)})`
 }
 
 export function getHF2Devices() {
