@@ -114,14 +114,18 @@ export class HidIO implements HF2.PacketIO {
     }
 
     reconnectAsync(): Promise<void> {
-        // see https://github.com/node-hid/node-hid/issues/61
-        this.dev.removeAllListeners("data");
-        this.dev.removeAllListeners("error");
-        let pkt = new Uint8Array([0x48])
-        this.sendPacketAsync(pkt).catch(e => { })
+        if (this.dev) {
+            // see https://github.com/node-hid/node-hid/issues/61
+            this.dev.removeAllListeners("data");
+            this.dev.removeAllListeners("error");
+            let pkt = new Uint8Array([0x48])
+            this.sendPacketAsync(pkt).catch(e => { })
+        }
         return Promise.delay(100)
             .then(() => {
-                this.dev.close()
+                if (this.dev)
+                    this.dev.close()
+                this.dev = null
                 this.connect()
             })
     }

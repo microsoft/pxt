@@ -180,6 +180,7 @@ namespace pxt.HF2 {
         flashSize: number;
         maxMsgSize: number = 63; // when running in forwarding mode, we do not really know
         bootloaderMode = false;
+        reconnectTries = 0;
         msgs = new U.PromiseBuffer<Uint8Array>()
 
         onSerial = (buf: Uint8Array, isStderr: boolean) => { };
@@ -195,15 +196,20 @@ namespace pxt.HF2 {
             this.msgs.drain()
         }
 
-        reconnectAsync(first = false) {
+        reconnectAsync(first = false): Promise<void> {
             this.resetState()
             if (first) return this.initAsync()
-            let pio = this.io
-            this.io = null
-            return pio.reconnectAsync()
-                .then(() => {
-                    this.io = pio
-                    return this.initAsync()
+            return this.io.reconnectAsync()
+                .then(() => this.initAsync())
+                .catch(e => {
+                    if (this.reconnectTries < 5) {
+                        this.reconnectTries++
+                        log(`error ${e.message}; reconnecting attempt #${this.reconnectTries}`)
+                        return Promise.delay(500)
+                            .then(() => this.reconnectAsync())
+                    } else {
+                        throw e
+                    }
                 })
         }
 
@@ -306,7 +312,7 @@ namespace pxt.HF2 {
 
         reflashAsync(blocks: pxtc.UF2.Block[]) {
             return this.flashAsync(blocks)
-                .then(() => Promise.delay(500))
+                .then(() => Promise.delay(100))
                 .then(() => this.reconnectAsync())
         }
 
@@ -371,6 +377,9 @@ namespace pxt.HF2 {
                         Features: m[2],
                     }
                     log("Board-ID: " + this.info.BoardID)
+                })
+                .then(() => {
+                    this.reconnectTries = 0
                 })
         }
 
