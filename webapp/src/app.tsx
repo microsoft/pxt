@@ -827,6 +827,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
     toggleCollapse() {
         const state = this.props.parent.state;
         this.props.parent.setState({collapseEditorTools: !state.collapseEditorTools});
+        this.props.parent.fireResize();
     }
 
     render() {
@@ -834,7 +835,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const collapsed = state.hideEditorFloats || state.collapseEditorTools;
         const isEditor = this.props.parent.editor == this.props.parent.blocksEditor || this.props.parent.editor == this.props.parent.textEditor;
         if (!isEditor) return <div />;
-        
+
         const targetTheme = pxt.appTarget.appTheme;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex;
@@ -848,7 +849,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
 
         return <div className="ui equal width grid right aligned padded">
                     <div className="column mobile only">
-                        {collapsed ? 
+                        {collapsed ?
                         <div className="ui equal width grid">
                             <div className="left aligned column">
                                 <div className="ui icon small buttons">
@@ -898,7 +899,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         </div> }
                     </div>
                     <div className="column tablet only">
-                        {collapsed ? 
+                        {collapsed ?
                         <div className="ui equal width grid">
                             <div className="left aligned column">
                                 <div className="ui icon large buttons">
@@ -2337,7 +2338,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="right menu">
                             {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
                             {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
-                            {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="portrait only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span>: undefined }
+                            {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="portrait only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined }
                         </div>
                         {tutorial ? <TutorialMenuItem parent={this} /> : undefined }
                         {tutorial ? <div className="right menu">
