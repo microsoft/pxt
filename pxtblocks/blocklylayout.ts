@@ -1,12 +1,19 @@
 
 namespace pxt.blocks.layout {
-    export function alignBlocks(oldWs: B.Workspace, newWs: B.Workspace) {
+    export function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
         let changed = false;
-        const newBlocks = newWs.getTopBlocks(false);
+        let env: pxt.blocks.Environment;
+        let newBlocks: pxt.Map<B.Block>;
         oldWs.getTopBlocks(false).forEach(ob => {
             const otp = ob.xy_;
             if (otp && otp.x != 0 && otp.y != 0) {
-                const newBlock = newBlocks.filter(nb => ob.type == nb.type)[0];
+                if (!env) {
+                    env = pxt.blocks.mkEnv(oldWs, blockInfo, true);
+                    newBlocks = {};
+                    newWs.getTopBlocks(false).forEach(b => newBlocks[pxt.blocks.callKey(env, b) ] = b);
+                }
+                const oldKey = pxt.blocks.callKey(env, ob);
+                const newBlock = newBlocks[oldKey];
                 if (newBlock) {
                     newBlock.xy_ = otp;
                     changed = true;

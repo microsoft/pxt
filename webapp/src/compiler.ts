@@ -122,7 +122,7 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function decompileAsync(fileName: string, oldWorkspace?: B.Workspace, blockFile?: string) {
+export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: B.Workspace, blockFile?: string) {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
@@ -131,9 +131,9 @@ export function decompileAsync(fileName: string, oldWorkspace?: B.Workspace, blo
         })
         .then(resp => {
             // try to patch event locations
-            if (resp.success && oldWorkspace && blockFile) {
+            if (resp.success && blockInfo && oldWorkspace && blockFile) {
                 const newWs = pxt.blocks.loadWorkspaceXml(resp.outfiles[blockFile], true);
-                if (pxt.blocks.layout.alignBlocks(oldWorkspace, newWs)) {
+                if (pxt.blocks.layout.alignBlocks(blockInfo, oldWorkspace, newWs)) {
                     resp.outfiles[blockFile] = pxt.blocks.saveWorkspaceXml(newWs);
                 }
             }
