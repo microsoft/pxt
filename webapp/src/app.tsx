@@ -73,6 +73,7 @@ interface IAppState {
     compiling?: boolean;
     publishing?: boolean;
     hideEditorFloats?: boolean;
+    collapseEditorTools?: boolean;
     showBlocks?: boolean;
     showParts?: boolean;
 }
@@ -823,8 +824,14 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         pxt.tickEvent("editortools.sendFeedback");
     }
 
+    toggleCollapse() {
+        const state = this.props.parent.state;
+        this.props.parent.setState({collapseEditorTools: !state.collapseEditorTools});
+    }
+
     render() {
         const state = this.props.parent.state;
+        const collapsed = state.hideEditorFloats || state.collapseEditorTools;
         const isEditor = this.props.parent.editor == this.props.parent.blocksEditor || this.props.parent.editor == this.props.parent.textEditor;
         if (!isEditor) return <div />;
         
@@ -839,36 +846,125 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const makeTooltip = lf("Open assembly instructions");
         const run = true;
 
-        return  <div className="ui equal width grid padded">
-                    <div className="column mobile only tablet only">
-                        <div className="ui grid">
-                            <div className="eight wide mobile six wide tablet column">
-                                <div className="ui grid">
-                                    <div className="twelve wide column">
+        return <div className="ui equal width grid right aligned padded">
+                    <div className="column mobile only">
+                        {collapsed ? 
+                        <div className="ui equal width grid">
+                            <div className="left aligned column">
+                                <div className="ui icon small buttons">
+                                    {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
+                                    {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                </div>
+                            </div>
+                            <div className="column">
+                                <div className="ui icon small buttons">
+                                    <sui.Button icon='save' class="editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
+                                    <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                                </div>
+                            </div>
+                            <div className="column">
+                                <div className="ui icon small buttons">
+                                    <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                                    <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                </div>
+                            </div>
+                            <div className="column">
+                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class="small editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                            </div>
+                        </div> :
+                        <div className="ui equal width grid">
+                            <div className="column">
+                            </div>
+                            <div className="ui grid column">
+                                <div className="row">
+                                    <div className="column">
+                                        <div className="ui icon small buttons">
+                                            <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                                            <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                                            <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                            <sui.Button icon={collapsed ? 'expand' : 'compress'} class="editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                        </div>
                                     </div>
-                                    <div className="four wide column">
+                                </div>
+                                <div className="row" style={{paddingTop: 0}}>
+                                    <div className="column">
+                                        <div className="ui icon large buttons">
+                                            {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
+                                            {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="eight wide mobile ten wide tablet column">
-                                <div className="ui grid container">
-                                    <div className="four column row">
+                        </div> }
+                    </div>
+                    <div className="column tablet only">
+                        {collapsed ? 
+                        <div className="ui equal width grid">
+                            <div className="left aligned column">
+                                <div className="ui icon large buttons">
+                                    {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
+                                    {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                </div>
+                            </div>
+                            <div className="column">
+                                <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
+                            </div>
+                            <div className="column">
+                                <div className="ui icon large buttons">
+                                    <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                                    <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
+                                </div>
+                            </div>
+                            <div className="column">
+                                <div className="ui icon large buttons">
+                                    <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                                    <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                </div>
+                            </div>
+                            <div className="column">
+                                <sui.Button icon={collapsed ? 'expand' : 'compress'} class="large editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                            </div>
+                        </div>
+                        : <div className="ui grid">
+                            <div className="six wide column">
+                                <div className="ui grid">
+                                    <div className="row">
                                         <div className="column">
-                                            <sui.Button icon='undo' class="large editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
-                                        </div>
-                                        <div className="column">
-                                            <sui.Button icon='repeat' class="large editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
-                                        </div>
-                                        <div className="column">
-                                            <sui.Button icon='zoom' class="large editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
-                                        </div>
-                                        <div className="column">
-                                            <sui.Button icon='zoom out' class="large editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                            {run ? <sui.Button role="menuitem" class="right floated large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
                                         </div>
                                     </div>
+                                    <div className="row" style={{paddingTop: 0}}>
+                                        <div className="column">
+                                            {compileBtn ? <sui.Button role="menuitem" class={`right floated large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="ten wide column">
+                                <div className="ui grid">
                                     <div className="four column row">
+                                        <div className="column">
+                                            <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
+                                        </div>
+                                        <div className="column">
+                                            <div className="ui icon large buttons">
+                                                <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                                                <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
+                                            </div>
+                                        </div>
+                                        <div className="column">
+                                            <div className="ui icon large buttons">
+                                                <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                                                <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                            </div>
+                                        </div>
+                                        <div className="column">
+                                            <sui.Button icon={collapsed ? 'expand' : 'compress'} class="large editortools-btn collapse-editortools-btn" title={collapsed ? lf("Expand") : lf("Collapse")} onClick={() => this.toggleCollapse()}/>
+                                        </div>
+                                    </div>
+                                    <div className="centered row" style={{paddingTop: 0}}>
                                         <div className="eight wide column">
-                                            <div className={`ui large left icon fluid input projectname-input`} title={lf("Pick a name for your project") }>
+                                            <div className={`ui large left fluid input projectname-input`} title={lf("Pick a name for your project") }>
                                                 <input id="fileNameInput"
                                                     type="text"
                                                     placeholder={lf("Pick a name...") }
@@ -877,21 +973,15 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                                 </input>
                                             </div>
                                         </div>
-                                        <div className="column">
-                                            <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
-                                        </div>
-                                        <div className="column">
-                                            <sui.Button icon='smile' class="large editortools-btn feedback-editortools-btn" title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
-                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> }
                     </div>
                     <div className="column computer only">
-                        <div className="ui grid">
-                            <div className="column four wide">
-                                <div className={`ui small left icon fluid input projectname-input`} title={lf("Pick a name for your project") }>
+                        <div className="ui grid container">
+                            <div className="column five wide">
+                                <div className={`ui small left fluid input projectname-input`} title={lf("Pick a name for your project") }>
                                     <input id="fileNameInput"
                                         type="text"
                                         placeholder={lf("Pick a name...") }
@@ -900,26 +990,22 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                     </input>
                                 </div>
                             </div>
-                            <div className="column">
+                            <div className="left aligned column">
                                 <sui.Button icon='save' class="small editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile()} />
                             </div>
-                            <div className="column five wide">
-
+                            <div className="column six wide">
                             </div>
                             <div className="column two wide">
-                                <div className="ui icon buttons">
-                                    <sui.Button icon='undo' class="small editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
-                                    <sui.Button icon='repeat' class="small editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
+                                <div className="ui icon small buttons">
+                                    <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
+                                    <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
                                 </div>
                             </div>
                             <div className="column two wide">
-                                <div className="ui icon buttons">
-                                    <sui.Button icon='zoom' class="small editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
-                                    <sui.Button icon='zoom out' class="small editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
+                                <div className="ui icon small buttons">
+                                    <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
+                                    <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut()} />
                                 </div>
-                            </div>
-                            <div className="column two wide">
-                                <sui.Button icon='smile' class="small right floated editortools-btn feedback-editortools-btn " title={lf("Give Feedback")} onClick={() => this.sendFeedback()} />
                             </div>
                         </div>
                     </div>
@@ -2208,7 +2294,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -2278,11 +2364,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : ""}
                             {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                             {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Run") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.state.running ? this.stopSimulator() : this.runSimulator() } /> : undefined }
-                        </div>
-                        <div className="ui portrait only">
-                            {compileBtn ? <sui.Button role="menuitem" class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile() } /> : undefined }
-                            {make ? <sui.Button role="menuitem" icon='configure' class="large secondary" title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
-                            {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                         </div>
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}

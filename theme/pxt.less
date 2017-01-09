@@ -277,11 +277,11 @@ div.simframe > iframe {
     left: 0;
     right:0;
     z-index:3;
-    height:4.5rem;
+    height:4rem;
     background-color: @editorToolsBackground;
 }
 #blocksArea, #monacoEditor, #pxtJsonEditor {
-    bottom: 4.5rem !important;
+    bottom: 4rem !important;
 }
 
 /* Help card */
@@ -636,6 +636,78 @@ div.simframe > iframe {
 }
 
 /*******************************
+        Layout Variables
+*******************************/
+
+.ui.widedesktop.only {
+    display:none !important;
+}
+
+@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
+    .ui.widedesktop.only {
+        display:inherit !important;
+    }
+    .ui.widedesktop.hide {
+        display:none !important;
+    }
+}
+
+/* smaller desktop screen */
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 12/10) {
+    .ui.desktop.only {
+        display:none !important;
+    }
+}
+
+/* thin desktop portrait mode */
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 7/10) {
+    .ui.landscape.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @computerBreakpoint) {
+    .ui.portrait.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @tabletBreakpoint) {
+    .ui.tablet.only {
+        display:none !important;
+    }
+}
+
+/* Mobile + Tablet */
+@media only screen and (max-width: @largestTabletScreen) {
+    .ui.portrait.only {
+        display:inherit !important;
+    }
+    .ui.portrait.hide {
+        display:none !important;
+    }
+}
+
+/* Screens with decent vertical space */
+@media only screen and (max-height: @tallEditorBreakpoint) {
+    .ui.tall.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @mobileBreakpoint) {
+    .ui.thin.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (max-width: @mobileBreakpoint) {
+    .ui.wide.only {
+        display:none !important;
+    }
+}
+
+/*******************************
         Media Adjustments
 *******************************/
 
@@ -812,7 +884,6 @@ div.simframe > iframe {
         position:absolute;
         padding: 0;
         margin: 1em;
-        padding-bottom: 1em;
         z-index:5;
         bottom:0rem;
         left:0rem;
@@ -834,10 +905,19 @@ div.simframe > iframe {
         bottom: 0rem;
     }
     #editortools {
-        height: 12rem;
+        height: 10rem;
     }
     #blocksArea, #monacoEditor, #pxtJsonEditor {
-        bottom: 12rem !important;
+        bottom: 10rem !important;
+    }
+    .hideEditorFloats #editortools {
+        height: 4.5rem;
+    }
+    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
+        bottom: 4.5rem !important;
+    }
+    .hideEditorFloats .organization {
+        display: none;
     }
     /* Simulator */
     div.simframe {
@@ -879,14 +959,6 @@ div.simframe > iframe {
         right: auto;
         left:1rem;
     }
-    /* Blockly toolbox */
-    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        z-index:10;
-        position:fixed;
-        top: 0;
-        height: 100% !important;
-        bottom:0;
-    }
 }
 
 /* Mobile */
@@ -909,9 +981,17 @@ div.simframe > iframe {
     #blocklyTrashIcon {
         font-size: 3rem;
     }
-    /* Organization */
+    /* Organization logo */
     .organization {
-        top: auto !important;
+        top:auto !important;
+        right:0.5rem;
+        left: auto;
+        bottom: 0.5rem;
+        height: 1.3rem;
+    }
+    .rtl .organization {
+        left:0.5rem;
+        right: auto;
     }
     .blocklyTreeIcon {
         margin: 0.25em 0.25em 0.0em 0.0em;
@@ -920,76 +1000,10 @@ div.simframe > iframe {
     .blocklyAddPackageButton {
         margin-left: 0 !important;
     }
-}
-
-/*******************************
-        Layout Variables
-*******************************/
-
-.ui.widedesktop.only {
-    display:none !important;
-}
-
-@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
-    .ui.widedesktop.only {
-        display:inherit !important;
+    .hideEditorFloats #editortools {
+        height: 4rem;
     }
-    .ui.widedesktop.hide {
-        display:none !important;
-    }
-}
-
-/* smaller desktop screen */
-@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 12/10) {
-    .ui.desktop.only {
-        display:none !important;
-    }
-}
-
-/* thin desktop portrait mode */
-@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 7/10) {
-    .ui.landscape.only {
-        display:none !important;
-    }
-}
-
-@media only screen and (min-width: @computerBreakpoint) {
-    .ui.portrait.only {
-        display:none !important;
-    }
-}
-
-@media only screen and (min-width: @tabletBreakpoint) {
-    .ui.tablet.only {
-        display:none !important;
-    }
-}
-
-/* Mobile + Tablet */
-@media only screen and (max-width: @largestTabletScreen) {
-    .ui.portrait.only {
-        display:inherit !important;
-    }
-    .ui.portrait.hide {
-        display:none !important;
-    }
-}
-
-/* Screens with decent vertical space */
-@media only screen and (max-height: @tallEditorBreakpoint) {
-    .ui.tall.only {
-        display:none !important;
-    }
-}
-
-@media only screen and (min-width: @mobileBreakpoint) {
-    .ui.thin.only {
-        display:none !important;
-    }
-}
-
-@media only screen and (max-width: @mobileBreakpoint) {
-    .ui.wide.only {
-        display:none !important;
+    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
+        bottom: 4rem !important;
     }
 }

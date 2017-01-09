@@ -540,7 +540,7 @@ export class Editor extends srceditor.Editor {
                 monacoEditor.resetFlyout(false);
 
                 // Hide the toolbox if the current category is clicked twice
-                if (monacoEditor.selectedCategoryRow == treeitem) {
+                if (monacoEditor.selectedCategoryRow == treerow) {
                     monacoEditor.selectedCategoryRow = null;
                     monacoFlyout.style.display = 'none';
                     treerow.className = 'blocklyTreeRow';
