@@ -472,6 +472,7 @@ export class Editor extends srceditor.Editor {
 
     private selectedCategoryRow: HTMLElement;
     private selectedCategoryColor: string;
+    private selectedCategoryBackgroundColor: string;
 
     resetFlyout(clear?: boolean) {
         // Hide the flyout
@@ -481,7 +482,7 @@ export class Editor extends srceditor.Editor {
 
         // Hide the currnet toolbox category
         if (this.selectedCategoryRow) {
-            this.selectedCategoryRow.style.background = 'none';
+            this.selectedCategoryRow.style.background = `${this.selectedCategoryBackgroundColor}`;
             this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
             this.selectedCategoryRow.className = 'blocklyTreeRow';
         }
@@ -554,8 +555,10 @@ export class Editor extends srceditor.Editor {
                     if (appTheme.invertedToolbox) {
                         // Inverted toolbox
                         monacoEditor.selectedCategoryColor = '#fff';
+                        monacoEditor.selectedCategoryBackgroundColor = color;
                     } else {
                         monacoEditor.selectedCategoryColor = color;
+                        monacoEditor.selectedCategoryBackgroundColor = 'none';
                     }
                 }
 
