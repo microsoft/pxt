@@ -642,6 +642,9 @@ div.simframe > iframe {
 .ui.widedesktop.only {
     display:none !important;
 }
+.ui.tablet.only {
+    display:none !important;
+}
 
 @media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
     .ui.widedesktop.only {
@@ -672,9 +675,10 @@ div.simframe > iframe {
     }
 }
 
-@media only screen and (min-width: @tabletBreakpoint) {
+/* Tablet only */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     .ui.tablet.only {
-        display:none !important;
+        display:inherit !important;
     }
 }
 
@@ -731,6 +735,9 @@ div.simframe > iframe {
     /* Blockly */
     .blocklyTreeRow {
         min-width: 200px;
+    }
+    .collapsedEditorTools .organization {
+        display: block;
     }
 }
 
@@ -807,6 +814,15 @@ div.simframe > iframe {
         border-left-width: 18px !important;
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
+    }
+    .collapsedEditorTools #filelist {
+        display: none;
+    }
+    .collapsedEditorTools #maineditor {
+        left:0 !important;
+    }
+    .collapsedEditorTools .organization {
+        display: none;
     }
 }   
 
@@ -1005,5 +1021,9 @@ div.simframe > iframe {
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
         bottom: 4rem !important;
+    }
+    /* Hide getting stared on mobile */
+    #getting-started-btn {
+        display: none;
     }
 }
