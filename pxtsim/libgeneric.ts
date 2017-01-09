@@ -116,14 +116,9 @@ namespace pxsim {
         }
 
         export function getAt(c: RefCollection, x: number) {
-            if (c.isValidIndex(x)) {
-                let tmp = c.getAt(x);
-                if (c.flags & 1) incr(tmp);
-                return tmp;
-            }
-            else {
-                check(false);
-            }
+            let tmp = c.getAt(x);
+            if (c.flags & 1) incr(tmp);
+            return tmp;
         }
 
         export function removeAt(c: RefCollection, x: number) {
