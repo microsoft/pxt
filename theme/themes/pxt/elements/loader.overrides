@@ -1,3 +1,57 @@
 /*******************************
          Site Overrides
 *******************************/
+
+
+.ui.loader:before {
+   border: none;
+   border-radius: 0px;
+   box-shadow: none;
+}
+
+.ui.loader:after {
+   border: none;
+   box-shadow: none;
+   border-radius: 0px;
+   margin: 40px auto;
+   background: transparent data-uri(@loaderImageUrl) no-repeat center center;
+   background-size: 100%;
+  -webkit-animation: @loaderAnimation @loaderSpeed infinite ease-in-out;
+  animation: @loaderAnimation @loaderSpeed infinite ease-in-out;
+}
+
+@-webkit-keyframes loader-pxt {
+  0% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(0deg);
+            transform: perspective(160px) rotateX(0deg) rotateY(0deg); 
+            }
+  15% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(-@loaderAngle);
+            transform: perspective(160px) rotateX(0deg) rotateY(-@loaderAngle); }
+  50% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(@loaderAngle);
+            transform: perspective(160px) rotateX(0deg) rotateY(@loaderAngle); 
+            }
+  100% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(0deg);
+            transform: perspective(160px) rotateX(0deg) rotateY(0deg); 
+            }
+}
+
+@keyframes loader-pxt {
+  0% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(0deg);
+            transform: perspective(160px) rotateX(0deg) rotateY(0deg); 
+            }
+  15% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(-10deg);
+            transform: perspective(160px) rotateX(0deg) rotateY(-10deg); }
+  50% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(10deg);
+            transform: perspective(160px) rotateX(0deg) rotateY(10deg);
+            }
+  100% {
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(0deg);
+            transform: perspective(160px) rotateX(0deg) rotateY(0deg); 
+            }
+}
