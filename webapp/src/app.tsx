@@ -304,32 +304,22 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
                 {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
-                    <div className="ui vertial segment">
+                    <div className="ui vertical segment">
                         <sui.Button
                             icon="file outline"
-                            text={lf("New") }
+                            text={lf("New Project...") }
                             title={lf("Creates a new empty project") }
                             onClick={() => newProject() } />
-                        <sui.Button
-                            icon="save"
-                            text={lf("Save") }
-                            title={lf("Saves current project to a.hex file") }
-                            onClick={() => saveProject() } />
-                        <sui.Button
-                            icon="options"
-                            text={lf("Rename...") }
-                            title={lf("Rename the current project") }
-                            onClick={() => renameProject() } />
-                    </div> : undefined}
-                <div className="ui vertial segment">
-                {this.state.search ? <div className="ui search">
-                    <div className="ui fluid action input" role="search">
                         {pxt.appTarget.compile ?
                             <sui.Button
                                 icon="upload"
-                                text={lf("Import") }
-                                title={lf("Open .hex files on your computer") }
+                                text={lf("Import File...") }
+                                title={lf("Open files from your computer") }
                                 onClick={() => importHex() } /> : undefined}
+                    </div> : undefined}
+                <div className="ui vertical segment">
+                {this.state.search ? <div className="ui search">
+                    <div className="ui fluid action input" role="search">
                         <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
                         <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                             <i className="search icon"></i>
