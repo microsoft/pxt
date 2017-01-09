@@ -106,6 +106,9 @@ declare namespace Blockly {
         previousConnection: Connection;
         workspace: Workspace;
 
+        // private
+        xy_: goog.math.Coordinate;
+
 
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;
