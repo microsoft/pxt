@@ -1189,18 +1189,6 @@ namespace pxt.blocks {
             let topBlocks = this.getTopBlocks(true);
             let eventGroup = Blockly.genUid();
 
-            // Options to undo/redo previous action.
-            let undoOption: any = {};
-            undoOption.text = lf("Undo");
-            undoOption.enabled = this.undoStack_.length > 0;
-            undoOption.callback = this.undo.bind(this, false);
-            menuOptions.push(undoOption);
-            let redoOption: any = {};
-            redoOption.text = lf("Redo");
-            redoOption.enabled = this.redoStack_.length > 0;
-            redoOption.callback = this.undo.bind(this, true);
-            menuOptions.push(redoOption);
-
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
             if (this.options.collapse) {
