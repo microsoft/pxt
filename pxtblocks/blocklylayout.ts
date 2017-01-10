@@ -4,7 +4,8 @@ namespace pxt.blocks.layout {
         let changed = false;
         let env: pxt.blocks.Environment;
         let newBlocks: pxt.Map<B.Block>;
-        oldWs.getTopBlocks(false).forEach(ob => {
+        oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
+            .forEach(ob => {
             const otp = ob.xy_;
             if (otp && otp.x != 0 && otp.y != 0) {
                 if (!env) {
