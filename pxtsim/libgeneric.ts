@@ -77,9 +77,15 @@ namespace pxsim {
             }
             //As we treat undefined same as 0 which is default value for all the arrays, will need to search both.
             let defaultValueIndex = this.data.indexOf(x, start);
-            let undefinedIndex = this.data.indexOf(undefined, start);
+            let undefinedIndex = -1;
+            for (let i = start; i < this.data.length; i++) {
+                if (this.data[i] == undefined) {
+                    undefinedIndex = i;
+                    break;
+                }
+            }
 
-            if (defaultValueIndex < undefinedIndex) {
+            if (defaultValueIndex < undefinedIndex || undefinedIndex == -1) {
                 return defaultValueIndex;
             }
             return undefinedIndex;
