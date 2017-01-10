@@ -3,7 +3,7 @@ namespace pxt.blocks.layout {
     export function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
         let changed = false;
         let env: pxt.blocks.Environment;
-        let newBlocks: pxt.Map<B.Block>;
+        let newBlocks: pxt.Map<B.Block[]>; // support for multiple events with similar name
         oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
             .forEach(ob => {
             const otp = ob.xy_;
@@ -11,10 +11,15 @@ namespace pxt.blocks.layout {
                 if (!env) {
                     env = pxt.blocks.mkEnv(oldWs, blockInfo, true);
                     newBlocks = {};
-                    newWs.getTopBlocks(false).forEach(b => newBlocks[pxt.blocks.callKey(env, b) ] = b);
+                    newWs.getTopBlocks(false).forEach(b => {
+                        const nkey = pxt.blocks.callKey(env, b);
+                        const nbs = newBlocks[nkey] || [];
+                        nbs.push(b);
+                        newBlocks[nkey] = nbs;
+                    });
                 }
                 const oldKey = pxt.blocks.callKey(env, ob);
-                const newBlock = newBlocks[oldKey];
+                const newBlock = (newBlocks[oldKey] || []).shift();
                 if (newBlock) {
                     newBlock.xy_ = otp.clone();
                     changed = true;
