@@ -144,6 +144,10 @@ export class Editor extends srceditor.Editor {
         this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
     }
 
+    redo() {
+        this.editor.trigger('keyboard', monaco.editor.Handler.Redo, null)
+    }
+
     display() {
         return (
             <div className='full-abs' id="monacoEditorArea">
@@ -466,9 +470,9 @@ export class Editor extends srceditor.Editor {
         this.editor.addOverlayWidget(flyoutWidget);
     }
 
-    private selectedCategoryItem: HTMLElement;
     private selectedCategoryRow: HTMLElement;
     private selectedCategoryColor: string;
+    private selectedCategoryBackgroundColor: string;
 
     resetFlyout(clear?: boolean) {
         // Hide the flyout
@@ -477,14 +481,13 @@ export class Editor extends srceditor.Editor {
         flyout.style.display = 'none';
 
         // Hide the currnet toolbox category
-        if (this.selectedCategoryItem) {
-            this.selectedCategoryItem.style.background = 'none';
+        if (this.selectedCategoryRow) {
+            this.selectedCategoryRow.style.background = `${this.selectedCategoryBackgroundColor}`;
             this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
             this.selectedCategoryRow.className = 'blocklyTreeRow';
         }
 
         if (clear) {
-            this.selectedCategoryItem = null;
             this.selectedCategoryRow = null;
         }
     }
@@ -538,23 +541,24 @@ export class Editor extends srceditor.Editor {
                 monacoEditor.resetFlyout(false);
 
                 // Hide the toolbox if the current category is clicked twice
-                if (monacoEditor.selectedCategoryItem == treeitem) {
-                    monacoEditor.selectedCategoryItem = null;
+                if (monacoEditor.selectedCategoryRow == treerow) {
+                    monacoEditor.selectedCategoryRow = null;
                     monacoFlyout.style.display = 'none';
                     treerow.className = 'blocklyTreeRow';
                     return;
                 } else {
                     // Selected category
-                    treeitem.style.background = `${color}`;
+                    treerow.style.background = `${color}`;
                     treerow.style.color = '#fff';
                     treerow.className += ' blocklyTreeSelected';
-                    monacoEditor.selectedCategoryItem = treeitem;
                     monacoEditor.selectedCategoryRow = treerow;
                     if (appTheme.invertedToolbox) {
                         // Inverted toolbox
                         monacoEditor.selectedCategoryColor = '#fff';
+                        monacoEditor.selectedCategoryBackgroundColor = color;
                     } else {
                         monacoEditor.selectedCategoryColor = color;
+                        monacoEditor.selectedCategoryBackgroundColor = 'none';
                     }
                 }
 
@@ -679,10 +683,6 @@ export class Editor extends srceditor.Editor {
             (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                 (() => {
                     this.parent.addPackage();
-                }) : null),
-            (!this.parent.getSandboxMode() ?
-                (() => {
-                    this.undo();
                 }) : null)
         );
     }
@@ -773,7 +773,7 @@ export class Editor extends srceditor.Editor {
     }
 
     snapshotState() {
-        return this.editor.getModel().getLinesContent()
+        return this.editor ? this.editor.getModel().getLinesContent() : null;
     }
 
     setViewState(pos: monaco.IPosition) {

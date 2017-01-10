@@ -21,26 +21,6 @@ export class Editor extends srceditor.Editor {
         return "pxtJsonEditor"
     }
 
-    /*
-                    <div className="three fields">
-                        <sui.Input inputLabel={lf("Any") } type="number" value={(card.any || 0).toString() } onChange={v => {
-                            initCard();
-                            let vi = Math.max(0, parseInt(v) || 0)
-                            update(c.card.any = vi)
-                        } } />
-                        <sui.Input inputLabel={lf("Hardware") } type="number" value={(card.hardware || 0).toString() } onChange={v => {
-                            initCard();
-                            let vi = Math.max(0, parseInt(v) || 0)
-                            update(c.card.hardware = vi)
-                        } } />
-                        <sui.Input inputLabel={lf("Software") } type="number" value={(card.software || 0).toString() } onChange={v => {
-                            initCard();
-                            let vi = Math.max(0, parseInt(v) || 0)
-                            update(c.card.software = vi)
-                        } } />
-                    </div>
-*/
-
     display() {
         const c = this.config
         const update = (v: any) => {
@@ -93,7 +73,6 @@ export class Editor extends srceditor.Editor {
             <div className="ui content">
                 <div className="ui segment form text" style={{ backgroundColor: "white" }}>
                     <sui.Input label={lf("Name")} value={c.name} onChange={v => update(c.name = v)} />
-                    <sui.Input label={lf("Description") } lines={3} value={c.description} onChange={v => update(c.description = v) } />
                     {userConfigs.map(uc =>
                         <sui.Checkbox
                             key={`userconfig-${uc.description}`}

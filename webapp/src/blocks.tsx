@@ -79,17 +79,14 @@ export class Editor extends srceditor.Editor {
                             (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                                 (() => {
                                     this.parent.addPackage();
-                                }) : null),
-                            (!this.parent.getSandboxMode() ?
-                                (() => {
-                                    this.undo();
                                 }) : null)
                         );
                     }
                     if (showCategories && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
-                                .then((fns: pxtc.SymbolInfo[]) => fns));
+                                .then((fns: pxtc.SymbolInfo[]) => fns),
+                            searchTb => this.updateToolbox(searchTb, showCategories));
                     }
 
                     let xml = this.delayLoadXml;
@@ -417,6 +414,18 @@ export class Editor extends srceditor.Editor {
         this.editor.undo();
     }
 
+    redo() {
+        this.editor.undo(true);
+    }
+
+    zoomIn() {
+        this.editor.zoomCenter(1);
+    }
+
+    zoomOut() {
+        this.editor.zoomCenter(-1);
+    }
+
     getId() {
         return "blocksArea"
     }
@@ -503,8 +512,6 @@ export class Editor extends srceditor.Editor {
         let toolbox = showCategories ?
                 document.getElementById('blocklyToolboxDefinitionCategory')
                 : document.getElementById('blocklyToolboxDefinitionFlyout');
-        let zoomEnabled = showCategories;
-        let controlsEnabled = showCategories;
         let blocklyOptions: Blockly.Options = {
             toolbox: toolbox,
             scrollbars: true,
@@ -515,8 +522,8 @@ export class Editor extends srceditor.Editor {
             comments: true,
             disable: false,
             zoom: {
-                enabled: zoomEnabled,
-                controls: controlsEnabled,
+                enabled: false,
+                controls: false,
                 /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
                 maxScale: 2.5,
                 minScale: .2,

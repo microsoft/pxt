@@ -18,9 +18,10 @@
     margin-right: 0.25rem;
 }
 
-@media only screen and (max-width: @largestMobileScreen) {
+@media only screen and (max-width: @largestTabletScreen) {
     #menubar .ui.menu {
         height: @mobileMenuHeight !important;
+        min-height: @mobileMenuHeight !important;
     }
 }
 
