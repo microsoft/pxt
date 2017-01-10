@@ -16,8 +16,8 @@
    margin: 40px auto;
    background: transparent data-uri(@loaderImageUrl) no-repeat center center;
    background-size: 100%;
-  -webkit-animation: @loaderAnimation @loaderSpeed infinite ease-in-out;
-  animation: @loaderAnimation @loaderSpeed infinite ease-in-out;
+  -webkit-animation: @loaderAnimation @loaderSpeed infinite linear;
+  animation: @loaderAnimation @loaderSpeed infinite linear;
 }
 
 @-webkit-keyframes loader-pxt {
@@ -44,11 +44,11 @@
             transform: perspective(160px) rotateX(0deg) rotateY(0deg); 
             }
   15% {
-    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(-10deg);
-            transform: perspective(160px) rotateX(0deg) rotateY(-10deg); }
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(-@loaderAngle);
+            transform: perspective(160px) rotateX(0deg) rotateY(-@loaderAngle); }
   50% {
-    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(10deg);
-            transform: perspective(160px) rotateX(0deg) rotateY(10deg);
+    -webkit-transform: perspective(160px) rotateX(0deg) rotateY(@loaderAngle);
+            transform: perspective(160px) rotateX(0deg) rotateY(@loaderAngle);
             }
   100% {
     -webkit-transform: perspective(160px) rotateX(0deg) rotateY(0deg);
