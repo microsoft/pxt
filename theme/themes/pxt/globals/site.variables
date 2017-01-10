@@ -47,6 +47,8 @@
      PXT Variables
 *******************************/
 
+@avatarUrl: data-uri("../docs/static/avatar.svg");
+
 /*-------------------
    Menu
 --------------------*/

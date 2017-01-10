@@ -45,6 +45,13 @@ the ``id``, ``corpkg``, ``name`` and ``title`` fields to reflect your target inf
 
 * Tip: keep searching and replacing all instances of ``sample`` in `pxtarget.json`.
 
+### Updating assets
+
+Graphical assets are located under ``/docs/static``.
+
+* **avatar.svg** image used in talking heads
+* **loader.svg** image used in loading overlay
+
 ### Updating the ``sample`` package
 
 * Rename the ``/libs/sample`` project to your target id, ``libs/[your target id]``

@@ -635,6 +635,118 @@ div.simframe > iframe {
     border: solid 3px #fc3 !important;
 }
 
+/******************************
+Avatar
+******************************/
+
+.avatar {
+    position: relative;
+}
+
+#root .avatar .message {
+    margin-left: 4em;
+    margin-bottom: 1em;                    
+}
+
+.avatar .avatar-image {
+    position: absolute;
+    left: 0;
+    top: 1em;
+    width: 3em;
+    height: 3em;
+    background-size: contain;
+    background-image: @avatarUrl;
+}
+
+.avatar .message:after {
+    top: 1.1em;
+    left: -1em;
+    bottom: auto;
+    border-width: 0px 1em 0.7em 0;
+    border-color: rgba(0, 0, 0, 0) #EEE;
+    content: '';
+    position: absolute;
+    border-style: solid;
+    display: block;
+    width: 0;
+}
+
+/*******************************
+        Layout Variables
+*******************************/
+
+.ui.widedesktop.only {
+    display:none !important;
+}
+.ui.tablet.only {
+    display:none !important;
+}
+
+@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
+    .ui.widedesktop.only {
+        display:inherit !important;
+    }
+    .ui.widedesktop.hide {
+        display:none !important;
+    }
+}
+
+/* smaller desktop screen */
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 12/10) {
+    .ui.desktop.only {
+        display:none !important;
+    }
+}
+
+/* thin desktop portrait mode */
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 7/10) {
+    .ui.landscape.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @computerBreakpoint) {
+    .ui.portrait.only {
+        display:none !important;
+    }
+}
+
+/* Tablet only */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    .ui.tablet.only {
+        display:inherit !important;
+    }
+}
+
+/* Mobile + Tablet */
+@media only screen and (max-width: @largestTabletScreen) {
+    .ui.portrait.only {
+        display:inherit !important;
+    }
+    .ui.portrait.hide {
+        display:none !important;
+    }
+}
+
+/* Screens with decent vertical space */
+@media only screen and (max-height: @tallEditorBreakpoint) {
+    .ui.tall.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @mobileBreakpoint) {
+    .ui.thin.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (max-width: @mobileBreakpoint) {
+    .ui.wide.only {
+        display:none !important;
+    }
+}
+
 /*******************************
         Layout Variables
 *******************************/
@@ -732,6 +844,9 @@ div.simframe > iframe {
     .blocklyTreeRow {
         min-width: 200px;
     }
+    .collapsedEditorTools .organization {
+        display: block;
+    }
 }
 
 /* Small Monitor */
@@ -807,6 +922,15 @@ div.simframe > iframe {
         border-left-width: 18px !important;
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
+    }
+    .collapsedEditorTools #filelist {
+        display: none;
+    }
+    .collapsedEditorTools #maineditor {
+        left:0 !important;
+    }
+    .collapsedEditorTools .organization {
+        display: none;
     }
 }   
 
