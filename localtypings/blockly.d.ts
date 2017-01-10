@@ -22,6 +22,7 @@ declare namespace goog {
             x: number;
             y: number;
             constructor(x: number, y: number);
+            clone() : Coordinate;
 
             static difference(a: Coordinate, b: Coordinate): Coordinate;
             static sum(a: Coordinate, b: Coordinate): Coordinate;
@@ -105,6 +106,9 @@ declare namespace Blockly {
         outputConnection: Connection;
         previousConnection: Connection;
         workspace: Workspace;
+
+        // private
+        xy_: goog.math.Coordinate;
 
 
         // Returns null if the field does not exist on the specified block.

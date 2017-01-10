@@ -153,7 +153,7 @@ export class Editor extends srceditor.Editor {
         // layout on first load if no data info
         const needsLayout = this.editor.getTopBlocks(false).some(b => {
             const tp = b.getBoundingRectangle().topLeft;
-            return tp.x == 0 && tp.y == 0
+            return b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0
         });
         if (needsLayout)
             pxt.blocks.layout.flow(this.editor);
