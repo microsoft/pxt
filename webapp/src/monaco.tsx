@@ -773,7 +773,7 @@ export class Editor extends srceditor.Editor {
     }
 
     snapshotState() {
-        return this.editor ? this.editor.getModel().getLinesContent() : null;
+        return this.editor && this.editor.getModel() ? this.editor.getModel().getLinesContent() : null;
     }
 
     setViewState(pos: monaco.IPosition) {
