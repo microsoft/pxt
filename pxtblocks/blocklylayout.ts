@@ -16,7 +16,7 @@ namespace pxt.blocks.layout {
                 const oldKey = pxt.blocks.callKey(env, ob);
                 const newBlock = newBlocks[oldKey];
                 if (newBlock) {
-                    newBlock.xy_ = otp;
+                    newBlock.xy_ = otp.clone();
                     changed = true;
                 }
             }

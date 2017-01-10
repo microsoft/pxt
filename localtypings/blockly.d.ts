@@ -22,6 +22,7 @@ declare namespace goog {
             x: number;
             y: number;
             constructor(x: number, y: number);
+            clone() : Coordinate;
 
             static difference(a: Coordinate, b: Coordinate): Coordinate;
             static sum(a: Coordinate, b: Coordinate): Coordinate;
