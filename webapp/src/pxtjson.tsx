@@ -12,6 +12,7 @@ const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
+    isSaving: boolean;
 
     prepare() {
         this.isReady = true
@@ -23,15 +24,23 @@ export class Editor extends srceditor.Editor {
 
     display() {
         const c = this.config
-        const update = (v: any) => {
+        const updateName = (v: any) => {
+            this.config.name = v;
+            this.parent.forceUpdate()
+        }
+        const save = () => {
+            this.isSaving = true;
             const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
                 pkg.mainPkg.config.name = c.name;
                 this.parent.setState({projectName: c.name});
                 this.parent.forceUpdate()
                 Util.nextTick(this.changeCallback)
+                this.isSaving = false;
             })
-
+        }
+        const deleteProject = () => {
+            this.parent.removeProject();
         }
         const initCard = () => {
             if (!c.card) c.card = {}
@@ -68,12 +77,12 @@ export class Editor extends srceditor.Editor {
                 }
             }
             // trigger update            
-            update(uc);
+            save();
         }
         return (
             <div className="ui content">
                 <div className="ui segment form text" style={{ backgroundColor: "white" }}>
-                    <sui.Input label={lf("Name")} value={c.name} onChange={v => update(c.name = v)} />
+                    <sui.Input label={lf("Name")} value={c.name} onChange={(v) => updateName(c.name = v)} />
                     {userConfigs.map(uc =>
                         <sui.Checkbox
                             key={`userconfig-${uc.description}`}
@@ -82,7 +91,9 @@ export class Editor extends srceditor.Editor {
                             onChange={() => applyUserConfig(uc) } />
                     ) }
                     <sui.Field>
+                        <sui.Button text={lf("Save")} class={`green ${this.isSaving ? 'disabled' : ''}`} onClick={() => save()} />
                         <sui.Button text={lf("Edit Settings As text") } onClick={() => this.parent.editText() } />
+                        <sui.Button text={lf("Delete")} class={`red right floated`} onClick={() => deleteProject()} />
                     </sui.Field>
                 </div>
             </div>
