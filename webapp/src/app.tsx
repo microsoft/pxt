@@ -806,14 +806,15 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
     startStopSimulator() {
         pxt.tickEvent("editortools.startStopSimulator");
         const state = this.props.parent.state;
-        if (!state.running && state.collapseEditorTools)
-            this.props.parent.setState({collapseEditorTools: false});
+        this.props.parent.setState({collapseEditorTools: !state.collapseEditorTools});
         this.props.parent.startStopSimulator();
     }
 
     toggleCollapse() {
         const state = this.props.parent.state;
         pxt.tickEvent("editortools.toggleCollapse", {'collapsed': '' + !state.collapseEditorTools});
+        if (!state.running && state.collapseEditorTools)
+            this.props.parent.startStopSimulator();
         this.props.parent.setState({collapseEditorTools: !state.collapseEditorTools});
     }
 
@@ -879,7 +880,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                     <div className="column">
                                         <div className="ui icon large buttons">
                                             {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
-                                            {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                            {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                         </div>
                                     </div>
                                 </div>
@@ -922,7 +923,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                             {compileBtn ? <sui.Button role="menuitem" class={`large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.props.parent.compile() } /> : undefined }
                                         </div>
                                         <div className="two wide left aligned column">
-                                            {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.props.parent.startStopSimulator() } /> : undefined }
+                                            {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                         </div>
                                         <div className="three wide column">
                                             <div className="ui icon large buttons">
