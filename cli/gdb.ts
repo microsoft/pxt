@@ -64,7 +64,7 @@ function getOpenOcdPath() {
     return args
 }
 
-export function startAsync() {
+export function startAsync(c: commandParser.ParsedCommand) {
     let binTrg = pxt.appTarget.compileService.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
     let f = "built/yt/build/" + pxt.appTarget.compileService.yottaTarget
         + "/source/" + binTrg;
@@ -84,7 +84,7 @@ export function startAsync() {
         detached: true,
     })
 
-    let gdbargs = ["--command=built/openocd.gdb", f]
+    let gdbargs = ["--command=built/openocd.gdb", f].concat(c.arguments)
 
     pxt.log("starting gdb with: " + gdbargs.join(" "))
 
@@ -98,22 +98,29 @@ export function startAsync() {
         proc.kill('SIGINT')
     });
 
+    let shutdownOpenocdAsync = () => new Promise((resolve, reject) => {
+        let s = net.connect(4444)
+        s.on("connect", () => {
+            pxt.log("shutdown openocd...")
+            s.write("shutdown\n")
+            s.end();
+        })
+        s.on("error", () => {
+            pxt.log("Cannot connect to openocd to shut it down. Probably already down.")
+            resolve()
+        })
+        s.on("close", () => resolve())
+    })
+
+    let start = Date.now()
+
     return new Promise<void>((resolve, reject) => {
         proc.on("error", (err: any) => { reject(err) })
         proc.on("close", () => {
             resolve()
         })
     })
-        .finally(() => new Promise((resolve, reject) => {
-            let s = net.connect(4444)
-            s.on("connect", () => {
-                s.write("shutdown\n")
-                s.end();
-            })
-            s.on("error", () => {
-                pxt.log("Cannot connect to openocd to shut it down. Probably already down.")
-                resolve()
-            })
-            s.on("close", () => resolve())
-        }))
+        // wait at least two seconds since starting openocd, before trying to close it
+        .finally(() => Promise.delay(Math.max(0, 2000 - (Date.now() - start)))
+            .then(shutdownOpenocdAsync))
 }

@@ -3705,7 +3705,14 @@ function initCommands() {
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
-    advancedCommand("gdb", "attempt to start GDB", gdb.startAsync)
+
+    p.defineCommand({
+        name: "gdb",
+        help: "attempt to start openocd and GDB",
+        argString: "[GDB_ARGUMNETS...]",
+        anyArgs: true,
+        advanced: true
+    }, gdb.startAsync);
 
     p.defineCommand({
         name: "pokerepo",
