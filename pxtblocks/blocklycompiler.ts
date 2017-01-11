@@ -1155,7 +1155,7 @@ namespace pxt.blocks {
     // - All variables have been assigned an initial [Point] in the union-find.
     // - Variables have been marked to indicate if they are compatible with the
     //   TouchDevelop for-loop model.
-    function mkEnv(w: B.Workspace, blockInfo: pxtc.BlocksInfo): Environment {
+    export function mkEnv(w: B.Workspace, blockInfo?: pxtc.BlocksInfo, skipVariables?: boolean): Environment {
         // The to-be-returned environment.
         let e = emptyEnv(w);
 
@@ -1190,6 +1190,8 @@ namespace pxt.blocks {
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
                 })
+
+        if (skipVariables) return e;
 
         const variableIsScoped = (b: B.Block, name: string): boolean => {
             if (!b)
@@ -1308,6 +1310,22 @@ namespace pxt.blocks {
         return [] // unreachable
     }
 
+    export function callKey(e: Environment, b: B.Block): string {
+        if (b.type == ts.pxtc.ON_START_TYPE)
+            return JSON.stringify({ name: ts.pxtc.ON_START_TYPE });
+
+        const call = e.stdCallTable[b.type];
+        if (call) {
+            // detect if same event is registered already
+            const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
+            const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
+                .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
+            return key;
+        }
+
+        return undefined;
+    }
+
     function updateDisabledBlocks(e: Environment, allBlocks: B.Block[], topBlocks: B.Block[]) {
         // unset disabled
         allBlocks.forEach(b => b.setDisabled(false));
@@ -1336,9 +1354,7 @@ namespace pxt.blocks {
             else if (call && call.hasHandler) {
                 // compute key that identifies event call
                 // detect if same event is registered already
-                const compiledArgs = eventArgs(call).map(arg => compileArg(e, b, arg, []));
-                const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
-                    .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
+                const key = callKey(e, b);
                 flagDuplicate(key, b);
             } else {
                 // all non-events are disabled

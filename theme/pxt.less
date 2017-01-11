@@ -79,6 +79,10 @@
     background: rgba(0,0,0,0.05);
 }
 
+#simulators {
+    text-align: center;
+}
+
 /* Getting started button */
 #getting-started-btn {
     display:none;
@@ -229,7 +233,7 @@ div.simframe > iframe {
 /* Organization logo */
 .organization {
     position:absolute;
-    top:1rem;
+    top:1.3rem;
     right:2rem;
     height:2rem;
     z-index:102;
@@ -263,6 +267,21 @@ div.simframe > iframe {
     -webkit-transition: background 1s; /* Safari */
     transition: background 1s;
     transition-timing-function: ease-in;
+}
+
+/* Editor tools */
+#editortools {
+    position: absolute;
+    top:auto;
+    bottom:0;
+    left: 0;
+    right:0;
+    z-index:3;
+    height:4rem;
+    background-color: @editorToolsBackground;
+}
+#blocksArea, #monacoEditor, #pxtJsonEditor {
+    bottom: 4rem !important;
 }
 
 /* Help card */
@@ -307,6 +326,18 @@ div.simframe > iframe {
     vertical-align: middle;
 }
 
+/* Sandbox */
+.sandboxfooter {
+    position:absolute;
+    bottom:1rem;
+    left:1rem;
+    z-index:5;
+}
+.rtl .sandboxfooter{
+    left: auto;
+    right:1rem;
+}
+
 /* code card */
 
 .ui.card .image pre {
@@ -324,6 +355,7 @@ div.simframe > iframe {
 ::-webkit-scrollbar {
     -webkit-appearance: none;
     width: 10px;
+    height: 10px;
 }
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
@@ -331,6 +363,23 @@ div.simframe > iframe {
     box-shadow: 0 0 1px #ccc;    
     -webkit-box-shadow: 0 0 1px #ccc;
 }
+
+/* Button Colors */
+.ui.button.editortools-btn {
+    &:extend(.grey all);
+}
+.ui.button.getting-started-btn {
+    &:extend(.green all);
+}
+.ui.button.download-button {
+    &:extend(.green all);
+}
+/* Blockly Toolbox Buttons */
+.ui.button.blocklyAddPackageButton {
+    &:extend(.grey all);
+    &:extend(.circular all);
+}
+
 
 /*******************************
              Docs
@@ -395,6 +444,11 @@ div.simframe > iframe {
     fill: white !important;
 }
 
+/* Opacity of blockly flyout background */
+.blocklyFlyoutBackground {
+    fill-opacity: 0.9 !important;
+}
+
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
 .blocklyTreeRoot div div div div .blocklyTreeRow {
     border-left-width: 12px !important;
@@ -422,11 +476,8 @@ div.simframe > iframe {
 
 /* Blockly / Monaco Toolbox Buttons */
 #blocklyToolboxButtons, #monacoToolboxButtons {
-    margin-top: 0.5rem;
-    margin-left: auto;
-    margin-right: auto;
+    margin-top: 0.1rem;
     font-size:3rem;
-    text-align: center;
 }
 
 /* Blockly Search bar */
@@ -438,7 +489,7 @@ div.simframe > iframe {
 /* Blockly toolbox icons */
 .blocklyTreeIcon {
     opacity: 1;
-    margin: 0em 0.25rem 0em 0em;
+    margin: -0.2em 0.25em 0.0em 0.25em;
     width: 1.18em;
     font-family: 'Icons';
     font-style: normal;
@@ -451,6 +502,7 @@ div.simframe > iframe {
     -webkit-font-smoothing: antialiased;
     backface-visibility: hidden;
     font-size: 1.2rem;
+    display: none;
 }
 .blocklyTreeSelected .blocklyTreeIcon{
     color: white;
@@ -583,260 +635,40 @@ div.simframe > iframe {
     border: solid 3px #fc3 !important;
 }
 
-/*******************************
-        Media Adjustments
-*******************************/
+/******************************
+Avatar
+******************************/
 
-/* Large Monitor */
-@media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* Layout */
-    .sideDocs #maineditor {
-        right:@sideBarWidth;
-    }
-    .rtl .sideDocs #maineditor {
-        left:@sideBarWidth;
-        right:@simulatorWidth;
-    }
-    .sideDocs #sidedocs {
-        display:block;
-        width:@sideBarWidth;
-    }
-    #sidedocspopout, #sidedocsexpand {
-        display:block;
-    }
-    /* Blockly */
-    .blocklyTreeRow {
-        width: 230px;
-    }
-    /* Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 2rem;
-        margin-left: 2rem;
-    }
+.avatar {
+    position: relative;
 }
 
-/* Small Monitor */
-@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-    /* Blockly row */
-    .blocklyTreeRow {
-        width: 230px;
-    }
-    /* Blockly Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 1rem;
-        margin-left: 1rem;
-    }
+#root .avatar .message {
+    margin-left: 4em;
+    margin-bottom: 1em;                    
 }
 
-/* Tablet */
-@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
-    /* Blockly */
-    .blocklyTreeRow {
-        padding-top: 0.75rem !important;
-        padding-bottom: 2rem !important;
-        border-left-width: 12px !important;
-    }
-    .blocklyTreeRoot div div div div .blocklyTreeRow {
-        border-left-width: 18px !important;
-        padding-top: 0px !important;
-        padding-bottom: 1.6rem !important;
-    }
-    /* Blockly Toolbox buttons */
-    #blocklyToolboxButtons, #monacoToolboxButtons {
-        margin-right: 0.5rem;
-        margin-left: 0.5rem;
-    }
+.avatar .avatar-image {
+    position: absolute;
+    left: 0;
+    top: 1em;
+    width: 3em;
+    height: 3em;
+    background-size: contain;
+    background-image: @avatarUrl;
 }
 
-/* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
-    /* Blockly / Monaco Toolbox buttons, adjust how the stackable grid looks for these buttons in mobile view */
-    #blocklyToolboxButtons.ui.stackable.grid .column, #monacoToolboxButtons.ui.stackable.grid .column {
-        padding: 0.3rem 0 0.3rem 0 !important;
-    }
-    #getting-started-btn {
-        top: @mobileMenuHeight;
-    }
-    /* Menu spacing */
-    .ui.menu .item {
-        padding: 0.4em !important;
-    }
-    .ui.menu .item.editor-menuitem {
-        margin-top: ((@mobileMenuHeight - 2.5rem)/2) !important;
-        margin-bottom: ((@mobileMenuHeight - 2.5rem)/2) !important;
-    }
-    /* Logo */
-    .ui.item.logo img {
-        max-height: 2.5rem;
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
-    }
-    /* Hide the blockly toolbox labels */
-    .blocklyTreeLabel {
-        display: none !important;
-    }
-    .blocklyTreeIcon {
-        font-size: 1.5rem;
-    }
-    .blocklyTreeRow {
-        height: 2rem;
-    }
-    .blocklyToolboxDiv, .monacoToolboxDiv{
-        width: 50px;
-    }
-}
-
-/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
-@media only screen and (min-width: @computerBreakpoint) {
-    /* Blockly */
-    .blocklyTreeRow {
-        padding-top: 0.9rem !important;
-        padding-bottom: 2.3rem !important;
-        border-left-width: 12px !important;
-    }
-    .blocklyTreeRoot div div div div .blocklyTreeRow {
-        border-left-width: 18px !important;
-        padding-top: 0px !important;
-        padding-bottom: 1.6rem !important;
-    }
-}   
-
-/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
-@media only screen and (max-width: @largestSmallMonitor) {
-    /* Layout */
-    #filelist {
-        bottom:3rem;
-        min-width:@simulatorWidthSmall;
-        max-width:@simulatorWidthSmall;
-    }
-    #maineditor {
-        left:@simulatorWidthSmall;
-    }
-    .rtl #maineditor {
-        right:@simulatorWidthSmall;
-        left:0;
-    }
-    /* Logo */
-    #logo .name {
-        display: none !important;
-    }
-    /* Organization logo */
-    .organization {
-        right:auto;
-        top:auto !important;
-        left:1.5rem;
-        bottom:0.5rem;
-    }
-    .rtl .organization {
-        left:1.5rem;
-        right:auto;
-    }
-    /* Cookie Message */
-    #cookiemsg {
-        bottom:2.5rem;
-    }
-    /* Blockly */
-    .blocklyTreeLabel {
-        font-size:1rem;
-    }
-    /* Help card */
-    #helpcard {
-        top: auto;
-        bottom: 2.2rem;
-        margin: 0;
-    }
-}
-
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
-    /* Organization logo */
-    .organization {
-        top:auto !important;
-        left:0.5rem;
-        right: auto;
-        bottom: 0.5rem;
-        height: 1.3rem;
-    }
-    .rtl .organization {
-        left:0.5rem;
-        right: auto;
-    }
-    /* Blockly */
-    .blocklyTreeLabel {
-        font-size:1rem;
-    }
-    /* Help card */
-    #helpcard {
-        top: auto;
-        bottom: 2rem;
-        margin: 0;
-    }
-}
-
-/* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
-    /* Top Menu */
-    #maineditor {
-        top:@mobileMenuHeight !important;
-    }
-    /* Layout */
-    #filelist {
-        position:absolute;
-        z-index:5;
-        bottom:1rem;
-        left:3rem;
-        top:auto;
-        width:auto;
-        min-width: inherit;
-        max-width: inherit;
-        background-color: transparent;
-    }
-    .rtl #filelist {
-        left:auto;
-        right:3rem;
-    }
-    #maineditor, .rtl #maineditor {
-        left: 0;
-        right:0;
-    }
-    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
-        bottom:2.3rem;
-    }
-    /* Logo */
-    #logo {
-        font-size: 0rem;
-        padding-right: 0;
-    }
-    /* Blockly */
-    .blocklyTreeLabel {
-        font-size: 0.75rem !important;
-    }
-    .blocklyCheckbox {
-        font-size: 17pt !important;
-    }
-    .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
-        font-size: 0.75rem !important;
-    }
-    /* Simulator */
-    div.simframe {
-        display:inline-block;
-        width: 10rem;
-        margin-right:0.5rem;
-    }
-    div.simframe:not(:first-child) {
-        display:none !important;
-    }
-    div.simframe iframe.grayscale {
-        display:none !important;
-    }
-    /* Hide floating editors */
-    .hideEditorFloats .editorFloat {
-        display:none;
-    }
-    /* Organization */
-    .organization {
-        top: auto !important;
-    }
+.avatar .message:after {
+    top: 1.1em;
+    left: -1em;
+    bottom: auto;
+    border-width: 0px 1em 0.7em 0;
+    border-color: rgba(0, 0, 0, 0) #EEE;
+    content: '';
+    position: absolute;
+    border-style: solid;
+    display: block;
+    width: 0;
 }
 
 /*******************************
@@ -844,6 +676,9 @@ div.simframe > iframe {
 *******************************/
 
 .ui.widedesktop.only {
+    display:none !important;
+}
+.ui.tablet.only {
     display:none !important;
 }
 
@@ -857,27 +692,34 @@ div.simframe > iframe {
 }
 
 /* smaller desktop screen */
-@media only screen and (max-width: @computerBreakpoint), only screen and (max-aspect-ratio: 12/10) {
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 12/10) {
     .ui.desktop.only {
         display:none !important;
     }
 }
 
 /* thin desktop portrait mode */
-@media only screen and (max-width: @tabletBreakpoint), only screen and (max-aspect-ratio: 7/10) {
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 7/10) {
     .ui.landscape.only {
         display:none !important;
     }
 }
 
-@media only screen and (min-width: @tabletBreakpoint) {
+@media only screen and (min-width: @computerBreakpoint) {
     .ui.portrait.only {
         display:none !important;
     }
 }
 
-/* Mobile */
-@media only screen and (max-width: @tabletBreakpoint) {
+/* Tablet only */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    .ui.tablet.only {
+        display:inherit !important;
+    }
+}
+
+/* Mobile + Tablet */
+@media only screen and (max-width: @largestTabletScreen) {
     .ui.portrait.only {
         display:inherit !important;
     }
@@ -902,5 +744,318 @@ div.simframe > iframe {
 @media only screen and (max-width: @mobileBreakpoint) {
     .ui.wide.only {
         display:none !important;
+    }
+}
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Large Monitor */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    /* Layout */
+    .sideDocs #maineditor {
+        right:@sideBarWidth;
+    }
+    .rtl .sideDocs #maineditor {
+        left:@sideBarWidth;
+        right:@simulatorWidth;
+    }
+    .sideDocs #sidedocs {
+        display:block;
+        width:@sideBarWidth;
+    }
+    #sidedocspopout, #sidedocsexpand {
+        display:block;
+    }
+    /* Blockly */
+    .blocklyTreeRow {
+        min-width: 200px;
+    }
+    .collapsedEditorTools .organization {
+        display: block;
+    }
+}
+
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    /* Blockly row */
+    .blocklyTreeRow {
+        min-width: 200px;
+    }
+}
+
+/* Tablet */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    /* Blockly */
+    .blocklyTreeRow {
+        padding-top: 0.25rem !important;
+        padding-bottom: 1.5rem !important;
+        border-left-width: 12px !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow {
+        border-left-width: 18px !important;
+        padding-top: 0px !important;
+        padding-bottom: 1.6rem !important;
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    /* Logo */
+    .ui.item.logo img {
+        max-height: 2.5rem;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+    /* Hide the blockly toolbox labels */
+    .blocklyTreeLabel {
+        display: none !important;
+    }
+    .blocklyTreeRow:hover .blocklyTreeLabel{
+        display: none !important;
+        z-index:1000;
+    }
+    .blocklyTreeRow.blocklyTreeSelected:hover .blocklyTreeLabel{
+        display: none !important;
+    }
+    .blocklyTreeIcon {
+        font-size: 1.5rem;
+    }
+    .blocklyTreeRow {
+        height: 2rem;
+        text-align: center;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow {
+        border-left-width: 8px !important;
+    }
+    .blocklyTreeRow{
+        padding-right: 0;
+    }
+    /* Hide the blockly toolbox search */
+    #blocklySearchArea {
+        display: none !important;
+    }
+}
+
+/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
+@media only screen and (min-width: @computerBreakpoint) {
+    /* Blockly */
+    .blocklyTreeRow {
+        padding-top: 0.5rem !important;
+        padding-bottom: 2.0rem !important;
+        border-left-width: 12px !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow {
+        border-left-width: 18px !important;
+        padding-top: 0px !important;
+        padding-bottom: 1.6rem !important;
+    }
+    .collapsedEditorTools #filelist {
+        display: none;
+    }
+    .collapsedEditorTools #maineditor {
+        left:0 !important;
+    }
+    .collapsedEditorTools .organization {
+        display: none;
+    }
+}   
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+    /* Layout */
+    #filelist {
+        min-width:@simulatorWidthSmall;
+        max-width:@simulatorWidthSmall;
+    }
+    #maineditor {
+        left:@simulatorWidthSmall;
+    }
+    .rtl #maineditor {
+        right:@simulatorWidthSmall;
+        left:0;
+    }
+    /* Logo */
+    #logo .name {
+        display: none !important;
+    }
+    /* Organization logo */
+    .organization {
+        right:auto;
+        top:auto !important;
+        left:1.5rem;
+        bottom:0.5rem;
+    }
+    .rtl .organization {
+        right:1.5rem;
+        left:auto;
+    }
+    /* Cookie Message */
+    #cookiemsg {
+        bottom:2.5rem;
+    }
+    /* Blockly */
+    .blocklyTreeLabel {
+        font-size:1rem;
+    }
+    /* Help card */
+    #helpcard {
+        top: auto;
+        bottom: 2.2rem;
+        margin: 0;
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    /* Organization logo */
+    .organization {
+        top:auto !important;
+        right:1rem;
+        left: auto;
+        bottom: 1rem;
+        height: 1.3rem;
+    }
+    .rtl .organization {
+        left:1rem;
+        right: auto;
+    }
+    /* Blockly */
+    .blocklyTreeLabel {
+        font-size:1rem;
+    }
+    /* Help card */
+    #helpcard {
+        top: auto;
+        bottom: 2rem;
+        margin: 0;
+    }
+    /* Layout */
+    #filelist {
+        position:absolute;
+        padding: 0;
+        margin: 1em;
+        z-index:5;
+        bottom:0rem;
+        left:0rem;
+        top:auto;
+        width:auto;
+        min-width: inherit;
+        max-width: inherit;
+        background: transparent !important;
+    }
+    .rtl #filelist {
+        left:auto;
+        right:0;
+    }
+    #maineditor, .rtl #maineditor {
+        left: 0;
+        right:0;
+    }
+    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
+        bottom: 0rem;
+    }
+    #editortools {
+        height: 10rem;
+    }
+    #blocksArea, #monacoEditor, #pxtJsonEditor {
+        bottom: 10rem !important;
+    }
+    .hideEditorFloats #editortools {
+        height: 4.5rem !important;
+    }
+    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
+        bottom: 4.5rem !important;
+    }
+    .hideEditorFloats .organization {
+        display: none;
+    }
+    /* Simulator */
+    div.simframe {
+        display:inline-block;
+        width: 10rem;
+        margin-right:0.5rem;
+    }
+    div.simframe:not(:first-child) {
+        display:none !important;
+    }
+    div.simframe iframe.grayscale {
+        display:none !important;
+    }
+    /* Hide floating editors */
+    .hideEditorFloats .editorFloat {
+        display:none;
+    }
+    /* Menu spacing */
+    .ui.menu .item {
+        padding: 0.4em !important;
+    }
+    .ui.menu .item.editor-menuitem {
+        margin-top: ((@mobileMenuHeight - 2.5rem)/2) !important;
+        margin-bottom: ((@mobileMenuHeight - 2.5rem)/2) !important;
+    }
+    /* Top Menu */
+    #maineditor {
+        top:@mobileMenuHeight !important;
+    }
+    #getting-started-btn {
+        top: @mobileMenuHeight;
+    }
+    /* Sandbox */
+    .sandboxfooter {
+        left: auto;
+        right:1rem;
+    }
+    .rtl .sandboxfooter{
+        right: auto;
+        left:1rem;
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    /* Logo */
+    #logo {
+        font-size: 0rem;
+        padding-right: 0;
+    }
+    /* Blockly */
+    .blocklyTreeLabel {
+        font-size: 0.75rem !important;
+    }
+    .blocklyCheckbox {
+        font-size: 17pt !important;
+    }
+    .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
+        font-size: 0.75rem !important;
+    }
+    #blocklyTrashIcon {
+        font-size: 3rem;
+    }
+    /* Organization logo */
+    .organization {
+        top:auto !important;
+        right:0.5rem;
+        left: auto;
+        bottom: 0.5rem;
+        height: 1.3rem;
+    }
+    .rtl .organization {
+        left:0.5rem;
+        right: auto;
+    }
+    .blocklyTreeIcon {
+        margin: 0.25em 0.25em 0.0em 0.0em;
+    }
+    /* Remove margin around the blockly add package buttons */
+    .blocklyAddPackageButton {
+        margin-left: 0 !important;
+    }
+    .hideEditorFloats #editortools {
+        height: 4rem !important;
+    }
+    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
+        bottom: 4rem !important;
     }
 }

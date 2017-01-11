@@ -656,7 +656,8 @@ namespace pxt.blocks {
 
     export let cachedSearchTb: Element;
     export function initSearch(workspace: Blockly.Workspace, tb: Element,
-        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
+        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>,
+        updateToolbox: (tb: Element) => void) {
         if ($(`#blocklySearchArea`).length) return;
 
         let blocklySearchArea = document.createElement('div');
@@ -746,13 +747,13 @@ namespace pxt.blocks {
                             if (b) shadow.innerHTML = b.innerHTML;
                         })
 
-                        workspace.updateToolbox(searchTb);
+                        updateToolbox(searchTb);
                         blocklySearchInput.className = origClassName;
                     }
                 })
             } else {
                 // Clearing search
-                workspace.updateToolbox(pxt.blocks.cachedSearchTb);
+                updateToolbox(pxt.blocks.cachedSearchTb);
                 blocklySearchInput.className = origClassName;
             }
             // Search
@@ -773,16 +774,18 @@ namespace pxt.blocks {
         $('.blocklyToolboxDiv').prepend(blocklySearchArea);
     }
 
-    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: Event) => void, undoCallback: (ev?: Event) => void): void {
+    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: Event) => void): void {
         if (!$(`#${id}`).length) {
             let blocklyToolboxButtons = document.createElement('div');
             blocklyToolboxButtons.id = id;
-            blocklyToolboxButtons.className = 'ui equal width stackable grid blocklyToolboxButtons';
+            blocklyToolboxButtons.className = 'ui grid padded blocklyToolboxButtons';
 
             if (addCallback) {
                 // add "Add package" button to toolbox
                 let addButtonDiv = document.createElement('div');
-                addButtonDiv.className = 'column';
+                addButtonDiv.className = 'left floated row';
+                let addButtonColumnDiv = document.createElement('div');
+                addButtonColumnDiv.className = 'column';
                 let addPackageButton = document.createElement('button');
                 addPackageButton.setAttribute('role', 'button');
                 addPackageButton.setAttribute('aria-label', lf("Add Package..."));
@@ -794,27 +797,9 @@ namespace pxt.blocks {
                 let addpackageIcon = document.createElement('i');
                 addpackageIcon.className = 'plus icon';
                 addPackageButton.appendChild(addpackageIcon);
-                addButtonDiv.appendChild(addPackageButton);
+                addButtonColumnDiv.appendChild(addPackageButton);
+                addButtonDiv.appendChild(addButtonColumnDiv);
                 blocklyToolboxButtons.appendChild(addButtonDiv);
-            }
-
-            if (undoCallback) {
-                // add "undo" button to toolbox
-                let undoButtonDiv = document.createElement('div');
-                undoButtonDiv.className = 'column';
-                let undoButton = document.createElement('button');
-                undoButton.setAttribute('role', 'button');
-                undoButton.setAttribute('aria-label', lf("Undo"));
-                undoButton.setAttribute('title', lf("Undo"));
-                pxt.BrowserUtils.isTouchEnabled() ?
-                    undoButton.ontouchstart = undoCallback
-                    : undoButton.onclick = undoCallback;
-                undoButton.className = 'ui icon button small blocklyToolboxButton blocklyUndoButton';
-                let undoIcon = document.createElement('i');
-                undoIcon.className = 'undo icon';
-                undoButton.appendChild(undoIcon);
-                undoButtonDiv.appendChild(undoButton);
-                blocklyToolboxButtons.appendChild(undoButtonDiv);
             }
 
             toolbox.appendChild(blocklyToolboxButtons);
@@ -1093,6 +1078,7 @@ namespace pxt.blocks {
         }
     }
 
+    let lastInvertedCategory: any;
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
 
@@ -1120,7 +1106,9 @@ namespace pxt.blocks {
                         } else {
                             element.style.borderLeft = border;
                         }
-                        element.style.color = (child.hexColour || '#000');
+                        if (this.hasColours_) {
+                            element.style.color = (child.hexColour || '#000');
+                        }
                     }
                     this.addColour_(child);
                 }
@@ -1139,14 +1127,6 @@ namespace pxt.blocks {
                     let element = child.getRowElement();
                     let onlyChild = children.length == 1;
                     if (element) {
-                        let nextElement = element.parentNode.nextSibling;
-                        let previousElement = element.parentNode.previousSibling;
-                        if (!nextElement && !onlyChild) {
-                            element.className += ' blocklyTreeRowBottom';
-                        }
-                        if (!previousElement && !onlyChild) {
-                            element.className += ' blocklyTreeRowTop';
-                        }
                         if (this.hasColours_) {
                             element.style.color = '#fff';
                             element.style.background = (child.hexColour || '#ddd');
@@ -1162,6 +1142,7 @@ namespace pxt.blocks {
              * @override
              */
             let setSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+            let editor = this;
             Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
                 let toolbox = this.toolbox_;
                 if (node == this.selectedItem_ || node == toolbox.tree_) {
@@ -1169,11 +1150,11 @@ namespace pxt.blocks {
                 }
 
                 // Capture the last category and reset it after Blockly's setSelectedItem has been called.
-                let lastCategory = toolbox.lastCategory_;
+                editor.lastInvertedCategory = toolbox.lastCategory_;
                 setSelectedItem.call(this, node);
-                if (lastCategory) {
+                if (editor.lastInvertedCategory) {
                     // reset last category colour
-                    lastCategory.getRowElement().style.backgroundColor = lastCategory.hexColour;
+                    editor.lastInvertedCategory.getRowElement().style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
                 }
             };
         }
@@ -1207,18 +1188,6 @@ namespace pxt.blocks {
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
             let topBlocks = this.getTopBlocks(true);
             let eventGroup = Blockly.genUid();
-
-            // Options to undo/redo previous action.
-            let undoOption: any = {};
-            undoOption.text = lf("Undo");
-            undoOption.enabled = this.undoStack_.length > 0;
-            undoOption.callback = this.undo.bind(this, false);
-            menuOptions.push(undoOption);
-            let redoOption: any = {};
-            redoOption.text = lf("Redo");
-            redoOption.enabled = this.redoStack_.length > 0;
-            redoOption.callback = this.undo.bind(this, true);
-            menuOptions.push(redoOption);
 
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
@@ -1406,6 +1375,7 @@ namespace pxt.blocks {
 
         // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
         const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+        let editor = this;
         Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
             const that = <Blockly.Toolbox.TreeControl>this;
             let toolbox = (that as any).toolbox_;
@@ -1415,6 +1385,7 @@ namespace pxt.blocks {
 
             if (a === null) {
                 collapseMoreCategory(that.selectedItem_);
+                editor.lastInvertedCategory = that.selectedItem_;
             }
 
             oldSetSelectedItem.call(that, a);

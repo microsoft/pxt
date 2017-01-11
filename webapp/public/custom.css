@@ -54,11 +54,11 @@ body {
 
 
 .searchdialog {
-    margin-top: -15rem !important;
+    margin-top: -20rem !important;
 }
 
 .searchdialog .cards {
-    max-height: 23rem;
+    max-height: 20rem;
     overflow-y: auto;
     overflow-x: hidden;
     margin-top:0.5rem;
@@ -185,13 +185,6 @@ svg.ui.trend.red polyline {
 }
 svg.ui.trend.black polyline {
     stroke:#000;
-}
-
-.sandboxfooter {
-    position:absolute;
-    bottom:1rem;
-    left:1rem;
-    z-index:5;
 }
 
 .grayscale {

@@ -79,17 +79,14 @@ export class Editor extends srceditor.Editor {
                             (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
                                 (() => {
                                     this.parent.addPackage();
-                                }) : null),
-                            (!this.parent.getSandboxMode() ?
-                                (() => {
-                                    this.undo();
                                 }) : null)
                         );
                     }
                     if (showCategories && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
-                                .then((fns: pxtc.SymbolInfo[]) => fns));
+                                .then((fns: pxtc.SymbolInfo[]) => fns),
+                            searchTb => this.updateToolbox(searchTb, showCategories));
                     }
 
                     let xml = this.delayLoadXml;
@@ -156,7 +153,7 @@ export class Editor extends srceditor.Editor {
         // layout on first load if no data info
         const needsLayout = this.editor.getTopBlocks(false).some(b => {
             const tp = b.getBoundingRectangle().topLeft;
-            return tp.x == 0 && tp.y == 0
+            return b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0
         });
         if (needsLayout)
             pxt.blocks.layout.flow(this.editor);
@@ -417,6 +414,18 @@ export class Editor extends srceditor.Editor {
         this.editor.undo();
     }
 
+    redo() {
+        this.editor.undo(true);
+    }
+
+    zoomIn() {
+        this.editor.zoomCenter(1);
+    }
+
+    zoomOut() {
+        this.editor.zoomCenter(-1);
+    }
+
     getId() {
         return "blocksArea"
     }
@@ -503,8 +512,6 @@ export class Editor extends srceditor.Editor {
         let toolbox = showCategories ?
                 document.getElementById('blocklyToolboxDefinitionCategory')
                 : document.getElementById('blocklyToolboxDefinitionFlyout');
-        let zoomEnabled = showCategories;
-        let controlsEnabled = showCategories;
         let blocklyOptions: Blockly.Options = {
             toolbox: toolbox,
             scrollbars: true,
@@ -515,8 +522,8 @@ export class Editor extends srceditor.Editor {
             comments: true,
             disable: false,
             zoom: {
-                enabled: zoomEnabled,
-                controls: controlsEnabled,
+                enabled: false,
+                controls: false,
                 /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
                 maxScale: 2.5,
                 minScale: .2,
@@ -550,8 +557,9 @@ export class Editor extends srceditor.Editor {
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
             // Toolbox is consistent with current mode, safe to update
-            if (tb.innerHTML == this.cachedToolbox) return;
-            this.cachedToolbox = tb.innerHTML;
+            let tbString = new XMLSerializer().serializeToString(tb);
+            if (tbString == this.cachedToolbox) return;
+            this.cachedToolbox = tbString;
             this.editor.updateToolbox(tb);
         } else {
             // Toolbox mode is different, need to refresh.

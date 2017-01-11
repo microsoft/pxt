@@ -317,9 +317,9 @@ namespace pxsim.visuals {
         let h = scaleFn(opts.height);
         let img = <SVGImageElement>svg.elt("image", {
             width: w,
-            height: h,
-            "href": `${opts.image}`
+            height: h
         });
+        let href = img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', `${opts.image}`);
         return { el: img, w: w, h: h, x: 0, y: 0 };
     }
 

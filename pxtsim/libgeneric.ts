@@ -2,10 +2,14 @@ namespace pxsim {
     // A ref-counted collection of either primitive or ref-counted objects (String, Image,
     // user-defined record, another collection)
     export class RefCollection extends RefObject {
-        data: any[] = [];
+        private data: any[] = [];
+        //undefiend or null values need to be handled specially to support default values
+        //default values of boolean, string, number & object arrays are respectively, false, null, 0, null
+        //All of the default values are implemented by mapping undefined\null to zero.
 
         // 1 - collection of refs (need decr)
         // 2 - collection of strings (in fact we always have 3, never 2 alone)
+
         constructor(public flags: number) {
             super();
         }
@@ -21,7 +25,70 @@ namespace pxsim {
         }
 
         isValidIndex(x: number) {
-            return (x >= 0 && x < this.data.length && this.data.hasOwnProperty(x as any));
+            return (x >= 0 && x < this.data.length);
+        }
+
+        push(x: any) {
+            this.data.push(x);
+        }
+
+        pop() {
+            let x = this.data.pop();
+            if (x != undefined) { //treat null & undefined as the same
+                return 0;
+            }
+            return x;
+        }
+
+        getLength() {
+            return this.data.length;
+        }
+
+        setLength(x: number) {
+            this.data.length = x;
+        }
+
+        getAt(x: number) {
+            if (this.data[x] != undefined) {
+                return this.data[x];
+            }
+            return 0;
+        }
+
+        setAt(x: number, y: any) {
+            this.data[x] = y;
+        }
+
+        insertAt(x: number, y: number) {
+            this.data.splice(x, 0, y);
+        }
+
+        removeAt(x: number) {
+            let ret = this.data.splice(x, 1)
+            if (ret[0] == undefined) {
+                return 0;
+            }
+            return ret[0]; //return the deleted element.
+        }
+
+        indexOf(x: number, start: number) {
+            if (x != 0) {
+                return this.data.indexOf(x, start);
+            }
+            //As we treat undefined same as 0 which is default value for all the arrays, will need to search both.
+            let defaultValueIndex = this.data.indexOf(x, start);
+            let undefinedIndex = -1;
+            for (let i = start; i < this.data.length; i++) {
+                if (this.data[i] == undefined) {
+                    undefinedIndex = i;
+                    break;
+                }
+            }
+
+            if (defaultValueIndex < undefinedIndex || undefinedIndex == -1) {
+                return defaultValueIndex;
+            }
+            return undefinedIndex;
         }
 
         print() {
@@ -35,34 +102,29 @@ namespace pxsim {
         }
 
         export function length(c: RefCollection) {
-            return c.data.length;
+            return c.getLength();
         }
 
         export function setLength(c: RefCollection, x: number) {
-            c.data.length = x ;
+            c.setLength(x);
         }
 
 
         export function push(c: RefCollection, x: any) {
             if (c.flags & 1) incr(x);
-            c.data.push(x);
+            c.push(x);
         }
 
         export function pop(c: RefCollection, x: any) {
-            let ret = c.data.pop();
+            let ret = c.pop();
             if (c.flags & 1) decr(ret);
             return ret;
         }
 
         export function getAt(c: RefCollection, x: number) {
-            if (c.isValidIndex(x)) {
-                let tmp = c.data[x];
-                if (c.flags & 1) incr(tmp);
-                return tmp;
-            }
-            else {
-                check(false);
-            }
+            let tmp = c.getAt(x);
+            if (c.flags & 1) incr(tmp);
+            return tmp;
         }
 
         export function removeAt(c: RefCollection, x: number) {
@@ -70,29 +132,27 @@ namespace pxsim {
                 return;
 
             if (c.flags & 1) {
-                decr(c.data[x]);
+                decr(c.getAt(x));
             }
-            let ret = c.data.splice(x, 1)
-
-            return ret[0]; //return the deleted element.
+            return c.removeAt(x);
         }
 
         export function insertAt(c: RefCollection, x: number, y: number) {
             if (c.flags & 1) incr(y);
-            c.data.splice(x, 0, y);
+            c.insertAt(x, y);
         }
 
         export function setAt(c: RefCollection, x: number, y: any) {
             if (c.isValidIndex(x) && (c.flags & 1)) {
                 //if there is an existing element handle refcount
-                decr(c.data[x]);
+                decr(c.getAt(x));
                 incr(y);
             }
-            c.data[x] = y;
+            c.setAt(x, y);
         }
 
         export function indexOf(c: RefCollection, x: any, start: number) {
-            return c.data.indexOf(x, start)
+            return c.indexOf(x, start)
         }
 
         export function removeElement(c: RefCollection, x: any) {

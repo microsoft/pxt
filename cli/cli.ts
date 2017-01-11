@@ -105,7 +105,7 @@ function saveConfig() {
 }
 
 function initConfig() {
-    let atok: string = process.env["PXT_ACCESS_TOKEN"] || process.env["CLOUD_ACCESS_TOKEN"]
+    let atok: string = process.env["PXT_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config
@@ -439,7 +439,7 @@ function travisAsync() {
             .then(() => checkDocsAsync())
             .then(() => testSnippetsAsync())
             .then(() => {
-                if (!process.env.CLOUD_ACCESS_TOKEN) {
+                if (!process.env["PXT_ACCESS_TOKEN"]) {
                     // pull request, don't try to upload target
                     pxt.log('no token, skipping upload')
                     return Promise.resolve();
@@ -3167,7 +3167,7 @@ export function gendocsAsync(parsed: commandParser.ParsedCommand) {
         !!parsed.flags["locs"],
         parsed.flags["files"] as string,
         !!parsed.flags["create"]
-        );
+    );
 }
 
 export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {

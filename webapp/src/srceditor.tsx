@@ -65,6 +65,9 @@ export class Editor {
         return null
     }
     undo() { }
+    redo() { }
+    zoomIn() { }
+    zoomOut() { }
 
     beforeCompile() { }
 
