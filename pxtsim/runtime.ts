@@ -5,7 +5,7 @@ namespace pxsim {
     export namespace U {
         export function addClass(el: HTMLElement, cls: string) {
             if (el.classList) el.classList.add(cls);
-            else if (!el.className.indexOf(cls)) el.className += ' ' + cls;
+            else if (el.className.indexOf(cls) < 0) el.className += ' ' + cls;
         }
 
         export function removeClass(el: HTMLElement, cls: string) {

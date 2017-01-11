@@ -23,7 +23,7 @@ namespace pxsim.svg {
 
     export function addClass(el: SVGElement, cls: string) {
         if (el.classList) el.classList.add(cls);
-        else if (!el.className.baseVal.indexOf(cls)) el.className.baseVal += ' ' + cls;
+        else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
     }
 
     export function removeClass(el: SVGElement, cls: string) {
