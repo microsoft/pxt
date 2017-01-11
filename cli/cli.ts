@@ -20,6 +20,7 @@ import * as build from './buildengine';
 import * as electron from "./electron";
 import * as commandParser from './commandparser';
 import * as hid from './hid';
+import * as gdb from './gdb';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -3704,6 +3705,7 @@ function initCommands() {
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+    advancedCommand("gdb", "attempt to start GDB", gdb.startAsync)
 
     p.defineCommand({
         name: "pokerepo",

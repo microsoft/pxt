@@ -189,6 +189,7 @@ declare namespace ts.pxtc {
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
         upgrades?: UpgradePolicy[];
+        openocdScript?: string;
     }
 
     interface CompileOptions {
