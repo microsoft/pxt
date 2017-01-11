@@ -479,8 +479,12 @@ ${output}</xml>`;
                     return;
                 }
                 openBlockTag(info.attrs.blockId);
-                let leds = ((arg as ts.StringLiteral).text || '').replace(/\s/g, '');
-                let nc = info.attrs.imageLiteral * 5;
+                const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
+                const nc = info.attrs.imageLiteral * 5;
+                if (nc * 5 != leds.length) {
+                    error(node, Util.lf("Invalid image pattern"));
+                    return;
+                }
                 for (let r = 0; r < 5; ++r) {
                     for (let c = 0; c < nc; ++c) {
                         emitField(`LED${c}${r}`, /[#*1]/.test(leds[r * nc + c]) ? "TRUE" : "FALSE")
