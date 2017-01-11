@@ -1,32 +1,46 @@
 
 namespace pxt.blocks.layout {
-    export function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
-        let changed = false;
+    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
+        const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
+        // position blocks
+        alignBlocks(blockInfo, oldWs, newWs);
+        // inject disabled blocks
+        return injectDisabledBlocks(oldWs, newWs);
+    }
+
+    function injectDisabledBlocks(oldWs: B.Workspace, newWs: B.Workspace): string {
+        const oldDom = Blockly.Xml.workspaceToDom(oldWs);
+        const newDom = Blockly.Xml.workspaceToDom(newWs);
+        Util.toArray(oldDom.childNodes)
+            .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
+            .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
+        const updatedXml = Blockly.Xml.domToPrettyText(newDom);
+        return updatedXml;
+    }
+
+    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
         let env: pxt.blocks.Environment;
         let newBlocks: pxt.Map<B.Block[]>; // support for multiple events with similar name
         oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
             .forEach(ob => {
-            const otp = ob.xy_;
-            if (otp && otp.x != 0 && otp.y != 0) {
-                if (!env) {
-                    env = pxt.blocks.mkEnv(oldWs, blockInfo, true);
-                    newBlocks = {};
-                    newWs.getTopBlocks(false).forEach(b => {
-                        const nkey = pxt.blocks.callKey(env, b);
-                        const nbs = newBlocks[nkey] || [];
-                        nbs.push(b);
-                        newBlocks[nkey] = nbs;
-                    });
+                const otp = ob.xy_;
+                if (otp && otp.x != 0 && otp.y != 0) {
+                    if (!env) {
+                        env = pxt.blocks.mkEnv(oldWs, blockInfo, true);
+                        newBlocks = {};
+                        newWs.getTopBlocks(false).forEach(b => {
+                            const nkey = pxt.blocks.callKey(env, b);
+                            const nbs = newBlocks[nkey] || [];
+                            nbs.push(b);
+                            newBlocks[nkey] = nbs;
+                        });
+                    }
+                    const oldKey = pxt.blocks.callKey(env, ob);
+                    const newBlock = (newBlocks[oldKey] || []).shift();
+                    if (newBlock)
+                        newBlock.xy_ = otp.clone();
                 }
-                const oldKey = pxt.blocks.callKey(env, ob);
-                const newBlock = (newBlocks[oldKey] || []).shift();
-                if (newBlock) {
-                    newBlock.xy_ = otp.clone();
-                    changed = true;
-                }
-            }
-        })
-        return changed;
+            })
     }
 
     declare function unescape(escapeUri: string): string;
