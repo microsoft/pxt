@@ -92,7 +92,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
-        htmlBody: `        
+        htmlBody: `
 <div class="ui styled fluid accordion">
 ${instructions.map((step: UploadInstructionStep, i: number) =>
             `<div class="title">
@@ -159,14 +159,15 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 
 export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    const forceHexDownload = /forceHexDownload/i.test(window.location.href);
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
-    } else if (hidbridge.shouldUse()) {
+    } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // window app
         pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
+    } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
