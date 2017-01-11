@@ -100,7 +100,7 @@ namespace pxsim.instructions {
         if (el.classList) el.classList.add(cls);
         //BUG: won't work if element has class that is prefix of new class
         //TODO: make github issue (same issue exists svg.addClass)
-        else if (!el.className.indexOf(cls)) el.className += " " + cls;
+        else if (el.className.indexOf(cls) < 0) el.className += " " + cls;
     }
     function mkTxt(p: [number, number], txt: string, size: number) {
         let el = svg.elt("text")
