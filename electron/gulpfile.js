@@ -84,7 +84,11 @@ function getTargetRoot() {
 
 function getOutRoot() {
     if (!outRoot) {
-        outRoot = path.join(getTargetRoot(), "electron-out");
+        if (!process.argv[5]) {
+            throw new Error("This task requires the following args: --path/to/product.json --path/to/root/of/target --path/to/root/of/out/dir");
+        }
+
+        outRoot = path.resolve(process.argv[5].replace(/^--/, ""));
     }
 
     return outRoot;
