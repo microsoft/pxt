@@ -878,8 +878,8 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                     {run ? <sui.Button key='restartbtn' class={`${compileBtn ? '' : ' fluid'} restart-button`} text={compileBtn ? undefined : lf("Restart") } icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
-                                    <sui.Button icon={`${collapsed ? 'toggle right' : 'toggle left'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse() } />
                                 </div>
+                                <sui.Button icon={`${collapsed ? 'toggle right' : 'toggle left'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse() } />
                             </div>
                             <div className="two wide column">
                             </div>

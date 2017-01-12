@@ -173,7 +173,7 @@ namespace pxt.blocks {
                         category.setAttribute("colour", blockColors[ns].toString());
                     }
                     if (nsn && nsn.attributes.icon) {
-                        const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace("\\s","");
+                        const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
                         injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
@@ -602,7 +602,7 @@ namespace pxt.blocks {
 
         // Add the "Add package" category
         if (tb) {
-            getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#bdc3c7", 'blocklyTreeIconaddpackage')
+            getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         // Filter the blocks

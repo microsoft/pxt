@@ -268,7 +268,7 @@ div.simframe > iframe {
     background: @mainMenuBlocksJsToggleColor !important;
     margin: 0.5rem;
     padding: 0.7rem;
-    border-radius: 0.5rem;
+    border-radius: 0.5rem !important;
 }
 .ui.menu.fixed .item.blocks-menuitem, .ui.menu.fixed .item.javascript-menuitem {
     border-radius: 0.2rem !important;
@@ -399,7 +399,6 @@ div.simframe > iframe {
     &:extend(.grey all);
     &:extend(.circular all);
 }
-
 
 /*******************************
              Docs
@@ -882,6 +881,10 @@ Avatar
     }
     .collapsedEditorTools #maineditor {
         left:0 !important;
+    }
+    /* Sandbox */
+    .sandboxfooter {
+        bottom: 5rem;
     }
 }   
 

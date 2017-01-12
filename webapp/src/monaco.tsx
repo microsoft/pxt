@@ -533,7 +533,7 @@ export class Editor extends srceditor.Editor {
         })
 
         // Add the toolbox buttons
-        this.addToolboxCategory(group, "Add Package", "#bdc3c7", null, false, null, () => {
+        this.addToolboxCategory(group, "Add Package", "#717171", ' ', false, null, () => {
             this.resetFlyout();
             this.parent.addPackage();
         })
@@ -670,7 +670,7 @@ export class Editor extends srceditor.Editor {
         let iconNone = document.createElement('span');
         let label = document.createElement('span');
 
-        let iconClass = `blocklyTreeIcon${injectIconClass ? ns.toLowerCase() : 'Default'}`.replace("\\s","");
+        let iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
         iconBlank.className = 'blocklyTreeIcon';
         iconBlank.setAttribute('role', 'presentation');
         iconNone.className = `blocklyTreeIcon ${iconClass}`;
