@@ -31,6 +31,8 @@ namespace pxsim {
 
     export class EventBus {
         private queues: Map<EventQueue<number>> = {};
+        private lastEvent: number | string;
+        private lastEventTimestamp: number;
 
         constructor(private runtime: Runtime) { }
 
@@ -44,7 +46,19 @@ namespace pxsim {
         queue(id: number | string, evid: number | string, value: number = 0) {
             let k = id + ":" + evid;
             let queue = this.queues[k];
-            if (queue) queue.push(value);
+            if (queue) {
+                this.lastEvent = evid;
+                this.lastEventTimestamp = Date.now();
+                queue.push(value);
+            }
+        }
+
+        getLastEvent() {
+            return this.lastEvent;
+        }
+
+        getLastEventTimestamp() {
+            return this.lastEventTimestamp;
         }
     }
 
