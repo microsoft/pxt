@@ -48,7 +48,7 @@ namespace pxsim {
             let queue = this.queues[k];
             if (queue) {
                 this.lastEvent = evid;
-                this.lastEventTimestamp = Date.now();
+                this.lastEventTimestamp = U.nowUs();
                 queue.push(value);
             }
         }
@@ -57,8 +57,10 @@ namespace pxsim {
             return this.lastEvent;
         }
 
-        getLastEventTimestamp() {
-            return this.lastEventTimestamp;
+        getLastEventTime() {
+            let starTime = runtime.startTimeUs;
+            let lastEventTime = this.lastEventTimestamp;
+            return Math.floor((lastEventTime - starTime) * 1000);
         }
     }
 
