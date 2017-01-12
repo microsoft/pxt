@@ -86,7 +86,6 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         })
         .then(compileCoreAsync)
         .then(resp => {
-            // TODO remove this
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
 
