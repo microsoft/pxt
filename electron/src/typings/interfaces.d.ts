@@ -1,6 +1,7 @@
 import * as Promise from "bluebird";
 import * as http from "http";
 import * as stream from "stream";
+import { UpdateEventType } from "../updater/updateService";
 
 // General interfaces
 export interface Map<T> {
@@ -56,6 +57,7 @@ export interface VersionInfo {
     banned: string[];
     latest: string;
     prompt: string;
+    notification: string;
     urls: { [versionRange: string]: string };
 }
 
@@ -71,8 +73,8 @@ export interface UpdateCacheInfo {
 }
 
 export interface UpdateEventInfo {
+    type: UpdateEventType;
     appName?: string;
-    isCritical?: boolean;
     isInitialCheck?: boolean;
     targetVersion?: string;
 }
