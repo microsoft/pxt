@@ -27,7 +27,6 @@ export class Editor extends srceditor.Editor {
     currentHelpCardType: string;
     blockSubset: { [index: string]: number };
     showToolboxCategories: boolean = true;
-    showToolboxButtons: boolean = true;
     cachedToolbox: string;
 
     setVisible(v: boolean) {
@@ -69,19 +68,10 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
                     let showCategories = this.showToolboxCategories;
-                    let showToolboxButtons = this.showToolboxButtons;
                     let showSearch = true;
                     let toolbox = this.getDefaultToolbox(showCategories);
                     let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.blockSubset);
-                    this.updateToolbox(tb, showCategories, showToolboxButtons);
-                    if (showCategories && showToolboxButtons) {
-                        pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
-                            (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
-                                (() => {
-                                    this.parent.addPackage();
-                                }) : null)
-                        );
-                    }
+                    this.updateToolbox(tb, showCategories);
                     if (showCategories && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
@@ -125,7 +115,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadBlockly(s: string): boolean {
-        if (this.serializeBlocks() == s) {
+        if (this.serializeBlocks() == s && s.indexOf(`type="${ts.pxtc.ON_START_TYPE}"`) > -1) {
             pxt.debug('blocks already loaded...');
             return false;
         }
@@ -361,6 +351,10 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
+                    if (ev.newValue == lf("Add Package")) {
+                        (this.editor as any).toolbox_.clearSelection();
+                        this.parent.addPackage();
+                    }
                 }
                 else if (ev.element == 'commentOpen'
                     || ev.element == 'warningOpen') {
@@ -540,20 +534,19 @@ export class Editor extends srceditor.Editor {
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
 
-    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {
+    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true): Element {
         this.blockSubset = blockSubset;
         this.showToolboxCategories = showCategories;
-        this.showToolboxButtons = showToolboxButtons;
         let toolbox = this.getDefaultToolbox(showCategories);
         if (!this.blockInfo) return;
         let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, showCategories, blockSubset);
-        this.updateToolbox(tb, showCategories, showToolboxButtons);
+        this.updateToolbox(tb, showCategories);
 
         pxt.blocks.cachedSearchTb = tb;
         return tb;
     }
 
-    updateToolbox(tb: Element, showCategories: boolean = true, showToolboxButtons: boolean = true) {
+    updateToolbox(tb: Element, showCategories: boolean = true) {
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
             // Toolbox is consistent with current mode, safe to update

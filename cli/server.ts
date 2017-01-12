@@ -9,6 +9,7 @@ import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
 import * as os from 'os';
 import * as util from 'util';
+import * as hid from './hid';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -457,6 +458,85 @@ function initSocketServer(wsPort: number) {
         return r
     }
 
+    let hios: pxt.Map<Promise<pxt.HF2.Wrapper>> = {};
+    function startHID(request: any, socket: any, body: any) {
+        let ws = new WebSocket(request, socket, body);
+        ws.on('open', () => {
+            ws.send(JSON.stringify({ id: "ready" }))
+        })
+        ws.on('message', function (event: any) {
+            try {
+                let msg = JSON.parse(event.data);
+                //console.log("HIDMSG", msg.op) // , objToString(msg.arg))
+                Promise.resolve()
+                    .then(() => {
+                        let hio = hios[msg.arg.path]
+                        if (!hio && msg.arg.path)
+                            hios[msg.arg.path] = hio = hid.hf2ConnectAsync(msg.arg.path)
+                        return hio
+                    })
+                    .then(hio => {
+                        switch (msg.op) {
+                            case "init":
+                                return hio.reconnectAsync()
+                                    .then(() => {
+                                        hio.onSerial = (v, isErr) => {
+                                            if (!ws) return
+                                            ws.send(JSON.stringify({
+                                                op: "serial",
+                                                result: {
+                                                    isError: isErr,
+                                                    path: msg.arg.path,
+                                                    data: U.toHex(v),
+                                                }
+                                            }))
+                                        }
+                                        return {}
+                                    })
+                            case "talk":
+                                return Promise.mapSeries(msg.arg.cmds, (obj: any) =>
+                                    hio.talkAsync(obj.cmd, U.fromHex(obj.data))
+                                        .then(res => ({ data: U.toHex(res) })))
+                            case "sendserial":
+                                return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError)
+                            case "list":
+                                return { devices: hid.getHF2Devices() } as any
+                        }
+                    })
+                    .then(resp => {
+                        if (!ws) return;
+                        //console.log("HIDRESP", objToString(resp))
+                        ws.send(JSON.stringify({
+                            op: msg.op,
+                            id: msg.id,
+                            result: resp
+                        }))
+                    }, error => {
+                        console.log("HIDERR", error.message)
+                        if (!ws) return;
+                        ws.send(JSON.stringify({
+                            result: {
+                                errorMessage: error.message || "Error",
+                                errorStackTrace: error.stack,
+                            },
+                            op: msg.op,
+                            id: msg.id
+                        }))
+                    })
+            } catch (e) {
+                console.log("ws hid error", e.stack)
+            }
+        });
+        ws.on('close', function (event: any) {
+            console.log('ws hid connection closed')
+            ws = null;
+        });
+        ws.on('error', function () {
+            console.log('ws hid connection closed')
+            ws = null;
+        })
+    }
+
     function startDebug(request: any, socket: any, body: any) {
         let ws = new WebSocket(request, socket, body);
         let dapjs: any
@@ -541,6 +621,8 @@ function initSocketServer(wsPort: number) {
                     startSerial(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/debug")
                     startDebug(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/hid")
+                    startHID(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/electron")
                     startElectronChannel(request, socket, body);
                 else console.log('refused connection at ' + request.url);
@@ -556,8 +638,18 @@ function initSocketServer(wsPort: number) {
     });
 }
 
+function sendSerialMsg(msg: string) {
+    //console.log('sending ' + msg);
+    wsSerialClients.forEach(function (client: any) {
+        client.send(msg);
+    })
+}
+
 function initSerialMonitor() {
     if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
+    if (pxt.appTarget.serial.useHF2) {
+        return
+    }
 
     console.log('serial: monitoring ports...')
 
@@ -597,10 +689,7 @@ function initSerialMonitor() {
                         id: info.pnpId,
                         data: buffer.toString('utf8')
                     })
-                    //console.log('sending ' + msg);
-                    wsSerialClients.forEach(function (client: any) {
-                        client.send(msg);
-                    })
+                    sendSerialMsg(msg)
                 });
                 info.port.on('error', function () { close(info); });
                 info.port.on('close', function () { close(info); });

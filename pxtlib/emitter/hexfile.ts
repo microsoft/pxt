@@ -64,6 +64,15 @@ namespace ts.pxtc {
             }
         }
 
+        export function parseFile(blocks: Uint8Array) {
+            let r: Block[] = []
+            for (let i = 0; i < blocks.length; i += 512) {
+                let b = parseBlock(blocks.slice(i, i + 512))
+                if (b) r.push(b)
+            }
+            return r
+        }
+
         export function toBin(blocks: Uint8Array): Uint8Array {
             if (blocks.length < 512)
                 return null
@@ -135,6 +144,16 @@ namespace ts.pxtc {
         export function writeBytes(f: BlockFile, addr: number, bytes: number[]) {
             let currBlock = f.currBlock
             let needAddr = addr >> 8
+
+            // account for unaligned writes
+            // this function is only used to write small chunks, so recursion is fine
+            let firstChunk = 256 - (addr & 0xff)
+            if (bytes.length > firstChunk) {
+                writeBytes(f, addr, bytes.slice(0, firstChunk))
+                writeBytes(f, addr + firstChunk, bytes.slice(firstChunk))
+                return
+            }
+
             if (needAddr != f.currPtr) {
                 let i = 0;
                 currBlock = null

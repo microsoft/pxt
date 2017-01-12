@@ -29,9 +29,9 @@
 
 /* Main Editor layout */
 #maineditor {
-  left: @simulatorWidth;
-  right: 0;
-  overflow: hidden;
+    left: @simulatorWidth;
+    right: 0;
+    overflow: hidden;
 }
 .rtl #maineditor {
     left:0;
@@ -43,12 +43,10 @@
     position: relative;
     height: 100%;
 }
-#filelist {
-  width: 100%;
-  left: 0;
-  min-width: @simulatorWidth;
-  max-width: @simulatorWidth;
-  background-color: @simulatorBackground;
+#filelist, #downloadArea {
+    min-width: @simulatorWidth;
+    max-width: @simulatorWidth;
+    left: 0;
 }
 .rtl #filelist {
     left: auto;
@@ -56,19 +54,38 @@
 }
 
 #filelist {
-  padding: 1em 2em 1em 1.5em;
-  overflow-x: hidden;
-  overflow-y: auto;
-  margin-top: 0;
-  margin-bottom: 0;
+    padding: 1em 2em 1em 1.5em;
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    width: 100%;
+    background-color: @simulatorBackground;
+}
+
+#filelist .simtoolbar {
+    opacity: 0;
+    -webkit-transition: opacity 0.2s; /* Safari */
+    transition: opacity 0.2s;
+    transition-timing-function: linear;
+}
+
+#filelist:hover .simtoolbar {
+    opacity: 1;
+}
+
+#downloadArea {
+    margin-top: 0 !important;
+    padding-top: 0.7rem;
+    background-color: @simulatorBackground;
 }
 
 .filemenu {
-  direction:ltr;
+    direction:ltr;
 }
 
 #filelist .menu {
-  width: 100%;
+    width: 100%;
 }
 
 #filelist .nested.item {
@@ -97,6 +114,9 @@
 }
 #getting-started-btn:not(.sideDocs) {
     display: block;
+}
+.ui.button.getting-started-btn .ui.text {
+    font-weight: 100 !important;
 }
 
 /* Side Docs layout */
@@ -160,7 +180,7 @@
 }
 #tutorialcard.bottom {
     /* bottom right */
-    bottom: 1rem;
+    bottom: 6rem;
     right: 1rem;
 }
 .rtl #tutorialcard.bottom {
@@ -245,10 +265,13 @@ div.simframe > iframe {
 
 /* Menu */ 
 .ui.menu .item.editor-menuitem {
-    background: @mainMenuBlocksJsToggleColor !important;
+    background: fade(@black, 30%) !important;
     margin: 0.5rem;
     padding: 0.7rem;
-    border-radius: 0.5rem;
+    border-radius: 0.5rem !important;
+}
+.sandbox .ui.menu.fixed .item:first-child {
+    border-radius: 0.5rem !important;
 }
 .ui.menu.fixed .item.blocks-menuitem, .ui.menu.fixed .item.javascript-menuitem {
     border-radius: 0.2rem !important;
@@ -271,17 +294,17 @@ div.simframe > iframe {
 
 /* Editor tools */
 #editortools {
-    position: absolute;
+    position: fixed;
     top:auto;
     bottom:0;
     left: 0;
     right:0;
     z-index:3;
-    height:4rem;
+    height: 5rem;
     background-color: @editorToolsBackground;
 }
-#blocksArea, #monacoEditor, #pxtJsonEditor {
-    bottom: 4rem !important;
+#blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
+    bottom: 5rem !important;
 }
 
 /* Help card */
@@ -350,6 +373,24 @@ div.simframe > iframe {
     overflow-y: hidden;
 }
 
+/* Popup message */
+#msg {
+    position: absolute;
+    bottom: 5rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+#msg > div {
+    display: inline-block;
+    z-index: 100;
+}
+
+#msg > div:empty {
+   display: none;
+}
+
 /* Scrollbars */
 /* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
 ::-webkit-scrollbar {
@@ -379,7 +420,6 @@ div.simframe > iframe {
     &:extend(.grey all);
     &:extend(.circular all);
 }
-
 
 /*******************************
              Docs
@@ -411,6 +451,9 @@ div.simframe > iframe {
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor;
     z-index: 1;
+    -webkit-transition: width 1s; /* Safari */
+    transition: width 1s;
+    transition-timing-function: ease-in;
 }
 
 .blocklySvg {
@@ -518,6 +561,9 @@ div.simframe > iframe {
 }
 .blocklyTreeIcon.blocklyTreeIconmore::before {
     content: "\f141";
+}
+.blocklyTreeIcon.blocklyTreeIconaddpackage::before {
+    content: "\f055";
 }
 .blocklyTreeIcon.blocklyTreeIconloops::before {
     content: "\f01e";
@@ -772,9 +818,6 @@ Avatar
     .blocklyTreeRow {
         min-width: 200px;
     }
-    .collapsedEditorTools .organization {
-        display: block;
-    }
 }
 
 /* Small Monitor */
@@ -854,18 +897,22 @@ Avatar
     .collapsedEditorTools #filelist {
         display: none;
     }
+    .collapsedEditorTools #downloadArea {
+        background: @editorToolsBackground;
+    }
     .collapsedEditorTools #maineditor {
         left:0 !important;
     }
-    .collapsedEditorTools .organization {
-        display: none;
+    /* Sandbox */
+    .sandboxfooter {
+        bottom: 5rem;
     }
 }   
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
     /* Layout */
-    #filelist {
+    #filelist, #downloadArea {
         min-width:@simulatorWidthSmall;
         max-width:@simulatorWidthSmall;
     }
@@ -879,17 +926,6 @@ Avatar
     /* Logo */
     #logo .name {
         display: none !important;
-    }
-    /* Organization logo */
-    .organization {
-        right:auto;
-        top:auto !important;
-        left:1.5rem;
-        bottom:0.5rem;
-    }
-    .rtl .organization {
-        right:1.5rem;
-        left:auto;
     }
     /* Cookie Message */
     #cookiemsg {
@@ -937,8 +973,8 @@ Avatar
         padding: 0;
         margin: 1em;
         z-index:5;
-        bottom:0rem;
-        left:0rem;
+        bottom:0rem !important;
+        left:4rem !important;
         top:auto;
         width:auto;
         min-width: inherit;
@@ -959,14 +995,20 @@ Avatar
     #editortools {
         height: 10rem;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #msg {
         bottom: 10rem !important;
+    }
+    #tutorialcard.bottom {
+        bottom: 11rem !important;
     }
     .hideEditorFloats #editortools {
         height: 4.5rem !important;
     }
-    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
+    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
         bottom: 4.5rem !important;
+    }
+    .hideEditorFloats #tutorialcard.bottom {
+        bottom: 5.5rem !important;
     }
     .hideEditorFloats .organization {
         display: none;
@@ -986,6 +1028,9 @@ Avatar
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
         display:none;
+    }
+    #downloadArea {
+        display: none;
     }
     /* Menu spacing */
     .ui.menu .item {

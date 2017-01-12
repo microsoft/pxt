@@ -959,7 +959,7 @@ namespace pxt.blocks {
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
-            return compileEvent(e, b, call.f, eventArgs(call), call.namespace, comments)
+            return compileEvent(e, b, call, eventArgs(call), call.namespace, comments)
         else
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
@@ -1000,7 +1000,7 @@ namespace pxt.blocks {
         return mkStmt(compileStdCall(e, b, f, comments))
     }
 
-    function mkCallWithCallback(e: Environment, n: string, f: string, args: JsNode[], body: JsNode, argumentDeclaration?: JsNode): JsNode {
+    function mkCallWithCallback(e: Environment, n: string, f: string, args: JsNode[], body: JsNode, argumentDeclaration?: JsNode, isExtension = false): JsNode {
         body.noFinalNewline = true
         let callback: JsNode;
         if (argumentDeclaration) {
@@ -1009,7 +1009,11 @@ namespace pxt.blocks {
         else {
             callback = mkGroup([mkText("() =>"), body]);
         }
-        return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
+
+        if (isExtension)
+            return mkStmt(H.extensionCall(f, args.concat([callback]), false));
+        else
+            return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
     }
 
     function compileArg(e: Environment, b: B.Block, arg: string, comments: string[]): JsNode {
@@ -1025,7 +1029,7 @@ namespace pxt.blocks {
         return body;
     }
 
-    function compileEvent(e: Environment, b: B.Block, event: string, args: string[], ns: string, comments: string[]): JsNode {
+    function compileEvent(e: Environment, b: B.Block, stdfun: StdFunc, args: string[], ns: string, comments: string[]): JsNode {
         const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
         const bBody = b.getInputTargetBlock("HANDLER");
         const body = compileStatements(e, bBody);
@@ -1035,7 +1039,7 @@ namespace pxt.blocks {
             argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
 
-        return mkCallWithCallback(e, ns, event, compiledArgs, body, argumentDeclaration);
+        return mkCallWithCallback(e, ns, stdfun.f, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
     }
 
     function isMutatingBlock(b: B.Block): b is MutatingBlock {

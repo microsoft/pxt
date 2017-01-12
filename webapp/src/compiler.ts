@@ -86,7 +86,15 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         })
         .then(compileCoreAsync)
         .then(resp => {
-            // TODO remove this
+            let outpkg = pkg.mainEditorPkg().outputPkg
+
+            // keep the assembly file - it is only generated when user hits "Download"
+            // and is usually overwritten by the autorun very quickly, so it's impossible to see it
+            let prevasm = outpkg.files[pxtc.BINARY_ASM]
+            if (prevasm && !resp.outfiles[pxtc.BINARY_ASM]) {
+                resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
+            }
+
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
 

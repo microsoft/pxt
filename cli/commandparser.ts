@@ -23,6 +23,7 @@ export interface Command {
     flags?: { [index: string]: CommandFlag };
     aliases?: string[];
     numArgs?: number;
+    anyArgs?: boolean; // pass all arguments as is
 
     /* @internal */
     _aliasMap?: { [index: string]: string };
@@ -79,6 +80,13 @@ export class CommandParser {
         }
 
         const command = filtered[0];
+
+        if (command.anyArgs)
+            return command._callback({
+                name: command.name,
+                arguments: args.slice(1),
+                flags
+            });
 
         let currentFlag: string;
         let currentFlagDef: CommandFlag;
