@@ -410,24 +410,23 @@ function travisAsync() {
     forceCloudBuild = true
 
     const rel = process.env.TRAVIS_TAG || ""
+    const branch = process.env.TRAVIS_BRANCH || "local"
+    const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
+    const latest = /^master$/.test(branch) ? "latest" : "git-" + branch
+
+    return releaseTargetAsync(rel || latest, uploadLocs)
+}
+
+function releaseTargetAsync(rel: string, uploadLocs: boolean): Promise<void> {
     const atok = process.env.NPM_ACCESS_TOKEN
     const npmPublish = /^v\d+\.\d+\.\d+$/.exec(rel) && atok;
-
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
         console.log(`Setting up ${npmrc}`)
         let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
         fs.writeFileSync(npmrc, cfg)
     }
-
-    console.log("TRAVIS_TAG:", rel)
-
-    const branch = process.env.TRAVIS_BRANCH || "local"
-    const latest = branch == "master" ? "latest" : "git-" + branch
-    // upload locs on build on master
-    const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
-
-    let pkg = readJson("package.json")
+    const pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
         let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
         if (uploadLocs)
@@ -443,14 +442,10 @@ function travisAsync() {
                     pxt.log('no token, skipping upload')
                     return Promise.resolve();
                 }
-                let trg = readLocalPxTarget()
-                if (rel)
-                    return uploadTargetAsync(trg.id + "/" + rel)
-                        .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
-                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
-                else
-                    return uploadTargetAsync(trg.id + "/" + latest)
-                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
+                const trg = readLocalPxTarget()
+                return uploadTargetAsync(trg.id + "/" + rel)
+                    .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
+                    .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
             })
     }
 }
@@ -538,12 +533,7 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
             .then(() => nodeutil.runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
-            .then(() => {
-                if (!parsed.flags["upload"]) return Promise.resolve();
-                return buildTargetAsync()
-                    .then(() => uploadTargetAsync(readJson("package.json")["version"]))
-                    .then(() => {})
-            })
+            .then(() => parsed.flags["upload"] ? releaseTargetAsync(readJson("package.json")["version"], false) : Promise.resolve())
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
