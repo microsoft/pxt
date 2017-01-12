@@ -20,6 +20,7 @@ import * as cmds from "./cmds"
 import * as appcache from "./appcache";
 import * as gallery from "./gallery";
 import * as screenshot from "./screenshot";
+import * as hidbridge from "./hidbridge";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1910,6 +1911,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     compile(saveOnly = false) {
+        // the USB init has to be called from an event handler
+        if (/webusb=1/i.test(window.location.href)) {
+            pxt.usb.initAsync().catch(e => { })
+        }
+
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
         if (this.state.compiling) {
@@ -1934,7 +1940,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 resp.saveOnly = saveOnly
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
-                        core.warningNotification(lf(".hex file upload, please try again."));
+                        core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
                     })
             }).catch((e: Error) => {
@@ -2458,6 +2464,20 @@ function initLogin() {
 function initSerial() {
     if (!pxt.appTarget.serial || !Cloud.isLocalHost() || !Cloud.localToken)
         return;
+
+    if (hidbridge.shouldUse()) {
+        hidbridge.initAsync()
+            .then(dev => {
+                dev.onSerial = (buf, isErr) => {
+                    window.postMessage({
+                        type: 'serial',
+                        id: 'n/a', // TODO
+                        data: Util.fromUTF8(Util.uint8ArrayToString(buf))
+                    }, "*")
+                }
+            })
+        return
+    }
 
     pxt.debug('initializing serial pipe');
     let ws = new WebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/serial`);

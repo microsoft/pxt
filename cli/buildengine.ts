@@ -9,6 +9,7 @@ import * as nodeutil from './nodeutil';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
+import * as hid from './hid';
 
 import U = pxt.Util;
 import Map = pxt.Map;
@@ -309,6 +310,14 @@ const readDirAsync = Promise.promisify(fs.readdir)
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     const firmware = pxt.appTarget.compile.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_HEX;
     const encoding = pxt.appTarget.compile.useUF2 ? "base64" : "utf8";
+
+    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
+        let f = res.outfiles[pxtc.BINARY_UF2]
+        let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
+        return hid.hf2DeviceAsync()
+            .then(dev => dev.flashAsync(blocks))
+    }
+
     return getBoardDrivesAsync()
         .then(drives => filterDrives(drives))
         .then(drives => {
