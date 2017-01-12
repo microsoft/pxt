@@ -12,7 +12,7 @@ AppPublisherURL=https://www.pxt.io/
 AppSupportURL=https://www.pxt.io/
 AppUpdatesURL=https://www.pxt.io/
 DefaultDirName={pf}\{#DirName}
-DefaultGroupName={#NameLong}
+DefaultGroupName={#NameShort}
 AllowNoIcons=yes
 OutputDir={#DistDir}
 OutputBaseFilename={#InstallerBaseName}
@@ -49,16 +49,15 @@ Type: filesandordirs; Name: {app}\resources\app
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
-; Name: "associatewithfiles"; Description: "{cm:AssociateWithFiles,{#NameShort}}"; GroupDescription: "{cm:Other}"; Flags: unchecked
-Name: "runpxt"; Description: "{cm:RunAfter,{#NameShort}}"; GroupDescription: "{cm:Other}"; Check: WizardSilent
+Name: "runpxt"; Description: "{cm:RunAfter,{#NameLong}}"; GroupDescription: "{cm:Other}"; Check: WizardSilent
 
 [Files]
 Source: "*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#NameLong}"; Filename: "{app}\{#ExeBasename}.exe"; AppUserModelID: "{#AppUserId}"
-Name: "{commondesktop}\{#NameLong}"; Filename: "{app}\{#ExeBasename}.exe"; Tasks: desktopicon; AppUserModelID: "{#AppUserId}"
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#NameLong}"; Filename: "{app}\{#ExeBasename}.exe"; Tasks: quicklaunchicon; AppUserModelID: "{#AppUserId}"
+Name: "{group}\{#NameShort}"; Filename: "{app}\{#ExeBasename}.exe"; AppUserModelID: "{#AppUserId}"
+Name: "{commondesktop}\{#NameShort}"; Filename: "{app}\{#ExeBasename}.exe"; Tasks: desktopicon; AppUserModelID: "{#AppUserId}"
+Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#NameShort}"; Filename: "{app}\{#ExeBasename}.exe"; Tasks: quicklaunchicon; AppUserModelID: "{#AppUserId}"
 
 [Run]
 Filename: "{app}\{#ExeBasename}.exe"; Description: "{cm:LaunchProgram,{#NameLong}}"; Tasks: runpxt; Flags: nowait postinstall; Check: WizardSilent
