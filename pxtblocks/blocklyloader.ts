@@ -173,7 +173,7 @@ namespace pxt.blocks {
                         category.setAttribute("colour", blockColors[ns].toString());
                     }
                     if (nsn && nsn.attributes.icon) {
-                        const nsnIconClassName = `blocklyTreeIcon${nsn.name}`;
+                        const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
                         injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
@@ -600,6 +600,11 @@ namespace pxt.blocks {
             })
         }
 
+        // Add the "Add package" category
+        if (tb) {
+            getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+        }
+
         // Filter the blocks
         if (blockSubset) {
             let keepcategories: { [index: string]: number } = {};
@@ -772,38 +777,6 @@ namespace pxt.blocks {
         blocklySearchInput.appendChild(blocklySearchInputIcon);
         blocklySearchArea.appendChild(blocklySearchInput);
         $('.blocklyToolboxDiv').prepend(blocklySearchArea);
-    }
-
-    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: Event) => void): void {
-        if (!$(`#${id}`).length) {
-            let blocklyToolboxButtons = document.createElement('div');
-            blocklyToolboxButtons.id = id;
-            blocklyToolboxButtons.className = 'ui grid padded blocklyToolboxButtons';
-
-            if (addCallback) {
-                // add "Add package" button to toolbox
-                let addButtonDiv = document.createElement('div');
-                addButtonDiv.className = 'left floated row';
-                let addButtonColumnDiv = document.createElement('div');
-                addButtonColumnDiv.className = 'column';
-                let addPackageButton = document.createElement('button');
-                addPackageButton.setAttribute('role', 'button');
-                addPackageButton.setAttribute('aria-label', lf("Add Package..."));
-                addPackageButton.setAttribute('title', lf("Add Package..."));
-                pxt.BrowserUtils.isTouchEnabled() ?
-                    addPackageButton.ontouchstart = addCallback
-                    : addPackageButton.onclick = addCallback;
-                addPackageButton.className = 'ui icon button small blocklyToolboxButton blocklyAddPackageButton';
-                let addpackageIcon = document.createElement('i');
-                addpackageIcon.className = 'plus icon';
-                addPackageButton.appendChild(addpackageIcon);
-                addButtonColumnDiv.appendChild(addPackageButton);
-                addButtonDiv.appendChild(addButtonColumnDiv);
-                blocklyToolboxButtons.appendChild(addButtonDiv);
-            }
-
-            toolbox.appendChild(blocklyToolboxButtons);
-        }
     }
 
     function categoryElement(tb: Element, nameid: string): Element {
