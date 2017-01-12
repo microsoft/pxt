@@ -144,7 +144,7 @@ namespace ts.pxtc {
         export function writeBytes(f: BlockFile, addr: number, bytes: number[]) {
             let currBlock = f.currBlock
             let needAddr = addr >> 8
-            
+
             // account for unaligned writes
             // this function is only used to write small chunks, so recursion is fine
             let firstChunk = 256 - (addr & 0xff)
