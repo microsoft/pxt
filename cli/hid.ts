@@ -2,7 +2,18 @@ import HF2 = pxt.HF2
 import U = pxt.U
 import * as commandParser from './commandparser';
 
-let HID: any
+let HID: any = undefined;
+function getHID(): any {
+    if (HID === undefined) {
+        try {
+            HID = require("node-hid")
+        } catch (e) {
+            pxt.log('node-hid failed to load, ignoring...')
+            HID = null;
+        }
+    }
+    return HID;
+}
 
 export interface HidDevice {
     vendorId: number; // 9025,
@@ -36,9 +47,9 @@ export function deviceInfo(h: HidDevice) {
 }
 
 export function getHF2Devices() {
-    if (!HID)
-        HID = require("node-hid")
-    let devices = HID.devices() as HidDevice[]
+    const hid = getHID();
+    if (!hid) return [];
+    let devices = hid.devices() as HidDevice[]
     return devices.filter(d => (d.release & 0xff00) == 0x4200)
 }
 
@@ -88,6 +99,8 @@ export class HidIO implements HF2.PacketIO {
     }
 
     private connect() {
+        const hid = getHID();
+        U.assert(hid)
         this.dev = new HID.HID(this.path)
         this.dev.on("data", (v: Buffer) => {
             //console.log("got", v.toString("hex"))
