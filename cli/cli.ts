@@ -538,6 +538,12 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
             .then(() => nodeutil.runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
+            .then(() => {
+                if (!parsed.flags["upload"]) return Promise.resolve();
+                return buildTargetAsync()
+                    .then(() => uploadTargetAsync(readJson("package.json")["version"]))
+                    .then(() => {})
+            })
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
@@ -3554,7 +3560,8 @@ function initCommands() {
         name: "bump",
         help: "bump target or package version",
         flags: {
-            noupdate: { description: "Don't publish the updated version" }
+            noupdate: { description: "Don't publish the updated version" },
+            upload: { description: "Upload to release repo" }
         }
     }, bumpAsync);
 
