@@ -1105,7 +1105,7 @@ namespace ts.pxtc.assembler {
     }
 
     function parseString(s: string) {
-        s = s.replace(/\/\//g, "\\B")           // don't get confused by double backslash
+        s = s.replace(/\\\\/g, "\\B")           // don't get confused by double backslash
             .replace(/\\(['\?])/g, (f, q) => q) // these are not valid in JSON yet valid in C
             .replace(/\\[z0]/g, "\u0000")      // \0 is valid in C 
             .replace(/\\x([0-9a-f][0-9a-f])/gi, (f, h) => "\\u00" + h)
