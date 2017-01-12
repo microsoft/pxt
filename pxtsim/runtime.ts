@@ -34,13 +34,13 @@ namespace pxsim {
         }
 
         export function now(): number {
-            if(typeof performance != "undefined")
-              return (performance as any).now() ||
-                     (performance as any).mozNow()    ||
-                     (performance as any).msNow()     ||
-                     (performance as any).oNow()      ||
-                     (performance as any).webkitNow() ||
-                     Date.now();
+            if (typeof performance != "undefined")
+                return (performance as any).now()       ||
+                       (performance as any).mozNow()    ||
+                       (performance as any).msNow()     ||
+                       (performance as any).oNow()      ||
+                       (performance as any).webkitNow() ||
+                    Date.now();
             return process.hrtime();
         }
 
