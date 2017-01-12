@@ -738,7 +738,7 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
         const hasNext = currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
 
-        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} ${tutorialReady ? 'visible active' : 'hidden'}`}>
+        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} visible active`}>
             <div className="ui raised fluid card">
                 <div className="ui">
                     <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
