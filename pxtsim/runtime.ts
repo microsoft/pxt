@@ -38,7 +38,12 @@ namespace pxsim {
         }
 
         export function nowUs(): number {
-            return performance.now() || Date.now();
+            return (performance as any).now() ||
+                   (performance as any).mozNow    ||
+                   (performance as any).msNow     ||
+                   (performance as any).oNow      ||
+                   (performance as any).webkitNow ||
+                    Date.now();
         }
 
         export function nextTick(f: () => void) {
