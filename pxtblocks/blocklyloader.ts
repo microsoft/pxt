@@ -423,7 +423,9 @@ namespace pxt.blocks {
                 } else if (/\[\]$/.test(pr.type)) { // Array type
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
                 } else if (instance && n == "this") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
+                    if (!fn.attributes.defaultInstance) {
+                        i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
+                    }
                 } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();

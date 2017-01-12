@@ -704,6 +704,16 @@ ${output}</xml>`;
                 openBlockTag(info.attrs.blockId);
                 if (extraArgs) write(extraArgs);
                 info.args.forEach((e, i) => {
+                    if (i === 0 && info.attrs.defaultInstance) {
+                        if (e.getText() === info.attrs.defaultInstance) {
+                            return;
+                        }
+                        else {
+                            argNames[0] = "__instance__";
+                            write(`<mutation showing="true"></mutation>`);
+                        }
+                    }
+
                     switch (e.kind) {
                         case SK.ArrowFunction:
                             emitDestructuringMutation(e as ArrowFunction);

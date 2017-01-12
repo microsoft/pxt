@@ -451,7 +451,8 @@ namespace pxt.blocks {
 
                     default:
                         if (b.type in e.stdCallTable) {
-                            e.stdCallTable[b.type].args.forEach((p: StdArg) => {
+                            const func = e.stdCallTable[b.type];
+                            func.args.forEach((p: StdArg) => {
                                 if (p.field && !b.getFieldValue(p.field)) {
                                     let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
                                     // This will throw if someone modified blocks-custom.js and forgot to add
@@ -988,6 +989,19 @@ namespace pxt.blocks {
         if (func.isIdentity)
             return args[0];
         else if (func.isExtensionMethod) {
+            if (func.attrs.defaultInstance) {
+                let instance: JsNode;
+                if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.DefaultInstanceMutator) {
+                    instance = b.mutation.compileMutation(e, comments);
+                }
+
+                if (instance) {
+                    args.unshift(instance);
+                }
+                else {
+                    args.unshift(mkText(func.attrs.defaultInstance));
+                }
+            }
             return H.extensionCall(func.f, args, externalInputs);
         } else if (func.namespace) {
             return H.namespaceCall(func.namespace, func.f, args, externalInputs);
@@ -1173,10 +1187,12 @@ namespace pxt.blocks {
                         if (fieldMap[p.name] && fieldMap[p.name].name) return { field: fieldMap[p.name].name };
                         else return null;
                     }).filter(a => !!a);
-                    if (instance)
+
+                    if (instance && !fn.attributes.defaultInstance) {
                         args.unshift({
                             field: fieldMap["this"].name
                         });
+                    }
 
                     e.stdCallTable[fn.attributes.blockId] = {
                         namespace: fn.namespace,
