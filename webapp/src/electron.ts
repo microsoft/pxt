@@ -80,7 +80,7 @@ export function init() {
         }
 
         if (args.type === UpdateEventType.Notification) {
-            core.infoNotification(lf("Version {0} available. Select 'Check for updates...' in the menu.", args.targetVersion));
+            core.infoNotification(lf("A new version is available. Select 'Check for updates...' in the menu.", args.targetVersion));
         } else if (args.type === UpdateEventType.Prompt) {
             core.confirmAsync({
                 header,
@@ -125,7 +125,7 @@ export function init() {
     }
 
     function onUpdateCheckError() {
-        displayUpdateError(lf("Unable to check for update"), lf("Ok"));
+        displayUpdateError(lf("Unable to check for updates"), lf("Ok"));
     }
 
     function onUpdateDownloadError(args: UpdateEventInfo) {
