@@ -373,6 +373,24 @@ div.simframe > iframe {
     overflow-y: hidden;
 }
 
+/* Popup message */
+#msg {
+    position: absolute;
+    bottom: 5rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+
+#msg > div {
+    display: inline-block;
+    z-index: 100;
+}
+
+#msg > div:empty {
+   display: none;
+}
+
 /* Scrollbars */
 /* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
 ::-webkit-scrollbar {
@@ -977,7 +995,7 @@ Avatar
     #editortools {
         height: 10rem;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #msg {
         bottom: 10rem !important;
     }
     #tutorialcard.bottom {
@@ -986,7 +1004,7 @@ Avatar
     .hideEditorFloats #editortools {
         height: 4.5rem !important;
     }
-    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
+    .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
         bottom: 4.5rem !important;
     }
     .hideEditorFloats #tutorialcard.bottom {

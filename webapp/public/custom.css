@@ -25,23 +25,6 @@ body {
     background: #1B1C1D;
 }
 
-#msg {
-    position: absolute;
-    bottom: 4rem;
-    left: 0;
-    right: 0;
-    text-align: center;
-}
-
-#msg > div {
-    display: inline-block;
-    z-index: 100;
-}
-
-#msg > div:empty {
-   display: none;
-}
-
 .rtl .ui.menu .ui.dropdown .menu > .item,
 .rtl .ui.modal {
     text-align: right;
