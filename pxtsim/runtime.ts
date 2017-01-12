@@ -1,8 +1,6 @@
 /// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 
-declare const process: any;
-
 namespace pxsim {
     export namespace U {
         export function addClass(el: HTMLElement, cls: string) {
@@ -47,8 +45,6 @@ namespace pxsim {
                         (performance as any).oNow()      ||
                         (performance as any).webkitNow() ||
                          Date.now();
-            else if (typeof window != "undefined")
-                return process.hrtime();
             return Date.now();
         }
 
