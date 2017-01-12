@@ -1,6 +1,8 @@
 /// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 
+declare const process: any;
+
 namespace pxsim {
     export namespace U {
         export function addClass(el: HTMLElement, cls: string) {
@@ -34,14 +36,20 @@ namespace pxsim {
         }
 
         export function now(): number {
+            return Date.now();
+        }
+
+        export function perfNow(): number {
             if (typeof performance != "undefined")
-                return (performance as any).now()       ||
-                       (performance as any).mozNow()    ||
-                       (performance as any).msNow()     ||
-                       (performance as any).oNow()      ||
-                       (performance as any).webkitNow() ||
-                    Date.now();
-            return process.hrtime();
+                return performance.now()                 ||
+                        (performance as any).mozNow()    ||
+                        (performance as any).msNow()     ||
+                        (performance as any).oNow()      ||
+                        (performance as any).webkitNow() ||
+                         Date.now();
+            else if (typeof window != "undefined")
+                return process.hrtime();
+            return Date.now();
         }
 
         export function nextTick(f: () => void) {
@@ -232,6 +240,7 @@ namespace pxsim {
         dead = false;
         running = false;
         startTime = 0;
+        startTimeUs = 0;
         id: string;
         globals: any = {};
         currFrame: StackFrame;
@@ -294,6 +303,7 @@ namespace pxsim {
                 this.running = r;
                 if (this.running) {
                     this.startTime = U.now();
+                    this.startTimeUs = U.perfNow();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
