@@ -524,6 +524,16 @@ ${files["main.ts"]}
         tutorialid = tutorialid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
+                if (!tutorialmd) {
+                    if (window.parent)
+                        window.parent.postMessage(<pxsim.TutorialErrorMessage>{
+                            type: "tutorial",
+                            tutorial: tutorialid,
+                            subtype: "error",
+                        }, "*");
+                    return Promise.resolve();
+                }
+
                 let steps = tutorialmd.split(/\###.*(?!$)/i);
                 if (steps.length < 1) return;
                 let options = steps[0];
@@ -559,7 +569,7 @@ ${files["main.ts"]}
                                     toolboxSubset[blk.type] = 1;
                                 }
                             }
-                            if (toolboxSubset != {}) {
+                            if (toolboxSubset != {} && window.parent) {
                                 window.parent.postMessage(<pxsim.TutorialStepLoadedMessage>{
                                     type: "tutorial",
                                     tutorial: tutorialid,

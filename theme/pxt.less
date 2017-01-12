@@ -748,6 +748,78 @@ Avatar
 }
 
 /*******************************
+        Layout Variables
+*******************************/
+
+.ui.widedesktop.only {
+    display:none !important;
+}
+
+@media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
+    .ui.widedesktop.only {
+        display:inherit !important;
+    }
+    .ui.widedesktop.hide {
+        display:none !important;
+    }
+}
+
+/* smaller desktop screen */
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 12/10) {
+    .ui.desktop.only {
+        display:none !important;
+    }
+}
+
+/* thin desktop portrait mode */
+@media only screen and (max-width: @largestTabletScreen), only screen and (max-aspect-ratio: 7/10) {
+    .ui.landscape.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @computerBreakpoint) {
+    .ui.portrait.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @tabletBreakpoint) {
+    .ui.tablet.only {
+        display:none !important;
+    }
+}
+
+/* Mobile + Tablet */
+@media only screen and (max-width: @largestTabletScreen) {
+    .ui.portrait.only {
+        display:inherit !important;
+    }
+    .ui.portrait.hide {
+        display:none !important;
+    }
+}
+
+/* Screens with decent vertical space */
+@media only screen and (max-height: @tallEditorBreakpoint) {
+    .ui.tall.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (min-width: @mobileBreakpoint) {
+    .ui.thin.only {
+        display:none !important;
+    }
+}
+
+@media only screen and (max-width: @mobileBreakpoint) {
+    .ui.wide.only {
+        display:none !important;
+    }
+}
+
+/*******************************
         Media Adjustments
 *******************************/
 
