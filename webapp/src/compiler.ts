@@ -94,7 +94,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             if (prevasm && !resp.outfiles[pxtc.BINARY_ASM]) {
                 resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
             }
-            
+
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
 
