@@ -550,12 +550,16 @@ function justBumpPkgAsync() {
 
 function bumpAsync(parsed: commandParser.ParsedCommand) {
     const bumpPxt = !parsed.flags["noupdate"];
-    if (fs.existsSync(pxt.CONFIG_NAME))
+    const upload = parsed.flags["upload"];
+    if (fs.existsSync(pxt.CONFIG_NAME)) {
+        if (upload) throw U.userError("upload only supported on packages");
+
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
             .then(() => justBumpPkgAsync())
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
+    }
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
@@ -563,6 +567,7 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
             .then(() => nodeutil.runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
+            .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
@@ -582,7 +587,11 @@ function uploadTaggedTargetAsync() {
             gitInfoAsync(["rev-parse", "HEAD"])
         ]))
         // only build target after getting all the info
-        .then(info => buildTargetAsync().then(() => info))
+        .then(info =>
+            buildTargetAsync()
+                .then(() => checkDocsAsync())
+                .then(() => testSnippetsAsync())
+                .then(() => info))
         .then(info => {
             process.env["TRAVIS_TAG"] = info[0]
             process.env['TRAVIS_BRANCH'] = info[1]
@@ -3617,7 +3626,8 @@ function initCommands() {
         name: "bump",
         help: "bump target or package version",
         flags: {
-            noupdate: { description: "Don't publish the updated version" }
+            noupdate: { description: "Don't publish the updated version" },
+            upload: { description: "(package only) Upload after bumping" }
         }
     }, bumpAsync);
 
