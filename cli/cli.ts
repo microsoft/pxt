@@ -499,8 +499,26 @@ function updateAsync() {
         .then(() => nodeutil.runNpmAsync("install"));
 }
 
-function justBumpPkgAsync() {
-    ensurePkgDir()
+function gitInfoAsync(args: string[]) {
+    return Promise.resolve()
+        .then(() => nodeutil.spawnWithPipeAsync({
+            cmd: "git",
+            args: args
+        }))
+        .then(buf => buf.toString("utf8").trim())
+
+}
+
+function currGitTagAsync() {
+    return gitInfoAsync(["describe", "--tags", "--exact-match"])
+        .then(t => {
+            if (!t)
+                U.userError("no git tag found")
+            return t
+        })
+}
+
+function needsGitCleanAsync() {
     return Promise.resolve()
         .then(() => nodeutil.spawnWithPipeAsync({
             cmd: "git",
@@ -509,8 +527,13 @@ function justBumpPkgAsync() {
         .then(buf => {
             if (buf.length)
                 U.userError("Please commit all files to git before running 'pxt bump'")
-            return mainPkg.loadAsync()
         })
+}
+
+function justBumpPkgAsync() {
+    ensurePkgDir()
+    return needsGitCleanAsync()
+        .then(() => mainPkg.loadAsync())
         .then(() => {
             let v = pxt.semver.parse(mainPkg.config.version)
             v.patch++
@@ -543,6 +566,40 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
+}
+
+function uploadTaggedTargetAsync() {
+    forceCloudBuild = true
+    const token = passwordGet(GITHUB_KEY);
+    if (!token) {
+        fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push releases.");
+        return Promise.resolve();
+    }
+    return needsGitCleanAsync()
+        .then(() => Promise.all([
+            currGitTagAsync(),
+            gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
+            gitInfoAsync(["rev-parse", "HEAD"])
+        ]))
+        // only build target after getting all the info
+        .then(info => buildTargetAsync().then(() => info))
+        .then(info => {
+            process.env["TRAVIS_TAG"] = info[0]
+            process.env['TRAVIS_BRANCH'] = info[1]
+            process.env['TRAVIS_COMMIT'] = info[2]
+            let repoSlug = "microsoft/pxt-" + pxt.appTarget.id
+            process.env['TRAVIS_REPO_SLUG'] = repoSlug
+            process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
+            let v = pkgVersion()
+            pxt.log("uploading " + v)
+            return uploadCoreAsync({
+                label: "v" + v,
+                fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
+                pkgversion: v,
+                githubOnly: true,
+                fileContent: {}
+            })
+        })
 }
 
 function runGitAsync(...args: string[]) {
@@ -593,6 +650,7 @@ interface UploadOptions {
     legacyLabel?: boolean;
     target?: string;
     localDir?: string;
+    githubOnly?: boolean;
 }
 
 interface BlobReq {
@@ -965,7 +1023,10 @@ function uploadCoreAsync(opts: UploadOptions) {
             })
 
     return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
-        .then(() => gitUploadAsync(opts, uplReqs))
+        .then(() =>
+            opts.githubOnly
+                ? uploadToGitRepoAsync(opts, uplReqs)
+                : gitUploadAsync(opts, uplReqs))
 }
 
 function readLocalPxTarget() {
@@ -3690,6 +3751,7 @@ function initCommands() {
 
     advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
+    advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
     advancedCommand("checkdocs", "check docs for broken links, typing errors, etc...", checkDocsAsync);
 
