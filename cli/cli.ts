@@ -520,12 +520,15 @@ function justBumpPkgAsync() {
 
 function bumpAsync(parsed: commandParser.ParsedCommand) {
     const bumpPxt = !parsed.flags["noupdate"];
-    if (fs.existsSync(pxt.CONFIG_NAME))
+    if (fs.existsSync(pxt.CONFIG_NAME)) {
+        if (parsed.flags["upload"])
+            throw U.userError("upload flag only supported for targets");
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
             .then(() => justBumpPkgAsync())
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
+    }
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
@@ -3551,7 +3554,7 @@ function initCommands() {
         help: "bump target or package version",
         flags: {
             noupdate: { description: "Don't publish the updated version" },
-            upload: { description: "Upload to release repo" }
+            upload: { description: "(target only) Upload to release repo" }
         }
     }, bumpAsync);
 
