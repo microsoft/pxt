@@ -451,8 +451,7 @@ namespace pxt.blocks {
 
                     default:
                         if (b.type in e.stdCallTable) {
-                            const func = e.stdCallTable[b.type];
-                            func.args.forEach((p: StdArg) => {
+                            e.stdCallTable[b.type].args.forEach((p: StdArg) => {
                                 if (p.field && !b.getFieldValue(p.field)) {
                                     let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
                                     // This will throw if someone modified blocks-custom.js and forgot to add
