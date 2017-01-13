@@ -447,6 +447,9 @@ namespace pxt.blocks {
         if (fn.attributes.mutate) {
             addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
         }
+        else if (fn.attributes.defaultInstance) {
+            addMutation(block as MutatingBlock, fn, MutatorTypes.DefaultInstanceMutator);
+        }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
         if (body) {

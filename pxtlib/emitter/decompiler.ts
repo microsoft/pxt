@@ -692,7 +692,7 @@ ${output}</xml>`;
                 });
 
                 const argumentDifference = info.args.length - argNames.length;
-                if (argumentDifference > 0) {
+                if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1)) {
                     const hasCallback = hasArrowFunction(info);
                     if (argumentDifference > 1 || !hasCallback) {
                         pxt.tickEvent("decompiler.optionalParameters");
@@ -709,7 +709,7 @@ ${output}</xml>`;
                             return;
                         }
                         else {
-                            argNames[0] = "__instance__";
+                            argNames.unshift("__instance__");
                             write(`<mutation showing="true"></mutation>`);
                         }
                     }
