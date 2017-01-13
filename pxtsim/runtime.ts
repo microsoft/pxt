@@ -38,12 +38,13 @@ namespace pxsim {
         }
 
         export function perfNow(): number {
-            const perf = performance.now               ||
-                       (performance as any).mozNow     ||
-                       (performance as any).msNow      ||
-                       (performance as any).oNow       ||
-                       (performance as any).webkitNow  ||
-                       Date.now;
+            const perf = typeof performance != "undefined" ?
+                        performance.now ||
+                        (performance as any).mozNow    ||
+                        (performance as any).msNow     ||
+                        (performance as any).oNow      ||
+                        (performance as any).webkitNow :
+                        Date.now;
             return perf();
         }
 
