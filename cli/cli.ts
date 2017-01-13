@@ -422,12 +422,16 @@ function travisAsync() {
         fs.writeFileSync(npmrc, cfg)
     }
 
-    console.log("TRAVIS_TAG:", rel)
-
     const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
     const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
+
+    console.log("TRAVIS_TAG:", rel);
+    console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
+    console.log("TRAVIS_PULL_REQUEST:", process.env.TRAVIS_PULL_REQUEST);
+    console.log("uploadLocs:", uploadLocs);
+    console.log("latest:", latest);
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
