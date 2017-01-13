@@ -96,7 +96,10 @@ export class Editor extends srceditor.Editor {
                     }
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
-                            if (!resp.success) return failedAsync(blockFile);
+                            if (!resp.success) {
+                                this.currFile.diagnostics = resp.diagnostics;
+                                return failedAsync(blockFile);
+                            }
                             xml = resp.outfiles[blockFile];
                             Util.assert(!!xml);
                             return mainPkg.setContentAsync(blockFile, xml)
