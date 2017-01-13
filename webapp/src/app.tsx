@@ -880,7 +880,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             </div>
                         </div> :
                         <div className="ui equal width grid">
-                            <div className="left aligned one wide column">
+                            <div className="left aligned two wide column">
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
                                     {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
@@ -935,7 +935,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             </div>
                         </div>
                         : <div className="ui grid">
-                            <div className="one wide column">
+                            <div className="left aligned two wide column">
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
                                     {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
@@ -946,7 +946,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                     </div>
                                 </div>
                             </div>
-                            <div className="four wide column">
+                            <div className="three wide column">
                             </div>
                             <div className="five wide column">
                                 <div className="ui grid right aligned">
