@@ -290,6 +290,7 @@ namespace ts.pxtc {
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
+        defaultInstance?: string;
         autoCreate?: string;
         noRefCounting?: boolean;
         color?: string;

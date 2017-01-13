@@ -862,7 +862,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="left aligned column">
                                 <div className="ui icon small buttons">
                                     <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
-                                    {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
+                                    {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
                                 </div>
                             </div>
                             <div className="right aligned column">
@@ -881,8 +881,8 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         <div className="ui equal width grid">
                             <div className="left aligned one wide column">
                                 <div className="ui vertical icon small buttons">
-                                    {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
-                                    {run ? <sui.Button key='restartbtn' class={`${compileBtn ? '' : ' fluid'} restart-button`} text={compileBtn ? undefined : lf("Restart") } icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
+                                    {run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
+                                    {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
                                 </div>
                                 <div className="row" style={{paddingTop: "1rem"}}>
                                     <div className="ui vertical icon small buttons">
@@ -905,7 +905,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 <div className="row" style={{paddingTop: 0}}>
                                     <div className="column">
                                         <div className="ui icon large buttons">
-                                            {compileBtn ? <sui.Button role="menuitem" class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
+                                            {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
                                         </div>
                                     </div>
                                 </div>
@@ -917,7 +917,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         <div className="ui grid seven column">
                             <div className="left aligned six wide column">
                                 <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`large collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
-                                {compileBtn ? <sui.Button role="menuitem" class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
+                                {compileBtn ? <sui.Button class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
                             </div>
                             <div className="column four wide">
                                 <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile('tablet')} />
@@ -937,7 +937,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="one wide column">
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
-                                    {run ? <sui.Button key='restartbtn' class={`${compileBtn ? '' : 'fluid'} restart-button`} text={compileBtn ? undefined : lf("Restart") } icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
+                                    {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
                                 </div>
                                 <div className="row" style={{paddingTop: "1rem"}}>
                                     <div className="ui vertical icon small buttons">
@@ -2384,8 +2384,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div className="ui item grid centered portrait hide simtoolbar">
                             <div className="ui icon buttons">
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
-                                {run ? <sui.Button key='runbtn' class={`${compileBtn ? '' : 'huge fluid'} play-button`} text={compileBtn ? undefined : this.state.running ? lf("Stop") : lf("Run") } icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
-                                {run ? <sui.Button key='restartbtn' class={`${compileBtn ? '' : 'huge fluid'} restart-button`} text={compileBtn ? undefined : lf("Restart") } icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
+                                {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
+                                {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
                             </div>
                         </div>
                         <div className="ui item portrait hide">
