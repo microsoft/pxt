@@ -1411,6 +1411,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         if (this.state.currFile == this.editorFile && !editorOverride)
             return;
+        if (this.state.currFile && this.editor)
+            this.editor.unloadFile();
         this.saveSettings();
 
         this.saveFile(); // before change

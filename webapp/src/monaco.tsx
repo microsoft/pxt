@@ -787,6 +787,12 @@ export class Editor extends srceditor.Editor {
         this.resetFlyout(true);
     }
 
+    unloadFile () {
+        if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
+            this.parent.reloadHeaderAsync();
+        }
+    }
+
     snapshotState() {
         return this.editor && this.editor.getModel() ? this.editor.getModel().getLinesContent() : null;
     }

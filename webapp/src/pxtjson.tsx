@@ -13,6 +13,7 @@ const lf = Util.lf
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
     isSaving: boolean;
+    changeMade: boolean = false;
 
     prepare() {
         this.isReady = true
@@ -24,10 +25,6 @@ export class Editor extends srceditor.Editor {
 
     display() {
         const c = this.config
-        const updateName = (v: any) => {
-            this.config.name = v;
-            this.parent.forceUpdate()
-        }
         const save = () => {
             this.isSaving = true;
             const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
@@ -37,7 +34,12 @@ export class Editor extends srceditor.Editor {
                 this.parent.forceUpdate()
                 Util.nextTick(this.changeCallback)
                 this.isSaving = false;
+                this.changeMade = true;
             })
+        }
+        const setFileName = (v: string) => {
+            c.name = v;
+            this.parent.forceUpdate();
         }
         const deleteProject = () => {
             this.parent.removeProject();
@@ -82,7 +84,7 @@ export class Editor extends srceditor.Editor {
         return (
             <div className="ui content">
                 <div className="ui segment form text" style={{ backgroundColor: "white" }}>
-                    <sui.Input label={lf("Name")} value={c.name} onChange={(v) => updateName(c.name = v)} />
+                    <sui.Input label={lf("Name")} value={c.name} onChange={setFileName}/>
                     {userConfigs.map(uc =>
                         <sui.Checkbox
                             key={`userconfig-${uc.description}`}
@@ -92,12 +94,16 @@ export class Editor extends srceditor.Editor {
                     ) }
                     <sui.Field>
                         <sui.Button text={lf("Save")} class={`green ${this.isSaving ? 'disabled' : ''}`} onClick={() => save()} />
-                        <sui.Button text={lf("Edit Settings As text") } onClick={() => this.parent.editText() } />
-                        <sui.Button text={lf("Delete")} class={`red right floated`} onClick={() => deleteProject()} />
+                        <sui.Button text={lf("Edit Settings As text") } onClick={() => this.editSettingsText() } />
                     </sui.Field>
                 </div>
             </div>
         )
+    }
+
+    editSettingsText() {
+        this.changeMade = false;
+        this.parent.editText();
     }
 
     getCurrentSource() {
@@ -124,5 +130,11 @@ export class Editor extends srceditor.Editor {
     loadFile(file: pkg.File) {
         this.config = JSON.parse(file.content)
         this.setDiagnostics(file, this.snapshotState())
+        this.changeMade = false;
+    }
+
+    unloadFile () {
+        if (this.changeMade)
+            pkg.getEditorPkg(pkg.mainPkg).onupdate();
     }
 }
