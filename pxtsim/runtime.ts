@@ -40,11 +40,11 @@ namespace pxsim {
         export function perfNow(): number {
             const perf = typeof performance != "undefined" ?
                         performance.now ||
-                        (performance as any).mozNow    ||
-                        (performance as any).msNow     ||
-                        (performance as any).oNow      ||
-                        (performance as any).webkitNow :
-                        Date.now;
+                        (performance as any).mozNow ||
+                        (performance as any).msNow ||
+                        (performance as any).oNow ||
+                        (performance as any).webkitNow ||
+                        Date.now : Date.now;
             return perf();
         }
 
