@@ -265,7 +265,7 @@ div.simframe > iframe {
 
 /* Menu */ 
 .ui.menu .item.editor-menuitem {
-    background: @mainMenuBlocksJsToggleColor !important;
+    background: fade(@black, 30%) !important;
     margin: 0.5rem;
     padding: 0.7rem;
     border-radius: 0.5rem !important;
@@ -1020,9 +1020,6 @@ Avatar
         margin-right:0.5rem;
     }
     div.simframe:not(:first-child) {
-        display:none !important;
-    }
-    div.simframe iframe.grayscale {
         display:none !important;
     }
     /* Hide floating editors */
