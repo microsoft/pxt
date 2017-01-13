@@ -13,12 +13,55 @@ namespace pxsim {
         touched = false;
         value = 0;
         period = 0;
+        servoAngle = 0;
         mode = PinFlags.Unused;
         pitch = false;
         pull = 0; // PullDown
 
+        digitalReadPin(): number {
+            this.mode = PinFlags.Digital | PinFlags.Input;
+            return this.value > 100 ? 1 : 0;
+        }
+
+        digitalWritePin(value: number) {
+            this.mode = PinFlags.Digital | PinFlags.Output;
+            this.value = value > 0 ? 200 : 0;
+            runtime.queueDisplayUpdate();
+        }
+
+        setPull(pull: number) {
+            this.pull = pull;
+        }
+
+        analogReadPin(): number {
+            this.mode = PinFlags.Analog | PinFlags.Input;
+            return this.value || 0;
+        }
+
+        analogWritePin(value: number) {
+            this.mode = PinFlags.Analog | PinFlags.Output;
+            this.value = Math.max(0, Math.min(1023, value));
+            runtime.queueDisplayUpdate();
+        }
+
+        analogSetPeriod(micros: number) {
+            this.mode = PinFlags.Analog | PinFlags.Output;
+            this.period = micros;
+            runtime.queueDisplayUpdate();
+        }
+
+        servoWritePin(value: number) {
+            this.analogSetPeriod(20000);
+            this.servoAngle = Math.max(0, Math.min(180, value));
+            runtime.queueDisplayUpdate();
+        }
+
+        servoSetPulse(pinId: number, micros: number) {
+            // TODO
+        }
+
         isTouched(): boolean {
-            this.mode = PinFlags.Touch;
+            this.mode = PinFlags.Touch | PinFlags.Analog | PinFlags.Input;
             return this.touched;
         }
     }
