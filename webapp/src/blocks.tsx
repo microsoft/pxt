@@ -118,6 +118,7 @@ export class Editor extends srceditor.Editor {
 
     loadBlockly(s: string): boolean {
         if (this.serializeBlocks() == s && s.indexOf(`type="${ts.pxtc.ON_START_TYPE}"`) > -1) {
+            this.typeScriptSaveable = true;
             pxt.debug('blocks already loaded...');
             return false;
         }
