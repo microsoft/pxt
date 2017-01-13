@@ -17,6 +17,7 @@ export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     currFile: pkg.File;
     delayLoadXml: string;
+    typeScriptSaveable: boolean;
     loadingXml: boolean;
     loadingXmlPromise: Promise<any>;
     blockInfo: pxtc.BlocksInfo;
@@ -42,13 +43,14 @@ export class Editor extends srceditor.Editor {
     }
 
     saveToTypeScript(): string {
+        if (!this.typeScriptSaveable) return undefined;
         try {
             this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
             return this.compilationResult.source;
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return '';
+            return undefined;
         }
     }
 
@@ -120,6 +122,7 @@ export class Editor extends srceditor.Editor {
             return false;
         }
 
+        this.typeScriptSaveable = false;
         this.editor.clear();
         try {
             const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
@@ -130,8 +133,14 @@ export class Editor extends srceditor.Editor {
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
             this.ensureOnStart();
+
+            this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
+            this.editor.clear();
+            this.switchToTypeScript();
+            this.changeCallback();
+            return false;
         }
 
         this.changeCallback();
@@ -338,10 +347,10 @@ export class Editor extends srceditor.Editor {
             }
             if (ev.type == 'create') {
                 let lastCategory = (this.editor as any).toolbox_ ?
-                                    ((this.editor as any).toolbox_.lastCategory_ ?
-                                    (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
-                                    : 'unknown')
-                                    : 'flyout';
+                    ((this.editor as any).toolbox_.lastCategory_ ?
+                        (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
+                        : 'unknown')
+                    : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
                 pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
@@ -449,6 +458,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
+        this.typeScriptSaveable = false;
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
@@ -457,6 +467,11 @@ export class Editor extends srceditor.Editor {
             this.filterToolbox(null);
         }
         this.currFile = file;
+    }
+
+    switchToTypeScript() {
+        pxt.tickEvent("blocks.switchjavascript");
+        this.parent.switchTypeScript();
     }
 
     setDiagnostics(file: pkg.File) {
@@ -504,8 +519,8 @@ export class Editor extends srceditor.Editor {
 
     getBlocklyOptions(showCategories: boolean = true) {
         let toolbox = showCategories ?
-                document.getElementById('blocklyToolboxDefinitionCategory')
-                : document.getElementById('blocklyToolboxDefinitionFlyout');
+            document.getElementById('blocklyToolboxDefinitionCategory')
+            : document.getElementById('blocklyToolboxDefinitionFlyout');
         let blocklyOptions: Blockly.Options = {
             toolbox: toolbox,
             scrollbars: true,
