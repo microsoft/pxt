@@ -1412,6 +1412,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         if (this.state.currFile == this.editorFile && !editorOverride)
             return;
+        if (this.state.currFile && this.editor)
+            this.editor.unloadFile();
         this.saveSettings();
 
         this.saveFile(); // before change
@@ -2344,7 +2346,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         </sui.Item> }
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
                         {sandbox || tutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
-                            {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Rename...") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
+                            {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
