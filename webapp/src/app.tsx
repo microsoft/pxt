@@ -852,7 +852,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const runTooltip = state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
-        const collapseTooltip = collapsed ? lf("Hide the simulator") : lf("Show the simulator");
+        const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const run = true;
 
         return <div className="ui equal width grid right aligned padded">
