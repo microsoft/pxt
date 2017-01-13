@@ -54,7 +54,7 @@
 }
 
 #filelist {
-    padding: 1em 2em 1em 1.5em;
+    padding: 1em 2em 1em 2em;
     overflow-x: hidden;
     overflow-y: auto;
     margin-top: 0;
@@ -907,7 +907,78 @@ Avatar
     .sandboxfooter, #cookiemsg {
         bottom: 5rem;
     }
-}   
+
+    /* Full screen */
+    .fullscreen #filelist {
+        position: fixed;
+        z-index:100;
+        top:0;
+        left:0;
+        bottom:0;
+        right:0;
+        padding: 0;
+        max-width: 100%;
+        min-width: 100%;
+        height:100%;
+    }
+    .fullscreen #boardview {
+        position: relative;
+        height:100%;
+        background-color: white;
+        padding: @mainMenuHeight;
+        padding-left: calc(2*@mainMenuHeight);
+        padding-right: calc(2*@mainMenuHeight);
+
+        background-color: @mainMenuInvertedBackground;
+        background: @mainMenuInvertedBackground; /* For browsers that do not support gradients */
+        background: -webkit-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Firefox 3.6 to 15 */
+        background: linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* Standard syntax */
+    }
+    .fullscreen #simulator .ui.item:not(.simtoolbar),
+        .fullscreen #menubar .ui.item:not(:first-child),
+        .fullscreen #maineditor,
+        .fullscreen #editortools {
+        display: none !important;
+        z-index: -10;
+    }
+    .fullscreen .ui.menu {
+        background: transparent !important;
+    }
+    .fullscreen #filelist:hover .simtoolbar {
+        opacity: 1;
+    }
+    .fullscreen #filelist .simtoolbar {
+        position: fixed;
+        bottom: 2rem;
+        left:auto;
+        right:auto;
+    }
+    .fullscreen #simulators {
+        position: relative;
+        padding: 3rem;
+        width: 100%;
+        height: 100%;
+    }
+    .fullscreen div.simframe {
+        position:relative;
+        width: 50%;
+        height: 100%;
+        float: left;
+        padding-bottom: 0 !important;
+    }
+    .fullscreen div.simframe > iframe {
+        position:relative;
+        max-width: 90%;
+    }
+    .fullscreen div.simframe:only-child {
+        width: 100%;
+    }
+    .fullscreen div.simframe:only-child > iframe {
+        max-width: 100%;
+    }
+}
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {
