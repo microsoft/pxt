@@ -1589,8 +1589,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     projectName: h.name,
                     currFile: file
                 })
-                if (!sandbox)
-                    core.infoNotification(lf("Project loaded: {0}", h.name))
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
                 }
