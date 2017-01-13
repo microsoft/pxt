@@ -281,7 +281,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const saveProject = () => {
             pxt.tickEvent("projects.save");
             this.hide();
-            this.props.parent.compile(true);
+            this.props.parent.saveAndCompile();
         }
         const renameProject = () => {
             pxt.tickEvent("projects.rename");
@@ -782,7 +782,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
 
     saveFile(view?: string) {
         pxt.tickEvent("editortools.save", {view: view, collapsed: this.getCollapsedState()});
-        this.props.parent.compile(true);
+        this.props.parent.saveAndCompile();
     }
 
     undo(view?: string) {
@@ -1935,6 +1935,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 .done(() => window.location.reload(),
                 () => window.location.reload())
         });
+    }
+
+    saveAndCompile() {
+        this.saveFile();
+        this.compile(true);
     }
 
     compile(saveOnly = false) {
