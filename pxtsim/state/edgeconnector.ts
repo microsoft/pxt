@@ -68,7 +68,7 @@ namespace pxsim {
 
     export interface EdgeConnectorProps {
         pins: number[];
-        servos: { [name: string]: number; }
+        servos?: { [name: string]: number; }
     }
 
     export class EdgeConnectorState {
