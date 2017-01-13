@@ -455,6 +455,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
+        this.saveable = false;
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
