@@ -606,7 +606,7 @@ namespace pxt.blocks {
         }
 
         // Add the "Add package" category
-        if (tb) {
+        if (tb && showCategories) {
             getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
