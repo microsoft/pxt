@@ -71,6 +71,8 @@ export class Editor {
 
     beforeCompile() { }
 
+    unloadFile() { }
+
     highlightStatement(brk: pxtc.LocationInfo) { }
 
     filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {
