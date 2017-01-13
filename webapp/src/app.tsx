@@ -1726,12 +1726,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 pubCurrent: false
             };
             const files = JSON.parse(data.source) as pxt.Map<string>;
-            // basic xml validation of main.blocks.
-            if (files["main.blocks"] && !pxt.blocks.loadWorkspaceXml(files["main.blocks"], true)) {
-                // block code seems invalid., reset blocks to force decompilation
-                pxt.log('invalid blockly xml, reseting blockly');
-                files["main.blocks"] = '';
-            }
+             // we cannot load the workspace until we've loaded the project
             workspace.installAsync(h, files)
                 .done(hd => this.loadHeaderAsync(hd));
             return;
@@ -1886,6 +1881,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             target: pxt.appTarget.id,
             temporary: options.temporary
         }, files).then(hd => this.loadHeaderAsync(hd))
+    }
+
+    switchTypeScript() {
+        const mainPkg = pkg.mainEditorPkg();
+         const tsName = this.editorFile.getVirtualFileName();
+         const f = mainPkg.files[tsName];
+         this.setFile(f);
     }
 
     saveTypeScriptAsync(open = false): Promise<void> {
