@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.8.13",
+  "version": "0.9.5",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -20,6 +20,8 @@
     "README.md",
     "built/commandparser.js",
     "built/buildengine.js",
+    "built/hid.js",
+    "built/gdb.js",
     "built/pxt.js",
     "built/pxt-common.json",
     "built/blockly.d.ts",
@@ -66,6 +68,7 @@
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",
+    "node-hid": "^0.5.2",
     "serialport": "^4.0.1"
   },
   "devDependencies": {

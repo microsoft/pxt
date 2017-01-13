@@ -658,7 +658,7 @@ namespace pxt {
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
                                     if (!f) pxt.reportError("parts", "invalid part definition", { "error": `missing visual ${part.visual.image}` })
-                                    part.visual.image = `data:image/svg+xml,` + encodeURI(f);
+                                    part.visual.image = `data:image/svg+xml,` + encodeURIComponent(f);
                                 }
                             }
                         }

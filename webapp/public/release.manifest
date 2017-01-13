@@ -30,9 +30,7 @@ CACHE:
 /cdn/blockly/media/delete.mp3
 
 # monaco
-/cdn/vs/css.js
 /cdn/vs/loader.js
-/cdn/vs/nls.js
 /cdn/vs/base/common/worker/simpleWorker.js
 /cdn/vs/base/common/worker/simpleWorker.nls.js
 /cdn/vs/base/common/worker/workerServer.js
