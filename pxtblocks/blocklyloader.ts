@@ -423,7 +423,9 @@ namespace pxt.blocks {
                 } else if (/\[\]$/.test(pr.type)) { // Array type
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
                 } else if (instance && n == "this") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
+                    if (!fn.attributes.defaultInstance) {
+                        i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
+                    }
                 } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();
@@ -444,6 +446,9 @@ namespace pxt.blocks {
 
         if (fn.attributes.mutate) {
             addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
+        }
+        else if (fn.attributes.defaultInstance) {
+            addMutation(block as MutatingBlock, fn, MutatorTypes.DefaultInstanceMutator);
         }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;

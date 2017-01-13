@@ -48,6 +48,7 @@ namespace pxt.blocks {
     export namespace MutatorTypes {
         export const ObjectDestructuringMutator = "objectdestructuring";
         export const RestParameterMutator = "restparameter";
+        export const DefaultInstanceMutator = "defaultinstance";
     }
 
     interface BlockName {
@@ -74,6 +75,9 @@ namespace pxt.blocks {
             case MutatorTypes.RestParameterMutator:
                 m = new ArrayMutator(b, info);
                 break;
+            case MutatorTypes.DefaultInstanceMutator:
+                m = new DefaultInstanceMutator(b, info);
+                break;
             default:
                 console.warn("Ignoring unknown mutation type: " + mutationType);
                 return;
@@ -96,6 +100,8 @@ namespace pxt.blocks {
             case MutatorTypes.RestParameterMutator:
                 mutationElement.setAttribute(ArrayMutator.countAttributeName, mutation);
                 break;
+            case MutatorTypes.DefaultInstanceMutator:
+                mutationElement.setAttribute(DefaultInstanceMutator.attributeName, mutation);
             default:
                 console.warn("Ignoring unknown mutation type: " + mutationType);
                 return;
@@ -112,9 +118,6 @@ namespace pxt.blocks {
         protected topBlockType: string;
 
         public abstract getMutationType(): string;
-        public abstract compileMutation(e: Environment, comments: string[]): JsNode;
-        public abstract getDeclaredVariables(): pxt.Map<string>;
-        public abstract isDeclaredByMutation(varName: string): boolean;
 
         public abstract mutationToDom(): Element;
         public abstract domToMutation(xmlElement: Element): void;
@@ -170,6 +173,18 @@ namespace pxt.blocks {
             }
 
             return topBlock;
+        }
+
+        public compileMutation(e: Environment, comments: string[]): JsNode {
+            return undefined;
+        }
+
+        public getDeclaredVariables(): pxt.Map<string> {
+            return undefined;
+        }
+
+        public isDeclaredByMutation(varName: string): boolean {
+            return false;
         }
 
         protected initializeMutatorSubBlock(sub: Blockly.Block, parameter: string, colour: string) {
@@ -413,16 +428,8 @@ namespace pxt.blocks {
             return mkGroup(values);
         }
 
-        public getDeclaredVariables(): pxt.Map<string> {
-            return undefined;
-        }
-
-        public isDeclaredByMutation(varName: string): boolean {
-            return false;
-        }
-
         public mutationToDom(): Element {
-            const mutation = document.createElement("mutation");+
+            const mutation = document.createElement("mutation");
             mutation.setAttribute(ArrayMutator.countAttributeName, this.count.toString());
 
             return mutation;
@@ -490,6 +497,75 @@ namespace pxt.blocks {
         private forEachInput(cb: (v: Blockly.Block, i: number) => void) {
             for (let i = 0; i < this.count; i++) {
                 cb(this.block.getInputTargetBlock(ArrayMutator.valueInputPrefix + i), i);
+            }
+        }
+    }
+
+    class DefaultInstanceMutator extends MutatorHelper {
+        public static attributeName = "showing";
+        public static instanceInputName = "__instance__";
+        private static instanceSubBlockType = "instance";
+
+        private showing = false;
+
+        public getMutationType(): string {
+            return MutatorTypes.DefaultInstanceMutator;
+        }
+
+        public compileMutation(e: Environment, comments: string[]): JsNode {
+            if (this.showing) {
+                const target = this.block.getInputTargetBlock(DefaultInstanceMutator.instanceInputName);
+                if (target) {
+                    return compileExpression(e, target, comments);
+                }
+            }
+            return undefined;
+        }
+
+        public mutationToDom(): Element {
+            const mutation = document.createElement("mutation");
+            mutation.setAttribute(DefaultInstanceMutator.attributeName, this.showing ? "true" : "false");
+            return mutation;
+        }
+
+        public domToMutation(xmlElement: Element): void {
+            const attribute = xmlElement.getAttribute(DefaultInstanceMutator.attributeName);
+             if (attribute) {
+                 this.updateShape(attribute === "true");
+             }
+             else {
+                 this.updateShape(false);
+             }
+        }
+
+        protected updateBlock(subBlocks: BlockName[]) {
+            this.updateShape(!!(subBlocks && subBlocks.length));
+        }
+
+        protected getSubBlockNames(): BlockName[] {
+            return [{
+                name: "Instance",
+                type: DefaultInstanceMutator.instanceSubBlockType
+            }];
+        }
+
+        protected getVisibleBlockTypes(): string[] {
+            const result: string[] = [];
+            if (this.showing) {
+                result.push(DefaultInstanceMutator.instanceSubBlockType);
+            }
+            return result;
+        }
+
+        private updateShape(show: boolean) {
+            if (this.showing !== show) {
+                if (show && !this.block.getInputTargetBlock(DefaultInstanceMutator.instanceInputName)) {
+                    this.block.appendValueInput(DefaultInstanceMutator.instanceInputName);
+                }
+                else {
+                    this.block.removeInput(DefaultInstanceMutator.instanceInputName);
+                }
+                this.showing = show;
             }
         }
     }
