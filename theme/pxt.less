@@ -54,7 +54,7 @@
 }
 
 #filelist {
-    padding: 1em 2em 1em 1.5em;
+    padding: 1em 2em 1em 2em;
     overflow-x: hidden;
     overflow-y: auto;
     margin-top: 0;
@@ -907,7 +907,47 @@ Avatar
     .sandboxfooter, #cookiemsg {
         bottom: 5rem;
     }
-}   
+
+    /* Full screen */
+    .fullscreen div.simframe > iframe {
+        position: fixed;
+        background-color: white;
+        padding: @mainMenuHeight;
+        margin-top: @mainMenuHeight;
+        padding-bottom: calc(3*@mainMenuHeight);
+        background-color: @mainMenuInvertedBackground;
+        background: @mainMenuInvertedBackground; /* For browsers that do not support gradients */
+        background: -webkit-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Firefox 3.6 to 15 */
+        background: linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* Standard syntax */
+    }
+    .fullscreen #filelist {
+        position: fixed;
+        height: 100%;
+        z-index:100;
+        overflow: hidden;
+        top:0;
+        left:0;
+        padding: 0;
+    }
+    .fullscreen .boardview {
+        height: 0;
+    }
+    .fullscreen #simulator:hover .simtoolbar {
+        opacity: 1;
+    }
+    .fullscreen .ui.menu.fixed .item:not(:first-child) {
+        /* Hide menu items */
+        opacity: 0;
+    }
+    .fullscreen .simtoolbar {
+        position: fixed;
+        bottom: 2rem;
+        left:auto;
+        right:auto;
+    }
+}
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
 @media only screen and (max-width: @largestSmallMonitor) {

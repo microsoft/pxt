@@ -77,6 +77,7 @@ interface IAppState {
     collapseEditorTools?: boolean;
     showBlocks?: boolean;
     showParts?: boolean;
+    fullscreen?: boolean;
 }
 
 let theEditor: ProjectView;
@@ -2002,6 +2003,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({ running: false })
     }
 
+    toggleSimulatorFullscreen() {
+        pxt.tickEvent("simulator.fullscreen", {view: 'computer', fullScreenTo: '' + !this.state.fullscreen});
+        this.setState({fullscreen: !this.state.fullscreen});
+    }
+
     openInstructions() {
         pxt.tickEvent("simulator.make");
         compiler.compileAsync({ native: true })
@@ -2287,6 +2293,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const runTooltip = this.state.running ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
+        const fullscreenTooltip = this.state.fullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const tutorial = this.state.tutorial;
@@ -2315,7 +2322,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -2382,10 +2389,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item grid centered portrait hide simtoolbar">
-                            <div className="ui icon buttons">
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                 {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
+                                {run ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
                             </div>
                         </div>
                         <div className="ui item portrait hide">
