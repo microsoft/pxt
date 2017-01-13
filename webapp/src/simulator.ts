@@ -40,9 +40,13 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
                 duration: '0.5s',
                 onComplete: function () {
-                    $(el).remove();
                     completeHandler();
+                    $(el).remove();
                 }
+            }).error(() => {
+                // Problem with animation, still complete
+                completeHandler();
+                $(el).remove();
             })
         },
         onDebuggerBreakpoint: function (brk) {
