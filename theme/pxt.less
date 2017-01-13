@@ -40,7 +40,6 @@
 
 /* File list / Simulator layout */
 #simulator {
-    position: relative;
     height: 100%;
 }
 #filelist, #downloadArea {
@@ -929,12 +928,12 @@ Avatar
         padding-left: calc(2*@mainMenuHeight);
         padding-right: calc(2*@mainMenuHeight);
 
-        background-color: @mainMenuInvertedBackground;
-        background: @mainMenuInvertedBackground; /* For browsers that do not support gradients */
-        background: -webkit-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Safari 5.1 to 6.0 */
-        background: -o-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Opera 11.1 to 12.0 */
-        background: -moz-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Firefox 3.6 to 15 */
-        background: linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* Standard syntax */
+        background-color: @fullscreenBackgroundGradientStart;
+        background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
+        background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(@fullscreenBackgroundGradientStart, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(@fullscreenBackgroundGradientStart, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
+        background: linear-gradient(@fullscreenBackgroundGradientStart, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
     .fullscreen #simulator .ui.item:not(.simtoolbar),
         .fullscreen #menubar .ui.item:not(:first-child),

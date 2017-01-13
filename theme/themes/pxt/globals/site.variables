@@ -80,6 +80,13 @@
 @blocklySvgColor: #fff;
 
 /*-------------------
+   Full screen
+--------------------*/
+
+@fullscreenBackgroundGradientStart: @mainMenuInvertedBackground;
+@fullscreenBackgroundGradientEnd: @simulatorBackground;
+
+/*-------------------
    Side Docs
 --------------------*/
 
