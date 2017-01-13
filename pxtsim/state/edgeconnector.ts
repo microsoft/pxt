@@ -68,12 +68,13 @@ namespace pxsim {
 
     export interface EdgeConnectorProps {
         pins: number[];
+        servos: { [name: string]: number; }
     }
 
     export class EdgeConnectorState {
         pins: Pin[];
 
-        constructor(props: EdgeConnectorProps) {
+        constructor(public props: EdgeConnectorProps) {
             this.pins = props.pins.map(id => id ? new Pin(id) : null);
         }
 
