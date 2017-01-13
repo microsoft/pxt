@@ -68,9 +68,6 @@ export class Editor extends srceditor.Editor {
             if (!this.hasBlocks())
                 return
 
-            // needed to test roundtrip
-            let js = this.formatCode();
-
             // might be undefined
             let mainPkg = pkg.mainEditorPkg();
             let xml: string;
@@ -88,7 +85,7 @@ export class Editor extends srceditor.Editor {
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(js, 0).formatted) {
+                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(this.editor.getValue(), 0).formatted) {
                             pxt.debug('js not changed, skipping decompile');
                             pxt.tickEvent("typescript.noChanges")
                             return this.parent.setFile(mainPkg.files[blockFile]);
@@ -543,10 +540,10 @@ export class Editor extends srceditor.Editor {
     }
 
     addToolboxCategory(group: HTMLDivElement,
-                        ns: string, metaColor: string,
-                        icon: string, injectIconClass: boolean = true,
-                        fns?: {[fn: string]: pxt.vs.MethodDef},
-                        onClick?: () => void) {
+        ns: string, metaColor: string,
+        icon: string, injectIconClass: boolean = true,
+        fns?: { [fn: string]: pxt.vs.MethodDef },
+        onClick?: () => void) {
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
         // Create a tree item
