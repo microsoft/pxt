@@ -909,12 +909,26 @@ Avatar
     }
 
     /* Full screen */
-    .fullscreen div.simframe > iframe {
+    .fullscreen #filelist {
         position: fixed;
+        z-index:100;
+        top:0;
+        left:0;
+        bottom:0;
+        right:0;
+        padding: 0;
+        max-width: 100%;
+        min-width: 100%;
+        height:100%;
+    }
+    .fullscreen #boardview {
+        position: relative;
+        height:100%;
         background-color: white;
         padding: @mainMenuHeight;
-        margin-top: @mainMenuHeight;
-        padding-bottom: calc(3*@mainMenuHeight);
+        padding-left: calc(2*@mainMenuHeight);
+        padding-right: calc(2*@mainMenuHeight);
+
         background-color: @mainMenuInvertedBackground;
         background: @mainMenuInvertedBackground; /* For browsers that do not support gradients */
         background: -webkit-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Safari 5.1 to 6.0 */
@@ -922,30 +936,47 @@ Avatar
         background: -moz-linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@mainMenuInvertedBackground, @simulatorBackground); /* Standard syntax */
     }
-    .fullscreen #filelist {
-        position: fixed;
-        height: 100%;
-        z-index:100;
-        overflow: hidden;
-        top:0;
-        left:0;
-        padding: 0;
+    .fullscreen #simulator .ui.item:not(.simtoolbar),
+        .fullscreen #menubar .ui.item:not(:first-child),
+        .fullscreen #maineditor,
+        .fullscreen #editortools {
+        display: none !important;
+        z-index: -10;
     }
-    .fullscreen .boardview {
-        height: 0;
+    .fullscreen .ui.menu {
+        background: transparent !important;
     }
-    .fullscreen #simulator:hover .simtoolbar {
+    .fullscreen #filelist:hover .simtoolbar {
         opacity: 1;
     }
-    .fullscreen .ui.menu.fixed .item:not(:first-child) {
-        /* Hide menu items */
-        opacity: 0;
-    }
-    .fullscreen .simtoolbar {
+    .fullscreen #filelist .simtoolbar {
         position: fixed;
         bottom: 2rem;
         left:auto;
         right:auto;
+    }
+    .fullscreen #simulators {
+        position: relative;
+        padding: 3rem;
+        width: 100%;
+        height: 100%;
+    }
+    .fullscreen div.simframe {
+        position:relative;
+        width: 50%;
+        height: 100%;
+        float: left;
+        padding-bottom: 0 !important;
+    }
+    .fullscreen div.simframe > iframe {
+        position:relative;
+        max-width: 90%;
+    }
+    .fullscreen div.simframe:only-child {
+        width: 100%;
+    }
+    .fullscreen div.simframe:only-child > iframe {
+        max-width: 100%;
     }
 }
 
