@@ -2242,7 +2242,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             }).then(() => {
                 return this.createProjectAsync({
                     filesOverride: {
-                        "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">",
+                        "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"><block x="300" type="${ts.pxtc.ON_START_TYPE}"></block></xml>`,
                         "main.ts": "  "
                     },
                     name: tutorialId,

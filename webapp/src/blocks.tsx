@@ -581,6 +581,7 @@ export class Editor extends srceditor.Editor {
             }
             this.prepareBlockly(showCategories);
             this.domUpdate();
+            this.editor.scrollCenter();
         }
     }
 }

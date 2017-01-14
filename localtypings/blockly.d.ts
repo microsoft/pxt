@@ -296,6 +296,7 @@ declare namespace Blockly {
         getParentSvg(): Element;
         zoom(x: number, y: number, type: number): void;
         zoomCenter(type: number): void;
+        scrollCenter(): void;
         highlightBlock(id: string): void;
         undo(redo?: boolean): void;
         redo(): void;
