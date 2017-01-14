@@ -414,8 +414,16 @@ export class Editor extends srceditor.Editor {
         Blockly.svgResize(this.editor);
     }
 
+    hasUndo() {
+        return this.editor.undoStack_.length != 0;
+    }
+
     undo() {
         this.editor.undo();
+    }
+
+    hasRedo() {
+        return this.editor.redoStack_.length != 0;
     }
 
     redo() {
