@@ -38,17 +38,14 @@ namespace pxsim {
         }
 
         export function perfNow(): number {
-            if (typeof window === 'undefined') return Date.now();
-            let perf = window.performance || {now};
-            perf.now = () => {
-                return performance.now                 ||
+            const perf = typeof performance != "undefined" ?
+                        performance.now                ||
                         (performance as any).mozNow    ||
                         (performance as any).msNow     ||
                         (performance as any).oNow      ||
                         (performance as any).webkitNow ||
-                        Date.now
-            };
-            return perf.now();
+                        Date.now : Date.now;
+            return perf();
         }
 
         export function nextTick(f: () => void) {
