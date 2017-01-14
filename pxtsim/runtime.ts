@@ -38,6 +38,7 @@ namespace pxsim {
         }
 
         export function perfNow(): number {
+            if (typeof window === 'undefined') return Date.now();
             let perf = window.performance || {now};
             perf.now = () => {
                 return performance.now                 ||
