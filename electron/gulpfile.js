@@ -24,6 +24,10 @@ let productJsonPath = null;
 let targetRoot = null;
 let outRoot = null;
 
+console.log("product.json:", process.argv[3] ? path.resolve(process.argv[3].replace(/^--/, "")) : "");
+console.log("Target root:", process.argv[4] ? path.resolve(process.argv[4].replace(/^--/, "")) : "");
+console.log("Out root:", process.argv[5] ? path.resolve(process.argv[5].replace(/^--/, "")) : "");
+
 // JSON data
 const pkg = require(path.join(__dirname, "package.json"));
 const tsConfig = require(tsconfigJsonPath).compilerOptions;
@@ -172,6 +176,8 @@ function packageApp(platform, cb) {
         if (fs.existsSync(iconPath)) {
             console.log("Using icon: " + iconPath);
             options.icon = iconPath;
+        } else {
+            console.log("Icons not found: " + iconPath);
         }
     }
 
