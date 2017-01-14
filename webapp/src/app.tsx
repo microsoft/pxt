@@ -854,6 +854,10 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
+
+        const hasUndo = this.props.parent.editor.hasUndo();
+        const hasRedo = this.props.parent.editor.hasRedo();
+
         const run = true;
 
         return <div className="ui equal width grid right aligned padded">
@@ -869,7 +873,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="right aligned column">
                                 <div className="ui icon small buttons">
                                     <sui.Button icon='save' class="editortools-btn save-editortools-btn" title={lf("Save")} onClick={() => this.saveFile('mobile')} />
-                                    <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo('mobile')} />
+                                    <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} onClick={() => this.undo('mobile')} />
                                 </div>
                             </div>
                             <div className="right aligned column">
@@ -897,7 +901,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                                 <div className="row">
                                     <div className="column">
                                         <div className="ui icon small buttons">
-                                            <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo('mobile')} />
+                                            <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} onClick={() => this.undo('mobile')} />
                                             <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn('mobile')} />
                                             <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onClick={() => this.zoomOut('mobile')} />
                                         </div>
@@ -925,8 +929,8 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             </div>
                             <div className="column six wide right aligned">
                                 <div className="ui icon large buttons">
-                                    <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo('tablet')} />
-                                    <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo('tablet')} />
+                                    <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} onClick={() => this.undo('tablet')} />
+                                    <sui.Button icon='repeat' class={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} onClick={() => this.redo('tablet')} />
                                 </div>
                                 <div className="ui icon large buttons">
                                     <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn('tablet')} />
@@ -972,8 +976,8 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             </div>
                             <div className="six wide column right aligned">
                                 <div className="ui icon large buttons">
-                                    <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo()} />
-                                    <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo()} />
+                                    <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} onClick={() => this.undo()} />
+                                    <sui.Button icon='repeat' class={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} onClick={() => this.redo()} />
                                 </div>
                                 <div className="ui icon large buttons">
                                     <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn()} />
@@ -1003,8 +1007,8 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             </div>
                             <div className="column right aligned">
                                 <div className="ui icon small buttons">
-                                    <sui.Button icon='undo' class="editortools-btn undo-editortools-btn" title={lf("Undo")} onClick={() => this.undo('computer')} />
-                                    <sui.Button icon='repeat' class="editortools-btn redo-editortools-btn" title={lf("Redo")} onClick={() => this.redo('computer')} />
+                                    <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} onClick={() => this.undo('computer')} />
+                                    <sui.Button icon='repeat' class={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} onClick={() => this.redo('computer')} />
                                 </div>
                                 <div className="ui icon small buttons">
                                     <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onClick={() => this.zoomIn('computer')} />

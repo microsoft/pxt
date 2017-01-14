@@ -281,6 +281,9 @@ declare namespace Blockly {
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
 
+        undoStack_: Blockly.Events.Abstract[];
+        redoStack_: Blockly.Events.Abstract[];
+
         newBlock(prototypeName: string, opt_id?: string): Block;
         render(): void;
         clear(): void;
