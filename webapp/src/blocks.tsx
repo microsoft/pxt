@@ -413,6 +413,7 @@ export class Editor extends srceditor.Editor {
 
     undo() {
         this.editor.undo();
+        this.parent.forceUpdate();
     }
 
     hasRedo() {
@@ -421,6 +422,7 @@ export class Editor extends srceditor.Editor {
 
     redo() {
         this.editor.undo(true);
+        this.parent.forceUpdate();
     }
 
     zoomIn() {
