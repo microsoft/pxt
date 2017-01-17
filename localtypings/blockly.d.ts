@@ -150,7 +150,6 @@ declare namespace Blockly {
         setColour(colour: number | string): void;
         setCommentText(text: string): void;
         setConnectionsHidden(hidden: boolean): void;
-        setDeletable(deletable: boolean): void;
         setDisabled(disabled: boolean): void;
         setEditable(editable: boolean): void;
         setFieldValue(newValue: string, name: string): void;
