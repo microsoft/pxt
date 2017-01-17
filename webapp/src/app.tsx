@@ -276,7 +276,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         const newProject = () => {
             pxt.tickEvent("projects.new");
             this.hide();
-            this.props.parent.newEmptyProject();
+            this.props.parent.newProject();
         }
         const saveProject = () => {
             pxt.tickEvent("projects.save");
@@ -308,6 +308,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                 {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
                     <div className="ui vertical segment">
                         <sui.Button
+                            class="primary"
                             icon="file outline"
                             text={lf("New Project...") }
                             title={lf("Creates a new empty project") }
@@ -1817,7 +1818,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
                 return this.importHex(hexFile);
             }).catch(() => {
-                return this.newEmptyProject();
+                return this.newProject();
             })
     }
 
@@ -1851,7 +1852,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
     newEmptyProject(name?: string, documentation?: string) {
         this.newProject({
-            filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${ts.pxtc.ON_START_TYPE}"></block></xml>` },
+            filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name, documentation
         })
     }
@@ -2690,7 +2691,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
             break;
         case "newproject":
             pxt.tickEvent("hash.newproject")
-            editor.newEmptyProject();
+            editor.newProject();
             break;
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
