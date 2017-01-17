@@ -799,12 +799,16 @@ Avatar
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     /* Layout */
-    .sideDocs #maineditor {
+    .sideDocs #maineditor, .sideDocs #editortools {
         right:@sideBarWidth;
     }
     .rtl .sideDocs #maineditor {
         left:@sideBarWidth;
         right:@simulatorWidth;
+    }
+    .rtl .sideDocs #editortools {
+        left:@sideBarWidth;
+        right:0;
     }
     .sideDocs #sidedocs {
         display:block;
@@ -900,7 +904,11 @@ Avatar
         background: @editorToolsBackground;
     }
     .collapsedEditorTools #maineditor {
-        left:0 !important;
+        left: 0;
+    }
+    .rtl .collapsedEditorTools #maineditor {
+        left: inherit;
+        right: 0 !important;
     }
     /* Sandbox, Cookie message */
     .sandboxfooter, #cookiemsg {
