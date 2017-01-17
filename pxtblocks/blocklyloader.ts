@@ -1023,6 +1023,9 @@ namespace pxt.blocks {
          */
         let moveDrag = (<any>Blockly).WorkspaceSvg.prototype.moveDrag;
         (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function (e: any) {
+            // delete undoShuffleStack, redoShuffleStack
+            pxt.blocks.layout.undoShuffleSteps.length = 0;
+            pxt.blocks.layout.redoShuffleSteps.length = 0;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (blocklyTreeRoot && trashIcon) {

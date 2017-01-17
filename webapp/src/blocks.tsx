@@ -405,11 +405,35 @@ export class Editor extends srceditor.Editor {
     }
 
     undo() {
-        this.editor.undo();
+        let lastUndoSteps: number;
+        if (pxt.blocks.layout.undoShuffleSteps.length == 0) {
+            if (this.editor.undoStack_.length > 0)
+                lastUndoSteps = 1;
+            else
+                lastUndoSteps = 0;
+        } else {
+            lastUndoSteps = pxt.blocks.layout.undoShuffleSteps.pop();
+        }
+        for (let i: number = 0; i < lastUndoSteps; i++)
+            this.editor.undo();
+        if (lastUndoSteps > 0)
+            pxt.blocks.layout.redoShuffleSteps.push(lastUndoSteps);
     }
 
     redo() {
-        this.editor.undo(true);
+        let lastRedoSteps: number;
+        if (pxt.blocks.layout.redoShuffleSteps.length == 0) {
+            if (this.editor.redoStack_.length > 0)
+                lastRedoSteps = 1;
+            else
+                lastRedoSteps = 0;
+        } else {
+            lastRedoSteps = pxt.blocks.layout.redoShuffleSteps.pop();
+        }
+        for (let i: number = 0; i < lastRedoSteps; i++)
+            this.editor.undo(true);
+        if (lastRedoSteps > 0)
+            pxt.blocks.layout.undoShuffleSteps.push(lastRedoSteps);
     }
 
     zoomIn() {
