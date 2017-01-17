@@ -1097,7 +1097,7 @@ namespace pxt.blocks {
                 }
             };
         } else if (appTheme.invertedToolbox) {
-            const highlightColorLuminocityMultiplier = 0.7;
+            const highlightColorInvertedLuminocityMultiplier = 0.3;
             /**
              * Recursively add colours to this toolbox.
              * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
@@ -1116,7 +1116,7 @@ namespace pxt.blocks {
                             element.style.background = (child.hexColour || '#ddd');
                             element.onmouseenter = () => {
                                 if (!child.isSelected()) {
-                                    element.style.background = pxt.blocks.fadeColour(child.hexColour || '#ddd', highlightColorLuminocityMultiplier, false);
+                                    element.style.background = pxt.blocks.fadeColour(child.hexColour || '#ddd', highlightColorInvertedLuminocityMultiplier, false);
                                 }
                             };
                             element.onmouseleave = () => {
@@ -1153,7 +1153,7 @@ namespace pxt.blocks {
                 }
                 if (this.selectedItem_) {
                     let selectedElement = this.selectedItem_.getRowElement();
-                    selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorLuminocityMultiplier, false);
+                    selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
                 }
             };
         }
