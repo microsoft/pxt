@@ -117,7 +117,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadBlockly(s: string): boolean {
-        if (this.serializeBlocks() == s && s.indexOf(`type="${ts.pxtc.ON_START_TYPE}"`) > -1) {
+        if (this.serializeBlocks() == s) {
             this.typeScriptSaveable = true;
             pxt.debug('blocks already loaded...');
             return false;
@@ -126,14 +126,13 @@ export class Editor extends srceditor.Editor {
         this.typeScriptSaveable = false;
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
+            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`, this.blockInfo, true);
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
-            this.ensureOnStart();
 
             this.typeScriptSaveable = true;
         } catch (e) {
@@ -320,12 +319,6 @@ export class Editor extends srceditor.Editor {
 
     isIncomplete() {
         return this.editor ? this.editor.isDragging() : false;
-    }
-
-    ensureOnStart() {
-        this.editor.getTopBlocks(false)
-            .filter(b => b.type == ts.pxtc.ON_START_TYPE)
-            .forEach(b => b.setDeletable(!!b.disabled));
     }
 
     prepare() {
