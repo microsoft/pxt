@@ -1097,6 +1097,7 @@ namespace pxt.blocks {
                 }
             };
         } else if (appTheme.invertedToolbox) {
+            const highlightColorInvertedLuminocityMultiplier = 0.3;
             /**
              * Recursively add colours to this toolbox.
              * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
@@ -1113,6 +1114,16 @@ namespace pxt.blocks {
                         if (this.hasColours_) {
                             element.style.color = '#fff';
                             element.style.background = (child.hexColour || '#ddd');
+                            element.onmouseenter = () => {
+                                if (!child.isSelected()) {
+                                    element.style.background = pxt.blocks.fadeColour(child.hexColour || '#ddd', highlightColorInvertedLuminocityMultiplier, false);
+                                }
+                            };
+                            element.onmouseleave = () => {
+                                if (!child.isSelected()) {
+                                    element.style.background = (child.hexColour || '#ddd');
+                                }
+                            }
                         }
                     }
                     this.addColour_(child);
@@ -1137,7 +1148,12 @@ namespace pxt.blocks {
                 setSelectedItem.call(this, node);
                 if (editor.lastInvertedCategory) {
                     // reset last category colour
-                    editor.lastInvertedCategory.getRowElement().style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
+                    let lastElement = editor.lastInvertedCategory.getRowElement();
+                    lastElement.style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
+                }
+                if (this.selectedItem_) {
+                    let selectedElement = this.selectedItem_.getRowElement();
+                    selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
                 }
             };
         }
@@ -2022,5 +2038,25 @@ namespace pxt.blocks {
             }
             return openNode;
         };
+    }
+
+    export function fadeColour(hex: string, luminosity: number, lighten: boolean): string {
+        // #ABC => ABC
+        hex = hex.replace(/[^0-9a-f]/gi, '');
+
+        // ABC => AABBCC
+        if (hex.length < 6)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+
+        // tweak
+        let rgb = "#";
+        for (let i = 0; i < 3; i++) {
+            let c = parseInt(hex.substr(i * 2, 2), 16);
+            c = Math.round(Math.min(Math.max(0, lighten ? c + (c * luminosity) : c - (c * luminosity)), 255));
+            let cStr = c.toString(16);
+            rgb += ("00" + cStr).substr(cStr.length);
+        }
+
+        return rgb;
     }
 }
