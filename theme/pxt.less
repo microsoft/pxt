@@ -944,11 +944,15 @@ Avatar
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
     .fullscreen #simulator .ui.item:not(.simtoolbar),
-        .fullscreen #menubar .ui.item:not(:first-child),
+        .fullscreen #menubar .ui.item:not(.logo),
         .fullscreen #maineditor,
         .fullscreen #editortools {
         display: none !important;
         z-index: -10;
+    }
+    .fullscreen .sandboxfooter {
+        z-index:100;
+        bottom: 1rem;
     }
     .fullscreen .ui.menu {
         background: transparent !important;
