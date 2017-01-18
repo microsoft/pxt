@@ -17,6 +17,7 @@ export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     currFile: pkg.File;
     delayLoadXml: string;
+    typeScriptSaveable: boolean;
     loadingXml: boolean;
     loadingXmlPromise: Promise<any>;
     blockInfo: pxtc.BlocksInfo;
@@ -42,13 +43,14 @@ export class Editor extends srceditor.Editor {
     }
 
     saveToTypeScript(): string {
+        if (!this.typeScriptSaveable) return undefined;
         try {
             this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
             return this.compilationResult.source;
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return '';
+            return undefined;
         }
     }
 
@@ -115,23 +117,30 @@ export class Editor extends srceditor.Editor {
     }
 
     loadBlockly(s: string): boolean {
-        if (this.serializeBlocks() == s && s.indexOf(`type="${ts.pxtc.ON_START_TYPE}"`) > -1) {
+        if (this.serializeBlocks() == s) {
+            this.typeScriptSaveable = true;
             pxt.debug('blocks already loaded...');
             return false;
         }
 
+        this.typeScriptSaveable = false;
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
+            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`, this.blockInfo, true);
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
-            this.ensureOnStart();
+
+            this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
+            this.editor.clear();
+            this.switchToTypeScript();
+            this.changeCallback();
+            return false;
         }
 
         this.changeCallback();
@@ -312,12 +321,6 @@ export class Editor extends srceditor.Editor {
         return this.editor ? this.editor.isDragging() : false;
     }
 
-    ensureOnStart() {
-        this.editor.getTopBlocks(false)
-            .filter(b => b.type == ts.pxtc.ON_START_TYPE)
-            .forEach(b => b.setDeletable(!!b.disabled));
-    }
-
     prepare() {
         this.prepareBlockly();
 
@@ -338,10 +341,10 @@ export class Editor extends srceditor.Editor {
             }
             if (ev.type == 'create') {
                 let lastCategory = (this.editor as any).toolbox_ ?
-                                    ((this.editor as any).toolbox_.lastCategory_ ?
-                                    (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
-                                    : 'unknown')
-                                    : 'flyout';
+                    ((this.editor as any).toolbox_.lastCategory_ ?
+                        (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
+                        : 'unknown')
+                    : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
                 pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
@@ -404,6 +407,10 @@ export class Editor extends srceditor.Editor {
         Blockly.svgResize(this.editor);
     }
 
+    hasUndo() {
+        return this.editor.undoStack_.length != 0;
+    }
+
     undo() {
         let lastUndoSteps: number;
         if (pxt.blocks.layout.undoShuffleSteps.length == 0) {
@@ -418,7 +425,8 @@ export class Editor extends srceditor.Editor {
             this.editor.undo();
         if (lastUndoSteps > 0)
             pxt.blocks.layout.redoShuffleSteps.push(lastUndoSteps);
-    }
+        this.parent.forceUpdate();
+        }
 
     redo() {
         let lastRedoSteps: number;
@@ -434,9 +442,14 @@ export class Editor extends srceditor.Editor {
             this.editor.undo(true);
         if (lastRedoSteps > 0)
             pxt.blocks.layout.undoShuffleSteps.push(lastRedoSteps);
+        this.parent.forceUpdate();
     }
 
-    zoomIn() {
+    hasRedo() {
+        return this.editor.redoStack_.length != 0;
+    }
+
+   zoomIn() {
         this.editor.zoomCenter(1);
     }
 
@@ -473,6 +486,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
+        this.typeScriptSaveable = false;
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
@@ -481,6 +495,11 @@ export class Editor extends srceditor.Editor {
             this.filterToolbox(null);
         }
         this.currFile = file;
+    }
+
+    switchToTypeScript() {
+        pxt.tickEvent("blocks.switchjavascript");
+        this.parent.switchTypeScript();
     }
 
     setDiagnostics(file: pkg.File) {
@@ -528,8 +547,8 @@ export class Editor extends srceditor.Editor {
 
     getBlocklyOptions(showCategories: boolean = true) {
         let toolbox = showCategories ?
-                document.getElementById('blocklyToolboxDefinitionCategory')
-                : document.getElementById('blocklyToolboxDefinitionFlyout');
+            document.getElementById('blocklyToolboxDefinitionCategory')
+            : document.getElementById('blocklyToolboxDefinitionFlyout');
         let blocklyOptions: Blockly.Options = {
             toolbox: toolbox,
             scrollbars: true,
@@ -589,6 +608,7 @@ export class Editor extends srceditor.Editor {
             }
             this.prepareBlockly(showCategories);
             this.domUpdate();
+            this.editor.scrollCenter();
         }
     }
 }

@@ -87,14 +87,16 @@ ${output}</xml>`;
         }
 
         function error(n: ts.Node, msg?: string) {
-            let diags = pxtc.patchUpDiagnostics([{
+            const messageText = msg || `Language feature "${n.getFullText().trim()}"" not supported in blocks`;
+            const diags = pxtc.patchUpDiagnostics([{
                 file: file,
                 start: n.getFullStart(),
                 length: n.getFullWidth(),
-                messageText: msg || `Language feature "${n.getFullText().trim()}"" not supported in blocks`,
+                messageText,
                 category: ts.DiagnosticCategory.Error,
                 code: 1001
             }])
+            pxt.debug(`decompilation error: ${messageText}`)
             U.pushRange(result.diagnostics, diags)
             result.success = false;
         }

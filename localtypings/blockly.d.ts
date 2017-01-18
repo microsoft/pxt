@@ -151,7 +151,6 @@ declare namespace Blockly {
         setColour(colour: number | string): void;
         setCommentText(text: string): void;
         setConnectionsHidden(hidden: boolean): void;
-        setDeletable(deletable: boolean): void;
         setDisabled(disabled: boolean): void;
         setEditable(editable: boolean): void;
         setFieldValue(newValue: string, name: string): void;
@@ -281,8 +280,8 @@ declare namespace Blockly {
         svgGroup_: any;
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
-        undoStack_: Array<Blockly.Events.Abstract>;
-        redoStack_: Array<Blockly.Events.Abstract>;
+        undoStack_: Blockly.Events.Abstract[];
+        redoStack_: Blockly.Events.Abstract[];
         newBlock(prototypeName: string, opt_id?: string): Block;
         render(): void;
         clear(): void;
@@ -298,6 +297,7 @@ declare namespace Blockly {
         getParentSvg(): Element;
         zoom(x: number, y: number, type: number): void;
         zoomCenter(type: number): void;
+        scrollCenter(): void;
         highlightBlock(id: string): void;
         undo(redo?: boolean): void;
         redo(): void;

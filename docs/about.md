@@ -22,7 +22,7 @@ The Programming Experience Toolkit (PXT) is currently developed at Microsoft Res
 The BBC micro:bit is a small wearable and programmable mbed-based device that visibly features a 5x5 LED display, accelerometer, 
 compass, buttons, I/O pins, Micro USB plug, Bluetooth Low Energy antenna, ARM Cortex-M0 processor, and battery plug. 
 
-* [Try the PXT editor](https://m.pxt.io) for BBC micro:bit!
+* [Try the PXT editor](https://pxt.microbit.org) for BBC micro:bit!
 
 ## Open Source
 

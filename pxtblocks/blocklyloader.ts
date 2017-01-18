@@ -541,6 +541,11 @@ namespace pxt.blocks {
         // add extra blocks
         if (tb && pxt.appTarget.runtime) {
             const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
+            extraBlocks.push({
+                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
+                weight: pxt.appTarget.runtime.onStartWeight || 10,
+                type: ts.pxtc.ON_START_TYPE
+            })
             extraBlocks.forEach(eb => {
                 let el = document.createElement("block");
                 el.setAttribute("type", eb.type);
@@ -606,7 +611,7 @@ namespace pxt.blocks {
         }
 
         // Add the "Add package" category
-        if (tb) {
+        if (tb && showCategories) {
             getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
@@ -1095,6 +1100,7 @@ namespace pxt.blocks {
                 }
             };
         } else if (appTheme.invertedToolbox) {
+            const highlightColorInvertedLuminocityMultiplier = 0.3;
             /**
              * Recursively add colours to this toolbox.
              * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
@@ -1111,6 +1117,16 @@ namespace pxt.blocks {
                         if (this.hasColours_) {
                             element.style.color = '#fff';
                             element.style.background = (child.hexColour || '#ddd');
+                            element.onmouseenter = () => {
+                                if (!child.isSelected()) {
+                                    element.style.background = pxt.blocks.fadeColour(child.hexColour || '#ddd', highlightColorInvertedLuminocityMultiplier, false);
+                                }
+                            };
+                            element.onmouseleave = () => {
+                                if (!child.isSelected()) {
+                                    element.style.background = (child.hexColour || '#ddd');
+                                }
+                            }
                         }
                     }
                     this.addColour_(child);
@@ -1135,7 +1151,12 @@ namespace pxt.blocks {
                 setSelectedItem.call(this, node);
                 if (editor.lastInvertedCategory) {
                     // reset last category colour
-                    editor.lastInvertedCategory.getRowElement().style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
+                    let lastElement = editor.lastInvertedCategory.getRowElement();
+                    lastElement.style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
+                }
+                if (this.selectedItem_) {
+                    let selectedElement = this.selectedItem_.getRowElement();
+                    selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
                 }
             };
         }
@@ -1935,90 +1956,110 @@ namespace pxt.blocks {
          * @return {Node} Tree node to open at startup (or null).
          * @private
          */
-        (Blockly as any).Toolbox.prototype.syncTrees_ = function(treeIn: any, treeOut: any, pathToMedia: any) {
+        (Blockly as any).Toolbox.prototype.syncTrees_ = function (treeIn: any, treeOut: any, pathToMedia: any) {
             let openNode: any = null;
             let lastElement: any = null;
             for (let i = 0, childIn: any; childIn = treeIn.childNodes[i]; i++) {
                 if (!childIn.tagName) {
-                // Skip over text.
-                continue;
+                    // Skip over text.
+                    continue;
                 }
                 switch (childIn.tagName.toUpperCase()) {
-                case 'CATEGORY':
-                    let childOut = this.tree_.createNode(childIn.getAttribute('name'));
-                    childOut.blocks = [];
-                    treeOut.add(childOut);
-                    let custom = childIn.getAttribute('custom');
-                    if (custom) {
-                        // Variables and procedures are special dynamic categories.
-                        childOut.blocks = custom;
-                    } else {
-                        let newOpenNode = this.syncTrees_(childIn, childOut, pathToMedia);
-                        if (newOpenNode) {
-                            openNode = newOpenNode;
-                        }
-                    }
-                    let colour = childIn.getAttribute('colour');
-                    if ((goog as any).isString(colour)) {
-                        if (colour.match(/^#[0-9a-fA-F]{6}$/)) {
-                            childOut.hexColour = colour;
+                    case 'CATEGORY':
+                        let childOut = this.tree_.createNode(childIn.getAttribute('name'));
+                        childOut.blocks = [];
+                        treeOut.add(childOut);
+                        let custom = childIn.getAttribute('custom');
+                        if (custom) {
+                            // Variables and procedures are special dynamic categories.
+                            childOut.blocks = custom;
                         } else {
-                            childOut.hexColour = Blockly.hueToRgb(colour);
+                            let newOpenNode = this.syncTrees_(childIn, childOut, pathToMedia);
+                            if (newOpenNode) {
+                                openNode = newOpenNode;
+                            }
                         }
-                        this.hasColours_ = true;
-                    } else {
-                        childOut.hexColour = '';
-                    }
-                    let iconClass = childIn.getAttribute('iconclass');
-                    if ((goog as any).isString(iconClass)) {
-                        childOut.setIconClass(this.config_['cssTreeIcon'] + ' ' + iconClass);
-                    }
-                    let expandedClass = childIn.getAttribute('expandedclass');
-                    if ((goog as any).isString(expandedClass)) {
-                        childOut.setExpandedIconClass(this.config_['cssTreeIcon'] + ' ' + expandedClass);
-                    }
-                    if (childIn.getAttribute('expanded') == 'true') {
-                        if (childOut.blocks.length) {
-                            // This is a category that directly contians blocks.
-                            // After the tree is rendered, open this category and show flyout.
-                            openNode = childOut;
+                        let colour = childIn.getAttribute('colour');
+                        if ((goog as any).isString(colour)) {
+                            if (colour.match(/^#[0-9a-fA-F]{6}$/)) {
+                                childOut.hexColour = colour;
+                            } else {
+                                childOut.hexColour = Blockly.hueToRgb(colour);
+                            }
+                            this.hasColours_ = true;
+                        } else {
+                            childOut.hexColour = '';
                         }
-                        childOut.setExpanded(true);
-                    } else {
-                        childOut.setExpanded(false);
-                    }
-                    lastElement = childIn;
-                    break;
-                case 'SEP':
+                        let iconClass = childIn.getAttribute('iconclass');
+                        if ((goog as any).isString(iconClass)) {
+                            childOut.setIconClass(this.config_['cssTreeIcon'] + ' ' + iconClass);
+                        }
+                        let expandedClass = childIn.getAttribute('expandedclass');
+                        if ((goog as any).isString(expandedClass)) {
+                            childOut.setExpandedIconClass(this.config_['cssTreeIcon'] + ' ' + expandedClass);
+                        }
+                        if (childIn.getAttribute('expanded') == 'true') {
+                            if (childOut.blocks.length) {
+                                // This is a category that directly contians blocks.
+                                // After the tree is rendered, open this category and show flyout.
+                                openNode = childOut;
+                            }
+                            childOut.setExpanded(true);
+                        } else {
+                            childOut.setExpanded(false);
+                        }
+                        lastElement = childIn;
+                        break;
+                    case 'SEP':
                         if (lastElement) {
                             if (lastElement.tagName.toUpperCase() == 'CATEGORY') {
                                 // Separator between two categories.
                                 // <sep></sep>
                                 treeOut.add(new (Blockly as any).Toolbox.TreeSeparator(
                                     this.treeSeparatorConfig_));
-                        } else {
-                            // Change the gap between two blocks.
-                            // <sep gap="36"></sep>
-                            // The default gap is 24, can be set larger or smaller.
-                            // Note that a deprecated method is to add a gap to a block.
-                            // <block type="math_arithmetic" gap="8"></block>
-                            let newGap = parseFloat(childIn.getAttribute('gap'));
-                            if (!isNaN(newGap) && lastElement) {
-                                lastElement.setAttribute('gap', newGap);
+                            } else {
+                                // Change the gap between two blocks.
+                                // <sep gap="36"></sep>
+                                // The default gap is 24, can be set larger or smaller.
+                                // Note that a deprecated method is to add a gap to a block.
+                                // <block type="math_arithmetic" gap="8"></block>
+                                let newGap = parseFloat(childIn.getAttribute('gap'));
+                                if (!isNaN(newGap) && lastElement) {
+                                    lastElement.setAttribute('gap', newGap);
+                                }
                             }
                         }
-                    }
-                    break;
-                case 'BLOCK':
-                case 'SHADOW':
-                case 'LABEL':
-                case 'BUTTON':
-                    treeOut.blocks.push(childIn);
-                    lastElement = childIn;
-                    break;
+                        break;
+                    case 'BLOCK':
+                    case 'SHADOW':
+                    case 'LABEL':
+                    case 'BUTTON':
+                        treeOut.blocks.push(childIn);
+                        lastElement = childIn;
+                        break;
                 }
             }
             return openNode;
         };
+    }
+
+    export function fadeColour(hex: string, luminosity: number, lighten: boolean): string {
+        // #ABC => ABC
+        hex = hex.replace(/[^0-9a-f]/gi, '');
+
+        // ABC => AABBCC
+        if (hex.length < 6)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+
+        // tweak
+        let rgb = "#";
+        for (let i = 0; i < 3; i++) {
+            let c = parseInt(hex.substr(i * 2, 2), 16);
+            c = Math.round(Math.min(Math.max(0, lighten ? c + (c * luminosity) : c - (c * luminosity)), 255));
+            let cStr = c.toString(16);
+            rgb += ("00" + cStr).substr(cStr.length);
+        }
+
+        return rgb;
     }
 }

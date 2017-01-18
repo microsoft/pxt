@@ -68,9 +68,6 @@ export class Editor extends srceditor.Editor {
             if (!this.hasBlocks())
                 return
 
-            // needed to test roundtrip
-            let js = this.formatCode();
-
             // might be undefined
             let mainPkg = pkg.mainEditorPkg();
             let xml: string;
@@ -88,7 +85,7 @@ export class Editor extends srceditor.Editor {
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(js, 0).formatted) {
+                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(this.editor.getValue(), 0).formatted) {
                             pxt.debug('js not changed, skipping decompile');
                             pxt.tickEvent("typescript.noChanges")
                             return this.parent.setFile(mainPkg.files[blockFile]);
@@ -96,7 +93,10 @@ export class Editor extends srceditor.Editor {
                     }
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
-                            if (!resp.success) return failedAsync(blockFile);
+                            if (!resp.success) {
+                                this.currFile.diagnostics = resp.diagnostics;
+                                return failedAsync(blockFile);
+                            }
                             xml = resp.outfiles[blockFile];
                             Util.assert(!!xml);
                             return mainPkg.setContentAsync(blockFile, xml)
@@ -173,7 +173,7 @@ export class Editor extends srceditor.Editor {
                 const hexcolor = pxt.blocks.convertColour(element.metaData.color);
                 let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.${Object.keys(element.fns).join(', .token.ts.identifier.')}`;
                 cssContent += `${cssTag} { color: ${inverted
-                    ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
+                    ? pxt.blocks.fadeColour(hexcolor, invertedColorluminosityMultipler, true)
                     : hexcolor}; }`;
             }
         })
@@ -183,26 +183,6 @@ export class Editor extends srceditor.Editor {
             style.appendChild(document.createTextNode(cssContent));
         }
         head.appendChild(style);
-    }
-
-    static lightenColor(hex: string, luminosity: number): string {
-        // #ABC => ABC
-        hex = hex.replace(/[^0-9a-f]/gi, '');
-
-        // ABC => AABBCC
-        if (hex.length < 6)
-            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-
-        // tweak
-        let rgb = "#";
-        for (let i = 0; i < 3; i++) {
-            let c = parseInt(hex.substr(i * 2, 2), 16);
-            c = Math.round(Math.min(Math.max(0, c + (c * luminosity)), 255));
-            let cStr = c.toString(16);
-            rgb += ("00" + cStr).substr(cStr.length);
-        }
-
-        return rgb;
     }
 
     textAndPosition(pos: monaco.IPosition) {
@@ -540,10 +520,10 @@ export class Editor extends srceditor.Editor {
     }
 
     addToolboxCategory(group: HTMLDivElement,
-                        ns: string, metaColor: string,
-                        icon: string, injectIconClass: boolean = true,
-                        fns?: {[fn: string]: pxt.vs.MethodDef},
-                        onClick?: () => void) {
+        ns: string, metaColor: string,
+        icon: string, injectIconClass: boolean = true,
+        fns?: { [fn: string]: pxt.vs.MethodDef },
+        onClick?: () => void) {
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
         // Create a tree item
@@ -785,6 +765,12 @@ export class Editor extends srceditor.Editor {
 
         this.resize();
         this.resetFlyout(true);
+    }
+
+    unloadFile () {
+        if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
+            this.parent.reloadHeaderAsync();
+        }
     }
 
     snapshotState() {

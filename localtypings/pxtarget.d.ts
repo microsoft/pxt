@@ -57,7 +57,9 @@ declare namespace pxt {
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         extraBlocks?: BlockToolboxDefinition[];
+        onStartNamespace?: string; // default = loops
         onStartColor?: string;
+        onStartWeight?: number;
     }
 
     interface AppAnalytics {
