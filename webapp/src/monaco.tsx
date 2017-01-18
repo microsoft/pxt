@@ -545,7 +545,9 @@ export class Editor extends srceditor.Editor {
                 return;
             } else {
                 // Selected category
-                treerow.style.background = `${color}`;
+                treerow.style.background = appTheme.invertedToolbox ?
+                    `${pxt.blocks.fadeColour(color, pxt.blocks.highlightColorInvertedLuminocityMultiplier, false)}` :
+                    `${color}`;
                 treerow.style.color = '#fff';
                 treerow.className += ' blocklyTreeSelected';
                 monacoEditor.selectedCategoryRow = treerow;
@@ -670,6 +672,16 @@ export class Editor extends srceditor.Editor {
             // Inverted toolbox
             treerow.style.color = '#fff';
             treerow.style.background = (color || '#ddd');
+            treerow.onmouseenter = () => {
+                if (treerow != monacoEditor.selectedCategoryRow) {
+                    treerow.style.background = pxt.blocks.fadeColour(color || '#ddd', pxt.blocks.highlightColorInvertedLuminocityMultiplier, false);
+                }
+            }
+            treerow.onmouseleave = () => {
+                if (treerow != monacoEditor.selectedCategoryRow) {
+                    treerow.style.background = (color || '#ddd');
+                }
+            }
         } else {
             // Standard toolbox
             treerow.style.borderLeft = `8px solid ${color}`;

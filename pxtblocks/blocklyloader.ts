@@ -1062,6 +1062,7 @@ namespace pxt.blocks {
     }
 
     let lastInvertedCategory: any;
+    export const highlightColorInvertedLuminocityMultiplier = 0.3;
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
 
@@ -1097,7 +1098,6 @@ namespace pxt.blocks {
                 }
             };
         } else if (appTheme.invertedToolbox) {
-            const highlightColorInvertedLuminocityMultiplier = 0.3;
             /**
              * Recursively add colours to this toolbox.
              * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
