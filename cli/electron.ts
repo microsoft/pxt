@@ -14,6 +14,7 @@ let targetProductJson: string;
 let targetNpmPackageName: string;
 let isInit = false;
 let targetDir = process.cwd();
+let outDir = path.join(targetDir, "electron-out");
 
 function errorOut(msg: string): Promise<void> {
     console.error(msg);
@@ -37,7 +38,17 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
         errorOut("This command requires to be in a valid target directory (pxtarget.json and package.json required)");
     }
 
-    targetNpmPackageName = JSON.parse(fs.readFileSync("package.json", "utf8")).name;
+    if (parsed.flags["release"]) {
+        let match = /^(.*?)(?:@|$)/.exec(parsed.flags["release"] as string);
+
+        if (!match || !match[1]) {
+            errorOut("The specified released target is not valid. Required format: --release <target_npm_name>[@<target_npm_version>]");
+        }
+
+        targetNpmPackageName = match[1];
+    } else {
+        targetNpmPackageName = JSON.parse(fs.readFileSync("package.json", "utf8")).name;
+    }
 
     // Find root of PXT Electron app sources
     if (parsed.flags["appsrc"]) {
@@ -83,7 +94,8 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     isInit = linkPath && path.resolve(linkPath) === path.resolve(process.cwd());
 
     if (parsed.flags["release"]) {
-        targetDir = pxtElectronPath;
+        targetDir = path.join(pxtElectronPath, "src", "node_modules", targetNpmPackageName);
+        outDir = path.join(pxtElectronPath, "electron-out");
     }
 
     // Invoke subcommand
@@ -208,7 +220,8 @@ function electronGulpTask(taskName: string): Promise<void> {
         args: [
             taskName,
             "--" + targetProductJson,
-            "--" + targetDir
+            "--" + targetDir,
+            "--" + outDir
         ],
         cwd: pxtElectronPath
     });
