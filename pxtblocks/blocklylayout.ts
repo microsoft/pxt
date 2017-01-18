@@ -1,5 +1,9 @@
 
 namespace pxt.blocks.layout {
+
+    export let undoShuffleSteps: Array<number> = [];
+    export let redoShuffleSteps: Array<number> = [];
+
     export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
         // position blocks
@@ -62,11 +66,16 @@ namespace pxt.blocks.layout {
         // TODO: better layout
         // randomize order
         fisherYates(blocks);
-        // apply layout
-        flowBlocks(blocks, ratio);
+        // apply layout and return the number of blocks that changed their position
+        let nBlocks = flowBlocks(blocks, ratio);
+        // insert the number of blocks that were shuffled
+        if (nBlocks > 0)
+            undoShuffleSteps.push(nBlocks);
     }
-
+    //format
     export function flow(ws: B.Workspace, ratio?: number) {
+        undoShuffleSteps.length = 0;
+        redoShuffleSteps.length = 0;
         flowBlocks(ws.getTopBlocks(true), ratio);
     }
 
@@ -170,13 +179,15 @@ namespace pxt.blocks.layout {
         return { width: width, height: height, xml: data };
     }
 
-    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62) {
+    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62): number {
         const gap = 16;
         const marginx = 20;
         const marginy = 20;
 
         // compute total block surface and infer width
         let surface = 0;
+        // count number of blocks that change position
+        let cnt = 0;
         for (let block of blocks) {
             let s = block.getHeightWidth();
             surface += s.width * s.height;
@@ -189,8 +200,12 @@ namespace pxt.blocks.layout {
         for (let block of blocks) {
             let r = block.getBoundingRectangle();
             let s = block.getHeightWidth();
+            let originalPos = block.getRelativeToSurfaceXY();
             // move block to insertion point
             block.moveBy(insertx - r.topLeft.x, inserty - r.topLeft.y);
+            let newPos = block.getRelativeToSurfaceXY();
+            if (originalPos.x != newPos.x || originalPos.y != newPos.y)
+                cnt ++;
             insertx += s.width + gap;
             endy = Math.max(endy, inserty + s.height + gap);
             if (insertx > maxx) { // start new line
@@ -198,6 +213,7 @@ namespace pxt.blocks.layout {
                 inserty = endy;
             }
         }
+        return cnt;
     }
 
     function robertJenkins(): () => number {

@@ -123,6 +123,7 @@ declare namespace Blockly {
         unplug(): void;
 
         moveBy(x: number, y: number): void;
+        getRelativeToSurfaceXY(): goog.math.Coordinate;
         getHeightWidth(): { width: number; height: number; };
         getBoundingRectangle(): {
             topLeft: goog.math.Coordinate;
@@ -279,10 +280,8 @@ declare namespace Blockly {
         svgGroup_: any;
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
-
         undoStack_: Blockly.Events.Abstract[];
         redoStack_: Blockly.Events.Abstract[];
-
         newBlock(prototypeName: string, opt_id?: string): Block;
         render(): void;
         clear(): void;
