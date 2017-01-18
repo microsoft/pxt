@@ -517,6 +517,9 @@ export class Editor extends srceditor.Editor {
             this.resetFlyout();
             this.parent.addPackage();
         })
+
+        // Inject toolbox icon css
+        pxt.blocks.injectToolboxIconCss();
     }
 
     addToolboxCategory(group: HTMLDivElement,
@@ -687,8 +690,7 @@ export class Editor extends srceditor.Editor {
             treerow.style.borderLeft = `8px solid ${color}`;
         }
         if (icon && injectIconClass) {
-            // Inject css
-            pxt.blocks.injectToolboxIconCss(iconClass, icon);
+            pxt.blocks.appendToolboxIconCss(iconClass, icon);
         }
         treerow.style.paddingLeft = '0px';
         label.innerText = `${Util.capitalize(ns)}`;

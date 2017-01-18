@@ -174,7 +174,7 @@ namespace pxt.blocks {
                     }
                     if (nsn && nsn.attributes.icon) {
                         const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
-                        injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
+                        appendToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
                     } else {
@@ -218,6 +218,7 @@ namespace pxt.blocks {
             else {
                 if (showCategories) {
                     category.appendChild(block);
+                    injectToolboxIconCss();
                 } else {
                     tb.appendChild(block);
                 }
@@ -225,30 +226,32 @@ namespace pxt.blocks {
         }
     }
 
-    export function injectToolboxIconCss(className: string, i: string): void {
-        let head = document.head || document.getElementsByTagName('head')[0];
-        let style = document.getElementById('blocklyToolboxIcons') as HTMLStyleElement;
-
-        if (!style) {
-            style = document.createElement('style');
-            style.id = "blocklyToolboxIcons";
-            style.type = 'text/css';
-            head.appendChild(style);
-        }
-
-        if (style.innerText.indexOf(className) > -1) return;
+    let toolboxStyle: HTMLStyleElement;
+    let toolboxStyleBuffer: string = '';
+    export function appendToolboxIconCss(className: string, i: string): void {
+        if (toolboxStyleBuffer.indexOf(className) > -1) return;
 
         const icon = Util.unicodeToChar(i);
-        const cssContent = style.innerText + `
+        toolboxStyleBuffer += `
             .blocklyTreeIcon.${className}::before {
                 content: "${icon}";
             }
         `;
+    }
 
-        if (style.sheet) {
-            style.textContent = cssContent;
+    export function injectToolboxIconCss(): void {
+        if (!toolboxStyle) {
+            toolboxStyle = document.createElement('style');
+            toolboxStyle.id = "blocklyToolboxIcons";
+            toolboxStyle.type = 'text/css';
+            let head = document.head || document.getElementsByTagName('head')[0];
+            head.appendChild(toolboxStyle);
+        }
+
+        if (toolboxStyle.sheet) {
+            toolboxStyle.textContent = toolboxStyleBuffer;
         } else {
-            style.appendChild(document.createTextNode(cssContent));
+            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer));
         }
     }
 
