@@ -989,9 +989,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                         trg.appTheme.homeUrl = opts.localDir
                         data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     } else {
-                        // expand usb help pages
-                        (trg.appTheme.usbHelp || [])
-                            .forEach(h => h.path = uploadArtFile(h.path));
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
                         trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
                         content = JSON.stringify(trg, null, 2);
