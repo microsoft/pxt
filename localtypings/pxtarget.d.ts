@@ -145,7 +145,6 @@ declare namespace pxt {
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
         githubUrl?: string;
-        usbHelp?: SpecializedResource[];
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];

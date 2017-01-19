@@ -132,6 +132,7 @@ export interface ButtonConfig {
     class?: string; // defaults "positive"
     onclick?: () => (Promise<void> | void);
     url?: string;
+    fileName?: string;
 }
 
 export interface ConfirmOptions extends DialogOptions {
@@ -195,9 +196,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     }
 
     let btnno = 0
-    for (let b of options.buttons) {
+    for (let b of options.buttons.filter(b => !!b)) {
         html += `
-      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} target="_blank">
+      <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
         ${Util.htmlEscape(b.label)}
         <i class="${b.icon || "checkmark"} icon"></i>
       </${b.url ? "a" : "button"}>`

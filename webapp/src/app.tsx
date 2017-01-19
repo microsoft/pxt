@@ -2663,9 +2663,6 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
-    for (const u of theme.usbHelp || [])
-        u.path = patchCdn(u.path)
-
 }
 
 function parseHash(): { cmd: string; arg: string } {
