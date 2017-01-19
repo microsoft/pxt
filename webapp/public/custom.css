@@ -334,6 +334,7 @@ body.blocklyMinimalBody {
     display: inline-block;
     overflow-x: visible;
     overflow-y: auto;
+    vertical-align: top;
 }
 .monacoToolboxDiv.hide {
     display: none;
