@@ -51,7 +51,6 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     }
 
     if (resp.saveOnly) return Promise.resolve();
-    else if (pxt.options.light) core.infoNotification(lf(`Move the .hex file to your ${pxt.appTarget.appTheme.boardName || "???"}.`))
     else return showUploadInstructionsAsync(fn, url);
 }
 
