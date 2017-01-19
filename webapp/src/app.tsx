@@ -1574,6 +1574,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
+                simulator.makeDirty();
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
