@@ -164,6 +164,8 @@ export interface DialogOptions {
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
+    const buttons = options.buttons ? options.buttons.filter(b => !!b) : undefined;
+
     let logos = (options.logos || [])
         .filter(logo => !!logo)
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
@@ -188,7 +190,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     html += logos;
 
     if (!options.hideCancel) {
-        options.buttons.push({
+        buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
             class: options.disagreeClass || "cancel",
             icon: options.disagreeIcon || "cancel"
@@ -196,7 +198,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     }
 
     let btnno = 0
-    for (let b of options.buttons.filter(b => !!b)) {
+    for (let b of buttons) {
         html += `
       <${b.url ? "a" : "button"} class="ui right labeled icon button approve ${b.class || "positive"}" data-btnid="${btnno++}" ${b.url ? `href="${b.url}"` : ""} ${b.fileName ? `download="${Util.htmlEscape(b.fileName)}"` : ''} target="_blank">
         ${Util.htmlEscape(b.label)}
@@ -231,7 +233,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                 if (timer) clearTimeout(timer);
                 let id = elt.attr("data-btnid")
                 if (id) {
-                    let btn = options.buttons[+id]
+                    let btn = buttons[+id]
                     if (btn.onclick)
                         return resolve(btn.onclick())
                 }
