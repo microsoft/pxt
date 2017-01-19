@@ -407,34 +407,32 @@ export class Editor extends srceditor.Editor {
     }
 
     hasUndo() {
-        Util.assert(this.editor != undefined); // Guarded
-        return this.editor.undoStack_.length != 0;
+        return this.editor ? this.editor.undoStack_.length != 0 : false;
     }
 
     undo() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         this.editor.undo();
         this.parent.forceUpdate();
     }
 
     hasRedo() {
-        Util.assert(this.editor != undefined); // Guarded
-        return this.editor.redoStack_.length != 0;
+        return this.editor ? this.editor.redoStack_.length != 0 : false;
     }
 
     redo() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         this.editor.undo(true);
         this.parent.forceUpdate();
     }
 
     zoomIn() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         this.editor.zoomCenter(1);
     }
 
     zoomOut() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         this.editor.zoomCenter(-1);
     }
 

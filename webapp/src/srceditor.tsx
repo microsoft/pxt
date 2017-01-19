@@ -63,6 +63,14 @@ export class Editor {
         return false
     }
 
+    hasUndo() { return true; }
+    hasRedo() { return true; }
+    undo() { }
+    redo() { }
+
+    zoomIn() { }
+    zoomOut() { }
+
     /*******************************
      loadFile
     *******************************/
@@ -88,14 +96,6 @@ export class Editor {
 
     setDiagnostics(file: pkg.File, snapshot: any): void { }
     setViewState(view: ViewState): void { }
-
-    hasUndo() { return true; }
-    hasRedo() { return true; }
-    undo() { }
-    redo() { }
-
-    zoomIn() { }
-    zoomOut() { }
 
     saveToTypeScript(): string {
         return null

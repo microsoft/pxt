@@ -390,17 +390,17 @@ export class Editor extends srceditor.Editor {
     }
 
     undo() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
     }
 
     redo() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         this.editor.trigger('keyboard', monaco.editor.Handler.Redo, null)
     }
 
     zoomIn() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
         this.parent.settings.editorFontSize = currentFont + 1;
@@ -409,7 +409,7 @@ export class Editor extends srceditor.Editor {
     }
 
     zoomOut() {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
         this.parent.settings.editorFontSize = currentFont - 1;
