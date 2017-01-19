@@ -238,10 +238,6 @@ export class Editor extends srceditor.Editor {
                 false;
     }
 
-    prepare() {
-        this.isReady = true
-    }
-
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
         let monacoToolbox = document.getElementById('monacoEditorToolbox')
@@ -249,7 +245,11 @@ export class Editor extends srceditor.Editor {
             this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight });
     }
 
-    lazyLoadEditor() {
+    prepare() {
+        this.isReady = true
+    }
+
+    private prepareEditor() {
         this.extraLibs = Object.create(null);
 
         let editorArea = document.getElementById("monacoEditorArea");
@@ -732,7 +732,7 @@ export class Editor extends srceditor.Editor {
 
     loadFile(file: pkg.File) {
         if (!this.editor)
-            this.lazyLoadEditor();
+            this.prepareEditor();
 
         let toolbox = document.getElementById('monacoEditorToolbox');
 
