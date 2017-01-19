@@ -61,7 +61,9 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
         header: lf("Download completed..."),
-        body: lf("Move the .hex file to the {0} drive to transfer the code into your {1}.", boardDriveName, boardName),
+        body: lf("Move the {0} file to the {1} drive to transfer the code into your {2}.", 
+            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+            boardDriveName, boardName),
         hideCancel: true,
         agreeLbl: lf("Done!"),
         buttons: [!docUrl ? undefined : {
