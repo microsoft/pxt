@@ -44,7 +44,8 @@ namespace pxt.blocks {
             // does this block is disable or have s nested statement block?
             const nodeType = node.getAttribute("type");
             if (!node.getAttribute("disabled") && !node.querySelector("statement")
-                && (pxt.blocks.buildinBlockStatements[nodeType] || (blocks[nodeType] && blocks[nodeType].retType == "void"))
+                && (pxt.blocks.buildinBlockStatements[nodeType] ||
+                (blocks[nodeType] && blocks[nodeType].retType == "void" && !hasArrowFunction(blocks[nodeType])))
             ) {
                 // old block, needs to be wrapped in onstart
                 if (!insertNode) {
@@ -62,7 +63,7 @@ namespace pxt.blocks {
                     node.removeAttribute("y");
                     insertNode = node;
                 } else {
-                    // add nested statement
+                    // event, add nested statement
                     const next = dom.ownerDocument.createElement("next");
                     next.appendChild(node);
                     insertNode.appendChild(next);
