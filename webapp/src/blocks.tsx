@@ -101,14 +101,14 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    saveBlockly(): string {
+    private saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
         if (this.delayLoadXml) return this.delayLoadXml;
         return this.serializeBlocks();
     }
 
-    serializeBlocks(normalize?: boolean): string {
+    private serializeBlocks(normalize?: boolean): string {
         let xml = pxt.blocks.saveWorkspaceXml(this.editor);
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
@@ -116,7 +116,7 @@ export class Editor extends srceditor.Editor {
         return xml;
     }
 
-    loadBlockly(s: string): boolean {
+    private loadBlockly(s: string): boolean {
         if (this.serializeBlocks() == s) {
             this.typeScriptSaveable = true;
             pxt.debug('blocks already loaded...');
@@ -252,11 +252,8 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    contentSize(): { height: number; width: number } {
-        if (this.editor) {
-            return pxt.blocks.blocksMetrics(this.editor);
-        }
-        return undefined;
+    public contentSize(): { height: number; width: number } {
+        return this.editor ? pxt.blocks.blocksMetrics(this.editor) : undefined;
     }
 
     /**
@@ -327,7 +324,7 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
 
-    prepareBlockly(showCategories: boolean = true) {
+    private prepareBlockly(showCategories: boolean = true) {
         let blocklyDiv = document.getElementById('blocksEditor');
         blocklyDiv.innerHTML = '';
         let blocklyOptions = this.getBlocklyOptions(showCategories);
@@ -402,34 +399,42 @@ export class Editor extends srceditor.Editor {
         let blocklyArea = document.getElementById('blocksArea');
         let blocklyDiv = document.getElementById('blocksEditor');
         // Position blocklyDiv over blocklyArea.
-        blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
-        blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
-        Blockly.svgResize(this.editor);
+        if (blocklyArea && this.editor) {
+            blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
+            blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
+            Blockly.svgResize(this.editor);
+        }
     }
 
     hasUndo() {
+        Util.assert(this.editor != undefined); // Guarded
         return this.editor.undoStack_.length != 0;
     }
 
     undo() {
+        Util.assert(this.editor != undefined); // Guarded
         this.editor.undo();
         this.parent.forceUpdate();
     }
 
     hasRedo() {
+        Util.assert(this.editor != undefined); // Guarded
         return this.editor.redoStack_.length != 0;
     }
 
     redo() {
+        Util.assert(this.editor != undefined); // Guarded
         this.editor.undo(true);
         this.parent.forceUpdate();
     }
 
     zoomIn() {
+        Util.assert(this.editor != undefined); // Guarded
         this.editor.zoomCenter(1);
     }
 
     zoomOut() {
+        Util.assert(this.editor != undefined); // Guarded
         this.editor.zoomCenter(-1);
     }
 
@@ -450,10 +455,10 @@ export class Editor extends srceditor.Editor {
         return {}
     }
 
-    setViewState(pos: {}) {
-    }
+    setViewState(pos: {}) { }
 
     getCurrentSource() {
+        Util.assert(this.editor != undefined); // Guarded
         return this.saveBlockly();
     }
 
@@ -473,12 +478,13 @@ export class Editor extends srceditor.Editor {
         this.currFile = file;
     }
 
-    switchToTypeScript() {
+    public switchToTypeScript() {
         pxt.tickEvent("blocks.switchjavascript");
         this.parent.switchTypeScript();
     }
 
     setDiagnostics(file: pkg.File) {
+        Util.assert(this.editor != undefined); // Guarded
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
 
@@ -516,12 +522,12 @@ export class Editor extends srceditor.Editor {
         this.parent.openTypeScriptAsync().done();
     }
 
-    cleanUpShadowBlocks() {
+    private cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
     }
 
-    getBlocklyOptions(showCategories: boolean = true) {
+    private getBlocklyOptions(showCategories: boolean = true) {
         let toolbox = showCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
@@ -547,7 +553,7 @@ export class Editor extends srceditor.Editor {
         return blocklyOptions;
     }
 
-    getDefaultToolbox(showCategories: boolean = true): HTMLElement {
+    private getDefaultToolbox(showCategories: boolean = true): HTMLElement {
         return showCategories ?
             defaultToolbox.documentElement
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
@@ -565,7 +571,7 @@ export class Editor extends srceditor.Editor {
         return tb;
     }
 
-    updateToolbox(tb: Element, showCategories: boolean = true) {
+    private updateToolbox(tb: Element, showCategories: boolean = true) {
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
             // Toolbox is consistent with current mode, safe to update
