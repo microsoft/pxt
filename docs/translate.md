@@ -14,6 +14,12 @@ The project below contains the resources from https://www.pxt.io and the menu it
 
 If you want to help translating the editor, please sign in to Crowdin and send us a translator request.
 
+### ~ hint
+
+Looking to help translate **microbit.org**? Try http://translate.microbit.org/ to help the Microbit Foundation!
+
+### ~
+
 ## Live Translations
 
 To test your changes "live", use **beta** build and the ``?livelang=CODE`` query argument where ``CODE`` is your language ISO code. For example, to see the french translations:
