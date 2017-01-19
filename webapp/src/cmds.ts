@@ -61,22 +61,22 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
         header: lf("Download completed..."),
-        body: lf("Move the {0} file to the {1} drive to transfer the code into your {2}.", 
+        body: lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
             pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
             boardDriveName, boardName),
         hideCancel: true,
         agreeLbl: lf("Done!"),
-        buttons: [!docUrl ? undefined : {
-            label: lf("Help"),
-            icon: "help",
-            class: "lightgrey",
-            url: docUrl
-        }, {
+        buttons: [{
             label: lf("Download again"),
             icon: "download",
             class: "lightgrey",
             url,
             fileName: fn
+        }, !docUrl ? undefined : {
+            label: lf("Help"),
+            icon: "help",
+            class: "lightgrey",
+            url: docUrl
         }],
         timeout: 7000
     }).then(() => { });
