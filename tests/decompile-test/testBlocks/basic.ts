@@ -88,11 +88,6 @@ namespace testNamespace {
     //% block="Callback with optional arg"
     export function optionalArgumentWithCallback(arg1: () => void, arg2?: number) { }
 
-    //% blockId=test_optional_argument_3
-    //% block="Optional callback"
-    export function optionalCallback(arg1?: () => void) { }
-
-
     /**
      * Enum value function
      */
@@ -136,6 +131,19 @@ namespace testNamespace {
     //% mutate="objectdestructuring""
     //% mutateText="Visible properties""
     export function objectDestructuringTest(cb: (a: SomeBagOfProperties) => void): void { }
+
+    export class Anotherclass {
+        //% blockId=test_class_defaultInstanceMethod
+        //% block="default instance method with %a| and %b"
+        //% defaultInstance=testNamespace.builtin
+        public defaultInstanceMethod(a: number, b: number) {}
+    }
+
+    //% blockId=test_createDefInstanceClass
+    //% block="Create default instance class"
+    export function createDefInstanceClass(): Anotherclass { return new Anotherclass(); }
+
+    export const builtin: Anotherclass = createDefInstanceClass();
 }
 
 //% color=#A80000 weight=30

@@ -10,6 +10,3 @@ testNamespace.optionalArgument(40, 50);
 
 // @case: optional param after callback
 testNamespace.optionalArgumentWithCallback(() => {}, 500);
-
-// @case: optional callback
-testNamespace.optionalCallback(() => {});

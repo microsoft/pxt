@@ -103,8 +103,7 @@ ${output}</xml>`;
 
         function hasArrowFunction(info: CallInfo): boolean {
             const parameters = (info.decl as FunctionLikeDeclaration).parameters;
-            return info.args.some((arg, index) =>
-                arg && arg.kind === SK.ArrowFunction && parameters && !parameters[index].questionToken && !parameters[index].initializer);
+            return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
         }
 
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
@@ -703,6 +702,10 @@ ${output}</xml>`;
                     }
                 }
 
+                if (info.attrs.defaultInstance) {
+                    argNames.unshift("__instance__");
+                }
+
                 openBlockTag(info.attrs.blockId);
                 if (extraArgs) write(extraArgs);
                 info.args.forEach((e, i) => {
@@ -711,7 +714,6 @@ ${output}</xml>`;
                             return;
                         }
                         else {
-                            argNames.unshift("__instance__");
                             write(`<mutation showing="true"></mutation>`);
                         }
                     }
