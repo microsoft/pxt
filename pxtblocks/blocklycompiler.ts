@@ -463,10 +463,10 @@ namespace pxt.blocks {
                             });
                         }
                 }
-            } catch (e) {
-                const be = ((<any>e).block as B.Block) || b;
-                be.setWarningText(e + "");
-                e.push(be);
+            } catch (err) {
+                const be = ((<any>err).block as B.Block) || b;
+                be.setWarningText(err + "");
+                e.errors.push(be);
             }
         });
 
