@@ -191,7 +191,7 @@ namespace pxt.BrowserUtils {
 
 
     export function bestResourceForOsAndBrowser(resources: pxt.SpecializedResource[], name: string): pxt.SpecializedResource {
-        if (resources === null || resources.length == 0) {
+        if (!resources || resources.length == 0) {
             return null;
         }
 
@@ -269,7 +269,7 @@ namespace pxt.BrowserUtils {
     export function browserDownloadDataUri(uri: string, name: string) {
         if (pxt.BrowserUtils.isSafari()) {
             // For mysterious reasons, the "link" trick closes the
-            // PouchDB database                
+            // PouchDB database
             let iframe = document.getElementById("downloader") as HTMLIFrameElement;
             if (!iframe) {
                 pxt.debug('injecting downloader iframe')
