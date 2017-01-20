@@ -2021,7 +2021,7 @@ export function addAsync(parsed: commandParser.ParsedCommand) {
     return handleCommandAsync(parsed.arguments, loadPkgAsync)
 }
 
-export function initAsync() {
+export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
@@ -2034,16 +2034,24 @@ export function initAsync() {
 
     let configMap: Map<string> = config as any
 
-    if (!config.license)
+    if (!config.license) {
         config.license = "MIT"
-    if (!config.version)
+    }
+    if (!config.version) {
         config.version = "0.0.0"
+    }
 
-    return Promise.mapSeries(["name", "description", "license"], f =>
+
+    let initPromise = Promise.resolve();
+    if (!parsed.flags["useDefaults"]) {
+        initPromise =  Promise.mapSeries(["name", "description", "license"], f =>
         queryAsync(f, configMap[f])
             .then(r => {
                 configMap[f] = r
-            }))
+            })).then(() => {});
+    }
+
+    return initPromise
         .then(() => {
             let files: Map<string> = {};
             for (let f in defaultFiles)
@@ -3610,7 +3618,6 @@ function initCommands() {
         return Promise.resolve();
     }, "[all|command]");
 
-    simpleCmd("init", "start new package (library) in current directory", initAsync);
     simpleCmd("deploy", "build and deploy current package", deployAsync);
     simpleCmd("run", "build and run current package in the simulator", runAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
@@ -3753,6 +3760,14 @@ function initCommands() {
         },
         argString: "<subcommand>"
     }, electron.electronAsync);
+
+    p.defineCommand({
+        name: "init",
+        help: "start new package (library) in current directory",
+        flags: {
+            useDefaults: { description: "Do not prompt for package information" },
+        }
+    }, initAsync)
 
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
