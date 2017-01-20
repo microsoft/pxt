@@ -88,11 +88,6 @@ namespace testNamespace {
     //% block="Callback with optional arg"
     export function optionalArgumentWithCallback(arg1: () => void, arg2?: number) { }
 
-    //% blockId=test_optional_argument_3
-    //% block="Optional callback"
-    export function optionalCallback(arg1?: () => void) { }
-
-
     /**
      * Enum value function
      */
