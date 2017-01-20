@@ -701,6 +701,10 @@ ${output}</xml>`;
                     }
                 }
 
+                if (info.attrs.defaultInstance) {
+                    argNames.unshift("__instance__");
+                }
+
                 openBlockTag(info.attrs.blockId);
                 if (extraArgs) write(extraArgs);
                 info.args.forEach((e, i) => {
@@ -709,7 +713,6 @@ ${output}</xml>`;
                             return;
                         }
                         else {
-                            argNames.unshift("__instance__");
                             write(`<mutation showing="true"></mutation>`);
                         }
                     }
