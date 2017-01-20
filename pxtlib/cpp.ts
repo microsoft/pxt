@@ -797,7 +797,7 @@ int main() {
     export function unpackSourceFromHexAsync(dat: Uint8Array): Promise<HexFile> { // string[] (guid)
         let rawEmbed: RawEmbed
 
-        let bin = ts.pxtc.UF2.toBin(dat)
+        let bin = pxt.appTarget.compile.useUF2 ? ts.pxtc.UF2.toBin(dat) : undefined;
         if (bin) {
             rawEmbed = extractSourceFromBin(bin)
         } else {

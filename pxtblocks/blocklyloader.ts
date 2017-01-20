@@ -483,13 +483,18 @@ namespace pxt.blocks {
         }
 
         // hook up/down if return value is void
-        const hasHandlers = fn.parameters
-            ? fn.parameters.filter(pr => /^\([^\)]*\)\s*=>/.test(pr.type))[0]
-            : undefined;
+        const hasHandlers = hasArrowFunction(fn);
         block.setPreviousStatement(!hasHandlers && fn.retType == "void");
         block.setNextStatement(!hasHandlers && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
+    }
+
+    export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
+        const r = fn.parameters
+            ? fn.parameters.filter(pr => /^\([^\)]*\)\s*=>/.test(pr.type))[0]
+            : undefined;
+        return !!r;
     }
 
     function removeCategory(tb: Element, name: string) {
