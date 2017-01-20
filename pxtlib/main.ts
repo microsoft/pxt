@@ -189,15 +189,33 @@ namespace pxt {
     }
 
     export class Package {
+        static getConfigAsync(id: string, fullVers: string): Promise<pxt.PackageConfig> {
+            return Promise.resolve().then(() => {
+                if (pxt.github.isGithubId(fullVers)) {
+                    const repoInfo = pxt.github.parseRepoId(fullVers);
+                    return pxt.packagesConfigAsync()
+                        .then(config => pxt.github.repoAsync(repoInfo.fullName, config))    // Make sure repo exists and is whitelisted
+                        .then(gitRepo => gitRepo ? pxt.github.pkgConfigAsync(repoInfo.fullName, repoInfo.tag) : null);
+                } else {
+                    // If it's not from GH, assume it's a bundled package
+                    // TODO: Add logic for shared packages if we enable that
+                    return JSON.parse(pxt.appTarget.bundledpkgs[id][CONFIG_NAME]) as pxt.PackageConfig;
+                }
+            });
+        }
+
+        public addedBy: Package[];
         public config: PackageConfig;
         public level = -1;
         public isLoaded = false;
         private resolvedVersion: string;
 
-        constructor(public id: string, public _verspec: string, public parent: MainPackage) {
+        constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (parent) {
                 this.level = this.parent.level + 1
             }
+
+            this.addedBy = [addedBy];
         }
 
         version() {
@@ -270,10 +288,9 @@ namespace pxt {
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
                             const confStr = this.readFile(pxt.CONFIG_NAME)
-                            const mainTs = this.readFile("main.ts")
                             if (!confStr)
                                 U.userError(`package ${this.id} is missing ${pxt.CONFIG_NAME}`)
-                            this.parseConfig(confStr, mainTs);
+                            this.parseConfig(confStr);
                             if (this.level != 0)
                                 this.config.installedVersion = this.version()
                             this.saveConfig()
@@ -300,8 +317,29 @@ namespace pxt {
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
-        addMissingPackages(config: pxt.PackageConfig, ts: string) {
+        isPackageInUse(pkgId: string, ts: string = this.readFile("main.ts")): boolean {
+            // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
+            // otherwise fallback to the package's name
+            let regex: RegExp = null;
             const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            if (upgrades) {
+                upgrades.filter(rule => rule.type == "missingPackage").forEach((rule) => {
+                    Object.keys(rule.map).forEach((match) => {
+                        if (rule.map[match] === pkgId) {
+                            regex = new RegExp(match, "g");
+                        }
+                    });
+                });
+            }
+            if (!regex) {
+                regex = new RegExp(pkgId + "\\.[a-zA-Z]+", "g");
+            }
+            return regex.test(ts);
+        }
+
+        getMissingPackages(config: pxt.PackageConfig, ts: string): Map<string> {
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            const missing: Map<string> = {};
             if (ts && upgrades)
                 upgrades.filter(rule => rule.type == "missingPackage")
                     .forEach(rule => {
@@ -310,13 +348,98 @@ namespace pxt {
                             const pkg = rule.map[match];
                             ts.replace(regex, (m) => {
                                 if (!config.dependencies[pkg]) {
-                                    pxt.log(`adding missing package ${pkg}`);
-                                    config.dependencies[pkg] = "*"
+                                    missing[pkg] = "*";
                                 }
                                 return "";
                             })
                         }
                     })
+            return missing;
+        }
+
+        /**
+         * For the given package config or ID, looks through all the currently installed packages to find conflicts in
+         * Yotta settings
+         */
+        findConflicts(pkgOrId: string | PackageConfig, version: string): Promise<cpp.PkgConflictError[]> {
+            let conflicts: cpp.PkgConflictError[] = [];
+            let pkgCfg: PackageConfig;
+            return Promise.resolve()
+                .then(() => {
+                    // Get the package config if it's not already provided
+                    if (typeof pkgOrId === "string") {
+                        return Package.getConfigAsync(pkgOrId, version);
+                    } else {
+                        return Promise.resolve(pkgOrId as PackageConfig);
+                    }
+                })
+                .then((cfg) => {
+                    pkgCfg = cfg;
+
+                    // Iterate through all installed packages and check for conflicting settings
+                    if (pkgCfg && pkgCfg.yotta) {
+                        const yottaCfg = U.jsonFlatten(pkgCfg.yotta.config);
+                        this.parent.sortedDeps().forEach((depPkg) => {
+                            const depConfig = depPkg.config || JSON.parse(depPkg.readFile(CONFIG_NAME)) as PackageConfig;
+                            const hasYottaSettings = !!depConfig && !!depConfig.yotta && !!depPkg.config.yotta.config;
+                            if (hasYottaSettings) {
+                                const depYottaCfg = U.jsonFlatten(depConfig.yotta.config);
+                                for (const settingName of Object.keys(yottaCfg)) {
+                                    const depSetting = depYottaCfg[settingName];
+                                    const isJustDefault = depConfig.yotta.configIsJustDefaults;
+                                    if (depSetting !== yottaCfg[settingName] && !isJustDefault && (!depPkg.parent.config.yotta || !depPkg.parent.config.yotta.ignoreConflicts)) {
+                                        const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", settingName, pkgCfg.name, depPkg.id));
+                                        conflict.pkg0 = depPkg;
+                                        conflict.settingName = settingName;
+                                        conflicts.push(conflict);
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    // Also check for conflicts for all the specified package's dependencies (recursively)
+                    return Object.keys(pkgCfg.dependencies).reduce((soFar, pkgDep) => {
+                        return this.findConflicts(pkgDep, pkgCfg.dependencies[pkgDep])
+                            .then((childConflicts) => conflicts.push.apply(conflicts, childConflicts));
+                    }, Promise.resolve());
+                })
+                .then(() => {
+                    // For each conflicting package, we need to include their ancestor tree in the list of conflicts
+                    // For example, if package A depends on package B, and package B is in conflict with package C,
+                    // then package A is also technically in conflict with C
+                    const allAncestors = (p: Package): Package[] => {
+                        const ancestors: Package[] = [];
+                        p.addedBy.forEach((a) => {
+                            if (a.id !== this.id) {
+                                ancestors.push.apply(allAncestors(a));
+                                ancestors.push(a);
+                            }
+                        });
+                        return ancestors;
+                    }
+                    const additionalConflicts: cpp.PkgConflictError[] = [];
+                    conflicts.forEach((c) => {
+                        additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
+                            const confl = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
+                            confl.pkg0 = anc;
+                            return confl;
+                        }));
+                    });
+                    conflicts.push.apply(conflicts, additionalConflicts);
+
+                    // Remove duplicate conflicts (happens if more than one package had the same ancestor)
+                    conflicts = conflicts.filter((c, index) => {
+                        for (let i = 0; i < index; ++i) {
+                            if (c.pkg0.id === conflicts[i].pkg0.id) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+
+                    return conflicts;
+                });
         }
 
         upgradePackage(pkg: string, val: string): string {
@@ -351,8 +474,8 @@ namespace pxt {
             return updatedContents;
         }
 
-        private parseConfig(cfgSrc: string, mainTs: string) {
-            const cfg = <PackageConfig>JSON.parse(cfgSrc)
+        private parseConfig(cfgSrc: string) {
+            const cfg = <PackageConfig>JSON.parse(cfgSrc);
             this.config = cfg;
 
             const currentConfig = JSON.stringify(this.config);
@@ -365,7 +488,6 @@ namespace pxt {
                     }
                 }
             }
-            this.addMissingPackages(this.config, mainTs);
             if (JSON.stringify(this.config) != currentConfig) {
                 this.saveConfig();
             }
@@ -384,29 +506,68 @@ namespace pxt {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
             } else {
-                initPromise = initPromise.then(() => this.parseConfig(str, mainTs))
+                initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
+            const loadDepsRecursive = (dependencies: Map<string>) => {
+                return U.mapStringMapAsync(dependencies, (id, ver) => {
+                    let mod = this.resolveDep(id)
+                    ver = ver || "*"
+                    if (mod) {
+                        if (mod._verspec != ver && (!/^file:/.test(mod._verspec) || !/^file:/.test(ver)))
+                            U.userError("Version spec mismatch on " + id)
+                        mod.level = Math.min(mod.level, this.level + 1)
+                        mod.addedBy.push(this)
+                        return Promise.resolve()
+                    } else {
+                        mod = new Package(id, ver, this.parent, this)
+                        this.parent.deps[id] = mod
+                        return mod.loadAsync(isInstall)
+                    }
+                })
+            }
+
             return initPromise
-                .then(() =>
-                    U.mapStringMapAsync(this.config.dependencies, (id, ver) => {
-                        let mod = this.resolveDep(id)
-                        ver = ver || "*"
-                        if (mod) {
-                            if (mod._verspec != ver && (!/^file:/.test(mod._verspec) || !/^file:/.test(ver)))
-                                U.userError("Version spec mismatch on " + id)
-                            mod.level = Math.min(mod.level, this.level + 1)
-                            return Promise.resolve()
-                        } else {
-                            mod = new Package(id, ver, this.parent)
-                            this.parent.deps[id] = mod
-                            return mod.loadAsync(isInstall)
-                        }
-                    }))
-                .then(() => { })
+                .then(() => loadDepsRecursive(this.config.dependencies))
+                .then(() => {
+                    if (this.level === 0) {
+                        // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
+                        const missingPackages = this.getMissingPackages(<PackageConfig>JSON.parse(str), mainTs);
+                        let didAddPackages = false;
+                        let addPackagesPromise = Promise.resolve();
+                        Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
+                            return addPackagesPromise
+                                .then(() => this.findConflicts(missing, missingPackages[missing]))
+                                .then((conflicts) => {
+                                    if (conflicts.length) {
+                                        const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
+                                        const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");
+                                        pxt.log(`skipping missing package ${missing} because it conflicts with the following packages: ${conflictNames} (conflicting settings: ${settingNames})`);
+                                        return Promise.resolve(null);
+                                    } else {
+                                        pxt.log(`adding missing package ${missing}`);
+                                        didAddPackages = true;
+                                        this.config.dependencies[missing] = "*"
+                                        const addDependency: Map<string> = {};
+                                        addDependency[missing] = missingPackages[missing];
+                                        return loadDepsRecursive(addDependency);
+                                    }
+                                });
+                        }, Promise.resolve(null))
+                            .then(() => {
+                                if (didAddPackages) {
+                                    this.saveConfig();
+                                    this.validateConfig();
+                                }
+                                return Promise.resolve(null);
+                            });
+                    }
+                    return Promise.resolve(null);
+                })
+                .then(() => null);
         }
 
         getFiles() {
@@ -464,8 +625,9 @@ namespace pxt {
         public deps: Map<Package> = {};
 
         constructor(public _host: Host) {
-            super("this", "file:.", null)
+            super("this", "file:.", null, null)
             this.parent = this
+            this.addedBy = [this]
             this.level = 0
             this.deps[this.id] = this;
         }
@@ -478,7 +640,7 @@ namespace pxt {
             let visited: Map<boolean> = {}
             let ids: string[] = []
             let rec = (p: Package) => {
-                if (U.lookup(visited, p.id)) return;
+                if (!p || U.lookup(visited, p.id)) return;
                 visited[p.id] = true
                 if (p.config && p.config.dependencies) {
                     const deps = Object.keys(p.config.dependencies);
