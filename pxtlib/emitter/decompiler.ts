@@ -101,8 +101,7 @@ ${output}</xml>`;
 
         function hasArrowFunction(info: CallInfo): boolean {
             const parameters = (info.decl as FunctionLikeDeclaration).parameters;
-            return info.args.some((arg, index) =>
-                arg && arg.kind === SK.ArrowFunction && parameters && !parameters[index].questionToken && !parameters[index].initializer);
+            return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
         }
 
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
