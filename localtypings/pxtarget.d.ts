@@ -155,6 +155,7 @@ declare namespace pxt {
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
+        hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         projectGallery?: string;
         crowdinProject?: string;
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
