@@ -149,6 +149,7 @@ namespace pxsim {
 
         export function mute(mute: boolean) {
             _mute = mute;
+            stop();
         }
 
         export function stop() {
