@@ -17,6 +17,11 @@ namespace pxsim {
         code: string;
     }
 
+    export interface SimulatorMuteMessage extends SimulatorMessage {
+        type: "mute";
+        mute: boolean;
+    }
+
     export interface SimulatorDocMessage extends SimulatorMessage {
         docType?: string;
         src?: string;
@@ -114,6 +119,7 @@ namespace pxsim {
             switch (type || '') {
                 case 'run': run(<SimulatorRunMessage>data); break;
                 case 'stop': stop(); break;
+                case 'mute': AudioContextManager.mute((<SimulatorMuteMessage>data).mute); break;
                 case 'debugger':
                     if (runtime) {
                         runtime.handleDebuggerMsg(data as DebuggerMessage);

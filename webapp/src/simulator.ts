@@ -135,6 +135,11 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
     driver.run(js, opts);
 }
 
+export function mute(mute: boolean) {
+    driver.mute(mute);
+    $debugger.empty();
+}
+
 export function stop(unload?: boolean) {
     pxsim.U.removeClass(driver.container, "sepia");
     driver.stop(unload);

@@ -151,6 +151,10 @@ namespace pxsim {
             this.setState(SimulatorState.Unloaded);
         }
 
+        public mute(mute: boolean) {
+            this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
+        }
+
         private frameCleanupTimeout = 0;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
