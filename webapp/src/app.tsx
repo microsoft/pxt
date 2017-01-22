@@ -2411,12 +2411,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item grid centered portrait hide simtoolbar">
-                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`}>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                 {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
                             </div>
-                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`}>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
                                 {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
                                 {run ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
                             </div>
