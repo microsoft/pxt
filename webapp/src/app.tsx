@@ -2417,7 +2417,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`}>
-                                {run ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
+                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
                                 {run ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
                             </div>
                         </div>
