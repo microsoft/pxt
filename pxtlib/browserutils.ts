@@ -101,11 +101,6 @@ namespace pxt.BrowserUtils {
             ('ontouchstart' in document.documentElement);
     }
 
-    export function isMobile(): boolean {
-        return hasNavigator()
-            && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-
     export function os(): string {
         if (isWindows()) return "windows";
         else if (isMac()) return "mac";
