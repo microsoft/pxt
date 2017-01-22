@@ -120,7 +120,7 @@ namespace pxsim {
             switch (type || '') {
                 case 'run': run(<SimulatorRunMessage>data); break;
                 case 'stop': stop(); break;
-                case 'mute': this.mute((<SimulatorMuteMessage>data).mute); break;
+                case 'mute': mute((<SimulatorMuteMessage>data).mute); break;
                 case 'debugger':
                     if (runtime) {
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
@@ -145,7 +145,7 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
-            if (msg.mute) this.mute(msg.mute);
+            if (msg.mute) mute(msg.mute);
 
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
