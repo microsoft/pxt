@@ -15,6 +15,7 @@ namespace pxsim {
         partDefinitions?: Map<PartDefinition>
         fnArgs?: any;
         code: string;
+        mute?: boolean;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -119,7 +120,7 @@ namespace pxsim {
             switch (type || '') {
                 case 'run': run(<SimulatorRunMessage>data); break;
                 case 'stop': stop(); break;
-                case 'mute': AudioContextManager.mute((<SimulatorMuteMessage>data).mute); break;
+                case 'mute': this.mute((<SimulatorMuteMessage>data).mute); break;
                 case 'debugger':
                     if (runtime) {
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
@@ -144,6 +145,8 @@ namespace pxsim {
         export function run(msg: SimulatorRunMessage) {
             stop();
 
+            if (msg.mute) this.mute(msg.mute);
+
             runtime = new Runtime(msg.code);
             runtime.id = msg.id;
             runtime.board.initAsync(msg)
@@ -152,6 +155,10 @@ namespace pxsim {
                         pxsim.dumpLivePointers();
                     })
                 })
+        }
+
+        function mute(mute: boolean) {
+            AudioContextManager.mute(mute);
         }
 
         function queue(msg: SimulatorMessage) {
