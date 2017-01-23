@@ -3063,6 +3063,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
                         const folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
                         const ffn = path.join(folder, fn);
                         if (!buildOpts.createOnly || !fs.existsSync(ffn)) {
+                            nodeutil.mkdirP(path.dirname(ffn));
                             mainPkg.host().writeFile(mainPkg, ffn, md[fn])
                             console.log(`generated ${ffn}; size=${md[fn].length}`)
                         }
