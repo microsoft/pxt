@@ -150,7 +150,7 @@ export class WindowsUpdater extends EventEmitter implements I.UpdaterBase {
                 });
 
                 return Promise.map(files, (f) => {
-                    return Utils.fsUnlinkPromise(f);
+                    return Utils.fsUnlinkPromise(path.join(this.cacheInfo.cachePath, f));
                 })
                     .then(() => null);
             });

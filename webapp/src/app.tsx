@@ -1288,7 +1288,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     saveFile() {
-        simulator.makeDirty();
         this.saveFileAsync().done()
     }
 
@@ -1298,6 +1297,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return this.saveTypeScriptAsync()
             .then(() => {
                 let txt = this.editor.getCurrentSource()
+                if (txt != this.editorFile.content)
+                    simulator.makeDirty();
                 return this.editorFile.setContentAsync(txt);
             });
     }
@@ -1361,7 +1362,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
-            this.saveFile();
+            this.saveFile(); // don't wait till save is done
             this.typecheck();
         }
         this.markdownChangeHandler();
@@ -1573,6 +1574,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
+                simulator.makeDirty();
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)

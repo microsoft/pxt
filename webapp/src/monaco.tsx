@@ -37,7 +37,7 @@ export class Editor extends srceditor.Editor {
         return (blockFile && pkg.mainEditorPkg().files[blockFile] != null)
     }
 
-    openBlocks() {
+    public openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
         const header = this.parent.state.header;
         if (header) {
@@ -68,9 +68,6 @@ export class Editor extends srceditor.Editor {
             if (!this.hasBlocks())
                 return
 
-            // needed to test roundtrip
-            let js = this.formatCode();
-
             // might be undefined
             let mainPkg = pkg.mainEditorPkg();
             let xml: string;
@@ -88,7 +85,7 @@ export class Editor extends srceditor.Editor {
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(js, 0).formatted) {
+                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(this.editor.getValue(), 0).formatted) {
                             pxt.debug('js not changed, skipping decompile');
                             pxt.tickEvent("typescript.noChanges")
                             return this.parent.setFile(mainPkg.files[blockFile]);
@@ -96,7 +93,10 @@ export class Editor extends srceditor.Editor {
                     }
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
-                            if (!resp.success) return failedAsync(blockFile);
+                            if (!resp.success) {
+                                this.currFile.diagnostics = resp.diagnostics;
+                                return failedAsync(blockFile);
+                            }
                             xml = resp.outfiles[blockFile];
                             Util.assert(!!xml);
                             return mainPkg.setContentAsync(blockFile, xml)
@@ -111,7 +111,7 @@ export class Editor extends srceditor.Editor {
         core.showLoadingAsync(lf("switching to blocks..."), promise).done();
     }
 
-    showConversionFailedDialog(blockFile: string): Promise<void> {
+    public showConversionFailedDialog(blockFile: string): Promise<void> {
         let bf = pkg.mainEditorPkg().files[blockFile];
         return core.confirmAsync({
             header: lf("Oops, there is a problem converting your code."),
@@ -135,17 +135,9 @@ export class Editor extends srceditor.Editor {
         })
     }
 
-    decompileAsync(blockFile: string): Promise<boolean> {
+    public decompileAsync(blockFile: string): Promise<boolean> {
         return compiler.decompileAsync(blockFile)
             .then(resp => resp.success);
-    }
-
-    undo() {
-        this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
-    }
-
-    redo() {
-        this.editor.trigger('keyboard', monaco.editor.Handler.Redo, null)
     }
 
     display() {
@@ -157,7 +149,7 @@ export class Editor extends srceditor.Editor {
         )
     }
 
-    initEditorCss() {
+    private initEditorCss() {
         let head = document.head || document.getElementsByTagName('head')[0],
             style = (document.getElementById('monacoeditorStyles') as HTMLStyleElement) || document.createElement('style');
         style.id = "monacoeditorStyles";
@@ -185,26 +177,13 @@ export class Editor extends srceditor.Editor {
         head.appendChild(style);
     }
 
-    textAndPosition(pos: monaco.IPosition) {
-        let programText = this.editor.getValue()
-        let lines = pos.lineNumber
-        let chars = pos.column
-        let charNo = 0;
-        for (; charNo < programText.length; ++charNo) {
-            if (lines == 0) {
-                if (chars-- == 0)
-                    break;
-            } else if (programText[charNo] == '\n') lines--;
-        }
-
-        return { programText, charNo }
-    }
-
     beforeCompile() {
+        Util.assert(this.editor != undefined); // Guarded
         this.formatCode()
     }
 
-    formatCode(isAutomatic = false): string {
+    public formatCode(isAutomatic = false): string {
+        Util.assert(this.editor != undefined); // Guarded
         if (this.fileType != FileType.TypeScript) return;
 
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
@@ -238,18 +217,41 @@ export class Editor extends srceditor.Editor {
         return formatted
     }
 
-    getCurrLinePrefix() {
-        let pos = this.editor.getPosition()
-        let line = this.editor.getModel().getLineContent(pos.lineNumber)
-        return line.slice(0, pos.lineNumber)
+    private textAndPosition(pos: monaco.IPosition) {
+        let programText = this.editor.getValue()
+        let lines = pos.lineNumber
+        let chars = pos.column
+        let charNo = 0;
+        for (; charNo < programText.length; ++charNo) {
+            if (lines == 0) {
+                if (chars-- == 0)
+                    break;
+            } else if (programText[charNo] == '\n') lines--;
+        }
+
+        return { programText, charNo }
     }
 
     isIncomplete() {
-        return this.editor ? (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible : false;
+        return this.editor && (this.editor as any)._view ?
+                (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible :
+                false;
+    }
+
+    resize(e?: Event) {
+        let monacoArea = document.getElementById('monacoEditorArea');
+        let monacoToolbox = document.getElementById('monacoEditorToolbox')
+        if (monacoArea && monacoToolbox && this.editor)
+            this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight });
     }
 
     prepare() {
+        this.isReady = true
+    }
+
+    private prepareEditor() {
         this.extraLibs = Object.create(null);
+
         let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
@@ -385,17 +387,20 @@ export class Editor extends srceditor.Editor {
         this.editorViewZones = [];
 
         this.setupToolbox(editorArea);
-
-        this.isReady = true
     }
 
-    resize(e?: Event) {
-        let monacoArea = document.getElementById('monacoEditorArea');
-        let monacoToolbox = document.getElementById('monacoEditorToolbox')
-        this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight });
+    undo() {
+        if (!this.editor) return;
+        this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
+    }
+
+    redo() {
+        if (!this.editor) return;
+        this.editor.trigger('keyboard', monaco.editor.Handler.Redo, null)
     }
 
     zoomIn() {
+        if (!this.editor) return;
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
         this.parent.settings.editorFontSize = currentFont + 1;
@@ -404,6 +409,7 @@ export class Editor extends srceditor.Editor {
     }
 
     zoomOut() {
+        if (!this.editor) return;
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
         this.parent.settings.editorFontSize = currentFont - 1;
@@ -411,7 +417,8 @@ export class Editor extends srceditor.Editor {
         this.forceDiagnosticsUpdate();
     }
 
-    loadReference() {
+    private loadReference() {
+        Util.assert(this.editor != undefined); // Guarded
         let currentPosition = this.editor.getPosition();
         let wordInfo = this.editor.getModel().getWordAtPosition(currentPosition);
         let prevWordInfo = this.editor.getModel().getWordUntilPosition(new monaco.Position(currentPosition.lineNumber, wordInfo.startColumn - 1));
@@ -425,7 +432,7 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    setupToolbox(editorElement: HTMLElement) {
+    private setupToolbox(editorElement: HTMLElement) {
         // Monaco flyout widget
         let flyoutWidget = {
             getId: function (): string {
@@ -454,7 +461,7 @@ export class Editor extends srceditor.Editor {
     private selectedCategoryColor: string;
     private selectedCategoryBackgroundColor: string;
 
-    resetFlyout(clear?: boolean) {
+    private resetFlyout(clear?: boolean) {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
         flyout.innerHTML = '';
@@ -472,7 +479,7 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    updateToolbox() {
+    private updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
         if (!appTheme.monacoToolbox) return;
         // Toolbox div
@@ -517,13 +524,16 @@ export class Editor extends srceditor.Editor {
             this.resetFlyout();
             this.parent.addPackage();
         })
+
+        // Inject toolbox icon css
+        pxt.blocks.injectToolboxIconCss();
     }
 
-    addToolboxCategory(group: HTMLDivElement,
-                        ns: string, metaColor: string,
-                        icon: string, injectIconClass: boolean = true,
-                        fns?: {[fn: string]: pxt.vs.MethodDef},
-                        onClick?: () => void) {
+    private addToolboxCategory(group: HTMLDivElement,
+        ns: string, metaColor: string,
+        icon: string, injectIconClass: boolean = true,
+        fns?: { [fn: string]: pxt.vs.MethodDef },
+        onClick?: () => void) {
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
         // Create a tree item
@@ -545,7 +555,9 @@ export class Editor extends srceditor.Editor {
                 return;
             } else {
                 // Selected category
-                treerow.style.background = `${color}`;
+                treerow.style.background = appTheme.invertedToolbox ?
+                    `${pxt.blocks.fadeColour(color, pxt.blocks.highlightColorInvertedLuminocityMultiplier, false)}` :
+                    `${color}`;
                 treerow.style.color = '#fff';
                 treerow.className += ' blocklyTreeSelected';
                 monacoEditor.selectedCategoryRow = treerow;
@@ -670,13 +682,22 @@ export class Editor extends srceditor.Editor {
             // Inverted toolbox
             treerow.style.color = '#fff';
             treerow.style.background = (color || '#ddd');
+            treerow.onmouseenter = () => {
+                if (treerow != monacoEditor.selectedCategoryRow) {
+                    treerow.style.background = pxt.blocks.fadeColour(color || '#ddd', pxt.blocks.highlightColorInvertedLuminocityMultiplier, false);
+                }
+            }
+            treerow.onmouseleave = () => {
+                if (treerow != monacoEditor.selectedCategoryRow) {
+                    treerow.style.background = (color || '#ddd');
+                }
+            }
         } else {
             // Standard toolbox
             treerow.style.borderLeft = `8px solid ${color}`;
         }
         if (icon && injectIconClass) {
-            // Inject css
-            pxt.blocks.injectToolboxIconCss(iconClass, icon);
+            pxt.blocks.appendToolboxIconCss(iconClass, icon);
         }
         treerow.style.paddingLeft = '0px';
         label.innerText = `${Util.capitalize(ns)}`;
@@ -687,10 +708,12 @@ export class Editor extends srceditor.Editor {
     }
 
     getViewState() {
+        Util.assert(this.editor != undefined); // Guarded
         return this.editor.getPosition()
     }
 
     getCurrentSource() {
+        Util.assert(this.editor != undefined); // Guarded
         return this.editor.getValue()
     }
 
@@ -702,11 +725,15 @@ export class Editor extends srceditor.Editor {
         this.editor.setValue(v);
     }
 
-    overrideFile(content: string) {
+    public overrideFile(content: string) {
+        Util.assert(this.editor != undefined); // Guarded
         this.editor.setValue(content);
     }
 
     loadFile(file: pkg.File) {
+        if (!this.editor)
+            this.prepareEditor();
+
         let toolbox = document.getElementById('monacoEditorToolbox');
 
         let ext = file.getExtension()
@@ -767,7 +794,7 @@ export class Editor extends srceditor.Editor {
         this.resetFlyout(true);
     }
 
-    unloadFile () {
+    unloadFile() {
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             this.parent.reloadHeaderAsync();
         }
@@ -778,12 +805,14 @@ export class Editor extends srceditor.Editor {
     }
 
     setViewState(pos: monaco.IPosition) {
+        Util.assert(this.editor != undefined); // Guarded
         if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
         this.editor.setScrollPosition(pos)
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {
+        Util.assert(this.editor != undefined); // Guarded
         Util.assert(this.currFile == file)
         this.diagSnapshot = snapshot
         this.forceDiagnosticsUpdate()
@@ -809,7 +838,7 @@ export class Editor extends srceditor.Editor {
         return false;
     }
 
-    forceDiagnosticsUpdate() {
+    private forceDiagnosticsUpdate() {
         if (this.fileType != FileType.TypeScript) return
 
         let file = this.currFile
@@ -865,7 +894,6 @@ export class Editor extends srceditor.Editor {
     }
 
     private highlightDecorations: string[] = [];
-
     highlightStatement(brk: pxtc.LocationInfo) {
         if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
         let position = this.editor.getModel().getPositionAt(brk.start);
