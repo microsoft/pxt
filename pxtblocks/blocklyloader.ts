@@ -1157,11 +1157,11 @@ namespace pxt.blocks {
                 if (editor.lastInvertedCategory) {
                     // reset last category colour
                     let lastElement = editor.lastInvertedCategory.getRowElement();
-                    lastElement.style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
+                    if (lastElement) lastElement.style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
                 }
                 if (this.selectedItem_) {
                     let selectedElement = this.selectedItem_.getRowElement();
-                    selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
+                    if (selectedElement) selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
                 }
             };
         }
