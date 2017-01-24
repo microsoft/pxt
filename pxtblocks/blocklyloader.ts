@@ -413,10 +413,18 @@ namespace pxt.blocks {
                     if (syms.length == 0) {
                         console.error(`no instances of ${typeInfo.qName} found`)
                     }
-                    let dd = syms.map(v => [
-                        v.attributes.block || v.attributes.blockId || v.name,
-                        v.namespace + "." + v.name
-                    ]);
+                    const dd = syms.map(v => {
+                        const k = v.attributes.block || v.attributes.blockId || v.name;
+                        return [
+                            v.attributes.blockImage ? {
+                                src: `/static/blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
+                                alt: k,
+                                width: 64,
+                                height: 64
+                            } : k,
+                            v.namespace + "." + v.name
+                        ];
+                    });
                     i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     // if a value is provided, move it first
                     if (pr.shadowValue)
@@ -1194,7 +1202,7 @@ namespace pxt.blocks {
             }
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
             let topBlocks = this.getTopBlocks(true);
-            let eventGroup = Blockly.genUid();
+            let eventGroup = Blockly.utils.genUid();
 
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
