@@ -33,7 +33,6 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
-    function genUid(): string;
     function terminateDrag_(): void;
     function mouseToSvg(e: Event, svg: Element): any;
     function svgResize(workspace: Blockly.Workspace): void;
@@ -49,6 +48,7 @@ declare namespace Blockly {
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
+        function genUid(): string;
     }
 
     class FieldImage {

@@ -1202,7 +1202,7 @@ namespace pxt.blocks {
             }
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
             let topBlocks = this.getTopBlocks(true);
-            let eventGroup = Blockly.genUid();
+            let eventGroup = Blockly.utils.genUid();
 
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
