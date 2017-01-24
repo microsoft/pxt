@@ -419,8 +419,8 @@ namespace pxt.blocks {
                             v.attributes.blockImage ? {
                                 src: `/static/blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
-                                width: 64,
-                                height: 64
+                                width: 32,
+                                height: 32
                             } : k,
                             v.namespace + "." + v.name
                         ];
