@@ -8,6 +8,13 @@ to first install [node.js](https://nodejs.org). Then, you can install `pxt` with
 npm install -g pxt
 ```
 
+### ~ hint
+
+On Windows, make sure to install Visual Studio to get the C++ toolchains
+at https://www.visualstudio.com/downloads/
+
+### ~
+
 ## Setting up workspace
 
 For every PXT target you will need to create a directory for your projects.

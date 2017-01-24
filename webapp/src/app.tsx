@@ -750,7 +750,7 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
                     <div className="ui two buttons">
                         {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep() }>
                             <i className="left chevron icon"></i>
-                            Previous
+                            Back
                         </button> : undefined }
                         {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep() }>
                             Next
