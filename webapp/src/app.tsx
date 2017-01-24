@@ -748,18 +748,9 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
                 </div>
                 <div className="extra content">
                     <div className="ui two buttons">
-                        {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep() }>
-                            <i className="left chevron icon"></i>
-                            Back
-                        </button> : undefined }
-                        {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep() }>
-                            Next
-                            <i className="right chevron icon"></i>
-                        </button> : undefined }
-                        {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial() }>
-                            <i className="left checkmark icon"></i>
-                            Finish
-                        </button> : undefined }
+                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back")} onClick={() => this.previousTutorialStep() } /> : undefined }
+                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next")} onClick={() => this.nextTutorialStep() } /> : undefined }
+                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} onClick={() => this.finishTutorial() } /> : undefined }
                     </div>
                 </div>
             </div>
