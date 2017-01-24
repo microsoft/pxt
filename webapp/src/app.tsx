@@ -852,6 +852,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const hasRedo = this.props.parent.editor.hasRedo();
 
         const run = true;
+        const restart = run && !simOpts.hideRestart;
 
         return <div className="ui equal width grid right aligned padded">
                     <div className="column mobile only">
@@ -880,7 +881,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="left aligned two wide column">
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
-                                    {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
+                                    {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
                                 </div>
                                 <div className="row" style={{paddingTop: "1rem"}}>
                                     <div className="ui vertical icon small buttons">
@@ -935,7 +936,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="left aligned two wide column">
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
-                                    {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
+                                    {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
                                 </div>
                                 <div className="row" style={{paddingTop: "1rem"}}>
                                     <div className="ui vertical icon small buttons">
@@ -2314,6 +2315,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
+        const restart = run && !simOpts.hideRestart;
+        const fullscreen = run && !simOpts.hideFullscreen;
         const blockActive = this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
         const javascriptActive = this.editor == this.textEditor
@@ -2405,11 +2408,11 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
-                                {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
+                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
                                 {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
-                                {run ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
+                                {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
                             </div>
                         </div>
                         <div className="ui item portrait hide">
