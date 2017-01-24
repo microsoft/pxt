@@ -54,65 +54,31 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     else return showUploadInstructionsAsync(fn, url);
 }
 
-//Searches the known USB image, matching on platform and browser
-function namedUsbImage(name: string): string {
-    let match = pxt.BrowserUtils.bestResourceForOsAndBrowser(pxt.appTarget.appTheme.usbHelp, name);
-    return match ? match.path : null;
-}
-
-interface UploadInstructionStep {
-    title: string,
-    body?: string,
-    image?: string,
-}
-
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
-    let boardName = pxt.appTarget.appTheme.boardName || "???";
-    let boardDriveName = pxt.appTarget.compile.driveName || "???";
+    const boardName = pxt.appTarget.appTheme.boardName || "???";
+    const boardDriveName = pxt.appTarget.compile.driveName || "???";
 
-    let instructions: UploadInstructionStep[] = [
-        {
-            title: lf("Connect your {0} to your PC using the USB cable.", boardName),
-            image: "connection"
-        },
-        {
-            title: lf("Save the <code>.hex</code> file to your computer."),
-            body: `<a href="${encodeURI(url)}" target="_blank">${lf("Click here if the download hasn't started.")}</a>`,
-            image: "save"
-        },
-        {
-            title: lf("Copy the <code>.hex</code> file to your {0} drive.", boardDriveName),
-            body: pxt.BrowserUtils.isMac() ? lf("Drag and drop the <code>.hex</code> file to your {0} drive in Finder", boardDriveName) :
-                pxt.BrowserUtils.isWindows() ? lf("Right click on the file in Windows Explorer, click 'Send To', and select {0}", boardDriveName) : "",
-            image: "copy"
-        }
-    ];
-
-    let usbImagePath = namedUsbImage("connection");
-    let docUrl = pxt.appTarget.appTheme.usbDocs;
+    const docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
-        header: lf("Download your code to the {0}...", boardName),
-        htmlBody: `
-<div class="ui styled fluid accordion">
-${instructions.map((step: UploadInstructionStep, i: number) =>
-            `<div class="title">
-  <i class="dropdown icon"></i>
-  ${step.title}
-</div>
-<div class="content">
-    ${step.body ? step.body : ""}
-    ${step.image && namedUsbImage(step.image) ? `<img src="${namedUsbImage(step.image)}"  alt="${step.title}" class="ui centered large image" />` : ""}
-</div>`).join('')}
-</div>`,
+        header: lf("Download completed..."),
+        body: lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
+            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+            boardDriveName, boardName),
         hideCancel: true,
         agreeLbl: lf("Done!"),
-        buttons: !docUrl ? undefined : [{
+        buttons: [{
+            label: lf("Download again"),
+            icon: "download",
+            class: "lightgrey",
+            url,
+            fileName: fn
+        }, !docUrl ? undefined : {
             label: lf("Help"),
             icon: "help",
             class: "lightgrey",
             url: docUrl
         }],
-        timeout: 0 //We don't want this to timeout now that it is interactive
+        timeout: 7000
     }).then(() => { });
 }
 

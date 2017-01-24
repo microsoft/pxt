@@ -78,6 +78,7 @@ interface IAppState {
     showBlocks?: boolean;
     showParts?: boolean;
     fullscreen?: boolean;
+    mute?: boolean;
 }
 
 let theEditor: ProjectView;
@@ -747,18 +748,9 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
                 </div>
                 <div className="extra content">
                     <div className="ui two buttons">
-                        {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep() }>
-                            <i className="left chevron icon"></i>
-                            Previous
-                        </button> : undefined }
-                        {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep() }>
-                            Next
-                            <i className="right chevron icon"></i>
-                        </button> : undefined }
-                        {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial() }>
-                            <i className="left checkmark icon"></i>
-                            Finish
-                        </button> : undefined }
+                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back")} onClick={() => this.previousTutorialStep() } /> : undefined }
+                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next")} onClick={() => this.nextTutorialStep() } /> : undefined }
+                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} onClick={() => this.finishTutorial() } /> : undefined }
                     </div>
                 </div>
             </div>
@@ -1288,7 +1280,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     saveFile() {
-        simulator.makeDirty();
         this.saveFileAsync().done()
     }
 
@@ -1298,6 +1289,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return this.saveTypeScriptAsync()
             .then(() => {
                 let txt = this.editor.getCurrentSource()
+                if (txt != this.editorFile.content)
+                    simulator.makeDirty();
                 return this.editorFile.setContentAsync(txt);
             });
     }
@@ -1361,7 +1354,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
-            this.saveFile();
+            this.saveFile(); // don't wait till save is done
             this.typecheck();
         }
         this.markdownChangeHandler();
@@ -1573,6 +1566,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
+                simulator.makeDirty();
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
@@ -2020,6 +2014,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({fullscreen: !this.state.fullscreen});
     }
 
+    toggleMute() {
+        pxt.tickEvent("simulator.mute", {view: 'computer', muteTo: '' + !this.state.mute});
+        simulator.mute(!this.state.mute);
+        this.setState({mute: !this.state.mute});
+    }
+
     openInstructions() {
         pxt.tickEvent("simulator.make");
         compiler.compileAsync({ native: true })
@@ -2088,7 +2088,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp)
+                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
@@ -2306,6 +2306,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const fullscreenTooltip = this.state.fullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
+        const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const tutorial = this.state.tutorial;
@@ -2401,10 +2402,13 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item grid centered portrait hide simtoolbar">
-                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`}>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                 {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
+                            </div>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
+                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
                                 {run ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
                             </div>
                         </div>
@@ -2661,9 +2665,6 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
-    for (const u of theme.usbHelp || [])
-        u.path = patchCdn(u.path)
-
 }
 
 function parseHash(): { cmd: string; arg: string } {

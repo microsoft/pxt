@@ -989,9 +989,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                         trg.appTheme.homeUrl = opts.localDir
                         data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
                     } else {
-                        // expand usb help pages
-                        (trg.appTheme.usbHelp || [])
-                            .forEach(h => h.path = uploadArtFile(h.path));
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
                         trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
                         content = JSON.stringify(trg, null, 2);
@@ -3066,6 +3063,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
                         const folder = /strings.json$/.test(fn) ? "_locales/" : /\.md$/.test(fn) ? "../../docs/" : "built/";
                         const ffn = path.join(folder, fn);
                         if (!buildOpts.createOnly || !fs.existsSync(ffn)) {
+                            nodeutil.mkdirP(path.dirname(ffn));
                             mainPkg.host().writeFile(mainPkg, ffn, md[fn])
                             console.log(`generated ${ffn}; size=${md[fn].length}`)
                         }

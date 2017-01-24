@@ -128,6 +128,8 @@ namespace pxsim {
         let _vco: any; // OscillatorNode;
         let _vca: any; // GainNode;
 
+        let _mute = false; //mute audio
+
         function context(): any {
             if (!_context) _context = freshContext();
             return _context;
@@ -145,6 +147,11 @@ namespace pxsim {
             return undefined;
         }
 
+        export function mute(mute: boolean) {
+            _mute = mute;
+            stop();
+        }
+
         export function stop() {
             if (_vca) _vca.gain.value = 0;
             _frequency = 0;
@@ -155,6 +162,7 @@ namespace pxsim {
         }
 
         export function tone(frequency: number, gain: number) {
+            if (_mute) return;
             if (frequency <= 0) return;
             _frequency = frequency;
 
