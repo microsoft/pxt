@@ -218,7 +218,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
-        let mo: any;
+        let mo: JQuery;
         let timer = options.timeout ? setTimeout(() => {
             timer = 0;
             mo.modal("hide");
@@ -242,7 +242,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             closeable: !options.hideCancel,
             context: "body.dimmable",
             onHidden: () => {
-                modal.remove()
+                modal.remove();
+                mo.remove();
             },
             onApprove: onfinish,
             onDeny: onfinish,

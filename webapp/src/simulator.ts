@@ -35,13 +35,18 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 duration: '0.5s',
             })
         },
-        removeElement: (el) => {
+        removeElement: (el, completeHandler) => {
             ($(el) as any).transition({
                 animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
                 duration: '0.5s',
                 onComplete: function () {
+                    if (completeHandler) completeHandler();
                     $(el).remove();
                 }
+            }).error(() => {
+                // Problem with animation, still complete
+                if (completeHandler) completeHandler();
+                $(el).remove();
             })
         },
         onDebuggerBreakpoint: function (brk) {
@@ -133,6 +138,12 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
 export function stop(unload?: boolean) {
     pxsim.U.removeClass(driver.container, "sepia");
     driver.stop(unload);
+    $debugger.empty();
+}
+
+export function hide(completeHandler?: () => void) {
+    pxsim.U.addClass(driver.container, "sepia");
+    driver.hide(completeHandler);
     $debugger.empty();
 }
 

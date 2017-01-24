@@ -64,9 +64,16 @@ export class Editor {
     snapshotState(): any {
         return null
     }
+    hasUndo() { return true; }
+    hasRedo() { return true; }
     undo() { }
+    redo() { }
+    zoomIn() { }
+    zoomOut() { }
 
     beforeCompile() { }
+
+    unloadFile() { }
 
     highlightStatement(brk: pxtc.LocationInfo) { }
 

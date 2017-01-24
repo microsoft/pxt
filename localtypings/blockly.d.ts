@@ -22,6 +22,7 @@ declare namespace goog {
             x: number;
             y: number;
             constructor(x: number, y: number);
+            clone() : Coordinate;
 
             static difference(a: Coordinate, b: Coordinate): Coordinate;
             static sum(a: Coordinate, b: Coordinate): Coordinate;
@@ -106,6 +107,9 @@ declare namespace Blockly {
         previousConnection: Connection;
         workspace: Workspace;
 
+        // private
+        xy_: goog.math.Coordinate;
+
 
         // Returns null if the field does not exist on the specified block.
         getFieldValue(field: string): string;
@@ -146,7 +150,6 @@ declare namespace Blockly {
         setColour(colour: number | string): void;
         setCommentText(text: string): void;
         setConnectionsHidden(hidden: boolean): void;
-        setDeletable(deletable: boolean): void;
         setDisabled(disabled: boolean): void;
         setEditable(editable: boolean): void;
         setFieldValue(newValue: string, name: string): void;
@@ -277,6 +280,9 @@ declare namespace Blockly {
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
 
+        undoStack_: Blockly.Events.Abstract[];
+        redoStack_: Blockly.Events.Abstract[];
+
         newBlock(prototypeName: string, opt_id?: string): Block;
         render(): void;
         clear(): void;
@@ -291,8 +297,10 @@ declare namespace Blockly {
         getCanvas(): any;
         getParentSvg(): Element;
         zoom(x: number, y: number, type: number): void;
+        zoomCenter(type: number): void;
+        scrollCenter(): void;
         highlightBlock(id: string): void;
-        undo(): void;
+        undo(redo?: boolean): void;
         redo(): void;
         clearUndo(): void;
         isDragging(): boolean;

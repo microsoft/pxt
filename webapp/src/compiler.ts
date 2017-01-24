@@ -86,7 +86,15 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         })
         .then(compileCoreAsync)
         .then(resp => {
-            // TODO remove this
+            let outpkg = pkg.mainEditorPkg().outputPkg
+
+            // keep the assembly file - it is only generated when user hits "Download"
+            // and is usually overwritten by the autorun very quickly, so it's impossible to see it
+            let prevasm = outpkg.files[pxtc.BINARY_ASM]
+            if (prevasm && !resp.outfiles[pxtc.BINARY_ASM]) {
+                resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
+            }
+
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
 
@@ -122,7 +130,7 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function decompileAsync(fileName: string) {
+export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: B.Workspace, blockFile?: string) {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
@@ -130,7 +138,11 @@ export function decompileAsync(fileName: string) {
             return decompileCoreAsync(opts, fileName)
         })
         .then(resp => {
-            // TODO remove this
+            // try to patch event locations
+            if (resp.success && blockInfo && oldWorkspace && blockFile) {
+                const newXml = pxt.blocks.layout.patchBlocksFromOldWorkspace(blockInfo, oldWorkspace, resp.outfiles[blockFile]);
+                resp.outfiles[blockFile] = newXml;
+            }
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
             return resp

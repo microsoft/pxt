@@ -10,7 +10,7 @@ import * as minimist from "minimist";
 import * as path from "path";
 import product from "./util/productloader";
 import * as Telemetry from "./util/telemetry";
-import { UpdateService } from "./updater/updateservice";
+import { UpdateService, UpdateEventType } from "./updater/updateservice";
 import { Mutex } from 'windows-mutex';
 
 const target = require(product.targetId);
@@ -85,7 +85,7 @@ function createElectronHandlers(): I.Map<I.ElectronHandler> {
             if (!updateService) {
                 pxtCore.sendElectronMessage({ type: "update-download-error" });
             } else {
-                updateService.update(args.targetVersion, args.isCritical);
+                updateService.update(args.targetVersion, args.type === UpdateEventType.Critical);
             }
         };
     }

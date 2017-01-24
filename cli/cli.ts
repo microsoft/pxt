@@ -19,6 +19,8 @@ import * as server from './server';
 import * as build from './buildengine';
 import * as electron from "./electron";
 import * as commandParser from './commandparser';
+import * as hid from './hid';
+import * as gdb from './gdb';
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -104,7 +106,7 @@ function saveConfig() {
 }
 
 function initConfig() {
-    let atok: string = process.env["PXT_ACCESS_TOKEN"] || process.env["CLOUD_ACCESS_TOKEN"]
+    let atok: string = process.env["PXT_ACCESS_TOKEN"]
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config
@@ -420,12 +422,16 @@ function travisAsync() {
         fs.writeFileSync(npmrc, cfg)
     }
 
-    console.log("TRAVIS_TAG:", rel)
-
     const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
     const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
+
+    console.log("TRAVIS_TAG:", rel);
+    console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
+    console.log("TRAVIS_PULL_REQUEST:", process.env.TRAVIS_PULL_REQUEST);
+    console.log("uploadLocs:", uploadLocs);
+    console.log("latest:", latest);
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
@@ -438,7 +444,7 @@ function travisAsync() {
             .then(() => checkDocsAsync())
             .then(() => testSnippetsAsync())
             .then(() => {
-                if (!process.env.CLOUD_ACCESS_TOKEN) {
+                if (!process.env["PXT_ACCESS_TOKEN"]) {
                     // pull request, don't try to upload target
                     pxt.log('no token, skipping upload')
                     return Promise.resolve();
@@ -497,8 +503,26 @@ function updateAsync() {
         .then(() => nodeutil.runNpmAsync("install"));
 }
 
-function justBumpPkgAsync() {
-    ensurePkgDir()
+function gitInfoAsync(args: string[]) {
+    return Promise.resolve()
+        .then(() => nodeutil.spawnWithPipeAsync({
+            cmd: "git",
+            args: args
+        }))
+        .then(buf => buf.toString("utf8").trim())
+
+}
+
+function currGitTagAsync() {
+    return gitInfoAsync(["describe", "--tags", "--exact-match"])
+        .then(t => {
+            if (!t)
+                U.userError("no git tag found")
+            return t
+        })
+}
+
+function needsGitCleanAsync() {
     return Promise.resolve()
         .then(() => nodeutil.spawnWithPipeAsync({
             cmd: "git",
@@ -507,8 +531,13 @@ function justBumpPkgAsync() {
         .then(buf => {
             if (buf.length)
                 U.userError("Please commit all files to git before running 'pxt bump'")
-            return mainPkg.loadAsync()
         })
+}
+
+function justBumpPkgAsync() {
+    ensurePkgDir()
+    return needsGitCleanAsync()
+        .then(() => mainPkg.loadAsync())
         .then(() => {
             let v = pxt.semver.parse(mainPkg.config.version)
             v.patch++
@@ -525,12 +554,16 @@ function justBumpPkgAsync() {
 
 function bumpAsync(parsed: commandParser.ParsedCommand) {
     const bumpPxt = !parsed.flags["noupdate"];
-    if (fs.existsSync(pxt.CONFIG_NAME))
+    const upload = parsed.flags["upload"];
+    if (fs.existsSync(pxt.CONFIG_NAME)) {
+        if (upload) throw U.userError("upload only supported on packages");
+
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
             .then(() => justBumpPkgAsync())
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
+    }
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
             .then(() => runGitAsync("pull"))
@@ -538,9 +571,48 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
             .then(() => nodeutil.runNpmAsync("version", "patch"))
             .then(() => runGitAsync("push", "--tags"))
             .then(() => runGitAsync("push"))
+            .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
     }
+}
+
+function uploadTaggedTargetAsync() {
+    forceCloudBuild = true
+    const token = passwordGet(GITHUB_KEY);
+    if (!token) {
+        fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push releases.");
+        return Promise.resolve();
+    }
+    return needsGitCleanAsync()
+        .then(() => Promise.all([
+            currGitTagAsync(),
+            gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
+            gitInfoAsync(["rev-parse", "HEAD"])
+        ]))
+        // only build target after getting all the info
+        .then(info =>
+            buildTargetAsync()
+                .then(() => checkDocsAsync())
+                .then(() => testSnippetsAsync())
+                .then(() => info))
+        .then(info => {
+            process.env["TRAVIS_TAG"] = info[0]
+            process.env['TRAVIS_BRANCH'] = info[1]
+            process.env['TRAVIS_COMMIT'] = info[2]
+            let repoSlug = "microsoft/pxt-" + pxt.appTarget.id
+            process.env['TRAVIS_REPO_SLUG'] = repoSlug
+            process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
+            let v = pkgVersion()
+            pxt.log("uploading " + v)
+            return uploadCoreAsync({
+                label: "v" + v,
+                fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
+                pkgversion: v,
+                githubOnly: true,
+                fileContent: {}
+            })
+        })
 }
 
 function runGitAsync(...args: string[]) {
@@ -591,6 +663,7 @@ interface UploadOptions {
     legacyLabel?: boolean;
     target?: string;
     localDir?: string;
+    githubOnly?: boolean;
 }
 
 interface BlobReq {
@@ -963,7 +1036,10 @@ function uploadCoreAsync(opts: UploadOptions) {
             })
 
     return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
-        .then(() => gitUploadAsync(opts, uplReqs))
+        .then(() =>
+            opts.githubOnly
+                ? uploadToGitRepoAsync(opts, uplReqs)
+                : gitUploadAsync(opts, uplReqs))
 }
 
 function readLocalPxTarget() {
@@ -1945,7 +2021,7 @@ export function addAsync(parsed: commandParser.ParsedCommand) {
     return handleCommandAsync(parsed.arguments, loadPkgAsync)
 }
 
-export function initAsync() {
+export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
@@ -1958,16 +2034,24 @@ export function initAsync() {
 
     let configMap: Map<string> = config as any
 
-    if (!config.license)
+    if (!config.license) {
         config.license = "MIT"
-    if (!config.version)
+    }
+    if (!config.version) {
         config.version = "0.0.0"
+    }
 
-    return Promise.mapSeries(["name", "description", "license"], f =>
+
+    let initPromise = Promise.resolve();
+    if (!parsed.flags["useDefaults"]) {
+        initPromise =  Promise.mapSeries(["name", "description", "license"], f =>
         queryAsync(f, configMap[f])
             .then(r => {
                 configMap[f] = r
-            }))
+            })).then(() => {});
+    }
+
+    return initPromise
         .then(() => {
             let files: Map<string> = {};
             for (let f in defaultFiles)
@@ -3166,7 +3250,7 @@ export function gendocsAsync(parsed: commandParser.ParsedCommand) {
         !!parsed.flags["locs"],
         parsed.flags["files"] as string,
         !!parsed.flags["create"]
-        );
+    );
 }
 
 export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: string, createOnly?: boolean): Promise<void> {
@@ -3534,7 +3618,6 @@ function initCommands() {
         return Promise.resolve();
     }, "[all|command]");
 
-    simpleCmd("init", "start new package (library) in current directory", initAsync);
     simpleCmd("deploy", "build and deploy current package", deployAsync);
     simpleCmd("run", "build and run current package in the simulator", runAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
@@ -3554,7 +3637,8 @@ function initCommands() {
         name: "bump",
         help: "bump target or package version",
         flags: {
-            noupdate: { description: "Don't publish the updated version" }
+            noupdate: { description: "Don't publish the updated version" },
+            upload: { description: "(package only) Upload after bumping" }
         }
     }, bumpAsync);
 
@@ -3677,6 +3761,14 @@ function initCommands() {
         argString: "<subcommand>"
     }, electron.electronAsync);
 
+    p.defineCommand({
+        name: "init",
+        help: "start new package (library) in current directory",
+        flags: {
+            useDefaults: { description: "Do not prompt for package information" },
+        }
+    }, initAsync)
+
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
@@ -3688,6 +3780,7 @@ function initCommands() {
 
     advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
+    advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
     advancedCommand("checkdocs", "check docs for broken links, typing errors, etc...", checkDocsAsync);
 
@@ -3700,6 +3793,17 @@ function initCommands() {
     advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
 
     advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
+
+    advancedCommand("hidlist", "list HID devices", hid.listAsync)
+    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+
+    p.defineCommand({
+        name: "gdb",
+        help: "attempt to start openocd and GDB",
+        argString: "[GDB_ARGUMNETS...]",
+        anyArgs: true,
+        advanced: true
+    }, gdb.startAsync);
 
     p.defineCommand({
         name: "pokerepo",

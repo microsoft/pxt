@@ -16,10 +16,6 @@
 <field name="NUM">200</field>
 </shadow>
 </value>
-<next>
-<block type="test_optional_argument_3">
-</block>
-</next>
 </block>
 </next>
 </block>

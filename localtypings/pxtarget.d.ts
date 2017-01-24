@@ -57,7 +57,9 @@ declare namespace pxt {
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         extraBlocks?: BlockToolboxDefinition[];
+        onStartNamespace?: string; // default = loops
         onStartColor?: string;
+        onStartWeight?: number;
     }
 
     interface AppAnalytics {
@@ -66,6 +68,7 @@ declare namespace pxt {
     }
 
     interface AppSerial {
+        useHF2?: boolean;
         manufacturerFilter?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
         log?: boolean;
@@ -188,6 +191,7 @@ declare namespace ts.pxtc {
         shortPointers?: boolean; // set to true for 16 bit pointers
         flashCodeAlign?: number; // defaults to 1k
         upgrades?: UpgradePolicy[];
+        openocdScript?: string;
     }
 
     interface CompileOptions {

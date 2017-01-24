@@ -3,9 +3,15 @@
 import * as core from "./core";
 import Cloud = pxt.Cloud;
 
+enum UpdateEventType {
+    Critical = 1,
+    Notification,
+    Prompt
+}
+
 interface UpdateEventInfo {
+    type: UpdateEventType;
     appName?: string;
-    isCritical?: boolean;
     isInitialCheck?: boolean;
     targetVersion?: string;
 }
@@ -55,7 +61,7 @@ export function init() {
                 core.showLoading(lf("Downloading update..."));
                 sendMessage("update", {
                     targetVersion: args.targetVersion,
-                    isCritical: true
+                    type: args.type
                 });
             }
         });
@@ -73,35 +79,40 @@ export function init() {
             agreeLbl = lf("Go to website");
         }
 
-        core.confirmAsync({
-            header,
-            body,
-            agreeLbl,
-            disagreeLbl: lf("Not now"),
-            size: "medium"
-        }).then(b => {
-            if (!b) {
-                if (args.isInitialCheck) {
-                    pxt.tickEvent("update.refusedInitial");
+        if (args.type === UpdateEventType.Notification) {
+            core.infoNotification(lf("A new version is available. Select 'Check for updates...' in the menu.", args.targetVersion));
+        } else if (args.type === UpdateEventType.Prompt) {
+            core.confirmAsync({
+                header,
+                body,
+                agreeLbl,
+                disagreeLbl: lf("Not now"),
+                size: "medium"
+            }).then(b => {
+                if (!b) {
+                    if (args.isInitialCheck) {
+                        pxt.tickEvent("update.refusedInitial");
+                    } else {
+                        pxt.tickEvent("update.refused");
+                    }
                 } else {
-                    pxt.tickEvent("update.refused");
-                }
-            } else {
-                if (args.isInitialCheck) {
-                    pxt.tickEvent("update.acceptedInitial");
-                } else {
-                    pxt.tickEvent("update.accepted");
-                }
+                    if (args.isInitialCheck) {
+                        pxt.tickEvent("update.acceptedInitial");
+                    } else {
+                        pxt.tickEvent("update.accepted");
+                    }
 
-                if (!isUrl) {
-                    core.showLoading(lf("Downloading update..."));
-                }
+                    if (!isUrl) {
+                        core.showLoading(lf("Downloading update..."));
+                    }
 
-                sendMessage("update", {
-                    targetVersion: args.targetVersion
-                });
-            }
-        });
+                    sendMessage("update", {
+                        targetVersion: args.targetVersion,
+                        type: args.type
+                    });
+                }
+            });
+        }
     }
 
     function onUpdateNotAvailable() {
@@ -114,11 +125,11 @@ export function init() {
     }
 
     function onUpdateCheckError() {
-        displayUpdateError(lf("Unable to check for update"), lf("Ok"));
+        displayUpdateError(lf("Unable to check for updates"), lf("Ok"));
     }
 
     function onUpdateDownloadError(args: UpdateEventInfo) {
-        const isCritical = args && args.isCritical;
+        const isCritical = args && args.type === UpdateEventType.Critical;
 
         core.hideLoading();
         displayUpdateError(lf("There was an error downloading the update"), isCritical ? lf("Quit") : lf("Ok"))
@@ -190,7 +201,7 @@ export function init() {
     }
 }
 
-export function sendMessage(type: string, args?: any) {
+export function sendMessage(type: string, args?: UpdateEventInfo) {
     if (!electronSocket) {
         return;
     }

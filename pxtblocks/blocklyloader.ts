@@ -173,7 +173,7 @@ namespace pxt.blocks {
                         category.setAttribute("colour", blockColors[ns].toString());
                     }
                     if (nsn && nsn.attributes.icon) {
-                        const nsnIconClassName = `blocklyTreeIcon${nsn.name}`;
+                        const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
                         injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
@@ -431,7 +431,9 @@ namespace pxt.blocks {
                 } else if (/\[\]$/.test(pr.type)) { // Array type
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
                 } else if (instance && n == "this") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
+                    if (!fn.attributes.defaultInstance) {
+                        i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
+                    }
                 } else if (pr.type == "number") {
                     if (pr.shadowType && pr.shadowType == "value") {
                         i = block.appendDummyInput();
@@ -452,6 +454,9 @@ namespace pxt.blocks {
 
         if (fn.attributes.mutate) {
             addMutation(block as MutatingBlock, fn, fn.attributes.mutate);
+        }
+        else if (fn.attributes.defaultInstance) {
+            addMutation(block as MutatingBlock, fn, MutatorTypes.DefaultInstanceMutator);
         }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
@@ -483,13 +488,18 @@ namespace pxt.blocks {
         }
 
         // hook up/down if return value is void
-        const hasHandlers = fn.parameters
-            ? fn.parameters.filter(pr => /^\([^\)]*\)\s*=>/.test(pr.type))[0]
-            : undefined;
+        const hasHandlers = hasArrowFunction(fn);
         block.setPreviousStatement(!hasHandlers && fn.retType == "void");
         block.setNextStatement(!hasHandlers && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
+    }
+
+    export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
+        const r = fn.parameters
+            ? fn.parameters.filter(pr => /^\([^\)]*\)\s*=>/.test(pr.type))[0]
+            : undefined;
+        return !!r;
     }
 
     function removeCategory(tb: Element, name: string) {
@@ -544,6 +554,11 @@ namespace pxt.blocks {
         // add extra blocks
         if (tb && pxt.appTarget.runtime) {
             const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
+            extraBlocks.push({
+                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
+                weight: pxt.appTarget.runtime.onStartWeight || 10,
+                type: ts.pxtc.ON_START_TYPE
+            })
             extraBlocks.forEach(eb => {
                 let el = document.createElement("block");
                 el.setAttribute("type", eb.type);
@@ -608,6 +623,11 @@ namespace pxt.blocks {
             })
         }
 
+        // Add the "Add package" category
+        if (tb && showCategories) {
+            getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+        }
+
         // Filter the blocks
         if (blockSubset) {
             let keepcategories: { [index: string]: number } = {};
@@ -664,7 +684,8 @@ namespace pxt.blocks {
 
     export let cachedSearchTb: Element;
     export function initSearch(workspace: Blockly.Workspace, tb: Element,
-        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>) {
+        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>,
+        updateToolbox: (tb: Element) => void) {
         if ($(`#blocklySearchArea`).length) return;
 
         let blocklySearchArea = document.createElement('div');
@@ -754,13 +775,13 @@ namespace pxt.blocks {
                             if (b) shadow.innerHTML = b.innerHTML;
                         })
 
-                        workspace.updateToolbox(searchTb);
+                        updateToolbox(searchTb);
                         blocklySearchInput.className = origClassName;
                     }
                 })
             } else {
                 // Clearing search
-                workspace.updateToolbox(pxt.blocks.cachedSearchTb);
+                updateToolbox(pxt.blocks.cachedSearchTb);
                 blocklySearchInput.className = origClassName;
             }
             // Search
@@ -779,54 +800,6 @@ namespace pxt.blocks {
         blocklySearchInput.appendChild(blocklySearchInputIcon);
         blocklySearchArea.appendChild(blocklySearchInput);
         $('.blocklyToolboxDiv').prepend(blocklySearchArea);
-    }
-
-    export function initToolboxButtons(toolbox: HTMLElement, id: string, addCallback: (ev?: Event) => void, undoCallback: (ev?: Event) => void): void {
-        if (!$(`#${id}`).length) {
-            let blocklyToolboxButtons = document.createElement('div');
-            blocklyToolboxButtons.id = id;
-            blocklyToolboxButtons.className = 'ui equal width stackable grid blocklyToolboxButtons';
-
-            if (addCallback) {
-                // add "Add package" button to toolbox
-                let addButtonDiv = document.createElement('div');
-                addButtonDiv.className = 'column';
-                let addPackageButton = document.createElement('button');
-                addPackageButton.setAttribute('role', 'button');
-                addPackageButton.setAttribute('aria-label', lf("Add Package..."));
-                addPackageButton.setAttribute('title', lf("Add Package..."));
-                pxt.BrowserUtils.isTouchEnabled() ?
-                    addPackageButton.ontouchstart = addCallback
-                    : addPackageButton.onclick = addCallback;
-                addPackageButton.className = 'ui icon button small blocklyToolboxButton blocklyAddPackageButton';
-                let addpackageIcon = document.createElement('i');
-                addpackageIcon.className = 'plus icon';
-                addPackageButton.appendChild(addpackageIcon);
-                addButtonDiv.appendChild(addPackageButton);
-                blocklyToolboxButtons.appendChild(addButtonDiv);
-            }
-
-            if (undoCallback) {
-                // add "undo" button to toolbox
-                let undoButtonDiv = document.createElement('div');
-                undoButtonDiv.className = 'column';
-                let undoButton = document.createElement('button');
-                undoButton.setAttribute('role', 'button');
-                undoButton.setAttribute('aria-label', lf("Undo"));
-                undoButton.setAttribute('title', lf("Undo"));
-                pxt.BrowserUtils.isTouchEnabled() ?
-                    undoButton.ontouchstart = undoCallback
-                    : undoButton.onclick = undoCallback;
-                undoButton.className = 'ui icon button small blocklyToolboxButton blocklyUndoButton';
-                let undoIcon = document.createElement('i');
-                undoIcon.className = 'undo icon';
-                undoButton.appendChild(undoIcon);
-                undoButtonDiv.appendChild(undoButton);
-                blocklyToolboxButtons.appendChild(undoButtonDiv);
-            }
-
-            toolbox.appendChild(blocklyToolboxButtons);
-        }
     }
 
     function categoryElement(tb: Element, nameid: string): Element {
@@ -1101,6 +1074,7 @@ namespace pxt.blocks {
         }
     }
 
+    let lastInvertedCategory: any;
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
 
@@ -1128,12 +1102,15 @@ namespace pxt.blocks {
                         } else {
                             element.style.borderLeft = border;
                         }
-                        element.style.color = (child.hexColour || '#000');
+                        if (this.hasColours_) {
+                            element.style.color = (child.hexColour || '#000');
+                        }
                     }
                     this.addColour_(child);
                 }
             };
         } else if (appTheme.invertedToolbox) {
+            const highlightColorInvertedLuminocityMultiplier = 0.3;
             /**
              * Recursively add colours to this toolbox.
              * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
@@ -1147,17 +1124,19 @@ namespace pxt.blocks {
                     let element = child.getRowElement();
                     let onlyChild = children.length == 1;
                     if (element) {
-                        let nextElement = element.parentNode.nextSibling;
-                        let previousElement = element.parentNode.previousSibling;
-                        if (!nextElement && !onlyChild) {
-                            element.className += ' blocklyTreeRowBottom';
-                        }
-                        if (!previousElement && !onlyChild) {
-                            element.className += ' blocklyTreeRowTop';
-                        }
                         if (this.hasColours_) {
                             element.style.color = '#fff';
                             element.style.background = (child.hexColour || '#ddd');
+                            element.onmouseenter = () => {
+                                if (!child.isSelected()) {
+                                    element.style.background = pxt.blocks.fadeColour(child.hexColour || '#ddd', highlightColorInvertedLuminocityMultiplier, false);
+                                }
+                            };
+                            element.onmouseleave = () => {
+                                if (!child.isSelected()) {
+                                    element.style.background = (child.hexColour || '#ddd');
+                                }
+                            }
                         }
                     }
                     this.addColour_(child);
@@ -1170,6 +1149,7 @@ namespace pxt.blocks {
              * @override
              */
             let setSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+            let editor = this;
             Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (node: any) {
                 let toolbox = this.toolbox_;
                 if (node == this.selectedItem_ || node == toolbox.tree_) {
@@ -1177,11 +1157,16 @@ namespace pxt.blocks {
                 }
 
                 // Capture the last category and reset it after Blockly's setSelectedItem has been called.
-                let lastCategory = toolbox.lastCategory_;
+                editor.lastInvertedCategory = toolbox.lastCategory_;
                 setSelectedItem.call(this, node);
-                if (lastCategory) {
+                if (editor.lastInvertedCategory) {
                     // reset last category colour
-                    lastCategory.getRowElement().style.backgroundColor = lastCategory.hexColour;
+                    let lastElement = editor.lastInvertedCategory.getRowElement();
+                    lastElement.style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
+                }
+                if (this.selectedItem_) {
+                    let selectedElement = this.selectedItem_.getRowElement();
+                    selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
                 }
             };
         }
@@ -1215,18 +1200,6 @@ namespace pxt.blocks {
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
             let topBlocks = this.getTopBlocks(true);
             let eventGroup = Blockly.genUid();
-
-            // Options to undo/redo previous action.
-            let undoOption: any = {};
-            undoOption.text = lf("Undo");
-            undoOption.enabled = this.undoStack_.length > 0;
-            undoOption.callback = this.undo.bind(this, false);
-            menuOptions.push(undoOption);
-            let redoOption: any = {};
-            redoOption.text = lf("Redo");
-            redoOption.enabled = this.redoStack_.length > 0;
-            redoOption.callback = this.undo.bind(this, true);
-            menuOptions.push(redoOption);
 
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
@@ -1414,6 +1387,7 @@ namespace pxt.blocks {
 
         // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
         const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
+        let editor = this;
         Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
             const that = <Blockly.Toolbox.TreeControl>this;
             let toolbox = (that as any).toolbox_;
@@ -1423,6 +1397,7 @@ namespace pxt.blocks {
 
             if (a === null) {
                 collapseMoreCategory(that.selectedItem_);
+                editor.lastInvertedCategory = that.selectedItem_;
             }
 
             oldSetSelectedItem.call(that, a);
@@ -1991,90 +1966,110 @@ namespace pxt.blocks {
          * @return {Node} Tree node to open at startup (or null).
          * @private
          */
-        (Blockly as any).Toolbox.prototype.syncTrees_ = function(treeIn: any, treeOut: any, pathToMedia: any) {
+        (Blockly as any).Toolbox.prototype.syncTrees_ = function (treeIn: any, treeOut: any, pathToMedia: any) {
             let openNode: any = null;
             let lastElement: any = null;
             for (let i = 0, childIn: any; childIn = treeIn.childNodes[i]; i++) {
                 if (!childIn.tagName) {
-                // Skip over text.
-                continue;
+                    // Skip over text.
+                    continue;
                 }
                 switch (childIn.tagName.toUpperCase()) {
-                case 'CATEGORY':
-                    let childOut = this.tree_.createNode(childIn.getAttribute('name'));
-                    childOut.blocks = [];
-                    treeOut.add(childOut);
-                    let custom = childIn.getAttribute('custom');
-                    if (custom) {
-                        // Variables and procedures are special dynamic categories.
-                        childOut.blocks = custom;
-                    } else {
-                        let newOpenNode = this.syncTrees_(childIn, childOut, pathToMedia);
-                        if (newOpenNode) {
-                            openNode = newOpenNode;
-                        }
-                    }
-                    let colour = childIn.getAttribute('colour');
-                    if ((goog as any).isString(colour)) {
-                        if (colour.match(/^#[0-9a-fA-F]{6}$/)) {
-                            childOut.hexColour = colour;
+                    case 'CATEGORY':
+                        let childOut = this.tree_.createNode(childIn.getAttribute('name'));
+                        childOut.blocks = [];
+                        treeOut.add(childOut);
+                        let custom = childIn.getAttribute('custom');
+                        if (custom) {
+                            // Variables and procedures are special dynamic categories.
+                            childOut.blocks = custom;
                         } else {
-                            childOut.hexColour = Blockly.hueToRgb(colour);
+                            let newOpenNode = this.syncTrees_(childIn, childOut, pathToMedia);
+                            if (newOpenNode) {
+                                openNode = newOpenNode;
+                            }
                         }
-                        this.hasColours_ = true;
-                    } else {
-                        childOut.hexColour = '';
-                    }
-                    let iconClass = childIn.getAttribute('iconclass');
-                    if ((goog as any).isString(iconClass)) {
-                        childOut.setIconClass(this.config_['cssTreeIcon'] + ' ' + iconClass);
-                    }
-                    let expandedClass = childIn.getAttribute('expandedclass');
-                    if ((goog as any).isString(expandedClass)) {
-                        childOut.setExpandedIconClass(this.config_['cssTreeIcon'] + ' ' + expandedClass);
-                    }
-                    if (childIn.getAttribute('expanded') == 'true') {
-                        if (childOut.blocks.length) {
-                            // This is a category that directly contians blocks.
-                            // After the tree is rendered, open this category and show flyout.
-                            openNode = childOut;
+                        let colour = childIn.getAttribute('colour');
+                        if ((goog as any).isString(colour)) {
+                            if (colour.match(/^#[0-9a-fA-F]{6}$/)) {
+                                childOut.hexColour = colour;
+                            } else {
+                                childOut.hexColour = Blockly.hueToRgb(colour);
+                            }
+                            this.hasColours_ = true;
+                        } else {
+                            childOut.hexColour = '';
                         }
-                        childOut.setExpanded(true);
-                    } else {
-                        childOut.setExpanded(false);
-                    }
-                    lastElement = childIn;
-                    break;
-                case 'SEP':
+                        let iconClass = childIn.getAttribute('iconclass');
+                        if ((goog as any).isString(iconClass)) {
+                            childOut.setIconClass(this.config_['cssTreeIcon'] + ' ' + iconClass);
+                        }
+                        let expandedClass = childIn.getAttribute('expandedclass');
+                        if ((goog as any).isString(expandedClass)) {
+                            childOut.setExpandedIconClass(this.config_['cssTreeIcon'] + ' ' + expandedClass);
+                        }
+                        if (childIn.getAttribute('expanded') == 'true') {
+                            if (childOut.blocks.length) {
+                                // This is a category that directly contians blocks.
+                                // After the tree is rendered, open this category and show flyout.
+                                openNode = childOut;
+                            }
+                            childOut.setExpanded(true);
+                        } else {
+                            childOut.setExpanded(false);
+                        }
+                        lastElement = childIn;
+                        break;
+                    case 'SEP':
                         if (lastElement) {
                             if (lastElement.tagName.toUpperCase() == 'CATEGORY') {
                                 // Separator between two categories.
                                 // <sep></sep>
                                 treeOut.add(new (Blockly as any).Toolbox.TreeSeparator(
                                     this.treeSeparatorConfig_));
-                        } else {
-                            // Change the gap between two blocks.
-                            // <sep gap="36"></sep>
-                            // The default gap is 24, can be set larger or smaller.
-                            // Note that a deprecated method is to add a gap to a block.
-                            // <block type="math_arithmetic" gap="8"></block>
-                            let newGap = parseFloat(childIn.getAttribute('gap'));
-                            if (!isNaN(newGap) && lastElement) {
-                                lastElement.setAttribute('gap', newGap);
+                            } else {
+                                // Change the gap between two blocks.
+                                // <sep gap="36"></sep>
+                                // The default gap is 24, can be set larger or smaller.
+                                // Note that a deprecated method is to add a gap to a block.
+                                // <block type="math_arithmetic" gap="8"></block>
+                                let newGap = parseFloat(childIn.getAttribute('gap'));
+                                if (!isNaN(newGap) && lastElement) {
+                                    lastElement.setAttribute('gap', newGap);
+                                }
                             }
                         }
-                    }
-                    break;
-                case 'BLOCK':
-                case 'SHADOW':
-                case 'LABEL':
-                case 'BUTTON':
-                    treeOut.blocks.push(childIn);
-                    lastElement = childIn;
-                    break;
+                        break;
+                    case 'BLOCK':
+                    case 'SHADOW':
+                    case 'LABEL':
+                    case 'BUTTON':
+                        treeOut.blocks.push(childIn);
+                        lastElement = childIn;
+                        break;
                 }
             }
             return openNode;
         };
+    }
+
+    export function fadeColour(hex: string, luminosity: number, lighten: boolean): string {
+        // #ABC => ABC
+        hex = hex.replace(/[^0-9a-f]/gi, '');
+
+        // ABC => AABBCC
+        if (hex.length < 6)
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+
+        // tweak
+        let rgb = "#";
+        for (let i = 0; i < 3; i++) {
+            let c = parseInt(hex.substr(i * 2, 2), 16);
+            c = Math.round(Math.min(Math.max(0, lighten ? c + (c * luminosity) : c - (c * luminosity)), 255));
+            let cStr = c.toString(16);
+            rgb += ("00" + cStr).substr(cStr.length);
+        }
+
+        return rgb;
     }
 }

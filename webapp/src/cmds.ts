@@ -2,6 +2,7 @@
 import * as core from "./core";
 import * as pkg from "./package";
 import * as hwdbg from "./hwdbg";
+import * as hidbridge from "./hidbridge";
 import Cloud = pxt.Cloud;
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
@@ -91,7 +92,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     let docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
         header: lf("Download your code to the {0}...", boardName),
-        htmlBody: `        
+        htmlBody: `
 <div class="ui styled fluid accordion">
 ${instructions.map((step: UploadInstructionStep, i: number) =>
             `<div class="title">
@@ -113,6 +114,24 @@ ${instructions.map((step: UploadInstructionStep, i: number) =>
         }],
         timeout: 0 //We don't want this to timeout now that it is interactive
     }).then(() => { });
+}
+
+function webusbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug('webusb deployment...');
+    core.infoNotification(lf("Flashing device..."));
+    let f = resp.outfiles[pxtc.BINARY_UF2]
+    let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
+    return pxt.usb.initAsync()
+        .then(dev => dev.reflashAsync(blocks))
+}
+
+function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.debug('HID deployment...');
+    core.infoNotification(lf("Flashing device..."));
+    let f = resp.outfiles[pxtc.BINARY_UF2]
+    let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
+    return hidbridge.initAsync()
+        .then(dev => dev.reflashAsync(blocks))
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
@@ -139,15 +158,19 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function initCommandsAsync(): Promise<void> {
-    if (pxt.winrt.isWinRT()) { // window app
+    pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    const forceHexDownload = /forceHexDownload/i.test(window.location.href);
+    if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
+        pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+    } else if (hidbridge.shouldUse() && !forceHexDownload) {
+        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+    } else if (pxt.winrt.isWinRT()) { // window app
         pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken && !/forceHexDownload/i.test(window.location.href)) { // local node.js
+    } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
-        pxt.commands.browserDownloadAsync = browserDownloadAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
-        pxt.commands.browserDownloadAsync = browserDownloadAsync;
     }
 
     return Promise.resolve();

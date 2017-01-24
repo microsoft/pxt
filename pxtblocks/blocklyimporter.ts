@@ -26,17 +26,12 @@ namespace pxt.blocks {
 
     function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
         let onstart = dom.querySelector(`block[type=${ts.pxtc.ON_START_TYPE}]`)
-        if (onstart) { // nothing to doc        
-            onstart.setAttribute("deletable", "false");
+        if (onstart) { // nothing to do
+            onstart.removeAttribute("deletable");
             return;
         }
 
         let newnodes: Element[] = [];
-
-        onstart = dom.ownerDocument.createElement("block");
-        onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
-        onstart.setAttribute("deletable", "false");
-        newnodes.push(onstart);
 
         const blocks: Map<pxtc.SymbolInfo> = {};
         info.blocks.forEach(b => blocks[b.attributes.blockId] = b);
@@ -49,12 +44,18 @@ namespace pxt.blocks {
             // does this block is disable or have s nested statement block?
             const nodeType = node.getAttribute("type");
             if (!node.getAttribute("disabled") && !node.querySelector("statement")
-                && (pxt.blocks.buildinBlockStatements[nodeType] || (blocks[nodeType] && blocks[nodeType].retType == "void"))
+                && (pxt.blocks.buildinBlockStatements[nodeType] ||
+                (blocks[nodeType] && blocks[nodeType].retType == "void" && !hasArrowFunction(blocks[nodeType])))
             ) {
                 // old block, needs to be wrapped in onstart
                 if (!insertNode) {
                     insertNode = dom.ownerDocument.createElement("statement");
                     insertNode.setAttribute("name", "HANDLER");
+                    if (!onstart) {
+                        onstart = dom.ownerDocument.createElement("block");
+                        onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
+                        newnodes.push(onstart);
+                    }
                     onstart.appendChild(insertNode);
                     insertNode.appendChild(node);
 
@@ -62,7 +63,7 @@ namespace pxt.blocks {
                     node.removeAttribute("y");
                     insertNode = node;
                 } else {
-                    // add nested statement
+                    // event, add nested statement
                     const next = dom.ownerDocument.createElement("next");
                     next.appendChild(node);
                     insertNode.appendChild(next);

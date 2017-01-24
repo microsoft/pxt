@@ -105,6 +105,15 @@ To update, the user has to take explicit action (currently remove and re-add the
 You can use `pxt bump` to bump version of a package. It will `git pull`, update the patch
 version level (but will ask you for an override), create a git tag and push.
 
+## Approval process
+
+Targets may have policies to filter packages showing up in the search. 
+You might have to contact the target support system to get your packages approved and listed.
+
+For target specific information,
+
+* [micro:bit packages](https://pxt.microbit.org/packages)
+
 ## Samples
 
 * https://github.com/Microsoft/pxt-neopixel

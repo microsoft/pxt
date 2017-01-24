@@ -35,10 +35,10 @@ export function wrap(send: (v: any) => void): Iface {
             let id = "" + msgId++
             pendingMsgs[id] = v => {
                 if (!v) {
-                    pxt.reportError("worker", "no response")
+                    //pxt.reportError("worker", "no response")
                     reject(new Error("no response"))
                 } else if (v.errorMessage) {
-                    pxt.reportError("worker", v.errorMessage)
+                    //pxt.reportError("worker", v.errorMessage)
                     reject(new Error(v.errorMessage))
                 } else {
                     resolve(v)
@@ -60,7 +60,7 @@ export function makeWebWorker(workerFile: string) {
     return iface
 }
 
-export function makeWebSocket(url: string) {
+export function makeWebSocket(url: string, onOOB: (v: any) => void = null) {
     let ws = new WebSocket(url)
     let sendq: string[] = []
     let iface = wrap(v => {
@@ -69,7 +69,12 @@ export function makeWebSocket(url: string) {
         else ws.send(s)
     })
     ws.onmessage = ev => {
-        iface.recvHandler(JSON.parse(ev.data))
+        let js = JSON.parse(ev.data)
+        if (onOOB && js.id == null) {
+            onOOB(js)
+        } else {
+            iface.recvHandler(js)
+        }
     }
     ws.onopen = (ev) => {
         pxt.debug('socket opened');

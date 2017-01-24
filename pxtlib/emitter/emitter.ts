@@ -291,6 +291,7 @@ namespace ts.pxtc {
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
         indexedInstanceShim?: string;
+        defaultInstance?: string;
         autoCreate?: string;
         noRefCounting?: boolean;
         color?: string;
@@ -3140,6 +3141,8 @@ ${lbl}: .short 0xffff
                 case SK.ImportEqualsDeclaration:
                     // this doesn't do anything in compiled code
                     return emitImportEqualsDeclaration(<ImportEqualsDeclaration>node);
+                case SK.EmptyStatement:
+                    return;
                 default:
                     unhandled(node);
             }

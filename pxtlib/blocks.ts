@@ -8,7 +8,7 @@ namespace pxt.blocks {
 
     export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
         // collect blockly parameter name mapping
-        const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
+        const instance = (fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
         let attrNames: Map<BlockParameter> = {};
 
         if (instance) attrNames["this"] = { name: "this", type: fn.namespace };

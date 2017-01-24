@@ -1,13 +1,14 @@
 {
     "versions": {
         "0": {
-            "latest": "v0.7.8",
+            "latest": "v1.7.8",
             "banned": [
                 "v0.7.4"
             ],
-            "prompt": "v0.8.0",
+            "prompt": "v0.5.0",
+            "notification": "v1.8.0",
             "urls": {
-                "v0.7.4": "http://www.example.com"
+                "<v1.7.4": "https://www.example.com/"
             }
         }
     }

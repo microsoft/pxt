@@ -17,6 +17,7 @@ export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     currFile: pkg.File;
     delayLoadXml: string;
+    typeScriptSaveable: boolean;
     loadingXml: boolean;
     loadingXmlPromise: Promise<any>;
     blockInfo: pxtc.BlocksInfo;
@@ -27,7 +28,6 @@ export class Editor extends srceditor.Editor {
     currentHelpCardType: string;
     blockSubset: { [index: string]: number };
     showToolboxCategories: boolean = true;
-    showToolboxButtons: boolean = true;
     cachedToolbox: string;
 
     setVisible(v: boolean) {
@@ -43,13 +43,14 @@ export class Editor extends srceditor.Editor {
     }
 
     saveToTypeScript(): string {
+        if (!this.typeScriptSaveable) return undefined;
         try {
             this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
             return this.compilationResult.source;
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return '';
+            return undefined;
         }
     }
 
@@ -69,27 +70,15 @@ export class Editor extends srceditor.Editor {
                 .then(bi => {
                     this.blockInfo = bi;
                     let showCategories = this.showToolboxCategories;
-                    let showToolboxButtons = this.showToolboxButtons;
                     let showSearch = true;
                     let toolbox = this.getDefaultToolbox(showCategories);
                     let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.blockSubset);
-                    this.updateToolbox(tb, showCategories, showToolboxButtons);
-                    if (showCategories && showToolboxButtons) {
-                        pxt.blocks.initToolboxButtons($(".blocklyToolboxDiv").get(0), 'blocklyToolboxButtons',
-                            (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
-                                (() => {
-                                    this.parent.addPackage();
-                                }) : null),
-                            (!this.parent.getSandboxMode() ?
-                                (() => {
-                                    this.undo();
-                                }) : null)
-                        );
-                    }
+                    this.updateToolbox(tb, showCategories);
                     if (showCategories && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
-                                .then((fns: pxtc.SymbolInfo[]) => fns));
+                                .then((fns: pxtc.SymbolInfo[]) => fns),
+                            searchTb => this.updateToolbox(searchTb, showCategories));
                     }
 
                     let xml = this.delayLoadXml;
@@ -129,22 +118,29 @@ export class Editor extends srceditor.Editor {
 
     loadBlockly(s: string): boolean {
         if (this.serializeBlocks() == s) {
+            this.typeScriptSaveable = true;
             pxt.debug('blocks already loaded...');
             return false;
         }
 
+        this.typeScriptSaveable = false;
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}" deletable="false"></block>`, this.blockInfo, true);
+            const text = pxt.blocks.importXml(s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`, this.blockInfo, true);
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
-            this.ensureOnStart();
+
+            this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
+            this.editor.clear();
+            this.switchToTypeScript();
+            this.changeCallback();
+            return false;
         }
 
         this.changeCallback();
@@ -156,7 +152,7 @@ export class Editor extends srceditor.Editor {
         // layout on first load if no data info
         const needsLayout = this.editor.getTopBlocks(false).some(b => {
             const tp = b.getBoundingRectangle().topLeft;
-            return tp.x == 0 && tp.y == 0
+            return b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0
         });
         if (needsLayout)
             pxt.blocks.layout.flow(this.editor);
@@ -325,12 +321,6 @@ export class Editor extends srceditor.Editor {
         return this.editor ? this.editor.isDragging() : false;
     }
 
-    ensureOnStart() {
-        this.editor.getTopBlocks(false)
-            .filter(b => b.type == ts.pxtc.ON_START_TYPE)
-            .forEach(b => b.setDeletable(!!b.disabled));
-    }
-
     prepare() {
         this.prepareBlockly();
 
@@ -351,10 +341,10 @@ export class Editor extends srceditor.Editor {
             }
             if (ev.type == 'create') {
                 let lastCategory = (this.editor as any).toolbox_ ?
-                                    ((this.editor as any).toolbox_.lastCategory_ ?
-                                    (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
-                                    : 'unknown')
-                                    : 'flyout';
+                    ((this.editor as any).toolbox_.lastCategory_ ?
+                        (this.editor as any).toolbox_.lastCategory_.element_.innerText.trim()
+                        : 'unknown')
+                    : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
                 pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
                 if (ev.xml.tagName == 'SHADOW')
@@ -364,6 +354,10 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
+                    if (ev.newValue == lf("Add Package")) {
+                        (this.editor as any).toolbox_.clearSelection();
+                        this.parent.addPackage();
+                    }
                 }
                 else if (ev.element == 'commentOpen'
                     || ev.element == 'warningOpen') {
@@ -413,8 +407,28 @@ export class Editor extends srceditor.Editor {
         Blockly.svgResize(this.editor);
     }
 
+    hasUndo() {
+        return this.editor.undoStack_.length != 0;
+    }
+
     undo() {
         this.editor.undo();
+    }
+
+    hasRedo() {
+        return this.editor.redoStack_.length != 0;
+    }
+
+    redo() {
+        this.editor.undo(true);
+    }
+
+    zoomIn() {
+        this.editor.zoomCenter(1);
+    }
+
+    zoomOut() {
+        this.editor.zoomCenter(-1);
     }
 
     getId() {
@@ -446,6 +460,7 @@ export class Editor extends srceditor.Editor {
     }
 
     loadFile(file: pkg.File) {
+        this.typeScriptSaveable = false;
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
@@ -454,6 +469,11 @@ export class Editor extends srceditor.Editor {
             this.filterToolbox(null);
         }
         this.currFile = file;
+    }
+
+    switchToTypeScript() {
+        pxt.tickEvent("blocks.switchjavascript");
+        this.parent.switchTypeScript();
     }
 
     setDiagnostics(file: pkg.File) {
@@ -501,10 +521,8 @@ export class Editor extends srceditor.Editor {
 
     getBlocklyOptions(showCategories: boolean = true) {
         let toolbox = showCategories ?
-                document.getElementById('blocklyToolboxDefinitionCategory')
-                : document.getElementById('blocklyToolboxDefinitionFlyout');
-        let zoomEnabled = showCategories;
-        let controlsEnabled = showCategories;
+            document.getElementById('blocklyToolboxDefinitionCategory')
+            : document.getElementById('blocklyToolboxDefinitionFlyout');
         let blocklyOptions: Blockly.Options = {
             toolbox: toolbox,
             scrollbars: true,
@@ -515,8 +533,8 @@ export class Editor extends srceditor.Editor {
             comments: true,
             disable: false,
             zoom: {
-                enabled: zoomEnabled,
-                controls: controlsEnabled,
+                enabled: false,
+                controls: false,
                 /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
                 maxScale: 2.5,
                 minScale: .2,
@@ -533,25 +551,25 @@ export class Editor extends srceditor.Editor {
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
 
-    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {
+    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true): Element {
         this.blockSubset = blockSubset;
         this.showToolboxCategories = showCategories;
-        this.showToolboxButtons = showToolboxButtons;
         let toolbox = this.getDefaultToolbox(showCategories);
         if (!this.blockInfo) return;
         let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, showCategories, blockSubset);
-        this.updateToolbox(tb, showCategories, showToolboxButtons);
+        this.updateToolbox(tb, showCategories);
 
         pxt.blocks.cachedSearchTb = tb;
         return tb;
     }
 
-    updateToolbox(tb: Element, showCategories: boolean = true, showToolboxButtons: boolean = true) {
+    updateToolbox(tb: Element, showCategories: boolean = true) {
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
             // Toolbox is consistent with current mode, safe to update
-            if (tb.innerHTML == this.cachedToolbox) return;
-            this.cachedToolbox = tb.innerHTML;
+            let tbString = new XMLSerializer().serializeToString(tb);
+            if (tbString == this.cachedToolbox) return;
+            this.cachedToolbox = tbString;
             this.editor.updateToolbox(tb);
         } else {
             // Toolbox mode is different, need to refresh.
@@ -564,6 +582,7 @@ export class Editor extends srceditor.Editor {
             }
             this.prepareBlockly(showCategories);
             this.domUpdate();
+            this.editor.scrollCenter();
         }
     }
 }

@@ -85,16 +85,16 @@ export class Editor extends srceditor.Editor {
                 .then((bi) => {
                     blocksInfo = bi;
                     pxt.blocks.initBlocks(blocksInfo);
-                    let oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
+                    const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
-                        let oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
+                        const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
                         if (pxtc.format(oldJs, 0).formatted == pxtc.format(js, 0).formatted) {
-                            console.log('js not changed, skipping decompile');
+                            pxt.debug('js not changed, skipping decompile');
                             pxt.tickEvent("typescript.noChanges")
                             return this.parent.setFile(mainPkg.files[blockFile]);
                         }
                     }
-                    return compiler.decompileAsync(this.currFile.name)
+                    return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
                             if (!resp.success) return failedAsync(blockFile);
                             xml = resp.outfiles[blockFile];
@@ -144,6 +144,10 @@ export class Editor extends srceditor.Editor {
         this.editor.trigger('keyboard', monaco.editor.Handler.Undo, null);
     }
 
+    redo() {
+        this.editor.trigger('keyboard', monaco.editor.Handler.Redo, null)
+    }
+
     display() {
         return (
             <div className='full-abs' id="monacoEditorArea">
@@ -169,7 +173,7 @@ export class Editor extends srceditor.Editor {
                 const hexcolor = pxt.blocks.convertColour(element.metaData.color);
                 let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.${Object.keys(element.fns).join(', .token.ts.identifier.')}`;
                 cssContent += `${cssTag} { color: ${inverted
-                    ? Editor.lightenColor(hexcolor, invertedColorluminosityMultipler)
+                    ? pxt.blocks.fadeColour(hexcolor, invertedColorluminosityMultipler, true)
                     : hexcolor}; }`;
             }
         })
@@ -179,26 +183,6 @@ export class Editor extends srceditor.Editor {
             style.appendChild(document.createTextNode(cssContent));
         }
         head.appendChild(style);
-    }
-
-    static lightenColor(hex: string, luminosity: number): string {
-        // #ABC => ABC
-        hex = hex.replace(/[^0-9a-f]/gi, '');
-
-        // ABC => AABBCC
-        if (hex.length < 6)
-            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-
-        // tweak
-        let rgb = "#";
-        for (let i = 0; i < 3; i++) {
-            let c = parseInt(hex.substr(i * 2, 2), 16);
-            c = Math.round(Math.min(Math.max(0, c + (c * luminosity)), 255));
-            let cStr = c.toString(16);
-            rgb += ("00" + cStr).substr(cStr.length);
-        }
-
-        return rgb;
     }
 
     textAndPosition(pos: monaco.IPosition) {
@@ -466,9 +450,9 @@ export class Editor extends srceditor.Editor {
         this.editor.addOverlayWidget(flyoutWidget);
     }
 
-    private selectedCategoryItem: HTMLElement;
     private selectedCategoryRow: HTMLElement;
     private selectedCategoryColor: string;
+    private selectedCategoryBackgroundColor: string;
 
     resetFlyout(clear?: boolean) {
         // Hide the flyout
@@ -477,14 +461,13 @@ export class Editor extends srceditor.Editor {
         flyout.style.display = 'none';
 
         // Hide the currnet toolbox category
-        if (this.selectedCategoryItem) {
-            this.selectedCategoryItem.style.background = 'none';
+        if (this.selectedCategoryRow) {
+            this.selectedCategoryRow.style.background = `${this.selectedCategoryBackgroundColor}`;
             this.selectedCategoryRow.style.color = `${this.selectedCategoryColor}`;
             this.selectedCategoryRow.className = 'blocklyTreeRow';
         }
 
         if (clear) {
-            this.selectedCategoryItem = null;
             this.selectedCategoryRow = null;
         }
     }
@@ -517,62 +500,85 @@ export class Editor extends srceditor.Editor {
             const fn2 = fnDef[f2];
             const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
                 + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
-                + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
+            + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
             const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
                 + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
-                + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
+            + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
             return w2 - w1;
         }).filter(ns => fnDef[ns].metaData != null && fnDef[ns].metaData.color != null).forEach(function (ns) {
             let metaElement = fnDef[ns];
-            // Create a tree item
-            let treeitem = document.createElement('div');
-            let treerow = document.createElement('div');
-            treeitem.setAttribute('role', 'treeitem');
             let fnElement = fnDef[ns];
-            let color = pxt.blocks.convertColour(metaElement.metaData.color);
-            let icon = metaElement.metaData.icon;
-            treeitem.onclick = (ev: MouseEvent) => {
-                pxt.tickEvent("monaco.toolbox.click");
 
-                let monacoFlyout = document.getElementById('monacoFlyoutWidget');
-                monacoEditor.resetFlyout(false);
+            monacoEditor.addToolboxCategory(group, ns, metaElement.metaData.color, metaElement.metaData.icon, true, fnElement.fns);
+        })
 
-                // Hide the toolbox if the current category is clicked twice
-                if (monacoEditor.selectedCategoryItem == treeitem) {
-                    monacoEditor.selectedCategoryItem = null;
-                    monacoFlyout.style.display = 'none';
-                    treerow.className = 'blocklyTreeRow';
-                    return;
+        // Add the toolbox buttons
+        this.addToolboxCategory(group, "Add Package", "#717171", ' ', false, null, () => {
+            this.resetFlyout();
+            this.parent.addPackage();
+        })
+    }
+
+    addToolboxCategory(group: HTMLDivElement,
+                        ns: string, metaColor: string,
+                        icon: string, injectIconClass: boolean = true,
+                        fns?: {[fn: string]: pxt.vs.MethodDef},
+                        onClick?: () => void) {
+        let appTheme = pxt.appTarget.appTheme;
+        let monacoEditor = this;
+        // Create a tree item
+        let treeitem = document.createElement('div');
+        let treerow = document.createElement('div');
+        treeitem.setAttribute('role', 'treeitem');
+        let color = pxt.blocks.convertColour(metaColor);
+        treeitem.onclick = (ev: MouseEvent) => {
+            pxt.tickEvent("monaco.toolbox.click");
+
+            let monacoFlyout = document.getElementById('monacoFlyoutWidget');
+            monacoEditor.resetFlyout(false);
+
+            // Hide the toolbox if the current category is clicked twice
+            if (monacoEditor.selectedCategoryRow == treerow) {
+                monacoEditor.selectedCategoryRow = null;
+                monacoFlyout.style.display = 'none';
+                treerow.className = 'blocklyTreeRow';
+                return;
+            } else {
+                // Selected category
+                treerow.style.background = `${color}`;
+                treerow.style.color = '#fff';
+                treerow.className += ' blocklyTreeSelected';
+                monacoEditor.selectedCategoryRow = treerow;
+                if (appTheme.invertedToolbox) {
+                    // Inverted toolbox
+                    monacoEditor.selectedCategoryColor = '#fff';
+                    monacoEditor.selectedCategoryBackgroundColor = color;
                 } else {
-                    // Selected category
-                    treeitem.style.background = `${color}`;
-                    treerow.style.color = '#fff';
-                    treerow.className += ' blocklyTreeSelected';
-                    monacoEditor.selectedCategoryItem = treeitem;
-                    monacoEditor.selectedCategoryRow = treerow;
-                    if (appTheme.invertedToolbox) {
-                        // Inverted toolbox
-                        monacoEditor.selectedCategoryColor = '#fff';
-                    } else {
-                        monacoEditor.selectedCategoryColor = color;
-                    }
+                    monacoEditor.selectedCategoryColor = color;
+                    monacoEditor.selectedCategoryBackgroundColor = 'none';
                 }
+            }
 
-                monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
-                monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
-                monacoFlyout.style.display = 'block';
-                monacoFlyout.className = 'monacoFlyout';
+            monacoFlyout.style.left = `${monacoEditor.editor.getLayoutInfo().lineNumbersLeft}px`;
+            monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
+            monacoFlyout.style.display = 'block';
+            monacoFlyout.className = 'monacoFlyout';
 
-                Object.keys(fnElement.fns).sort((f1, f2) => {
+            if (onClick) {
+                // No flyout
+                onClick();
+            } else {
+                // Create a flyout and add the category methods in there
+                Object.keys(fns).sort((f1, f2) => {
                     // sort by fn weight
-                    const fn1 = fnElement.fns[f1];
-                    const fn2 = fnElement.fns[f2];
+                    const fn1 = fns[f1];
+                    const fn2 = fns[f2];
                     const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
                         + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
-                        + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
+                    + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
                     const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
                         + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
-                        + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
+                    + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
                     return w2 - w1;
                 }).forEach((fn) => {
                     let monacoBlock = document.createElement('div');
@@ -582,7 +588,7 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.style.backgroundColor = `${color}`;
                     monacoBlock.style.borderColor = `${color}`;
 
-                    const elem = fnElement.fns[fn];
+                    const elem = fns[fn];
                     const sig = elem.sig;
                     const snippet = elem.snippet;
                     const comment = elem.comment;
@@ -635,56 +641,45 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.appendChild(docToken);
                     monacoFlyout.appendChild(monacoBlock);
                 })
-            };
-            group.appendChild(treeitem);
-            treerow.className = 'blocklyTreeRow';
-            treeitem.appendChild(treerow);
-            let iconBlank = document.createElement('span');
-            let iconNone = document.createElement('span');
-            let label = document.createElement('span');
-
-            iconBlank.className = 'blocklyTreeIcon';
-            iconBlank.setAttribute('role', 'presentation');
-            iconNone.className = `blocklyTreeIcon blocklyTreeIcon${icon ? ns : 'None'}`;
-            iconNone.setAttribute('role', 'presentation');
-            iconNone.style.display = 'inline-block';
-
-            label.className = 'blocklyTreeLabel';
-            treerow.appendChild(iconBlank);
-            treerow.appendChild(iconNone);
-            treerow.appendChild(label);
-
-            if (appTheme.coloredToolbox) {
-                // Colored toolbox
-                treerow.style.color = `${color}`;
-                treerow.style.borderLeft = `8px solid ${color}`;
-            } else if (appTheme.invertedToolbox) {
-                // Inverted toolbox
-                treerow.style.color = '#fff';
-                treerow.style.background = (color || '#ddd');
-            } else {
-                // Standard toolbox
-                treerow.style.borderLeft = `8px solid ${color}`;
             }
-            if (icon) {
-                // Inject css
-                pxt.blocks.injectToolboxIconCss(`blocklyTreeIcon${ns}`,icon);
-            }
-            treerow.style.paddingLeft = '0px';
-            label.innerText = `${Util.capitalize(ns)}`;
-        })
+        };
+        group.appendChild(treeitem);
+        treerow.className = 'blocklyTreeRow';
+        treeitem.appendChild(treerow);
+        let iconBlank = document.createElement('span');
+        let iconNone = document.createElement('span');
+        let label = document.createElement('span');
 
-        // Add the toolbox buttons
-        pxt.blocks.initToolboxButtons(toolbox, 'monacoToolboxButtons',
-            (pxt.appTarget.cloud.packages && !this.parent.getSandboxMode() ?
-                (() => {
-                    this.parent.addPackage();
-                }) : null),
-            (!this.parent.getSandboxMode() ?
-                (() => {
-                    this.undo();
-                }) : null)
-        );
+        let iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
+        iconBlank.className = 'blocklyTreeIcon';
+        iconBlank.setAttribute('role', 'presentation');
+        iconNone.className = `blocklyTreeIcon ${iconClass}`;
+        iconNone.setAttribute('role', 'presentation');
+        iconNone.style.display = 'inline-block';
+
+        label.className = 'blocklyTreeLabel';
+        treerow.appendChild(iconBlank);
+        treerow.appendChild(iconNone);
+        treerow.appendChild(label);
+
+        if (appTheme.coloredToolbox) {
+            // Colored toolbox
+            treerow.style.color = `${color}`;
+            treerow.style.borderLeft = `8px solid ${color}`;
+        } else if (appTheme.invertedToolbox) {
+            // Inverted toolbox
+            treerow.style.color = '#fff';
+            treerow.style.background = (color || '#ddd');
+        } else {
+            // Standard toolbox
+            treerow.style.borderLeft = `8px solid ${color}`;
+        }
+        if (icon && injectIconClass) {
+            // Inject css
+            pxt.blocks.injectToolboxIconCss(iconClass, icon);
+        }
+        treerow.style.paddingLeft = '0px';
+        label.innerText = `${Util.capitalize(ns)}`;
     }
 
     getId() {
@@ -739,12 +734,12 @@ export class Editor extends srceditor.Editor {
 
         if (mode == "typescript" && !file.isReadonly()) {
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
-            .then((definitions) => {
-                this.definitions = definitions;
-                this.initEditorCss();
-                this.updateToolbox();
-                this.resize();
-            });
+                .then((definitions) => {
+                    this.definitions = definitions;
+                    this.initEditorCss();
+                    this.updateToolbox();
+                    this.resize();
+                });
         }
 
         this.setValue(file.content)
@@ -772,8 +767,14 @@ export class Editor extends srceditor.Editor {
         this.resetFlyout(true);
     }
 
+    unloadFile () {
+        if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
+            this.parent.reloadHeaderAsync();
+        }
+    }
+
     snapshotState() {
-        return this.editor.getModel().getLinesContent()
+        return this.editor && this.editor.getModel() ? this.editor.getModel().getLinesContent() : null;
     }
 
     setViewState(pos: monaco.IPosition) {

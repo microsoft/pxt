@@ -101,8 +101,7 @@ ${output}</xml>`;
 
         function hasArrowFunction(info: CallInfo): boolean {
             const parameters = (info.decl as FunctionLikeDeclaration).parameters;
-            return info.args.some((arg, index) =>
-                arg && arg.kind === SK.ArrowFunction && parameters && !parameters[index].questionToken && !parameters[index].initializer);
+            return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
         }
 
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
@@ -479,8 +478,12 @@ ${output}</xml>`;
                     return;
                 }
                 openBlockTag(info.attrs.blockId);
-                let leds = ((arg as ts.StringLiteral).text || '').replace(/\s/g, '');
-                let nc = info.attrs.imageLiteral * 5;
+                const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
+                const nc = info.attrs.imageLiteral * 5;
+                if (nc * 5 != leds.length) {
+                    error(node, Util.lf("Invalid image pattern"));
+                    return;
+                }
                 for (let r = 0; r < 5; ++r) {
                     for (let c = 0; c < nc; ++c) {
                         emitField(`LED${c}${r}`, /[#*1]/.test(leds[r * nc + c]) ? "TRUE" : "FALSE")
@@ -688,7 +691,7 @@ ${output}</xml>`;
                 });
 
                 const argumentDifference = info.args.length - argNames.length;
-                if (argumentDifference > 0) {
+                if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1)) {
                     const hasCallback = hasArrowFunction(info);
                     if (argumentDifference > 1 || !hasCallback) {
                         pxt.tickEvent("decompiler.optionalParameters");
@@ -697,9 +700,22 @@ ${output}</xml>`;
                     }
                 }
 
+                if (info.attrs.defaultInstance) {
+                    argNames.unshift("__instance__");
+                }
+
                 openBlockTag(info.attrs.blockId);
                 if (extraArgs) write(extraArgs);
                 info.args.forEach((e, i) => {
+                    if (i === 0 && info.attrs.defaultInstance) {
+                        if (e.getText() === info.attrs.defaultInstance) {
+                            return;
+                        }
+                        else {
+                            write(`<mutation showing="true"></mutation>`);
+                        }
+                    }
+
                     switch (e.kind) {
                         case SK.ArrowFunction:
                             emitDestructuringMutation(e as ArrowFunction);

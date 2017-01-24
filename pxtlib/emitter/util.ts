@@ -99,6 +99,15 @@ namespace ts.pxtc.Util {
         return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
+    export function memcpy(trg: Uint8Array, trgOff: number, src: Uint8Array, srcOff?: number, len?: number) {
+        if (srcOff === void 0)
+            srcOff = 0
+        if (len === void 0)
+            len = src.length - srcOff
+        for (let i = 0; i < len; ++i)
+            trg[trgOff + i] = src[srcOff + i]
+    }
+
     export function jsonMergeFrom(trg: any, src: any) {
         if (!src) return;
         Object.keys(src).forEach(k => {
@@ -475,24 +484,93 @@ namespace ts.pxtc.Util {
         return res;
     }
 
+    export function toHex(bytes: Uint8Array) {
+        let r = ""
+        for (let i = 0; i < bytes.length; ++i)
+            r += ("0" + bytes[i].toString(16)).slice(-2)
+        return r
+    }
+
+    export function fromHex(hex: string) {
+        let r = new Uint8Array(hex.length >> 1)
+        for (let i = 0; i < hex.length; i += 2)
+            r[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
+        return r
+    }
+
     export class PromiseQueue {
-        promises: pxt.Map<Promise<any>> = {};
+        promises: pxt.Map<(() => Promise<any>)[]> = {};
 
         enqueue<T>(id: string, f: () => Promise<T>): Promise<T> {
-            if (!this.promises.hasOwnProperty(id)) {
-                this.promises[id] = Promise.resolve()
+            return new Promise<T>((resolve, reject) => {
+                let arr = this.promises[id]
+                if (!arr) {
+                    arr = this.promises[id] = []
+                }
+                arr.push(() =>
+                    f()
+                        .finally(() => {
+                            arr.shift()
+                            if (arr.length == 0)
+                                delete this.promises[id]
+                            else
+                                arr[0]()
+                        })
+                        .then(resolve, reject))
+                if (arr.length == 1)
+                    arr[0]()
+            })
+        }
+    }
+
+    export class PromiseBuffer<T> {
+        private waiting: ((v: (T | Error)) => void)[] = [];
+        private available: (T | Error)[] = [];
+
+        drain() {
+            for (let f of this.waiting) {
+                f(new Error("Promise Buffer Reset"))
             }
-            let newOne = this.promises[id]
-                .catch(e => {
-                    Util.nextTick(() => { throw e })
+            this.waiting = []
+            this.available = []
+        }
+
+
+        pushError(v: Error) {
+            this.push(v as any)
+        }
+
+        push(v: T) {
+            let f = this.waiting.shift()
+            if (f) f(v)
+            else this.available.push(v)
+        }
+
+        shiftAsync(timeout = 0) {
+            if (this.available.length > 0) {
+                let v = this.available.shift()
+                if (v instanceof Error)
+                    return Promise.reject<T>(v)
+                else
+                    return Promise.resolve<T>(v)
+            } else
+                return new Promise<T>((resolve, reject) => {
+                    let f = (v: (T | Error)) => {
+                        if (v instanceof Error) reject(v)
+                        else resolve(v)
+                    }
+                    this.waiting.push(f)
+                    if (timeout > 0) {
+                        Promise.delay(timeout)
+                            .then(() => {
+                                let idx = this.waiting.indexOf(f)
+                                if (idx >= 0) {
+                                    this.waiting.splice(idx, 1)
+                                    reject(new Error("Timeout"))
+                                }
+                            })
+                    }
                 })
-                .then(() => f().then(v => {
-                    if (this.promises[id] === newOne)
-                        delete this.promises[id];
-                    return v;
-                }))
-            this.promises[id] = newOne;
-            return newOne;
         }
     }
 
@@ -569,7 +647,7 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string) {
-            return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+        return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
     }
 
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {

@@ -103,6 +103,12 @@ function testNums(): void {
     control.assert(100000001 * 100000001 == 2074919425, "*2")
 
     control.assert(105 % 100 == 5, "perc")
+
+    // test number->bool conversion, #1057
+    // x==20 here
+    if (!x) {
+        control.assert(false, "wrong bang")
+    }
 }
 
 

@@ -14,6 +14,12 @@ import * as semver from "semver";
 import * as Telemetry from "../util/telemetry";
 import { WindowsUpdater } from "./windowsupdater";
 
+export enum UpdateEventType {
+    Critical = 1,
+    Notification,
+    Prompt
+}
+
 /**
  * This class is the main entry point for updates in the app. It is responsible for checking if updates are available,
  * downloading updates, applying updates, and understanding the release manifest of the target. In addition to the
@@ -81,20 +87,28 @@ export class UpdateService extends EventEmitter {
                 const criticalPrompt = versionInfo.banned.some((banRange) => {
                     return semver.satisfies(product.version, banRange);
                 });
-                const aggressivePrompt = semver.lte(product.version, versionInfo.prompt);
+                const prompt = semver.lte(product.version, versionInfo.prompt);
+                const notification = semver.lte(product.version, versionInfo.notification);
 
                 if (targetVersion) {
                     if (criticalPrompt) {
                         Telemetry.tickEvent("electron.update.available", {
                             initial: "true",
-                            critical: "true"
+                            type: "critical"
                         });
-                        this.emit("critical-update", this.makeUpdateInfo(targetVersion));
-                    } else if (aggressivePrompt) {
+                        this.emit("critical-update", this.makeUpdateInfo(targetVersion, UpdateEventType.Critical));
+                    } else if (prompt) {
                         Telemetry.tickEvent("electron.update.available", {
-                            initial: "true"
+                            initial: "true",
+                            type: "prompt"
                         });
-                        this.emit("update-available", this.makeUpdateInfo(targetVersion, /*isInitialCheck*/ true));
+                        this.emit("update-available", this.makeUpdateInfo(targetVersion, UpdateEventType.Prompt, /*isInitialCheck*/ true));
+                    } else if (notification) {
+                        Telemetry.tickEvent("electron.update.available", {
+                            initial: "true",
+                            type: "notification"
+                        });
+                        this.emit("update-available", this.makeUpdateInfo(targetVersion, UpdateEventType.Notification, /*isInitialCheck*/ true));
                     }
                 } else {
                     Telemetry.tickEvent("electron.update.notavailable", {
@@ -120,7 +134,7 @@ export class UpdateService extends EventEmitter {
 
                 if (targetVersion) {
                     Telemetry.tickEvent("electron.update.available");
-                    this.emit("update-available", this.makeUpdateInfo(targetVersion));
+                    this.emit("update-available", this.makeUpdateInfo(targetVersion, UpdateEventType.Prompt));
                 } else {
                     Telemetry.tickEvent("electron.update.notavailable");
                     this.emit("update-not-available");
@@ -234,11 +248,12 @@ export class UpdateService extends EventEmitter {
         return null;
     }
 
-    private makeUpdateInfo(targetVersion: string, isInitialCheck: boolean = false): I.UpdateEventInfo {
+    private makeUpdateInfo(targetVersion: string, type: UpdateEventType, isInitialCheck: boolean = false): I.UpdateEventInfo {
         return {
             appName: product.nameLong,
             isInitialCheck,
-            targetVersion
+            targetVersion,
+            type
         };
     }
 
