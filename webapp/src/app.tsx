@@ -350,7 +350,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
                             onClick={() => chgHeader(scr) }
                             />
                     ) }
-                    {galleries.map(scr => <codecard.CodeCardView
+                    {pxt.options.light ? undefined : galleries.map(scr => <codecard.CodeCardView
                         key={'gal' + scr.name}
                         className="widedesktop only"
                         name={scr.name}
