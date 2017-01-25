@@ -402,6 +402,14 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
 
 ju.catFiles("built/web/semantic.js",
     expand(["node_modules/semantic-ui-less/definitions/globals",
-        "node_modules/semantic-ui-less/definitions/modules",
+        "node_modules/semantic-ui-less/definitions/modules/accordion.js",
+        "node_modules/semantic-ui-less/definitions/modules/checkbox.js",
+        "node_modules/semantic-ui-less/definitions/modules/dimmer.js",
+        "node_modules/semantic-ui-less/definitions/modules/dropdown.js",
+        "node_modules/semantic-ui-less/definitions/modules/embed.js",
+        "node_modules/semantic-ui-less/definitions/modules/modal.js",
+        "node_modules/semantic-ui-less/definitions/modules/popup.js",
+        "node_modules/semantic-ui-less/definitions/modules/search.js",
+        "node_modules/semantic-ui-less/definitions/modules/transition.js",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")
