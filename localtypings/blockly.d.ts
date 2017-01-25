@@ -37,8 +37,6 @@ declare namespace Blockly {
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
 
-    function registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
-
     function alert(message: string, opt_callback?: () => void): void;
     function confirm(message: string, callback: (response: boolean) => void): void;
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
@@ -290,7 +288,6 @@ declare namespace Blockly {
         getTopBlocks(ordered: boolean): Block[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
-        traceOn(armed: boolean): void;
         addChangeListener(f: (e: BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string): void;
@@ -317,6 +314,9 @@ declare namespace Blockly {
             viewWidth: number;
         }
         variableIndexOf(name: string): number;
+
+        registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
+
     }
 
     class WorkspaceSvg {
