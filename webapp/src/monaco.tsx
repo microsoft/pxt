@@ -149,32 +149,35 @@ export class Editor extends srceditor.Editor {
         )
     }
 
-    private initEditorCss() {
-        let head = document.head || document.getElementsByTagName('head')[0],
-            style = (document.getElementById('monacoeditorStyles') as HTMLStyleElement) || document.createElement('style');
-        style.id = "monacoeditorStyles";
-        style.type = 'text/css';
-
+    private defineEditorTheme() {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
         const invertedColorluminosityMultipler = 0.6;
-        let cssContent = "";
         let fnDict = this.definitions;
+        let rules: monaco.editor.IThemeRule[] = [];
         Object.keys(fnDict).forEach((ns) => {
             let element = fnDict[ns];
             if (element.metaData && element.metaData.color && element.fns) {
-                const hexcolor = pxt.blocks.convertColour(element.metaData.color);
-                let cssTag = `.token.ts.identifier.${ns}, .token.ts.identifier.${Object.keys(element.fns).join(', .token.ts.identifier.')}`;
-                cssContent += `${cssTag} { color: ${inverted
-                    ? pxt.blocks.fadeColour(hexcolor, invertedColorluminosityMultipler, true)
-                    : hexcolor}; }`;
+                let hexcolor = pxt.blocks.convertColour(element.metaData.color);
+                hexcolor = (inverted ? pxt.blocks.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#','');
+                Object.keys(element.fns).forEach((fn) => {
+                    rules.push({ token: `identifier.ts ${fn}`, foreground: hexcolor });
+                });
+                rules.push({ token: `identifier.ts ${ns}`, foreground: hexcolor });
             }
         })
-        if (style.sheet) {
-            style.textContent = cssContent;
-        } else {
-            style.appendChild(document.createTextNode(cssContent));
-        }
-        head.appendChild(style);
+
+        rules.push({ token: `identifier.ts if`, foreground: '5B80A5', });
+        rules.push({ token: `identifier.ts else`, foreground: '5B80A5', });
+        rules.push({ token: `identifier.ts while`, foreground: '5BA55B', });
+        rules.push({ token: `identifier.ts for`, foreground: '5BA55B', });
+
+        monaco.editor.defineTheme('pxtTheme', {
+            base: inverted ? 'vs-dark' : 'vs', // can also be vs-dark or hc-black
+            inherit: true, // can also be false to completely replace the builtin rules
+            rules: rules
+        });
+
+        this.editor.updateOptions({theme: 'pxtTheme'});
     }
 
     beforeCompile() {
@@ -261,7 +264,7 @@ export class Editor extends srceditor.Editor {
 
             this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
-            this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
+            this.editor.getActions().filter(action => action.id == "editor.action.formatDocument")[0]
                 .run = () => Promise.resolve(this.beforeCompile());
 
             this.editor.addAction({
@@ -330,8 +333,8 @@ export class Editor extends srceditor.Editor {
                 });
 
                 this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
-                    let word = this.editor.getModel().getWordAtPosition(e.position);
-                    if (word) {
+                    let word = this.editor.getModel().getWordUntilPosition(e.position);
+                    if (word && word.word != "") {
                         referenceContextKey.set(true);
                     } else {
                         referenceContextKey.reset()
@@ -352,6 +355,58 @@ export class Editor extends srceditor.Editor {
                 let flyout = document.getElementById('monacoFlyoutWidget');
                 flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
             })
+
+            const monacoEditorInner = document.getElementById('monacoEditorInner');
+            monacoEditorInner.ondragenter = ((ev: DragEvent) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+            });
+            monacoEditorInner.ondragover = ((ev: DragEvent) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
+                let position = mouseTarget.position;
+                if (position && this.editor.getPosition() != position)
+                    this.editor.setPosition(position);
+                this.editor.focus();
+            });
+            monacoEditorInner.ondrop = ((ev: DragEvent) => {
+                let insertText = ev.dataTransfer.getData('Snippet');
+                if (!insertText)
+                    return;
+                ev.preventDefault();
+                ev.stopPropagation();
+
+                let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
+                let position = mouseTarget.position;
+                let model = this.editor.getModel();
+                let currPos = this.editor.getPosition();
+                let cursor = model.getOffsetAt(currPos)
+
+                insertText = (currPos.column > 1) ? '\n' + insertText :
+                                model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
+                                    insertText + '\n' : insertText;
+                if (insertText.indexOf('{{}}') > -1) {
+                    cursor += (insertText.indexOf('{{}}'));
+                    insertText = insertText.replace('{{}}', '');
+                } else
+                    cursor += (insertText.length);
+
+                this.editor.executeEdits("", [
+                    {
+                        identifier: { major: 0, minor: 0 },
+                        range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                        text: insertText,
+                        forceMoveMarkers: false
+                    }
+                ]);
+
+                let endPos = model.getPositionAt(cursor);
+                this.editor.setPosition(endPos);
+                this.formatCode();
+                this.editor.focus();
+            });
+
 
             this.editor.onDidFocusEditorText(() => {
                 this.resetFlyout(true);
@@ -395,6 +450,7 @@ export class Editor extends srceditor.Editor {
         Util.assert(this.editor != undefined); // Guarded
         let currentPosition = this.editor.getPosition();
         let wordInfo = this.editor.getModel().getWordAtPosition(currentPosition);
+        if (!wordInfo) return;
         let prevWordInfo = this.editor.getModel().getWordUntilPosition(new monaco.Position(currentPosition.lineNumber, wordInfo.startColumn - 1));
         if (prevWordInfo && wordInfo) {
             let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
@@ -525,6 +581,7 @@ export class Editor extends srceditor.Editor {
             if (monacoEditor.selectedCategoryRow == treerow) {
                 monacoEditor.selectedCategoryRow = null;
                 monacoFlyout.style.display = 'none';
+
                 treerow.className = 'blocklyTreeRow';
                 return;
             } else {
@@ -573,6 +630,7 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
                     monacoBlock.style.backgroundColor = `${color}`;
                     monacoBlock.style.borderColor = `${color}`;
+                    monacoBlock.draggable = true;
 
                     const elem = fns[fn];
                     const sig = elem.sig;
@@ -601,7 +659,10 @@ export class Editor extends srceditor.Editor {
                         let model = monacoEditor.editor.getModel();
                         let currPos = monacoEditor.editor.getPosition();
                         let cursor = model.getOffsetAt(currPos)
-                        let insertText = `${ns}.${snippet}\n`;
+                        let insertText = `${ns}.${snippet}`;
+                        insertText = (currPos.column > 1) ? '\n' + insertText :
+                                        model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
+                                            insertText + '\n' : insertText;
 
                         if (insertText.indexOf('{{}}') > -1) {
                             cursor += (insertText.indexOf('{{}}'));
@@ -618,9 +679,25 @@ export class Editor extends srceditor.Editor {
                         ]);
                         let endPos = model.getPositionAt(cursor);
                         monacoEditor.editor.setPosition(endPos);
+                        monacoEditor.formatCode();
                         monacoEditor.editor.focus();
                         //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
                     };
+                    monacoBlock.ondragstart = (ev2: DragEvent) => {
+                        pxt.tickEvent("monaco.toolbox.itemdrag");
+                        let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
+
+                        setTimeout(function(){
+                            monacoFlyout.style.transform = "translateX(-9999px)";
+                        });
+
+                        let insertText = `${ns}.${snippet}`;
+                        ev2.dataTransfer.setData('Snippet', insertText);
+                    }
+                    monacoBlock.ondragend = (ev2: DragEvent) => {
+                        monacoFlyout.style.transform = "none";
+                        monacoEditor.resetFlyout(true);
+                    }
 
                     monacoBlock.appendChild(methodToken);
                     monacoBlock.appendChild(sigToken);
@@ -800,7 +877,7 @@ export class Editor extends srceditor.Editor {
         pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
             .then((definitions) => {
                 this.definitions = definitions;
-                this.initEditorCss();
+                this.defineEditorTheme();
                 this.updateToolbox();
                 this.resize();
             });
