@@ -32,6 +32,14 @@ export class Editor {
         return false
     }
 
+    getViewState(): ViewState {
+        return {}
+    }
+
+    getCurrentSource(): string {
+        return this.currSource
+    }
+
     getId() {
         return "editor"
     }
@@ -47,6 +55,8 @@ export class Editor {
         return null
     }
 
+    beforeCompile() { }
+
     isReady = false;
     prepare() {
         this.isReady = true;
@@ -57,7 +67,7 @@ export class Editor {
     snapshotState(): any {
         return null
     }
-    unloadFile() { }
+    unloadFileAsync(): Promise<void> { return Promise.resolve() }
 
     isIncomplete() {
         return false
@@ -75,22 +85,16 @@ export class Editor {
      loadFile
     *******************************/
 
-    loadFile(file: pkg.File): void {
+    loadFileAsync(file: pkg.File): Promise<void> {
         this.currSource = file.content
         this.setDiagnostics(file, this.snapshotState())
+        return Promise.resolve();
     }
 
     /*******************************
      Methods called after loadFile
       this.editor != undefined
     *******************************/
-
-    getViewState(): ViewState {
-        return {}
-    }
-    getCurrentSource(): string {
-        return this.currSource
-    }
 
     domUpdate() { }
 
@@ -101,7 +105,6 @@ export class Editor {
         return null
     }
 
-    beforeCompile() { }
     highlightStatement(brk: pxtc.LocationInfo) { }
 
     filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true, showToolboxButtons: boolean = true): Element {

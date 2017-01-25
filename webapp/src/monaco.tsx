@@ -178,8 +178,8 @@ export class Editor extends srceditor.Editor {
     }
 
     beforeCompile() {
-        Util.assert(this.editor != undefined); // Guarded
-        this.formatCode()
+        if (this.editor)
+            this.formatCode()
     }
 
     public formatCode(isAutomatic = false): string {
@@ -249,144 +249,118 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
 
-    private prepareEditor() {
+    public loadMonaco(): Promise<void> {
+        if (this.editor) return Promise.resolve();
         this.extraLibs = Object.create(null);
 
         let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
-        this.editor = pxt.vs.initMonacoAsync(editorElement);
-        if (!this.editor) {
-            // Todo: create a text area if we weren't able to load the monaco editor correctly.
-            return;
-        };
+        return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
+            this.editor = editor;
 
-        this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
+            this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
-        this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
-            .run = () => Promise.resolve(this.beforeCompile());
+            this.editor.getActions().filter(action => action.id == "editor.action.format")[0]
+                .run = () => Promise.resolve(this.beforeCompile());
 
-        this.editor.addAction({
-            id: "save",
-            label: lf("Save"),
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-            keybindingContext: "!editorReadonly",
-            contextMenuGroupId: "0_pxtnavigation",
-            contextMenuOrder: 0.2,
-            run: () => Promise.resolve(this.parent.typecheckNow())
-        });
-
-        this.editor.addAction({
-            id: "runSimulator",
-            label: lf("Run Simulator"),
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-            keybindingContext: "!editorReadonly",
-            contextMenuGroupId: "0_pxtnavigation",
-            contextMenuOrder: 0.21,
-            run: () => Promise.resolve(this.parent.runSimulator())
-        });
-
-        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             this.editor.addAction({
-                id: "compileHex",
-                label: lf("Download"),
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
+                id: "save",
+                label: lf("Save"),
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
                 keybindingContext: "!editorReadonly",
                 contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.22,
-                run: () => Promise.resolve(this.parent.compile())
+                contextMenuOrder: 0.2,
+                run: () => Promise.resolve(this.parent.typecheckNow())
             });
-        }
 
-        this.editor.addAction({
-            id: "zoomIn",
-            label: lf("Zoom In"),
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_ADD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL],
-            run: () => Promise.resolve(this.zoomIn())
-        });
-
-        this.editor.addAction({
-            id: "zoomOut",
-            label: lf("Zoom Out"),
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS],
-            run: () => Promise.resolve(this.zoomOut())
-        });
-
-        this.editor.onDidBlurEditorText(() => {
-            if (this.isIncomplete()) {
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSyntaxValidation: true });
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: true });
-            } else {
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSyntaxValidation: false });
-                monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: false });
-            }
-        })
-
-        if (pxt.appTarget.appTheme.hasReferenceDocs) {
-            let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
             this.editor.addAction({
-                id: "reference",
-                label: lf("Help"),
-                keybindingContext: "!editorReadonly && editorHasReference",
-                contextMenuGroupId: "navigation",
-                contextMenuOrder: 0.1,
-                run: () => Promise.resolve(this.loadReference())
+                id: "runSimulator",
+                label: lf("Run Simulator"),
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+                keybindingContext: "!editorReadonly",
+                contextMenuGroupId: "0_pxtnavigation",
+                contextMenuOrder: 0.21,
+                run: () => Promise.resolve(this.parent.runSimulator())
             });
 
-            this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
-                let word = this.editor.getModel().getWordAtPosition(e.position);
-                if (word) {
-                    referenceContextKey.set(true);
+            if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+                this.editor.addAction({
+                    id: "compileHex",
+                    label: lf("Download"),
+                    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
+                    keybindingContext: "!editorReadonly",
+                    contextMenuGroupId: "0_pxtnavigation",
+                    contextMenuOrder: 0.22,
+                    run: () => Promise.resolve(this.parent.compile())
+                });
+            }
+
+            this.editor.addAction({
+                id: "zoomIn",
+                label: lf("Zoom In"),
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_ADD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL],
+                run: () => Promise.resolve(this.zoomIn())
+            });
+
+            this.editor.addAction({
+                id: "zoomOut",
+                label: lf("Zoom Out"),
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS],
+                run: () => Promise.resolve(this.zoomOut())
+            });
+
+            this.editor.onDidBlurEditorText(() => {
+                if (this.isIncomplete()) {
+                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: true, noSemanticValidation: true});
                 } else {
-                    referenceContextKey.reset()
+                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: false, noSemanticValidation: false});
                 }
             })
-        }
 
-        this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
-            // Update editor font size in settings after a ctrl+scroll zoom
-            let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
-            if (this.parent.settings.editorFontSize != currentFont) {
-                this.parent.settings.editorFontSize = currentFont;
-                this.forceDiagnosticsUpdate();
-            }
-            // Update widgets
-            let toolbox = document.getElementById('monacoEditorToolbox');
-            toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
-            let flyout = document.getElementById('monacoFlyoutWidget');
-            flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
-        })
-
-        this.editor.onDidFocusEditorText(() => {
-            this.resetFlyout(true);
-        })
-
-        this.editor.onDidChangeModelContent((e: monaco.editor.IModelContentChangedEvent2) => {
-            if (this.currFile.isReadonly()) return;
-
-            // Remove any Highlighted lines
-            if (this.highlightDecorations)
-                this.editor.deltaDecorations(this.highlightDecorations, []);
-
-            // Remove any current error shown, as a change has been made.
-            let viewZones = this.editorViewZones || [];
-            (this.editor as any).changeViewZones(function (changeAccessor: any) {
-                viewZones.forEach((id: any) => {
-                    changeAccessor.removeZone(id);
+            if (pxt.appTarget.appTheme.hasReferenceDocs) {
+                let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
+                this.editor.addAction({
+                    id: "reference",
+                    label: lf("Help"),
+                    keybindingContext: "!editorReadonly && editorHasReference",
+                    contextMenuGroupId: "navigation",
+                    contextMenuOrder: 0.1,
+                    run: () => Promise.resolve(this.loadReference())
                 });
-            });
+
+                this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
+                    let word = this.editor.getModel().getWordAtPosition(e.position);
+                    if (word) {
+                        referenceContextKey.set(true);
+                    } else {
+                        referenceContextKey.reset()
+                    }
+                })
+            }
+
+            this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
+                // Update editor font size in settings after a ctrl+scroll zoom
+                let currentFont = this.editor.getConfiguration().fontInfo.fontSize;
+                if (this.parent.settings.editorFontSize != currentFont) {
+                    this.parent.settings.editorFontSize = currentFont;
+                    this.forceDiagnosticsUpdate();
+                }
+                // Update widgets
+                let toolbox = document.getElementById('monacoEditorToolbox');
+                toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+                let flyout = document.getElementById('monacoFlyoutWidget');
+                flyout.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+            })
+
+            this.editor.onDidFocusEditorText(() => {
+                this.resetFlyout(true);
+            })
+
             this.editorViewZones = [];
 
-            if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
-                this.editor.setValue(" ");
-            }
-            this.updateDiagnostics();
-            this.changeCallback();
-        });
-
-        this.editorViewZones = [];
-
-        this.setupToolbox(editorArea);
+            this.setupToolbox(editorArea);
+        })
     }
 
     undo() {
@@ -708,13 +682,11 @@ export class Editor extends srceditor.Editor {
     }
 
     getViewState() {
-        Util.assert(this.editor != undefined); // Guarded
-        return this.editor.getPosition()
+        return this.editor ? this.editor.getPosition() : {};
     }
 
     getCurrentSource() {
-        Util.assert(this.editor != undefined); // Guarded
-        return this.editor.getValue()
+        return this.editor ? this.editor.getValue() : this.currSource;
     }
 
     acceptsFile(file: pkg.File) {
@@ -730,74 +702,116 @@ export class Editor extends srceditor.Editor {
         this.editor.setValue(content);
     }
 
-    loadFile(file: pkg.File) {
-        if (!this.editor)
-            this.prepareEditor();
+    loadFileAsync(file: pkg.File): Promise<void> {
+        let mode = "text";
+        this.currSource = file.content;
 
-        let toolbox = document.getElementById('monacoEditorToolbox');
+        let loading = document.createElement("div");
+        loading.className = "ui inverted loading dimmer active";
+        let editorArea = document.getElementById("monacoEditorArea");
+        let editorDiv = document.getElementById("monacoEditorInner");
+        editorArea.insertBefore(loading, editorDiv);
 
-        let ext = file.getExtension()
-        let modeMap: any = {
-            "cpp": "cpp",
-            "h": "cpp",
-            "json": "json",
-            "md": "text",
-            "ts": "typescript",
-            "js": "javascript",
-            "svg": "xml",
-            "blocks": "xml",
-            "asm": "asm"
-        }
-        let mode = "text"
-        if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
+        return this.loadMonaco()
+        .then(() => {
+            let toolbox = document.getElementById('monacoEditorToolbox');
 
-        this.editor.updateOptions({ readOnly: file.isReadonly() });
-
-        this.currFile = file;
-        let proto = "pkg:" + this.currFile.getName();
-        let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
-        if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(this.currFile.getName()), mode, monaco.Uri.parse(proto));
-        if (model) this.editor.setModel(model);
-
-        if (mode == "typescript" && !file.isReadonly()) {
-            pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
-                .then((definitions) => {
-                    this.definitions = definitions;
-                    this.initEditorCss();
-                    this.updateToolbox();
-                    this.resize();
-                });
-        }
-
-        this.setValue(file.content)
-        this.setDiagnostics(file, this.snapshotState())
-
-        this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
-
-        if (this.fileType == FileType.Markdown)
-            this.parent.setSideMarkdown(file.content);
-
-        this.currFile.setForceChangeCallback((from: string, to: string) => {
-            if (from != to) {
-                pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
-                this.loadFile(this.currFile);
+            let ext = file.getExtension()
+            let modeMap: any = {
+                "cpp": "cpp",
+                "h": "cpp",
+                "json": "json",
+                "md": "text",
+                "ts": "typescript",
+                "js": "javascript",
+                "svg": "xml",
+                "blocks": "xml",
+                "asm": "asm"
             }
+            if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
+
+            this.editor.updateOptions({ readOnly: file.isReadonly() });
+
+            let proto = "pkg:" + file.getName();
+            let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
+            if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
+            if (model) this.editor.setModel(model);
+
+            if (mode == "typescript" && !file.isReadonly()) {
+                toolbox.innerHTML = '';
+                this.beginLoadToolbox(file);
+            }
+
+            // Set the current file
+            this.currFile = file;
+
+            this.setValue(file.content)
+            this.setDiagnostics(file, this.snapshotState())
+
+            this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
+
+            if (this.fileType == FileType.Markdown)
+                this.parent.setSideMarkdown(file.content);
+
+            this.currFile.setForceChangeCallback((from: string, to: string) => {
+                if (from != to) {
+                    pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
+                    this.loadFileAsync(this.currFile);
+                }
+            });
+
+            if (!file.isReadonly()) {
+                model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent2) => {
+                    // Remove any Highlighted lines
+                    if (this.highlightDecorations)
+                        this.editor.deltaDecorations(this.highlightDecorations, []);
+
+                    // Remove any current error shown, as a change has been made.
+                    let viewZones = this.editorViewZones || [];
+                    (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                        viewZones.forEach((id: any) => {
+                            changeAccessor.removeZone(id);
+                        });
+                    });
+                    this.editorViewZones = [];
+
+                    if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
+                        this.editor.setValue(" ");
+                    }
+                    this.updateDiagnostics();
+                    this.changeCallback();
+                });
+            }
+
+            if (mode == "typescript" && !file.isReadonly()) {
+                toolbox.className = 'monacoToolboxDiv';
+            } else {
+                toolbox.className = 'monacoToolboxDiv hide';
+            }
+
+            this.resize();
+            this.resetFlyout(true);
+        }).finally(() => {
+            editorArea.removeChild(loading);
         });
-
-        if (mode == "typescript" && !file.isReadonly()) {
-            toolbox.className = 'monacoToolboxDiv';
-        } else {
-            toolbox.className = 'monacoToolboxDiv hide';
-        }
-
-        this.resize();
-        this.resetFlyout(true);
     }
 
-    unloadFile() {
+    private beginLoadToolbox(file: pkg.File) {
+        pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
+            .then((definitions) => {
+                this.definitions = definitions;
+                this.initEditorCss();
+                this.updateToolbox();
+                this.resize();
+            });
+    }
+
+    unloadFileAsync(): Promise<void> {
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
-            this.parent.reloadHeaderAsync();
+            // Reload the header if a change was made to the config file: pxt.json
+            return this.parent.reloadHeaderAsync();
         }
+        return Promise.resolve();
     }
 
     snapshotState() {

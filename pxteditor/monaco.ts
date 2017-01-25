@@ -22,12 +22,12 @@ namespace pxt.vs {
     }
 
     export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<{ [ns: string]: NameDefiniton }> {
+        if (readOnly) return;
+
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
-        const promises: monaco.Promise<any>[] = [];
+        let toPopulate: {f: string, fp: string} [] = [];
         let definitions: { [ns: string]: NameDefiniton } = {}
-
-        if (readOnly) return;
 
         mainPkg.sortedDeps().forEach(pkg => {
             pkg.getFiles().forEach(f => {
@@ -40,18 +40,25 @@ namespace pxt.vs {
                     }
                     modelMap[fp] = "1";
 
-                    // populate definitions
-                    let promise = populateDefinitions(f, fp, definitions);
-                    promises.push(promise);
+                    // store which files we need to populate definitions for the monaco toolbox
+                    toPopulate.push({f: f, fp: fp});
                 }
             });
         });
 
+        // dispose of any extra libraries, the typescript worker will be killed as a result of this
         Object.keys(extraLibs)
             .filter(lib => /\.(ts)$/.test(lib) && !modelMap[lib])
             .forEach(lib => {
                 libs[lib].dispose();
             });
+
+        // populate definitions for the monaco toolbox
+        const promises: monaco.Promise<any>[] = [];
+        toPopulate.forEach((populate) => {
+            let promise = populateDefinitions(populate.f, populate.fp, definitions);
+            promises.push(promise);
+        })
 
         return monaco.Promise.join(promises)
             .then(() => {
@@ -116,7 +123,39 @@ namespace pxt.vs {
         });
     }
 
-    export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
+    export function initMonacoAsync(element: HTMLElement): Promise<monaco.editor.IStandaloneCodeEditor> {
+        return new Promise<monaco.editor.IStandaloneCodeEditor>((resolve, reject) => {
+            if (typeof((window as any).monaco) === 'object') {
+                // monaco is already loaded
+                resolve(createEditor(element));
+                return;
+            }
+
+            let onGotAmdLoader = () => {
+                (window as any).require.config({ paths: { 'vs': '/cdn/vs' }});
+
+                // Load monaco
+                (window as any).require(['vs/editor/editor.main'], () => {
+                    setupMonaco();
+
+                    resolve(createEditor(element));
+                });
+            };
+
+            // Load AMD loader if necessary
+            if (!(<any>window).require) {
+                let loaderScript = document.createElement('script');
+                loaderScript.type = 'text/javascript';
+                loaderScript.src = '/cdn/vs/loader.js';
+                loaderScript.addEventListener('load', onGotAmdLoader);
+                document.body.appendChild(loaderScript);
+            } else {
+                onGotAmdLoader();
+            }
+        })
+    }
+
+    function setupMonaco() {
         if (!monaco.languages.typescript) return;
 
         initAsmMonarchLanguage();
@@ -142,7 +181,9 @@ namespace pxt.vs {
 
         // maximum idle time
         monaco.languages.typescript.typescriptDefaults.setMaximunWorkerIdleTime(20 * 60 * 1000);
+    }
 
+    export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         let editor = monaco.editor.create(element, {
             model: null,
             //ariaLabel: lf("JavaScript Editor"),
