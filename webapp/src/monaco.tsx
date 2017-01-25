@@ -312,11 +312,9 @@ export class Editor extends srceditor.Editor {
 
             this.editor.onDidBlurEditorText(() => {
                 if (this.isIncomplete()) {
-                    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSyntaxValidation: true });
-                    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: true });
+                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: true, noSemanticValidation: true});
                 } else {
-                    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSyntaxValidation: false });
-                    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: false });
+                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: false, noSemanticValidation: false});
                 }
             })
 
@@ -740,6 +738,7 @@ export class Editor extends srceditor.Editor {
             if (model) this.editor.setModel(model);
 
             if (mode == "typescript" && !file.isReadonly()) {
+                toolbox.innerHTML = '';
                 this.beginLoadToolbox(file);
             }
 
