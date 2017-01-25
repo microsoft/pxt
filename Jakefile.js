@@ -299,8 +299,7 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     jake.mkdirP("built/web/vs/editor")
     let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
     monacotypescriptcontribution = monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
-    console.log(monacotypescriptcontribution);
-    
+
     let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
     // Remove certain actions from the context menu
     monacoeditor = monacoeditor.replace(/((GoToDefinitionAction.ID|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
