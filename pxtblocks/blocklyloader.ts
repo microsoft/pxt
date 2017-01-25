@@ -1016,7 +1016,7 @@ namespace pxt.blocks {
             let e = ev as WheelEvent;
             Blockly.terminateDrag_();
             const delta = e.deltaY > 0 ? -1 : 1;
-            const position = Blockly.mouseToSvg(e, ws.getParentSvg());
+            const position = Blockly.utils.mouseToSvg(e, ws.getParentSvg());
             if (e.ctrlKey || e.metaKey)
                 ws.zoom(position.x, position.y, delta);
             else if (ws.scrollbar) {
