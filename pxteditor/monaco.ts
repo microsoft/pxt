@@ -184,6 +184,8 @@ namespace pxt.vs {
     }
 
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
+        const inverted = pxt.appTarget.appTheme.invertedMonaco;
+
         let editor = monaco.editor.create(element, {
             model: null,
             //ariaLabel: lf("JavaScript Editor"),
@@ -197,7 +199,8 @@ namespace pxt.vs {
             lineNumbersMinChars: 3,
             //automaticLayout: true,
             mouseWheelScrollSensitivity: 0.5,
-            quickSuggestionsDelay: 200
+            quickSuggestionsDelay: 200,
+            theme: inverted ? 'vs-dark' : 'vs'
         });
 
         editor.layout();
