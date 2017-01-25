@@ -756,7 +756,7 @@ export class Editor extends srceditor.Editor {
             this.currFile.setForceChangeCallback((from: string, to: string) => {
                 if (from != to) {
                     pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
-                    this.loadFile(this.currFile);
+                    this.loadFileAsync(this.currFile);
                 }
             });
 
