@@ -463,7 +463,7 @@ export class Editor extends srceditor.Editor {
         return file.getExtension() == "blocks"
     }
 
-    loadFile(file: pkg.File): Promise<void> {
+    loadFileAsync(file: pkg.File): Promise<void> {
         this.currSource = file.content;
         this.typeScriptSaveable = false;
         this.setDiagnostics(file)

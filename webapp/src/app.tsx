@@ -1420,9 +1420,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             let previousEditor = this.editor;
             this.editor = editorOverride || this.pickEditorFor(this.editorFile)
             this.allEditors.forEach(e => e.setVisible(e == this.editor))
-            return previousEditor ? previousEditor.unloadFile() : Promise.resolve();
+            return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
         })
-        .then(() => { return this.editor.loadFile(this.editorFile); })
+        .then(() => { return this.editor.loadFileAsync(this.editorFile); })
         .then(() => {
             this.saveFile(); // make sure state is up to date
             this.typecheck();

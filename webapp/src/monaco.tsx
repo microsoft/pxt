@@ -702,7 +702,7 @@ export class Editor extends srceditor.Editor {
         this.editor.setValue(content);
     }
 
-    loadFile(file: pkg.File): Promise<void> {
+    loadFileAsync(file: pkg.File): Promise<void> {
         let mode = "text";
         this.currSource = file.content;
 
@@ -806,8 +806,9 @@ export class Editor extends srceditor.Editor {
             });
     }
 
-    unloadFile(): Promise<void> {
+    unloadFileAsync(): Promise<void> {
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
+            // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
         }
         return Promise.resolve();

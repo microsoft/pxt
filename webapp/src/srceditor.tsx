@@ -67,7 +67,7 @@ export class Editor {
     snapshotState(): any {
         return null
     }
-    unloadFile(): Promise<void> { return Promise.resolve() }
+    unloadFileAsync(): Promise<void> { return Promise.resolve() }
 
     isIncomplete() {
         return false
@@ -85,7 +85,7 @@ export class Editor {
      loadFile
     *******************************/
 
-    loadFile(file: pkg.File): Promise<void> {
+    loadFileAsync(file: pkg.File): Promise<void> {
         this.currSource = file.content
         this.setDiagnostics(file, this.snapshotState())
         return Promise.resolve();
