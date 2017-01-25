@@ -177,10 +177,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (scriptid) {
-            let res = this.getData(`cloud:${scriptid}`)
+            let res = this.getData(`cloud-search:${scriptid}`)
             if (res) {
-                if (!this.prevUrlData) this.prevUrlData = [res]
-                else this.prevUrlData.push(res)
+                if (res.statusCode !== 404) {
+                    if (!this.prevUrlData) this.prevUrlData = [res]
+                    else this.prevUrlData.push(res)
+                }
             }
         }
         return this.prevUrlData;

@@ -114,12 +114,15 @@ export function cookieNotification() {
     }
 }
 
-export function handleNetworkError(e: any) {
+export function handleNetworkError(e: any, ignoredCodes?: number[]) {
     let statusCode = parseInt(e.statusCode);
 
     if (e.isOffline || statusCode === 0) {
         warningNotification(lf("Network request failed; you appear to be offline"));
     } else if (!isNaN(statusCode) && statusCode !== 200) {
+        if (ignoredCodes && ignoredCodes.indexOf(statusCode) !== -1) {
+            return e;
+        }
         warningNotification(lf("Network request failed"));
     }
 
