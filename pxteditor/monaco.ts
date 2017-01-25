@@ -116,7 +116,39 @@ namespace pxt.vs {
         });
     }
 
-    export function initMonacoAsync(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
+    export function initMonacoAsync(element: HTMLElement): Promise<monaco.editor.IStandaloneCodeEditor> {
+        return new Promise<monaco.editor.IStandaloneCodeEditor>((resolve, reject) => {
+            if (typeof((window as any).monaco) === 'object') {
+                // monaco is already loaded
+                resolve(createEditor(element));
+                return;
+            }
+
+            let onGotAmdLoader = () => {
+                (window as any).require.config({ paths: { 'vs': '/cdn/vs' }});
+
+                // Load monaco
+                (window as any).require(['vs/editor/editor.main'], () => {
+                    setupMonaco();
+
+                    resolve(createEditor(element));
+                });
+            };
+
+            // Load AMD loader if necessary
+            if (!(<any>window).require) {
+                let loaderScript = document.createElement('script');
+                loaderScript.type = 'text/javascript';
+                loaderScript.src = '/cdn/vs/loader.js';
+                loaderScript.addEventListener('load', onGotAmdLoader);
+                document.body.appendChild(loaderScript);
+            } else {
+                onGotAmdLoader();
+            }
+        })
+    }
+
+    function setupMonaco() {
         if (!monaco.languages.typescript) return;
 
         initAsmMonarchLanguage();
@@ -142,7 +174,9 @@ namespace pxt.vs {
 
         // maximum idle time
         monaco.languages.typescript.typescriptDefaults.setMaximunWorkerIdleTime(20 * 60 * 1000);
+    }
 
+    export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         let editor = monaco.editor.create(element, {
             model: null,
             //ariaLabel: lf("JavaScript Editor"),

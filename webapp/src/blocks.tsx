@@ -456,15 +456,15 @@ export class Editor extends srceditor.Editor {
     setViewState(pos: {}) { }
 
     getCurrentSource() {
-        Util.assert(this.editor != undefined); // Guarded
-        return this.saveBlockly();
+        return this.editor ? this.saveBlockly() : this.currSource;
     }
 
     acceptsFile(file: pkg.File) {
         return file.getExtension() == "blocks"
     }
 
-    loadFile(file: pkg.File) {
+    loadFile(file: pkg.File): Promise<void> {
+        this.currSource = file.content;
         this.typeScriptSaveable = false;
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
@@ -474,6 +474,7 @@ export class Editor extends srceditor.Editor {
             this.filterToolbox(null);
         }
         this.currFile = file;
+        return Promise.resolve();
     }
 
     public switchToTypeScript() {

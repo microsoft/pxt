@@ -127,14 +127,17 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    loadFile(file: pkg.File) {
+    loadFile(file: pkg.File): Promise<void> {
         this.config = JSON.parse(file.content)
         this.setDiagnostics(file, this.snapshotState())
         this.changeMade = false;
+        return Promise.resolve();
     }
 
-    unloadFile () {
-        if (this.changeMade)
-            pkg.getEditorPkg(pkg.mainPkg).onupdate();
+    unloadFile(): Promise<void> {
+        if (this.changeMade) {
+            return this.parent.reloadHeaderAsync();
+        }
+        return Promise.resolve();
     }
 }

@@ -1411,31 +1411,36 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         if (this.state.currFile == this.editorFile && !editorOverride)
             return;
-        if (this.state.currFile && this.editor)
-            this.editor.unloadFile();
         this.saveSettings();
 
-        this.saveFile(); // before change
+        // save file before change
+        this.saveFileAsync()
+        .then(() => {
+            this.editorFile = this.state.currFile;
+            let previousEditor = this.editor;
+            this.editor = editorOverride || this.pickEditorFor(this.editorFile)
+            this.allEditors.forEach(e => e.setVisible(e == this.editor))
+            return previousEditor ? previousEditor.unloadFile() : Promise.resolve();
+        })
+        .then(() => { return this.editor.loadFile(this.editorFile); })
+        .then(() => {
+            this.saveFile(); // make sure state is up to date
+            this.typecheck();
 
-        this.editorFile = this.state.currFile;
-        this.editor = editorOverride || this.pickEditorFor(this.editorFile)
-        this.editor.loadFile(this.editorFile)
-        this.allEditors.forEach(e => e.setVisible(e == this.editor))
+            let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+            if (e)
+                this.editor.setViewState(e.pos)
 
-        this.saveFile(); // make sure state is up to date
-        this.typecheck();
+            SideDocs.notify({
+                type: "fileloaded",
+                name: this.editorFile.getName(),
+                locale: pxt.Util.localeInfo()
+            } as pxsim.SimulatorFileLoadedMessage)
 
-        let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
-        if (e)
-            this.editor.setViewState(e.pos)
-
-        SideDocs.notify({
-            type: "fileloaded",
-            name: this.editorFile.getName(),
-            locale: pxt.Util.localeInfo()
-        } as pxsim.SimulatorFileLoadedMessage)
-
-        if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
+            if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
+        }).finally(() => {
+            this.forceUpdate();
+        })
     }
 
     setFile(fn: pkg.File) {
@@ -1893,6 +1898,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return Promise.resolve();
 
         let promise = Promise.resolve().then(() => {
+            return open ? this.textEditor.loadMonaco() : Promise.resolve();
+        }).then(() => {
             let src = this.editor.saveToTypeScript();
 
             if (!src) return Promise.resolve();
@@ -1911,7 +1918,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         });
 
         if (open) {
-            return core.showLoadingAsync(lf("switching to JavaScript..."), promise);
+            return core.showLoadingAsync(lf("switching to JavaScript..."), promise, 0);
         } else {
             return promise;
         }
