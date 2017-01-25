@@ -337,8 +337,9 @@ namespace pxt.github {
                     return Promise.resolve<string>(resp.json.id);
                 } else if (resp.statusCode == 404 && method == 'PATCH') {
                     return Promise.reject(resp.statusCode);
-                }
-                return Promise.reject(resp.text);
+                } else if (resp.statusCode == 404) {
+                    return Promise.reject("Make sure to add the ``gist`` scope to your token. " + resp.text);
+                } return Promise.reject(resp.text);
             });
     }
 }
