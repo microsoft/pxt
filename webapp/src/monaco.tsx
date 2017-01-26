@@ -392,6 +392,7 @@ export class Editor extends srceditor.Editor {
                 } else
                     cursor += (insertText.length);
 
+                this.editor.pushUndoStop();
                 this.editor.executeEdits("", [
                     {
                         identifier: { major: 0, minor: 0 },
@@ -400,10 +401,10 @@ export class Editor extends srceditor.Editor {
                         forceMoveMarkers: false
                     }
                 ]);
+                this.editor.pushUndoStop();
 
                 let endPos = model.getPositionAt(cursor);
                 this.editor.setPosition(endPos);
-                this.formatCode();
                 this.editor.focus();
             });
 
@@ -669,6 +670,7 @@ export class Editor extends srceditor.Editor {
                             insertText = insertText.replace('{{}}', '');
                         } else
                             cursor += (insertText.length);
+                        monacoEditor.editor.pushUndoStop();
                         monacoEditor.editor.executeEdits("", [
                             {
                                 identifier: { major: 0, minor: 0 },
@@ -677,9 +679,9 @@ export class Editor extends srceditor.Editor {
                                 forceMoveMarkers: false
                             }
                         ]);
+                        monacoEditor.editor.pushUndoStop();
                         let endPos = model.getPositionAt(cursor);
                         monacoEditor.editor.setPosition(endPos);
-                        monacoEditor.formatCode();
                         monacoEditor.editor.focus();
                         //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
                     };
