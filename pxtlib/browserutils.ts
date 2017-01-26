@@ -97,8 +97,9 @@ namespace pxt.BrowserUtils {
     }
 
     export function isTouchEnabled(): boolean {
-        return typeof document !== "undefined" &&
-            ('ontouchstart' in document.documentElement);
+        return typeof window !== "undefined" &&
+            ('ontouchstart' in window               // works on most browsers 
+            || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
     export function os(): string {
