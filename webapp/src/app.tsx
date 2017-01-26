@@ -166,6 +166,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         if (this.state.mode != ScriptSearchMode.Projects
             || sandbox
             || this.state.searchFor
+            || pxt.options.light
             || !pxt.appTarget.appTheme.projectGallery) return [];
         let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.projectGallery)}`) as gallery.Gallery[];
         if (res) this.prevGalleries = Util.concat(res.map(g => g.cards));
