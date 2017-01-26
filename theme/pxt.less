@@ -69,7 +69,10 @@
     transition-timing-function: linear;
 }
 
-#filelist:hover .simtoolbar {
+#filelist .simtoolbar.has-touch {
+    opacity: 1;
+}
+#filelist:hover .simtoolbar:not(.has-touch) {
     opacity: 1;
 }
 

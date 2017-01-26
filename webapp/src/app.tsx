@@ -2414,7 +2414,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                     <div id="filelist" className="ui items" role="complementary">
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
-                        <div className="ui item grid centered portrait hide simtoolbar">
+                        <div className={`ui item grid centered portrait hide simtoolbar ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''}`}>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
