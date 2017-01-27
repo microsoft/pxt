@@ -130,6 +130,7 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else {
                 pxt.tickEvent("typescript.discardText");
+                this.overrideFile(this.parent.blocksEditor.saveToTypeScript());
                 this.parent.setFile(bf);
             }
         })
