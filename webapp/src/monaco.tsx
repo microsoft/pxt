@@ -273,6 +273,7 @@ export class Editor extends srceditor.Editor {
                 label: lf("Save"),
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
                 keybindingContext: "!editorReadonly",
+                precondition: "!editorReadonly",
                 contextMenuGroupId: "0_pxtnavigation",
                 contextMenuOrder: 0.2,
                 run: () => Promise.resolve(this.parent.typecheckNow())
@@ -283,6 +284,7 @@ export class Editor extends srceditor.Editor {
                 label: lf("Run Simulator"),
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
+                precondition: "!editorReadonly",
                 contextMenuGroupId: "0_pxtnavigation",
                 contextMenuOrder: 0.21,
                 run: () => Promise.resolve(this.parent.runSimulator())
@@ -294,6 +296,7 @@ export class Editor extends srceditor.Editor {
                     label: lf("Download"),
                     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                     keybindingContext: "!editorReadonly",
+                    precondition: "!editorReadonly",
                     contextMenuGroupId: "0_pxtnavigation",
                     contextMenuOrder: 0.22,
                     run: () => Promise.resolve(this.parent.compile())
@@ -328,6 +331,7 @@ export class Editor extends srceditor.Editor {
                     id: "reference",
                     label: lf("Help"),
                     keybindingContext: "!editorReadonly && editorHasReference",
+                    precondition: "!editorReadonly && editorHasReference",
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 0.1,
                     run: () => Promise.resolve(this.loadReference())
