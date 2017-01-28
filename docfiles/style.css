@@ -117,6 +117,10 @@ code.lang-codecard
     color:transparent;   
 }
 
+code.lang-typescript {
+    background: none !important;
+}
+
 /* Limit width of text so that it's readable
  */
  

@@ -298,11 +298,11 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     console.log(`Updating the monaco editor bits`)
     jake.mkdirP("built/web/vs/editor")
     let monacotypescriptcontribution = fs.readFileSync("node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js", "utf8")
-    monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
+    monacotypescriptcontribution = monacotypescriptcontribution.replace('["require","exports"]', '["require","exports","vs/editor/edcore.main"]')
 
     let monacoeditor = fs.readFileSync("node_modules/monaco-editor/dev/vs/editor/editor.main.js", "utf8")
     // Remove certain actions from the context menu
-    monacoeditor = monacoeditor.replace(/((GoToDefinitionAction.ID|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
+    monacoeditor = monacoeditor.replace(/((GoToDefinitionAction|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
     monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
@@ -402,6 +402,14 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
 
 ju.catFiles("built/web/semantic.js",
     expand(["node_modules/semantic-ui-less/definitions/globals",
-        "node_modules/semantic-ui-less/definitions/modules",
+        "node_modules/semantic-ui-less/definitions/modules/accordion.js",
+        "node_modules/semantic-ui-less/definitions/modules/checkbox.js",
+        "node_modules/semantic-ui-less/definitions/modules/dimmer.js",
+        "node_modules/semantic-ui-less/definitions/modules/dropdown.js",
+        "node_modules/semantic-ui-less/definitions/modules/embed.js",
+        "node_modules/semantic-ui-less/definitions/modules/modal.js",
+        "node_modules/semantic-ui-less/definitions/modules/popup.js",
+        "node_modules/semantic-ui-less/definitions/modules/search.js",
+        "node_modules/semantic-ui-less/definitions/modules/transition.js",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")

@@ -21,24 +21,29 @@ export class Editor {
     setVisible(v: boolean) {
         this.isVisible = v;
     }
-    getViewState(): ViewState {
-        return {}
-    }
-    getCurrentSource(): string {
-        return this.currSource
-    }
-    loadFile(file: pkg.File): void {
-        this.currSource = file.content
-        this.setDiagnostics(file, this.snapshotState())
-    }
-    setDiagnostics(file: pkg.File, snapshot: any): void { }
-    setViewState(view: ViewState): void { }
+
+    /*******************************
+     Methods called before loadFile
+      this.editor may be undefined
+      Always check that this.editor exists
+    *******************************/
+
     acceptsFile(file: pkg.File) {
         return false
     }
+
+    getViewState(): ViewState {
+        return {}
+    }
+
+    getCurrentSource(): string {
+        return this.currSource
+    }
+
     getId() {
         return "editor"
     }
+
     displayOuter() {
         return (
             <div className='full-abs' key={this.getId() } id={this.getId() } style={{ display: this.isVisible ? "block" : "none" }}>
@@ -49,31 +54,56 @@ export class Editor {
     display(): JSX.Element {
         return null
     }
+
+    beforeCompile() { }
+
     isReady = false;
     prepare() {
         this.isReady = true;
     }
+
     resize(e?: Event) { }
-    domUpdate() { }
-    saveToTypeScript(): string {
-        return null
-    }
-    isIncomplete() {
-        return false
-    }
+
     snapshotState(): any {
         return null
     }
+    unloadFileAsync(): Promise<void> { return Promise.resolve() }
+
+    isIncomplete() {
+        return false
+    }
+
     hasUndo() { return true; }
     hasRedo() { return true; }
     undo() { }
     redo() { }
+
     zoomIn() { }
     zoomOut() { }
 
-    beforeCompile() { }
+    /*******************************
+     loadFile
+    *******************************/
 
-    unloadFile() { }
+    loadFileAsync(file: pkg.File): Promise<void> {
+        this.currSource = file.content
+        this.setDiagnostics(file, this.snapshotState())
+        return Promise.resolve();
+    }
+
+    /*******************************
+     Methods called after loadFile
+      this.editor != undefined
+    *******************************/
+
+    domUpdate() { }
+
+    setDiagnostics(file: pkg.File, snapshot: any): void { }
+    setViewState(view: ViewState): void { }
+
+    saveToTypeScript(): string {
+        return null
+    }
 
     highlightStatement(brk: pxtc.LocationInfo) { }
 

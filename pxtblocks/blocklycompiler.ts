@@ -35,6 +35,7 @@ namespace pxt.blocks {
         "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while",
         "with"];
 
+    let placeholders: Map<Map<any>> = {};
 
     function stringLit(s: string) {
         if (s.length > 20 && /\n/.test(s))
@@ -341,27 +342,34 @@ namespace pxt.blocks {
     function attachPlaceholderIf(e: Environment, b: B.Block, n: string) {
         // Ugly hack to keep track of the type we want there.
         if (!b.getInputTargetBlock(n)) {
-            let i = b.inputList.filter(x => x.name == n)[0];
-            assert(i != null);
-            i.connection.targetConnection = new B.Connection(mkPlaceholderBlock(e), 0);
+            if (!placeholders[b.id]) {
+                placeholders[b.id] = {};
+            }
+
+            placeholders[b.id][n] = mkPlaceholderBlock(e);
         }
     }
 
-    function removeAllPlaceholders(w: B.Workspace) {
-        w.getAllBlocks().forEach((b: B.Block) => {
-            b.inputList.forEach((i: B.Input) => {
-                if (i.connection && i.connection.targetBlock() != null
-                    && i.connection.targetBlock().type == "placeholder")
-                    i.connection.targetConnection = null;
-            });
-        });
+    function getInputTargetBlock(b: B.Block, n: string) {
+        const res = b.getInputTargetBlock(n);
+
+        if (!res) {
+            return placeholders[b.id] && placeholders[b.id][n];
+        }
+        else {
+            return res
+        }
+    }
+
+    function removeAllPlaceholders() {
+        placeholders = {};
     }
 
     // Unify the *return* type of the parameter [n] of block [b] with point [p].
     function unionParam(e: Environment, b: B.Block, n: string, p: Point) {
         try {
             attachPlaceholderIf(e, b, n);
-            union(returnType(e, b.getInputTargetBlock(n)), p);
+            union(returnType(e, getInputTargetBlock(b, n)), p);
         } catch (e) {
             throwBlockError("The parameter " + n + " of this block is of the wrong type. More precisely: " + e, b);
         }
@@ -395,8 +403,8 @@ namespace pxt.blocks {
                             case "EQ": case "NEQ":
                                 attachPlaceholderIf(e, b, "A");
                                 attachPlaceholderIf(e, b, "B");
-                                let p1 = returnType(e, b.getInputTargetBlock("A"));
-                                let p2 = returnType(e, b.getInputTargetBlock("B"));
+                                let p1 = returnType(e, getInputTargetBlock(b, "A"));
+                                let p2 = returnType(e, getInputTargetBlock(b, "B"));
                                 try {
                                     union(p1, p2);
                                 } catch (e) {
@@ -431,7 +439,7 @@ namespace pxt.blocks {
                         let x = escapeVarName(b.getFieldValue("VAR"), e);
                         let p1 = lookup(e, x).type;
                         attachPlaceholderIf(e, b, "VALUE");
-                        let rhs = b.getInputTargetBlock("VALUE");
+                        let rhs = getInputTargetBlock(b, "VALUE");
                         if (rhs) {
                             let tr = returnType(e, rhs);
                             try {
@@ -521,8 +529,8 @@ namespace pxt.blocks {
 
     function compileArithmetic(e: Environment, b: B.Block, comments: string[]): JsNode {
         let bOp = b.getFieldValue("OP");
-        let left = b.getInputTargetBlock("A");
-        let right = b.getInputTargetBlock("B");
+        let left = getInputTargetBlock(b, "A");
+        let right = getInputTargetBlock(b, "B");
         let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
         let t = returnType(e, left).type;
 
@@ -541,21 +549,21 @@ namespace pxt.blocks {
     }
 
     function compileModulo(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let left = b.getInputTargetBlock("DIVIDEND");
-        let right = b.getInputTargetBlock("DIVISOR");
+        let left = getInputTargetBlock(b, "DIVIDEND");
+        let right = getInputTargetBlock(b, "DIVISOR");
         let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
         return H.mkSimpleCall("%", args);
     }
 
     function compileMathOp2(e: Environment, b: B.Block, comments: string[]): JsNode {
         let op = b.getFieldValue("op");
-        let x = compileExpression(e, b.getInputTargetBlock("x"), comments);
-        let y = compileExpression(e, b.getInputTargetBlock("y"), comments);
+        let x = compileExpression(e, getInputTargetBlock(b, "x"), comments);
+        let y = compileExpression(e, getInputTargetBlock(b, "y"), comments);
         return H.mathCall(op, [x, y])
     }
 
     function compileMathOp3(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let x = compileExpression(e, b.getInputTargetBlock("x"), comments);
+        let x = compileExpression(e, getInputTargetBlock(b, "x"), comments);
         return H.mathCall("abs", [x]);
     }
 
@@ -567,7 +575,7 @@ namespace pxt.blocks {
         let last: JsNode;
         let i = 0;
         while (true) {
-            const val = b.getInputTargetBlock("ADD" + i);
+            const val = getInputTargetBlock(b, "ADD" + i);
             i++;
 
             if (!val) {
@@ -607,7 +615,7 @@ namespace pxt.blocks {
     }
 
     function compileNot(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let expr = compileExpression(e, b.getInputTargetBlock("BOOL"), comments);
+        let expr = compileExpression(e, getInputTargetBlock(b, "BOOL"), comments);
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
@@ -620,7 +628,7 @@ namespace pxt.blocks {
     }
 
     function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let expr = compileExpression(e, b.getInputTargetBlock("limit"), comments);
+        let expr = compileExpression(e, getInputTargetBlock(b, "limit"), comments);
         let v = extractNumberLit(expr)
         if (v != null)
             return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
@@ -798,8 +806,8 @@ namespace pxt.blocks {
         let stmts: JsNode[] = [];
         // Notice the <= (if there's no else-if, we still compile the primary if).
         for (let i = 0; i <= b.elseifCount_; ++i) {
-            let cond = compileExpression(e, b.getInputTargetBlock("IF" + i), comments);
-            let thenBranch = compileStatements(e, b.getInputTargetBlock("DO" + i));
+            let cond = compileExpression(e, getInputTargetBlock(b, "IF" + i), comments);
+            let thenBranch = compileStatements(e, getInputTargetBlock(b, "DO" + i));
             let startNode = mkText("if (")
             if (i > 0) {
                 startNode = mkText("else if (")
@@ -817,7 +825,7 @@ namespace pxt.blocks {
             elseNode.glueToBlock = true
             append(stmts, [
                 elseNode,
-                compileStatements(e, b.getInputTargetBlock("ELSE"))
+                compileStatements(e, getInputTargetBlock(b, "ELSE"))
             ])
         }
         return stmts;
@@ -825,10 +833,10 @@ namespace pxt.blocks {
 
     function compileControlsFor(e: Environment, b: B.Block, comments: string[]): JsNode[] {
         let bVar = escapeVarName(b.getFieldValue("VAR"), e);
-        let bTo = b.getInputTargetBlock("TO");
-        let bDo = b.getInputTargetBlock("DO");
-        let bBy = b.getInputTargetBlock("BY");
-        let bFrom = b.getInputTargetBlock("FROM");
+        let bTo = getInputTargetBlock(b, "TO");
+        let bDo = getInputTargetBlock(b, "DO");
+        let bBy = getInputTargetBlock(b, "BY");
+        let bFrom = getInputTargetBlock(b, "FROM");
         let incOne = !bBy || (bBy.type.match(/^math_number/) && extractNumber(bBy) == 1)
 
         let binding = lookup(e, bVar);
@@ -847,8 +855,8 @@ namespace pxt.blocks {
     }
 
     function compileControlsRepeat(e: Environment, b: B.Block, comments: string[]): JsNode[] {
-        let bound = compileExpression(e, b.getInputTargetBlock("TIMES"), comments);
-        let body = compileStatements(e, b.getInputTargetBlock("DO"));
+        let bound = compileExpression(e, getInputTargetBlock(b, "TIMES"), comments);
+        let body = compileStatements(e, getInputTargetBlock(b, "DO"));
         let valid = (x: string) => !lookup(e, x)
         let name = "i";
         for (let i = 0; !valid(name); i++)
@@ -862,8 +870,8 @@ namespace pxt.blocks {
     }
 
     function compileWhile(e: Environment, b: B.Block, comments: string[]): JsNode[] {
-        let cond = compileExpression(e, b.getInputTargetBlock("COND"), comments);
-        let body = compileStatements(e, b.getInputTargetBlock("DO"));
+        let cond = compileExpression(e, getInputTargetBlock(b, "COND"), comments);
+        let body = compileStatements(e, getInputTargetBlock(b, "DO"));
         return [
             mkText("while ("),
             cond,
@@ -873,7 +881,7 @@ namespace pxt.blocks {
     }
 
     function compileForever(e: Environment, b: B.Block): JsNode {
-        let bBody = b.getInputTargetBlock("HANDLER");
+        let bBody = getInputTargetBlock(b, "HANDLER");
         let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
     }
@@ -921,7 +929,7 @@ namespace pxt.blocks {
 
     function compileSet(e: Environment, b: B.Block, comments: string[]): JsNode {
         let bVar = escapeVarName(b.getFieldValue("VAR"), e);
-        let bExpr = b.getInputTargetBlock("VALUE");
+        let bExpr = getInputTargetBlock(b, "VALUE");
         let binding = lookup(e, bVar);
         let isDef = false
         if (!binding.assigned)
@@ -941,7 +949,7 @@ namespace pxt.blocks {
 
     function compileChange(e: Environment, b: B.Block, comments: string[]): JsNode {
         let bVar = escapeVarName(b.getFieldValue("VAR"), e);
-        let bExpr = b.getInputTargetBlock("VALUE");
+        let bExpr = getInputTargetBlock(b, "VALUE");
         let binding = lookup(e, bVar);
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
@@ -972,7 +980,7 @@ namespace pxt.blocks {
         if (f)
             return mkText(f);
         else
-            return compileExpression(e, b.getInputTargetBlock(p.field), comments)
+            return compileExpression(e, getInputTargetBlock(b, p.field), comments)
     }
 
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): JsNode {
@@ -1031,20 +1039,20 @@ namespace pxt.blocks {
 
     function compileArg(e: Environment, b: B.Block, arg: string, comments: string[]): JsNode {
         // b.getFieldValue may be string, numbers
-        const argb = b.getInputTargetBlock(arg);
+        const argb = getInputTargetBlock(b, arg);
         if (argb) return compileExpression(e, argb, comments);
         return mkText(b.getFieldValue(arg))
     }
 
     function compileStartEvent(e: Environment, b: B.Block): JsNode {
-        const bBody = b.getInputTargetBlock("HANDLER");
+        const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
         return body;
     }
 
     function compileEvent(e: Environment, b: B.Block, stdfun: StdFunc, args: string[], ns: string, comments: string[]): JsNode {
         const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
-        const bBody = b.getInputTargetBlock("HANDLER");
+        const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
         let argumentDeclaration: JsNode;
 
@@ -1271,6 +1279,7 @@ namespace pxt.blocks {
         const e = mkEnv(w, blockInfo);
         infer(e, w);
         const compiled = compileStatementBlock(e, b)
+        removeAllPlaceholders();
         return tdASTtoTS(compiled);
     }
 
@@ -1319,7 +1328,7 @@ namespace pxt.blocks {
 
             return stmtsVariables.concat(stmtsMain)
         } finally {
-            removeAllPlaceholders(w);
+            removeAllPlaceholders();
         }
 
         return [] // unreachable

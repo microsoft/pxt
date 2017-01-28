@@ -670,13 +670,30 @@ namespace ts.pxtc.service {
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
     let lastFuse: Fuse;
+    let builtinItems: SearchInfo[];
+    let tbSubset: Map<boolean>;
 
     export interface OpArg {
         fileName?: string;
         fileContent?: string;
         position?: number;
         options?: CompileOptions;
-        search?: string;
+        search?: SearchOptions;
+    }
+
+    export interface SearchOptions {
+        subset?: Map<boolean>;
+        term: string;
+    }
+
+    export interface SearchInfo {
+        id: string;
+        name: string;
+        qName?: string;
+        block?: string;
+        namespace?: string;
+        jsdoc?: string;
+        field?: [string, string];
     }
 
     function fileDiags(fn: string) {
@@ -780,6 +797,36 @@ namespace ts.pxtc.service {
             const search = v.search;
             const blockInfo = blocksInfoOp(); // cache
 
+            if (!builtinItems) {
+                builtinItems = [];
+                for (const id in pxt.blocks.helpResources) {
+                    const helpItem = pxt.blocks.helpResources[id];
+
+                    if (helpItem.operators) {
+                        for (const op in helpItem.operators) {
+                            const opValues = helpItem.operators[op];
+                            opValues.forEach(v => builtinItems.push({
+                                id,
+                                name: helpItem.name,
+                                jsdoc: helpItem.tooltip,
+                                block: v,
+                                field: [op, v]
+                            }));
+                        }
+                    }
+                    else {
+                        builtinItems.push({
+                            id,
+                            name: helpItem.name,
+                            jsdoc: helpItem.tooltip
+                        });
+                    }
+
+                }
+            }
+
+            let subset: SymbolInfo[];
+
             const fnweight = (fn: ts.pxtc.SymbolInfo): number => {
                 const fnw = fn.attributes.weight || 50;
                 const nsInfo = blockInfo.apis.byQName[fn.namespace];
@@ -790,13 +837,43 @@ namespace ts.pxtc.service {
             }
 
             if (!lastFuse) {
-                const blockInfo = blocksInfoOp(); // cache  
+                const blockInfo = blocksInfoOp(); // cache
                 const weights: pxt.Map<number> = {};
+                let builtinSearchSet: SearchInfo[];
+
+                if (search.subset) {
+                    tbSubset = search.subset;
+                    builtinSearchSet = builtinItems.filter(s => tbSubset[s.id]);
+                }
+
+                if (tbSubset) {
+                    subset = blockInfo.blocks.filter(s => tbSubset[s.attributes.blockId]);
+                }
+                else {
+                    subset = blockInfo.blocks;
+                    builtinSearchSet = builtinItems;
+                }
+
+                let searchSet: SearchInfo[] = subset.map(s => {
+                    return {
+                        id: s.attributes.blockId,
+                        qName: s.qName,
+                        name: s.name,
+                        nameSpace: s.namespace,
+                        block: s.attributes.block,
+                        jsDoc: s.attributes.jsDoc
+                    };
+                });
+
+
                 let mw = 0;
-                blockInfo.blocks.forEach(b => {
+                subset.forEach(b => {
                     const w = weights[b.qName] = fnweight(b);
                     mw = Math.max(mw, w);
                 });
+
+                searchSet = searchSet.concat(builtinSearchSet);
+
                 const fuseOptions = {
                     shouldSort: true,
                     threshold: 0.6,
@@ -809,19 +886,19 @@ namespace ts.pxtc.service {
                     keys: [
                         { name: 'name', weight: 0.5 },
                         { name: 'namespace', weight: 0.3 },
-                        { name: 'attributes.block', weight: 0.7 },
-                        { name: 'attributes.jsDoc', weight: 0.1 }
+                        { name: 'block', weight: 0.7 },
+                        { name: 'jsDoc', weight: 0.1 }
                     ],
                     sortFn: function (a: any, b: any): number {
-                        const wa = 1 - weights[a.item.qName] / mw;
-                        const wb = 1 - weights[b.item.qName] / mw;
+                        const wa = a.qName ?  1 - weights[a.item.qName] / mw : 1;
+                        const wb = b.qName ? 1 - weights[b.item.qName] / mw : 1;
                         // allow 10% wiggle room for weights
-                        return a.score * (1 + wa / 10) - b.score * (1 + wb / 10);
+                        return a.score  * (1 + wa / 10) - b.score * (1 + wb / 10);
                     }
                 };
-                lastFuse = new Fuse(blockInfo.blocks, fuseOptions);
+                lastFuse = new Fuse(searchSet, fuseOptions);
             }
-            const fns = lastFuse.search(search)
+            const fns = lastFuse.search(search.term)
                 .slice(0, SEARCH_RESULT_COUNT);
             return fns;
         }

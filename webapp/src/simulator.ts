@@ -115,7 +115,7 @@ export function isDirty(): boolean { // in need of a restart?
     return /sepia/.test(driver.container.className);
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult) {
+export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean) {
     pxsim.U.removeClass(driver.container, "sepia");
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
@@ -125,6 +125,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
+        mute: mute,
         parts: parts,
         debug: debug,
         fnArgs: fnArgs,
@@ -133,6 +134,11 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
     }
 
     driver.run(js, opts);
+}
+
+export function mute(mute: boolean) {
+    driver.mute(mute);
+    $debugger.empty();
 }
 
 export function stop(unload?: boolean) {

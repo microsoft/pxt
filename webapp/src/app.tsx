@@ -40,6 +40,14 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 let lf = Util.lf
 
+// Polyfill for Uint8Array.slice for IE and Safari
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
+if (!Uint8Array.prototype.slice) {
+    Object.defineProperty(Uint8Array.prototype, 'slice', {
+        value: Array.prototype.slice
+    });
+}
+
 export interface FileHistoryEntry {
     id: string;
     name: string;
@@ -78,6 +86,7 @@ interface IAppState {
     showBlocks?: boolean;
     showParts?: boolean;
     fullscreen?: boolean;
+    mute?: boolean;
 }
 
 let theEditor: ProjectView;
@@ -165,6 +174,7 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
         if (this.state.mode != ScriptSearchMode.Projects
             || sandbox
             || this.state.searchFor
+            || pxt.options.light
             || !pxt.appTarget.appTheme.projectGallery) return [];
         let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.projectGallery)}`) as gallery.Gallery[];
         if (res) this.prevGalleries = Util.concat(res.map(g => g.cards));
@@ -176,10 +186,12 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (scriptid) {
-            let res = this.getData(`cloud:${scriptid}`)
+            let res = this.getData(`cloud-search:${scriptid}`)
             if (res) {
-                if (!this.prevUrlData) this.prevUrlData = [res]
-                else this.prevUrlData.push(res)
+                if (res.statusCode !== 404) {
+                    if (!this.prevUrlData) this.prevUrlData = [res]
+                    else this.prevUrlData.push(res)
+                }
             }
         }
         return this.prevUrlData;
@@ -747,18 +759,9 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
                 </div>
                 <div className="extra content">
                     <div className="ui two buttons">
-                        {hasPrevious ? <button className={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.previousTutorialStep() }>
-                            <i className="left chevron icon"></i>
-                            Previous
-                        </button> : undefined }
-                        {hasNext ? <button className={`ui right icon green button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.nextTutorialStep() }>
-                            Next
-                            <i className="right chevron icon"></i>
-                        </button> : undefined }
-                        {hasFinish ? <button className={`ui right icon orange button ${!tutorialReady ? 'disabled' : ''}`} onClick={() => this.finishTutorial() }>
-                            <i className="left checkmark icon"></i>
-                            Finish
-                        </button> : undefined }
+                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back")} onClick={() => this.previousTutorialStep() } /> : undefined }
+                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next")} onClick={() => this.nextTutorialStep() } /> : undefined }
+                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} onClick={() => this.finishTutorial() } /> : undefined }
                     </div>
                 </div>
             </div>
@@ -860,6 +863,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const hasRedo = this.props.parent.editor.hasRedo();
 
         const run = true;
+        const restart = run && !simOpts.hideRestart;
 
         return <div className="ui equal width grid right aligned padded">
                     <div className="column mobile only">
@@ -888,7 +892,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="left aligned two wide column">
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
-                                    {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
+                                    {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
                                 </div>
                                 <div className="row" style={{paddingTop: "1rem"}}>
                                     <div className="ui vertical icon small buttons">
@@ -943,7 +947,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                             <div className="left aligned two wide column">
                                 <div className="ui vertical icon small buttons">
                                     {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
-                                    {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
+                                    {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
                                 </div>
                                 <div className="row" style={{paddingTop: "1rem"}}>
                                     <div className="ui vertical icon small buttons">
@@ -1288,7 +1292,6 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     saveFile() {
-        simulator.makeDirty();
         this.saveFileAsync().done()
     }
 
@@ -1298,6 +1301,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         return this.saveTypeScriptAsync()
             .then(() => {
                 let txt = this.editor.getCurrentSource()
+                if (txt != this.editorFile.content)
+                    simulator.makeDirty();
                 return this.editorFile.setContentAsync(txt);
             });
     }
@@ -1361,7 +1366,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
-            this.saveFile();
+            this.saveFile(); // don't wait till save is done
             this.typecheck();
         }
         this.markdownChangeHandler();
@@ -1417,31 +1422,36 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return;
         if (this.state.currFile == this.editorFile && !editorOverride)
             return;
-        if (this.state.currFile && this.editor)
-            this.editor.unloadFile();
         this.saveSettings();
 
-        this.saveFile(); // before change
+        // save file before change
+        this.saveFileAsync()
+        .then(() => {
+            this.editorFile = this.state.currFile;
+            let previousEditor = this.editor;
+            this.editor = editorOverride || this.pickEditorFor(this.editorFile)
+            this.allEditors.forEach(e => e.setVisible(e == this.editor))
+            return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
+        })
+        .then(() => { return this.editor.loadFileAsync(this.editorFile); })
+        .then(() => {
+            this.saveFile(); // make sure state is up to date
+            this.typecheck();
 
-        this.editorFile = this.state.currFile;
-        this.editor = editorOverride || this.pickEditorFor(this.editorFile)
-        this.editor.loadFile(this.editorFile)
-        this.allEditors.forEach(e => e.setVisible(e == this.editor))
+            let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+            if (e)
+                this.editor.setViewState(e.pos)
 
-        this.saveFile(); // make sure state is up to date
-        this.typecheck();
+            SideDocs.notify({
+                type: "fileloaded",
+                name: this.editorFile.getName(),
+                locale: pxt.Util.localeInfo()
+            } as pxsim.SimulatorFileLoadedMessage)
 
-        let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
-        if (e)
-            this.editor.setViewState(e.pos)
-
-        SideDocs.notify({
-            type: "fileloaded",
-            name: this.editorFile.getName(),
-            locale: pxt.Util.localeInfo()
-        } as pxsim.SimulatorFileLoadedMessage)
-
-        if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
+            if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
+        }).finally(() => {
+            this.forceUpdate();
+        })
     }
 
     setFile(fn: pkg.File) {
@@ -1573,6 +1583,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
+                simulator.makeDirty();
                 compiler.newProject();
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
@@ -1898,6 +1909,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             return Promise.resolve();
 
         let promise = Promise.resolve().then(() => {
+            return open ? this.textEditor.loadMonaco() : Promise.resolve();
+        }).then(() => {
             let src = this.editor.saveToTypeScript();
 
             if (!src) return Promise.resolve();
@@ -1916,7 +1929,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         });
 
         if (open) {
-            return core.showLoadingAsync(lf("switching to JavaScript..."), promise);
+            return core.showLoadingAsync(lf("switching to JavaScript..."), promise, 0);
         } else {
             return promise;
         }
@@ -2020,6 +2033,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setState({fullscreen: !this.state.fullscreen});
     }
 
+    toggleMute() {
+        pxt.tickEvent("simulator.mute", {view: 'computer', muteTo: '' + !this.state.mute});
+        simulator.mute(!this.state.mute);
+        this.setState({mute: !this.state.mute});
+    }
+
     openInstructions() {
         pxt.tickEvent("simulator.make");
         compiler.compileAsync({ native: true })
@@ -2088,7 +2107,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp)
+                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
@@ -2306,6 +2325,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const fullscreenTooltip = this.state.fullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
+        const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
         const tutorial = this.state.tutorial;
@@ -2313,6 +2333,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
+        const restart = run && !simOpts.hideRestart;
+        const fullscreen = run && !simOpts.hideFullscreen;
         const blockActive = this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
         const javascriptActive = this.editor == this.textEditor
@@ -2334,7 +2356,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -2342,7 +2364,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                                 {targetTheme.logo || targetTheme.portraitLogo
                                     ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
                                     : <span className="name">{targetTheme.name}</span>}
-                                {targetTheme.portraitLogo ? (<a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className='ui logo portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
+                                {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
                             </span> }
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
@@ -2401,11 +2423,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item grid centered portrait hide simtoolbar">
-                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`}>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
-                                {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
-                                {run ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
+                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
+                            </div>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
+                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
+                                {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
                             </div>
                         </div>
                         <div className="ui item portrait hide">
@@ -2661,9 +2686,6 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
-    for (const u of theme.usbHelp || [])
-        u.path = patchCdn(u.path)
-
 }
 
 function parseHash(): { cmd: string; arg: string } {

@@ -69,7 +69,7 @@
     transition-timing-function: linear;
 }
 
-#filelist:hover .simtoolbar {
+#filelist:hover .simtoolbar, .has-touch #filelist .simtoolbar {
     opacity: 1;
 }
 
@@ -414,11 +414,6 @@ div.simframe > iframe {
 .ui.button.download-button {
     &:extend(.green all);
 }
-/* Blockly Toolbox Buttons */
-.ui.button.blocklyAddPackageButton {
-    &:extend(.grey all);
-    &:extend(.circular all);
-}
 
 /*******************************
              Docs
@@ -455,20 +450,23 @@ div.simframe > iframe {
     transition-timing-function: ease-in;
 }
 
-.blocklySvg {
+svg.blocklySvg {
     background-color: @blocklySvgColor !important;
 }
+#blocksEditor .injectionDiv svg {
+    overflow: visible;
+}
 
-.blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
+span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
 }
 
-.blocklyText {
+text.blocklyText {
     font-size:1rem !important;
 }
 
-.blocklyTreeLabel {
-    font-size:1.25rem !important;
+span.blocklyTreeLabel {
+    font-size:1.25rem;
 }
 
 .blocklyFlyoutButton {
@@ -492,13 +490,13 @@ div.simframe > iframe {
 }
 
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */
-.blocklyTreeRoot div div div div .blocklyTreeRow {
+div.blocklyTreeRoot div div div div div.blocklyTreeRow {
     border-left-width: 12px !important;
     padding-left: 0px !important;
 }
 
-.blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
-    font-size: 1rem !important;
+div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
+    font-size: 1rem;
 }
 
 /* The trash icon inside the toolbox */
@@ -529,7 +527,7 @@ div.simframe > iframe {
 }
 
 /* Blockly toolbox icons */
-.blocklyTreeIcon {
+span.blocklyTreeIcon {
     opacity: 1;
     margin: -0.2em 0.25em 0.0em 0.25em;
     width: 1.18em;
@@ -628,16 +626,6 @@ div.simframe > iframe {
 }
 
 /* Monaco Editor Main tokens */
-.token.ts.identifier:hover, .token.ts.keyword:hover {
-    outline: 1px auto #bdc3c7;
-}
-.token.ts.keyword.if, .token.ts.keyword.else {
-    color: #5B80A5;
-}
-.token.ts.keyword.while:not(.true), .token.ts.keyword.for {
-    color: #5BA55B;
-}
-
 .monaco-editor .highlight-statement {
     background-color: #FFB900;
 }
@@ -818,7 +806,7 @@ Avatar
         display:block;
     }
     /* Blockly */
-    .blocklyTreeRow {
+    div.blocklyTreeRow {
         min-width: 200px;
     }
 }
@@ -826,7 +814,7 @@ Avatar
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     /* Blockly row */
-    .blocklyTreeRow {
+    div.blocklyTreeRow {
         min-width: 200px;
     }
 }
@@ -834,12 +822,12 @@ Avatar
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     /* Blockly */
-    .blocklyTreeRow {
+    div.blocklyTreeRow {
         padding-top: 0.25rem !important;
         padding-bottom: 1.5rem !important;
         border-left-width: 12px !important;
     }
-    .blocklyTreeRoot div div div div .blocklyTreeRow {
+    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
         border-left-width: 18px !important;
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
@@ -848,51 +836,17 @@ Avatar
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    /* Logo */
-    .ui.item.logo img {
-        max-height: 2.5rem;
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
-    }
-    /* Hide the blockly toolbox labels */
-    .blocklyTreeLabel {
-        display: none !important;
-    }
-    .blocklyTreeRow:hover .blocklyTreeLabel{
-        display: none !important;
-        z-index:1000;
-    }
-    .blocklyTreeRow.blocklyTreeSelected:hover .blocklyTreeLabel{
-        display: none !important;
-    }
-    .blocklyTreeIcon {
-        font-size: 1.5rem;
-    }
-    .blocklyTreeRow {
-        height: 2rem;
-        text-align: center;
-    }
-    .blocklyTreeRoot div div div div .blocklyTreeRow {
-        border-left-width: 8px !important;
-    }
-    .blocklyTreeRow{
-        padding-right: 0;
-    }
-    /* Hide the blockly toolbox search */
-    #blocklySearchArea {
-        display: none !important;
-    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
     /* Blockly */
-    .blocklyTreeRow {
+    div.blocklyTreeRow {
         padding-top: 0.5rem !important;
         padding-bottom: 2.0rem !important;
         border-left-width: 12px !important;
     }
-    .blocklyTreeRoot div div div div .blocklyTreeRow {
+    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
         border-left-width: 18px !important;
         padding-top: 0px !important;
         padding-bottom: 1.6rem !important;
@@ -944,6 +898,7 @@ Avatar
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
     .fullscreen #simulator .ui.item:not(.simtoolbar),
+        .fullscreen #simulator .ui.menu,
         .fullscreen #menubar .ui.item:not(.logo),
         .fullscreen #maineditor,
         .fullscreen #editortools {
@@ -1010,7 +965,7 @@ Avatar
         display: none !important;
     }
     /* Blockly */
-    .blocklyTreeLabel {
+    span.blocklyTreeLabel {
         font-size:1rem;
     }
     /* Help card */
@@ -1036,7 +991,7 @@ Avatar
         right: auto;
     }
     /* Blockly */
-    .blocklyTreeLabel {
+    span.blocklyTreeLabel {
         font-size:1rem;
     }
     /* Help card */
@@ -1131,6 +1086,15 @@ Avatar
         right: auto;
         left:1rem;
     }
+    /* Logo */
+    .ui.item.logo img {
+        max-height: 2.5rem;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+    .ui.mini.image {
+        display: block !important;
+    }
 }
 
 /* Mobile */
@@ -1141,17 +1105,38 @@ Avatar
         padding-right: 0;
     }
     /* Blockly */
-    .blocklyTreeLabel {
-        font-size: 0.75rem !important;
-    }
-    .blocklyCheckbox {
+    text.blocklyCheckbox {
         font-size: 17pt !important;
     }
-    .blocklyTreeRoot div div div div .blocklyTreeRow .blocklyTreeLabel {
-        font-size: 0.75rem !important;
+    /* Hide blockly tree labels on mobile */
+    span.blocklyTreeLabel {
+        display: none !important;
     }
+    div.blocklyTreeRow:hover span.blocklyTreeLabel {
+        display: none !important;
+    }
+    div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel {
+        display: none !important;
+    }
+    div.blocklyTreeRow {
+        padding-right: 0;
+        height: 2rem;
+        text-align: center;
+    }
+    div.blocklyTreeRoot div div div div div.blocklyTreeRow {
+        border-left-width: 8px !important;
+    }
+    span.blocklyTreeIcon {
+        font-size: 1.5rem;
+        margin: 0.0em 0.25em 0.0em 0.25em;
+    }
+    /* Blockly trash icon */
     #blocklyTrashIcon {
         font-size: 3rem;
+    }
+    /* Hide the blockly toolbox search */
+    #blocklySearchArea {
+        display: none !important;
     }
     /* Organization logo */
     .organization {
@@ -1164,13 +1149,6 @@ Avatar
     .rtl .organization {
         left:0.5rem;
         right: auto;
-    }
-    .blocklyTreeIcon {
-        margin: 0.25em 0.25em 0.0em 0.0em;
-    }
-    /* Remove margin around the blockly add package buttons */
-    .blocklyAddPackageButton {
-        margin-left: 0 !important;
     }
     .hideEditorFloats #editortools {
         height: 4rem !important;

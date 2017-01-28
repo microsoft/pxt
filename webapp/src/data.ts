@@ -28,6 +28,12 @@ mountVirtualApi("cloud", {
     isOffline: () => !Cloud.isOnline(),
 })
 
+mountVirtualApi("cloud-search", {
+    getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(e => core.handleNetworkError(e, [404])),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline(),
+})
+
 mountVirtualApi("gallery", {
     getAsync: p => gallery.loadGalleryAsync(stripProtocol(p)).catch(core.handleNetworkError),
     expirationTime: p => 3600 * 1000,

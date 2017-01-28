@@ -32,6 +32,7 @@ namespace pxsim {
         fnArgs?: any;
         aspectRatio?: number;
         partDefinitions?: pxsim.Map<PartDefinition>;
+        mute?: boolean;
     }
 
     export interface HwDebugger {
@@ -151,6 +152,10 @@ namespace pxsim {
             this.setState(SimulatorState.Unloaded);
         }
 
+        public mute(mute: boolean) {
+            this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
+        }
+
         private frameCleanupTimeout = 0;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
@@ -209,6 +214,7 @@ namespace pxsim {
                 fnArgs: opts.fnArgs,
                 code: js,
                 partDefinitions: opts.partDefinitions,
+                mute: opts.mute,
             }
 
             this.applyAspectRatio();

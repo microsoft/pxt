@@ -33,6 +33,9 @@ namespace pxt.blocks {
         }
     }
 
+    let usedBlocks: Map<boolean> = {};
+    let updateUsedBlocks = false;
+
     // list of built-in blocks, should be touched.
     const builtinBlocks: Map<{
         block: B.BlockDefinition;
@@ -145,7 +148,7 @@ namespace pxt.blocks {
     function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories: boolean) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
-        if (fn.attributes.shim == "TD_ID" || fn.attributes.blockHidden)
+        if (fn.attributes.blockHidden)
             return;
 
         if (!fn.attributes.deprecated) {
@@ -174,7 +177,7 @@ namespace pxt.blocks {
                     }
                     if (nsn && nsn.attributes.icon) {
                         const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
-                        injectToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
+                        appendToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
                     } else {
@@ -218,6 +221,7 @@ namespace pxt.blocks {
             else {
                 if (showCategories) {
                     category.appendChild(block);
+                    injectToolboxIconCss();
                 } else {
                     tb.appendChild(block);
                 }
@@ -225,30 +229,32 @@ namespace pxt.blocks {
         }
     }
 
-    export function injectToolboxIconCss(className: string, i: string): void {
-        let head = document.head || document.getElementsByTagName('head')[0];
-        let style = document.getElementById('blocklyToolboxIcons') as HTMLStyleElement;
-
-        if (!style) {
-            style = document.createElement('style');
-            style.id = "blocklyToolboxIcons";
-            style.type = 'text/css';
-            head.appendChild(style);
-        }
-
-        if (style.innerText.indexOf(className) > -1) return;
+    let toolboxStyle: HTMLStyleElement;
+    let toolboxStyleBuffer: string = '';
+    export function appendToolboxIconCss(className: string, i: string): void {
+        if (toolboxStyleBuffer.indexOf(className) > -1) return;
 
         const icon = Util.unicodeToChar(i);
-        const cssContent = style.innerText + `
+        toolboxStyleBuffer += `
             .blocklyTreeIcon.${className}::before {
                 content: "${icon}";
             }
         `;
+    }
 
-        if (style.sheet) {
-            style.textContent = cssContent;
+    export function injectToolboxIconCss(): void {
+        if (!toolboxStyle) {
+            toolboxStyle = document.createElement('style');
+            toolboxStyle.id = "blocklyToolboxIcons";
+            toolboxStyle.type = 'text/css';
+            let head = document.head || document.getElementsByTagName('head')[0];
+            head.appendChild(toolboxStyle);
+        }
+
+        if (toolboxStyle.sheet) {
+            toolboxStyle.textContent = toolboxStyleBuffer;
         } else {
-            style.appendChild(document.createTextNode(cssContent));
+            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer));
         }
     }
 
@@ -410,10 +416,18 @@ namespace pxt.blocks {
                     if (syms.length == 0) {
                         console.error(`no instances of ${typeInfo.qName} found`)
                     }
-                    let dd = syms.map(v => [
-                        v.attributes.block || v.attributes.blockId || v.name,
-                        v.namespace + "." + v.name
-                    ]);
+                    const dd = syms.map(v => {
+                        const k = v.attributes.block || v.attributes.blockId || v.name;
+                        return [
+                            v.attributes.blockImage ? {
+                                src: `/static/blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
+                                alt: k,
+                                width: 32,
+                                height: 32
+                            } : k,
+                            v.namespace + "." + v.name
+                        ];
+                    });
                     i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     // if a value is provided, move it first
                     if (pr.shadowValue)
@@ -650,6 +664,17 @@ namespace pxt.blocks {
             }
         }
 
+        if (tb) {
+            usedBlocks = {};
+            const blocks = tb.querySelectorAll("block");
+
+            for (let i = 0; i < blocks.length; i++) {
+                usedBlocks[blocks.item(i).getAttribute("type")] = true;
+            }
+
+            updateUsedBlocks = true;
+        }
+
         return tb;
     }
 
@@ -676,7 +701,7 @@ namespace pxt.blocks {
 
     export let cachedSearchTb: Element;
     export function initSearch(workspace: Blockly.Workspace, tb: Element,
-        searchAsync: (searchFor: string) => Promise<pxtc.SymbolInfo[]>,
+        searchAsync: (searchFor: pxtc.service.SearchOptions) => Promise<pxtc.service.SearchInfo[]>,
         updateToolbox: (tb: Element) => void) {
         if ($(`#blocklySearchArea`).length) return;
 
@@ -730,7 +755,8 @@ namespace pxt.blocks {
                         parentCategoryList.appendChild(category);
                 }
 
-                searchAsync(searchFor).then(blocks => {
+                searchAsync({ term: searchFor, subset: updateUsedBlocks ? usedBlocks : undefined }).then(blocks => {
+                    updateUsedBlocks = false;
                     if (!blocks) return;
                     if (blocks.length == 0) {
                         let label = goog.dom.createDom('label');
@@ -738,35 +764,32 @@ namespace pxt.blocks {
                         category.appendChild(label);
                         return;
                     }
-                    blocks.forEach((fn) => {
-                        let pnames = parameterNames(fn);
-                        let block = createToolboxBlock(this.blockInfo, fn, pnames);
+                    blocks.forEach(info => {
+                        if (tb) {
+                            const type = info.id;
 
-                        if (injectBlockDefinition(this.blockInfo, fn, pnames, block)) {
-                            if (!fn.attributes.deprecated) {
-                                if (fn.attributes.mutateDefaults) {
-                                    const mutationValues = fn.attributes.mutateDefaults.split(";");
-                                    mutationValues.forEach(mutation => {
-                                        const mutatedBlock = block.cloneNode(true);
-                                        mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
-                                        category.appendChild(mutatedBlock);
-                                    });
+                            if (info.field) {
+                                const blocks = tb.querySelectorAll(`block[type="${type}"]`);
+                                for (let i = 0; i < blocks.length; i++) {
+                                    const block = blocks.item(i);
+                                    const f = block.querySelector(`field[name="${info.field[0]}"]`);
+                                    if (f && f.innerHTML === info.field[1]) {
+                                        category.appendChild(block.cloneNode(true));
+                                        return;
+                                    }
                                 }
-                                else {
-                                    category.appendChild(block);
+                            }
+                            else {
+                                // Just grab the first block of this type from the toolbox
+                                const block = tb.querySelector(`block[type="${type}"]`);
+                                if (block) {
+                                    category.appendChild(block.cloneNode(true));
                                 }
                             }
                         }
                     })
                 }).finally(() => {
-                    // update shadow types
                     if (tb) {
-                        $(tb).find('shadow:empty').each((i, shadow) => {
-                            let type = shadow.getAttribute('type');
-                            let b = $(tb).find(`block[type="${type}"]`)[0];
-                            if (b) shadow.innerHTML = b.innerHTML;
-                        })
-
                         updateToolbox(searchTb);
                         blocklySearchInput.className = origClassName;
                     }
@@ -842,6 +865,16 @@ namespace pxt.blocks {
         initToolboxIconPatch();
     }
 
+    function setBuiltinHelpInfo(block: any, id: string) {
+        const info = helpResources[id];
+        setHelpResources(block, id, info.name, info.tooltip, info.url);
+    }
+
+    function installBuiltinHelpInfo(id: string) {
+        const info = helpResources[id];
+        installHelpResources(id, info.name, info.tooltip, info.url)
+    }
+
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
         if (tooltip) block.setTooltip(tooltip);
         if (url) block.setHelpUrl(url);
@@ -876,12 +909,7 @@ namespace pxt.blocks {
         // builtin controls_repeat_ext
         msg.CONTROLS_REPEAT_TITLE = lf("repeat %1 times");
         msg.CONTROLS_REPEAT_INPUT_DO = lf("{id:repeat}do");
-        installHelpResources(
-            'controls_repeat_ext',
-            lf("a loop that repeats and increments an index"),
-            lf("Do some statements several times."),
-            '/blocks/loops/repeat'
-        );
+        installBuiltinHelpInfo('controls_repeat_ext');
 
         // pxt device_while
         Blockly.Blocks['device_while'] = {
@@ -902,12 +930,7 @@ namespace pxt.blocks {
                 this.appendStatementInput("DO")
                     .appendField(lf("{id:while}do"));
 
-                setHelpResources(this,
-                    'device_while',
-                    lf("a loop that repeats while the condition is true"),
-                    lf("Run the same sequence of actions while the condition is met."),
-                    '/blocks/loops/while'
-                );
+                setBuiltinHelpInfo(this, 'device_while');
             }
         };
 
@@ -944,14 +967,15 @@ namespace pxt.blocks {
                 this.appendStatementInput('DO')
                     .appendField(lf("{id:for}do"));
 
+                const info = helpResources['controls_simple_for'];
                 let thisBlock = this;
                 setHelpResources(this,
                     'controls_simple_for',
-                    lf("a loop that repeats the number of times you say"),
+                    info.name,
                     function () {
                         return lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks.", thisBlock.getFieldValue('VAR'));
                     },
-                    '/blocks/loops/for'
+                    info.url
                 );
             },
             /**
@@ -1005,7 +1029,7 @@ namespace pxt.blocks {
             let e = ev as WheelEvent;
             Blockly.terminateDrag_();
             const delta = e.deltaY > 0 ? -1 : 1;
-            const position = Blockly.mouseToSvg(e, ws.getParentSvg());
+            const position = Blockly.utils.mouseToSvg(e, ws.getParentSvg());
             if (e.ctrlKey || e.metaKey)
                 ws.zoom(position.x, position.y, delta);
             else if (ws.scrollbar) {
@@ -1067,6 +1091,7 @@ namespace pxt.blocks {
     }
 
     let lastInvertedCategory: any;
+    export const highlightColorInvertedLuminocityMultiplier = 0.3;
     function initToolboxColor() {
         let appTheme = pxt.appTarget.appTheme;
 
@@ -1102,7 +1127,6 @@ namespace pxt.blocks {
                 }
             };
         } else if (appTheme.invertedToolbox) {
-            const highlightColorInvertedLuminocityMultiplier = 0.3;
             /**
              * Recursively add colours to this toolbox.
              * @param {Blockly.Toolbox.TreeNode} opt_tree Starting point of tree.
@@ -1154,11 +1178,11 @@ namespace pxt.blocks {
                 if (editor.lastInvertedCategory) {
                     // reset last category colour
                     let lastElement = editor.lastInvertedCategory.getRowElement();
-                    lastElement.style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
+                    if (lastElement) lastElement.style.backgroundColor = (editor.lastInvertedCategory.hexColour || '#ddd');
                 }
                 if (this.selectedItem_) {
                     let selectedElement = this.selectedItem_.getRowElement();
-                    selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
+                    if (selectedElement) selectedElement.style.backgroundColor = pxt.blocks.fadeColour(this.selectedItem_.hexColour, highlightColorInvertedLuminocityMultiplier, false);
                 }
             };
         }
@@ -1191,7 +1215,7 @@ namespace pxt.blocks {
             }
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
             let topBlocks = this.getTopBlocks(true);
-            let eventGroup = Blockly.genUid();
+            let eventGroup = Blockly.utils.genUid();
 
             // Add a little animation to collapsing and expanding.
             const DELAY = 10;
@@ -1496,13 +1520,14 @@ namespace pxt.blocks {
                 });
 
                 let thisBlock = this;
+                const info = helpResources['math_op2'];
                 setHelpResources(this,
                     'math_op2',
-                    lf("minimum or maximum of 2 numbers"),
+                    info.name,
                     function () {
                         return thisBlock.getFieldValue('op') == 'min' ? lf("smaller value of 2 numbers") : lf("larger value of 2 numbers");
                     },
-                    '/blocks/math'
+                    info.url
                 );
             }
         };
@@ -1524,12 +1549,7 @@ namespace pxt.blocks {
                     "colour": blockColors['math']
                 });
 
-                setHelpResources(this,
-                    'math_op3',
-                    lf("absolute number"),
-                    lf("absolute value of a number"),
-                    '/blocks/math/abs'
-                );
+                setBuiltinHelpInfo(this, 'math_op3');
             }
         };
 
@@ -1550,22 +1570,18 @@ namespace pxt.blocks {
                     "colour": blockColors['math']
                 });
 
-                setHelpResources(this,
-                    'device_random',
-                    lf("pick random number"),
-                    lf("Returns a random integer between 0 and the specified bound (inclusive)."),
-                    '/blocks/math/random'
-                );
+                setBuiltinHelpInfo(this, 'device_random');
             }
         };
 
         // builtin math_number
         //XXX Integer validation needed.
+        const mInfo = helpResources['math_number'];
         installHelpResources(
             'math_number',
-            lf("{id:block}number"),
+            mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            '/blocks/math/random'
+            mInfo.url
         );
 
         // builtin math_arithmetic
@@ -1583,23 +1599,19 @@ namespace pxt.blocks {
             'DIVIDE': lf("Return the quotient of the two numbers."),
             'POWER': lf("Return the first number raised to the power of the second number."),
         };
+        const aInfo = helpResources['math_arithmetic'];
         installHelpResources(
             'math_arithmetic',
-            lf("arithmetic operation"),
+            aInfo.name,
             function (block: any) {
                 return TOOLTIPS[block.getFieldValue('OP')];
             },
-            '/blocks/math'
+            aInfo.url
         );
 
         // builtin math_modulo
         msg.MATH_MODULO_TITLE = lf("remainder of %1 ÷ %2");
-        installHelpResources(
-            'math_modulo',
-            lf("division remainder"),
-            lf("Return the remainder from dividing the two numbers."),
-            '/blocks/math'
-        );
+        installBuiltinHelpInfo('math_modulo');
     }
 
     function initVariables() {
@@ -1610,7 +1622,7 @@ namespace pxt.blocks {
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-            Blockly.registerButtonCallback('CREATE_VARIABLE', function (button: Blockly.FlyoutButton) {
+            workspace.registerButtonCallback('CREATE_VARIABLE', function (button: Blockly.FlyoutButton) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
             xmlList.push(button);
@@ -1693,12 +1705,7 @@ namespace pxt.blocks {
         // builtin variables_get
         let msg: any = Blockly.Msg;
         msg.VARIABLES_GET_CREATE_SET = lf("Create 'set %1'");
-        installHelpResources(
-            'variables_get',
-            lf("get the value of a variable"),
-            lf("Returns the value of this variable."),
-            '/blocks/variables'
-        );
+        installBuiltinHelpInfo('variables_get');
 
         // builtin variables_set
         msg.VARIABLES_SET = lf("set %1 to %2");
@@ -1706,12 +1713,7 @@ namespace pxt.blocks {
         //XXX Do not translate the default variable name.
         //XXX Variable names with Unicode character are harmful at this point.
         msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
-        installHelpResources(
-            'variables_set',
-            lf("assign the value of a variable"),
-            lf("Sets this variable to be equal to the input."),
-            '/blocks/variables/assign'
-        );
+        installBuiltinHelpInfo('variables_set');
 
         // pxt variables_change
         Blockly.Blocks['variables_change'] = {
@@ -1736,12 +1738,7 @@ namespace pxt.blocks {
                     "colour": blockColors['variables']
                 });
 
-                setHelpResources(this,
-                    'variables_change',
-                    lf("update the value of a number variable"),
-                    lf("Changes the value of the variable by this amount"),
-                    '/blocks/variables/change-var'
-                );
+                setBuiltinHelpInfo(this, 'variables_change');
             }
         };
     }
@@ -1758,12 +1755,7 @@ namespace pxt.blocks {
         msg.CONTROLS_IF_TOOLTIP_2 = lf("If a value is true, then do the first block of statements. Otherwise, do the second block of statements.");
         msg.CONTROLS_IF_TOOLTIP_3 = lf("If the first value is true, then do the first block of statements. Otherwise, if the second value is true, do the second block of statements.");
         msg.CONTROLS_IF_TOOLTIP_4 = lf("If the first value is true, then do the first block of statements. Otherwise, if the second value is true, do the second block of statements. If none of the values are true, do the last block of statements.");
-        installHelpResources(
-            'controls_if',
-            lf("a conditional statement"),
-            undefined,
-            "blocks/logic/if"
-        );
+        installBuiltinHelpInfo('controls_if');
 
         // builtin logic_compare
         msg.LOGIC_COMPARE_TOOLTIP_EQ = lf("Return true if both inputs equal each other.");
@@ -1772,63 +1764,33 @@ namespace pxt.blocks {
         msg.LOGIC_COMPARE_TOOLTIP_LTE = lf("Return true if the first input is smaller than or equal to the second input.");
         msg.LOGIC_COMPARE_TOOLTIP_GT = lf("Return true if the first input is greater than the second input.");
         msg.LOGIC_COMPARE_TOOLTIP_GTE = lf("Return true if the first input is greater than or equal to the second input.");
-        installHelpResources(
-            'logic_compare',
-            lf("comparing two numbers"),
-            undefined,
-            '/blocks/logic/boolean'
-        );
+        installBuiltinHelpInfo('logic_compare');
 
         // builtin logic_operation
         msg.LOGIC_OPERATION_AND = lf("{id:op}and");
         msg.LOGIC_OPERATION_OR = lf("{id:op}or");
         msg.LOGIC_OPERATION_TOOLTIP_AND = lf("Return true if both inputs are true."),
             msg.LOGIC_OPERATION_TOOLTIP_OR = lf("Return true if at least one of the inputs is true."),
-            installHelpResources(
-                'logic_operation',
-                lf("boolean operation"),
-                undefined,
-                '/blocks/logic/boolean'
-            );
+            installBuiltinHelpInfo('logic_operation');
 
         // builtin logic_negate
         msg.LOGIC_NEGATE_TITLE = lf("not %1");
-        installHelpResources(
-            'logic_negate',
-            lf("logical negation"),
-            lf("Returns true if the input is false. Returns false if the input is true."),
-            '/blocks/logic/boolean'
-        );
+        installBuiltinHelpInfo('logic_negate');
 
         // builtin logic_boolean
         msg.LOGIC_BOOLEAN_TRUE = lf("{id:boolean}true");
         msg.LOGIC_BOOLEAN_FALSE = lf("{id:boolean}false");
-        installHelpResources(
-            'logic_boolean',
-            lf("a `true` or `false` value"),
-            lf("Returns either true or false."),
-            '/blocks/logic/boolean'
-        );
+        installBuiltinHelpInfo('logic_boolean');
     }
 
     function initText() {
         // builtin text
-        installHelpResources(
-            'text',
-            lf("a piece of text"),
-            lf("A letter, word, or line of text."),
-            "reference/types/string"
-        );
+        installBuiltinHelpInfo('text');
 
         // builtin text_length
         let msg: any = Blockly.Msg;
         msg.TEXT_LENGTH_TITLE = lf("length of %1");
-        installHelpResources(
-            'text_length',
-            lf("number of characters in the string"),
-            lf("Returns the number of letters (including spaces) in the provided text."),
-            "reference/types/string-functions"
-        );
+        installBuiltinHelpInfo('text_length');
     }
 
     function initTooltip(blockInfo: pxtc.BlocksInfo) {

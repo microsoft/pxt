@@ -13,13 +13,17 @@ namespace pxt.BrowserUtils {
         }
     }
 
+    export function hasNavigator(): boolean {
+        return typeof navigator !== "undefined";
+    }
+
     export function isWindows(): boolean {
-        return !!navigator && /(Win32|Win64|WOW64)/i.test(navigator.platform);
+        return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform);
     }
 
     //MacIntel on modern Macs
     export function isMac(): boolean {
-        return !!navigator && /Mac/i.test(navigator.platform);
+        return hasNavigator() && /Mac/i.test(navigator.platform);
     }
 
     //This is generally appears for Linux
@@ -30,7 +34,7 @@ namespace pxt.BrowserUtils {
 
     // Detects if we are running on ARM (Raspberry pi)
     export function isARM(): boolean {
-        return !!navigator && /arm/i.test(navigator.platform);
+        return hasNavigator() && /arm/i.test(navigator.platform);
     }
 
     /*
@@ -50,14 +54,14 @@ namespace pxt.BrowserUtils {
     //Edge lies about its user agent and claims to be Chrome, but Edge/Version
     //is always at the end
     export function isEdge(): boolean {
-        return !!navigator && /Edge/i.test(navigator.userAgent);
+        return hasNavigator() && /Edge/i.test(navigator.userAgent);
     }
 
     //IE11 also lies about its user agent, but has Trident appear somewhere in
     //the user agent. Detecting the different between IE11 and Edge isn't
     //super-important because the UI is similar enough
     export function isIE(): boolean {
-        return !!navigator && /Trident/i.test(navigator.userAgent);
+        return hasNavigator() && /Trident/i.test(navigator.userAgent);
     }
 
     //Edge and IE11 lie about being Chrome
@@ -78,22 +82,24 @@ namespace pxt.BrowserUtils {
 
     //These days Opera's core is based on Chromium so we shouldn't distinguish between them too much
     export function isOpera(): boolean {
-        return !!navigator && /Opera|OPR/i.test(navigator.userAgent);
+        return hasNavigator() && /Opera|OPR/i.test(navigator.userAgent);
     }
 
     //Midori *was* the default browser on Raspbian, however isn't any more
     export function isMidori(): boolean {
-        return !!navigator && /Midori/i.test(navigator.userAgent);
+        return hasNavigator() && /Midori/i.test(navigator.userAgent);
     }
 
     //Epiphany (code name for GNOME Web) is the default browser on Raspberry Pi
     //Epiphany also lies about being Chrome, Safari, and Chromium
     export function isEpiphany(): boolean {
-        return !!navigator && /Epiphany/i.test(navigator.userAgent);
+        return hasNavigator() && /Epiphany/i.test(navigator.userAgent);
     }
 
     export function isTouchEnabled(): boolean {
-        return ('ontouchstart' in document.documentElement);
+        return typeof window !== "undefined" &&
+            ('ontouchstart' in window               // works on most browsers 
+            || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
     export function os(): string {
@@ -117,7 +123,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserVersion(): string {
-        if (!navigator) return null;
+        if (!hasNavigator()) return null;
         //Unsurprisingly browsers also lie about this and include other browser versions...
         let matches: string[] = [];
         if (isOpera()) {
@@ -191,7 +197,7 @@ namespace pxt.BrowserUtils {
 
 
     export function bestResourceForOsAndBrowser(resources: pxt.SpecializedResource[], name: string): pxt.SpecializedResource {
-        if (resources === null || resources.length == 0) {
+        if (!resources || resources.length == 0) {
             return null;
         }
 
@@ -267,9 +273,13 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserDownloadDataUri(uri: string, name: string) {
-        if (pxt.BrowserUtils.isSafari()) {
+        const windowOpen = /downloadWindowOpen=1/i.test(window.location.href);
+
+        if (windowOpen) {
+            window.open(uri);
+        } else if (pxt.BrowserUtils.isSafari()) {
             // For mysterious reasons, the "link" trick closes the
-            // PouchDB database                
+            // PouchDB database
             let iframe = document.getElementById("downloader") as HTMLIFrameElement;
             if (!iframe) {
                 pxt.debug('injecting downloader iframe')
@@ -311,10 +321,13 @@ namespace pxt.BrowserUtils {
     export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
         pxt.debug('trigger download')
 
-        const isMobileBrowser = /mobile/i.test(navigator.userAgent);
+        const isMobileBrowser = /mobi/i.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
+        let protocol = "data";
+        const m = /downloadProtocol=([a-z0-9]+)/i.exec(window.location.href);
+        if (m) protocol = m[1];
 
-        const dataurl = "data:" + contentType + ";base64," + b64
+        const dataurl = protocol + ":" + contentType + ";base64," + b64
         try {
             if (isDesktopIE) {
                 let b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })

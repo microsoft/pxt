@@ -33,13 +33,9 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
-    function genUid(): string;
     function terminateDrag_(): void;
-    function mouseToSvg(e: Event, svg: Element): any;
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
-
-    function registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
 
     function alert(message: string, opt_callback?: () => void): void;
     function confirm(message: string, callback: (response: boolean) => void): void;
@@ -49,6 +45,8 @@ declare namespace Blockly {
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
+        function genUid(): string;
+        function mouseToSvg(e: Event, svg: Element): any;
     }
 
     class FieldImage {
@@ -92,7 +90,7 @@ declare namespace Blockly {
     }
 
     class FieldDropdown extends Field {
-        constructor(val: string[][]);
+        constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]));
     }
 
     class Block {
@@ -290,7 +288,6 @@ declare namespace Blockly {
         getTopBlocks(ordered: boolean): Block[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
-        traceOn(armed: boolean): void;
         addChangeListener(f: (e: BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string): void;
@@ -317,6 +314,9 @@ declare namespace Blockly {
             viewWidth: number;
         }
         variableIndexOf(name: string): number;
+
+        registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
+
     }
 
     class WorkspaceSvg {
