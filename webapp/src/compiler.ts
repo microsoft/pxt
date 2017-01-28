@@ -62,7 +62,7 @@ function catchUserErrorAndSetDiags(r: any) {
 export interface CompileOptions {
     native?: boolean;
     debug?: boolean;
-    background?: boolean; // not explicitely requested by user (hint for simulator)
+    background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     preferredEditor?: string;
 }
@@ -180,7 +180,7 @@ function ensureApisInfoAsync(): Promise<void> {
     else return Promise.resolve()
 }
 
-export function apiSearchAsync(searchFor: string) {
+export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => workerOpAsync("apiSearch", { search: searchFor }));
 }
