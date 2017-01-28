@@ -272,7 +272,11 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserDownloadDataUri(uri: string, name: string) {
-        if (pxt.BrowserUtils.isSafari()) {
+        const windowOpen = /downloadWindowOpen=1/i.test(window.location.href);
+
+        if (windowOpen) {
+            window.open(uri);
+        } else if (pxt.BrowserUtils.isSafari()) {
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database
             let iframe = document.getElementById("downloader") as HTMLIFrameElement;
@@ -316,10 +320,13 @@ namespace pxt.BrowserUtils {
     export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
         pxt.debug('trigger download')
 
-        const isMobileBrowser = /mobile/i.test(navigator.userAgent);
+        const isMobileBrowser = /mobi/i.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
+        let protocol = "data";
+        const m = /downloadProtocol=([a-z0-9]+)/i.exec(window.location.href);
+        if (m) protocol = m[1];
 
-        const dataurl = "data:" + contentType + ";base64," + b64
+        const dataurl = protocol + ":" + contentType + ";base64," + b64
         try {
             if (isDesktopIE) {
                 let b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
