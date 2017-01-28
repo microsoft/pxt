@@ -332,7 +332,7 @@ namespace pxt {
                 });
             }
             if (!regex) {
-                regex = new RegExp(pkgId + "\\.[a-zA-Z]+", "g");
+                regex = new RegExp(pkgId + "\\.", "g");
             }
             return regex.test(ts);
         }
@@ -361,7 +361,7 @@ namespace pxt {
          * For the given package config or ID, looks through all the currently installed packages to find conflicts in
          * Yotta settings
          */
-        findConflicts(pkgOrId: string | PackageConfig, version: string): Promise<cpp.PkgConflictError[]> {
+        findConflictsAsync(pkgOrId: string | PackageConfig, version: string): Promise<cpp.PkgConflictError[]> {
             let conflicts: cpp.PkgConflictError[] = [];
             let pkgCfg: PackageConfig;
             return Promise.resolve()
@@ -386,8 +386,8 @@ namespace pxt {
                                 const depYottaCfg = U.jsonFlatten(depConfig.yotta.config);
                                 for (const settingName of Object.keys(yottaCfg)) {
                                     const depSetting = depYottaCfg[settingName];
-                                    const isJustDefault = depConfig.yotta.configIsJustDefaults;
-                                    if (depSetting !== yottaCfg[settingName] && !isJustDefault && (!depPkg.parent.config.yotta || !depPkg.parent.config.yotta.ignoreConflicts)) {
+                                    const isJustDefaults = pkgCfg.yotta.configIsJustDefaults || depConfig.yotta.configIsJustDefaults;
+                                    if (depYottaCfg.hasOwnProperty(settingName) && depSetting !== yottaCfg[settingName] && !isJustDefaults && (!depPkg.parent.config.yotta || !depPkg.parent.config.yotta.ignoreConflicts)) {
                                         const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", settingName, pkgCfg.name, depPkg.id));
                                         conflict.pkg0 = depPkg;
                                         conflict.settingName = settingName;
@@ -400,7 +400,8 @@ namespace pxt {
 
                     // Also check for conflicts for all the specified package's dependencies (recursively)
                     return Object.keys(pkgCfg.dependencies).reduce((soFar, pkgDep) => {
-                        return this.findConflicts(pkgDep, pkgCfg.dependencies[pkgDep])
+                        return soFar
+                            .then(() => this.findConflictsAsync(pkgDep, pkgCfg.dependencies[pkgDep]))
                             .then((childConflicts) => conflicts.push.apply(conflicts, childConflicts));
                     }, Promise.resolve());
                 })
@@ -540,7 +541,7 @@ namespace pxt {
                         let addPackagesPromise = Promise.resolve();
                         Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
-                                .then(() => this.findConflicts(missing, missingPackages[missing]))
+                                .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
                                 .then((conflicts) => {
                                     if (conflicts.length) {
                                         const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");

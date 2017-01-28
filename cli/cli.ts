@@ -1633,8 +1633,9 @@ class SnippetHost implements pxt.Host {
             else if (filename == "main.ts") {
                 return this.main
             }
-        }
-        else {
+        } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
+            return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
+        } else {
             let p0 = path.join(module.id, filename);
             let p1 = path.join('libs', module.id, filename)
             let p2 = path.join('libs', module.id, 'built', filename)
@@ -1660,10 +1661,7 @@ class SnippetHost implements pxt.Host {
             }
 
             if (contents) {
-                if (!SnippetHost.files[module.id]) {
-                    SnippetHost.files[module.id] = {}
-                }
-                SnippetHost.files[module.id][filename] = contents
+                this.writeFile(module, filename, contents)
                 return contents
             }
         }
@@ -1671,6 +1669,9 @@ class SnippetHost implements pxt.Host {
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string) {
+        if (!SnippetHost.files[module.id]) {
+            SnippetHost.files[module.id] = {}
+        }
         SnippetHost.files[module.id][filename] = contents
     }
 
@@ -2041,11 +2042,11 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
 
     let initPromise = Promise.resolve();
     if (!parsed.flags["useDefaults"]) {
-        initPromise =  Promise.mapSeries(["name", "description", "license"], f =>
-        queryAsync(f, configMap[f])
-            .then(r => {
-                configMap[f] = r
-            })).then(() => {});
+        initPromise = Promise.mapSeries(["name", "description", "license"], f =>
+            queryAsync(f, configMap[f])
+                .then(r => {
+                    configMap[f] = r
+                })).then(() => { });
     }
 
     return initPromise
@@ -2690,6 +2691,80 @@ function compareBaselines(a: string, b: string): boolean {
 
 function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
+}
+
+interface PackageConflictTestCase {
+    id: number
+    dependencies: string[];
+    pkgToAdd: string;
+    main: string;
+    expectedConflicts: string[];
+    expectedInUse: string[];
+}
+
+function testPkgConflictsAsync() {
+    /*
+    Fake bundled packages are as follows (see [pxt root]/tests/pkgconflicts/built/target.json):
+        Project dependencies        Packages added by test cases, conflicts in parentheses
+        A  B  C                     F(C)  G     H(C,D)      G has "configIsJustDefaults"
+        | / \                       |     |     |           I has same setting values as installed dependencies
+        D    E                      I     J(D)  K(C,E)
+    */
+    const testCases: PackageConflictTestCase[] = [
+        { id: 1, dependencies: ["A", "B", "C"], pkgToAdd: "I", main: "D.test()", expectedConflicts: [], expectedInUse: [] },
+        { id: 2, dependencies: ["A", "B"], pkgToAdd: "F", main: "test.test()", expectedConflicts: [], expectedInUse: [] },
+        { id: 3, dependencies: ["B", "C"], pkgToAdd: "J", main: "C.test()", expectedConflicts: ["B", "D"], expectedInUse: [] },
+        { id: 4, dependencies: ["A", "B", "C"], pkgToAdd: "G", main: "D.test()\nC.test()", expectedConflicts: ["A", "B", "D"], expectedInUse: ["D"] },
+        { id: 5, dependencies: ["A", "B", "C"], pkgToAdd: "H", main: "C.test()\nD.test()\ntest.test()\E.test()", expectedConflicts: ["A", "B", "C", "D", "E"], expectedInUse: ["C", "D", "E"] },
+        { id: 6, dependencies: ["A", "B", "C"], pkgToAdd: "F", main: "", expectedConflicts: ["C"], expectedInUse: [] },
+    ];
+    const failures: { testCase: number; reason: string }[] = [];
+    const oldAppTarget = pxt.appTarget;
+
+    nodeutil.setTargetDir(path.join(__dirname, "..", "tests", "pkgconflicts"));
+    let trg = nodeutil.getPxtTarget();
+    pxt.setAppTarget(trg);
+
+    return Promise.mapSeries(testCases, (tc) => {
+        let testFailed = (reason: string) => {
+            failures.push({ testCase: tc.id, reason });
+        };
+
+        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, tc.dependencies));
+        SnippetHost.files = {};
+        tc.expectedConflicts = tc.expectedConflicts.sort();
+        tc.expectedInUse = tc.expectedInUse.sort();
+
+        return mainPkg.installAllAsync()
+            .then(() => mainPkg.findConflictsAsync(tc.pkgToAdd, "*"))
+            .then((conflicts) => {
+                let conflictNames = conflicts.map((c) => c.pkg0.id).sort();
+                if (conflictNames.length !== tc.expectedConflicts.length || !conflictNames.every((cn, i) => conflictNames[i] === tc.expectedConflicts[i])) {
+                    testFailed(`Mismatch on expected conflicts (found: [${conflictNames.join(", ")}], expected: [${tc.expectedConflicts.join(", ")}])`);
+                } else {
+                    let inUse = conflictNames.filter((cn) => mainPkg.isPackageInUse(cn));
+                    if (inUse.length !== tc.expectedInUse.length || !inUse.every((cn, i) => inUse[i] === tc.expectedInUse[i])) {
+                        testFailed(`Mismatch on expected in-use conflicts (found: [${inUse.join(", ")}], expected: [${tc.expectedInUse.join(", ")}])`);
+                    }
+                }
+
+                return Promise.resolve();
+            })
+            .catch((e) => {
+                testFailed("Uncaught exception during test: " + e.message || e);
+            });
+    })
+        .then(() => {
+            console.log(`Package conflict tests: ${testCases.length - failures.length} passed, ${failures.length} failed`);
+
+            if (failures.length) {
+                console.log(failures.map((e) => `Failure in test case ${e.testCase}: ${e.reason}`).join("\n"));
+                process.exit(1);
+            }
+        })
+        .finally(() => {
+            pxt.setAppTarget(oldAppTarget);
+        });
 }
 
 function testDecompilerErrorsAsync(parsed: commandParser.ParsedCommand) {
@@ -3775,6 +3850,7 @@ function initCommands() {
     advancedCommand("testdecompilererrors", "run decompiler error tests", testDecompilerErrorsAsync, "<dir>");
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
     advancedCommand("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
+    advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
 
     advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");

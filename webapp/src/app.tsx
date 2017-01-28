@@ -270,27 +270,18 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
             }
         }
         const addDepIfNoConflict = (config: pxt.PackageConfig, version: string) => {
-            return pkg.mainPkg.findConflicts(config, version)
+            return pkg.mainPkg.findConflictsAsync(config, version)
                 .then((conflicts) => {
-                    let inUse: pxt.cpp.PkgConflictError = null;
-                    conflicts.some((c) => {
-                        if (pkg.mainPkg.isPackageInUse(c.pkg0.id)) {
-                            inUse = c;
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    });
-
+                    let inUse = conflicts.filter((c) => pkg.mainPkg.isPackageInUse(c.pkg0.id));
                     let addDependencyPromise = Promise.resolve(true);
 
-                    if (inUse) {
+                    if (inUse.length) {
                         addDependencyPromise = addDependencyPromise
                             .then(() => core.confirmAsync({
                                 header: lf("Cannot add {0} package", config.name),
                                 hideCancel: true,
                                 agreeLbl: lf("Ok"),
-                                body: lf("Remove all the blocks from the {0} package and try again.", inUse.pkg0.id)
+                                body: lf("Remove all the blocks from the {0} package and try again.", inUse[0].pkg0.id)
                             }))
                             .then(() => {
                                 return false;
