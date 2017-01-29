@@ -885,7 +885,7 @@ namespace pxt.blocks {
             header: name,
             name: name,
             software: 1,
-            description: goog.isFunction(tooltip) ? tooltip() : tooltip,
+            description: goog.isFunction(tooltip) ? tooltip(block) : tooltip,
             blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
@@ -899,7 +899,7 @@ namespace pxt.blocks {
         block.init = function () {
             old.call(this);
             let block = this;
-            setHelpResources(this, id, name, goog.isFunction(tooltip) ? function () { return tooltip(block); } : tooltip, url);
+            setHelpResources(this, id, name, tooltip, url);
         }
     }
 
@@ -1798,7 +1798,7 @@ namespace pxt.blocks {
         const renderTip = (el: any) => {
             let tip = el.tooltip;
             while (goog.isFunction(tip)) {
-                tip = tip();
+                tip = tip(el);
             }
             return tip;
         }
@@ -1818,7 +1818,7 @@ namespace pxt.blocks {
             const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
             if (card) {
                 const cardEl = pxt.docs.codeCard.render({
-                    header: card.description || renderTip(Blockly.Tooltip.element_),
+                    header: renderTip(Blockly.Tooltip.element_),
                     typeScript: pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
                 })
                 Blockly.Tooltip.DIV.appendChild(cardEl);
