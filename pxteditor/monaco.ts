@@ -132,7 +132,7 @@ namespace pxt.vs {
             }
 
             let onGotAmdLoader = () => {
-                (window as any).require.config({ paths: { 'vs': '/cdn/vs' }});
+                (window as any).require.config({ paths: { 'vs': pxt.webConfig.pxtCdnUrl + '/vs' }});
 
                 // Load monaco
                 (window as any).require(['vs/editor/editor.main'], () => {
