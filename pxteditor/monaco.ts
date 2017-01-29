@@ -146,7 +146,7 @@ namespace pxt.vs {
             if (!(<any>window).require) {
                 let loaderScript = document.createElement('script');
                 loaderScript.type = 'text/javascript';
-                loaderScript.src = '/cdn/vs/loader.js';
+                loaderScript.src = pxt.webConfig.pxtCdnUrl + '/vs/loader.js';
                 loaderScript.addEventListener('load', onGotAmdLoader);
                 document.body.appendChild(loaderScript);
             } else {
