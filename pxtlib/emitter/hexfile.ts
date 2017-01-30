@@ -409,7 +409,7 @@ namespace ts.pxtc {
                 }
             }
 
-            oops();
+            return; // Why was this an oops() before?
         }
 
         export function validateShim(funname: string, shimName: string, hasRet: boolean, numArgs: number) {
