@@ -301,6 +301,7 @@ namespace ts.pxtc {
         parts?: string;
         trackArgs?: number[];
         advanced?: boolean;
+        subcategory?: string;
         deprecated?: boolean;
 
         // on interfaces

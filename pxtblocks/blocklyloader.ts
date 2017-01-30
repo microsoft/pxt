@@ -205,6 +205,9 @@ namespace pxt.blocks {
                 if (fn.attributes.advanced) {
                     category = getOrAddSubcategory(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
                 }
+                else if (fn.attributes.subcategory) {
+                    category = getOrAddSubcategory(category,  fn.attributes.subcategory, fn.attributes.subcategory, 2, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                }
             }
             if (fn.attributes.mutateDefaults) {
                 const mutationValues = fn.attributes.mutateDefaults.split(";");
