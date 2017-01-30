@@ -802,9 +802,9 @@ class TutorialCard extends data.Component<ISettingsProps, {}> {
                 </div>
                 <div className="extra content">
                     <div className="ui two buttons">
-                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back")} onClick={() => this.previousTutorialStep() } /> : undefined }
-                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next")} onClick={() => this.nextTutorialStep() } /> : undefined }
-                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} onClick={() => this.finishTutorial() } /> : undefined }
+                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back") } onClick={() => this.previousTutorialStep() } /> : undefined }
+                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next") } onClick={() => this.nextTutorialStep() } /> : undefined }
+                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
                     </div>
                 </div>
             </div>
@@ -935,17 +935,11 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         <div className="left aligned two wide column">
                             <div className="ui vertical icon small buttons">
                                 {run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
-                                {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
+                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
                             </div>
                             <div className="row" style={{ paddingTop: "1rem" }}>
                                 <div className="ui vertical icon small buttons">
-                                    {run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
-                                    {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
-                                </div>
-                                <div className="row" style={{paddingTop: "1rem"}}>
-                                    <div className="ui vertical icon small buttons">
-                                        <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
-                                    </div>
+                                    <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
                                 </div>
                             </div>
                         </div>
@@ -996,17 +990,11 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         <div className="left aligned two wide column">
                             <div className="ui vertical icon small buttons">
                                 {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
-                                {run ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
+                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
                             </div>
                             <div className="row" style={{ paddingTop: "1rem" }}>
                                 <div className="ui vertical icon small buttons">
-                                    {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
-                                    {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
-                                </div>
-                                <div className="row" style={{paddingTop: "1rem"}}>
-                                    <div className="ui vertical icon small buttons">
-                                        <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
-                                    </div>
+                                    <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
                                 </div>
                             </div>
                         </div>
@@ -1481,32 +1469,32 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         // save file before change
         this.saveFileAsync()
-        .then(() => {
-            this.editorFile = this.state.currFile;
-            let previousEditor = this.editor;
-            this.editor = editorOverride || this.pickEditorFor(this.editorFile)
-            this.allEditors.forEach(e => e.setVisible(e == this.editor))
-            return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
-        })
-        .then(() => { return this.editor.loadFileAsync(this.editorFile); })
-        .then(() => {
-            this.saveFile(); // make sure state is up to date
-            this.typecheck();
+            .then(() => {
+                this.editorFile = this.state.currFile;
+                let previousEditor = this.editor;
+                this.editor = editorOverride || this.pickEditorFor(this.editorFile)
+                this.allEditors.forEach(e => e.setVisible(e == this.editor))
+                return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
+            })
+            .then(() => { return this.editor.loadFileAsync(this.editorFile); })
+            .then(() => {
+                this.saveFile(); // make sure state is up to date
+                this.typecheck();
 
-            let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
-            if (e)
-                this.editor.setViewState(e.pos)
+                let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+                if (e)
+                    this.editor.setViewState(e.pos)
 
-            SideDocs.notify({
-                type: "fileloaded",
-                name: this.editorFile.getName(),
-                locale: pxt.Util.localeInfo()
-            } as pxsim.SimulatorFileLoadedMessage)
+                SideDocs.notify({
+                    type: "fileloaded",
+                    name: this.editorFile.getName(),
+                    locale: pxt.Util.localeInfo()
+                } as pxsim.SimulatorFileLoadedMessage)
 
-            if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
-        }).finally(() => {
-            this.forceUpdate();
-        })
+                if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
+            }).finally(() => {
+                this.forceUpdate();
+            })
     }
 
     setFile(fn: pkg.File) {
@@ -2089,9 +2077,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     }
 
     toggleMute() {
-        pxt.tickEvent("simulator.mute", {view: 'computer', muteTo: '' + !this.state.mute});
+        pxt.tickEvent("simulator.mute", { view: 'computer', muteTo: '' + !this.state.mute });
         simulator.mute(!this.state.mute);
-        this.setState({mute: !this.state.mute});
+        this.setState({ mute: !this.state.mute });
     }
 
     openInstructions() {
@@ -2478,12 +2466,12 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item grid centered portrait hide simtoolbar">
-                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
                                 {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
                             </div>
-                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{padding: "0"}}>
+                            <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
                             </div>
