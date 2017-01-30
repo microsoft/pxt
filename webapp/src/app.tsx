@@ -1951,6 +1951,9 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
             pxt.usb.initAsync().catch(e => { })
         }
 
+        if (cmds.isLtc())
+            cmds.ltcDeploySetup();
+
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
         if (this.state.compiling) {
