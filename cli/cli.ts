@@ -1591,7 +1591,9 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             packaged,
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
+            addr: parsed.flags["addr"] as string,
             wsPort: parsed.flags["wsport"] as number || 0,
+            wsAddr: parsed.flags["wsaddr"] as string,
             browser: parsed.flags["browser"] as string,
             serial: !parsed.flags["noSerial"]
         }))
@@ -3709,11 +3711,22 @@ function initCommands() {
                 type: "number",
                 argument: "port"
             },
+            addr: {
+                description: "address to bind server, default 127.0.0.1",
+                aliases: ["a"],
+                type: "string",
+                argument: "addr"
+            },
             wsport: {
                 description: "port to bind websocket server, default 3233",
                 aliases: ["w"],
                 type: "number",
                 argument: "wsport"
+            },
+            wsaddr: {
+                description: "address to bind websocket server, default 127.0.0.1",
+                type: "string",
+                argument: "wsaddr"
             },
             electron: { description: "used to indicate that the server is being started in the context of an electron app" }
         }
