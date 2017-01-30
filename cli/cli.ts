@@ -2703,6 +2703,7 @@ interface PackageConflictTestCase {
 }
 
 function testPkgConflictsAsync() {
+    console.log("Package conflict tests");
     /*
     Fake bundled packages are as follows (see [pxt root]/tests/pkgconflicts/built/target.json):
         Project dependencies        Packages added by test cases, conflicts in parentheses
@@ -2748,14 +2749,16 @@ function testPkgConflictsAsync() {
                     }
                 }
 
+                console.log(`package conflict test OK: ${tc.id}`);
                 return Promise.resolve();
             })
             .catch((e) => {
+                console.log(`package conflict test FAILED: ${tc.id}`);
                 testFailed("Uncaught exception during test: " + e.message || e);
             });
     })
         .then(() => {
-            console.log(`Package conflict tests: ${testCases.length - failures.length} passed, ${failures.length} failed`);
+            console.log(`${testCases.length - failures.length} passed, ${failures.length} failed`);
 
             if (failures.length) {
                 console.log(failures.map((e) => `Failure in test case ${e.testCase}: ${e.reason}`).join("\n"));
