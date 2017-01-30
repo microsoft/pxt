@@ -246,7 +246,7 @@ function ltcRenderWave(e: any) {
 
 function ltcDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('LTC deployment...');
-    core.infoNotification(lf("Playing that sweet music..."));
+    core.infoNotification(lf("Here's a tune..."));
     let bin = ltcIhexToBinary(resp.outfiles[pxtc.BINARY_HEX]);
     let audio = ltcGetAudioElement();
 
