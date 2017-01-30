@@ -368,6 +368,7 @@ export function initCommandsAsync(): Promise<void> {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
     } else if (1) {
         pxt.commands.deployCoreAsync = ltcDeployCoreAsync;
+        is_ltc = true;
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // window app
