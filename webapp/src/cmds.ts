@@ -155,8 +155,8 @@ function ltcIhexToBinary(ihex: string): Uint8Array {
                 }
             }
         }
-        // Skip past the :, count, address, and record type fields
-        let s = hex[i].slice(9);
+        // Skip past the :, count, address, and record type fields, and chop off the checksum
+        let s = hex[i].slice(9, hex[i].length - 2);
         let step = 2;
         while (s.length >= step) {
             let hexb = s.slice(0, step);
