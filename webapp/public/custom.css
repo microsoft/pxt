@@ -256,17 +256,17 @@ html {
     stroke:none !important;
 }
 
-.rtl .blocklyText {
+.rtl text.blocklyText {
     text-align:right;
 }
 
 /* This ensures built-in blockly toolbox icons are hidden */
-.blocklyTreeIcon {
+span.blocklyTreeIcon {
     background: none !important;
 }
 
 /* This is to ensure the leds inside showLeds fill the entire checkbox */
-.blocklyCheckbox {
+text.blocklyCheckbox {
     fill: #ff3030 !important;
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
@@ -294,7 +294,7 @@ body.blocklyMinimalBody {
 }
 
 /* Fix for context menu scroll issue */
-.blocklyWidgetDiv {
+div.blocklyWidgetDiv {
     position: fixed;
 }
 
