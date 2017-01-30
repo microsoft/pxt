@@ -2601,7 +2601,7 @@ function enableAnalytics() {
     if (typeof window !== "undefined") {
         const screen = window.screen;
         stats["screen.width"] = screen.width;
-        stats["screen.width"] = screen.height;
+        stats["screen.height"] = screen.height;
         stats["screen.availwidth"] = screen.availWidth;
         stats["screen.availheight"] = screen.availHeight;
         stats["screen.devicepixelratio"] = pxt.BrowserUtils.devicePixelRatio();
