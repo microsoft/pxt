@@ -61,7 +61,7 @@ task('testdecompilererrors', ['built/pxt.js'], { async: true }, function () {
 })
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "tests/pkgconflicts", 'node ../../../built/pxt.js testpkgconflicts')
+    cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
 })
 
 ju.catFiles('built/pxt.js', [
