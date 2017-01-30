@@ -634,7 +634,7 @@ function initSocketServer(wsPort: number) {
 
     return new Promise<void>((resolve, reject) => {
         wsserver.on("Error", reject);
-        wsserver.listen(wsPort, "127.0.0.1", () => resolve());
+        wsserver.listen(serveOptions.wsPort, serveOptions.wsAddr, () => resolve());
     });
 }
 
@@ -800,7 +800,9 @@ export interface ServeOptions {
     browser?: string;
     electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
+    addr?: string;
     wsPort?: number;
+    wsAddr?: string;
     serial?: boolean;
 }
 
@@ -817,7 +819,9 @@ let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
+    if (!serveOptions.addr) serveOptions.addr = "localhost";
     if (!serveOptions.wsPort) serveOptions.wsPort = 3233;
+    if (!serveOptions.wsAddr) serveOptions.wsAddr = "localhost";
     setupRootDir();
     const wsServerPromise = initSocketServer(serveOptions.wsPort);
     if (serveOptions.serial)
@@ -999,12 +1003,12 @@ export function serveAsync(options: ServeOptions) {
 
     const serverPromise = new Promise<void>((resolve, reject) => {
         server.on("error", reject);
-        server.listen(serveOptions.port, "127.0.0.1", () => resolve());
+        server.listen(serveOptions.port, serveOptions.addr, () => resolve());
     });
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            let start = `http://localhost:${serveOptions.port}/#ws=${serveOptions.wsPort}&local_token=${options.localToken}`;
+            let start = `http://${serveOptions.addr}:${serveOptions.port}/#ws=${serveOptions.wsPort}&local_token=${options.localToken}`;
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);
