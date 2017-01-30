@@ -14,7 +14,41 @@
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "declaration": false,
-        "preserveConstEnums": true
+        "preserveConstEnums": true,
+        "allowJs": true
     },
-    "exclude": [ "node_modules" ]
+    "files": [
+        "./src/ltc/afsk-encoder.js",
+        "./src/ltc/modulate-controller.js",
+        "./src/ltc/modulate.js",
+        "./src/ltc/murmurhash3_gc.js",
+        "./src/ltc/pcm.js",
+        "./src/ltc/spark-md5.js",
+        "./src/appcache.ts",
+        "./src/cloudworkspace.ts",
+        "./src/cmds.ts",
+        "./src/compiler.ts",
+        "./src/core.ts",
+        "./src/data.ts",
+        "./src/db.ts",
+        "./src/draganddrop.ts",
+        "./src/electron.ts",
+        "./src/fileworkspace.ts",
+        "./src/gallery.ts",
+        "./src/hidbridge.ts",
+        "./src/hwdbg.ts",
+        "./src/memoryworkspace.ts",
+        "./src/package.ts",
+        "./src/screenshot.ts",
+        "./src/semantic-jquery.d.ts",
+        "./src/simulator.ts",
+        "./src/tdlegacy.ts",
+        "./src/toolbox.ts",
+        "./src/worker.ts",
+        "./src/workeriface.ts",
+        "./src/workspace.ts"
+    ],
+    "exclude": [
+        "../localtypings/blockly.d.ts"
+    ]
 }
