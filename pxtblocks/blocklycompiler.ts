@@ -898,7 +898,10 @@ namespace pxt.blocks {
             //.map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1)) breaks roundtrip...
             .join('');
 
-        if (/\d/.test(n.charAt(0)) || isReservedWord(name)) {
+        if (!n) {
+            n = "myVariable";
+        }
+        else if (/\d/.test(n.charAt(0)) || isReservedWord(name)) {
             n = "_" + n;
         }
 
