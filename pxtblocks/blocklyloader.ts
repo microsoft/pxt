@@ -60,6 +60,7 @@ namespace pxt.blocks {
         block: Blockly.BlockDefinition;
     }
     let cachedBlocks: Map<CachedBlock> = {};
+    let searchElementCache: Map<Node> = {};
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
@@ -127,6 +128,7 @@ namespace pxt.blocks {
                     let attr = attrNames[pr.name];
                     block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
                 })
+        searchElementCache[fn.attributes.blockId] = block.cloneNode(true);
         return block;
     }
 
@@ -532,6 +534,7 @@ namespace pxt.blocks {
             return c;
         })
 
+        searchElementCache = {};
         let currentBlocks: Map<number> = {};
         const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
@@ -768,23 +771,13 @@ namespace pxt.blocks {
                         if (tb) {
                             const type = info.id;
 
-                            if (info.field) {
-                                const blocks = tb.querySelectorAll(`block[type="${type}"]`);
-                                for (let i = 0; i < blocks.length; i++) {
-                                    const block = blocks.item(i);
-                                    const f = block.querySelector(`field[name="${info.field[0]}"]`);
-                                    if (f && f.innerHTML === info.field[1]) {
-                                        category.appendChild(block.cloneNode(true));
-                                        return;
-                                    }
-                                }
+                            let block = searchElementCache[type];
+                            if (!block) {
+                                block = (searchElementCache[type] = tb.querySelector(`block[type="${type}"]`).cloneNode(true))
                             }
-                            else {
-                                // Just grab the first block of this type from the toolbox
-                                const block = tb.querySelector(`block[type="${type}"]`);
-                                if (block) {
-                                    category.appendChild(block.cloneNode(true));
-                                }
+
+                            if (block) {
+                                category.appendChild(block);
                             }
                         }
                     })
@@ -800,10 +793,11 @@ namespace pxt.blocks {
                 blocklySearchInput.className = origClassName;
             }
             // Search
-        }, 200, false);
+        }, 700, false);
 
         blocklySearchInputField.oninput = searchHandler;
         blocklySearchInputField.onchange = searchHandler;
+        blocklySearchInputField.onfocus = () => blocklySearchInputField.select();
         pxt.BrowserUtils.isTouchEnabled() ?
             blocklySearchInputField.ontouchstart = searchHandler
             : blocklySearchInputField.onclick = searchHandler;
