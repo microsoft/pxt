@@ -142,6 +142,8 @@ export function mute(mute: boolean) {
 }
 
 export function stop(unload?: boolean) {
+    if (!driver) return;
+
     pxsim.U.removeClass(driver.container, "sepia");
     driver.stop(unload);
     $debugger.empty();

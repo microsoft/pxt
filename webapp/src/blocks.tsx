@@ -331,6 +331,9 @@ export class Editor extends srceditor.Editor {
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
         pxt.blocks.initMouse(this.editor);
+        // zoom out on mobile by default
+        if (pxt.BrowserUtils.isMobile())
+            this.editor.zoomCenter(-4);
         this.editor.addChangeListener((ev) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {

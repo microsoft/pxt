@@ -2141,14 +2141,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (opts.background) pxt.tickActivity("autorun", "autorun." + editorId);
         else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
-        if (opts.background) {
-            if (!simulator.isDirty()) {
-                pxt.debug('auto-run cancelled');
-                return;
-            }
-        } else {
+        if (!opts.background)
             this.editor.beforeCompile();
-        }
 
         this.stopSimulator();
         this.clearLog();
