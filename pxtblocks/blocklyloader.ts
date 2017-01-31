@@ -60,7 +60,7 @@ namespace pxt.blocks {
         block: Blockly.BlockDefinition;
     }
     let cachedBlocks: Map<CachedBlock> = {};
-    const searchElementCache: Map<Node> = {};
+    let searchElementCache: Map<Node> = {};
 
     export function blockSymbol(type: string): pxtc.SymbolInfo {
         let b = cachedBlocks[type];
@@ -534,6 +534,7 @@ namespace pxt.blocks {
             return c;
         })
 
+        searchElementCache = {};
         let currentBlocks: Map<number> = {};
         const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
@@ -796,6 +797,7 @@ namespace pxt.blocks {
 
         blocklySearchInputField.oninput = searchHandler;
         blocklySearchInputField.onchange = searchHandler;
+        blocklySearchInputField.onfocus = () => blocklySearchInputField.select();
         pxt.BrowserUtils.isTouchEnabled() ?
             blocklySearchInputField.ontouchstart = searchHandler
             : blocklySearchInputField.onclick = searchHandler;
