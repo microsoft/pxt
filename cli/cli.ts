@@ -409,6 +409,11 @@ function semverCmp(a: string, b: string) {
 let readJson = nodeutil.readJson;
 
 function travisAsync() {
+    if(process.env["PXT_ACCESS_TOKEN"]) {
+        console.log("--==*****************************************************************************************************==--")
+    } else {
+        console.log("--==$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$==--")
+    }
     forceCloudBuild = true
 
     const rel = process.env.TRAVIS_TAG || ""
