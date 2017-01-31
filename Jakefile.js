@@ -27,7 +27,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testpkgconflicts', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'testdecompilererrors'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'testdecompilererrors', 'testpkgconflicts'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -61,7 +61,8 @@ task('testdecompilererrors', ['built/pxt.js'], { async: true }, function () {
 })
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
+    console.log(`PATH: ${process.env["PATH"]}`); // TEMP REMOVE
+    cmdIn(this, "tests/pkgconflicts", 'node -v')//../../built/pxt.js testpkgconflicts')
 })
 
 ju.catFiles('built/pxt.js', [
