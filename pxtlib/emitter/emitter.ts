@@ -301,8 +301,12 @@ namespace ts.pxtc {
         parts?: string;
         trackArgs?: number[];
         advanced?: boolean;
-        subcategory?: string;
         deprecated?: boolean;
+
+        // On block
+        subcategory?: string;
+        // On namepspace
+        subcategories?: string[];
 
         // on interfaces
         indexerGet?: string;
@@ -434,6 +438,14 @@ namespace ts.pxtc {
             res.callingConvention = ir.CallingConvention.Async
         if (res.promise)
             res.callingConvention = ir.CallingConvention.Promise
+        if (res.subcategories) {
+            try {
+                res.subcategories = JSON.parse(res.subcategories as any);
+            }
+            catch (e) {
+                res.subcategories = undefined;
+            }
+        }
 
         return res
     }

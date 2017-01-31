@@ -206,7 +206,15 @@ namespace pxt.blocks {
                     category = getOrAddSubcategory(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
                 }
                 else if (fn.attributes.subcategory) {
-                    category = getOrAddSubcategory(category,  fn.attributes.subcategory, fn.attributes.subcategory, 2, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    const sub = fn.attributes.subcategory;
+                    const all = nsn.attributes.subcategories;
+                    if (all && all.indexOf(sub) !== -1) {
+                        const weight = all.length - all.indexOf(sub) + 1;
+                        category = getOrAddSubcategory(category,  sub, sub, weight, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    }
+                    else if (!all) {
+                        category = getOrAddSubcategory(category,  sub, sub, 2, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    }
                 }
             }
             if (fn.attributes.mutateDefaults) {
@@ -298,7 +306,18 @@ namespace pxt.blocks {
         }
 
         const newCategory = createCategoryElement(name, nameid, weight, colour, iconClass);
-        parent.appendChild(newCategory)
+        const siblings = parent.querySelectorAll("category");
+
+        let ci = 0;
+        for (ci = 0; ci < siblings.length; ++ci) {
+            let cat = siblings[ci];
+            if (parseInt(cat.getAttribute("weight") || "50") < weight) {
+                parent.insertBefore(newCategory, cat);
+                break;
+            }
+        }
+        if (ci == siblings.length)
+            parent.appendChild(newCategory);
 
         return newCategory;
     }
