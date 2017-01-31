@@ -61,8 +61,7 @@ task('testdecompilererrors', ['built/pxt.js'], { async: true }, function () {
 })
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
-    console.log(`PATH: ${process.env["PATH"]}`); // TEMP REMOVE
-    cmdIn(this, "tests/pkgconflicts", 'node -v')//../../built/pxt.js testpkgconflicts')
+    cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
 })
 
 ju.catFiles('built/pxt.js', [
