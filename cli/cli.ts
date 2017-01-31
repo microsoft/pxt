@@ -409,7 +409,8 @@ function semverCmp(a: string, b: string) {
 let readJson = nodeutil.readJson;
 
 function travisAsync() {
-    if(process.env["PXT_ACCESS_TOKEN"]) {
+    if(process.env["NPM_ACCESS_TOKEN"] || process.env["TSD_GITHUB_TOKEN"] || process.env["CLOUD_ACCESS_TOKEN"]
+       || process.env["CROWDIN_PROJECT"] || process.env["CROWDIN_KEY"] || process.env["PXT_ACCESS_TOKEN"]) {
         console.log("--==*****************************************************************************************************==--")
     } else {
         console.log("--==$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$==--")
