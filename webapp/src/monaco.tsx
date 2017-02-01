@@ -30,6 +30,7 @@ export class Editor extends srceditor.Editor {
     fileType: FileType = FileType.Unknown;
     extraLibs: pxt.Map<monaco.IDisposable>;
     definitions: pxt.Map<pxt.vs.NameDefiniton>;
+    loadingMonaco: boolean;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -254,7 +255,8 @@ export class Editor extends srceditor.Editor {
     }
 
     public loadMonaco(): Promise<void> {
-        if (this.editor) return Promise.resolve();
+        if (this.editor || this.loadingMonaco) return Promise.resolve();
+        this.loadingMonaco = true;
         this.extraLibs = Object.create(null);
 
         let editorArea = document.getElementById("monacoEditorArea");
@@ -262,6 +264,7 @@ export class Editor extends srceditor.Editor {
 
         return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
             this.editor = editor;
+            this.loadingMonaco = false;
 
             this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
@@ -798,6 +801,7 @@ export class Editor extends srceditor.Editor {
 
         return this.loadMonaco()
         .then(() => {
+            if (!this.editor) return;
             let toolbox = document.getElementById('monacoEditorToolbox');
 
             let ext = file.getExtension()
