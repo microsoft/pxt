@@ -63,14 +63,9 @@
 }
 
 #filelist .simtoolbar {
-    opacity: 0;
     -webkit-transition: opacity 0.2s; /* Safari */
     transition: opacity 0.2s;
     transition-timing-function: linear;
-}
-
-#filelist:hover .simtoolbar, .has-touch #filelist .simtoolbar {
-    opacity: 1;
 }
 
 #downloadArea {
@@ -911,9 +906,6 @@ Avatar
     }
     .fullscreen .ui.menu {
         background: transparent !important;
-    }
-    .fullscreen #filelist:hover .simtoolbar {
-        opacity: 1;
     }
     .fullscreen #filelist .simtoolbar {
         position: fixed;
