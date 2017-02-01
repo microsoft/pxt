@@ -1559,7 +1559,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         core.confirmAsync({
             header: lf("Remove {0}", fn.name),
-            body: lf("You are about to remove a file from your project. Are you sure?"),
+            body: lf("You are about to remove a file from your project. You can't undo this. Are you sure?"),
             agreeClass: "red",
             agreeIcon: "trash",
             agreeLbl: lf("Remove it"),
