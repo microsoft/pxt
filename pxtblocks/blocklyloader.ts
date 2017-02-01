@@ -1054,7 +1054,7 @@ namespace pxt.blocks {
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (blocklyTreeRoot && trashIcon) {
-                const distance = calculateDistance(blocklyTreeRoot.getBoundingClientRect(), e.pageX);
+                const distance = calculateDistance(blocklyTreeRoot.getBoundingClientRect(), e.clientX);
                 if (distance < 200) {
                     const opacity = distance / 200;
                     trashIcon.style.opacity = `${1 - opacity}`;

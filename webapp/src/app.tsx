@@ -956,17 +956,15 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
                         <div className="ui grid column">
                             <div className="row">
                                 <div className="column">
-                                    <div className="ui icon small buttons">
+                                    <div className="ui icon large buttons">
                                         <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo") } onClick={() => this.undo('mobile') } />
-                                        <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('mobile') } />
-                                        <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('mobile') } />
                                     </div>
                                 </div>
                             </div>
                             <div className="row" style={{ paddingTop: 0 }}>
                                 <div className="column">
                                     <div className="ui icon large buttons">
-                                        {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
+                                        {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
                                     </div>
                                 </div>
                             </div>
@@ -1561,7 +1559,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
 
         core.confirmAsync({
             header: lf("Remove {0}", fn.name),
-            body: lf("You are about to remove a file from your project. Are you sure?"),
+            body: lf("You are about to remove a file from your project. You can't undo this. Are you sure?"),
             agreeClass: "red",
             agreeIcon: "trash",
             agreeLbl: lf("Remove it"),
@@ -2141,14 +2139,8 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         if (opts.background) pxt.tickActivity("autorun", "autorun." + editorId);
         else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
-        if (opts.background) {
-            if (!simulator.isDirty()) {
-                pxt.debug('auto-run cancelled');
-                return;
-            }
-        } else {
+        if (!opts.background)
             this.editor.beforeCompile();
-        }
 
         this.stopSimulator();
         this.clearLog();
