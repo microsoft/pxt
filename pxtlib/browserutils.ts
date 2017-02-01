@@ -328,7 +328,7 @@ namespace pxt.BrowserUtils {
         const isMobileBrowser = /mobi/i.test(navigator.userAgent);
         const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
         let protocol = "data";
-        const m = /downloadProtocol=([a-z0-9]+)/i.exec(window.location.href);
+        const m = /downloadProtocol=([a-z0-9:/?]+)/i.exec(window.location.href);
         if (m) protocol = m[1];
 
         const dataurl = protocol + ":" + contentType + ";base64," + b64
