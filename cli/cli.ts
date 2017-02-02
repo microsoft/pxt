@@ -1844,7 +1844,8 @@ const defaultFiles: Map<string> = {
         "noImplicitAny": true,
         "outDir": "built",
         "rootDir": "."
-    }
+    },
+    "exclude": ["pxt_modules/**/*test.ts"]
 }
 `,
 
