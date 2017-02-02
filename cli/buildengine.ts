@@ -95,7 +95,7 @@ function platformioUploadAsync(r: pxtc.CompileResult) {
     fs.writeFileSync(pioFirmwareHex(), r.outfiles[pxtc.BINARY_HEX])
     return runPlatformioAsync(["run", "--target", "upload", "--target", "nobuild", "-v"])
         .finally(() => {
-            console.log('Restoring ' + pioFirmwareHex())
+            pxt.log('Restoring ' + pioFirmwareHex())
             fs.writeFileSync(pioFirmwareHex(), prevHex)
         })
 }
@@ -109,11 +109,11 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     }
 
     if (buildCache.sha == extInfo.sha) {
-        console.log("Skipping build.")
+        pxt.log("Skipping build.")
         return tasks
     }
 
-    console.log("Writing build files to " + buildEngine.buildPath)
+    pxt.log("Writing build files to " + buildEngine.buildPath)
 
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
@@ -142,7 +142,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 buildDalConst(buildEngine, mainPkg, true);
             })
     } else {
-        console.log("Skipping build update.")
+        pxt.log("Skipping build update.")
     }
 
     tasks = tasks
@@ -170,7 +170,7 @@ function runYottaAsync(args: string[]) {
         }
     }
 
-    console.log("*** " + ytCommand + " " + args.join(" "))
+    pxt.log("*** " + ytCommand + " " + args.join(" "))
     let child = child_process.spawn("yotta", args, {
         cwd: thisBuild.buildPath,
         stdio: "inherit",
@@ -185,7 +185,7 @@ function runYottaAsync(args: string[]) {
 }
 
 function runPlatformioAsync(args: string[]) {
-    console.log("*** platformio " + args.join(" "))
+    pxt.log("*** platformio " + args.join(" "))
     let child = child_process.spawn("platformio", args, {
         cwd: thisBuild.buildPath,
         stdio: "inherit",
@@ -231,7 +231,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                     vals[n] = "?"
                     // TODO: DAL-specific code
                     if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
-                        console.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
+                        pxt.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
                 }
             } else {
                 vals[n] = "?" // just in case there's another more valid entry
@@ -258,7 +258,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 if (v) {
                     enumVal = parseCppInt(v)
                     if (enumVal == null) {
-                        console.log(`${fileName}(${lineNo}): invalid enum initializer, ${ln}`)
+                        pxt.log(`${fileName}(${lineNo}): invalid enum initializer, ${ln}`)
                         inEnum = false
                         return
                     }
@@ -274,11 +274,13 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
     if (mainPkg && mainPkg.getFiles().indexOf(constName) >= 0 &&
         (force || !fs.existsSync(constName))) {
-        console.log(`rebuilding ${constName}...`)
+        pxt.log(`rebuilding ${constName}...`)
         // TODO: DAL-specific code
         let incPath = buildEngine.buildPath + "/yotta_modules/microbit-dal/inc/"
         if (!fs.existsSync(incPath))
-            incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/"
+            incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/";
+        if (!fs.existsSync(incPath))
+            U.userError("cannot find " + incPath);
         let files = nodeutil.allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: Map<string> = {}
@@ -322,13 +324,13 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
         .then(drives => filterDrives(drives))
         .then(drives => {
             if (drives.length == 0) {
-                console.log("cannot find any drives to deploy to");
+                pxt.log("cannot find any drives to deploy to");
                 return Promise.resolve(0);
             }
-            console.log(`copying ${firmware} to ` + drives.join(", "));
+            pxt.log(`copying ${firmware} to ` + drives.join(", "));
             const writeHexFile = (filename: string) => {
                 return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware], encoding)
-                    .then(() => console.log("   wrote hex file to " + filename));
+                    .then(() => pxt.log("   wrote hex file to " + filename));
             };
             return Promise.map(drives, d => writeHexFile(d))
                 .then(() => drives.length);
