@@ -1148,7 +1148,6 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         "dir": "ltr",
         "name": cfg.name,
         "short_name": cfg.name,
-        "theme_color": cfg.appTheme.accentColor,
         "icons": [
             {
                 "src": "\/static\/icons\/android-chrome-36x36.png",
