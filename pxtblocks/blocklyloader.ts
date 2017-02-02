@@ -188,7 +188,7 @@ namespace pxt.blocks {
                     }
 
                     if (nsn && nsn.attributes.advanced) {
-                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", 'blocklyTreeIconadvanced')
+                        parentCategoryList = getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", 'blocklyTreeIconadvanced')
                         categories = getChildCategories(parentCategoryList)
                     }
 
@@ -205,17 +205,19 @@ namespace pxt.blocks {
                         parentCategoryList.appendChild(category);
                 }
                 if (fn.attributes.advanced) {
-                    category = getOrAddSubcategory(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    category = getOrAddSubcategoryByWeight(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
                 }
                 else if (fn.attributes.subcategory) {
                     const sub = fn.attributes.subcategory;
                     const all = nsn.attributes.subcategories;
                     if (all && all.indexOf(sub) !== -1) {
-                        const weight = all.length - all.indexOf(sub) + 1;
-                        category = getOrAddSubcategory(category,  sub, sub, weight, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                        // Respect the weights given by the package
+                        const weight = 10000 - all.indexOf(sub);
+                        category = getOrAddSubcategoryByWeight(category,  sub, sub, weight, category.getAttribute("colour"), 'blocklyTreeIconmore')
                     }
-                    else if (!all) {
-                        category = getOrAddSubcategory(category,  sub, sub, 2, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    else {
+                        // If no weight is specified, insert alphabetically after the weighted subcategories but above "More"
+                        category = getOrAddSubcategoryName(category,  sub, sub, category.getAttribute("colour"), 'blocklyTreeIconmore')
                     }
                 }
             }
@@ -301,7 +303,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function getOrAddSubcategory(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
+    function getOrAddSubcategoryByWeight(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
         const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
         if (existing) {
             return existing;
@@ -320,6 +322,59 @@ namespace pxt.blocks {
         }
         if (ci == siblings.length)
             parent.appendChild(newCategory);
+
+        return newCategory;
+    }
+
+    function getOrAddSubcategoryName(parent: Element, name: string, nameid: string, colour?: string, iconClass?: string) {
+        const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
+        if (existing) {
+            return existing;
+        }
+
+        const newCategory = createCategoryElement(name, nameid, 100, colour, iconClass);
+
+        const siblings = parent.querySelectorAll("category");
+        const filtered: Element[] = [];
+
+        let ci = 0;
+        let inserted = false;
+        let last: Element = undefined;
+        for (ci = 0; ci < siblings.length; ++ci) {
+            let cat = siblings[ci];
+            const sibWeight = parseInt(cat.getAttribute("weight") || "50")
+
+            if (sibWeight >= 1000) {
+                continue;
+            }
+            else if (sibWeight === 1) {
+                last = cat;
+                break;
+            }
+
+            filtered.push(cat);
+
+            if (!inserted && cat.getAttribute("name").localeCompare(name) >= 0) {
+                parent.insertBefore(newCategory, cat);
+                filtered.splice(filtered.length - 1, 0, newCategory);
+                inserted = true;
+            }
+        }
+
+        if (!inserted) {
+            filtered.push(newCategory);
+
+            if (last) {
+                parent.insertBefore(newCategory, last);
+            }
+            else {
+                parent.appendChild(newCategory);
+            }
+        }
+
+        filtered.forEach((e, i) => {
+            e.setAttribute("weight", (200 - i).toString());
+        });
 
         return newCategory;
     }
@@ -656,7 +711,7 @@ namespace pxt.blocks {
 
         // Add the "Add package" category
         if (tb && showCategories) {
-            getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         // Filter the blocks
