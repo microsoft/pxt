@@ -64,6 +64,9 @@
 
 #filelist .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
+    -moz-transition: opacity 0.2s; /* Mozilla */
+    -webkit-transition-timing-function: linear; /* Mozilla */
+    -o-transition: opacity 0.2s; /* Opera */
     transition: opacity 0.2s;
     transition-timing-function: linear;
 }
@@ -282,6 +285,9 @@ div.simframe > iframe {
 // Add a transition between the blocks / js menu item toggle options
 .ui.inverted.menu .item.blocks-menuitem, .ui.inverted.menu .item.javascript-menuitem {
     -webkit-transition: background 1s; /* Safari */
+    -moz-transition: background 1s; /* Mozilla */
+    -webkit-transition-timing-function: ease-in; /* Mozilla */
+    -o-transition: background 1s; /* Opera */
     transition: background 1s;
     transition-timing-function: ease-in;
 }
@@ -388,7 +394,9 @@ div.simframe > iframe {
 /* Scrollbars */
 /* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
 ::-webkit-scrollbar {
+    -moz-appearance: none;
     -webkit-appearance: none;
+    appearance: none;
     width: 10px;
     height: 10px;
 }
@@ -441,6 +449,9 @@ div.simframe > iframe {
     background: @blocklyToolboxColor !important;
     z-index: 1;
     -webkit-transition: width 1s; /* Safari */
+    -moz-transition: width 1s; /* Mozilla */
+    -webkit-transition-timing-function: ease-in; /* Mozilla */
+    -o-transition: width 1s; /* Opera */
     transition: width 1s;
     transition-timing-function: ease-in;
 }

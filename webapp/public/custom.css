@@ -209,6 +209,7 @@ html {
 
 .flash {
     animation: flash-animation 0.4s alternate infinite;
+    -webkit-animation: flash-animation 0.4s alternate infinite;
 }
 
 @keyframes flash-animation {
@@ -218,6 +219,7 @@ html {
 
 .cloudflash {
     animation: cloud-flash-animation 0.8s alternate infinite;
+    -webkit-animation: cloud-flash-animation 0.8s alternate infinite;
 }
 
 @keyframes cloud-flash-animation {
@@ -276,6 +278,8 @@ text.blocklyCheckbox {
     position: absolute;
     top: 50%;
     left: 50%;
+    -webkit-transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
     transform: translate(-50%,-50%);
     width: calc(100% - 1em);
     max-height: calc(100% - 1em);
