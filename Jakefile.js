@@ -60,6 +60,10 @@ task('testdecompilererrors', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "tests/decompile-test/errors", 'node ../../../built/pxt.js testdecompilererrors .')
 })
 
+task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
+    cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
+})
+
 ju.catFiles('built/pxt.js', [
     "node_modules/typescript/lib/typescript.js",
     "built/pxtlib.js",

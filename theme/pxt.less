@@ -63,14 +63,12 @@
 }
 
 #filelist .simtoolbar {
-    opacity: 0;
     -webkit-transition: opacity 0.2s; /* Safari */
+    -moz-transition: opacity 0.2s; /* Mozilla */
+    -webkit-transition-timing-function: linear; /* Mozilla */
+    -o-transition: opacity 0.2s; /* Opera */
     transition: opacity 0.2s;
     transition-timing-function: linear;
-}
-
-#filelist:hover .simtoolbar, .has-touch #filelist .simtoolbar {
-    opacity: 1;
 }
 
 #downloadArea {
@@ -287,6 +285,9 @@ div.simframe > iframe {
 // Add a transition between the blocks / js menu item toggle options
 .ui.inverted.menu .item.blocks-menuitem, .ui.inverted.menu .item.javascript-menuitem {
     -webkit-transition: background 1s; /* Safari */
+    -moz-transition: background 1s; /* Mozilla */
+    -webkit-transition-timing-function: ease-in; /* Mozilla */
+    -o-transition: background 1s; /* Opera */
     transition: background 1s;
     transition-timing-function: ease-in;
 }
@@ -393,7 +394,9 @@ div.simframe > iframe {
 /* Scrollbars */
 /* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
 ::-webkit-scrollbar {
+    -moz-appearance: none;
     -webkit-appearance: none;
+    appearance: none;
     width: 10px;
     height: 10px;
 }
@@ -446,6 +449,9 @@ div.simframe > iframe {
     background: @blocklyToolboxColor !important;
     z-index: 1;
     -webkit-transition: width 1s; /* Safari */
+    -moz-transition: width 1s; /* Mozilla */
+    -webkit-transition-timing-function: ease-in; /* Mozilla */
+    -o-transition: width 1s; /* Opera */
     transition: width 1s;
     transition-timing-function: ease-in;
 }
@@ -650,6 +656,9 @@ span.blocklyTreeIcon {
     border-radius: 8px;
     border: solid 3px @white;
     cursor: pointer;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
     user-select: none;
 }
 
@@ -912,9 +921,6 @@ Avatar
     .fullscreen .ui.menu {
         background: transparent !important;
     }
-    .fullscreen #filelist:hover .simtoolbar {
-        opacity: 1;
-    }
     .fullscreen #filelist .simtoolbar {
         position: fixed;
         bottom: 2rem;
@@ -1141,10 +1147,10 @@ Avatar
     /* Organization logo */
     .organization {
         top:auto !important;
-        right:0.5rem;
+        right:0.4rem;
         left: auto;
-        bottom: 0.5rem;
-        height: 1.3rem;
+        bottom: 0.4rem;
+        height: 1.0rem;
     }
     .rtl .organization {
         left:0.5rem;
