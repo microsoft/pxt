@@ -1,5 +1,5 @@
 // Single-line comment
-let x = 0;
+let x = 1;
 
 // Multiple
 // Single-line

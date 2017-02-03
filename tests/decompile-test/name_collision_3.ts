@@ -1,4 +1,4 @@
-let a = 0;
+let a = 1;
 
 if (!!true) {
     let a = 1;

@@ -1,4 +1,4 @@
-let x = 0;
+let x = 1;
 {
     let x = 1;
     x++;
@@ -32,11 +32,11 @@ while (!!true) {
 x++;
 
 {
-    let y = 0;
+    let y = 1;
     y++;
 }
 
 {
-    let y = 0;
+    let y = 1;
     y++;
 }

@@ -376,8 +376,13 @@ ${output}</xml>`;
                     const decl = node as ts.VariableDeclaration;
                     let isAuto = false
                     if (decl.initializer) {
-                        if (decl.initializer.kind === SyntaxKind.NullKeyword)
+                        if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
                             isAuto = true
+                        }
+                        else if (isStringOrNumericLiteral(decl.initializer.kind)) {
+                            const text = decl.initializer.getText();
+                            isAuto = text === "0" || isEmptyString(text);
+                        }
                         else {
                             const callInfo: pxtc.CallInfo = (decl.initializer as any).callInfo
                             if (callInfo && callInfo.isAutoCreate)
@@ -1103,5 +1108,9 @@ ${output}</xml>`;
                 }
             }
         }
+    }
+
+    function isEmptyString(a: string) {
+        return a === `""` || a === `''` || a === "``";
     }
 }
