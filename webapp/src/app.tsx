@@ -1705,6 +1705,10 @@ export class ProjectView
         this.setFile(f);
     }
 
+    saveBlocksToTypeScript(): string {
+        return this.blocksEditor.saveToTypeScript();
+    }
+
     saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg() || this.reload)
             return Promise.resolve();

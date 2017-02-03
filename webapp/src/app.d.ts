@@ -76,6 +76,7 @@ export interface IProjectView {
 
     switchTypeScript(): void;
     openTypeScriptAsync(): Promise<void>;
+    saveBlocksToTypeScript(): string;
 
     saveFileAsync(): Promise<void>;
     loadHeaderAsync(h: Header): Promise<void>;
@@ -86,6 +87,8 @@ export interface IProjectView {
     newEmptyProject(name?: string, documentation?: string): void;
     newProject(options?: ProjectCreationOptions): void;
     importFileDialog(): void;
+    removeProject(): void;
+    editText(): void;
 
     getPreferredEditor(): string;
     saveAndCompile(): void;
@@ -95,6 +98,7 @@ export interface IProjectView {
     setFile(fn: IFile): void;
     setSideFile(fn: IFile): void;
     setSideDoc(path: string): void;
+    setSideMarkdown(md: string): void;
     removeFile(fn: IFile, skipConfirm?: boolean): void;
 
     setTutorialStep(step: number): void;
@@ -114,6 +118,9 @@ export interface IProjectView {
 
     isBlocksEditor(): boolean;
     isTextEditor(): boolean;
+
+    settings: EditorSettings;
+
     editor: IEditor;
 }
 
