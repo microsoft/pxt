@@ -23,6 +23,7 @@ import * as gallery from "./gallery";
 import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
 import * as share from "./share";
+import * as tutorial from "./tutorial";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -440,144 +441,6 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
-    }
-}
-
-class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    openTutorialStep(step: number) {
-        pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorial, step: step });
-        this.props.parent.setState({ tutorialStep: step, tutorialReady: false })
-        this.props.parent.setTutorialStep(step);
-    }
-
-    render() {
-        const state = this.props.parent.state;
-        const tutorialReady = state.tutorialReady;
-        const targetTheme = pxt.appTarget.appTheme;
-        const tutorialSteps = state.tutorialSteps;
-        const currentStep = state.tutorialStep;
-        const tutorialName = state.tutorialName;
-
-        return <div className="ui item">
-            <div className="ui item">
-                {tutorialName}
-            </div>
-            <div className="ui item tutorial-menuitem">
-                {tutorialSteps.map((step, index) =>
-                    <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index) }/>
-                ) }
-            </div>
-        </div>;
-    }
-}
-
-interface TutorialOptions {
-    tutorialId: string;
-    tutorialName: string;
-    showCategories?: boolean;
-}
-
-class TutorialContent extends data.Component<ISettingsProps, {}> {
-    public static notify(message: pxsim.SimulatorMessage) {
-        let tc = document.getElementById("tutorialcontent") as HTMLIFrameElement;
-        if (tc && tc.contentWindow) tc.contentWindow.postMessage(message, "*");
-    }
-
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    setPath(path: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
-        const url = `${docsUrl}#tutorial:${path}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-    }
-
-    private setUrl(url: string) {
-        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
-        if (el) el.src = url;
-        else this.props.parent.setState({ tutorialUrl: url });
-    }
-
-    public static refresh() {
-        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
-        if (el && el.contentWindow) {
-            el.parentElement.style.height = "";
-            el.parentElement.style.height = el.contentWindow.document.body.scrollHeight + "px";
-        }
-    }
-
-    renderCore() {
-        const state = this.props.parent.state;
-        const docsUrl = state.tutorialUrl;
-        if (!docsUrl) return null;
-
-        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh() } src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
-    }
-}
-
-class TutorialCard extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    previousTutorialStep() {
-        const currentStep = this.props.parent.state.tutorialStep;
-        const previousStep = currentStep - 1;
-
-        pxt.tickEvent(`tutorial.previous`, { tutorial: this.props.parent.state.tutorial, step: previousStep });
-        this.props.parent.setState({ tutorialStep: previousStep, tutorialReady: false })
-        this.props.parent.setTutorialStep(previousStep);
-    }
-
-    nextTutorialStep() {
-        const currentStep = this.props.parent.state.tutorialStep;
-        const nextStep = currentStep + 1;
-
-        pxt.tickEvent(`tutorial.next`, { tutorial: this.props.parent.state.tutorial, step: nextStep });
-        this.props.parent.setState({ tutorialStep: nextStep, tutorialReady: false })
-        this.props.parent.setTutorialStep(nextStep);
-    }
-
-    finishTutorial() {
-        this.props.parent.exitTutorial();
-    }
-
-    setPath(path: string) {
-        let tc = this.refs["tutorialcontent"] as TutorialContent;
-        if (!tc) return;
-        tc.setPath(path);
-    }
-
-    render() {
-        const state = this.props.parent.state;
-        const tutorialReady = state.tutorialReady;
-        const currentStep = state.tutorialStep;
-        const cardLocation = state.tutorialCardLocation || 'bottom';
-        const maxSteps = state.tutorialSteps.length;
-        const hasPrevious = currentStep != 0;
-        const hasNext = currentStep != maxSteps - 1;
-        const hasFinish = currentStep == maxSteps - 1;
-
-        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} visible active`}>
-            <div className="ui raised fluid card">
-                <div className="ui">
-                    <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
-                </div>
-                <div className="extra content">
-                    <div className="ui two buttons">
-                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back") } onClick={() => this.previousTutorialStep() } /> : undefined }
-                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next") } onClick={() => this.nextTutorialStep() } /> : undefined }
-                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
-                    </div>
-                </div>
-            </div>
-        </div>;
     }
 }
 
@@ -1337,10 +1200,10 @@ export class ProjectView
         // save and typecheck
         this.typecheckNow();
         // Notify tutorial content pane
-        let tc = this.refs["tutorialcard"] as TutorialCard;
+        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            TutorialContent.notify({
+            tutorial.TutorialContent.notify({
                 type: "tutorial",
                 tutorial: this.state.tutorial,
                 subtype: "stepchange",
@@ -1359,7 +1222,7 @@ export class ProjectView
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
                         this.editor.filterToolbox(tt.data, showCategories, false);
                         this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
-                        TutorialContent.refresh();
+                        tutorial.TutorialContent.refresh();
                         core.hideLoading();
                         break;
                 }
@@ -2066,7 +1929,7 @@ export class ProjectView
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
                 this.setState({ tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result })
-                let tc = this.refs["tutorialcard"] as TutorialCard;
+                let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
@@ -2135,7 +1998,7 @@ export class ProjectView
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const tutorial = this.state.tutorial;
+        const inTutorial = this.state.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
@@ -2163,7 +2026,7 @@ export class ProjectView
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -2177,13 +2040,13 @@ export class ProjectView
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        {sandbox || tutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        {tutorial ? undefined : <sui.Item class="editor-menuitem">
+                        {sandbox || inTutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
+                        {inTutorial ? undefined : <sui.Item class="editor-menuitem">
                             <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
                             <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
                         </sui.Item> }
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
-                        {sandbox || tutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
+                        {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -2208,8 +2071,8 @@ export class ProjectView
                             {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
                             {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="tablet only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined }
                         </div>
-                        {tutorial ? <TutorialMenuItem parent={this} /> : undefined }
-                        {tutorial ? <div className="right menu">
+                        {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined }
+                        {inTutorial ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() }/>
                             <div className="ui item widedesktop only"></div>
                             <div className="ui item widedesktop only"></div>
@@ -2251,7 +2114,7 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {tutorial ? <TutorialCard ref="tutorialcard" parent={this} /> : undefined }
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 <div id="editortools" role="complementary">
