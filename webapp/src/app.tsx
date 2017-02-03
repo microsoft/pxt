@@ -19,12 +19,14 @@ import * as tdlegacy from "./tdlegacy"
 import * as db from "./db"
 import * as cmds from "./cmds"
 import * as appcache from "./appcache";
-import * as gallery from "./gallery";
 import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
 import * as share from "./share";
 import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
+import * as filelist from "./filelist";
+import * as container from "./container";
+import * as scriptsearch from "./scriptsearch";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -74,546 +76,6 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     }
 }*/
 
-enum ScriptSearchMode {
-    Packages,
-    Projects
-}
-
-interface ScriptSearchState {
-    searchFor?: string;
-    mode?: ScriptSearchMode;
-    visible?: boolean;
-    search?: boolean;
-}
-
-class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
-    private prevGhData: pxt.github.GitRepo[] = [];
-    private prevUrlData: Cloud.JsonScript[] = [];
-    private prevGalleries: pxt.CodeCard[] = [];
-
-    constructor(props: ISettingsProps) {
-        super(props)
-        this.state = {
-            searchFor: '',
-            mode: ScriptSearchMode.Packages,
-            visible: false
-        }
-    }
-
-    hide() {
-        this.setState({ visible: false });
-    }
-
-    showAddPackages() {
-        this.setState({ visible: true, mode: ScriptSearchMode.Packages, searchFor: '', search: true })
-    }
-
-    showOpenProject() {
-        this.setState({ visible: true, mode: ScriptSearchMode.Projects, searchFor: '', search: true })
-    }
-
-    fetchGhData(): pxt.github.GitRepo[] {
-        const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages || this.state.mode != ScriptSearchMode.Packages) return [];
-        let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let res: pxt.github.GitRepo[] =
-            searchFor || cloud.preferredPackages
-                ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
-                : null
-        if (res) this.prevGhData = res
-        return this.prevGhData || []
-    }
-
-    fetchGalleries(): pxt.CodeCard[] {
-        if (this.state.mode != ScriptSearchMode.Projects
-            || sandbox
-            || this.state.searchFor
-            || pxt.options.light
-            || !pxt.appTarget.appTheme.projectGallery) return [];
-        let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.projectGallery)}`) as gallery.Gallery[];
-        if (res) this.prevGalleries = Util.concat(res.map(g => g.cards));
-        return this.prevGalleries;
-    }
-
-    fetchUrlData(): Cloud.JsonScript[] {
-        if (this.state.mode != ScriptSearchMode.Projects) return []
-
-        let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-        if (scriptid) {
-            let res = this.getData(`cloud-search:${scriptid}`)
-            if (res) {
-                if (res.statusCode !== 404) {
-                    if (!this.prevUrlData) this.prevUrlData = [res]
-                    else this.prevUrlData.push(res)
-                }
-            }
-        }
-        return this.prevUrlData;
-    }
-
-    fetchBundled(): pxt.PackageConfig[] {
-        if (this.state.mode != ScriptSearchMode.Packages || !!this.state.searchFor) return [];
-
-        const bundled = pxt.appTarget.bundledpkgs;
-        return Object.keys(bundled).filter(k => !/prj$/.test(k))
-            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig);
-    }
-
-    fetchLocalData(): Header[] {
-        if (this.state.mode != ScriptSearchMode.Projects) return [];
-
-        let headers: Header[] = this.getData("header:*")
-        if (this.state.searchFor)
-            headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
-        return headers;
-    }
-
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
-        return this.state.visible != nextState.visible
-            || this.state.searchFor != nextState.searchFor
-            || this.state.mode != nextState.mode;
-    }
-
-    renderCore() {
-        if (!this.state.visible) return null;
-
-        const headers = this.fetchLocalData();
-        const bundles = this.fetchBundled();
-        const ghdata = this.fetchGhData();
-        const urldata = this.fetchUrlData();
-        const galleries = this.fetchGalleries();
-
-        const chgHeader = (hdr: Header) => {
-            pxt.tickEvent("projects.header");
-            this.hide();
-            this.props.parent.loadHeaderAsync(hdr)
-        }
-        const chgBundle = (scr: pxt.PackageConfig) => {
-            pxt.tickEvent("packages.bundled", { name: scr.name });
-            this.hide();
-            addDepIfNoConflict(scr, "*")
-                .done();
-        }
-        const chgGallery = (scr: pxt.CodeCard) => {
-            pxt.tickEvent("projects.gallery", { name: scr.name });
-            this.hide();
-            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
-        }
-        const upd = (v: any) => {
-            let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
-            this.setState({ searchFor: str })
-        };
-        const kupd = (ev: __React.KeyboardEvent) => {
-            if (ev.keyCode == 13) upd(ev);
-        }
-        const installScript = (scr: Cloud.JsonScript) => {
-            this.hide();
-            if (this.state.mode == ScriptSearchMode.Projects) {
-                core.showLoading(lf("loading project..."));
-                workspace.installByIdAsync(scr.id)
-                    .then(r => this.props.parent.loadHeaderAsync(r))
-                    .done(() => core.hideLoading())
-            }
-        }
-        const installGh = (scr: pxt.github.GitRepo) => {
-            pxt.tickEvent("packages.github");
-            this.hide();
-            if (this.state.mode == ScriptSearchMode.Packages) {
-                let p = pkg.mainEditorPkg();
-                core.showLoading(lf("downloading package..."));
-                pxt.packagesConfigAsync()
-                    .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
-                    .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
-                        .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
-                    .catch(core.handleNetworkError)
-                    .finally(() => core.hideLoading());
-            } else {
-                Util.oops()
-            }
-        }
-        const addDepIfNoConflict = (config: pxt.PackageConfig, version: string) => {
-            return pkg.mainPkg.findConflictsAsync(config, version)
-                .then((conflicts) => {
-                    let inUse = conflicts.filter((c) => pkg.mainPkg.isPackageInUse(c.pkg0.id));
-                    let addDependencyPromise = Promise.resolve(true);
-
-                    if (inUse.length) {
-                        addDependencyPromise = addDependencyPromise
-                            .then(() => core.confirmAsync({
-                                header: lf("Cannot add {0} package", config.name),
-                                hideCancel: true,
-                                agreeLbl: lf("Ok"),
-                                body: lf("Remove all the blocks from the {0} package and try again.", inUse[0].pkg0.id)
-                            }))
-                            .then(() => {
-                                return false;
-                            });
-                    } else if (conflicts.length) {
-                        const body = conflicts.length === 1 ?
-                            // Single conflict: "Package a is..."
-                            lf("Package {0} is incompatible with {1}. Remove {0} and add {1}?", conflicts[0].pkg0.id, config.name) :
-                            // 2 conflicts: "Packages A and B are..."; 3+ conflicts: "Packages A, B, C and D are..."
-                            lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(","), conflicts.slice(-1)[0].pkg0.id, config.name);
-
-                        addDependencyPromise = addDependencyPromise
-                            .then(() => core.confirmAsync({
-                                header: lf("Some packages will be removed"),
-                                agreeLbl: lf("Remove package(s) and add {0}", config.name),
-                                agreeClass: "pink",
-                                body
-                            }))
-                            .then((buttonPressed) => {
-                                if (buttonPressed !== 0) {
-                                    let p = pkg.mainEditorPkg();
-                                    return Promise.all(conflicts.map((c) => {
-                                        return p.removeDepAsync(c.pkg0.id);
-                                    }))
-                                        .then(() => true);
-                                }
-                                return Promise.resolve(false);
-                            });
-                    }
-
-                    return addDependencyPromise
-                        .then((shouldAdd) => {
-                            if (shouldAdd) {
-                                let p = pkg.mainEditorPkg();
-                                return p.addDepAsync(config.name, version)
-                                    .then(() => this.props.parent.reloadHeaderAsync());
-                            }
-                            return Promise.resolve();
-                        });
-                });
-        }
-        const importHex = () => {
-            pxt.tickEvent("projects.import");
-            this.hide();
-            this.props.parent.importFileDialog();
-        }
-        const newProject = () => {
-            pxt.tickEvent("projects.new");
-            this.hide();
-            this.props.parent.newProject();
-        }
-        const saveProject = () => {
-            pxt.tickEvent("projects.save");
-            this.hide();
-            this.props.parent.saveAndCompile();
-        }
-        const renameProject = () => {
-            pxt.tickEvent("projects.rename");
-            this.hide();
-            this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
-        }
-        const isEmpty = () => {
-            if (this.state.searchFor) {
-                if (headers.length > 0
-                    || bundles.length > 0
-                    || ghdata.length > 0
-                    || urldata.length > 0)
-                    return false;
-                return true;
-            }
-            return false;
-        }
-
-        const headerText = this.state.mode == ScriptSearchMode.Packages ? lf("Add Package...")
-            : lf("Projects");
-        return (
-            <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
-                onHide={() => this.setState({ visible: false }) }>
-                {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
-                    <div className="ui vertical segment">
-                        <sui.Button
-                            class="primary"
-                            icon="file outline"
-                            text={lf("New Project...") }
-                            title={lf("Creates a new empty project") }
-                            onClick={() => newProject() } />
-                        {pxt.appTarget.compile ?
-                            <sui.Button
-                                icon="upload"
-                                text={lf("Import File...") }
-                                title={lf("Open files from your computer") }
-                                onClick={() => importHex() } /> : undefined}
-                    </div> : undefined}
-                <div className="ui vertical segment">
-                    {this.state.search ? <div className="ui search">
-                        <div className="ui fluid action input" role="search">
-                            <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
-                            <button title={lf("Search") } className="ui right icon button" onClick={upd}>
-                                <i className="search icon"></i>
-                            </button>
-                        </div>
-                    </div> : undefined }
-                    <div className="ui cards">
-                        {bundles.map(scr =>
-                            <codecard.CodeCardView
-                                key={'bundled' + scr.name}
-                                name={scr.name}
-                                description={scr.description}
-                                url={"/" + scr.installedVersion}
-                                onClick={() => chgBundle(scr) }
-                                />
-                        ) }
-                        {headers.map(scr =>
-                            <codecard.CodeCardView
-                                key={'local' + scr.id}
-                                name={scr.name}
-                                time={scr.recentUse}
-                                imageUrl={scr.icon}
-                                url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                onClick={() => chgHeader(scr) }
-                                />
-                        ) }
-                        {galleries.map(scr => <codecard.CodeCardView
-                            key={'gal' + scr.name}
-                            className="widedesktop only"
-                            name={scr.name}
-                            url={scr.url}
-                            imageUrl={scr.imageUrl}
-                            onClick={() => chgGallery(scr) }
-                            />
-                        ) }
-                        {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
-                            <codecard.CodeCardView
-                                name={scr.name.replace(/^pxt-/, "") }
-                                header={scr.fullName}
-                                description={scr.description}
-                                key={'gh' + scr.fullName}
-                                onClick={() => installGh(scr) }
-                                url={'github:' + scr.fullName}
-                                color="blue"
-                                />
-                        ) }
-                        {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
-                            <codecard.CodeCardView
-                                name={scr.name.replace(/^pxt-/, "") }
-                                header={scr.fullName}
-                                description={scr.description}
-                                key={'gh' + scr.fullName}
-                                onClick={() => installGh(scr) }
-                                url={'github:' + scr.fullName}
-                                color="red"
-                                />
-                        ) }
-                        {urldata.map(scr =>
-                            <codecard.CodeCardView
-                                name={scr.name}
-                                time={scr.time}
-                                header={'/' + scr.id}
-                                description={scr.description}
-                                key={'cloud' + scr.id}
-                                onClick={() => installScript(scr) }
-                                url={'/' + scr.id}
-                                color="blue"
-                                />
-                        ) }
-                    </div>
-                    { isEmpty() ?
-                        <div className="ui items">
-                            <div className="ui item">
-                                {this.state.mode == ScriptSearchMode.Packages ?
-                                    lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
-                                    lf("We couldn't find any projects matching '{0}'", this.state.searchFor) }
-                            </div>
-                        </div>
-                        : undefined }
-                </div>
-            </sui.Modal >
-        );
-    }
-}
-
-class DocsMenuItem extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    openDoc(path: string) {
-        pxt.tickEvent(`docs`, { path });
-        this.props.parent.setSideDoc(path);
-    }
-
-    render() {
-        const targetTheme = pxt.appTarget.appTheme;
-        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        return <sui.DropdownMenuItem icon="help" class="help-dropdown-menuitem" text={lf("Help") } textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
-            {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
-            {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
-        </sui.DropdownMenuItem>
-    }
-}
-
-class SideDocs extends data.Component<ISettingsProps, {}> {
-    public static notify(message: pxsim.SimulatorMessage) {
-        let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
-    }
-
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    setPath(path: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
-        const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-    }
-
-    setMarkdown(md: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
-        const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-    }
-
-    private setUrl(url: string) {
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
-        if (el) el.src = url;
-        else this.props.parent.setState({ sideDocsLoadUrl: url });
-        this.props.parent.setState({ sideDocsCollapsed: false });
-    }
-
-    collapse() {
-        this.props.parent.setState({ sideDocsCollapsed: true });
-    }
-
-    popOut() {
-        SideDocs.notify({
-            type: "popout"
-        })
-    }
-
-    toggleVisibility() {
-        const state = this.props.parent.state;
-        this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
-    }
-
-    componentDidUpdate() {
-        this.props.parent.editor.resize();
-    }
-
-    renderCore() {
-        const state = this.props.parent.state;
-        const docsUrl = state.sideDocsLoadUrl;
-        if (!docsUrl) return null;
-
-        const icon = !docsUrl || state.sideDocsCollapsed ? "expand" : "compress";
-        return <div>
-            <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
-            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
-                <i className={`external icon`}></i>
-            </button>
-            <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation") } className="circular ui icon button" onClick={() => this.toggleVisibility() }>
-                <i className={`${icon} icon`}></i>
-            </button>
-        </div>
-    }
-}
-
-interface FileListState {
-    expands: pxt.Map<boolean>;
-}
-
-class FileList extends data.Component<ISettingsProps, FileListState> {
-
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {
-            expands: {}
-        }
-    }
-
-    private removePkg(e: React.MouseEvent, p: pkg.EditorPackage) {
-        e.stopPropagation();
-        core.confirmAsync({
-            header: lf("Remove {0} package", p.getPkgId()),
-            body: lf("You are about to remove a package from your project. Are you sure?"),
-            agreeClass: "red",
-            agreeIcon: "trash",
-            agreeLbl: lf("Remove it"),
-        }).done(res => {
-            if (res) {
-                pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
-                    .then(() => this.props.parent.reloadHeaderAsync())
-                    .done()
-            }
-        })
-    }
-
-    private removeFile(e: React.MouseEvent, f: pkg.File) {
-        e.stopPropagation();
-        this.props.parent.removeFile(f);
-    }
-
-    private updatePkg(e: React.MouseEvent, p: pkg.EditorPackage) {
-        e.stopPropagation();
-        pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
-            .then(() => this.props.parent.reloadHeaderAsync())
-            .done()
-    }
-
-    private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
-        const deleteFiles = pkg.getPkgId() == "this";
-        const parent = this.props.parent;
-        return pkg.sortedFiles().map(file => {
-            let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
-            return (
-                <a key={file.getName() }
-                    onClick={() => parent.setSideFile(file) }
-                    className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
-                    >
-                    {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <i className="align left icon"></i> : /\.blocks$/.test(file.name) ? <i className="puzzle icon"></i> : undefined }
-                    {meta.isReadonly ? <i className="lock icon"></i> : null}
-                    {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-                    {deleteFiles && /\.blocks$/i.test(file.getName()) ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removeFile(e, file) } /> : ''}
-                </a>);
-        })
-    }
-
-    private packageOf(p: pkg.EditorPackage) {
-        const expands = this.state.expands;
-        let del = p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built";
-        let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
-        return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => this.togglePkg(p) }>
-            <i className={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`}></i>
-            {upd ? <sui.Button class="primary label" icon="refresh" onClick={(e) => this.updatePkg(e, p) } /> : ''}
-            {del ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removePkg(e, p) } /> : ''}
-            {p.getPkgId() }
-        </div>
-        ].concat(expands[p.getPkgId()] ? this.filesOf(p) : [])
-    }
-
-    private togglePkg(p: pkg.EditorPackage) {
-        const expands = this.state.expands;
-        expands[p.getPkgId()] = !expands[p.getPkgId()];
-        this.forceUpdate();
-    }
-
-    private filesWithHeader(p: pkg.EditorPackage) {
-        return p.isTopLevel() ? this.filesOf(p) : this.packageOf(p);
-    }
-
-    private toggleVisibility() {
-        this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
-    }
-
-    renderCore() {
-        const show = !!this.props.parent.state.showFiles;
-        const targetTheme = pxt.appTarget.appTheme;
-        return <div className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
-            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
-                {lf("Explorer") }
-                <i className={`chevron ${show ? "down" : "right"} icon`}></i>
-            </div>
-            {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
-        </div>;
-    }
-}
-
 export class ProjectView
     extends data.Component<IAppProps, IAppState>
     implements IProjectView {
@@ -624,7 +86,7 @@ export class ProjectView
     blocksEditor: blocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
-    scriptSearch: ScriptSearch;
+    scriptSearch: scriptsearch.ScriptSearch;
     shareEditor: share.ShareEditor;
 
     private lastChangeTime: number;
@@ -852,7 +314,7 @@ export class ProjectView
                 if (e)
                     this.editor.setViewState(e.pos)
 
-                SideDocs.notify({
+                container.SideDocs.notify({
                     type: "fileloaded",
                     name: this.editorFile.getName(),
                     locale: pxt.Util.localeInfo()
@@ -930,13 +392,13 @@ export class ProjectView
     }
 
     setSideMarkdown(md: string) {
-        let sd = this.refs["sidedoc"] as SideDocs;
+        let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
         sd.setMarkdown(md);
     }
 
     setSideDoc(path: string) {
-        let sd = this.refs["sidedoc"] as SideDocs;
+        let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
         if (path) sd.setPath(path);
         else sd.collapse();
@@ -1791,7 +1253,7 @@ export class ProjectView
                             <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
                             <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
                         </sui.Item> }
-                        {docMenu ? <DocsMenuItem parent={this} /> : undefined}
+                        {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
                         {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Share Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
@@ -1856,7 +1318,7 @@ export class ProjectView
                         <div className="ui editorFloat portrait hide">
                             <logview.LogView ref="logs" />
                         </div>
-                        {sandbox || isBlocks ? undefined : <FileList parent={this} />}
+                        {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
@@ -1866,10 +1328,10 @@ export class ProjectView
                 <div id="editortools" role="complementary">
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div>
-                {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
+                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui landscape hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui landscape only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
                 {!sandbox && !targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined}
-                {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
+                {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
@@ -2291,7 +1753,7 @@ $(document).ready(() => {
                 theEditor.handleMessage(m);
         }
         if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
-            SideDocs.notify({
+            container.SideDocs.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
