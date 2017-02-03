@@ -3,6 +3,7 @@
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
 /// <reference path="../../built/pxtwinrt.d.ts"/>
+/// <reference path="app.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -31,100 +32,19 @@ import * as draganddrop from "./draganddrop";
 import * as hwdbg from "./hwdbg"
 import * as electron from "./electron";
 
-type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
-type InstallHeader = pxt.workspace.InstallHeader;
+type ISettingsProps = pxt.editor.ISettingsProps;
+type IAppProps = pxt.editor.IAppProps;
+type IAppState = pxt.editor.IAppState;
+type IProjectView = pxt.editor.IProjectView;
+type FileHistoryEntry = pxt.editor.FileHistoryEntry;
+type EditorSettings = pxt.editor.EditorSettings;
+type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-let lf = Util.lf
-
-export interface FileHistoryEntry {
-    id: string;
-    name: string;
-    pos: srceditor.ViewState;
-}
-
-export interface EditorSettings {
-    editorFontSize: number;
-    fileHistory: FileHistoryEntry[];
-}
-
-interface IAppProps { }
-interface IAppState {
-    active?: boolean; // is this tab visible at all
-    header?: Header;
-    currFile?: pkg.File;
-    fileState?: string;
-    showFiles?: boolean;
-    sideDocsLoadUrl?: string; // set once to load the side docs frame
-    sideDocsCollapsed?: boolean;
-    projectName?: string;
-
-    tutorial?: string; // tutorial
-    tutorialName?: string; // tutorial title
-    tutorialSteps?: string[]; // tutorial steps
-    tutorialStep?: number; // current tutorial page
-    tutorialReady?: boolean; // current tutorial page
-    tutorialUrl?: string; // current tutorial url
-    tutorialCardLocation?: string; // current card location
-
-    running?: boolean;
-    compiling?: boolean;
-    publishing?: boolean;
-    hideEditorFloats?: boolean;
-    collapseEditorTools?: boolean;
-    showBlocks?: boolean;
-    showParts?: boolean;
-    fullscreen?: boolean;
-    mute?: boolean;
-}
+const lf = Util.lf
 
 let theEditor: ProjectView;
-
-interface IProjectView {
-    state: IAppState;
-    setState(st: IAppState): void;
-
-    saveFileAsync(): Promise<void>;
-    loadHeaderAsync(h: Header): Promise<void>;
-    reloadHeaderAsync(): Promise<void>;
-
-    exportAsync(): Promise<string>;
-
-    newEmptyProject(name?: string, documentation?: string): void;
-    newProject(options?: ProjectCreationOptions): void;
-    importFileDialog(): void;
-
-    getPreferredEditor(): string;
-    saveAndCompile(): void;
-    updateHeaderName(name: string): void;
-    compile(): void;
-
-    setFile(fn: pkg.File): void;
-    setSideFile(fn: pkg.File): void;
-    setSideDoc(path: string): void;
-    removeFile(fn: pkg.File, skipConfirm?: boolean): void;
-
-    setTutorialStep(step: number): void;
-    exitTutorial(): void;
-
-    publishAsync(): Promise<string>;
-
-    startStopSimulator(): void;
-    restartSimulator(): void;
-    startSimulator(): void;
-
-    editor: srceditor.Editor;
-    blocksEditor: blocks.Editor;
-    textEditor: monaco.Editor;
-}
-
-interface ISettingsProps {
-    parent: IProjectView;
-    visible?: boolean;
-}
 
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     renderCore() {
@@ -1275,15 +1195,6 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
         </div>;
     }
 }
-
-interface ProjectCreationOptions {
-    prj?: pxt.ProjectTemplate;
-    name?: string;
-    documentation?: string;
-    filesOverride?: pxt.Map<string>;
-    temporary?: boolean;
-}
-
 
 export class ProjectView
     extends data.Component<IAppProps, IAppState>

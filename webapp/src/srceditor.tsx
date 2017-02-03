@@ -1,3 +1,5 @@
+/// <reference path="app.d.ts"/>
+
 import * as pkg from "./package";
 import * as core from "./core";
 import * as data from "./data";
@@ -6,7 +8,7 @@ import * as React from "react";
 
 
 export type ViewState = any;
-export type ProjectView = app.ProjectView;
+export type ProjectView = pxt.editor.IProjectView;
 
 export interface ParentProps {
     parent: ProjectView;
