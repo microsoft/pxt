@@ -1551,7 +1551,7 @@ export class ProjectView
         })
     }
 
-    publishAsync(): Promise<string> {
+    anonymousPublishAsync(): Promise<string> {
         pxt.tickEvent("publish");
         this.setState({ publishing: true })
         let mpkg = pkg.mainPkg
@@ -1570,7 +1570,7 @@ export class ProjectView
                     meta.blocksHeight = blocksSize.height;
                     meta.blocksWidth = blocksSize.width;
                 }
-                return workspace.publishAsync(epkg.header, files, meta)
+                return workspace.anonymousPublishAsync(epkg.header, files, meta)
                     .then(inf => inf.id)
             }).finally(() => {
                 this.setState({ publishing: false })

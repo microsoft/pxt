@@ -141,7 +141,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish");
-            this.props.parent.publishAsync().done(() => {
+            this.props.parent.anonymousPublishAsync().done(() => {
                 this.setState({ pubCurrent: true });
             });
         }
