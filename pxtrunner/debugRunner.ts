@@ -41,11 +41,13 @@ namespace pxt.runner {
     }
 
     /**
-     * Runner for the debugger that handle communication with the user
+     * Runner for the debugger that handles communication with the user
      * interface. Also talks to the server for anything to do with
      * the filesystem (like reading code)
      */
     export class DebugRunner implements pxsim.protocol.DebugSessionHost {
+        private static RETRY_MS = 2500;
+
         private session: pxsim.SimDebugSession;
         private ws: WebSocket;
         private pkgLoaded = false;
@@ -54,10 +56,29 @@ namespace pxt.runner {
         private errorListener: (msg: string) => void;
         private closeListener: () => void;
 
+        private intervalId: number;
+        private intervalRunning = false;
+
         constructor(private container: HTMLElement) {}
 
         public start() {
+
             this.initializeWebsocket();
+
+            if (!this.intervalRunning) {
+                this.intervalRunning = true;
+                this.intervalId = setInterval(() => {
+                    if (!this.ws) {
+                        try {
+                            this.initializeWebsocket();
+                        }
+                        catch (e) {
+                            console.warn(`Connection to server failed, retrying in ${DebugRunner.RETRY_MS} ms`);
+                        }
+                    }
+                }, DebugRunner.RETRY_MS);
+            }
+
             this.session = new pxsim.SimDebugSession(this.container);
             this.session.start(this);
         }
@@ -80,6 +101,8 @@ namespace pxt.runner {
                     this.closeListener();
                 }
 
+                this.session.stopSimulator();
+
                 this.ws = undefined;
             }
 
@@ -89,6 +112,8 @@ namespace pxt.runner {
                 if (this.errorListener) {
                     this.errorListener(ev.type);
                 }
+
+                this.session.stopSimulator();
 
                 this.ws = undefined;
             }
@@ -139,7 +164,18 @@ namespace pxt.runner {
         }
 
         public close(): void {
-            // TODO
+            if (this.session) {
+                this.session.stopSimulator(true);
+            }
+
+            if (this.intervalRunning) {
+                clearInterval(this.intervalId);
+                this.intervalId = undefined;
+            }
+
+            if (this.ws) {
+                this.ws.close();
+            }
         }
 
         private handleRunnerMessage(msg: RunnerMessage) {
