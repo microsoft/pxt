@@ -813,6 +813,34 @@ export function sendElectronMessage(message: ElectronMessage) {
     electronSocket.send(JSON.stringify(message));
 }
 
+// can use http://localhost:3232/streams/nnngzlzxslfu for testing
+function streamPageTestAsync(id: string) {
+    return Cloud.privateGetAsync(id)
+        .then((info: pxt.streams.JsonStream) => {
+            let vars: pxt.Map<string> = {
+                id: id,
+                objname: info.name,
+                time: info.time + ""
+            }
+            let templ = expandDocFileTemplate("stream.html")
+            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
+            return html
+        })
+}
+
+// use http://localhost:3232/45912-50568-62072-42379 for testing
+function scriptPageTestAsync(id: string) {
+    return Cloud.privateGetAsync(id)
+        .then((info: Cloud.JsonScript) => {
+            let vars: pxt.Map<string> = info as any
+            vars["title"] = info.name
+            let templ = expandDocFileTemplate("script.html")
+            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
+            return html
+        })
+
+}
+
 let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
@@ -871,6 +899,13 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (elts[0] == "api") {
+            if (elts[1] == "streams") {
+                let trg = Cloud.apiRoot + req.url.slice(5)
+                res.setHeader("Location", trg)
+                error(302, "Redir: " + trg)
+                return
+            }
+
             if (!isAuthorizedLocalRequest(req)) {
                 error(403);
                 return null;
@@ -924,6 +959,18 @@ export function serveAsync(options: ServeOptions) {
 
         if (pathname == "/--docs") {
             sendFile(path.join(publicDir, 'docs.html'));
+            return
+        }
+
+        if (/^\/(\d\d\d\d[\d-]+)$/.test(pathname)) {
+            scriptPageTestAsync(pathname.slice(1))
+                .then(sendHtml)
+            return
+        }
+
+        if (elts[0] == "streams") {
+            streamPageTestAsync(elts[0] + "/" + elts[1])
+                .then(sendHtml)
             return
         }
 
