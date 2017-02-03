@@ -104,7 +104,7 @@ export interface IProjectView {
     setTutorialStep(step: number): void;
     exitTutorial(): void;
 
-    publishAsync(): Promise<string>;
+    anonymousPublishAsync(): Promise<string>;
 
     startStopSimulator(): void;
     restartSimulator(): void;

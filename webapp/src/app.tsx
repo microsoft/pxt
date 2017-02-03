@@ -1013,7 +1013,7 @@ export class ProjectView
         })
     }
 
-    publishAsync(): Promise<string> {
+    anonymousPublishAsync(): Promise<string> {
         pxt.tickEvent("publish");
         this.setState({ publishing: true })
         let mpkg = pkg.mainPkg
@@ -1032,7 +1032,7 @@ export class ProjectView
                     meta.blocksHeight = blocksSize.height;
                     meta.blocksWidth = blocksSize.width;
                 }
-                return workspace.publishAsync(epkg.header, files, meta)
+                return workspace.anonymousPublishAsync(epkg.header, files, meta)
                     .then(inf => inf.id)
             }).finally(() => {
                 this.setState({ publishing: false })
@@ -1256,7 +1256,7 @@ export class ProjectView
                         {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
                         {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
-                            {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
+                            {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Share Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
                             {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
                             <div className="ui divider"></div>

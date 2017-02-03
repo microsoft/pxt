@@ -59,7 +59,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         if (!this.state.visible) return null;
 
         const cloud = pxt.appTarget.cloud || {};
-        const publishingEnabled = cloud.publishing || false;
+        const publishingEnabled = !!cloud.publishing;
+        const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
 
         let ready = false;
@@ -141,13 +142,20 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish");
-            this.props.parent.publishAsync().done(() => {
+            this.props.parent.anonymousPublishAsync().done(() => {
                 this.setState({ pubCurrent: true });
             });
         }
         const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
+        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") }];
+        if (embedding) formats.push({ mode: ShareMode.Editor, label: lf("Editor") });
+        if (!publishingEnabled) formats.push({ mode: ShareMode.Url, label: lf("Link") });
+        else {
+            formats.push({ mode: ShareMode.Simulator, label: lf("Simulator") });
+            formats.push({ mode: ShareMode.Cli, label: lf("Command line") }); 
+        }
 
-        return <sui.Modal visible={this.state.visible} addClass="small searchdialog" header={lf("Embed Project") }
+        return <sui.Modal visible={this.state.visible} addClass="small searchdialog" header={lf("Share Project") }
             onHide={() => this.setState({ visible: false }) }>
             <div className={`ui ${formState} form`}>
                 { publishingEnabled ?
@@ -167,22 +175,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 { ready ?
                     <div className="ui form">
                         <div className="inline fields">
-                            <label>{lf("Embed...") }</label>
-                            {[
-                                { mode: ShareMode.Screenshot, label: lf("Screenshot") },
-                                { mode: ShareMode.Editor, label: lf("Editor") }]
-                                .concat(
-                                !publishingEnabled ? [
-                                    { mode: ShareMode.Url, label: lf("Link") }
-                                ] : []
-                                )
-                                .concat(
-                                publishingEnabled ? [
-                                    { mode: ShareMode.Simulator, label: lf("Simulator") },
-                                    { mode: ShareMode.Cli, label: lf("Command line") }
-                                ] : []
-                                )
-                                .map(f =>
+                            {formats.map(f =>
                                     <div key={f.mode.toString() } className="field">
                                         <div className="ui radio checkbox">
                                             <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>

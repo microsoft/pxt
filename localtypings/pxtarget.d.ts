@@ -79,6 +79,7 @@ declare namespace pxt {
         packages?: boolean;
         sharing?: boolean;
         publishing?: boolean;
+        embedding?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages
     }
