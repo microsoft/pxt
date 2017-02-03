@@ -1,3 +1,5 @@
+/// <reference path="app.d.ts"/>
+
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
@@ -21,7 +23,7 @@ export function setupAppTarget(trgbundle: pxt.TargetBundle) {
     pxt.setAppTarget(trgbundle)
 }
 
-export class File {
+export class File implements pxt.editor.IFile {
     inSyncWithEditor = true;
     inSyncWithDisk = true;
     diagnostics: pxtc.KsDiagnostic[];
