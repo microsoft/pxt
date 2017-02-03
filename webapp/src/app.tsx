@@ -23,6 +23,8 @@ import * as gallery from "./gallery";
 import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
 import * as share from "./share";
+import * as tutorial from "./tutorial";
+import * as editortoolbar from "./editortoolbar";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -440,399 +442,6 @@ class DocsMenuItem extends data.Component<ISettingsProps, {}> {
             {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
             {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
-    }
-}
-
-class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    openTutorialStep(step: number) {
-        pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorial, step: step });
-        this.props.parent.setState({ tutorialStep: step, tutorialReady: false })
-        this.props.parent.setTutorialStep(step);
-    }
-
-    render() {
-        const state = this.props.parent.state;
-        const tutorialReady = state.tutorialReady;
-        const targetTheme = pxt.appTarget.appTheme;
-        const tutorialSteps = state.tutorialSteps;
-        const currentStep = state.tutorialStep;
-        const tutorialName = state.tutorialName;
-
-        return <div className="ui item">
-            <div className="ui item">
-                {tutorialName}
-            </div>
-            <div className="ui item tutorial-menuitem">
-                {tutorialSteps.map((step, index) =>
-                    <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index) }/>
-                ) }
-            </div>
-        </div>;
-    }
-}
-
-interface TutorialOptions {
-    tutorialId: string;
-    tutorialName: string;
-    showCategories?: boolean;
-}
-
-class TutorialContent extends data.Component<ISettingsProps, {}> {
-    public static notify(message: pxsim.SimulatorMessage) {
-        let tc = document.getElementById("tutorialcontent") as HTMLIFrameElement;
-        if (tc && tc.contentWindow) tc.contentWindow.postMessage(message, "*");
-    }
-
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    setPath(path: string) {
-        const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
-        const url = `${docsUrl}#tutorial:${path}:${mode}:${pxt.Util.localeInfo()}`;
-        this.setUrl(url);
-    }
-
-    private setUrl(url: string) {
-        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
-        if (el) el.src = url;
-        else this.props.parent.setState({ tutorialUrl: url });
-    }
-
-    public static refresh() {
-        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
-        if (el && el.contentWindow) {
-            el.parentElement.style.height = "";
-            el.parentElement.style.height = el.contentWindow.document.body.scrollHeight + "px";
-        }
-    }
-
-    renderCore() {
-        const state = this.props.parent.state;
-        const docsUrl = state.tutorialUrl;
-        if (!docsUrl) return null;
-
-        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh() } src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
-    }
-}
-
-class TutorialCard extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    previousTutorialStep() {
-        const currentStep = this.props.parent.state.tutorialStep;
-        const previousStep = currentStep - 1;
-
-        pxt.tickEvent(`tutorial.previous`, { tutorial: this.props.parent.state.tutorial, step: previousStep });
-        this.props.parent.setState({ tutorialStep: previousStep, tutorialReady: false })
-        this.props.parent.setTutorialStep(previousStep);
-    }
-
-    nextTutorialStep() {
-        const currentStep = this.props.parent.state.tutorialStep;
-        const nextStep = currentStep + 1;
-
-        pxt.tickEvent(`tutorial.next`, { tutorial: this.props.parent.state.tutorial, step: nextStep });
-        this.props.parent.setState({ tutorialStep: nextStep, tutorialReady: false })
-        this.props.parent.setTutorialStep(nextStep);
-    }
-
-    finishTutorial() {
-        this.props.parent.exitTutorial();
-    }
-
-    setPath(path: string) {
-        let tc = this.refs["tutorialcontent"] as TutorialContent;
-        if (!tc) return;
-        tc.setPath(path);
-    }
-
-    render() {
-        const state = this.props.parent.state;
-        const tutorialReady = state.tutorialReady;
-        const currentStep = state.tutorialStep;
-        const cardLocation = state.tutorialCardLocation || 'bottom';
-        const maxSteps = state.tutorialSteps.length;
-        const hasPrevious = currentStep != 0;
-        const hasNext = currentStep != maxSteps - 1;
-        const hasFinish = currentStep == maxSteps - 1;
-
-        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} visible active`}>
-            <div className="ui raised fluid card">
-                <div className="ui">
-                    <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
-                </div>
-                <div className="extra content">
-                    <div className="ui two buttons">
-                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back") } onClick={() => this.previousTutorialStep() } /> : undefined }
-                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next") } onClick={() => this.nextTutorialStep() } /> : undefined }
-                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
-                    </div>
-                </div>
-            </div>
-        </div>;
-    }
-}
-
-class EditorTools extends data.Component<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    saveProjectName(name: string, view?: string) {
-        pxt.tickEvent("editortools.projectrename", { view: view });
-        this.props.parent.updateHeaderName(name);
-    }
-
-    compile(view?: string) {
-        pxt.tickEvent("editortools.download", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.compile();
-    }
-
-    saveFile(view?: string) {
-        pxt.tickEvent("editortools.save", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.saveAndCompile();
-    }
-
-    undo(view?: string) {
-        pxt.tickEvent("editortools.undo", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.editor.undo();
-    }
-
-    redo(view?: string) {
-        pxt.tickEvent("editortools.redo", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.editor.redo();
-    }
-
-    zoomIn(view?: string) {
-        pxt.tickEvent("editortools.zoomIn", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.editor.zoomIn();
-    }
-
-    zoomOut(view?: string) {
-        pxt.tickEvent("editortools.zoomOut", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.editor.zoomOut();
-    }
-
-    startStopSimulator(view?: string) {
-        pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.startStopSimulator();
-    }
-
-    restartSimulator(view?: string) {
-        pxt.tickEvent("editortools.restart", { view: view, collapsed: this.getCollapsedState() });
-        this.props.parent.restartSimulator();
-    }
-
-    toggleCollapse(view?: string) {
-        const state = this.props.parent.state;
-        pxt.tickEvent("editortools.toggleCollapse", { view: view, collapsedTo: '' + !state.collapseEditorTools });
-        if (!state.running && state.collapseEditorTools)
-            this.props.parent.startStopSimulator();
-
-        if (state.collapseEditorTools) {
-            this.props.parent.startSimulator();
-            this.props.parent.setState({ collapseEditorTools: false });
-        }
-        else {
-            simulator.hide(() => {
-                this.props.parent.setState({ collapseEditorTools: true });
-            })
-        }
-    }
-
-    private getCollapsedState(): string {
-        return '' + this.props.parent.state.collapseEditorTools;
-    }
-
-    render() {
-        const state = this.props.parent.state;
-        const hideEditorFloats = state.hideEditorFloats;
-        const collapsed = state.hideEditorFloats || state.collapseEditorTools;
-        const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
-        if (!isEditor) return <div />;
-
-        const targetTheme = pxt.appTarget.appTheme;
-        const compile = pxt.appTarget.compile;
-        const compileBtn = compile.hasHex;
-        const simOpts = pxt.appTarget.simulator;
-        const make = !sandbox && state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
-        const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
-        const compileLoading = !!state.compiling;
-        const runTooltip = state.running ? lf("Stop the simulator") : lf("Start the simulator");
-        const makeTooltip = lf("Open assembly instructions");
-        const restartTooltip = lf("Restart the simulator");
-        const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
-
-        const hasUndo = this.props.parent.editor.hasUndo();
-        const hasRedo = this.props.parent.editor.hasRedo();
-
-        const run = true;
-        const restart = run && !simOpts.hideRestart;
-
-        return <div className="ui equal width grid right aligned padded">
-            <div className="column mobile only">
-                {collapsed ?
-                    <div className="ui equal width grid">
-                        <div className="left aligned column">
-                            <div className="ui icon small buttons">
-                                <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
-                                {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
-                            </div>
-                        </div>
-                        <div className="right aligned column">
-                            <div className="ui icon small buttons">
-                                <sui.Button icon='save' class="editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('mobile') } />
-                                <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo") } onClick={() => this.undo('mobile') } />
-                            </div>
-                        </div>
-                        <div className="right aligned column">
-                            <div className="ui icon small buttons">
-                                <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('mobile') } />
-                                <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('mobile') } />
-                            </div>
-                        </div>
-                    </div> :
-                    <div className="ui equal width grid">
-                        <div className="left aligned two wide column">
-                            <div className="ui vertical icon small buttons">
-                                {run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
-                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
-                            </div>
-                            <div className="row" style={{ paddingTop: "1rem" }}>
-                                <div className="ui vertical icon small buttons">
-                                    <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="three wide column">
-                        </div>
-                        <div className="ui grid column">
-                            <div className="row">
-                                <div className="column">
-                                    <div className="ui icon large buttons">
-                                        <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo") } onClick={() => this.undo('mobile') } />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="row" style={{ paddingTop: 0 }}>
-                                <div className="column">
-                                    <div className="ui icon large buttons">
-                                        {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div> }
-            </div>
-            <div className="column tablet only">
-                {collapsed ?
-                    <div className="ui grid seven column">
-                        <div className="left aligned six wide column">
-                            <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`large collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
-                            {compileBtn ? <sui.Button class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
-                        </div>
-                        <div className="column four wide">
-                            <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('tablet') } />
-                        </div>
-                        <div className="column six wide right aligned">
-                            <div className="ui icon large buttons">
-                                <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo") } onClick={() => this.undo('tablet') } />
-                                <sui.Button icon='repeat' class={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo") } onClick={() => this.redo('tablet') } />
-                            </div>
-                            <div className="ui icon large buttons">
-                                <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('tablet') } />
-                                <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('tablet') } />
-                            </div>
-                        </div>
-                    </div>
-                    : <div className="ui grid">
-                        <div className="left aligned two wide column">
-                            <div className="ui vertical icon small buttons">
-                                {run ? <sui.Button role="menuitem" class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
-                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
-                            </div>
-                            <div className="row" style={{ paddingTop: "1rem" }}>
-                                <div className="ui vertical icon small buttons">
-                                    <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class="collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="three wide column">
-                        </div>
-                        <div className="five wide column">
-                            <div className="ui grid right aligned">
-                                <div className="row">
-                                    <div className="column">
-                                        {compileBtn ? <sui.Button role="menuitem" class={`large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
-                                    </div>
-                                </div>
-                                <div className="row" style={{ paddingTop: 0 }}>
-                                    <div className="column">
-                                        <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
-                                            <input id="fileNameInput"
-                                                type="text"
-                                                placeholder={lf("Pick a name...") }
-                                                value={state.projectName || ''}
-                                                onChange={(e) => this.saveProjectName((e.target as any).value, 'tablet') }>
-                                            </input>
-                                            <sui.Button icon='save' class="large right attached editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('tablet') } />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="six wide column right aligned">
-                            <div className="ui icon large buttons">
-                                <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo") } onClick={() => this.undo() } />
-                                <sui.Button icon='repeat' class={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo") } onClick={() => this.redo() } />
-                            </div>
-                            <div className="ui icon large buttons">
-                                <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn() } />
-                                <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut() } />
-                            </div>
-                        </div>
-                    </div> }
-            </div>
-            <div className="column computer only">
-                <div className="ui grid equal width">
-                    <div id="downloadArea" className="ui column items">
-                        <div className="ui item">
-                            <sui.Button icon={`${collapsed ? 'toggle right' : 'toggle left'}`} class="large collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />
-                            {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
-                        </div>
-                    </div>
-                    <div className="column left aligned">
-                        <div className={`ui large right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project") }>
-                            <input id="fileNameInput"
-                                type="text"
-                                placeholder={lf("Pick a name...") }
-                                value={state.projectName || ''}
-                                onChange={(e) => this.saveProjectName((e.target as any).value, 'computer') }>
-                            </input>
-                            <sui.Button icon='save' class="small right attached editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('computer') } />
-                        </div>
-                    </div>
-                    <div className="column right aligned">
-                        <div className="ui icon small buttons">
-                            <sui.Button icon='undo' class={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo") } onClick={() => this.undo('computer') } />
-                            <sui.Button icon='repeat' class={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo") } onClick={() => this.redo('computer') } />
-                        </div>
-                        <div className="ui icon small buttons">
-                            <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('computer') } />
-                            <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('computer') } />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>;
     }
 }
 
@@ -1337,10 +946,10 @@ export class ProjectView
         // save and typecheck
         this.typecheckNow();
         // Notify tutorial content pane
-        let tc = this.refs["tutorialcard"] as TutorialCard;
+        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            TutorialContent.notify({
+            tutorial.TutorialContent.notify({
                 type: "tutorial",
                 tutorial: this.state.tutorial,
                 subtype: "stepchange",
@@ -1359,7 +968,7 @@ export class ProjectView
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
                         this.editor.filterToolbox(tt.data, showCategories, false);
                         this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
-                        TutorialContent.refresh();
+                        tutorial.TutorialContent.refresh();
                         core.hideLoading();
                         break;
                 }
@@ -2066,7 +1675,7 @@ export class ProjectView
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
                 this.setState({ tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result })
-                let tc = this.refs["tutorialcard"] as TutorialCard;
+                let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
@@ -2135,7 +1744,7 @@ export class ProjectView
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const tutorial = this.state.tutorial;
+        const inTutorial = this.state.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
@@ -2163,7 +1772,7 @@ export class ProjectView
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${tutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''}` }>
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -2177,13 +1786,13 @@ export class ProjectView
                         {sandbox ? undefined : <div className="ui item landscape only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                         {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        {sandbox || tutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        {tutorial ? undefined : <sui.Item class="editor-menuitem">
+                        {sandbox || inTutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
+                        {inTutorial ? undefined : <sui.Item class="editor-menuitem">
                             <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
                             <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
                         </sui.Item> }
                         {docMenu ? <DocsMenuItem parent={this} /> : undefined}
-                        {sandbox || tutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
+                        {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                             {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                             {this.state.header && packages && sharingEnabled ? <sui.Item role="menuitem" text={lf("Embed Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
                             {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
@@ -2208,8 +1817,8 @@ export class ProjectView
                             {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
                             {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="tablet only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined }
                         </div>
-                        {tutorial ? <TutorialMenuItem parent={this} /> : undefined }
-                        {tutorial ? <div className="right menu">
+                        {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined }
+                        {inTutorial ? <div className="right menu">
                             <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() }/>
                             <div className="ui item widedesktop only"></div>
                             <div className="ui item widedesktop only"></div>
@@ -2251,11 +1860,11 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {tutorial ? <TutorialCard ref="tutorialcard" parent={this} /> : undefined }
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 <div id="editortools" role="complementary">
-                    <EditorTools ref="editortools" parent={this} />
+                    <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div>
                 {sideDocs ? <SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui landscape hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui landscape only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
@@ -2686,7 +2295,7 @@ $(document).ready(() => {
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
-            TutorialContent.notify({
+            tutorial.TutorialContent.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
