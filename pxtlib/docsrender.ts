@@ -222,12 +222,17 @@ namespace pxt.docs {
         breadcrumb: BreadcrumbEntry[] = null, filepath: string = null,
         locale: Map<string> = null): string {
 
-        let params: Map<string> = pubinfo || {}
-
+        if (!pubinfo) pubinfo = {}
         if (!theme) theme = {}
+        if (!breadcrumb) breadcrumb = []
 
-        if (!breadcrumb)
-            breadcrumb = []
+        if (pubinfo["time"]) {
+            let tm = parseInt(pubinfo["time"])
+            if (!pubinfo["timems"])
+                pubinfo["timems"] = 1000 * tm + ""
+            if (!pubinfo["humantime"])
+                pubinfo["humantime"] = U.isoTime(tm)
+        }
 
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
@@ -242,7 +247,7 @@ namespace pxt.docs {
         let d: RenderData = {
             html: template,
             theme: theme,
-            params: params,
+            params: pubinfo,
             breadcrumb: breadcrumb,
             filepath: filepath
         }
@@ -295,7 +300,7 @@ namespace pxt.docs {
         })
 
         // replace pre-tempate in markdow
-        src = src.replace(/@([a-z]+)@/ig, (m, param) => params[param] || 'unknown macro')
+        src = src.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
         let html = marked(src)
 
@@ -314,7 +319,7 @@ namespace pxt.docs {
             if (tp == "@") {
                 let expansion = U.lookup(d.settings, cmd)
                 if (expansion != null) {
-                    params[cmd] = args
+                    pubinfo[cmd] = args
                 } else {
                     expansion = U.lookup(d.macros, cmd)
                     if (expansion == null)
@@ -345,18 +350,18 @@ namespace pxt.docs {
             }
         })
 
-        if (!params["title"]) {
+        if (!pubinfo["title"]) {
             let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)
             if (titleM)
-                params["title"] = html2Quote(titleM[1])
+                pubinfo["title"] = html2Quote(titleM[1])
         }
 
-        if (!params["description"]) {
+        if (!pubinfo["description"]) {
             let descM = /<p>([^]+?)<\/p>/.exec(html)
             if (descM)
-                params["description"] = html2Quote(descM[1])
+                pubinfo["description"] = html2Quote(descM[1])
         }
-        params["twitter"] = html2Quote(theme.twitter || "@mspxtio");
+        pubinfo["twitter"] = html2Quote(theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first
@@ -381,8 +386,14 @@ namespace pxt.docs {
             html += injectBody(k + "-container", registers[k])
         }
 
-        params["body"] = html
-        params["name"] = params["title"] + " - " + params["targetname"]
+        pubinfo["body"] = html
+        pubinfo["name"] = pubinfo["title"] + " - " + pubinfo["targetname"]
+
+        for (let k of Object.keys(theme)) {
+            let v = (theme as any)[k]
+            if (typeof v == "string")
+                pubinfo["theme_" + k] = v
+        }
 
         return d.finish()
     }
