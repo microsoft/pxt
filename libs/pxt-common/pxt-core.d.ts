@@ -44,7 +44,7 @@ interface Array<T> {
     //% helper=arrayUnshift weight=69
     //% blockId="array_unshift" block="unshift into %this|with first item %item" blockNamespace="lists"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
-    unshift(value:T): number; 
+    unshift(value:T): number;
 
     /**
       * Returns a section of an array.
@@ -64,7 +64,7 @@ interface Array<T> {
     splice(start: number, deleteCount: number): void;
 
     /**
-      * Sorts the elements of an array in place and returns the array. The sort is not necessarily stable. 
+      * Sorts the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
       */
     //% helper=arraySort weight=40
@@ -146,7 +146,7 @@ declare interface String {
      * @param other The string to append to the end of the string.
      */
     //% shim=String_::concat weight=80
-    //% blockId="string_concat" block="join %this|%other" blockNamespace="text"
+    //% blockId="string_concat" block="join %this=text|%other" blockNamespace="text"
     concat(other: string): string;
 
     /**
@@ -154,7 +154,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=77
-    //% blockId="string_get" block="char from %this|at %pos" blockNamespace="text"
+    //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -174,7 +174,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
-    //% blockId="string_compare" block="compare %this| to %that" blockNamespace="text"
+    //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
     compare(that: string): number;
 
     /**
@@ -183,12 +183,12 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
-    //% blockId="string_substr" block="substring of %this|from %start|of length %length" blockNamespace="text"
+    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start:number, length?:number): string;
 
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
-    //% blockId="string_isempty" block="%this| is empty" blockNamespace="text"
+    //% blockId="string_isempty" block="%this=text| is empty" blockNamespace="text"
     isEmpty() : boolean;
 
     [index: number]: string;
