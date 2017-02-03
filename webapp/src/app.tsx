@@ -2295,7 +2295,7 @@ $(document).ready(() => {
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
-            TutorialContent.notify({
+            tutorial.TutorialContent.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
