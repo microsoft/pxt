@@ -10,6 +10,7 @@ import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
 import * as codecard from "./codecard";
+import * as blocks from "./blocks"
 
 
 import Util = pxt.Util;
@@ -131,7 +132,7 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else {
                 pxt.tickEvent("typescript.discardText");
-                this.overrideFile(this.parent.blocksEditor.saveToTypeScript());
+                this.overrideFile(this.parent.saveBlocksToTypeScript());
                 this.parent.setFile(bf);
             }
         })

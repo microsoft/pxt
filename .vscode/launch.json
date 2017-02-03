@@ -7,8 +7,8 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["testdir", "tests"],
-			"cwd": "${workspaceRoot}/../pxt-microbit",
+			"args": ["build"],
+			"cwd": "${workspaceRoot}/../pxt-calliope/libs/core",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
@@ -18,7 +18,7 @@
 			},
 			"console": "integratedTerminal",
 			"sourceMaps": false,
-			"outDir": null
+			"outFiles": []
 		},
 		{
 			"name": "Attach",

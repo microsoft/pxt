@@ -295,7 +295,12 @@ task('serve', ['default'], { async: true }, function () {
     if (process.env.browser) {
         cmdArg += ' -browser ' + process.env.browser;
     }
-    cmdIn(this, '../pxt-microbit', 'node ../pxt/built/pxt.js serve ' + cmdArg)
+
+    let destination = '../pxt-microbit';
+    if (process.env.target) {
+        destination = '../' + process.env.target;
+    }
+    cmdIn(this, destination, 'node ../pxt/built/pxt.js serve ' + cmdArg)
 })
 
 file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
@@ -341,7 +346,7 @@ file('built/webapp/src/app.js', expand([
     "built/web/pxtsim.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js",
-    "built/web/pxtwinrt.js"    
+    "built/web/pxtwinrt.js"
 ]), { async: true }, function () {
     tscIn(this, "webapp", "built/webapp")
 })

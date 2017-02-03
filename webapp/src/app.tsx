@@ -3,6 +3,7 @@
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
 /// <reference path="../../built/pxtwinrt.d.ts"/>
+/// <reference path="app.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -21,6 +22,7 @@ import * as appcache from "./appcache";
 import * as gallery from "./gallery";
 import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
+import * as share from "./share";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -31,71 +33,21 @@ import * as draganddrop from "./draganddrop";
 import * as hwdbg from "./hwdbg"
 import * as electron from "./electron";
 
-type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
-type InstallHeader = pxt.workspace.InstallHeader;
+type ISettingsProps = pxt.editor.ISettingsProps;
+type IAppProps = pxt.editor.IAppProps;
+type IAppState = pxt.editor.IAppState;
+type IProjectView = pxt.editor.IProjectView;
+type FileHistoryEntry = pxt.editor.FileHistoryEntry;
+type EditorSettings = pxt.editor.EditorSettings;
+type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-let lf = Util.lf
-
-// Polyfill for Uint8Array.slice for IE and Safari
-// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
-if (!Uint8Array.prototype.slice) {
-    Object.defineProperty(Uint8Array.prototype, 'slice', {
-        value: Array.prototype.slice
-    });
-}
-
-export interface FileHistoryEntry {
-    id: string;
-    name: string;
-    pos: srceditor.ViewState;
-}
-
-export interface EditorSettings {
-    editorFontSize: number;
-    fileHistory: FileHistoryEntry[];
-}
-
-interface IAppProps { }
-interface IAppState {
-    active?: boolean; // is this tab visible at all
-    header?: Header;
-    currFile?: pkg.File;
-    fileState?: string;
-    showFiles?: boolean;
-    sideDocsLoadUrl?: string; // set once to load the side docs frame
-    sideDocsCollapsed?: boolean;
-    projectName?: string;
-
-    tutorial?: string; // tutorial
-    tutorialName?: string; // tutorial title
-    tutorialSteps?: string[]; // tutorial steps
-    tutorialStep?: number; // current tutorial page
-    tutorialReady?: boolean; // current tutorial page
-    tutorialUrl?: string; // current tutorial url
-    tutorialCardLocation?: string; // current card location
-
-    running?: boolean;
-    compiling?: boolean;
-    publishing?: boolean;
-    hideEditorFloats?: boolean;
-    collapseEditorTools?: boolean;
-    showBlocks?: boolean;
-    showParts?: boolean;
-    fullscreen?: boolean;
-    mute?: boolean;
-}
+const lf = Util.lf
 
 let theEditor: ProjectView;
 
-interface ISettingsProps {
-    parent: ProjectView;
-    visible?: boolean;
-}
-
+/*
 class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     renderCore() {
         Util.assert(pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces);
@@ -118,7 +70,7 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
             popup={btnClass ? lf("Uploading...") : needsUpload ? lf("Will upload. Click to sync.") : lf("Stored in the cloud. Click to sync.") }
             />
     }
-}
+}*/
 
 enum ScriptSearchMode {
     Packages,
@@ -471,196 +423,6 @@ class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
     }
 }
 
-enum ShareMode {
-    Screenshot,
-    Editor,
-    Url,
-    Simulator,
-    Cli
-}
-
-interface ShareEditorState {
-    mode?: ShareMode;
-    screenshotId?: string;
-    screenshotUri?: string;
-    currentPubId?: string;
-    pubCurrent?: boolean;
-    visible?: boolean;
-}
-
-class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {
-            currentPubId: undefined,
-            pubCurrent: false,
-            visible: false
-        }
-    }
-
-    hide() {
-        this.setState({ visible: false });
-    }
-
-    show(header: Header) {
-        this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
-    }
-
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
-        return this.state.visible != nextState.visible
-            || this.state.mode != nextState.mode
-            || this.state.pubCurrent != nextState.pubCurrent
-            || this.state.screenshotId != nextState.screenshotId
-            || this.state.currentPubId != nextState.currentPubId;
-    }
-
-    renderCore() {
-        if (!this.state.visible) return null;
-
-        const cloud = pxt.appTarget.cloud || {};
-        const publishingEnabled = cloud.publishing || false;
-        const header = this.props.parent.state.header;
-
-        let ready = false;
-        let mode = this.state.mode;
-        let url = '';
-        let embed = '';
-        let help = lf("Copy this HTML to your website or blog.");
-        let helpUrl = "/share";
-
-        if (header) {
-            if (!header.pubCurrent && !publishingEnabled) {
-                this.props.parent.exportAsync()
-                    .then(filedata => {
-                        header.pubCurrent = true;
-                        this.setState({ pubCurrent: true, currentPubId: filedata, screenshotId: undefined })
-                    });
-            }
-
-            let rootUrl = pxt.appTarget.appTheme.embedUrl
-            if (!/\/$/.test(rootUrl)) rootUrl += '/';
-
-            const isBlocks = this.props.parent.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
-            const pubCurrent = header ? header.pubCurrent : false;
-            let currentPubId = (header ? header.pubId : undefined) || this.state.currentPubId;
-
-            ready = (!!currentPubId && header.pubCurrent);
-            if (ready) {
-                url = `${rootUrl}${header.pubId}`;
-                let editUrl = `${rootUrl}#${publishingEnabled ? 'pub' : 'project'}:${currentPubId}`;
-                switch (mode) {
-                    case ShareMode.Cli:
-                        embed = `pxt extract ${header.pubId}`;
-                        help = lf("Run this command from a shell.");
-                        helpUrl = "/cli";
-                        break;
-                    case ShareMode.Simulator:
-                        let padding = '81.97%';
-                        // TODO: parts aspect ratio
-                        if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                        embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
-                        break;
-                    case ShareMode.Editor:
-                        embed = pxt.docs.embedUrl(rootUrl, publishingEnabled ? 'sandbox' : 'sandboxproject', currentPubId, header.meta.blocksHeight);
-                        break;
-                    case ShareMode.Url:
-                        embed = editUrl;
-                        break;
-                    default:
-                        if (isBlocks) {
-                            // Render screenshot
-                            if (this.state.screenshotId == currentPubId) {
-                                if (this.state.screenshotUri)
-                                    embed = `<a href="${editUrl}"><img src="${this.state.screenshotUri}" /></a>`
-                                else embed = lf("Ooops, no screenshot available.");
-                            } else {
-                                pxt.debug("rendering share-editor screenshot png");
-                                embed = lf("rendering...");
-                                pxt.blocks.layout.toPngAsync(this.props.parent.blocksEditor.editor)
-                                    .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
-                            }
-                        } else {
-                            // Render javascript code
-                            pxt.debug("rendering share-editor javascript markdown");
-                            embed = lf("rendering...")
-                            let main = pkg.getEditorPkg(pkg.mainPkg)
-                            let file = main.getMainFile()
-                            if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName())
-                                file = main.lookupFile("this/" + file.getVirtualFileName()) || file
-                            if (pkg.File.tsFileNameRx.test(file.getName())) {
-                                let fileContents = file.content;
-                                let mdContent = pxt.docs.renderMarkdown(`@body@`, `\`\`\`javascript\n${fileContents}\n\`\`\``);
-                                embed = `<a style="text-decoration: none;" href="${editUrl}">${mdContent}</a>`;
-                            }
-                        }
-                        break;
-                }
-            }
-
-        }
-        const publish = () => {
-            pxt.tickEvent("menu.embed.publish");
-            this.props.parent.publishAsync().done(() => {
-                this.setState({ pubCurrent: true });
-            });
-        }
-        const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
-
-        return <sui.Modal visible={this.state.visible} addClass="small searchdialog" header={lf("Embed Project") }
-            onHide={() => this.setState({ visible: false }) }>
-            <div className={`ui ${formState} form`}>
-                { publishingEnabled ?
-                    <div className="ui warning message">
-                        <div className="header">{lf("Almost there!") }</div>
-                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                            lf("You acknowledge having consent to publish this project.") }</p>
-                        <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
-                    </div> : undefined }
-                { url && publishingEnabled ? <div className="ui success message">
-                    <h3>{lf("Project URL") }</h3>
-                    <div className="header"><a target="_blank" href={url}>{url}</a></div>
-                </div> : undefined }
-                { !ready && !publishingEnabled ? <div className="ui warning message">
-                    <h3>{lf("Loading...") }</h3>
-                </div> : undefined }
-                { ready ?
-                    <div className="ui form">
-                        <div className="inline fields">
-                            <label>{lf("Embed...") }</label>
-                            {[
-                                { mode: ShareMode.Screenshot, label: lf("Screenshot") },
-                                { mode: ShareMode.Editor, label: lf("Editor") }]
-                                .concat(
-                                !publishingEnabled ? [
-                                    { mode: ShareMode.Url, label: lf("Link") }
-                                ] : []
-                                )
-                                .concat(
-                                publishingEnabled ? [
-                                    { mode: ShareMode.Simulator, label: lf("Simulator") },
-                                    { mode: ShareMode.Cli, label: lf("Command line") }
-                                ] : []
-                                )
-                                .map(f =>
-                                    <div key={f.mode.toString() } className="field">
-                                        <div className="ui radio checkbox">
-                                            <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
-                                            <label>{f.label}</label>
-                                        </div>
-                                    </div>
-                                ) }
-                        </div>
-                    </div> : undefined }
-                { ready ?
-                    <sui.Field>
-                        <p>{help} <span><a target="_blank" href={helpUrl}>{lf("Help...") }</a></span></p>
-                        <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
-                    </sui.Field> : null }
-            </div>
-        </sui.Modal>
-    }
-}
-
 class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -731,8 +493,7 @@ class TutorialContent extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
+        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#tutorial:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
@@ -895,7 +656,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const state = this.props.parent.state;
         const hideEditorFloats = state.hideEditorFloats;
         const collapsed = state.hideEditorFloats || state.collapseEditorTools;
-        const isEditor = this.props.parent.editor == this.props.parent.blocksEditor || this.props.parent.editor == this.props.parent.textEditor;
+        const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
         if (!isEditor) return <div />;
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -1087,16 +848,14 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
+        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
+        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
@@ -1246,16 +1005,9 @@ class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 }
 
-interface ProjectCreationOptions {
-    prj?: pxt.ProjectTemplate;
-    name?: string;
-    documentation?: string;
-    filesOverride?: pxt.Map<string>;
-    temporary?: boolean;
-}
-
-
-export class ProjectView extends data.Component<IAppProps, IAppState> {
+export class ProjectView
+    extends data.Component<IAppProps, IAppState>
+    implements IProjectView {
     editor: srceditor.Editor;
     editorFile: pkg.File;
     textEditor: monaco.Editor;
@@ -1264,7 +1016,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: ScriptSearch;
-    shareEditor: ShareEditor;
+    shareEditor: share.ShareEditor;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -1476,7 +1228,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         // save file before change
         this.saveFileAsync()
             .then(() => {
-                this.editorFile = this.state.currFile;
+                this.editorFile = this.state.currFile as pkg.File; // TODO
                 let previousEditor = this.editor;
                 this.editor = editorOverride || this.pickEditorFor(this.editorFile)
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
@@ -1953,6 +1705,10 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         this.setFile(f);
     }
 
+    saveBlocksToTypeScript(): string {
+        return this.blocksEditor.saveToTypeScript();
+    }
+
     saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg() || this.reload)
             return Promise.resolve();
@@ -2250,6 +2006,14 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
         }
     }
 
+    isTextEditor(): boolean {
+        return this.editor == this.textEditor;
+    }
+
+    isBlocksEditor(): boolean {
+        return this.editor == this.blocksEditor;
+    }
+
     about() {
         pxt.tickEvent("menu.about");
         core.confirmAsync({
@@ -2497,7 +2261,7 @@ export class ProjectView extends data.Component<IAppProps, IAppState> {
                 {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui landscape hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui landscape only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
                 {!sandbox && !targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined}
                 {sandbox ? undefined : <ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox || !sharingEnabled ? undefined : <ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>

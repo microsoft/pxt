@@ -217,6 +217,10 @@ namespace pxsim {
             this.driver.run(js, { parts, fnArgs, boardDefinition: board });
         }
 
+        public stopSimulator(unload = false) {
+            this.driver.stop(unload);
+        }
+
         protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
             response.body.supportsConditionalBreakpoints = false;
             response.body.supportsHitConditionalBreakpoints = false;
