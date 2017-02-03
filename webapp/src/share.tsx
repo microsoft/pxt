@@ -1,7 +1,11 @@
 /// <reference path="app.d.ts"/>
 
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as pkg from "./package";
+import * as blocks from "./blocks"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -113,7 +117,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                             } else {
                                 pxt.debug("rendering share-editor screenshot png");
                                 embed = lf("rendering...");
-                                pxt.blocks.layout.toPngAsync(this.props.parent.blocksEditor.editor)
+                                pxt.blocks.layout.toPngAsync((this.props.parent.editor as blocks.Editor).editor)
                                     .done(uri => this.setState({ screenshotId: currentPubId, screenshotUri: uri }));
                             }
                         } else {
