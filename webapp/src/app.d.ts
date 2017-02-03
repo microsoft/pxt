@@ -6,6 +6,20 @@ type InstallHeader = pxt.workspace.InstallHeader;
 
 declare namespace pxt.editor {
 
+export interface IEditor {
+    undo(): void;
+    redo(): void;
+    hasUndo(): boolean;
+    hasRedo(): boolean;
+    zoomIn(): void;
+    zoomOut(): void;
+    resize(): void;
+}
+
+export interface IFile {
+    name: string;
+}
+
 export interface FileHistoryEntry {
     id: string;
     name: string;
@@ -21,7 +35,7 @@ export interface IAppProps { }
 export interface IAppState {
     active?: boolean; // is this tab visible at all
     header?: Header;
-    currFile?: pkg.File;
+    currFile?: IFile;
     fileState?: string;
     showFiles?: boolean;
     sideDocsLoadUrl?: string; // set once to load the side docs frame
@@ -78,10 +92,10 @@ export interface IProjectView {
     updateHeaderName(name: string): void;
     compile(): void;
 
-    setFile(fn: pkg.File): void;
-    setSideFile(fn: pkg.File): void;
+    setFile(fn: IFile): void;
+    setSideFile(fn: IFile): void;
     setSideDoc(path: string): void;
-    removeFile(fn: pkg.File, skipConfirm?: boolean): void;
+    removeFile(fn: IFile, skipConfirm?: boolean): void;
 
     setTutorialStep(step: number): void;
     exitTutorial(): void;
@@ -91,14 +105,16 @@ export interface IProjectView {
     startStopSimulator(): void;
     restartSimulator(): void;
     startSimulator(): void;
+    runSimulator(): void;
 
     addPackage(): void;
+    typecheckNow(): void;
 
     fireResize(): void;
 
     isBlocksEditor(): boolean;
     isTextEditor(): boolean;
-    editor: srceditor.Editor;
+    editor: IEditor;
 }
 
 export interface ISettingsProps {

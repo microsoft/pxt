@@ -14,7 +14,7 @@ export interface ParentProps {
     parent: ProjectView;
 }
 
-export class Editor {
+export class Editor implements pxt.editor.IEditor {
     protected currSource: string;
     isVisible = false;
     constructor(public parent: ProjectView) {
