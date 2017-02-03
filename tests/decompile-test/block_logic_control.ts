@@ -8,7 +8,7 @@ let x = true || false
 if ((x || true) && 2 == 4) {}
 if (x) {} else {}
 
-let y = 0
+let y = 1
 if (y) {}
 
 if (!!true) {
