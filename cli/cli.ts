@@ -1295,7 +1295,7 @@ implication, estoppel or otherwise.
 In the event that we accidentally failed to list a required notice, please
 bring it to our attention. Post an issue or email us:
 
-           pxt@microsoft.com
+           yelmteam@microsoft.com
 
 ---------------------------------------------
 Third Party Code Components
