@@ -22,6 +22,8 @@ import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as gdb from './gdb';
 
+const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
+
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
 
@@ -1595,11 +1597,12 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
 }
 
 
-let readFileAsync: any = Promise.promisify(fs.readFile)
-let writeFileAsync: any = Promise.promisify(fs.writeFile)
-let execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
-let readDirAsync = Promise.promisify(fs.readdir)
-let statAsync = Promise.promisify(fs.stat)
+const readFileAsync: any = Promise.promisify(fs.readFile)
+const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = Promise.promisify(child_process.exec)
+const readDirAsync = Promise.promisify(fs.readdir)
+const statAsync = Promise.promisify(fs.stat)
+const rimrafAsync = Promise.promisify(rimraf);
 
 let commonfiles: Map<string> = {}
 let fileoverrides: Map<string> = {}
@@ -3309,6 +3312,14 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
     else return JSON.stringify(trg, null, 2);
 }
 
+export function cleanAsync(parsed: commandParser.ParsedCommand) {
+    pxt.log('cleaning built folders')
+    return rimrafAsync("built", {})
+        .then(() => rimrafAsync("libs/**/built", {}))
+        .then(() => rimrafAsync("projects/**/built", {}))
+        .then(() => {})
+}
+
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     forceCloudBuild = !!parsed.flags["cloud"];
 
@@ -3727,6 +3738,8 @@ function initCommands() {
             debug: { description: "Emit debug information with build" }
         }
     }, buildAsync);
+
+    simpleCmd("clean", "removes built folders", cleanAsync);
 
     p.defineCommand({
         name: "extract",
