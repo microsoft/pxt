@@ -681,8 +681,7 @@ class TutorialContent extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
+        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#tutorial:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
@@ -845,7 +844,7 @@ class EditorTools extends data.Component<ISettingsProps, {}> {
         const state = this.props.parent.state;
         const hideEditorFloats = state.hideEditorFloats;
         const collapsed = state.hideEditorFloats || state.collapseEditorTools;
-        const isEditor = this.props.parent.editor == this.props.parent.blocksEditor || this.props.parent.editor == this.props.parent.textEditor;
+        const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
         if (!isEditor) return <div />;
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -1037,16 +1036,14 @@ class SideDocs extends data.Component<ISettingsProps, {}> {
 
     setPath(path: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
+        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.editor == this.props.parent.blocksEditor
-            ? "blocks" : "js";
+        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
@@ -2191,6 +2188,14 @@ export class ProjectView
         catch (e) {
             console.error('failed to read pxt.json')
         }
+    }
+
+    isTextEditor(): boolean {
+        return this.editor == this.textEditor;
+    }
+
+    isBlocksEditor(): boolean {
+        return this.editor == this.blocksEditor;
     }
 
     about() {

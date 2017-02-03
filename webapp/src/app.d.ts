@@ -58,6 +58,10 @@ export interface ProjectCreationOptions {
 export interface IProjectView {
     state: IAppState;
     setState(st: IAppState): void;
+    forceUpdate(): void;
+
+    switchTypeScript(): void;
+    openTypeScriptAsync(): Promise<void>;
 
     saveFileAsync(): Promise<void>;
     loadHeaderAsync(h: Header): Promise<void>;
@@ -88,9 +92,13 @@ export interface IProjectView {
     restartSimulator(): void;
     startSimulator(): void;
 
+    addPackage(): void;
+
+    fireResize(): void;
+
+    isBlocksEditor(): boolean;
+    isTextEditor(): boolean;
     editor: srceditor.Editor;
-    blocksEditor: blocks.Editor;
-    textEditor: monaco.Editor;
 }
 
 export interface ISettingsProps {
