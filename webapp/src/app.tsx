@@ -83,8 +83,46 @@ interface IAppState {
 
 let theEditor: ProjectView;
 
+interface IProjectView {
+    state: IAppState;
+    setState(st: IAppState): void;
+
+    saveFileAsync(): Promise<void>;
+    loadHeaderAsync(h: Header): Promise<void>;
+    reloadHeaderAsync(): Promise<void>;
+
+    exportAsync(): Promise<string>;
+
+    newEmptyProject(name?: string, documentation?: string): void;
+    newProject(options?: ProjectCreationOptions): void;
+    importFileDialog(): void;
+
+    getPreferredEditor(): string;
+    saveAndCompile(): void;
+    updateHeaderName(name: string): void;
+    compile(): void;
+
+    setFile(fn: pkg.File): void;
+    setSideFile(fn: pkg.File): void;
+    setSideDoc(path: string): void;
+    removeFile(fn: pkg.File, skipConfirm?: boolean): void;
+
+    setTutorialStep(step: number): void;
+    exitTutorial(): void;
+
+    publishAsync(): Promise<string>;
+
+    startStopSimulator(): void;
+    restartSimulator(): void;
+    startSimulator(): void;
+
+    editor: srceditor.Editor;
+    blocksEditor: blocks.Editor;
+    textEditor: monaco.Editor;
+}
+
 interface ISettingsProps {
-    parent: ProjectView;
+    parent: IProjectView;
     visible?: boolean;
 }
 
@@ -1247,7 +1285,9 @@ interface ProjectCreationOptions {
 }
 
 
-export class ProjectView extends data.Component<IAppProps, IAppState> {
+export class ProjectView
+    extends data.Component<IAppProps, IAppState>
+    implements IProjectView {
     editor: srceditor.Editor;
     editorFile: pkg.File;
     textEditor: monaco.Editor;
