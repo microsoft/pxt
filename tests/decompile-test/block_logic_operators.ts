@@ -10,8 +10,8 @@ false
 
 false && (true || !false) || !(true && false)
 
-let x = 0
-let y = false
+let x = 1
+let y = true
 
 y = x && ((((y)))) || false
 
