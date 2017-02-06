@@ -23,19 +23,23 @@ This document defines a format for specifying checksums for regions of flash.
 | Offset | Size | Value                                             |
 |--------|------|---------------------------------------------------|
 | 0      | 4    | Magic number: `0x07eeb07c` or `0x87eeb07c`        |
-| 4      | 4    | Position of end marker                            |
+| 4      | 4    | Position of end marker (32-bit aligned)           |
 | 8      | 4    | End marker value and page size                    |
 | 12     | 8    | Region 0                                          |
 | ...    | ...  | Region ...                                        |
 | ...    | 4    | `0x00000000` - regions terminator                 |
 
+All numbers are little endian.
+
 The magic number of `0x87eeb07c` indicates that the bootloader
 should optimize for frequent re-flashing (for example, by starting after a
-single (and not double) click on the reset button).  The other number
+single (and not double) click on the reset button).  The magic number `0x07eeb07c`
 indicates no such preference.
 
 The end marker is used to mitigate partial flashing. It should be
 either random, or derived from checksum of the entire program.
+It should be placed so it is written at the end of the flashing
+process (typically at the end of the program).
 The flashing process should check if flash contains the end marker
 at indicated position. If it doesn't, the entire checksum block
 should be treated as invalid.
@@ -55,6 +59,10 @@ The checksum can be computed in any way by the application.
 For example, one can take first 4 bytes of a SHA256 of the contents of
 the region.
 
+There is no need for region descriptors to cover the entire flash, or even the 
+entire contents of the flashed file. If there is no region descriptor
+for a given location in the flashed file, the location should always be flashed.
+
 ## Typical usage
 
 For example, on micro:bit one would have the following regions:
@@ -63,9 +71,14 @@ For example, on micro:bit one would have the following regions:
 * user code
 
 On SAMD21 one wouldn't have the bootloader and softdevice regions, as bootloader is normally
-not included in .UF2 files.
+not included in .UF2 files and there is no softdevice.
+
+The checksum for user code may or may not be included. It can prevent re-flashing of 
+the exact same user code, but this isn't a very common usage scenario.
 
 ## Position of the checksum block
 
-* SAMD21 - `0x20B0`
-* nRF51 - in UICR (TBD)
+The position of the checksum block is MCU-specific.
+
+* SAMD21 - `0x20B0` (right after application vectors)
+* nRF51 - `0x100010C0` (`CUSTOMER[16]` and onwards in UICR)
