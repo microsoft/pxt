@@ -121,7 +121,7 @@ namespace ts.pxtc.assembler {
                         if (/^[+-]?\d+$/.test(actual)) {
                             v = parseInt(actual, 10)
                             labelName = "rel" + v
-                        } else if (/^0x[0-9a-fA-F]+$/.test(actual) ) {
+                        } else if (/^0x[0-9a-fA-F]+$/.test(actual)) {
                             v = parseInt(actual, 16)
                             labelName = "abs" + v
                         } else {
@@ -392,11 +392,11 @@ namespace ts.pxtc.assembler {
             let scoped = this.scopedName(name)
             if (this.labels.hasOwnProperty(scoped)) {
                 v = this.labels[scoped];
-                v = this.ei.postProcessRelAddress(this,v)
+                v = this.ei.postProcessRelAddress(this, v)
             } else if (this.lookupExternalLabel) {
                 v = this.lookupExternalLabel(name)
-                if (v != null)  {
-                    v = this.ei.postProcessAbsAddress(this,v)
+                if (v != null) {
+                    v = this.ei.postProcessAbsAddress(this, v)
                 }
             }
             if (v == null && direct) {
@@ -838,12 +838,18 @@ namespace ts.pxtc.assembler {
                 lf("; assembly: {0} lines\n", this.lines.length) +
                 this.stats + "\n\n"
 
-            let pastEnd = false;
+            let skipOne = false
 
             this.lines.forEach((ln, i) => {
-                if (pastEnd) return;
-                if (ln.type == "label" && ln.words[0] == "_program_end")
-                    pastEnd = true;
+                if (ln.words[0] == "_stored_program") {
+                    res += "_stored_program: .string \"...\"\n"
+                    skipOne = true
+                    return
+                }
+                if (skipOne) {
+                    skipOne = false
+                    return
+                }
                 let text = ln.text
                 if (clean) {
                     if (ln.words[0] == "@stackempty" &&
@@ -1152,9 +1158,9 @@ namespace ts.pxtc.assembler {
     export function expect(ei: AbstractProcessor, disasm: string) {
         let exp: number[] = []
         let asm = disasm.replace(/^([0-9a-fA-F]{4,8})\s/gm, (w, n) => {
-            exp.push(parseInt(n.slice(0,4), 16))
+            exp.push(parseInt(n.slice(0, 4), 16))
             if (n.length == 8)
-                exp.push(parseInt(n.slice(4,8), 16))
+                exp.push(parseInt(n.slice(4, 8), 16))
             return ""
         })
 

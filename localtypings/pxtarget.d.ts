@@ -195,6 +195,7 @@ declare namespace ts.pxtc {
         flashCodeAlign?: number; // defaults to 1k
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
+        flashChecksumAddr?: number;
     }
 
     interface CompileOptions {

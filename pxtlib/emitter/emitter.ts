@@ -3319,6 +3319,8 @@ ${lbl}: .short 0xffff
         res: CompileResult;
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
+        sourceHash = "";
+        checksumBlock: number[];
 
         strings: Map<string> = {};
         otherLiterals: string[] = [];
