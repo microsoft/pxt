@@ -21,6 +21,7 @@ export enum ShareMode {
 }
 
 export interface ShareEditorState {
+    advancedMenu?: boolean;
     mode?: ShareMode;
     screenshotId?: string;
     screenshotUri?: string;
@@ -35,7 +36,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         this.state = {
             currentPubId: undefined,
             pubCurrent: false,
-            visible: false
+            visible: false,
+            advancedMenu: false
         }
     }
 
@@ -49,6 +51,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
+            || this.state.advancedMenu != nextState.advancedMenu
             || this.state.mode != nextState.mode
             || this.state.pubCurrent != nextState.pubCurrent
             || this.state.screenshotId != nextState.screenshotId
@@ -62,13 +65,13 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const publishingEnabled = !!cloud.publishing;
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
+        const advancedMenu = !!this.state.advancedMenu;
 
         let ready = false;
         let mode = this.state.mode;
         let url = '';
         let embed = '';
         let help = lf("Copy this HTML to your website or blog.");
-        let helpUrl = "/share";
 
         if (header) {
             if (!header.pubCurrent && !publishingEnabled) {
@@ -94,7 +97,6 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                     case ShareMode.Cli:
                         embed = `pxt extract ${header.pubId}`;
                         help = lf("Run this command from a shell.");
-                        helpUrl = "/cli";
                         break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
@@ -146,17 +148,20 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 this.setState({ pubCurrent: true });
             });
         }
+
         const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
         const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") }];
+
         if (embedding) formats.push({ mode: ShareMode.Editor, label: lf("Editor") });
         if (!publishingEnabled) formats.push({ mode: ShareMode.Url, label: lf("Link") });
         else {
             formats.push({ mode: ShareMode.Simulator, label: lf("Simulator") });
-            formats.push({ mode: ShareMode.Cli, label: lf("Command line") }); 
+            formats.push({ mode: ShareMode.Cli, label: lf("Command line") });
         }
 
         return <sui.Modal visible={this.state.visible} addClass="small searchdialog" header={lf("Share Project") }
-            onHide={() => this.setState({ visible: false }) }>
+            onHide={() => this.setState({ visible: false }) }
+            helpUrl="/share">
             <div className={`ui ${formState} form`}>
                 { publishingEnabled ?
                     <div className="ui warning message">
@@ -173,21 +178,22 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                     <h3>{lf("Loading...") }</h3>
                 </div> : undefined }
                 { ready ?
+                    <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("More...")} onClick={() => this.setState({ advancedMenu: !advancedMenu }) } /> : undefined }
+                { ready && advancedMenu ?
                     <div className="ui form">
                         <div className="inline fields">
                             {formats.map(f =>
-                                    <div key={f.mode.toString() } className="field">
-                                        <div className="ui radio checkbox">
-                                            <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
-                                            <label>{f.label}</label>
-                                        </div>
+                                <div key={f.mode.toString() } className="field">
+                                    <div className="ui radio checkbox">
+                                        <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
+                                        <label>{f.label}</label>
                                     </div>
-                                ) }
+                                </div>
+                            ) }
                         </div>
                     </div> : undefined }
-                { ready ?
+                { ready && advancedMenu ?
                     <sui.Field>
-                        <p>{help} <span><a target="_blank" href={helpUrl}>{lf("Help...") }</a></span></p>
                         <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
                     </sui.Field> : null }
             </div>
