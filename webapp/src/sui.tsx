@@ -269,6 +269,7 @@ export interface ModalProps {
     header: string;
     onHide: () => void;
     visible?: boolean;
+    helpUrl?: string;
 }
 
 export interface ModalState {
@@ -300,6 +301,11 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                         {this.props.children}
                     </div>
                     <div className="actions">
+                        {this.props.helpUrl ?
+                            <a className="ui button icon-and-text labeled" href={this.props.helpUrl} target="_docs">
+                                <i className="help icon"></i>
+                            {lf("Help")}</a>
+                            : undefined}
                         <Button
                             icon="close"
                             text={lf("Close") }
