@@ -3374,7 +3374,7 @@ export function cleanAsync(parsed: commandParser.ParsedCommand) {
     return rimrafAsync("built", {})
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
-        .then(() => {})
+        .then(() => { })
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
@@ -3555,6 +3555,22 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             const dirs = writeProjects(prjs, outDir)
             return dirs;
         })
+}
+
+export function hexdumpAsync(c: commandParser.ParsedCommand) {
+    let filename = c.arguments[0]
+    let buf = fs.readFileSync(filename)
+    if (/^UF2\n/.test(buf.slice(0, 4).toString("utf8"))) {
+        let r = pxtc.UF2.toBin(buf as any)
+        if (r) {
+            console.log("UF2 file detected.")
+            console.log(pxtc.hex.hexDump(r.buf, r.start))
+            return Promise.resolve()
+        }
+    }
+    console.log("Binary file assumed.")
+    console.log(pxtc.hex.hexDump(buf))
+    return Promise.resolve()
 }
 
 function openVsCode(dirname: string) {
@@ -3944,6 +3960,7 @@ function initCommands() {
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+    advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
 

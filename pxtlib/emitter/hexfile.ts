@@ -73,7 +73,7 @@ namespace ts.pxtc {
             return r
         }
 
-        export function toBin(blocks: Uint8Array): Uint8Array {
+        export function toBin(blocks: Uint8Array) {
             if (blocks.length < 512)
                 return null
             let curraddr = -1
@@ -105,7 +105,10 @@ namespace ts.pxtc {
                 for (let i = 0; i < b.length; ++i)
                     r[dst++] = b[i]
             }
-            return r
+            return {
+                buf: r,
+                start: appstartaddr,
+            }
         }
 
         function setWord(block: Uint8Array, ptr: number, v: number) {
@@ -228,6 +231,34 @@ namespace ts.pxtc {
             for (; i < str.length; i += 2)
                 r = str[i] + str[i + 1] + r
             assert(i == str.length)
+            return r
+        }
+
+        export function hexDump(bytes: ArrayLike<number>, startOffset = 0) {
+            function toHex(n: number, len = 8) {
+                let r = n.toString(16)
+                while (r.length < len) r = "0" + r
+                return r
+            }
+            let r = ""
+            for (let i = 0; i < bytes.length; i += 16) {
+                r += toHex(startOffset + i) + ": "
+                let t = ""
+                for (let j = 0; j < 16; j++) {
+                    if ((j & 3) == 0) r += " "
+                    let v = bytes[i + j]
+                    if (v == null) {
+                        r += "   "
+                        continue
+                    }
+                    r += toHex(v, 2) + " "
+                    if (32 <= v && v < 127)
+                        t += String.fromCharCode(v)
+                    else
+                        t += "."
+                }
+                r += " " + t + "\n"
+            }
             return r
         }
 
