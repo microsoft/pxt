@@ -633,7 +633,7 @@ namespace pxt.blocks {
         }
 
         // Add the "Add package" category
-        if (tb && showCategories && pxt.appTarget.cloud.packages) {
+        if (tb && showCategories && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
             getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 

@@ -1225,7 +1225,7 @@ export class ProjectView
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const fullscreen = run && !simOpts.hideFullscreen;
-        const showMenuBar = !targetTheme.layoutOptions.hideMenuBar;
+        const showMenuBar = targetTheme.layoutOptions && !targetTheme.layoutOptions.hideMenuBar;
 
         const blockActive = this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
