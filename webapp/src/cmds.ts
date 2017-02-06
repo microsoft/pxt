@@ -117,10 +117,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         }
     });
 
-    if (/quickflash/i.test(window.location.href))
-        return hwdbg.partialFlashAsync(resp, deploy)
-    else
-        return deploy()
+    return deploy()
 }
 
 export function initCommandsAsync(): Promise<void> {
