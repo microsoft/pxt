@@ -144,6 +144,23 @@ namespace ts.pxtc {
             return res
         }
 
+        function hasAddr(b: Block, a: number) {
+            if (!b) return false
+            return b.targetAddr <= a && a < b.targetAddr + b.payloadSize
+        }
+
+        export function readBytes(blocks: Block[], addr: number, length: number) {
+            let res = new Uint8Array(length)
+            let bl: Block
+            for (let i = 0; i < length; ++i, ++addr) {
+                if (!hasAddr(bl, addr))
+                    bl = blocks.filter(b => hasAddr(b, addr))[0]
+                if (bl)
+                    res[i] = bl.data[addr - bl.targetAddr]
+            }
+            return res
+        }
+
         export function writeBytes(f: BlockFile, addr: number, bytes: number[]) {
             let currBlock = f.currBlock
             let needAddr = addr >> 8
@@ -204,8 +221,8 @@ namespace ts.pxtc {
                     writeBytes(f, newAddr, arr)
                 }
             }
-
         }
+
     }
 
 
@@ -232,6 +249,54 @@ namespace ts.pxtc {
                 r = str[i] + str[i + 1] + r
             assert(i == str.length)
             return r
+        }
+
+        export interface ChecksumBlock {
+            magic: number;
+            endMarkerPos: number;
+            endMarker: number;
+            regions: { start: number; length: number; checksum: number; }[];
+        }
+
+        export function parseChecksumBlock(buf: ArrayLike<number>, pos = 0): ChecksumBlock {
+            let magic = pxt.HF2.read32(buf, pos)
+            if ((magic & 0x7fffffff) != 0x07eeb07c) {
+                pxt.log("no checksum block magic")
+                return null
+            }
+            let endMarkerPos = pxt.HF2.read32(buf, pos + 4)
+            let endMarker = pxt.HF2.read32(buf, pos + 8)
+            if (endMarkerPos & 3) {
+                pxt.log("invalid end marker position")
+                return null
+            }
+            let pageSize = 1 << (endMarker & 0xff)
+            if (pageSize != pxt.appTarget.compile.flashCodeAlign) {
+                pxt.log("invalid page size: " + pageSize)
+                return null
+            }
+
+            let blk: ChecksumBlock = {
+                magic,
+                endMarkerPos,
+                endMarker,
+                regions: []
+            }
+
+            for (let i = pos + 12; i < buf.length - 7; i += 8) {
+                let r = {
+                    start: pageSize * pxt.HF2.read16(buf, i),
+                    length: pageSize * pxt.HF2.read16(buf, i + 2),
+                    checksum: pxt.HF2.read32(buf, i + 4)
+                }
+                if (r.length && r.checksum) {
+                    blk.regions.push(r)
+                } else {
+                    break
+                }
+            }
+
+            return blk
         }
 
         export function hexDump(bytes: ArrayLike<number>, startOffset = 0) {
@@ -815,7 +880,15 @@ _stored_program: .string "`
             let endMarker = parseInt(bin.sourceHash.slice(0, 8), 16)
             let progStart = hex.bytecodeStartAddrPadded / pageSize
             endMarker = (endMarker & 0xffffff00) | k
+            let templBeg = 0
+            let templSize = progStart
+            // we exclude the checksum block from the template
+            if (opts.target.flashChecksumAddr < hex.bytecodeStartAddrPadded) {
+                templBeg = Math.ceil((opts.target.flashChecksumAddr + 32) / pageSize)
+                templSize -= templBeg
+            }
             src += `
+    .balign 4
 __end_marker:
     .word ${endMarker}
 
@@ -825,7 +898,7 @@ __flash_checksums:
     .word __end_marker ; end marker position
     .word ${endMarker} ; end marker
     ; template region
-    .short 0, ${progStart}
+    .short ${templBeg}, ${templSize}
     .word 0x${hex.hexTemplateHash().slice(0, 8)}
     ; user region
     .short ${progStart}, 0xffff
