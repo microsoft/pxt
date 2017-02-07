@@ -104,7 +104,6 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         text: text,
         targetVersions: pxt.appTarget.versions,
         meta: {
-            editor: h.editor,
             blocksHeight: meta.blocksHeight,
             blocksWidth: meta.blocksWidth
         }
