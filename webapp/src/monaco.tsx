@@ -821,14 +821,15 @@ export class Editor extends srceditor.Editor {
             }
             if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
-            this.editor.updateOptions({ readOnly: file.isReadonly() });
+            const readOnly = file.isReadonly() || this.parent.isReadOnly();
+            this.editor.updateOptions({ readOnly: readOnly });
 
             let proto = "pkg:" + file.getName();
             let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
             if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
             if (model) this.editor.setModel(model);
 
-            if (mode == "typescript" && !file.isReadonly()) {
+            if (mode == "typescript" && !readOnly) {
                 toolbox.innerHTML = '';
                 this.beginLoadToolbox(file);
             }

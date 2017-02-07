@@ -652,7 +652,7 @@ export class ProjectView
     }
 
     importFile(file: File) {
-        if (!file) return;
+        if (!file || this.isReadOnly()) return;
         if (isHexFile(file.name)) {
             this.importHexFile(file)
         } else if (isBlocksFile(file.name)) {
@@ -1191,12 +1191,17 @@ export class ProjectView
             });
     }
 
-    getEditorLayoutType () {
+    getEditorLayoutType() {
         return layoutType;
     }
 
     isSandboxMode() {
         return layoutType == EditorLayoutType.Sandbox;
+    }
+
+    isReadOnly() {
+        return this.isSandboxMode()
+            && !/[?&]edit=1/i.test(window.location.href);
     }
 
     renderCore() {
@@ -1259,62 +1264,62 @@ export class ProjectView
         return (
             <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${EditorLayoutType[layoutType].toLowerCase()} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''} ${showMenuBar ? '' : 'hideMenuBar'}` }>
                 {showMenuBar ?
-                <div id="menubar" role="banner">
-                    <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
-                        {sandbox ? undefined :
-                            <span id="logo" className="ui item logo">
-                                {targetTheme.logo || targetTheme.portraitLogo
-                                    ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
-                                    : <span className="name">{targetTheme.name}</span>}
-                                {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
-                            </span> }
-                        {sandbox ? undefined : <div className="ui item landscape only"></div>}
-                        {sandbox ? undefined : <div className="ui item landscape only"></div>}
-                        {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
-                        {sandbox || inTutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
-                        {inTutorial ? undefined : <sui.Item class="editor-menuitem">
-                            <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
-                            <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
-                        </sui.Item> }
-                        {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
-                        {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
-                            {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
-                            {this.state.header && sharingEnabled ? <sui.Item role="menuitem" text={lf("Share Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
-                            {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
-                            {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
-                            <div className="ui divider"></div>
-                            <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
-                                <i className="help icon"></i>
-                                {lf("Help") }
-                            </a>
-                            {
-                                // we always need a way to clear local storage, regardless if signed in or not
-                            }
-                            <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } />
-                            <div className="ui divider"></div>
-                            { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
-                            { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
-                            <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
-                            { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
-                        </sui.DropdownMenuItem>}
-                        <div className="right menu">
-                            {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
-                            {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
-                            {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="tablet only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined }
+                    <div id="menubar" role="banner">
+                        <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
+                            {sandbox ? undefined :
+                                <span id="logo" className="ui item logo">
+                                    {targetTheme.logo || targetTheme.portraitLogo
+                                        ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
+                                        : <span className="name">{targetTheme.name}</span>}
+                                    {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
+                                </span> }
+                            {sandbox ? undefined : <div className="ui item landscape only"></div>}
+                            {sandbox ? undefined : <div className="ui item landscape only"></div>}
+                            {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
+                            {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
+                            {sandbox || inTutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
+                            {inTutorial ? undefined : <sui.Item class="editor-menuitem">
+                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
+                            </sui.Item> }
+                            {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
+                            {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
+                                {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
+                                {this.state.header && sharingEnabled ? <sui.Item role="menuitem" text={lf("Share Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
+                                {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
+                                {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
+                                <div className="ui divider"></div>
+                                <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
+                                    <i className="help icon"></i>
+                                    {lf("Help") }
+                                </a>
+                                {
+                                    // we always need a way to clear local storage, regardless if signed in or not
+                                }
+                                <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } />
+                                <div className="ui divider"></div>
+                                { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
+                                { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
+                                <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
+                                { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
+                            </sui.DropdownMenuItem>}
+                            <div className="right menu">
+                                {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
+                                {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
+                                {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="tablet only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined }
+                            </div>
+                            {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined }
+                            {inTutorial ? <div className="right menu">
+                                <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() }/>
+                                <div className="ui item widedesktop only"></div>
+                                <div className="ui item widedesktop only"></div>
+                                <div className="ui item widedesktop only"></div>
+                                <div className="ui item widedesktop only"></div>
+                                <div className="ui item widedesktop only"></div>
+                                <div className="ui item widedesktop only"></div>
+                            </div> : undefined }
                         </div>
-                        {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined }
-                        {inTutorial ? <div className="right menu">
-                            <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() }/>
-                            <div className="ui item widedesktop only"></div>
-                            <div className="ui item widedesktop only"></div>
-                            <div className="ui item widedesktop only"></div>
-                            <div className="ui item widedesktop only"></div>
-                            <div className="ui item widedesktop only"></div>
-                            <div className="ui item widedesktop only"></div>
-                        </div> : undefined }
-                    </div>
-                </div> : undefined }
+                    </div> : undefined }
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />

@@ -119,6 +119,7 @@ export interface IProjectView {
     isBlocksEditor(): boolean;
     isTextEditor(): boolean;
 
+    isReadOnly(): boolean;
     isSandboxMode(): boolean;
 
     settings: EditorSettings;
