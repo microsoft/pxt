@@ -35,7 +35,7 @@ class Serial {
                     console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
                     info.opened = true;
                     info.port.on('data', (buffer: Buffer) => {
-                        console.log("S: " + buffer.toString("hex"))
+                        // console.log("S: " + buffer.toString("hex"))
                         this.buf.push(buffer)
                     });
                     info.port.on('error', () => this.close())
@@ -50,6 +50,7 @@ class Serial {
         if (typeof buf == "string")
             buf = new Buffer(buf as string, "utf8")
         return this.openpromise
+            .then(() => this.isclosed ? Promise.reject(new Error("closed (write)")) : null)
             .then(() => new Promise<void>((resolve, reject) => {
                 this.info.port.write(buf, (err: any) => {
                     if (err) reject(err)
@@ -93,26 +94,28 @@ class Serial {
 
     readCoreAsync() {
         if (this.isclosed)
-            return Promise.reject<Buffer>(new Error("closed"))
+            return Promise.reject<Buffer>(new Error("closed (read core)"))
         return this.buf.shiftAsync()
     }
 
     close() {
-        this.isclosed = true
-        this.openpromise = Promise.reject(new Error("closed"))
         this.buf.drain()
+        if (this.isclosed) return
+        this.isclosed = true
+        this.info.port.close()
     }
 }
 
 let samd21flash = [
-    0xb5f02180, 0x4f194b18, 0x4b196818, 0x4b19681c, 0x430a685a, 0x605a4918,
-    0x18451a09, 0xd3213c01, 0x4a147d1e, 0xd5fb07f6, 0x36ff2620, 0x08468316,
-    0x801761d6, 0x07d27d1a, 0x4a10d5fc, 0x46664694, 0x80164a0c, 0x07d27d1a,
-    0x2200d5fc, 0x508658ae, 0x2a403204, 0x4a0ad1fa, 0x801a3040, 0x07d27d1a,
-    0xe7dad5fc, 0x46c0bdf0, 0x20006000, 0xffffa502, 0x20006004, 0x41004000,
-    0x20006008, 0xffffa544, 0xffffa504, // code ends
+    0xb5f02180, 0x68184b1a, 0x681c4b1a, 0x685a4b1a, 0x605a430a, 0x3c014a19,
+    0x7d1dd329, 0x07ed4916, 0x2520d5fb, 0x830d35ff, 0x61cd0845, 0x800d4d14,
+    0x07c97d19, 0x4913d5fc, 0x468c0005, 0x37ff1c57, 0x80194911, 0x07c97d19,
+    0x2100d5fc, 0x506e5856, 0x29403104, 0x4661d1fa, 0x35403240, 0x7d198019,
+    0xd5fc07c9, 0xd1eb4297, 0x30ff3001, 0xbdf0e7d3, 0x20006000, 0x20006004,
+    0x41004000, 0x20006008, 0xffffa502, 0xffffa504, 0xffffa544,
+    // code ends
     0x20007ff0, // stack
-    0x20008000 - 512 // base address
+    0x20008000 - 512 + 1 // start address (+1 for Thumb)
 ]
 
 function sambaCmd(ch: string, addr: number, len?: number) {
@@ -146,7 +149,7 @@ export function flashSerialAsync(c: commandParser.ParsedCommand) {
             .then(() => s.writeAsync(goCmd))
             .then(pingAsync)
             .then(() => {
-                console.log("written at " + b.targetAddr)
+                // console.log("written at " + b.targetAddr)
             })
     }
 
@@ -163,12 +166,13 @@ export function flashSerialAsync(c: commandParser.ParsedCommand) {
                     let writeBuf = new Buffer(samd21flash.length * 4)
                     for (let i = 0; i < samd21flash.length; i++)
                         pxt.HF2.write32(writeBuf, i * 4, samd21flash[i])
-                    let code = samd21flash[samd21flash.length - 1]
+                    let code = samd21flash[samd21flash.length - 1] - 1
                     goCmd = sambaCmd("G", code + writeBuf.length - 8)
                     return writeMemAsync(code, writeBuf)
                         .then(() => Promise.mapSeries(lessBlocks, writeBlockAsync))
                         .then(() => {
                             console.log("all done")
+                            s.close()
                         })
                 })
         })
