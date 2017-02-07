@@ -3374,7 +3374,7 @@ export function cleanAsync(parsed: commandParser.ParsedCommand) {
     return rimrafAsync("built", {})
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
-        .then(() => {})
+        .then(() => { })
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
@@ -3442,6 +3442,42 @@ export function extractAsync(parsed: commandParser.ParsedCommand): Promise<void>
     return extractAsyncInternal(filename, out as string, vscode);
 }
 
+function isScriptId(id: string) {
+    return /^((_[a-zA-Z0-9]{12})|([\d\-]{20,}))$/.test(id)
+}
+
+function fetchTextAsync(filename: string): Promise<Buffer> {
+    if (filename == "-" || !filename)
+        return nodeutil.readResAsync(process.stdin)
+
+    if (isScriptId(filename))
+        filename = Cloud.apiRoot + filename + "/text"
+
+    let m = /^(https:\/\/[^\/]+\/)([^\/]+)$/.exec(filename)
+    let fn2 = ""
+
+    if (m) {
+        let id = m[2]
+        if (/^api\//.test(id)) id = id.slice(4)
+        if (isScriptId(id)) {
+            fn2 = m[1] + "api/" + id + "/text"
+        }
+    }
+
+    if (/^https?:/.test(filename)) {
+        pxt.log(`Fetching ${filename}...`)
+        return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
+            .then(resp => {
+                if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
+                    pxt.log(`Trying also ${fn2}...`)
+                    return U.requestAsync({ url: fn2 })
+                } return resp
+            })
+            .then(resp => resp.buffer)
+    } else
+        return readFileAsync(filename)
+}
+
 function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<void> {
     if (filename && nodeutil.existDirSync(filename)) {
         pxt.log(`extracting folder ${filename}`);
@@ -3451,18 +3487,7 @@ function extractAsyncInternal(filename: string, out: string, vscode: boolean): P
             .then(() => { });
     }
 
-    return (filename == "-" || !filename
-        ? nodeutil.readResAsync(process.stdin)
-        : /^https?:/.test(filename) ?
-            U.requestAsync({ url: filename })
-                .then(resp => {
-                    let m = /^(https:\/\/[^\/]+\/)([a-z]+)$/.exec(filename)
-                    if (m && /^<!doctype/i.test(resp.text))
-                        return U.requestAsync({ url: m[1] + "api/" + m[2] + "/text" })
-                    else return resp
-                })
-                .then(resp => resp.buffer)
-            : readFileAsync(filename) as Promise<Buffer>)
+    return fetchTextAsync(filename)
         .then(buf => extractBufferAsync(buf, out))
         .then(dirs => {
             if (dirs && vscode) {
