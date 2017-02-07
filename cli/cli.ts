@@ -3483,7 +3483,7 @@ function extractAsyncInternal(filename: string, out: string, vscode: boolean): P
     if (filename && nodeutil.existDirSync(filename)) {
         pxt.log(`extracting folder ${filename}`);
         return Promise.all(fs.readdirSync(filename)
-            .filter(f => /\.hex/.test(f))
+            .filter(f => /\.(hex|uf2)/.test(f))
             .map(f => extractAsyncInternal(path.join(filename, f), out, vscode)))
             .then(() => { });
     }
@@ -3511,7 +3511,9 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
                 if (!data) return null
                 if (!data.meta) data.meta = {} as any
                 let id = data.meta.cloudId || "?"
-                console.log(`.hex cloudId: ${id}`)
+                console.log(`.hex/uf2 cloudId: ${id}`)
+                if (data.meta.targetVersions)
+                    console.log(`target version: ${data.meta.targetVersions.target}, pxt ${data.meta.targetVersions.pxt}`);
                 let files: Map<string> = null
                 try {
                     files = JSON.parse(data.source)
