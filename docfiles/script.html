@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>@name@ /@id@</title>
+    <title>@name@</title>
     <meta name="Description" content="@description@" />
 
     <!-- @include meta.html -->
@@ -53,13 +53,18 @@
             <pre style="white-space: pre-wrap;">
 # open a shell and run these commands
 pxt extract @id@
-cd @title@
+cd @dirname@
 code .</pre>
             <p class="ui description">Do you need help installing the tools?
                 <a href="@theme_embedUrl@/code">Follow these instructions!</a></p>
         </div>
     </div>
 
+
+<script>
+const script = @JSON@;
+// do something with it
+</script>
 
     <!-- @include footer.html -->
     <!-- @include tracking.html -->

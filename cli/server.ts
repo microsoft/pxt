@@ -817,13 +817,8 @@ export function sendElectronMessage(message: ElectronMessage) {
 function streamPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: pxt.streams.JsonStream) => {
-            let vars: pxt.Map<string> = {
-                id: id,
-                objname: info.name,
-                time: info.time + ""
-            }
             let templ = expandDocFileTemplate("stream.html")
-            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
+            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, info as any, null, "/" + id)
             return html
         })
 }
@@ -833,7 +828,6 @@ function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
             let vars: pxt.Map<string> = info as any
-            vars["title"] = info.name
             let templ = expandDocFileTemplate("script.html")
             let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
             return html
