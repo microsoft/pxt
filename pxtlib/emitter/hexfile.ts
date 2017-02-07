@@ -296,6 +296,8 @@ namespace ts.pxtc {
                 }
             }
 
+            //console.log(hexDump(buf), blk)
+
             return blk
         }
 

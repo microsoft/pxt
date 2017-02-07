@@ -20,6 +20,7 @@ import * as build from './buildengine';
 import * as electron from "./electron";
 import * as commandParser from './commandparser';
 import * as hid from './hid';
+import * as serial from './serial';
 import * as gdb from './gdb';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
@@ -3961,6 +3962,7 @@ function initCommands() {
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
+    advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
 

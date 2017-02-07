@@ -408,7 +408,7 @@ export function expandDocFileTemplate(name: string) {
     return expandDocTemplateCore(template)
 }
 
-interface SerialPortInfo {
+export interface SerialPortInfo {
     comName: string;
     pnpId: string;
     manufacturer: string;
