@@ -1480,6 +1480,17 @@ namespace pxt.blocks {
                 );
             }
         };
+
+        Blockly.Blocks["typescript"] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": lf("Typescript"),
+                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops']
+                });
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+            }
+        };
     }
 
     function initMath() {

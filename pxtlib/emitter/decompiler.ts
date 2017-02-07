@@ -253,9 +253,6 @@ ${output}</xml>`;
             function emitBinaryExpression(n: ts.BinaryExpression): void {
                 const op = n.operatorToken.getText();
                 const npp = ops[op];
-                if (!npp) {
-                    return error(n, Util.lf("Could not find operator {0}", op))
-                }
 
                 // Could be string concatenation
                 if (isTextJoin(n)) {
@@ -350,75 +347,80 @@ ${output}</xml>`;
 
             const node = n as ts.Node;
 
-            switch (node.kind) {
-                case SK.Block:
-                    pushScope();
-                    emitBlockStatement((node as ts.Block).statements, next);
-                    return;
-                case SK.ExpressionStatement:
-                    emitStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
-                    return;
-                case SK.VariableStatement:
-                    emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next, true, false, parent || node);
-                    return;
-                case SK.ArrowFunction:
-                    emitArrowFunction(node as ts.ArrowFunction, next);
-                    return;
+            if (checkStatement(node)) {
+                openGreyBlock(node);
+            }
+            else {
+                switch (node.kind) {
+                    case SK.Block:
+                        pushScope();
+                        emitBlockStatement((node as ts.Block).statements, next);
+                        return;
+                    case SK.ExpressionStatement:
+                        emitStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
+                        return;
+                    case SK.VariableStatement:
+                        emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next, true, false, parent || node);
+                        return;
+                    case SK.ArrowFunction:
+                        emitArrowFunction(node as ts.ArrowFunction, next);
+                        return;
 
-                case SK.BinaryExpression:
-                    openBinaryExpressionBlock(node as ts.BinaryExpression)
-                    break;
-                case SK.PostfixUnaryExpression:
-                case SK.PrefixUnaryExpression:
-                    openIncrementExpressionBlock(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression))
-                    break;
-                case SK.VariableDeclaration:
-                    const decl = node as ts.VariableDeclaration;
-                    let isAuto = false
-                    if (decl.initializer) {
-                        if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
-                            isAuto = true
+                    case SK.BinaryExpression:
+                        openBinaryExpressionBlock(node as ts.BinaryExpression)
+                        break;
+                    case SK.PostfixUnaryExpression:
+                    case SK.PrefixUnaryExpression:
+                        openIncrementExpressionBlock(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression))
+                        break;
+                    case SK.VariableDeclaration:
+                        const decl = node as ts.VariableDeclaration;
+                        let isAuto = false
+                        if (decl.initializer) {
+                            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
+                                isAuto = true
+                            }
+                            else if (isStringOrNumericLiteral(decl.initializer.kind)) {
+                                const text = decl.initializer.getText();
+                                isAuto = text === "0" || isEmptyString(text);
+                            }
+                            else {
+                                const callInfo: pxtc.CallInfo = (decl.initializer as any).callInfo
+                                if (callInfo && callInfo.isAutoCreate)
+                                    isAuto = true
+                            }
                         }
-                        else if (isStringOrNumericLiteral(decl.initializer.kind)) {
-                            const text = decl.initializer.getText();
-                            isAuto = text === "0" || isEmptyString(text);
+                        if (isAuto) {
+                            // Don't emit null or automatic initializers;
+                            // They are implicit within the blocks. But do add a name to the scope
+                            if (addVariableDeclaration(decl)) {
+                                emitNextBlock(/*withinNextTag*/false)
+                            }
+                            return;
+                        }
+                        openVariableDeclarationBlock(node as ts.VariableDeclaration);
+                        break;
+                    case SK.WhileStatement:
+                        openWhileStatementBlock(node as ts.WhileStatement);
+                        break;
+                    case SK.IfStatement:
+                        openIfStatementBlock(node as ts.IfStatement);
+                        break;
+                    case SK.ForStatement:
+                        openForStatementBlock(node as ts.ForStatement);
+                        break;
+                    case SK.CallExpression:
+                        openCallExpressionBlock(node as ts.CallExpression);
+                        break;
+                    default:
+                        if (next) {
+                            error(node, Util.lf("Unsupported statement in block: {0}", SK[node.kind]))
                         }
                         else {
-                            const callInfo: pxtc.CallInfo = (decl.initializer as any).callInfo
-                            if (callInfo && callInfo.isAutoCreate)
-                                isAuto = true
-                        }
-                    }
-                    if (isAuto) {
-                        // Don't emit null or automatic initializers;
-                        // They are implicit within the blocks. But do add a name to the scope
-                        if (addVariableDeclaration(decl)) {
-                            emitNextBlock(/*withinNextTag*/false)
+                            error(node, Util.lf("Statement kind unsupported in blocks: {0}", SK[node.kind]))
                         }
                         return;
-                    }
-                    openVariableDeclarationBlock(node as ts.VariableDeclaration);
-                    break;
-                case SK.WhileStatement:
-                    openWhileStatementBlock(node as ts.WhileStatement);
-                    break;
-                case SK.IfStatement:
-                    openIfStatementBlock(node as ts.IfStatement);
-                    break;
-                case SK.ForStatement:
-                    openForStatementBlock(node as ts.ForStatement);
-                    break;
-                case SK.CallExpression:
-                    openCallExpressionBlock(node as ts.CallExpression);
-                    break;
-                default:
-                    if (next) {
-                        error(node, Util.lf("Unsupported statement in block: {0}", SK[node.kind]))
-                    }
-                    else {
-                        error(node, Util.lf("Statement kind unsupported in blocks: {0}", SK[node.kind]))
-                    }
-                    return;
+                }
             }
 
             emitNextBlock(/*withinNextTag*/true);
@@ -877,6 +879,11 @@ ${output}</xml>`;
             closeBlockTag()
         }
 
+        function openGreyBlock(node: ts.Node) {
+            openBlockTag("typescript");
+            write(`<comment pinned="false">${U.htmlEscape(node.getFullText())}</comment>`)
+        }
+
         function emitValue(name: string, contents: boolean | number | string | Node, shadowType?: ShadowType): void {
             write(`<value name="${U.htmlEscape(name)}">`)
 
@@ -929,10 +936,6 @@ ${output}</xml>`;
         }
 
         function emitIdentifier(identifier: Identifier) {
-            if (isUndefined(identifier)) {
-                error(identifier, Util.lf("Undefined has no block equivalent"))
-                return;
-            }
             emitFieldBlock("variables_get", "VAR", getVariableName(identifier.text), false)
         }
 
@@ -959,10 +962,6 @@ ${output}</xml>`;
                 emitField(fieldName, value)
                 closeBlockTag()
             }
-        }
-
-        function isUndefined(node: ts.Node) {
-            return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
         }
 
         function isLiteralNode(node: ts.Node): boolean {
@@ -1110,7 +1109,148 @@ ${output}</xml>`;
         }
     }
 
+    function checkStatement(node: ts.Node): string {
+        switch (node.kind) {
+            case SK.VariableDeclaration:
+            case SK.WhileStatement:
+            case SK.IfStatement:
+            case SK.Block:
+            case SK.VariableStatement:
+            case SK.ExpressionStatement:
+                return undefined;
+            case SK.CallExpression:
+                // openCallExpressionBlock(node as ts.CallExpression);
+                return undefined; // FIXME
+            case SK.PostfixUnaryExpression:
+            case SK.PrefixUnaryExpression:
+                return checkIncrementorExpression(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
+            case SK.ArrowFunction:
+                return checkArrowFunction(node as ts.ArrowFunction);
+            case SK.BinaryExpression:
+                return checkBinaryExpression(node as ts.BinaryExpression);
+            case SK.ForStatement:
+                return checkForStatement(node as ts.ForStatement);
+        }
+
+        return Util.lf("Unsupported statement in block: {0}", SK[node.kind]);
+
+        function checkForStatement(n: ts.ForStatement) {
+            if (!n.initializer || !n.incrementor || !n.condition) {
+                return Util.lf("for loops must have an initializer, incrementor, and condition");
+            }
+
+            if (n.initializer.kind !== SK.VariableDeclarationList) {
+                return Util.lf("only variable declarations are permitted in for loop initializers");
+            }
+
+            const initializer = n.initializer as ts.VariableDeclarationList;
+
+            if (!initializer.declarations) {
+                return Util.lf("for loop with out-of-scope variables not supported");
+            }
+            if (initializer.declarations.length != 1) {
+                return Util.lf("for loop with multiple variables not supported");
+            }
+
+            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
+            if (!incrementorIsValid(indexVar)) {
+                return Util.lf("for loop incrementors may only increment the variable declared in the initializer");
+            }
+
+            if (n.condition.kind !== SK.BinaryExpression) {
+                return Util.lf("for loop conditionals must be binary comparison operations")
+            }
+
+            const condition = n.condition as ts.BinaryExpression
+            if (condition.left.kind !== SK.Identifier || (condition.left as ts.Identifier).text !== indexVar) {
+                return Util.lf("left side of for loop conditional must be the variable declared in the initializer")
+            }
+
+            if (condition.operatorToken.kind !== SK.LessThanToken && condition.operatorToken.kind !== SK.LessThanEqualsToken) {
+                return Util.lf("for loop conditional operator must be either < or <=");
+            }
+
+            return undefined;
+
+            function incrementorIsValid(varName: string): boolean {
+                if (n.incrementor.kind === SK.PostfixUnaryExpression || n.incrementor.kind === SK.PrefixUnaryExpression) {
+                    const incrementor = n.incrementor as ts.PostfixUnaryExpression | ts.PrefixUnaryExpression;
+                    if (incrementor.operator === SK.PlusPlusToken && incrementor.operand.kind === SK.Identifier) {
+                        return (incrementor.operand as ts.Identifier).text === varName;
+                    }
+                }
+                return false;
+            }
+        }
+
+        function checkBinaryExpression(n: ts.BinaryExpression) {
+            if (n.left.kind !== SK.Identifier) {
+                Util.lf("Only variable names may be assigned to")
+            }
+
+            switch (n.operatorToken.kind) {
+                case SK.EqualsToken:
+                case SK.PlusEqualsToken:
+                case SK.MinusEqualsToken:
+                    return undefined;
+                default:
+                    return Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]);
+            }
+        }
+
+        function checkArrowFunction(n: ts.ArrowFunction) {
+            if (n.parameters.length > 0 && !(n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern)) {
+                return Util.lf("Unsupported parameters in error function");
+            }
+            return undefined;
+        }
+
+        function checkIncrementorExpression(n: (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression)) {
+            if (n.operand.kind != SK.Identifier) {
+                return Util.lf("-- and ++ may only be used on an identifier")
+            }
+
+            if (n.operator !== SK.PlusPlusToken && n.operator !== SK.MinusMinusToken) {
+                return Util.lf("Only ++ and -- supported as prefix or postfix unary operators in a statement");
+            }
+
+            return undefined;
+        }
+    }
+
+    function checkExpression(n: ts.Node): string {
+        switch (n.kind) {
+            case SK.StringLiteral:
+            case SK.FirstTemplateToken:
+            case SK.NoSubstitutionTemplateLiteral:
+            case SK.NumericLiteral:
+            case SK.TrueKeyword:
+            case SK.FalseKeyword:
+            case SK.ExpressionStatement:
+            case SK.ParenthesizedExpression:
+                return undefined;
+            case SK.Identifier:
+                return isUndefined(n) ? Util.lf("") : undefined;
+            case SK.BinaryExpression:
+                const op1 = (n as BinaryExpression).operatorToken.getText();
+                return ops[op1] ? undefined : Util.lf("Could not find operator {0}", op1);
+            case SK.PrefixUnaryExpression:
+                const op2 = (n as PrefixUnaryExpression).operator;
+                return op2 === SK.MinusToken || op2 === SK.PlusToken || op2 === SK.ExclamationToken ?
+                    undefined : Util.lf("Unsupported prefix unary operator{0}", op2);
+            case SK.PropertyAccessExpression:
+                return (n as any).callInfo ? undefined : Util.lf("No call info found");
+            case SK.CallExpression:
+                return checkStatement(n);
+        }
+        return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
+    }
+
     function isEmptyString(a: string) {
         return a === `""` || a === `''` || a === "``";
+    }
+
+    function isUndefined(node: ts.Node) {
+        return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
     }
 }
