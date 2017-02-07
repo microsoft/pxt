@@ -1192,7 +1192,7 @@ export class ProjectView
 
     isReadOnly() {
         return this.isSandboxMode()
-            && !/edit=1/.test(window.location.href);
+            && !/[?&]edit=1/i.test(window.location.href);
     }
 
     renderCore() {
