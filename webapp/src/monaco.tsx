@@ -560,7 +560,7 @@ export class Editor extends srceditor.Editor {
         })
 
         // Add the toolbox buttons
-        if (pxt.appTarget.cloud.packages) {
+        if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
             this.addToolboxCategory(group, "Add Package", "#717171", ' ', false, null, () => {
                 this.resetFlyout();
                 this.parent.addPackage();
