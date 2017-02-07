@@ -20,6 +20,8 @@ namespace pxt.shell {
         } else {
             layoutType = EditorLayoutType.IDE;
         }
+
+        pxt.debug(`shell: layout type ${EditorLayoutType[layoutType]}, readonly ${isReadOnly()}`);
     }
 
     export function isSandboxMode() {
