@@ -24,6 +24,8 @@ let lf = U.lf
 let impl: WorkspaceProvider;
 
 export function setupWorkspace(id: string) {
+    U.assert(!impl, "workspace set twice");
+    pxt.debug(`workspace: ${id}`);
     switch (id) {
         case "fs":
         case "file":
