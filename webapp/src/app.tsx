@@ -1469,6 +1469,9 @@ function initSerial() {
                     }, "*")
                 }
             })
+            .catch(e => {
+                pxt.log(`hidbridge failed to load, ${e}`);
+            })
         return
     }
 
