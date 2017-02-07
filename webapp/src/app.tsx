@@ -51,6 +51,7 @@ const lf = Util.lf
 
 // Polyfill for Uint8Array.slice for IE and Safari
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
+// TODO: Move this polyfill to a more appropriate file. It is left here for now because moving it causes a crash in IE; see PXT issue #1301.
 if (!Uint8Array.prototype.slice) {
     Object.defineProperty(Uint8Array.prototype, 'slice', {
         value: Array.prototype.slice
