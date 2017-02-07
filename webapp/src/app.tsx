@@ -1304,7 +1304,7 @@ export class ProjectView
                                 { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
                             </sui.DropdownMenuItem>}
                             <div className="right menu">
-                                {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Open with {0}", targetTheme.name) } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
+                                {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } textClass="landscape only" onClick={() => this.launchFullEditor() }/> : undefined }
                                 {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
                                 {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="tablet only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined }
                             </div>
