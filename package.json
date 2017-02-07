@@ -22,6 +22,7 @@
     "built/buildengine.js",
     "built/hid.js",
     "built/gdb.js",
+    "built/serial.js",
     "built/pxt.js",
     "built/pxt-common.json",
     "built/blockly.d.ts",
