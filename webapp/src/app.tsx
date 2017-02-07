@@ -643,7 +643,7 @@ export class ProjectView
     }
 
     importFile(file: File) {
-        if (!file) return;
+        if (!file || this.isReadOnly()) return;
         if (isHexFile(file.name)) {
             this.importHexFile(file)
         } else if (isBlocksFile(file.name)) {
