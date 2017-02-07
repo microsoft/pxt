@@ -730,20 +730,6 @@ export class ProjectView
             })
     }
 
-    launchFullEditor() {
-        Util.assert(this.isSandboxMode());
-
-        let rootUrl = pxt.appTarget.appTheme.embedUrl;
-        if (!/\/$/.test(rootUrl)) rootUrl += '/';
-
-        this.exportAsync()
-            .then(fileContent => {
-                pxt.tickEvent("sandbox.openfulleditor");
-                const editUrl = `${rootUrl}#project:${fileContent}`;
-                window.open(editUrl, '_blank')
-            })
-    }
-
     addPackage() {
         pxt.tickEvent("menu.addpackage");
         this.scriptSearch.showAddPackages();
@@ -1029,18 +1015,39 @@ export class ProjectView
         })
     }
 
+    launchFullEditor() {
+        pxt.tickEvent("sandbox.openfulleditor");
+        Util.assert(this.isSandboxMode());
+
+        let editUrl = pxt.appTarget.appTheme.embedUrl;
+        if (!/\/$/.test(editUrl)) editUrl += '/';
+
+        const mpkg = pkg.mainPkg
+        const epkg = pkg.getEditorPkg(mpkg)
+        if (this.isReadOnly()) {
+            if (epkg.header.pubId) { }
+            editUrl += `#pub:${epkg.header.pubId}`;
+            window.open(editUrl, '_blank');
+        }
+        else this.exportAsync()
+            .done(fileContent => {
+                pxt.tickEvent("sandbox.openfulleditor");
+                editUrl += `#project:${fileContent}`;
+                window.open(editUrl, '_blank')
+            });
+    }
+
     anonymousPublishAsync(): Promise<string> {
         pxt.tickEvent("publish");
         this.setState({ publishing: true })
-        let mpkg = pkg.mainPkg
-        let epkg = pkg.getEditorPkg(mpkg)
+        const mpkg = pkg.mainPkg
+        const epkg = pkg.getEditorPkg(mpkg)
         return this.saveFileAsync()
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
                 if (epkg.header.pubCurrent)
                     return Promise.resolve(epkg.header.pubId)
                 const meta: workspace.ScriptMeta = {
-                    editor: this.getPreferredEditor(),
                     description: mpkg.config.description,
                 };
                 const blocksSize = this.blocksEditor.contentSize();

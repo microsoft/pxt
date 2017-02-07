@@ -262,7 +262,7 @@ namespace pxt {
         }
 
         saveConfig() {
-            let cfg = JSON.stringify(this.config, null, 4) + "\n"
+            const cfg = JSON.stringify(this.config, null, 4) || "\n"
             this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
         }
 
