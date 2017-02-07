@@ -151,6 +151,7 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
+        layoutOptions?: LayoutOptions;
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -163,6 +164,10 @@ declare namespace pxt {
         crowdinProject?: string;
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
+    }
+
+    interface LayoutOptions {
+        hideMenuBar?: boolean; // Hides the main menu bar
     }
 
     interface DocMenuEntry {

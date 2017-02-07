@@ -69,7 +69,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     fetchGalleries(): pxt.CodeCard[] {
         if (this.state.mode != ScriptSearchMode.Projects
-            || this.props.parent.getSandboxMode()
+            || this.props.parent.isSandboxMode()
             || this.state.searchFor
             || pxt.options.light
             || !pxt.appTarget.appTheme.projectGallery) return [];

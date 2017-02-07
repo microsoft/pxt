@@ -119,7 +119,7 @@ export interface IProjectView {
     isBlocksEditor(): boolean;
     isTextEditor(): boolean;
 
-    getSandboxMode(): boolean;
+    isSandboxMode(): boolean;
 
     settings: EditorSettings;
 
