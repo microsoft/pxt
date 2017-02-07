@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>@name@ /@id@</title>
+    <title>@name@</title>
     <meta name="Description" content="@description@" />
 
     <!-- @include meta.html -->
@@ -31,7 +31,7 @@
         <!-- @include abuse.html -->
         <h1 class="ui header">
             <div class="ui content">
-                @title@ <a href="/#pub:@id@" class="ui primary button">Edit</a>
+                @title@ <a href="/@versionsuff@#pub:@id@" class="ui primary button">Edit</a>
                 <div class='sub header humantime' data-time="@time@">@humantime@</span>
             </div>
         </h1>
@@ -41,7 +41,7 @@
 
         <div class="ui container">
             <div style="position:relative;height:0;padding-bottom:70%;overflow:hidden;">
-                <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="/#sandbox:@id@" sandbox="allow-popups allow-scripts allow-same-origin"
+                <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="/@versionsuff@#sandbox:@id@" sandbox="allow-popups allow-scripts allow-same-origin"
                     frameborder="0"></iframe>
             </div>
         </div>
@@ -53,13 +53,18 @@
             <pre style="white-space: pre-wrap;">
 # open a shell and run these commands
 pxt extract @id@
-cd @title@
+cd @dirname@
 code .</pre>
             <p class="ui description">Do you need help installing the tools?
                 <a href="@theme_embedUrl@/code">Follow these instructions!</a></p>
         </div>
     </div>
 
+
+<script>
+const script = @JSON@;
+// do something with it
+</script>
 
     <!-- @include footer.html -->
     <!-- @include tracking.html -->

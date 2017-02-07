@@ -214,7 +214,8 @@ namespace pxt.docs {
         }
 
         d.finish = () => injectHtml(d.html, params,
-            ["body", "menu", "breadcrumb", "targetlogo", "github"])
+            ["body", "menu", "breadcrumb", "targetlogo", "github",
+             "JSON"])
     }
 
     export function renderMarkdown(template: string, src: string,
@@ -222,9 +223,16 @@ namespace pxt.docs {
         breadcrumb: BreadcrumbEntry[] = null, filepath: string = null,
         locale: Map<string> = null): string {
 
-        if (!pubinfo) pubinfo = {}
+        let hasPubInfo = true
+
+        if (!pubinfo) {
+            hasPubInfo = false
+            pubinfo = {}
+        }
         if (!theme) theme = {}
         if (!breadcrumb) breadcrumb = []
+
+        delete pubinfo["private"] // just in case
 
         if (pubinfo["time"]) {
             let tm = parseInt(pubinfo["time"])
@@ -232,6 +240,14 @@ namespace pxt.docs {
                 pubinfo["timems"] = 1000 * tm + ""
             if (!pubinfo["humantime"])
                 pubinfo["humantime"] = U.isoTime(tm)
+        }
+        if (pubinfo["name"]) {
+            pubinfo["dirname"] = pubinfo["name"].replace(/[^A-Za-z0-9_]/g, "-")
+            pubinfo["title"] = pubinfo["name"]
+        }
+
+        if (hasPubInfo) {
+            pubinfo["JSON"] = JSON.stringify(pubinfo, null, 4).replace(/</g, "\\u003c")
         }
 
         template = template
@@ -299,7 +315,7 @@ namespace pxt.docs {
             return f
         })
 
-        // replace pre-tempate in markdow
+        // replace pre-template in markdown
         src = src.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
         let html = marked(src)
