@@ -1670,9 +1670,7 @@ function initHashchange() {
     });
 }
 
-$(document).ready(() => {
-    pxt.setupWebConfig((window as any).pxtConfig);
-    const config = pxt.webConfig
+function parseLayout() {
     let sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
         // in iframe
         || pxt.BrowserUtils.isIFrame();
@@ -1684,6 +1682,12 @@ $(document).ready(() => {
     } else {
         layoutType = EditorLayoutType.IDE;
     }
+}
+
+$(document).ready(() => {
+    pxt.setupWebConfig((window as any).pxtConfig);
+    parseLayout();
+    const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
 
@@ -1707,7 +1711,7 @@ $(document).ready(() => {
 
     let ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1]);
-    else if (sandbox) workspace.setupWorkspace("mem");
+    else if (layoutType == EditorLayoutType.Sandbox) workspace.setupWorkspace("mem");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     pxt.docs.requireMarked = () => require("marked");
@@ -1718,6 +1722,7 @@ $(document).ready(() => {
     pkg.setupAppTarget((window as any).pxtTargetBundle)
 
     if (!pxt.BrowserUtils.isBrowserSupported()) {
+        pxt.tickEvent("unsupported");
         let redirect = pxt.BrowserUtils.suggestedBrowserPath();
         if (redirect) {
             window.location.href = redirect;
