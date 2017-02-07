@@ -1219,8 +1219,8 @@ export class ProjectView
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const inTutorial = this.state.tutorial;
-        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
+        const inTutorial = !!this.state.tutorial;
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
