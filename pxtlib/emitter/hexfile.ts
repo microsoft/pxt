@@ -73,7 +73,7 @@ namespace ts.pxtc {
             return r
         }
 
-        export function toBin(blocks: Uint8Array): Uint8Array {
+        export function toBin(blocks: Uint8Array) {
             if (blocks.length < 512)
                 return null
             let curraddr = -1
@@ -105,7 +105,10 @@ namespace ts.pxtc {
                 for (let i = 0; i < b.length; ++i)
                     r[dst++] = b[i]
             }
-            return r
+            return {
+                buf: r,
+                start: appstartaddr,
+            }
         }
 
         function setWord(block: Uint8Array, ptr: number, v: number) {
@@ -138,6 +141,23 @@ namespace ts.pxtc {
             let res = ""
             for (let b of f.blocks)
                 res += Util.uint8ArrayToString(b)
+            return res
+        }
+
+        function hasAddr(b: Block, a: number) {
+            if (!b) return false
+            return b.targetAddr <= a && a < b.targetAddr + b.payloadSize
+        }
+
+        export function readBytes(blocks: Block[], addr: number, length: number) {
+            let res = new Uint8Array(length)
+            let bl: Block
+            for (let i = 0; i < length; ++i, ++addr) {
+                if (!hasAddr(bl, addr))
+                    bl = blocks.filter(b => hasAddr(b, addr))[0]
+                if (bl)
+                    res[i] = bl.data[addr - bl.targetAddr]
+            }
             return res
         }
 
@@ -201,8 +221,8 @@ namespace ts.pxtc {
                     writeBytes(f, newAddr, arr)
                 }
             }
-
         }
+
     }
 
 
@@ -228,6 +248,84 @@ namespace ts.pxtc {
             for (; i < str.length; i += 2)
                 r = str[i] + str[i + 1] + r
             assert(i == str.length)
+            return r
+        }
+
+        export interface ChecksumBlock {
+            magic: number;
+            endMarkerPos: number;
+            endMarker: number;
+            regions: { start: number; length: number; checksum: number; }[];
+        }
+
+        export function parseChecksumBlock(buf: ArrayLike<number>, pos = 0): ChecksumBlock {
+            let magic = pxt.HF2.read32(buf, pos)
+            if ((magic & 0x7fffffff) != 0x07eeb07c) {
+                pxt.log("no checksum block magic")
+                return null
+            }
+            let endMarkerPos = pxt.HF2.read32(buf, pos + 4)
+            let endMarker = pxt.HF2.read32(buf, pos + 8)
+            if (endMarkerPos & 3) {
+                pxt.log("invalid end marker position")
+                return null
+            }
+            let pageSize = 1 << (endMarker & 0xff)
+            if (pageSize != pxt.appTarget.compile.flashCodeAlign) {
+                pxt.log("invalid page size: " + pageSize)
+                return null
+            }
+
+            let blk: ChecksumBlock = {
+                magic,
+                endMarkerPos,
+                endMarker,
+                regions: []
+            }
+
+            for (let i = pos + 12; i < buf.length - 7; i += 8) {
+                let r = {
+                    start: pageSize * pxt.HF2.read16(buf, i),
+                    length: pageSize * pxt.HF2.read16(buf, i + 2),
+                    checksum: pxt.HF2.read32(buf, i + 4)
+                }
+                if (r.length && r.checksum) {
+                    blk.regions.push(r)
+                } else {
+                    break
+                }
+            }
+
+            //console.log(hexDump(buf), blk)
+
+            return blk
+        }
+
+        export function hexDump(bytes: ArrayLike<number>, startOffset = 0) {
+            function toHex(n: number, len = 8) {
+                let r = n.toString(16)
+                while (r.length < len) r = "0" + r
+                return r
+            }
+            let r = ""
+            for (let i = 0; i < bytes.length; i += 16) {
+                r += toHex(startOffset + i) + ": "
+                let t = ""
+                for (let j = 0; j < 16; j++) {
+                    if ((j & 3) == 0) r += " "
+                    let v = bytes[i + j]
+                    if (v == null) {
+                        r += "   "
+                        continue
+                    }
+                    r += toHex(v, 2) + " "
+                    if (32 <= v && v < 127)
+                        t += String.fromCharCode(v)
+                    else
+                        t += "."
+                }
+                r += " " + t + "\n"
+            }
             return r
         }
 
@@ -491,8 +589,17 @@ namespace ts.pxtc {
             if (uf2) {
                 UF2.writeHex(uf2, myhex)
                 UF2.writeBytes(uf2, jmpStartAddr, nextLine(hd, jmpStartIdx).slice(4))
+                if (bin.checksumBlock) {
+                    let bytes: number[] = []
+                    for (let w of bin.checksumBlock)
+                        bytes.push(w & 0xff, w >> 8)
+                    UF2.writeBytes(uf2, bin.target.flashChecksumAddr, bytes)
+                }
             } else {
                 myhex[jmpStartIdx] = hexBytes(nextLine(hd, jmpStartAddr))
+                if (bin.checksumBlock) {
+                    U.oops("checksum block in HEX not implemented yet")
+                }
             }
 
             ptr = 0
@@ -646,8 +753,9 @@ ${hex.hexPrelude()}
         return asmsource
     }
 
-    function patchSrcHash(src: string) {
+    function patchSrcHash(bin: Binary, src: string) {
         let sha = U.sha256(src)
+        bin.sourceHash = sha
         return src.replace(/\n.*@SRCHASH@\n/, "\n    .hex " + sha.slice(0, 16).toUpperCase() + " ; program hash\n")
     }
 
@@ -763,14 +871,57 @@ _stored_program: .string "`
 
     export function processorEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin, opts)
-        src = patchSrcHash(src)
+        src = patchSrcHash(bin, src)
         if (opts.embedBlob)
             src += addSource(opts.embedMeta, decodeBase64(opts.embedBlob))
+        let checksumWords = 8
+        let pageSize = hex.flashCodeAlign(opts.target)
+        if (opts.target.flashChecksumAddr) {
+            let k = 0
+            while (pageSize > (1 << k)) k++;
+            let endMarker = parseInt(bin.sourceHash.slice(0, 8), 16)
+            let progStart = hex.bytecodeStartAddrPadded / pageSize
+            endMarker = (endMarker & 0xffffff00) | k
+            let templBeg = 0
+            let templSize = progStart
+            // we exclude the checksum block from the template
+            if (opts.target.flashChecksumAddr < hex.bytecodeStartAddrPadded) {
+                templBeg = Math.ceil((opts.target.flashChecksumAddr + 32) / pageSize)
+                templSize -= templBeg
+            }
+            src += `
+    .balign 4
+__end_marker:
+    .word ${endMarker}
+
+; ------- this will get removed from the final binary ------
+__flash_checksums:
+    .word 0x87eeb07c ; magic
+    .word __end_marker ; end marker position
+    .word ${endMarker} ; end marker
+    ; template region
+    .short ${templBeg}, ${templSize}
+    .word 0x${hex.hexTemplateHash().slice(0, 8)}
+    ; user region
+    .short ${progStart}, 0xffff
+    .word 0x${bin.sourceHash.slice(0, 8)}
+    .word 0x0 ; terminator
+`
+        }
         bin.writeFile(pxtc.BINARY_ASM, src)
         let res = assemble(opts.target.nativeType, bin, src)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
         if (res.buf) {
+            if (opts.target.flashChecksumAddr) {
+                let pos = res.thumbFile.lookupLabel("__flash_checksums") / 2
+                U.assert(pos == res.buf.length - checksumWords * 2)
+                let chk = res.buf.slice(res.buf.length - checksumWords * 2)
+                res.buf.splice(res.buf.length - checksumWords * 2, checksumWords * 2)
+                let len = Math.ceil(res.buf.length * 2 / pageSize)
+                chk[chk.length - 5] = len
+                bin.checksumBlock = chk;
+            }
             if (opts.target.useUF2) {
                 const myhex = btoa(hex.patchHex(bin, res.buf, false, true)[0])
                 bin.writeFile(pxtc.BINARY_UF2, myhex)
@@ -778,15 +929,6 @@ _stored_program: .string "`
                 const myhex = hex.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"
                 bin.writeFile(pxtc.BINARY_HEX, myhex)
             }
-            cres.quickFlash = {
-                startAddr: hex.bytecodeStartAddrPadded,
-                words: []
-            }
-            for (let i = 0; i < res.buf.length; i += 2) {
-                cres.quickFlash.words.push(res.buf[i] | (res.buf[i + 1] << 16))
-            }
-            while (cres.quickFlash.words.length & ((hex.flashCodeAlign(opts.target) >> 2) - 1))
-                cres.quickFlash.words.push(0)
         }
 
         for (let bkpt of cres.breakpoints) {

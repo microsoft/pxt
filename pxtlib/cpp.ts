@@ -799,7 +799,7 @@ int main() {
 
         let bin = pxt.appTarget.compile.useUF2 ? ts.pxtc.UF2.toBin(dat) : undefined;
         if (bin) {
-            rawEmbed = extractSourceFromBin(bin)
+            rawEmbed = extractSourceFromBin(bin.buf)
         } else {
             let str = fromUTF8Bytes(dat);
             rawEmbed = extractSource(str || "")

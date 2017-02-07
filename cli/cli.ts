@@ -20,6 +20,7 @@ import * as build from './buildengine';
 import * as electron from "./electron";
 import * as commandParser from './commandparser';
 import * as hid from './hid';
+import * as serial from './serial';
 import * as gdb from './gdb';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
@@ -3582,6 +3583,22 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         })
 }
 
+export function hexdumpAsync(c: commandParser.ParsedCommand) {
+    let filename = c.arguments[0]
+    let buf = fs.readFileSync(filename)
+    if (/^UF2\n/.test(buf.slice(0, 4).toString("utf8"))) {
+        let r = pxtc.UF2.toBin(buf as any)
+        if (r) {
+            console.log("UF2 file detected.")
+            console.log(pxtc.hex.hexDump(r.buf, r.start))
+            return Promise.resolve()
+        }
+    }
+    console.log("Binary file assumed.")
+    console.log(pxtc.hex.hexDump(buf))
+    return Promise.resolve()
+}
+
 function openVsCode(dirname: string) {
     child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..
 }
@@ -3969,6 +3986,8 @@ function initCommands() {
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+    advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
+    advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
 
