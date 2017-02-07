@@ -171,6 +171,7 @@ namespace pxsim {
     }
 }
 
+pxsim.util.injectPolyphils();
 if (typeof window !== 'undefined') {
     window.addEventListener('load', function (ev) {
         pxsim.Embed.start();
