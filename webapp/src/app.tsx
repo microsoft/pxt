@@ -1039,11 +1039,11 @@ export class ProjectView
             .then(files => {
                 if (epkg.header.pubCurrent)
                     return Promise.resolve(epkg.header.pubId)
-                let meta: workspace.ScriptMeta = {
+                const meta: workspace.ScriptMeta = {
+                    editor: this.getPreferredEditor(),
                     description: mpkg.config.description,
-                    islibrary: false,
-                }
-                let blocksSize = this.blocksEditor.contentSize();
+                };
+                const blocksSize = this.blocksEditor.contentSize();
                 if (blocksSize) {
                     meta.blocksHeight = blocksSize.height;
                     meta.blocksWidth = blocksSize.width;

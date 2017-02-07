@@ -87,7 +87,7 @@ export function getTextAsync(id: string): Promise<ScriptText> {
 
 export interface ScriptMeta {
     description: string;
-    islibrary: boolean;
+    editor?: string;
     blocksWidth?: number;
     blocksHeight?: number;
 }
@@ -103,7 +103,9 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         description: meta.description,
         editor: h.editor,
         text: text,
+        targetVersions: pxt.appTarget.versions,
         meta: {
+            editor: meta.editor,
             blocksHeight: meta.blocksHeight,
             blocksWidth: meta.blocksWidth
         }
