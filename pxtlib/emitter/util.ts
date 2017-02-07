@@ -6,15 +6,6 @@ namespace ts.pxtc {
 
 import pxtc = ts.pxtc
 
-
-// Polyfill for Uint8Array.slice for IE and Safari
-// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
-if (!Uint8Array.prototype.slice) {
-    Object.defineProperty(Uint8Array.prototype, 'slice', {
-        value: Array.prototype.slice
-    });
-}
-
 namespace ts.pxtc.Util {
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {

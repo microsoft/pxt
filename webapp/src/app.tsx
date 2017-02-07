@@ -49,6 +49,14 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 const lf = Util.lf
 
+// Polyfill for Uint8Array.slice for IE and Safari
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
+if (!Uint8Array.prototype.slice) {
+    Object.defineProperty(Uint8Array.prototype, 'slice', {
+        value: Array.prototype.slice
+    });
+}
+
 let theEditor: ProjectView;
 
 /*
