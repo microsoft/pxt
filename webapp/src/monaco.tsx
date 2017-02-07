@@ -821,7 +821,7 @@ export class Editor extends srceditor.Editor {
             }
             if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
-            const readOnly = file.isReadonly();
+            const readOnly = file.isReadonly() || this.parent.isReadOnly();
             this.editor.updateOptions({ readOnly: readOnly });
 
             let proto = "pkg:" + file.getName();

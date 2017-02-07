@@ -529,6 +529,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private getBlocklyOptions(showCategories: boolean = true) {
+        const readOnly = this.parent.isReadOnly();
         let toolbox = showCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
@@ -541,6 +542,7 @@ export class Editor extends srceditor.Editor {
             collapse: false,
             comments: true,
             disable: false,
+            readOnly: readOnly,
             zoom: {
                 enabled: false,
                 controls: false,
