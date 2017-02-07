@@ -1,5 +1,5 @@
 /* Import all components */
-@import 'semantic';
+@import 'pxtsemantic';
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
 
@@ -17,6 +17,12 @@
   position: absolute;
   top:@mainMenuHeight;
   bottom: 0rem;
+}
+
+.hideMenuBar #filelist,
+.hideMenuBar #maineditor,
+.hideMenuBar #sidedocs{
+    top: 0;
 }
 
 .full-abs {
@@ -258,6 +264,10 @@ div.simframe > iframe {
 .rtl .organization {
     right:auto;
     left:2rem;
+}
+
+.hideMenuBar .organization {
+    display: none;
 }
 
 /* Menu */ 

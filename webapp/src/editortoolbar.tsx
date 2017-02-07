@@ -84,7 +84,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
     render() {
         const state = this.props.parent.state;
-        const sandbox = this.props.parent.getSandboxMode();
+        const sandbox = this.props.parent.isSandboxMode();
         const hideEditorFloats = state.hideEditorFloats;
         const collapsed = state.hideEditorFloats || state.collapseEditorTools;
         const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();

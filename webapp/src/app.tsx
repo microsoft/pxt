@@ -76,6 +76,13 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
     }
 }*/
 
+
+export enum EditorLayoutType {
+    IDE,
+    Sandbox,
+    Widget
+}
+
 export class ProjectView
     extends data.Component<IAppProps, IAppState>
     implements IProjectView {
@@ -715,7 +722,7 @@ export class ProjectView
     }
 
     launchFullEditor() {
-        Util.assert(sandbox);
+        Util.assert(this.isSandboxMode());
 
         let rootUrl = pxt.appTarget.appTheme.embedUrl;
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
@@ -1175,8 +1182,12 @@ export class ProjectView
             });
     }
 
-    getSandboxMode() {
-        return sandbox;
+    getEditorLayoutType () {
+        return layoutType;
+    }
+
+    isSandboxMode() {
+        return layoutType == EditorLayoutType.Sandbox;
     }
 
     renderCore() {
@@ -1195,6 +1206,7 @@ export class ProjectView
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex;
         const simOpts = pxt.appTarget.simulator;
+        const sandbox = this.isSandboxMode();
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -1213,6 +1225,8 @@ export class ProjectView
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const fullscreen = run && !simOpts.hideFullscreen;
+        const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
+
         const blockActive = this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
         const javascriptActive = this.editor == this.textEditor
@@ -1234,7 +1248,8 @@ export class ProjectView
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${sandbox ? "sandbox" : ""} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${EditorLayoutType[layoutType].toLowerCase()} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''} ${showMenuBar ? '' : 'hideMenuBar'}` }>
+                {showMenuBar ?
                 <div id="menubar" role="banner">
                     <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                         {sandbox ? undefined :
@@ -1290,7 +1305,7 @@ export class ProjectView
                             <div className="ui item widedesktop only"></div>
                         </div> : undefined }
                     </div>
-                </div>
+                </div> : undefined }
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
@@ -1536,7 +1551,7 @@ let myexports: any = {
 (window as any).E = myexports;
 
 export var ksVersion: string;
-export var sandbox = false;
+export var layoutType: EditorLayoutType;
 
 function initTheme() {
     core.cookieNotification()
@@ -1634,9 +1649,17 @@ function initHashchange() {
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
-    sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
+    let sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
         // in iframe
         || pxt.BrowserUtils.isIFrame();
+    let nosandbox = /nosandbox=1/i.test(window.location.href);
+    if (nosandbox) {
+        layoutType = EditorLayoutType.Widget;
+    } else if (sandbox) {
+        layoutType = EditorLayoutType.Sandbox;
+    } else {
+        layoutType = EditorLayoutType.IDE;
+    }
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
 
