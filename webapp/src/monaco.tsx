@@ -658,8 +658,6 @@ export class Editor extends srceditor.Editor {
                         .replace(/^[^(]*\(/, '(')
                         .replace(/^\s*\{\{\}\}\n/gm, '')
                         .replace(/\{\n\}/g, '{}');
-                    const docToken = document.createElement('span'); docToken.className = 'docs';
-                    docToken.innerText = comment.split('.')[0];
 
                     monacoBlock.title = comment;
 
@@ -714,7 +712,6 @@ export class Editor extends srceditor.Editor {
 
                     monacoBlock.appendChild(methodToken);
                     monacoBlock.appendChild(sigToken);
-                    monacoBlock.appendChild(docToken);
                     monacoFlyout.appendChild(monacoBlock);
                 })
             }
