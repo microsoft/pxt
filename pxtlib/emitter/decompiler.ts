@@ -886,7 +886,15 @@ ${output}</xml>`;
 
         function openGreyBlock(node: ts.Node) {
             openBlockTag("typescript_statement");
-            write(`<comment pinned="false">${U.htmlEscape(node.getFullText())}</comment>`)
+
+            const parts = node.getFullText().split("\n");
+
+            write(`<mutation numlines="${parts.length}" `);
+            parts.forEach((p, i) => {
+                write(`line${i}="${U.htmlEscape(p)}" `);
+            });
+
+            write(`/>`)
         }
 
         function emitValue(name: string, contents: boolean | number | string | Node, shadowType?: ShadowType): void {

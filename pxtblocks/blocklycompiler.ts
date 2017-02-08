@@ -1158,17 +1158,7 @@ namespace pxt.blocks {
                 r = compileStartEvent(e, b).children;
                 break;
             case "typescript_statement":
-                if (b.comment) {
-                    if (typeof b.comment === "string") {
-                        r = [mkText(b.comment as string)];
-                    }
-                    else {
-                        r = [mkText((b.comment as any).text_)];
-                    }
-                }
-                else {
-                    r = [mkText("")]
-                }
+                r = compileTypescriptBlock(e, b);
                 break;
             default:
                 let call = e.stdCallTable[b.type];
@@ -1192,6 +1182,25 @@ namespace pxt.blocks {
             b = b.getNextBlock();
         }
         return mkBlock(stmts);
+    }
+
+    function compileTypescriptBlock(e: Environment, b: B.Block) {
+        let res: JsNode[] = [];
+        let i = 0;
+
+        while (true) {
+            const value = b.getFieldValue("LINE" + i);
+            i++;
+
+            if (value) {
+                res.push(mkText(value + "\n"));
+            }
+            else {
+                break;
+            }
+        }
+
+        return res;
     }
 
     // This function creates an empty environment where type inference has NOT yet

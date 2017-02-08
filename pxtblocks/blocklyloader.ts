@@ -1484,11 +1484,40 @@ namespace pxt.blocks {
         Blockly.Blocks["typescript_statement"] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("Typescript statement"),
                     "colour": blockColors['logic']
                 });
-                this.setPreviousStatement(true);
-                this.setNextStatement(true);
+                let that: Blockly.Block = this;
+                that.setPreviousStatement(true);
+                that.setNextStatement(true);
+
+                this.domToMutation = (element: Element) => {
+                    const n = parseInt(element.getAttribute("numlines"));
+                    for (let i = 0; i < n; i++) {
+                        const line = element.getAttribute("line"+ i);
+                        that.appendDummyInput().appendField(line, "LINE" + i);
+                    }
+                };
+
+                this.mutationToDom = () => {
+                    let mutation = document.createElement("mutation");
+                    let i = 0;
+
+                    while (true) {
+                        const val = that.getFieldValue("LINE" + i);
+                        if (!val) {
+                            break;
+                        }
+
+                        mutation.setAttribute("line" + i, val);
+                        i++;
+                    }
+
+                    mutation.setAttribute("numlines", i.toString());
+
+                    return mutation;
+                };
+
+                that.setEditable(false);
             }
         };
 
