@@ -73,7 +73,7 @@ namespace pxt.storage {
             } catch (e) { }
         }
 
-        if (supported) {
+        if (!supported) {
             impl = new MemoryStorage();
             pxt.debug('storage: in memory');
         } else {
