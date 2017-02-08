@@ -220,11 +220,10 @@ body#docs.tutorial {
 /* Cookie Message */
 #cookiemsg {
    position: absolute;
-   left: 1rem;
-   bottom: 0.5rem;
+   right: 2rem;
+   bottom: 12rem;
    width: 18rem;
    text-align: left;
-   display:none;
    z-index:1000;
 }
 
@@ -234,8 +233,13 @@ body#docs.tutorial {
 }
 
 .rtl #cookiemsg {
-    left:auto;
-    right:1rem;
+    right:auto;
+    left:2rem;
+    text-align: right;
+}
+
+.collapsedEditorTools #cookiemsg {
+   bottom: 6rem;
 }
 
 /* Simulator */
@@ -362,13 +366,15 @@ div.simframe > iframe {
 /* Sandbox */
 .sandboxfooter {
     position:absolute;
-    bottom:1rem;
-    left:1rem;
+    bottom:0rem;
+    right:1rem;
     z-index:5;
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem !important;
 }
 .rtl .sandboxfooter{
-    left: auto;
-    right:1rem;
+    right: auto;
+    left:1rem;
 }
 
 /* code card */
@@ -883,10 +889,9 @@ Avatar
         left: inherit;
         right: 0 !important;
     }
-    /* Sandbox, Cookie message */
-    .sandboxfooter, #cookiemsg {
-        bottom: 5rem;
-    }
+    #cookiemsg {
+        bottom: 7.5rem;
+    }        
 
     /* Full screen */
     .fullscreen #filelist {
@@ -1051,13 +1056,13 @@ Avatar
         bottom: 11rem !important;
     }
     .hideEditorFloats #editortools {
-        height: 4.5rem !important;
+        height: 5rem !important;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
-        bottom: 4.5rem !important;
+        bottom: 5rem !important;
     }
     .hideEditorFloats #tutorialcard.bottom {
-        bottom: 5.5rem !important;
+        bottom: 5rem !important;
     }
     .hideEditorFloats .organization {
         display: none;
@@ -1092,15 +1097,6 @@ Avatar
     }
     #getting-started-btn {
         top: @mobileMenuHeight;
-    }
-    /* Sandbox */
-    .sandboxfooter {
-        left: auto;
-        right:1rem;
-    }
-    .rtl .sandboxfooter{
-        right: auto;
-        left:1rem;
     }
     /* Logo */
     .ui.item.logo img {
@@ -1167,9 +1163,9 @@ Avatar
         right: auto;
     }
     .hideEditorFloats #editortools {
-        height: 4rem !important;
+        height: 5rem !important;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: 4rem !important;
+        bottom: 5rem !important;
     }
 }
