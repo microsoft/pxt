@@ -15,18 +15,26 @@ require('pouchdb/extras/memory');
 let _db: any = undefined;
 let inMemory = false;
 
+function memoryDb(): Promise<any> {
+    pxt.debug('db: in memory...')
+    inMemory = true;
+    _db = new PouchDB("pxt-" + pxt.storage.storageId(), {
+        adapter: 'memory'
+    })
+    return Promise.resolve(_db);
+}
+
 export function getDbAsync(): Promise<any> {
     if (_db) return Promise.resolve(_db);
+
+    if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly())
+        return memoryDb();
 
     let temp = new PouchDB("pxt-" + pxt.storage.storageId(), { revs_limit: 2 })
     return temp.get('pouchdbsupportabletest')
         .catch(function (error: any) {
             if (error && error.error && error.name == 'indexed_db_went_bad') {
-                // we are in private mode...
-                pxt.debug('private mode...')
-                inMemory = true;
-                _db = new PouchDB("pxt-" + pxt.storage.storageId(), { adapter: 'memory' })
-                return Promise.resolve(_db);
+                return memoryDb();
             } else {
                 _db = temp;
                 return Promise.resolve(_db);
