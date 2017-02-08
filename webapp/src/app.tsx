@@ -1220,6 +1220,13 @@ export class ProjectView
         const restart = run && !simOpts.hideRestart;
         const fullscreen = run && !simOpts.hideFullscreen;
         const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
+        const cookieKey = "cookieconsent"
+        const cookieConsent = !!pxt.storage.getLocal(cookieKey);
+
+        const consentCookie = () => {
+            pxt.storage.setLocal(cookieKey, "1");
+            this.forceUpdate();
+        }
 
         const blockActive = this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
@@ -1347,6 +1354,13 @@ export class ProjectView
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                 </div> : undefined }
+                {cookieConsent ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
+                    <button arial-label={lf("Ok") } className="ui right floated icon button" onClick={consentCookie}>
+                        <i className="remove icon"></i>
+                    </button>
+                    {lf("By using this site you agree to the use of cookies for analytics.") }
+                    <a target="_blank" className="ui link" href={pxt.appTarget.appTheme.privacyUrl}>{lf("Learn more") }</a>
+                </div>}
             </div>
         );
     }
@@ -1550,8 +1564,6 @@ let myexports: any = {
 export var ksVersion: string;
 
 function initTheme() {
-    core.cookieNotification()
-
     const theme = pxt.appTarget.appTheme;
     if (theme.accentColor) {
         let style = document.createElement('style');
