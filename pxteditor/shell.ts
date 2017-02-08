@@ -5,9 +5,11 @@ namespace pxt.shell {
         Widget
     }
 
-    export var layoutType: EditorLayoutType;
+    let layoutType: EditorLayoutType;
 
-    export function init() {
+    function init() {
+        if (layoutType !== undefined) return;
+
         const sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
             // in iframe
             || pxt.BrowserUtils.isIFrame();
@@ -24,7 +26,13 @@ namespace pxt.shell {
         pxt.debug(`shell: layout type ${EditorLayoutType[layoutType]}, readonly ${isReadOnly()}`);
     }
 
+    export function layoutTypeClass(): string {
+        init();
+        return pxt.shell.EditorLayoutType[layoutType].toLowerCase();
+    }
+
     export function isSandboxMode() {
+        init();
         return layoutType == EditorLayoutType.Sandbox;
     }
 
