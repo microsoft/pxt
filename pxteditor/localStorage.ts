@@ -68,11 +68,12 @@ namespace pxt.storage {
         if (!pxt.shell.isSandboxMode()) {
             try {
                 window.localStorage[sid] = '1';
+                let v = window.localStorage[sid];
                 supported = true;
             } catch (e) { }
         }
 
-        if (supported) {
+        if (!supported) {
             impl = new MemoryStorage();
             pxt.debug('storage: in memory');
         } else {
