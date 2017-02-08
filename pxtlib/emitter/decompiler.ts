@@ -887,7 +887,7 @@ ${output}</xml>`;
         function openGreyBlock(node: ts.Node) {
             openBlockTag("typescript_statement");
 
-            const parts = node.getFullText().split("\n");
+            const parts = node.getText().split("\n");
 
             write(`<mutation numlines="${parts.length}" `);
             parts.forEach((p, i) => {
