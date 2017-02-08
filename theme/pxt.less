@@ -366,13 +366,15 @@ div.simframe > iframe {
 /* Sandbox */
 .sandboxfooter {
     position:absolute;
-    bottom:1rem;
-    left:1rem;
+    bottom:0rem;
+    right:1rem;
     z-index:5;
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem !important;
 }
 .rtl .sandboxfooter{
-    left: auto;
-    right:1rem;
+    right: auto;
+    left:1rem;
 }
 
 /* code card */
@@ -887,10 +889,9 @@ Avatar
         left: inherit;
         right: 0 !important;
     }
-    /* Sandbox */
-    .sandboxfooter {
-        bottom: 6rem;
-    }
+    #cookiemsg {
+        bottom: 7.5rem;
+    }        
 
     /* Full screen */
     .fullscreen #filelist {
@@ -1096,15 +1097,6 @@ Avatar
     }
     #getting-started-btn {
         top: @mobileMenuHeight;
-    }
-    /* Sandbox */
-    .sandboxfooter {
-        left: auto;
-        right:1rem;
-    }
-    .rtl .sandboxfooter{
-        right: auto;
-        left:1rem;
     }
     /* Logo */
     .ui.item.logo img {
