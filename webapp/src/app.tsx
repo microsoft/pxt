@@ -49,14 +49,7 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 const lf = Util.lf
 
-// Polyfill for Uint8Array.slice for IE and Safari
-// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
-// TODO: Move this polyfill to a more appropriate file. It is left here for now because moving it causes a crash in IE; see PXT issue #1301.
-if (!Uint8Array.prototype.slice) {
-    Object.defineProperty(Uint8Array.prototype, 'slice', {
-        value: Array.prototype.slice
-    });
-}
+pxsim.util.injectPolyphils();
 
 let theEditor: ProjectView;
 
@@ -84,13 +77,6 @@ class CloudSyncButton extends data.Component<ISettingsProps, {}> {
             />
     }
 }*/
-
-
-export enum EditorLayoutType {
-    IDE,
-    Sandbox,
-    Widget
-}
 
 export class ProjectView
     extends data.Component<IAppProps, IAppState>
@@ -652,7 +638,7 @@ export class ProjectView
     }
 
     importFile(file: File) {
-        if (!file || this.isReadOnly()) return;
+        if (!file || pxt.shell.isReadOnly()) return;
         if (isHexFile(file.name)) {
             this.importHexFile(file)
         } else if (isBlocksFile(file.name)) {
@@ -1017,14 +1003,14 @@ export class ProjectView
 
     launchFullEditor() {
         pxt.tickEvent("sandbox.openfulleditor");
-        Util.assert(this.isSandboxMode());
+        Util.assert(pxt.shell.isSandboxMode());
 
         let editUrl = pxt.appTarget.appTheme.embedUrl;
         if (!/\/$/.test(editUrl)) editUrl += '/';
 
         const mpkg = pkg.mainPkg
         const epkg = pkg.getEditorPkg(mpkg)
-        if (this.isReadOnly()) {
+        if (pxt.shell.isReadOnly()) {
             if (epkg.header.pubId) { }
             editUrl += `#pub:${epkg.header.pubId}`;
             window.open(editUrl, '_blank');
@@ -1198,19 +1184,6 @@ export class ProjectView
             });
     }
 
-    getEditorLayoutType() {
-        return layoutType;
-    }
-
-    isSandboxMode() {
-        return layoutType == EditorLayoutType.Sandbox;
-    }
-
-    isReadOnly() {
-        return this.isSandboxMode()
-            && !/[?&]edit=1/i.test(window.location.href);
-    }
-
     renderCore() {
         theEditor = this;
 
@@ -1227,7 +1200,7 @@ export class ProjectView
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex;
         const simOpts = pxt.appTarget.simulator;
-        const sandbox = this.isSandboxMode();
+        const sandbox = pxt.shell.isSandboxMode();
         const make = !sandbox && this.state.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -1239,8 +1212,8 @@ export class ProjectView
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const inTutorial = this.state.tutorial;
-        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !tutorial;
+        const inTutorial = !!this.state.tutorial;
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const gettingStarted = !sandbox && !tutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
@@ -1269,7 +1242,7 @@ export class ProjectView
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${EditorLayoutType[layoutType].toLowerCase()} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''} ${showMenuBar ? '' : 'hideMenuBar'}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${pxt.shell.layoutTypeClass()} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''} ${showMenuBar ? '' : 'hideMenuBar'}` }>
                 {showMenuBar ?
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
@@ -1575,7 +1548,6 @@ let myexports: any = {
 (window as any).E = myexports;
 
 export var ksVersion: string;
-export var layoutType: EditorLayoutType;
 
 function initTheme() {
     core.cookieNotification()
@@ -1670,23 +1642,8 @@ function initHashchange() {
     });
 }
 
-function parseLayout() {
-    let sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
-        // in iframe
-        || pxt.BrowserUtils.isIFrame();
-    let nosandbox = /nosandbox=1/i.test(window.location.href);
-    if (nosandbox) {
-        layoutType = EditorLayoutType.Widget;
-    } else if (sandbox) {
-        layoutType = EditorLayoutType.Sandbox;
-    } else {
-        layoutType = EditorLayoutType.IDE;
-    }
-}
-
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
-    parseLayout();
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
@@ -1704,14 +1661,14 @@ $(document).ready(() => {
     appcache.init();
     initLogin();
 
-    let hash = parseHash();
+    const hash = parseHash();
 
-    let hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
+    const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
-    let ws = /ws=(\w+)/.exec(window.location.href)
+    const ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1]);
-    else if (layoutType == EditorLayoutType.Sandbox) workspace.setupWorkspace("mem");
+    else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     pxt.docs.requireMarked = () => require("marked");
@@ -1739,10 +1696,6 @@ $(document).ready(() => {
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => {
-            if (localStorage["noAutoRun"] && pxt.appTarget.simulator)
-                pxt.appTarget.simulator.autoRun = false
-        })
         .then(() => compiler.init())
         .then(() => workspace.initAsync())
         .then(() => {

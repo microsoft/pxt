@@ -22,7 +22,7 @@ namespace pxt.vs {
     }
 
     export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<{ [ns: string]: NameDefiniton }> {
-        if (readOnly) return;
+        if (readOnly) return monaco.Promise.as(undefined);
 
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}

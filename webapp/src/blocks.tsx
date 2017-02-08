@@ -529,7 +529,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private getBlocklyOptions(showCategories: boolean = true) {
-        const readOnly = this.parent.isReadOnly();
+        const readOnly = pxt.shell.isReadOnly();
         const toolbox = showCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
@@ -576,7 +576,7 @@ export class Editor extends srceditor.Editor {
 
     private updateToolbox(tb: Element, showCategories: boolean = true) {
         // no toolbox when readonly
-        if (this.parent.isReadOnly()) return;
+        if (pxt.shell.isReadOnly()) return;
 
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
