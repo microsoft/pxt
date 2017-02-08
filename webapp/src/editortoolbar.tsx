@@ -156,7 +156,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         </div>
                                     </div>
                                 </div>}
-                            <div className="row" style={{ paddingTop: 0 }}>
+                            <div className="row" style={readOnly ? undefined : { paddingTop: 0 }}>
                                 <div className="column">
                                     <div className="ui icon large buttons">
                                         {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
@@ -173,9 +173,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`large collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
                             {compileBtn ? <sui.Button class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
                         </div>
-                        <div className="column four wide">
-                            <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('tablet') } />
-                        </div>
+                        {readOnly ? undefined :
+                            <div className="column four wide">
+                                <sui.Button icon='save' class="large editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('tablet') } />
+                            </div>}
                         <div className="column six wide right aligned">
                             {readOnly ? undefined :
                                 <div className="ui icon large buttons">
@@ -209,19 +210,20 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         {compileBtn ? <sui.Button role="menuitem" class={`large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
                                     </div>
                                 </div>
-                                <div className="row" style={{ paddingTop: 0 }}>
-                                    <div className="column">
-                                        <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
-                                            <input id="fileNameInput"
-                                                type="text"
-                                                placeholder={lf("Pick a name...") }
-                                                value={state.projectName || ''}
-                                                onChange={(e) => this.saveProjectName((e.target as any).value, 'tablet') }>
-                                            </input>
-                                            <sui.Button icon='save' class="large right attached editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('tablet') } />
+                                {readOnly ? undefined :
+                                    <div className="row" style={{ paddingTop: 0 }}>
+                                        <div className="column">
+                                            <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
+                                                <input id="fileNameInput"
+                                                    type="text"
+                                                    placeholder={lf("Pick a name...") }
+                                                    value={state.projectName || ''}
+                                                    onChange={(e) => this.saveProjectName((e.target as any).value, 'tablet') }>
+                                                </input>
+                                                <sui.Button icon='save' class="large right attached editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('tablet') } />
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
+                                    </div>}
                             </div>
                         </div>
                         <div className="six wide column right aligned">
@@ -245,17 +247,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
                         </div>
                     </div>
-                    <div className="column left aligned">
-                        <div className={`ui large right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project") }>
-                            <input id="fileNameInput"
-                                type="text"
-                                placeholder={lf("Pick a name...") }
-                                value={state.projectName || ''}
-                                onChange={(e) => this.saveProjectName((e.target as any).value, 'computer') }>
-                            </input>
-                            <sui.Button icon='save' class="small right attached editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('computer') } />
-                        </div>
-                    </div>
+                    {readOnly ? undefined :
+                        <div className="column left aligned">
+                            <div className={`ui large right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project") }>
+                                <input id="fileNameInput"
+                                    type="text"
+                                    placeholder={lf("Pick a name...") }
+                                    value={state.projectName || ''}
+                                    onChange={(e) => this.saveProjectName((e.target as any).value, 'computer') }>
+                                </input>
+                                <sui.Button icon='save' class="small right attached editortools-btn save-editortools-btn" title={lf("Save") } onClick={() => this.saveFile('computer') } />
+                            </div>
+                        </div>}
                     <div className="column right aligned">
                         {readOnly ? undefined :
                             <div className="ui icon small buttons">
