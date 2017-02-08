@@ -521,7 +521,7 @@ export class Editor extends srceditor.Editor {
 
     private updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
-        if (!appTheme.monacoToolbox) return;
+        if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
         // Toolbox div
         let toolbox = document.getElementById('monacoEditorToolbox');
         // Move the monaco editor to make room for the toolbox div
@@ -829,7 +829,7 @@ export class Editor extends srceditor.Editor {
             if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
             if (model) this.editor.setModel(model);
 
-            if (mode == "typescript" && !readOnly) {
+            if (mode == "typescript") {
                 toolbox.innerHTML = '';
                 this.beginLoadToolbox(file);
             }
