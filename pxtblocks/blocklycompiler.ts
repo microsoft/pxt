@@ -304,7 +304,7 @@ namespace pxt.blocks {
     function returnType(e: Environment, b: B.Block): Point {
         assert(b != null);
 
-        if (b.type == "placeholder")
+        if (b.type == "placeholder" || b.type === "typescript_expression")
             return find((<any>b).p);
 
         if (b.type == "variables_get")
@@ -341,12 +341,16 @@ namespace pxt.blocks {
 
     function attachPlaceholderIf(e: Environment, b: B.Block, n: string) {
         // Ugly hack to keep track of the type we want there.
-        if (!b.getInputTargetBlock(n)) {
+        const target = b.getInputTargetBlock(n);
+        if (!target) {
             if (!placeholders[b.id]) {
                 placeholders[b.id] = {};
             }
 
             placeholders[b.id][n] = mkPlaceholderBlock(e);
+        }
+        else if (target.type === "typescript_expression" && !((target as any).p)) {
+            (target as any).p = mkPoint(null);
         }
     }
 
@@ -504,6 +508,10 @@ namespace pxt.blocks {
         if (n === Infinity || n === NaN) {
             U.userError(lf("Number entered is either too large or too small"));
         }
+    }
+
+    function extractTsExpression(e: Environment, b: B.Block, comments: string[]): JsNode {
+        return mkText(b.getFieldValue("EXPRESSION"));
     }
 
     function compileNumber(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -702,6 +710,8 @@ namespace pxt.blocks {
                 expr = compileTextJoin(e, b, comments); break;
             case "lists_create_with":
                 expr = compileCreateList(e, b, comments); break;
+            case "typescript_expression":
+                expr = extractTsExpression(e, b, comments); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
@@ -1146,6 +1156,19 @@ namespace pxt.blocks {
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
+                break;
+            case "typescript_statement":
+                if (b.comment) {
+                    if (typeof b.comment === "string") {
+                        r = [mkText(b.comment as string)];
+                    }
+                    else {
+                        r = [mkText((b.comment as any).text_)];
+                    }
+                }
+                else {
+                    r = [mkText("")]
+                }
                 break;
             default:
                 let call = e.stdCallTable[b.type];
@@ -1600,7 +1623,7 @@ namespace pxt.blocks {
     }
 
     function maybeAddComment(b: B.Block, comments: string[]) {
-        if (b.comment) {
+        if (b.comment && b.type !== "typescript_statement") {
             if ((typeof b.comment) === "string") {
                 comments.push(b.comment as string)
             }

@@ -1481,14 +1481,34 @@ namespace pxt.blocks {
             }
         };
 
-        Blockly.Blocks["typescript"] = {
+        Blockly.Blocks["typescript_statement"] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("Typescript"),
-                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops']
+                    "message0": lf("Typescript statement"),
+                    "colour": blockColors['logic']
                 });
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
+            }
+        };
+
+        Blockly.Blocks["typescript_expression"] = {
+            init: function () {
+                this.jsonInit({
+                    "colour": blockColors['logic'],
+                    "message0": "%1",
+                    "args0": [
+                        {
+                            "type": "field_input",
+                            "name": "EXPRESSION",
+                            "text": ""
+                        }
+                    ]
+                });
+                this.setPreviousStatement(false);
+                this.setNextStatement(false);
+                this.setOutput(true);
+                this.setEditable(false);
             }
         };
     }

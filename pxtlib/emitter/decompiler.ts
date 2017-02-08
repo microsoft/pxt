@@ -209,45 +209,50 @@ ${output}</xml>`;
          * @param n     The node to emit into blocks
          */
         function emitOutputBlock(n: ts.Node, topLevel = false): void {
-            switch (n.kind) {
-                case SK.ExpressionStatement:
-                    emitOutputBlock((n as ts.ExpressionStatement).expression, topLevel);
-                    break;
-                case SK.ParenthesizedExpression:
-                    emitOutputBlock((n as ts.ParenthesizedExpression).expression, topLevel);
-                    break;
-                case SK.Identifier:
-                    emitIdentifier(n as ts.Identifier);
-                    break;
-                case SK.StringLiteral:
-                case SK.FirstTemplateToken:
-                case SK.NoSubstitutionTemplateLiteral:
-                    emitStringLiteral((n as ts.LiteralExpression).text, !topLevel);
-                    break;
-                case SK.NumericLiteral:
-                    emitNumericLiteral((n as ts.LiteralExpression).text, !topLevel);
-                    break;
-                case SK.TrueKeyword:
-                    emitBooleanLiteral(true, !topLevel);
-                    break;
-                case SK.FalseKeyword:
-                    emitBooleanLiteral(false, !topLevel);
-                    break;
-                case SK.BinaryExpression:
-                    emitBinaryExpression(n as ts.BinaryExpression);
-                    break;
-                case SK.PrefixUnaryExpression:
-                    emitPrefixUnaryExpression(n as ts.PrefixUnaryExpression);
-                    break;
-                case SK.PropertyAccessExpression:
-                    emitPropertyAccessExpression(n as ts.PropertyAccessExpression);
-                    break;
-                case SK.CallExpression:
-                    emitStatementBlock(n);
-                    break;
-                default:
-                    error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
-                    break;
+            if (checkExpression(n)) {
+                emitFieldBlock("typescript_expression", "EXPRESSION", n.getFullText(), false)
+            }
+            else {
+                switch (n.kind) {
+                    case SK.ExpressionStatement:
+                        emitOutputBlock((n as ts.ExpressionStatement).expression, topLevel);
+                        break;
+                    case SK.ParenthesizedExpression:
+                        emitOutputBlock((n as ts.ParenthesizedExpression).expression, topLevel);
+                        break;
+                    case SK.Identifier:
+                        emitIdentifier(n as ts.Identifier);
+                        break;
+                    case SK.StringLiteral:
+                    case SK.FirstTemplateToken:
+                    case SK.NoSubstitutionTemplateLiteral:
+                        emitStringLiteral((n as ts.LiteralExpression).text, !topLevel);
+                        break;
+                    case SK.NumericLiteral:
+                        emitNumericLiteral((n as ts.LiteralExpression).text, !topLevel);
+                        break;
+                    case SK.TrueKeyword:
+                        emitBooleanLiteral(true, !topLevel);
+                        break;
+                    case SK.FalseKeyword:
+                        emitBooleanLiteral(false, !topLevel);
+                        break;
+                    case SK.BinaryExpression:
+                        emitBinaryExpression(n as ts.BinaryExpression);
+                        break;
+                    case SK.PrefixUnaryExpression:
+                        emitPrefixUnaryExpression(n as ts.PrefixUnaryExpression);
+                        break;
+                    case SK.PropertyAccessExpression:
+                        emitPropertyAccessExpression(n as ts.PropertyAccessExpression);
+                        break;
+                    case SK.CallExpression:
+                        emitStatementBlock(n);
+                        break;
+                    default:
+                        error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
+                        break;
+                }
             }
 
             function emitBinaryExpression(n: ts.BinaryExpression): void {
@@ -880,7 +885,7 @@ ${output}</xml>`;
         }
 
         function openGreyBlock(node: ts.Node) {
-            openBlockTag("typescript");
+            openBlockTag("typescript_statement");
             write(`<comment pinned="false">${U.htmlEscape(node.getFullText())}</comment>`)
         }
 
