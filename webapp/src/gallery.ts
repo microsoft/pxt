@@ -8,7 +8,7 @@ export interface Gallery {
 function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreationOptions {
     if (!md) return undefined;
 
-    const m = /```blocks(.+?)```/.exec(md);
+    const m = /```blocks(.+?)```/is.exec(md);
     if (!m) return undefined;
 
     return {
