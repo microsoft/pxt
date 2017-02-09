@@ -77,8 +77,8 @@ declare namespace pxt {
     interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
-        sharing?: boolean;
         publishing?: boolean;
+        sharing?: boolean; // uses cloud-based anonymous sharing
         embedding?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages

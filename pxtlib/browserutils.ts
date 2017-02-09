@@ -280,7 +280,7 @@ namespace pxt.BrowserUtils {
         const windowOpen = /downloadWindowOpen=1/i.test(window.location.href);
 
         if (windowOpen) {
-            window.open(uri);
+            window.open(uri, "_self");
         } else if (pxt.BrowserUtils.isSafari()) {
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database
