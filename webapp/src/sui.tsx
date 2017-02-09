@@ -198,14 +198,15 @@ export class Input extends data.Component<{
 
         if (!p.lines || p.lines == 1) {
             const inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
-            inp.setSelectionRange(0, inp.value.length);
+            inp.select();
         } else {
             const inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
-            inp.setSelectionRange(0, inp.value.length);
+            inp.select();
         }
 
         try {
-            document.execCommand("copy");
+            const success = document.execCommand("copy");
+            pxt.debug('copy: ' + success);
         } catch (e) {
         }
     }
