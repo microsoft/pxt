@@ -19,7 +19,8 @@ import Cloud = pxt.Cloud;
 
 enum ProjectsTab {
     MyStuff,
-    Makes
+    Make,
+    Code
 }
 
 interface ProjectsState {
@@ -31,7 +32,8 @@ interface ProjectsState {
 export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
-    private prevGalleries: pxt.CodeCard[] = [];
+    private prevMakes: pxt.CodeCard[] = [];
+    private prevCodes: pxt.CodeCard[] = [];
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -49,12 +51,20 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.setState({ visible: true, tab: ProjectsTab.MyStuff })
     }
 
-    fetchGalleries(): pxt.CodeCard[] {
-        if (this.state.tab != ProjectsTab.Makes) return [];
+    fetchMakes(): pxt.CodeCard[] {
+        if (this.state.tab != ProjectsTab.Make) return [];
 
         let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.projectGallery)}`) as gallery.Gallery[];
-        if (res) this.prevGalleries = Util.concat(res.map(g => g.cards));
-        return this.prevGalleries;
+        if (res) this.prevMakes = Util.concat(res.map(g => g.cards));
+        return this.prevMakes;
+    }
+
+    fetchCodes(): pxt.CodeCard[] {
+        if (this.state.tab != ProjectsTab.Code) return [];
+
+        let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.exampleGallery)}`) as gallery.Gallery[];
+        if (res) this.prevCodes = Util.concat(res.map(g => g.cards));
+        return this.prevCodes;
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
@@ -92,21 +102,34 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const tab = this.state.tab;
         const tabNames = [
             lf("My Stuff"),
-            lf("Makes")
+            lf("Make"),
+            lf("Code")
         ];
         const headers = this.fetchLocalData();
         const urldata = this.fetchUrlData();
-        const galleries = this.fetchGalleries();
+        const makes = this.fetchMakes();
+        const codes = this.fetchCodes();
 
         const chgHeader = (hdr: Header) => {
             pxt.tickEvent("projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
-        const chgGallery = (scr: pxt.CodeCard) => {
+        const chgMake = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
             this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+        }
+        const chgCode = (scr: pxt.CodeCard) => {
+            pxt.tickEvent("projects.example", { name: scr.name });
+            this.hide();
+            core.showLoading(lf("Loading..."));
+            gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
+                .done(opts => {
+                    core.hideLoading();
+                    if (opts)
+                        this.props.parent.newProject(opts);
+                });
         }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
@@ -153,7 +176,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
 
         const tabs = [ProjectsTab.MyStuff];
-        if (pxt.appTarget.appTheme.projectGallery) tabs.push(ProjectsTab.Makes);
+        if (pxt.appTarget.appTheme.projectGallery) tabs.push(ProjectsTab.Make);
+        if (pxt.appTarget.appTheme.exampleGallery) tabs.push(ProjectsTab.Code);
 
         return (
             <sui.Modal visible={this.state.visible} addClass="large searchdialog"
@@ -191,18 +215,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                 onClick={() => chgHeader(scr) }
                                 />
                         ) }
-                    </div>
-                </div> : undefined }
-                {tab == ProjectsTab.Makes ? <div className="ui bottom attached tab active">
-                    <div className="ui cards">
-                        {galleries.map(scr => <codecard.CodeCardView
-                            key={'gal' + scr.name}
-                            name={scr.name}
-                            url={scr.url}
-                            imageUrl={scr.imageUrl}
-                            onClick={() => chgGallery(scr) }
-                            />
-                        ) }
                         {urldata.map(scr =>
                             <codecard.CodeCardView
                                 name={scr.name}
@@ -214,6 +226,30 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                 url={'/' + scr.id}
                                 color="blue"
                                 />
+                        ) }
+                    </div>
+                </div> : undefined }
+                {tab == ProjectsTab.Make ? <div className="ui bottom attached tab active">
+                    <div className="ui cards">
+                        {makes.map(scr => <codecard.CodeCardView
+                            key={'gal' + scr.name}
+                            name={scr.name}
+                            url={scr.url}
+                            imageUrl={scr.imageUrl}
+                            onClick={() => chgMake(scr) }
+                            />
+                        ) }
+                    </div>
+                </div> : undefined }
+                {tab == ProjectsTab.Code ? <div className="ui bottom attached tab active">
+                    <div className="ui cards">
+                        {codes.map(scr => <codecard.CodeCardView
+                            key={'gal' + scr.name}
+                            name={scr.name}
+                            url={scr.url}
+                            imageUrl={scr.imageUrl}
+                            onClick={() => chgCode(scr) }
+                            />
                         ) }
                     </div>
                 </div> : undefined }
