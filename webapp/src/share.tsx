@@ -146,10 +146,10 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
         return <sui.Modal visible={this.state.visible} addClass="searchdialog" header={lf("Share Project") }
             onHide={() => this.setState({ visible: false }) }
-            helpUrl="/share"
             action={action}
             actionClick={publish}
             actionLoading={actionLoading}
+            hideClose={true}
             >
             <div className={`ui form`}>
                 { action ?
