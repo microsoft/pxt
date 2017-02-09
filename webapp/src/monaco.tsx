@@ -380,7 +380,7 @@ export class Editor extends srceditor.Editor {
                 this.editor.focus();
             });
             monacoEditorInner.ondrop = ((ev: DragEvent) => {
-                let insertText = ev.dataTransfer.getData('Snippet');
+                let insertText = ev.dataTransfer.getData('text'); // IE11 only support "text"
                 if (!insertText)
                     return;
                 ev.preventDefault();
@@ -391,6 +391,8 @@ export class Editor extends srceditor.Editor {
                 let model = this.editor.getModel();
                 let currPos = this.editor.getPosition();
                 let cursor = model.getOffsetAt(currPos)
+                if (!position) // IE11 fails to locate the mouse
+                    position = currPos;
 
                 insertText = (currPos.column > 1) ? '\n' + insertText :
                                 model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
@@ -618,6 +620,7 @@ export class Editor extends srceditor.Editor {
             monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
             monacoFlyout.style.display = 'block';
             monacoFlyout.className = 'monacoFlyout';
+            monacoFlyout.style.transform = 'none';
 
             if (onClick) {
                 // No flyout
@@ -703,7 +706,7 @@ export class Editor extends srceditor.Editor {
                         });
 
                         let insertText = `${ns}.${snippet}`;
-                        ev2.dataTransfer.setData('Snippet', insertText);
+                        ev2.dataTransfer.setData('text', insertText); // IE11 only supports text
                     }
                     monacoBlock.ondragend = (ev2: DragEvent) => {
                         monacoFlyout.style.transform = "none";
