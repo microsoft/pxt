@@ -231,7 +231,7 @@ namespace pxsim {
         currFrame: StackFrame;
         entry: LabelFn;
 
-        setupResume: (retPC: number) => void;
+        overwriteResume: (retPC: number) => void;
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => StackFrame;
@@ -550,7 +550,7 @@ namespace pxsim {
             this.setupTop = setupTop
             this.handleDebuggerMsg = handleDebuggerMsg
             this.entry = entryPoint
-            this.setupResume = (retPC: number) => { setupResume(this.currFrame, retPC) }
+            this.overwriteResume = (retPC: number) => { currResume = null; setupResume(this.currFrame, retPC) }
             runtime = this;
 
             initCurrentRuntime();
