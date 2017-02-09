@@ -8,13 +8,14 @@ export interface Gallery {
 function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreationOptions {
     if (!md) return undefined;
 
-    const m = /```blocks(.+?)```/is.exec(md);
+    const m =  /```blocks((.|\s)+?)```/i.exec(md);
     if (!m) return undefined;
 
     return {
         name,
         filesOverride: {
-            "main.blocks": m[1]
+            "main.blocks": "",
+            "main.ts": m[1]
         }
     };
 }
