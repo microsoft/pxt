@@ -144,7 +144,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing;
 
-        return <sui.Modal visible={this.state.visible} addClass="small searchdialog" header={lf("Share Project") }
+        return <sui.Modal visible={this.state.visible} addClass="searchdialog" header={lf("Share Project") }
             onHide={() => this.setState({ visible: false }) }
             helpUrl="/share"
             action={action}
