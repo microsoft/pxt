@@ -193,18 +193,17 @@ export class Input extends data.Component<{
 }, {}> {
 
     copy() {
-        let p = this.props
-        let el = ReactDOM.findDOMNode(this);
+        const p = this.props
+        const el = ReactDOM.findDOMNode(this);
 
         if (!p.lines || p.lines == 1) {
-            let inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
+            const inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
             inp.setSelectionRange(0, inp.value.length);
         } else {
-            let inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
+            const inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
             inp.setSelectionRange(0, inp.value.length);
         }
 
-        let btn = $(el.getElementsByTagName("button")[0]);
         try {
             document.execCommand("copy");
         } catch (e) {
@@ -214,7 +213,7 @@ export class Input extends data.Component<{
     renderCore() {
         let p = this.props
         let copyBtn = p.copy && document.queryCommandSupported('copy')
-            ? <Button class="ui right labeled teal icon button" text={lf("Copy") } icon="copy" onClick={() => this.copy() } />
+            ? <Button class="ui right labeled primary icon button" text={lf("Copy") } icon="copy" onClick={() => this.copy() } />
             : null;
 
         return (
@@ -270,6 +269,10 @@ export interface ModalProps {
     onHide: () => void;
     visible?: boolean;
     helpUrl?: string;
+
+    action?: string;
+    actionClick?: () => void;
+    actionLoading?: boolean;
 }
 
 export interface ModalState {
@@ -296,22 +299,29 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 <div role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} className={"ui modal transition visible active " + (this.props.addClass || "") }>
                     <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                         {this.props.header}
+                        <Button
+                            icon="close"
+                            text={lf("Close") }
+                            class="cancel right labeled right floated"
+                            onClick={() => this.hide() } />
+                        {this.props.helpUrl ?
+                            <a className="ui button icon-and-text right floated labeled" href={this.props.helpUrl} target="_docs">
+                                <i className="help icon"></i>
+                                {lf("Help") }</a>
+                            : undefined}
                     </div>
                     <div id={this.id + 'desc'} className="content">
                         {this.props.children}
                     </div>
-                    <div className="actions">
-                        {this.props.helpUrl ?
-                            <a className="ui button icon-and-text labeled" href={this.props.helpUrl} target="_docs">
-                                <i className="help icon"></i>
-                            {lf("Help")}</a>
-                            : undefined}
-                        <Button
-                            icon="close"
-                            text={lf("Close") }
-                            class="cancel right labeled"
-                            onClick={() => this.hide() } />
-                    </div>
+                    {this.props.action && this.props.actionClick ?
+                        <div className="actions">
+                            <Button
+                                text={this.props.action}
+                                class={`approve primary ${this.props.actionLoading ? "loading" : ""}`}
+                                onClick={() => {
+                                    this.props.actionClick();
+                                } } />
+                        </div> : undefined }
                 </div>
             </div>
         );
