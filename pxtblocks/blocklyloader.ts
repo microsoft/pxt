@@ -5,7 +5,7 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
-    const blockColors: Map<number> = {
+    export const blockColors: Map<number> = {
         loops: 120,
         images: 45,
         variables: 330,
@@ -941,7 +941,7 @@ namespace pxt.blocks {
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": lf("{id:var}item")
+                            "variable": lf("{id:var}index")
                             // Please note that most multilingual characters
                             // cannot be used as variable name at this point.
                             // Translate or decide the default variable name
