@@ -155,15 +155,19 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const tabs = [ProjectsTab.MyStuff];
         if (pxt.appTarget.appTheme.projectGallery) tabs.push(ProjectsTab.Makes);
 
-        const headerText = lf("Projects");
         return (
-            <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
+            <sui.Modal visible={this.state.visible} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
+                <sui.Button
+                    icon="close"
+                    text={lf("Close") }
+                    class="cancel right labeled right floated"
+                    onClick={() => this.hide() } />
                 <div className="ui pointing secondary menu">
                     {tabs.map(t =>
                         <sui.Item key={`tab${t}`} class={`item ${tab == t ? "active" : ""}`} text={tabNames[t]} onClick={() => this.setState({ tab: t }) } />) }
                 </div>
-                {tab == ProjectsTab.MyStuff ? <div className="ui bottom attached tab segment active">
+                {tab == ProjectsTab.MyStuff ? <div className="ui bottom attached tab active">
                     <sui.Button
                         class="primary"
                         icon="file outline"
@@ -189,7 +193,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         ) }
                     </div>
                 </div> : undefined }
-                {tab == ProjectsTab.Makes ? <div className="ui bottom attached tab segment active">
+                {tab == ProjectsTab.Makes ? <div className="ui bottom attached tab active">
                     <div className="ui cards">
                         {galleries.map(scr => <codecard.CodeCardView
                             key={'gal' + scr.name}

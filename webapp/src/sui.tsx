@@ -266,7 +266,7 @@ export interface ModalProps {
     children?: any;
     addClass?: string;
     headerClass?: string;
-    header: string;
+    header?: string;
     onHide: () => void;
     visible?: boolean;
     helpUrl?: string;
@@ -300,7 +300,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     this.hide()
             } }>
                 <div role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} className={"ui modal transition visible active " + (this.props.addClass || "") }>
-                    <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
+                    {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                         {this.props.header}
                         {this.props.hideClose ? undefined : <Button
                             icon="close"
@@ -312,7 +312,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                                 <i className="help icon"></i>
                                 {lf("Help") }</a>
                             : undefined}
-                    </div>
+                    </div> : undefined }
                     <div id={this.id + 'desc'} className="content">
                         {this.props.children}
                     </div>
