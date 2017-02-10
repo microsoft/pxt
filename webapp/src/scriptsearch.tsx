@@ -74,7 +74,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
 
-        const chgHeader = (hdr: Header) => {
+        const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)

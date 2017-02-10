@@ -81,10 +81,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         return this.prevUrlData;
     }
 
-    fetchLocalData(): Header[] {
+    fetchLocalData(): pxt.workspace.Header[] {
         if (this.state.tab != ProjectsTab.MyStuff) return [];
 
-        let headers: Header[] = this.getData("header:*")
+        let headers: pxt.workspace.Header[] = this.getData("header:*")
         if (this.state.searchFor)
             headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
         return headers;
@@ -110,7 +110,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const makes = this.fetchMakes();
         const codes = this.fetchCodes();
 
-        const chgHeader = (hdr: Header) => {
+        const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
