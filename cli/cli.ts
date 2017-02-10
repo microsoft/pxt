@@ -2976,7 +2976,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
                     resolve(decompiled.outfiles["main.blocks"]);
                 }
                 else {
-                    reject("Could not decompile " + f)
+                    reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
                 }
             });
     });

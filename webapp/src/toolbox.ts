@@ -203,6 +203,19 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                         </shadow>
                     </value>
                 </block>
+                <block type="text_join">
+                    <mutation items="2"></mutation>
+                    <value name="ADD0">
+                        <shadow type="text">
+                            <field name="TEXT"></field>
+                        </shadow>
+                    </value>
+                    <value name="ADD1">
+                        <shadow type="text">
+                            <field name="TEXT"></field>
+                        </shadow>
+                    </value>
+                </block>
             </category>
         </category>
     </xml>`, "text/xml");

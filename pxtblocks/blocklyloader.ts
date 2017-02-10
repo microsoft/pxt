@@ -1781,10 +1781,12 @@ namespace pxt.blocks {
         // builtin text
         installBuiltinHelpInfo('text');
 
-        // builtin text_length
+        // builtin text_length and text_join
         let msg: any = Blockly.Msg;
         msg.TEXT_LENGTH_TITLE = lf("length of %1");
+        msg.TEXT_JOIN_TITLE_CREATEWITH = lf("join");
         installBuiltinHelpInfo('text_length');
+        installBuiltinHelpInfo('text_join');
     }
 
     function initTooltip(blockInfo: pxtc.BlocksInfo) {

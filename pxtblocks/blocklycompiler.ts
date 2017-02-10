@@ -117,8 +117,14 @@ namespace pxt.blocks {
             return mkText(stringLit(x))
         }
 
-        export function mkCall(name: string, args: JsNode[], externalInputs: boolean, property = false) {
-            if (property)
+        export function mkPropertyAccess(name: string, thisArg: JsNode) {
+            return mkGroup([
+                mkInfix(thisArg, ".", mkText(name)),
+            ])
+        }
+
+        export function mkCall(name: string, args: JsNode[], externalInputs: boolean, method = false) {
+            if (method)
                 return mkGroup([
                     mkInfix(args[0], ".", mkText(name)),
                     mkText("("),
@@ -995,7 +1001,9 @@ namespace pxt.blocks {
         const externalInputs = !b.getInputsInline();
         if (func.isIdentity)
             return args[0];
-        else if (func.isExtensionMethod) {
+        else if (func.property) {
+            return H.mkPropertyAccess(func.f, args[0]);
+        } else if (func.isExtensionMethod) {
             if (func.attrs.defaultInstance) {
                 let instance: JsNode;
                 if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.DefaultInstanceMutator) {
