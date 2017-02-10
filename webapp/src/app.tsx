@@ -27,6 +27,7 @@ import * as editortoolbar from "./editortoolbar";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
+import * as projects from "./projects";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -89,6 +90,7 @@ export class ProjectView
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
+    projects: projects.Projects;
     shareEditor: share.ShareEditor;
 
     private lastChangeTime: number;
@@ -529,7 +531,7 @@ export class ProjectView
             return workspace.saveAsync(curr, {})
                 .then(() => {
                     if (workspace.getHeaders().length > 0) {
-                        this.scriptSearch.showOpenProject();
+                        this.projects.showOpenProject();
                     } else {
                         this.newProject();
                     }
@@ -664,7 +666,7 @@ export class ProjectView
 
     openProject() {
         pxt.tickEvent("menu.open");
-        this.scriptSearch.showOpenProject();
+        this.projects.showOpenProject();
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -1348,6 +1350,7 @@ export class ProjectView
                 {!sandbox && targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <div><img className="organization ui landscape hide" src={Util.toDataUri(targetTheme.organizationLogo) } /> <img className="organization ui landscape only" src={Util.toDataUri(targetTheme.organizationWideLogo) } /></div> : undefined}
                 {!sandbox && !targetTheme.organizationWideLogo && targetTheme.organizationLogo ? <img className="organization" src={Util.toDataUri(targetTheme.organizationLogo) } /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
+                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}

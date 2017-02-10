@@ -266,7 +266,7 @@ export interface ModalProps {
     children?: any;
     addClass?: string;
     headerClass?: string;
-    header: string;
+    header?: string;
     onHide: () => void;
     visible?: boolean;
     helpUrl?: string;
@@ -274,6 +274,8 @@ export interface ModalProps {
     action?: string;
     actionClick?: () => void;
     actionLoading?: boolean;
+
+    hideClose?: boolean;
 }
 
 export interface ModalState {
@@ -298,19 +300,19 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     this.hide()
             } }>
                 <div role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} className={"ui modal transition visible active " + (this.props.addClass || "") }>
-                    <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
+                    {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                         {this.props.header}
-                        <Button
+                        {this.props.hideClose ? undefined : <Button
                             icon="close"
                             text={lf("Close") }
                             class="cancel right labeled right floated"
-                            onClick={() => this.hide() } />
+                            onClick={() => this.hide() } /> }
                         {this.props.helpUrl ?
                             <a className="ui button icon-and-text right floated labeled" href={this.props.helpUrl} target="_docs">
                                 <i className="help icon"></i>
                                 {lf("Help") }</a>
                             : undefined}
-                    </div>
+                    </div> : undefined }
                     <div id={this.id + 'desc'} className="content">
                         {this.props.children}
                     </div>

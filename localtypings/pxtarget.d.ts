@@ -161,6 +161,7 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         projectGallery?: string;
+        exampleGallery?: string;
         crowdinProject?: string;
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
