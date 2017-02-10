@@ -104,6 +104,7 @@ namespace pxt.editor {
         anonymousPublishAsync(): Promise<string>;
 
         startStopSimulator(): void;
+        stopSimulator(unload?: boolean): void;
         restartSimulator(): void;
         startSimulator(): void;
         runSimulator(): void;

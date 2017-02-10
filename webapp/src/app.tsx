@@ -914,7 +914,7 @@ export class ProjectView
             .then(() => this.runSimulator());
     }
 
-    stopSimulator(unload = false) {
+    stopSimulator(unload?: boolean) {
         simulator.stop(unload)
         this.setState({ running: false })
     }
