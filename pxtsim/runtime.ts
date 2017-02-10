@@ -222,13 +222,16 @@ namespace pxsim {
         errorHandler: (e: any) => void;
         postError: (e: any) => void;
         stateChanged: () => void;
+
         dead = false;
         running = false;
         startTime = 0;
         id: string;
         globals: any = {};
         currFrame: StackFrame;
+        entry: LabelFn;
 
+        overwriteResume: (retPC: number) => void;
         getResume: () => ResumeFn;
         run: (cb: ResumeFn) => void;
         setupTop: (cb: ResumeFn) => StackFrame;
@@ -314,7 +317,7 @@ namespace pxsim {
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
-            let _this = this
+            let __this = this
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
@@ -334,7 +337,7 @@ namespace pxsim {
                     s.pc = pc;
                     s.r0 = r0;
                     let cont = () => {
-                        if (_this.dead) return;
+                        if (__this.dead) return;
                         U.assert(s.pc == pc);
                         return loop(s)
                     }
@@ -367,8 +370,8 @@ namespace pxsim {
                 Runtime.postMessage(getBreakpointMsg(s, brkId))
                 dbgResume = (m: DebuggerMessage) => {
                     dbgResume = null;
-                    if (_this.dead) return;
-                    runtime = _this;
+                    if (__this.dead) return;
+                    runtime = __this;
                     U.assert(s.pc == retPC);
 
                     breakAlways = false
@@ -421,28 +424,28 @@ namespace pxsim {
             }
 
             function loop(p: StackFrame) {
-                if (_this.dead) {
+                if (__this.dead) {
                     console.log("Runtime terminated")
                     return
                 }
                 try {
-                    runtime = _this
+                    runtime = __this
                     while (!!p) {
-                        _this.currFrame = p;
+                        __this.currFrame = p;
                         p = p.fn(p)
-                        _this.maybeUpdateDisplay()
+                        __this.maybeUpdateDisplay()
                     }
                 } catch (e) {
-                    if (_this.errorHandler)
-                        _this.errorHandler(e)
+                    if (__this.errorHandler)
+                        __this.errorHandler(e)
                     else {
                         console.error("Simulator crashed, no error handler", e.stack)
                         let msg = getBreakpointMsg(p, p.lastBrkId)
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
-                        if (_this.postError)
-                            _this.postError(e)
+                        if (__this.postError)
+                            __this.postError(e)
                     }
                 }
             }
@@ -485,9 +488,9 @@ namespace pxsim {
             }
 
             function topCall(fn: LabelFn, cb: ResumeFn) {
-                U.assert(!!_this.board)
-                U.assert(!_this.running)
-                _this.setRunning(true);
+                U.assert(!!__this.board)
+                U.assert(!__this.running)
+                __this.setRunning(true);
                 let topFrame = setupTopCore(cb)
                 let frame: StackFrame = {
                     parent: topFrame,
@@ -510,8 +513,8 @@ namespace pxsim {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
                 return (v: any) => {
-                    if (_this.dead) return;
-                    runtime = _this;
+                    if (__this.dead) return;
+                    runtime = __this;
                     U.assert(s.pc == retPC);
                     // TODO should loop() be called here using U.nextTick?
                     // This matters if the simulator function calls cb()
@@ -546,7 +549,8 @@ namespace pxsim {
             }
             this.setupTop = setupTop
             this.handleDebuggerMsg = handleDebuggerMsg
-
+            this.entry = entryPoint
+            this.overwriteResume = (retPC: number) => { currResume = null; setupResume(this.currFrame, retPC) }
             runtime = this;
 
             initCurrentRuntime();

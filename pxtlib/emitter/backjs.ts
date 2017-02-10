@@ -53,7 +53,7 @@ namespace ts.pxtc {
         bin.writeFile(BINARY_JS, jssource)
     }
 
-    export function irToJS(bin: Binary, proc: ir.Procedure) {
+    function irToJS(bin: Binary, proc: ir.Procedure): string {
         let resText = ""
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
@@ -91,6 +91,7 @@ switch (step) {
         let exprStack: ir.Expr[] = []
 
         let lblIdx = 0
+        let asyncContinuations: number[] = []
         for (let s of proc.body) {
             if (s.stmtKind == ir.SK.Label)
                 s.lblId = ++lblIdx;
@@ -127,7 +128,8 @@ switch (step) {
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
-
+        if (proc.isRoot)
+            writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
         return resText
 
         function emitBreakpoint(s: ir.Stmt) {
@@ -282,6 +284,7 @@ switch (step) {
                 write(`r0 = ${text};`)
             } else {
                 let loc = ++lblIdx
+                asyncContinuations.push(loc)
                 if (topExpr.callingConvention == ir.CallingConvention.Promise) {
                     write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
                 } else {
