@@ -1,23 +1,4 @@
 namespace pxt.editor {
-    export enum EditorAction {
-        /**
-         * "blocks" button
-         */
-        switchBlocks,
-        /**
-         * "typescript" button
-         */
-        switchTypeScript,
-        /**
-         * "play" button
-         */
-        startSimulator, // no op if already running
-        /**
-         * "reset" button
-         */
-        restartSimulator
-    }
-
     export interface EditorMessageRequest {
         /**
          * identifier used to correlate request / responses
@@ -30,7 +11,7 @@ namespace pxt.editor {
         /**
          * Request action
          */
-        action: EditorAction
+        action: "switchblocks" | "switchjavascript" | "startsimulator" | "restartsimulator"
     }
 
     export interface EditorMessageResponse {
@@ -66,15 +47,15 @@ namespace pxt.editor {
 
         window.addEventListener("message", (msg: MessageEvent) => {
             const data = msg.data as EditorMessageRequest;
-            if (!data || data.type != "pxteditor") return false;
+            if (!data || data.type != "pxteditor" || !data.action) return false;
 
             let p = Promise.resolve();
-            switch (data.action) {
+            switch (data.action.toLowerCase()) {
                 // TODO: make async
-                case EditorAction.switchTypeScript: p = p.then(() => projectView.openJavaScript()); break;
-                case EditorAction.switchBlocks: p = p.then(() => projectView.openBlocks()); break;
-                case EditorAction.startSimulator: p = p.then(() => projectView.startSimulator()); break;
-                case EditorAction.restartSimulator: p = p.then(() => projectView.restartSimulator()); break;
+                case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
+                case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
+                case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
+                case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
             }
             p.done(() => sendResponse(data, true, undefined),
                 (err) => sendResponse(data, false, err))
