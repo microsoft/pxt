@@ -20,6 +20,11 @@ More info:
 * [About PXT](https://www.pxt.io/about)
 * [Documentation](https://www.pxt.io/docs)
 
+Examples of Editors built with PXT:
+
+* https://pxt.microbit.org
+* https://adafruit.pxt.io
+
 ## Running a target from localhost
 
 Please follow the [instructions here](https://www.pxt.io/cli).
