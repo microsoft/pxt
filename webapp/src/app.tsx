@@ -309,7 +309,8 @@ export class ProjectView
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
-        pxt.editor.bindEditorMessages(this);
+        if (pxt.appTarget.appTheme.allowParentController)
+            pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
     }
 

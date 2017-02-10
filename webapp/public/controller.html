@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" data-manifest="" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8">
+</head>
+<style type="text/css">
+    @import "/cdn/semantic.css";
+</style>
+<style>
+    #buttons {
+        position: absolute;
+        left: 0;
+        top: 0rem;
+        width: 100%;
+        height: 1rem;
+        border: 0;
+    }
+    
+    #logs {
+        position: absolute;
+        left: 0;
+        top: 1rem;
+        width: 100%;
+        height: 6rem;
+        border: 0;
+    }
+    
+    #iframe {
+        position: absolute;
+        left: 0;
+        top: 7rem;
+        width: 100%;
+        height: calc(100% - 7rem);
+        border: 0;
+    }
+</style>
+<script>
+    function sendMessage(action) {
+        var logs = document.getElementById("logs");
+        logs.innerText += action + "\n";
+        document.getElementById("iframe").contentWindow.postMessage({
+            type: "pxteditor",
+            id: "xxxxxxxxx",
+            action: action
+        }, "*")
+    }
+
+</script>
+<body>
+    <div id="buttons" class="ui buttons">
+        <button class="ui button" onclick="sendMessage('switchblocks')">switch to blocks</button>
+        <button class="ui button" onclick="sendMessage('switchtypescript')">switch to typescript</button>
+    </div>
+    <pre id="logs" class="ui"></pre>
+    <iframe id="iframe" src="http://localhost:3232/index.html" />
+</body>
+
+<script>
+
+</script>
+
+</html>

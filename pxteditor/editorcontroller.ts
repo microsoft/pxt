@@ -62,7 +62,7 @@ namespace pxt.editor {
      * Some commands may be async, use the ``id`` field to correlate to the original request.
      */
     export function bindEditorMessages(projectView: IProjectView) {
-        if (!window.parent || !pxt.appTarget.appTheme.allowParentController) return;
+        if (!window.parent) return;
 
         window.addEventListener("message", (msg: MessageEvent) => {
             const data = msg.data as EditorMessageRequest;
