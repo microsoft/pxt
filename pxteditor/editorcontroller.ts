@@ -7,11 +7,24 @@ namespace pxt.editor {
         /**
          * constant messageb identifier
          */
-        type: "pxteditor",
+        type: "pxteditor";
         /**
          * Request action
          */
-        action: "switchblocks" | "switchjavascript" | "startsimulator" | "restartsimulator"
+        action: "switchblocks"
+        | "switchjavascript"
+        | "startsimulator"
+        | "restartsimulator"
+        | "stopsimulator" // EditorMessageStopRequest
+        ;
+    }
+
+    export interface EditorMessageStopRequest extends EditorMessageRequest {
+        action: "stopsimulator";
+        /**
+         * Indicates if simulator iframes should be unloaded or kept hot.
+         */
+        unload?: boolean;
     }
 
     export interface EditorMessageResponse {
@@ -56,6 +69,10 @@ namespace pxt.editor {
                 case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
                 case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
                 case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
+                case "stopsimulator": {
+                    const stop = data as EditorMessageStopRequest;
+                    p = p.then(() => projectView.stopSimulator(stop.unload)); break;
+                }
             }
             p.done(() => sendResponse(data, true, undefined),
                 (err) => sendResponse(data, false, err))
