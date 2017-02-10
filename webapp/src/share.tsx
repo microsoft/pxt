@@ -1,5 +1,3 @@
-/// <reference path="app.d.ts"/>
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as data from "./data";
@@ -44,7 +42,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         this.setState({ visible: false });
     }
 
-    show(header: Header) {
+    show(header: pxt.workspace.Header) {
         this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
     }
 

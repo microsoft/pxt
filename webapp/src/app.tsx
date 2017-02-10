@@ -3,7 +3,6 @@
 /// <reference path="../../built/pxtblocks.d.ts"/>
 /// <reference path="../../built/pxtsim.d.ts"/>
 /// <reference path="../../built/pxtwinrt.d.ts"/>
-/// <reference path="app.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
@@ -183,6 +182,30 @@ export class ProjectView
             });
     }
 
+    private isBlocksActive(): boolean {
+        return this.editor == this.blocksEditor
+            && this.editorFile && this.editorFile.name == "main.blocks";
+    }
+
+    private isJavaScriptActive(): boolean {
+        return this.editor == this.textEditor
+            && this.editorFile && this.editorFile.name == "main.ts";
+    }
+
+    openJavaScript() {
+        pxt.tickEvent("menu.javascript");
+        if (this.isJavaScriptActive()) return;
+        if (this.isBlocksActive()) this.blocksEditor.openTypeScript();
+        else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+    }
+
+    openBlocks() {
+        pxt.tickEvent("menu.blocks");
+        if (this.isBlocksActive()) return;
+        if (this.isJavaScriptActive()) this.textEditor.openBlocks();
+        else this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+    }
+
     openTypeScriptAsync(): Promise<void> {
         return this.saveTypeScriptAsync(true)
             .then(() => {
@@ -286,6 +309,8 @@ export class ProjectView
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
+        if (pxt.appTarget.appTheme.allowParentController)
+            pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
     }
 
@@ -446,7 +471,7 @@ export class ProjectView
         return this.loadHeaderAsync(this.state.header)
     }
 
-    loadHeaderAsync(h: Header): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -607,7 +632,7 @@ export class ProjectView
         ) {
             pxt.tickEvent("import.pxt")
             pxt.debug("importing project")
-            let h: InstallHeader = {
+            let h: pxt.workspace.InstallHeader = {
                 target: targetId,
                 editor: data.meta.editor,
                 name: data.meta.name,
@@ -744,7 +769,7 @@ export class ProjectView
         let cfg = pxt.U.clone(options.prj.config);
         cfg.name = options.name || lf("Untitled") // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
         cfg.documentation = options.documentation;
-        let files: ScriptText = Util.clone(options.prj.files)
+        let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride)
             Util.jsonCopyFrom(files, options.filesOverride)
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n"
@@ -1224,27 +1249,12 @@ export class ProjectView
         const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
         const cookieKey = "cookieconsent"
         const cookieConsent = !!pxt.storage.getLocal(cookieKey);
+        const blockActive = this.isBlocksActive();
+        const javascriptActive = this.isJavaScriptActive();
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
             this.forceUpdate();
-        }
-
-        const blockActive = this.editor == this.blocksEditor
-            && this.editorFile && this.editorFile.name == "main.blocks";
-        const javascriptActive = this.editor == this.textEditor
-            && this.editorFile && this.editorFile.name == "main.ts";
-        const blocksClick = () => {
-            pxt.tickEvent("menu.blocks");
-            if (blockActive) return;
-            if (javascriptActive) this.textEditor.openBlocks();
-            else this.setFile(pkg.mainEditorPkg().files["main.blocks"])
-        }
-        const javascriptClick = () => {
-            pxt.tickEvent("menu.javascript");
-            if (javascriptActive) return;
-            if (blockActive) this.blocksEditor.openTypeScript();
-            else this.setFile(pkg.mainEditorPkg().files["main.ts"])
         }
 
         // update window title
@@ -1268,8 +1278,8 @@ export class ProjectView
                             {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                             {sandbox || inTutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
                             {inTutorial ? undefined : <sui.Item class="editor-menuitem">
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={blocksClick} title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={javascriptClick} title={lf("Convert code to JavaScript") } />
+                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks()} title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript()} title={lf("Convert code to JavaScript") } />
                             </sui.Item> }
                             {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
                             {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">

@@ -165,6 +165,7 @@ declare namespace pxt {
         crowdinProject?: string;
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
+        allowParentController?: boolean; // allow parent iframe to control editor
     }
 
     interface LayoutOptions {

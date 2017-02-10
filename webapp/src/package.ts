@@ -1,5 +1,3 @@
-/// <reference path="app.d.ts"/>
-
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";

@@ -81,7 +81,7 @@ export class Editor extends srceditor.Editor {
             let blocksInfo: pxtc.BlocksInfo;
             return this.parent.saveFileAsync()
                 .then(() => compiler.getBlocksAsync())
-                .then((bi) => {
+                .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;
                     pxt.blocks.initBlocks(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
