@@ -1261,7 +1261,7 @@ export class ProjectView
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         return (
-            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${pxt.shell.layoutTypeClass()} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''} ${showMenuBar ? '' : 'hideMenuBar'}` }>
+            <div id='root' className={`full-abs ${this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : ""} ${this.state.collapseEditorTools ? " collapsedEditorTools" : ""} ${this.state.fullscreen ? 'fullscreen' : ''} ${!sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? "" : "sideDocs"} ${pxt.shell.layoutTypeClass()} ${inTutorial ? "tutorial" : ""} ${pxt.options.light ? "light" : ""} ${pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : ''} ${showMenuBar ? '' : 'hideMenuBar'}`}>
                 {showMenuBar ?
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
@@ -1270,23 +1270,23 @@ export class ProjectView
                                     {targetTheme.logo || targetTheme.portraitLogo
                                         ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
                                         : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null }
-                                </span> }
+                                    {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null}
+                                </span>}
                             {sandbox ? undefined : <div className="ui item landscape only"></div>}
                             {sandbox ? undefined : <div className="ui item landscape only"></div>}
                             {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                             {sandbox ? undefined : <div className="ui item widedesktop only"></div>}
                             {sandbox || inTutorial ? undefined : <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open" text={lf("Projects") } onClick={() => this.openProject() } />}
                             {inTutorial ? undefined : <sui.Item class="editor-menuitem">
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks()} title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript()} title={lf("Convert code to JavaScript") } />
-                            </sui.Item> }
+                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                            </sui.Item>}
                             {docMenu ? <container.DocsMenuItem parent={this} /> : undefined}
                             {sandbox || inTutorial ? undefined : <sui.DropdownMenuItem icon='setting' title={lf("More...") } class="more-dropdown-menuitem">
                                 {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                 {this.state.header && sharingEnabled ? <sui.Item role="menuitem" text={lf("Share Project...") } icon="share alternate" onClick={() => this.embed() } /> : null}
-                                {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined }
-                                {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined }
+                                {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined}
+                                {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
                                 <div className="ui divider"></div>
                                 <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
                                     <i className="help icon"></i>
@@ -1297,46 +1297,46 @@ export class ProjectView
                                 }
                                 <sui.Item role="menuitem" icon='sign out' text={lf("Reset") } onClick={() => this.reset() } />
                                 <div className="ui divider"></div>
-                                { targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined }
-                                { targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined }
+                                {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank">{lf("Privacy & Cookies") }</a> : undefined}
+                                {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined}
                                 <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
-                                { electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined }
+                                {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined}
                             </sui.DropdownMenuItem>}
                             <div className="right menu">
-                                {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } onClick={() => this.launchFullEditor() }/> : undefined }
-                                {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined }
-                                {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="tablet only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined }
+                                {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
+                                {sandbox ? <span className="ui item logo"><img className="ui image" src={Util.toDataUri(rightLogo) } /></span> : undefined}
+                                {!sandbox && gettingStarted ? <span className="ui item"><sui.Button class="tablet only small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
                             </div>
-                            {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined }
+                            {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             {inTutorial ? <div className="right menu">
-                                <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() }/>
+                                <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() } />
                                 <div className="ui item widedesktop only"></div>
                                 <div className="ui item widedesktop only"></div>
                                 <div className="ui item widedesktop only"></div>
                                 <div className="ui item widedesktop only"></div>
                                 <div className="ui item widedesktop only"></div>
                                 <div className="ui item widedesktop only"></div>
-                            </div> : undefined }
+                            </div> : undefined}
                         </div>
-                    </div> : undefined }
+                    </div> : undefined}
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
                     </div>
-                    : undefined }
+                    : undefined}
                 <div id="simulator">
                     <div id="filelist" className="ui items" role="complementary">
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
                         <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined }
-                                {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined }
-                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined }
+                                {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
+                                {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
+                                {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined }
-                                {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined }
+                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume up' : 'volume off'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
+                                {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
                         </div>
                         <div className="ui item portrait hide">
@@ -1350,7 +1350,7 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 <div id="editortools" role="complementary">
@@ -1366,7 +1366,7 @@ export class ProjectView
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                </div> : undefined }
+                </div> : undefined}
                 {cookieConsent ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button" onClick={consentCookie}>
                         <i className="remove icon"></i>
@@ -1381,7 +1381,7 @@ export class ProjectView
 
 
 function render() {
-    ReactDOM.render(<ProjectView/>, $('#content')[0])
+    ReactDOM.render(<ProjectView />, $('#content')[0])
 }
 
 function getEditor() {
@@ -1773,11 +1773,33 @@ $(document).ready(() => {
         if (theEditor && theEditor.editor)
             theEditor.editor.resize(ev)
     }, false);
+
+    const ipcRenderer = (window as any).ipcRenderer;
+    if (ipcRenderer)
+        ipcRenderer.on('responseFromApp', (event: any, message: any) => {
+            // IPC renderer sends a string, we need to convert to an object to send to the simulator iframe
+            try {
+                simulator.driver.postMessage(JSON.parse(message));
+            } catch (e) {
+
+            }
+        });
     window.addEventListener("message", ev => {
         let m = ev.data as pxsim.SimulatorMessage;
         if (!m) {
             return;
         }
+
+        if (ev.data.__proxy == "parent") {
+            pxt.debug("received parent proxy message" + ev.data);
+            delete ev.data.__proxy;
+            const ipcRenderer = (window as any).ipcRenderer;
+            if (ipcRenderer)
+                ipcRenderer.sendToHost("sendToApp", ev.data);
+            else if (window.parent && window != window.parent)
+                window.parent.postMessage(ev.data, "*");
+        }
+
         if (m.type == "tutorial") {
             if (theEditor && theEditor.editor)
                 theEditor.handleMessage(m);
