@@ -60,6 +60,63 @@ namespace ts.pxtc.decompiler {
         "Math.max": { blockId: "math_op2", block: "of %x|and %y", fields: `<field name="op">max</field>` }
     }
 
+    interface Scope {
+        renames: Map<string>;
+        usages: Map<boolean>;
+        autoDeclarations?: ts.VariableDeclaration[];
+    }
+
+    interface BlocklyNode {
+        kind: string;
+    }
+
+    interface TextNode {
+        kind: "text";
+        value: string;
+    }
+
+    interface FieldNode extends BlocklyNode {
+        kind: "field";
+        name: string;
+        value: string | number;
+    }
+
+    interface ValueNode extends BlocklyNode {
+        kind: "value";
+        name: string;
+        value: OutputNode;
+        shadowType?: ShadowType;
+    }
+
+    interface BlockNode extends BlocklyNode {
+        type: string;
+        inputs?: ValueNode[];
+        fields?: FieldNode[]
+        mutation?: Map<string>;
+    }
+
+    interface ExpressionNode extends BlockNode {
+        kind: "expr";
+    }
+
+    interface StatementNode extends BlockNode {
+        kind: "statement";
+        handlers?: Handler[];
+        next?: StatementNode;
+    }
+
+    interface EventHandlerNode extends BlockNode {
+        kind: "event";
+        statements: StatementNode[];
+    }
+
+    interface Handler {
+        name: string,
+        statement: StatementNode
+    }
+
+    type OutputNode = ExpressionNode | TextNode;
+
     export interface DecompileBlocksOptions {
         snippetMode?: boolean; // do not emit "on start"
     }
@@ -72,8 +129,10 @@ namespace ts.pxtc.decompiler {
         }
         const fileText = file.getFullText();
         let output = ""
-        const scopes: pxt.Map<string>[] = [{}];
+        const scopes: Scope[] = [getNewScope()];
         const takenNames: pxt.Map<boolean> = {}
+
+        const unusedDeclarations: [string, ts.Node][] = []
 
         emitBlockStatement(stmts, undefined, true, true);
 
@@ -99,11 +158,6 @@ ${output}</xml>`;
             pxt.debug(`decompilation error: ${messageText}`)
             U.pushRange(result.diagnostics, diags)
             result.success = false;
-        }
-
-        function hasArrowFunction(info: CallInfo): boolean {
-            const parameters = (info.decl as FunctionLikeDeclaration).parameters;
-            return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
         }
 
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
@@ -171,11 +225,8 @@ ${output}</xml>`;
             statements.reverse().forEach(statement => {
                 if (statement.kind == SK.ExpressionStatement &&
                     (isOutputExpression((statement as ts.ExpressionStatement).expression) ||
-                        isEventExpression((statement as ts.ExpressionStatement))
-                    )) {
-                    if (!topLevel) {
-                        error(statement, Util.lf("Output expressions can only exist in the top level scope"))
-                    }
+                        (isEventExpression(statement as ts.ExpressionStatement) && !checkStatement(statement))
+                    ) && topLevel) {
                     outputStatements.unshift(statement)
                 }
                 else {
@@ -185,12 +236,12 @@ ${output}</xml>`;
 
             if (blockStatements.length > (partOfCurrentBlock ? 0 : 1)) {
                 // wrap statement in "on start" if top level
+                emitStatementBlock(blockStatements.shift(), blockStatements, parent);
                 const emitOnStart = topLevel && !options.snippetMode;
                 if (emitOnStart) {
                     openBlockTag(ts.pxtc.ON_START_TYPE);
                     write(`<statement name="HANDLER">`)
                 }
-                emitStatementBlock(blockStatements.shift(), blockStatements, parent);
                 if (emitOnStart) {
                     write(`</statement>`)
                     closeBlockTag();
@@ -353,7 +404,7 @@ ${output}</xml>`;
             const node = n as ts.Node;
 
             if (checkStatement(node)) {
-                openGreyBlock(node);
+                openTypeScriptStatementBlock(node);
             }
             else {
                 switch (node.kind) {
@@ -370,7 +421,6 @@ ${output}</xml>`;
                     case SK.ArrowFunction:
                         emitArrowFunction(node as ts.ArrowFunction, next);
                         return;
-
                     case SK.BinaryExpression:
                         openBinaryExpressionBlock(node as ts.BinaryExpression)
                         break;
@@ -396,6 +446,7 @@ ${output}</xml>`;
                             }
                         }
                         if (isAuto) {
+                            trackAutoDeclaration(decl);
                             // Don't emit null or automatic initializers;
                             // They are implicit within the blocks. But do add a name to the scope
                             if (addVariableDeclaration(decl)) {
@@ -553,42 +604,10 @@ ${output}</xml>`;
             }
 
             function openForStatementBlock(n: ts.ForStatement) {
-                if (!n.initializer || !n.incrementor || !n.condition) {
-                    error(n, Util.lf("for loops must have an initializer, incrementor, and condition"));
-                    return;
-                }
-
-                if (n.initializer.kind !== SK.VariableDeclarationList) {
-                    error(n, Util.lf("only variable declarations are permitted in for loop initializers"));
-                    return;
-                }
-
                 const initializer = n.initializer as ts.VariableDeclarationList;
-
-                if (!initializer.declarations) {
-                    error(n, Util.lf("for loop with out-of-scope variables not supported"));
-                    return;
-                }
-                if (initializer.declarations.length != 1) {
-                    error(n, Util.lf("for loop with multiple variables not supported"));
-                    return;
-                }
-
                 const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
-                if (!incrementorIsValid(indexVar)) {
-                    error(n, Util.lf("for loop incrementors may only increment the variable declared in the initializer"));
-                }
-
-                if (n.condition.kind !== SK.BinaryExpression) {
-                    error(n, Util.lf("for loop conditionals must be binary comparison operations"))
-                    return;
-                }
-
                 const condition = n.condition as ts.BinaryExpression
-                if (condition.left.kind !== SK.Identifier || (condition.left as ts.Identifier).text !== indexVar) {
-                    error(n, Util.lf("left side of for loop conditional must be the variable declared in the initializer"))
-                    return;
-                }
+
 
                 // FIXME: We never decompile repeat blocks correctly, they are always converted into a for-loop.
                 // To decompile repeat, we would need to check to make sure the initialized variable is
@@ -617,28 +636,16 @@ ${output}</xml>`;
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
                     emitValue("TO", condition.right, ShadowType.Number)
                 }
-                else {
-                    error(n, Util.lf("for loop conditional operator must be either < or <="))
-                    return;
-                }
 
                 emitStatementTag("DO", n.statement);
                 popScope()
-
-                function incrementorIsValid(varName: string): boolean {
-                    if (n.incrementor.kind === SK.PostfixUnaryExpression || n.incrementor.kind === SK.PrefixUnaryExpression) {
-                        const incrementor = n.incrementor as ts.PostfixUnaryExpression | ts.PrefixUnaryExpression;
-                        if (incrementor.operator === SK.PlusPlusToken && incrementor.operand.kind === SK.Identifier) {
-                            return (incrementor.operand as ts.Identifier).text === varName;
-                        }
-                    }
-                    return false;
-                }
             }
 
-            function openVariableSetOrChangeBlock(name: string, value: Node | number, changed = false) {
+            function openVariableSetOrChangeBlock(name: string, value: Node | number, changed = false, overrideName = false) {
                 openBlockTag(changed ? "variables_change" : "variables_set")
-                name = getVariableName(name);
+                if (!overrideName) {
+                    name = getVariableName(name);
+                }
                 emitField("VAR", name);
 
                 // We always do a number shadow even if the variable is not of type number
@@ -652,10 +659,6 @@ ${output}</xml>`;
             }
 
             function openIncrementExpressionBlock(node: ts.PrefixUnaryExpression | PostfixUnaryExpression) {
-                if (node.operand.kind != SK.Identifier) {
-                    error(node, Util.lf("-- and ++ may only be used on an identifier"));
-                    return;
-                }
                 const isPlusPlus = node.operator === SK.PlusPlusToken;
 
                 if (!isPlusPlus && node.operator !== SK.MinusMinusToken) {
@@ -703,16 +706,6 @@ ${output}</xml>`;
                     argNames.push(n)
                     return ""
                 });
-
-                const argumentDifference = info.args.length - argNames.length;
-                if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1)) {
-                    const hasCallback = hasArrowFunction(info);
-                    if (argumentDifference > 1 || !hasCallback) {
-                        pxt.tickEvent("decompiler.optionalParameters");
-                        error(node, Util.lf("Function call has more arguments than are supported by its block"));
-                        return;
-                    }
-                }
 
                 if (info.attrs.defaultInstance) {
                     argNames.unshift("__instance__");
@@ -884,7 +877,7 @@ ${output}</xml>`;
             closeBlockTag()
         }
 
-        function openGreyBlock(node: ts.Node) {
+        function openTypeScriptStatementBlock(node: ts.Node) {
             openBlockTag("typescript_statement");
 
             const parts = node.getText().split("\n");
@@ -977,6 +970,721 @@ ${output}</xml>`;
             }
         }
 
+        function getOutputBlock(n: ts.Node): OutputNode {
+            if (checkExpression(n)) {
+                return getFieldBlock("typescript_expression", "EXPRESSION", n.getFullText())
+            }
+            else {
+                switch (n.kind) {
+                    case SK.ExpressionStatement:
+                        return getOutputBlock((n as ts.ExpressionStatement).expression);
+                    case SK.ParenthesizedExpression:
+                        return getOutputBlock((n as ts.ParenthesizedExpression).expression);
+                    case SK.Identifier:
+                        return getIdentifier(n as ts.Identifier);
+                    case SK.StringLiteral:
+                    case SK.FirstTemplateToken:
+                    case SK.NoSubstitutionTemplateLiteral:
+                        return getStringLiteral((n as ts.LiteralExpression).text);
+                    case SK.NumericLiteral:
+                        return getNumericLiteral((n as ts.LiteralExpression).text);
+                    case SK.TrueKeyword:
+                        return getBooleanLiteral(true);
+                    case SK.FalseKeyword:
+                        return getBooleanLiteral(false);
+                    case SK.BinaryExpression:
+                        return getBinaryExpression(n as ts.BinaryExpression);
+                    case SK.PrefixUnaryExpression:
+                        return getPrefixUnaryExpression(n as ts.PrefixUnaryExpression);
+                    case SK.PropertyAccessExpression:
+                        return getPropertyAccessExpression(n as ts.PropertyAccessExpression);
+                    case SK.CallExpression:
+                        //emitStatementBlock(n);
+                        break;
+                    default:
+                        error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
+                        break;
+                }
+                return undefined;
+            }
+        }
+
+        function getExpressionNode(type: string): ExpressionNode {
+            return { kind: "expr", type }
+        }
+
+        function getBinaryExpression(n: ts.BinaryExpression): ExpressionNode {
+            const op = n.operatorToken.getText();
+            const npp = ops[op];
+
+            // Could be string concatenation
+            if (isTextJoin(n)) {
+                const args: ts.Node[] = [];
+                collectTextJoinArgs(n, args);
+
+                const result: ExpressionNode = {
+                    kind: "expr",
+                    type: "text_join",
+                    mutation: {
+                        "items": args.length.toString()
+                    },
+                    inputs: []
+                };
+
+                for (let i = 0; i < args.length; i++) {
+                    result.inputs.push(getValue("ADD" + i, args[i], ShadowType.String));
+                }
+
+                return result;
+            }
+
+            const result: ExpressionNode = {
+                kind: "expr",
+                type: npp.type,
+                fields: [],
+                inputs: []
+            };
+
+            if (npp.op) {
+                result.fields.push(getField("OP", npp.op))
+            }
+
+            const shadowType = (op === "&&" || op === "||") ? ShadowType.Boolean : ShadowType.Number;
+
+            result.inputs.push(getValue(npp.leftName || "A", n.left, shadowType));
+            result.inputs.push(getValue(npp.rightName || "B", n.right, shadowType));
+
+            return result;
+
+            function isTextJoin(n: ts.Node): n is ts.BinaryExpression {
+                if (n.kind === SK.BinaryExpression) {
+                    const b = n as ts.BinaryExpression;
+                    if (b.operatorToken.getText() === "+") {
+                        const info: BinaryExpressionInfo = (n as any).exprInfo;
+                        return !!info;
+                    }
+                }
+
+                return false;
+            }
+
+            function collectTextJoinArgs(n: ts.Node, result: ts.Node[]) {
+                if (isTextJoin(n)) {
+                    collectTextJoinArgs(n.left, result);
+                    collectTextJoinArgs(n.right, result)
+                }
+                else {
+                    result.push(n);
+                }
+            }
+        }
+
+        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: ShadowType): ValueNode {
+            let value: OutputNode;
+
+            if (typeof contents === "number") {
+                value = getNumericLiteral(contents.toString())
+            }
+            else if (typeof contents === "boolean") {
+                value = getBooleanLiteral(contents)
+            }
+            else if (typeof contents === "string") {
+                value = getStringLiteral(contents)
+            }
+            else {
+                // // If this is some expression, we want to also emit a shadow block in case the expression
+                // // gets pulled out of the block
+                // if (shadowType && !isLiteralNode(contents)) {
+                //     switch (shadowType) {
+                //         case ShadowType.Number:
+                //             emitNumericLiteral("0")
+                //             break;
+                //         case ShadowType.String:
+                //             emitStringLiteral("")
+                //             break;
+                //         case ShadowType.Boolean:
+                //             emitBooleanLiteral(true)
+                //     }
+                // }
+                value = getOutputBlock(contents)
+            }
+
+
+            return { kind: "value", name, value, shadowType };
+        }
+
+        function getIdentifier(identifier: Identifier): ExpressionNode {
+            return getFieldBlock("variables_get", "VAR", getVariableName(identifier.text));
+        }
+
+        function getNumericLiteral(value: string): ExpressionNode {
+            return getFieldBlock("math_number", "NUM", value);
+        }
+
+        function getStringLiteral(value: string): ExpressionNode {
+            return getFieldBlock("text", "TEXT", value);
+        }
+
+        function getBooleanLiteral(value: boolean): ExpressionNode {
+            return getFieldBlock("logic_boolean", "BOOL", value ? "TRUE" : "FALSE");
+        }
+
+        function getFieldBlock(type: string, fieldName: string, value: string): ExpressionNode {
+            return {
+                kind: "expr",
+                type,
+                fields: [getField(fieldName, value)]
+            };
+        }
+
+        function getField(name: string, value: string): FieldNode {
+            return {
+                kind: "field",
+                name,
+                value,
+            };
+        }
+
+        // TODO: Add a real negation block
+        function negateNumericNode(node: ts.Node): ExpressionNode {
+            return {
+                kind: "expr",
+                type: "math_arithmetic",
+                inputs: [
+                    getValue("A", 0),
+                    getValue("B", node, ShadowType.Number)
+                ],
+                fields: [
+                    getField("OP", "MINUS")
+                ]
+            };
+        }
+
+        function getPrefixUnaryExpression(node: PrefixUnaryExpression): OutputNode {
+            switch (node.operator) {
+                case SK.ExclamationToken:
+                    const r = getExpressionNode("logic_negate");
+                    r.inputs = [getValue("BOOL", node.operand, ShadowType.Boolean)]
+                    return r;
+                case SK.PlusToken:
+                    return getOutputBlock(node.operand);
+                case SK.MinusToken:
+                    if (node.operand.kind == SK.NumericLiteral) {
+                        return getNumericLiteral("-" + (node.operand as ts.LiteralExpression).text)
+                    } else {
+                        return negateNumericNode(node.operand)
+                    }
+                default:
+                    error(node);
+                    break;
+            }
+            return undefined;
+        }
+
+        function getPropertyAccessExpression(n: ts.PropertyAccessExpression, shadow = false): OutputNode {
+            let callInfo = (n as any).callInfo as pxtc.CallInfo;
+            if (!callInfo) {
+                error(n);
+                return;
+            }
+            const value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
+
+            if (callInfo.attrs.blockIdentity) {
+                let idfn = blocksInfo.apis.byQName[callInfo.attrs.blockIdentity];
+                let tag = shadow ? "shadow" : "block";
+                let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
+
+                return {
+                    kind: "expr",
+                    type: U.htmlEscape(idfn.attributes.blockId),
+                    fields: [{
+                        kind: "field",
+                        name: U.htmlEscape(f[1]),
+                        value
+                    }]
+                };
+            }
+            else {
+                return {
+                    kind: "text",
+                    value
+                }
+            }
+        }
+
+        function getStatementBlock(n: NextNode, next?: NextNode[], parent?: ts.Node) {
+            if (isScopeEnd(n)) {
+                popScope();
+                emitNextBlock(/*withinNextTag*/false);
+                return;
+            }
+
+            const node = n as ts.Node;
+
+            if (checkStatement(node)) {
+                openTypeScriptStatementBlock(node);
+            }
+            else {
+                switch (node.kind) {
+                    case SK.Block:
+                        pushScope();
+                        emitBlockStatement((node as ts.Block).statements, next);
+                        return;
+                    case SK.ExpressionStatement:
+                        emitStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
+                        return;
+                    case SK.VariableStatement:
+                        emitBlockStatement((node as ts.VariableStatement).declarationList.declarations, next, true, false, parent || node);
+                        return;
+                    case SK.ArrowFunction:
+                        emitArrowFunction(node as ts.ArrowFunction, next);
+                        return;
+                    case SK.BinaryExpression:
+                        return getBinaryExpressionStatement(node as ts.BinaryExpression);
+                    case SK.PostfixUnaryExpression:
+                    case SK.PrefixUnaryExpression:
+                        return getIncrementStatement(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
+                    case SK.VariableDeclaration:
+                        const decl = node as ts.VariableDeclaration;
+                        let isAuto = false
+                        if (decl.initializer) {
+                            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
+                                isAuto = true
+                            }
+                            else if (isStringOrNumericLiteral(decl.initializer.kind)) {
+                                const text = decl.initializer.getText();
+                                isAuto = text === "0" || isEmptyString(text);
+                            }
+                            else {
+                                const callInfo: pxtc.CallInfo = (decl.initializer as any).callInfo
+                                if (callInfo && callInfo.isAutoCreate)
+                                    isAuto = true
+                            }
+                        }
+                        if (isAuto) {
+                            trackAutoDeclaration(decl);
+                            // Don't emit null or automatic initializers;
+                            // They are implicit within the blocks. But do add a name to the scope
+                            if (addVariableDeclaration(decl)) {
+                                emitNextBlock(/*withinNextTag*/false)
+                            }
+                            return;
+                        }
+                        return getVariableDeclarationStatement(node as ts.VariableDeclaration);
+                    case SK.WhileStatement:
+                        getWhileStatement(node as ts.WhileStatement);
+                        break;
+                    case SK.IfStatement:
+                        getIfStatement(node as ts.IfStatement);
+                        break;
+                    case SK.ForStatement:
+                        openForStatementBlock(node as ts.ForStatement);
+                        break;
+                    case SK.CallExpression:
+                        openCallExpressionBlock(node as ts.CallExpression);
+                        break;
+                    default:
+                        if (next) {
+                            error(node, Util.lf("Unsupported statement in block: {0}", SK[node.kind]))
+                        }
+                        else {
+                            error(node, Util.lf("Statement kind unsupported in blocks: {0}", SK[node.kind]))
+                        }
+                        return;
+                }
+            }
+
+            emitNextBlock(/*withinNextTag*/true);
+
+            const commentRanges = ts.getLeadingCommentRangesOfNode(parent || node, file)
+            if (commentRanges) {
+                const commentText = getCommentText(commentRanges)
+
+                if (commentText) {
+                    write(`<comment pinned="false">${U.htmlEscape(commentText)}</comment>`)
+                }
+            }
+
+            closeBlockTag()
+
+            function emitNextBlock(withinNextTag: boolean) {
+                const toEmit = consumeToNextBlock();
+                if (toEmit) {
+                    if (withinNextTag) {
+                        write("<next>")
+                        emitStatementBlock(toEmit, next);
+                        write("</next>")
+                    }
+                    else {
+                        emitStatementBlock(toEmit, next);
+                    }
+                }
+
+                function consumeToNextBlock(): ts.Node {
+                    if (next && next.length) {
+                        const toEmit = next.shift();
+
+                        if (isScopeEnd(toEmit)) {
+                            popScope();
+                        }
+                        else if (canBeEmitted(toEmit)) {
+                            return toEmit;
+                        }
+                        return consumeToNextBlock();
+                    }
+                    return undefined;
+                }
+
+                function canBeEmitted(node: ts.Node) {
+                    switch (node.kind) {
+                        case SyntaxKind.VariableStatement:
+                            const decl = node as ts.VariableDeclaration;
+                            if (decl.initializer && decl.initializer.kind === SyntaxKind.NullKeyword) {
+                                // Don't emit null initializers; They are implicit within the blocks. But do add a name to the scope
+                                addVariableDeclaration(decl);
+                                return false;
+                            }
+                            break;
+                        default:
+                    }
+                    return true;
+                }
+            }
+
+            function openImageLiteralExpressionBlock(node: ts.CallExpression, info: pxtc.CallInfo) {
+                let arg = node.arguments[0];
+                if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
+                    error(node)
+                    return;
+                }
+                openBlockTag(info.attrs.blockId);
+                const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
+                const nc = info.attrs.imageLiteral * 5;
+                if (nc * 5 != leds.length) {
+                    error(node, Util.lf("Invalid image pattern"));
+                    return;
+                }
+                for (let r = 0; r < 5; ++r) {
+                    for (let c = 0; c < nc; ++c) {
+                        emitField(`LED${c}${r}`, /[#*1]/.test(leds[r * nc + c]) ? "TRUE" : "FALSE")
+                    }
+                }
+            }
+
+            function getBinaryExpressionStatement(n: ts.BinaryExpression): StatementNode {
+                if (n.left.kind !== SK.Identifier) {
+                    error(n, Util.lf("Only variable names may be assigned to"));
+                    return;
+                }
+
+                const name = (n.left as ts.Identifier).text;
+
+                switch (n.operatorToken.kind) {
+                    case SK.EqualsToken:
+                        return getVariableSetOrChangeBlock(name, n.right);
+                    case SK.PlusEqualsToken:
+                        return getVariableSetOrChangeBlock(name, n.right, true);
+                    case SK.MinusEqualsToken:
+                        return {
+                            kind: "statement",
+                            type: "variables_change",
+                            inputs: [{
+                                kind: "value",
+                                name: "VALUE",
+                                value: negateNumericNode(n.right)
+                            }],
+                            fields: [getField("VAR", getVariableName(name))]
+                        };
+                    default:
+                        error(n, Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]));
+                        return;
+                }
+            }
+
+            function getWhileStatement(n: ts.WhileStatement): StatementNode {
+                return {
+                    kind: "statement",
+                    type: "device_while",
+                    inputs: [getValue("COND", n.expression, ShadowType.Boolean)],
+                    handlers: [{ name: "DO", statement: getStatementBlock(n.statement) }]
+                };
+            }
+
+            function getIfStatement(n: ts.IfStatement): StatementNode {
+                let flatif = flattenIfStatement(n);
+
+                const r: StatementNode = {
+                    kind: "statement",
+                    type: "controls_if",
+                    mutation: {
+                        "elseif": (flatif.ifStatements.length - 1).toString(),
+                        "else": flatif.elseStatement ? "1" : "0"
+                    },
+                    inputs: [],
+                    handlers: []
+                };
+
+                flatif.ifStatements.forEach((stmt, i) => {
+                    r.inputs.push(getValue("IF" + i, stmt.expression, ShadowType.Boolean));
+                    r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
+                });
+
+                if (flatif.elseStatement) {
+                    r.handlers.push({ name: "ELSE", statement: getStatementBlock(flatif.elseStatement) });
+                }
+
+                return r;
+            }
+
+            function openForStatementBlock(n: ts.ForStatement) {
+                const initializer = n.initializer as ts.VariableDeclarationList;
+                const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
+                const condition = n.condition as ts.BinaryExpression
+
+
+                // FIXME: We never decompile repeat blocks correctly, they are always converted into a for-loop.
+                // To decompile repeat, we would need to check to make sure the initialized variable is
+                // never referenced in the loop body
+                openBlockTag("controls_simple_for");
+
+                pushScope()
+                addVariable(indexVar)
+                emitField("VAR", getVariableName(indexVar));
+
+
+                if (condition.operatorToken.kind === SK.LessThanToken) {
+                    write(`<value name="TO">`)
+
+                    // Emit a shadow block
+                    emitNumericLiteral("0")
+
+                    // Subtract 1 to get the same behavior as <=
+                    openBlockTag("math_arithmetic")
+                    emitField("OP", "MINUS")
+                    emitValue("A", condition.right, ShadowType.Number)
+                    emitValue("B", 1)
+                    closeBlockTag()
+                    write(`</value>`)
+                }
+                else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
+                    emitValue("TO", condition.right, ShadowType.Number)
+                }
+
+                emitStatementTag("DO", n.statement);
+                popScope()
+            }
+
+            function getVariableSetOrChangeBlock(name: string, value: Node | number, changed = false, overrideName = false): StatementNode {
+                if (!overrideName) {
+                    name = getVariableName(name);
+                }
+
+                // We always do a number shadow even if the variable is not of type number
+                return {
+                    kind: "statement",
+                    type: changed ? "variables_change" : "variables_set",
+                    inputs: [getValue("VALUE", value, ShadowType.Number)],
+                    fields: [getField("VAR", name)]
+                };
+            }
+
+            function getVariableDeclarationStatement(n: ts.VariableDeclaration): StatementNode {
+                if (addVariableDeclaration(n)) {
+                    return getVariableSetOrChangeBlock((n.name as ts.Identifier).text, n.initializer)
+                }
+                return undefined;
+            }
+
+            function getIncrementStatement(node: ts.PrefixUnaryExpression | PostfixUnaryExpression): StatementNode {
+                const isPlusPlus = node.operator === SK.PlusPlusToken;
+
+                if (!isPlusPlus && node.operator !== SK.MinusMinusToken) {
+                    error(node);
+                    return;
+                }
+
+                return getVariableSetOrChangeBlock((node.operand as ts.Identifier).text, isPlusPlus ? 1 : -1, true);
+            }
+
+            function openCallExpressionBlock(node: ts.CallExpression) {
+                let extraArgs = '';
+                const info: pxtc.CallInfo = (node as any).callInfo
+                if (!info) {
+                    error(node);
+                    return;
+                }
+
+                if (!info.attrs.blockId || !info.attrs.block) {
+                    const builtin = builtinBlocks[info.qName];
+                    if (!builtin) {
+                        error(node)
+                        return;
+                    }
+                    info.attrs.block = builtin.block;
+                    info.attrs.blockId = builtin.blockId;
+                    if (builtin.fields) extraArgs += builtin.fields;
+                }
+
+                if (info.attrs.imageLiteral) {
+                    openImageLiteralExpressionBlock(node, info);
+                    return;
+                }
+
+                if (ts.isFunctionLike(info.decl)) {
+                    const decl = info.decl as FunctionLikeDeclaration;
+                    if (decl.parameters && decl.parameters.length === 1 && ts.isRestParameter(decl.parameters[0])) {
+                        openCallExpressionBlockWithRestParameter(node, info);
+                        return;
+                    }
+                }
+
+                const argNames: string[] = []
+                info.attrs.block.replace(/%(\w+)/g, (f, n) => {
+                    argNames.push(n)
+                    return ""
+                });
+
+                if (info.attrs.defaultInstance) {
+                    argNames.unshift("__instance__");
+                }
+
+                openBlockTag(info.attrs.blockId);
+                if (extraArgs) write(extraArgs);
+                info.args.forEach((e, i) => {
+                    if (i === 0 && info.attrs.defaultInstance) {
+                        if (e.getText() === info.attrs.defaultInstance) {
+                            return;
+                        }
+                        else {
+                            write(`<mutation showing="true"></mutation>`);
+                        }
+                    }
+
+                    switch (e.kind) {
+                        case SK.ArrowFunction:
+                            emitDestructuringMutation(e as ArrowFunction);
+                            emitStatementTag("HANDLER", e);
+                            break;
+                        case SK.PropertyAccessExpression:
+                            let forv = "field";
+                            const callInfo = (e as any).callInfo as pxtc.CallInfo;
+                            const shadow = callInfo && !!callInfo.attrs.blockIdentity
+                            if (shadow)
+                                forv = "value";
+
+                            write(`<${forv} name="${U.htmlEscape(argNames[i])}">`, "");
+                            emitPropertyAccessExpression(e as PropertyAccessExpression, shadow);
+                            write(`</${forv}>`);
+                            break;
+                        default:
+                            write(`<value name="${U.htmlEscape(argNames[i])}">`)
+                            if (info.qName == "Math.random") {
+                                emitMathRandomArgumentExpresion(e);
+                            }
+                            else {
+                                emitOutputBlock(e);
+                            }
+                            write(`</value>`)
+                            break;
+                    }
+                });
+            }
+
+            function openCallExpressionBlockWithRestParameter(call: ts.CallExpression, info: pxtc.CallInfo) {
+                openBlockTag(info.attrs.blockId);
+                write(`<mutation count="${info.args.length}" />`)
+                info.args.forEach((expression, index) => {
+                    emitValue("value_input_" + index, expression, ShadowType.Number);
+                });
+            }
+
+            function emitDestructuringMutation(callback: ts.ArrowFunction) {
+                if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
+                    const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
+
+                    const renames: { [index: string]: string } = {};
+
+                    const properties = elements.map(e => {
+                        if (checkName(e.propertyName) && checkName(e.name)) {
+                            const name = (e.name as Identifier).text;
+                            if (e.propertyName) {
+                                const propName = (e.propertyName as Identifier).text;
+                                renames[propName] = name;
+                                return propName;
+                            }
+                            return name;
+                        }
+                        else {
+                            return "";
+                        }
+                    });
+
+                    write(`<mutation callbackproperties="${properties.join(",")}" renamemap="${Util.htmlEscape(JSON.stringify(renames))}"></mutation>`)
+                }
+
+                function checkName(name: Node) {
+                    if (name && name.kind !== SK.Identifier) {
+                        error(name, Util.lf("Only identifiers may be used for variable names in object destructuring patterns"));
+                        return false;
+                    }
+                    return true;
+                }
+            }
+
+            function emitMathRandomArgumentExpresion(e: ts.Expression) {
+                switch (e.kind) {
+                    case SK.NumericLiteral:
+                        const n = e as LiteralExpression;
+                        emitNumericLiteral((parseInt(n.text) - 1).toString());
+                        break;
+                    case SK.BinaryExpression:
+                        const op = e as BinaryExpression;
+                        if (op.operatorToken.kind == SK.PlusToken && (op.right as any).text == "1") {
+                            emitOutputBlock(op.left);
+                            //Note: break is intentionally in the if statement as we don't want to handle any other kinds of operations
+                            //other than the +1 created by the block compilation because otherwise roundtripping won't work anyway
+                            break;
+                        }
+                    default:
+                        //This will definitely lead to an error, but the above are the only two cases generated by blocks
+                        emitOutputBlock(e);
+                        break;
+                }
+            }
+
+            function emitArrowFunction(n: ts.ArrowFunction, next: NextNode[]) {
+                if (n.parameters.length > 0 && !(n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern)) {
+                    error(n);
+                    return;
+                }
+
+                pushScope();
+                emitStatementBlock(n.body, next)
+            }
+
+            function flattenIfStatement(n: ts.IfStatement): {
+                ifStatements: {
+                    expression: ts.Expression;
+                    thenStatement: ts.Statement;
+                }[];
+                elseStatement: ts.Statement;
+            } {
+                let r = {
+                    ifStatements: [{
+                        expression: n.expression,
+                        thenStatement: n.thenStatement
+                    }],
+                    elseStatement: n.elseStatement
+                }
+                if (n.elseStatement && n.elseStatement.kind == SK.IfStatement) {
+                    let flat = flattenIfStatement(n.elseStatement as ts.IfStatement);
+                    r.ifStatements = r.ifStatements.concat(flat.ifStatements);
+                    r.elseStatement = flat.elseStatement;
+                }
+                return r;
+            }
+        }
+
         function isLiteralNode(node: ts.Node): boolean {
             if (!node) {
                 return false
@@ -1040,16 +1748,34 @@ ${output}</xml>`;
             }
         }
 
+        function getNewScope(): Scope {
+            return { renames: {}, usages: {}, autoDeclarations: [] }
+        }
+
+        function getCurrentScope() {
+            return scopes[scopes.length - 1];
+        }
+
         function pushScope() {
-            scopes.push({})
+            scopes.push(getNewScope())
         }
 
         function popScope() {
-            scopes.pop();
+            const current = scopes.pop();
+            current.autoDeclarations.forEach(v => {
+                const rename = current.renames[(v.name as ts.Identifier).text];
+                if (!current.usages[rename]) {
+                    unusedDeclarations.push([rename, v]);
+                }
+            })
         }
 
         function addVariable(name: string) {
-            scopes[scopes.length - 1][name] = getNewName(name);
+            getCurrentScope().renames[name] = getNewName(name);
+        }
+
+        function trackAutoDeclaration(n: ts.VariableDeclaration) {
+            getCurrentScope().autoDeclarations.push(n);
         }
 
         function addVariableDeclaration(node: VariableDeclaration): boolean {
@@ -1079,8 +1805,10 @@ ${output}</xml>`;
 
         function findVariableName(name: string) {
             for (let i = scopes.length - 1; i >= 0; i--) {
-                if (scopes[i][name]) {
-                    return scopes[i][name];
+                const rename = scopes[i].renames[name];
+                if (rename) {
+                    scopes[i].usages[rename] = true;
+                    return rename;
                 }
             }
             return undefined;
@@ -1124,16 +1852,17 @@ ${output}</xml>`;
 
     function checkStatement(node: ts.Node): string {
         switch (node.kind) {
-            case SK.VariableDeclaration:
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
-            case SK.VariableStatement:
             case SK.ExpressionStatement:
                 return undefined;
+            case SK.VariableStatement:
+                return checkVariableStatement(node as ts.VariableStatement);
             case SK.CallExpression:
-                // openCallExpressionBlock(node as ts.CallExpression);
-                return undefined; // FIXME
+                return checkCall(node as ts.CallExpression);
+            case SK.VariableDeclaration:
+                return checkVariableDeclaration(node as ts.VariableDeclaration);
             case SK.PostfixUnaryExpression:
             case SK.PrefixUnaryExpression:
                 return checkIncrementorExpression(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
@@ -1198,7 +1927,7 @@ ${output}</xml>`;
 
         function checkBinaryExpression(n: ts.BinaryExpression) {
             if (n.left.kind !== SK.Identifier) {
-                Util.lf("Only variable names may be assigned to")
+                return Util.lf("Only variable names may be assigned to")
             }
 
             switch (n.operatorToken.kind) {
@@ -1229,6 +1958,72 @@ ${output}</xml>`;
 
             return undefined;
         }
+
+        function checkVariableDeclaration(n: ts.VariableDeclaration) {
+            if (n.name.kind !== SK.Identifier) {
+                return Util.lf("Variable declarations may not use binding patterns");
+            }
+            else if (!n.initializer) {
+                return Util.lf("Variable declarations must have an initializer");
+            }
+
+            return undefined;
+        }
+
+        function checkVariableStatement(n: ts.VariableStatement) {
+            for (const declaration of n.declarationList.declarations) {
+                const res = checkVariableDeclaration(declaration);
+                if (res) {
+                    return res;
+                }
+            }
+            return undefined;
+        }
+
+        function checkCall(n: ts.CallExpression) {
+            const info: pxtc.CallInfo = (n as any).callInfo;
+            if (!info) {
+                return Util.lf("Function call not supported in the blocks");
+            }
+
+            if (!info.attrs.blockId || !info.attrs.block) {
+                const builtin = builtinBlocks[info.qName];
+                if (!builtin) {
+                    return Util.lf("Function call not supported in the blocks");
+                }
+                info.attrs.block = builtin.block;
+                info.attrs.blockId = builtin.blockId;
+            }
+
+            if (info.attrs.imageLiteral) {
+                let arg = n.arguments[0];
+                if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
+                    return Util.lf("Only string literals supported for image literals")
+                }
+                const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
+                const nc = info.attrs.imageLiteral * 5;
+                if (nc * 5 != leds.length) {
+                    return Util.lf("Invalid image pattern");
+                }
+                return undefined;
+            }
+
+            const argNames: string[] = []
+            info.attrs.block.replace(/%(\w+)/g, (f, n) => {
+                argNames.push(n)
+                return ""
+            });
+
+            const argumentDifference = info.args.length - argNames.length;
+            if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1)) {
+                const hasCallback = hasArrowFunction(info);
+                if (argumentDifference > 1 || !hasCallback) {
+                    return Util.lf("Function call has more arguments than are supported by its block");
+                }
+            }
+
+            return undefined;
+        }
     }
 
     function checkExpression(n: ts.Node): string {
@@ -1243,7 +2038,7 @@ ${output}</xml>`;
             case SK.ParenthesizedExpression:
                 return undefined;
             case SK.Identifier:
-                return isUndefined(n) ? Util.lf("") : undefined;
+                return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
             case SK.BinaryExpression:
                 const op1 = (n as BinaryExpression).operatorToken.getText();
                 return ops[op1] ? undefined : Util.lf("Could not find operator {0}", op1);
@@ -1265,5 +2060,10 @@ ${output}</xml>`;
 
     function isUndefined(node: ts.Node) {
         return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
+    }
+
+    function hasArrowFunction(info: CallInfo): boolean {
+        const parameters = (info.decl as FunctionLikeDeclaration).parameters;
+        return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
     }
 }

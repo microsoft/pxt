@@ -1192,7 +1192,7 @@ namespace pxt.blocks {
             const value = b.getFieldValue("LINE" + i);
             i++;
 
-            if (value) {
+            if (value !== null) {
                 res.push(mkText(value + "\n"));
             }
             else {
@@ -1632,7 +1632,7 @@ namespace pxt.blocks {
     }
 
     function maybeAddComment(b: B.Block, comments: string[]) {
-        if (b.comment && b.type !== "typescript_statement") {
+        if (b.comment) {
             if ((typeof b.comment) === "string") {
                 comments.push(b.comment as string)
             }

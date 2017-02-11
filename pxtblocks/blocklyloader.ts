@@ -1483,10 +1483,8 @@ namespace pxt.blocks {
 
         Blockly.Blocks["typescript_statement"] = {
             init: function () {
-                this.jsonInit({
-                    "colour": blockColors['logic']
-                });
                 let that: Blockly.Block = this;
+                that.setColour(blockColors['logic'])
                 that.setPreviousStatement(true);
                 that.setNextStatement(true);
 
@@ -1504,7 +1502,7 @@ namespace pxt.blocks {
 
                     while (true) {
                         const val = that.getFieldValue("LINE" + i);
-                        if (!val) {
+                        if (val === null) {
                             break;
                         }
 
