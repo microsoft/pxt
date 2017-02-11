@@ -7,16 +7,7 @@
 <style type="text/css">
     @import "/cdn/semantic.css";
 </style>
-<style>
-    #buttons {
-        position: absolute;
-        left: 0;
-        top: 0rem;
-        width: 100%;
-        height: 1rem;
-        border: 0;
-    }
-    
+<style>    
     #logs {
         position: absolute;
         left: 0;
@@ -52,8 +43,9 @@
         <button class="ui button" onclick="sendMessage('switchblocks')">switch to blocks</button>
         <button class="ui button" onclick="sendMessage('switchjavascript')">switch to javascript</button>
         <button class="ui button" onclick="sendMessage('startsimulator')">start sim</button>
-        <button class="ui button" onclick="sendMessage('resetsimulator')">reset sim</button>
+        <button class="ui button" onclick="sendMessage('restartsimulator')">reset sim</button>
         <button class="ui button" onclick="sendMessage('stopsimulator')">stop sim</button>
+        <button class="ui button" onclick="sendMessage('newproject')">newproject</button>
     </div>
     <pre id="logs" class="ui"></pre>
     <iframe id="iframe" src="http://localhost:3232/index.html?editorlayout=ide" />
