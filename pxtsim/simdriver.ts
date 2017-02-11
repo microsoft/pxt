@@ -86,7 +86,7 @@ namespace pxsim {
             }
         }
 
-        private postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+        public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
@@ -122,6 +122,8 @@ namespace pxsim {
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             if (this.runOptions.aspectRatio)
                 wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
+            // TODO
+            simUrl += "?ipc=1"
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
