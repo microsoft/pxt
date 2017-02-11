@@ -16,6 +16,7 @@ namespace pxt.editor {
         | "startsimulator"
         | "restartsimulator"
         | "stopsimulator" // EditorMessageStopRequest
+        | "newproject"
         ;
     }
 
@@ -25,6 +26,14 @@ namespace pxt.editor {
          * Indicates if simulator iframes should be unloaded or kept hot.
          */
         unload?: boolean;
+    }
+
+    export interface EditorMessageNewProjectRequest extends EditorMessageRequest {
+        action: "newproject";
+        /**
+         * Additional optional to create new project
+         */
+        options?: ProjectCreationOptions;
     }
 
     export interface EditorMessageResponse {
@@ -72,6 +81,10 @@ namespace pxt.editor {
                 case "stopsimulator": {
                     const stop = data as EditorMessageStopRequest;
                     p = p.then(() => projectView.stopSimulator(stop.unload)); break;
+                }
+                case "newproject":  {
+                    const create = data as EditorMessageNewProjectRequest;
+                    p = p.then(() => projectView.newProject(create.options)); break;
                 }
             }
             p.done(() => sendResponse(data, true, undefined),
