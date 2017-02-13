@@ -430,18 +430,18 @@ namespace pxt.docs {
     export function embedUrl(rootUrl: string, tag: string, id: string, height?: number): string {
         const url = `${rootUrl}#${tag}:${id}`;
         let padding = '70%';
-        return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`;
+        return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe></div>`;
     }
 
     export function runUrl(url: string, padding: string, id: string): string {
-        let embed = `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}?id=${encodeURIComponent(id)}" allowfullscreen="allowfullscreen" sandbox="allow-scripts allow-same-origin" frameborder="0"></iframe></div>`;
+        let embed = `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}?id=${encodeURIComponent(id)}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-scripts allow-same-origin" frameborder="0"></iframe></div>`;
         return embed;
     }
 
     export function docsEmbedUrl(rootUrl: string, id: string, height?: number): string {
         const docurl = `${rootUrl}--docs?projectid=${id}`;
         height = Math.ceil(height || 300);
-        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`
+        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe></div>`
     }
 
     const inlineTags: Map<number> = {
