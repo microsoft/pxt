@@ -90,7 +90,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
                         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                        embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
+                        embed = pxt.docs.runUrl((pxt.webConfig.runUrl || rootUrl) + "--run", padding, header.pubId);
                         break;
                     case ShareMode.Url:
                         embed = editUrl;
