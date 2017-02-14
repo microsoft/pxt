@@ -603,12 +603,11 @@ export class ProjectView
             pxt.tickEvent("import.blocks")
             pxt.debug('importing microbit.co.uk blocks project')
             core.showLoading(lf("loading project..."))
-            compiler.getBlocksAsync()
-                .then(info => this.createProjectAsync({
+            this.createProjectAsync({
                     filesOverride: {
-                        "main.blocks": pxt.blocks.importXml(data.source, info)
+                        "main.blocks": data.source
                     }, name: data.meta.name
-                })).done(() => core.hideLoading());
+                }).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             pxt.tickEvent("import.td")
