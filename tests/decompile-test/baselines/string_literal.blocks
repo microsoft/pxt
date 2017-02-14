@@ -1,5 +1,9 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="text">
-<field name="TEXT">hello</field>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" line0="&#34;hello&#34;" />
+</block>
+</statement>
 </block>
 </xml>

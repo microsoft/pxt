@@ -4,9 +4,7 @@
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="typescript_expression">
 <field name="EXPRESSION"> 0 &#60;&#60; 1</field>
 </block>
@@ -15,9 +13,7 @@
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="typescript_expression">
 <field name="EXPRESSION"> 0 &#62;&#62; 1</field>
 </block>
@@ -26,9 +22,7 @@
 <block type="variables_set">
 <field name="VAR">z</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="typescript_expression">
 <field name="EXPRESSION"> 0 &#62;&#62;&#62; 1</field>
 </block>
@@ -37,9 +31,7 @@
 <block type="variables_set">
 <field name="VAR">a</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="typescript_expression">
 <field name="EXPRESSION"> 0 &#124; 1</field>
 </block>
@@ -48,9 +40,7 @@
 <block type="variables_set">
 <field name="VAR">b</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="typescript_expression">
 <field name="EXPRESSION"> 0 &#38; 1</field>
 </block>
@@ -59,9 +49,7 @@
 <block type="variables_set">
 <field name="VAR">c</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="typescript_expression">
 <field name="EXPRESSION"> 0 &#94; 1</field>
 </block>
@@ -76,9 +64,7 @@
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#42;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#42;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">e</field>
@@ -89,9 +75,7 @@ line0="x &#42;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#47;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#47;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">f</field>
@@ -102,9 +86,7 @@ line0="x &#47;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#37;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#37;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">g</field>
@@ -115,9 +97,7 @@ line0="x &#37;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#124;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#124;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">h</field>
@@ -128,9 +108,7 @@ line0="x &#124;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#38;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#38;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">i</field>
@@ -141,9 +119,7 @@ line0="x &#38;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#94;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#94;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">j</field>
@@ -154,9 +130,7 @@ line0="x &#94;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#60;&#60;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#60;&#60;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">k</field>
@@ -167,9 +141,7 @@ line0="x &#60;&#60;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#62;&#62;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#62;&#62;&#61; 1&#59;" />
 <next>
 <block type="variables_set">
 <field name="VAR">l</field>
@@ -180,9 +152,7 @@ line0="x &#62;&#62;&#61; 1"
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="x &#62;&#62;&#62;&#61; 1"
-/>
+<mutation numlines="1" line0="x &#62;&#62;&#62;&#61; 1&#59;" />
 </block>
 </next>
 </block>

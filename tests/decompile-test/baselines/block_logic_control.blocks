@@ -2,7 +2,7 @@
 <block type="pxt-on-start">
 <statement name="HANDLER">
 <block type="controls_if">
-<mutation elseif="0" else="0"></mutation>
+<mutation elseif="0" else="0" />
 <value name="IF0">
 <shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
@@ -12,7 +12,7 @@
 </statement>
 <next>
 <block type="controls_if">
-<mutation elseif="0" else="1"></mutation>
+<mutation elseif="0" else="1" />
 <value name="IF0">
 <shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
@@ -24,47 +24,45 @@
 </statement>
 <next>
 <block type="controls_if">
-<mutation elseif="1" else="1"></mutation>
+<mutation elseif="1" else="1" />
 <value name="IF0">
 <shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
 </shadow>
 </value>
-<statement name="DO0">
-</statement>
 <value name="IF1">
 <shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
 </shadow>
 </value>
+<statement name="DO0">
+</statement>
 <statement name="DO1">
 </statement>
 <statement name="ELSE">
 </statement>
 <next>
 <block type="controls_if">
-<mutation elseif="1" else="0"></mutation>
+<mutation elseif="1" else="0" />
 <value name="IF0">
 <shadow type="logic_boolean">
 <field name="BOOL">FALSE</field>
 </shadow>
 </value>
-<statement name="DO0">
-</statement>
 <value name="IF1">
 <shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>
 </shadow>
 </value>
+<statement name="DO0">
+</statement>
 <statement name="DO1">
 </statement>
 <next>
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
@@ -81,14 +79,17 @@
 </value>
 <next>
 <block type="controls_if">
-<mutation elseif="0" else="0"></mutation>
+<mutation elseif="0" else="0" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">AND</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="variables_get">
 <field name="VAR">x</field>
 </block>
@@ -101,6 +102,7 @@
 </block>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">EQ</field>
 <value name="A">
@@ -121,8 +123,9 @@
 </statement>
 <next>
 <block type="controls_if">
-<mutation elseif="0" else="1"></mutation>
+<mutation elseif="0" else="1" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="variables_get">
 <field name="VAR">x</field>
 </block>
@@ -141,8 +144,9 @@
 </value>
 <next>
 <block type="controls_if">
-<mutation elseif="0" else="0"></mutation>
+<mutation elseif="0" else="0" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="variables_get">
 <field name="VAR">y</field>
 </block>
@@ -151,10 +155,27 @@
 </statement>
 <next>
 <block type="controls_if">
-<mutation elseif="1" else="1"></mutation>
+<mutation elseif="1" else="1" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="IF1">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -169,9 +190,7 @@
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
@@ -190,11 +209,10 @@
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -209,26 +227,11 @@
 </next>
 </block>
 </statement>
-<value name="IF1">
-<block type="logic_negate">
-<value name="BOOL">
-<block type="logic_negate">
-<value name="BOOL">
-<shadow type="logic_boolean">
-<field name="BOOL">TRUE</field>
-</shadow>
-</value>
-</block>
-</value>
-</block>
-</value>
 <statement name="DO1">
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
@@ -247,11 +250,10 @@
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -270,9 +272,7 @@
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
@@ -291,14 +291,14 @@
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="logic_operation">
 <field name="OP">AND</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -322,10 +322,27 @@
 </statement>
 <next>
 <block type="controls_if">
-<mutation elseif="1" else="1"></mutation>
+<mutation elseif="1" else="1" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="IF1">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -340,9 +357,7 @@
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
@@ -359,26 +374,11 @@
 </value>
 </block>
 </statement>
-<value name="IF1">
-<block type="logic_negate">
-<value name="BOOL">
-<block type="logic_negate">
-<value name="BOOL">
-<shadow type="logic_boolean">
-<field name="BOOL">TRUE</field>
-</shadow>
-</value>
-</block>
-</value>
-</block>
-</value>
 <statement name="DO1">
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MULTIPLY</field>
 <value name="A">
