@@ -594,7 +594,6 @@ export class ProjectView
 
     importHex(data: pxt.cpp.HexFile) {
         const targetId = pxt.appTarget.id;
-        const forkid = pxt.appTarget.forkof;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
@@ -627,8 +626,7 @@ export class ProjectView
                 }).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
-            || (!forkid && Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
-            || (forkid && data.meta.cloudId == pxt.CLOUD_ID + forkid) // trying to load main target file into white-label
+            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
         ) {
             pxt.tickEvent("import.pxt")
             pxt.debug("importing project")

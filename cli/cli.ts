@@ -610,7 +610,7 @@ function uploadTaggedTargetAsync() {
             pxt.log("uploading " + v)
             return uploadCoreAsync({
                 label: "v" + v,
-                fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
+                fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
                 pkgversion: v,
                 githubOnly: true,
                 fileContent: {}
@@ -635,16 +635,8 @@ function pkgVersion() {
 }
 
 function targetFileList() {
-    let fp = forkPref()
-    let forkFiles = (name: string) => {
-        if (fp)
-            // make sure for the local files to follow fork files - this is the overriding order
-            return nodeutil.allFiles(fp + name).concat(nodeutil.allFiles(name, 8, true))
-        else
-            return nodeutil.allFiles(name)
-    }
-    let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
-        .concat(forkFiles("sim/public"))
+    let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
+        .concat(nodeutil.allFiles("sim/public"))
     pxt.debug(`target files: ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -652,7 +644,7 @@ function targetFileList() {
 export function uploadTargetAsync(label: string) {
     return uploadCoreAsync({
         label,
-        fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
+        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
         pkgversion: pkgVersion(),
         fileContent: {}
     })
@@ -1049,11 +1041,6 @@ function readLocalPxTarget() {
     }
     nodeutil.setTargetDir(process.cwd())
     let cfg: pxt.TargetBundle = readJson("pxtarget.json")
-    if (forkPref()) {
-        let cfgF: pxt.TargetBundle = readJson(forkPref() + "pxtarget.json")
-        U.jsonMergeFrom(cfgF, cfg)
-        return cfgF
-    }
     return cfg
 }
 
@@ -1086,7 +1073,7 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export function buildTargetAsync(): Promise<void> {
-    if (pxt.appTarget.forkof || pxt.appTarget.id == "core")
+    if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
     return simshimAsync()
         .then(() => buildFolderAsync('sim'))
@@ -1245,8 +1232,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
 }
 
-let forkPref = server.forkPref
-
 function buildSemanticUIAsync() {
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
@@ -1392,12 +1377,8 @@ function buildTargetCoreAsync() {
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
-    let isFork = !!pxt.appTarget.forkof
-    if (isFork)
-        forceCloudBuild = true
-    cfg.bundleddirs = cfg.bundleddirs.map(s => forkPref() + s)
     dirsToWatch = cfg.bundleddirs.slice()
-    if (!isFork && pxt.appTarget.id != "core") {
+    if (pxt.appTarget.id != "core") {
         dirsToWatch.push("sim"); // simulator
         if (fs.existsSync("theme")) {
             dirsToWatch.push("theme"); // simulator
@@ -1462,7 +1443,7 @@ function buildTargetCoreAsync() {
                 target: readJson("package.json")["version"],
                 pxt: pxt.appTarget.id == "core" ?
                     readJson("package.json")["version"] :
-                    readJson(forkPref() + "node_modules/pxt-core/package.json")["version"],
+                    readJson("node_modules/pxt-core/package.json")["version"],
             }
 
             saveThemeJson(cfg)
@@ -1522,11 +1503,6 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps = false) {
-    if (forkPref() && fs.existsSync("pxtarget.json")) {
-        console.log("Assuming target fork; building once.")
-        return buildTargetAsync()
-    }
-
     if (!fs.existsSync("sim/tsconfig.json")) {
         console.log("No sim/tsconfig.json; assuming npm installed package")
         return Promise.resolve()
@@ -2402,8 +2378,7 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
         .then(res => {
             reportDiagnostics(res.diagnostics);
             if (!res.success) U.userError("Compiler test failed")
-            if (!pxt.appTarget.forkof)
-                simulatorCoverage(res, opts)
+            simulatorCoverage(res, opts)
         })
         .then(() => opts);
 }

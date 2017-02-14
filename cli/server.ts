@@ -27,24 +27,6 @@ let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
 let electronHandlers: pxt.Map<ElectronHandler> = {};
 
-export function forkPref() {
-    if (pxt.appTarget.forkof)
-        return "node_modules/pxt-" + pxt.appTarget.forkof + "/"
-    else
-        return ""
-}
-function forkDirs(lst: string[]) {
-    if (pxt.appTarget.id == "core") {
-        lst = lst.map(s => s.replace(/node_modules\/pxt-core\//, ""))
-    }
-    let res = lst.map(p => path.join(root, p))
-    let fp = forkPref()
-    if (fp) {
-        U.pushRange(res, lst.map(p => path.join(root, fp + p)))
-    }
-    return res
-}
-
 function setupDocfilesdirs() {
     docfilesdirs = [
         "docfiles",
