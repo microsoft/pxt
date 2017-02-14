@@ -87,7 +87,7 @@ class Serial {
     lock = new U.PromiseQueue()
     openpromise: Promise<void>;
 
-    constructor(public info: server.SerialPortInfo) {
+    constructor(public info: SerialPortInfo) {
         let SerialPort = require("serialport");
         info.port = new SerialPort(info.comName, {
             baudrate: 115200,
@@ -196,7 +196,7 @@ function sambaCmd(ch: string, addr: number, len?: number) {
 }
 export function flashSerialAsync(c: commandParser.ParsedCommand) {
     let SerialPort = require("serialport");
-    let listAsync: () => Promise<server.SerialPortInfo[]> = Promise.promisify(SerialPort.list) as any
+    let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(SerialPort.list) as any
 
     let f = fs.readFileSync(c.arguments[0])
     let blocks = pxtc.UF2.parseFile(f as any)
