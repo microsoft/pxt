@@ -1984,12 +1984,12 @@ pxt_modules
         "taskName": "deploy",
         "isBuildCommand": true,
         "problemMatcher": "$tsc",
-        "args": ["deploy"]
+        "args": [""]
     }, {
         "taskName": "build",
         "isTestCommand": true,
         "problemMatcher": "$tsc",
-        "args": ["build"]
+        "args": [""]
     }]
 }
 `
