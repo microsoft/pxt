@@ -1,4 +1,5 @@
 /// <reference path="../typings/globals/bluebird/index.d.ts"/>
+/// <reference path="../built/pxtsim.d.ts"/>
 
 namespace pxsim.instructions {
     const LOC_LBL_SIZE = 10;
