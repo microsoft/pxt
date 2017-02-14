@@ -617,12 +617,12 @@ export class ProjectView
                 filesOverride: { "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">", "main.ts": "  " },
                 name: data.meta.name
             })
-                .then(() => this.openTypeScriptAsync())
+                .then(() => this.textEditor.loadMonacoAsync())
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
-                    // this is somewhat hacky...
+                    const main = pkg.mainEditorPkg().files["main.ts"];
+                    this.setFile(main);
                     this.textEditor.overrideFile(text);
-                    this.textEditor.formatCode();
                 }).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
@@ -799,7 +799,7 @@ export class ProjectView
             return Promise.resolve();
 
         let promise = Promise.resolve().then(() => {
-            return open ? this.textEditor.loadMonaco() : Promise.resolve();
+            return open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         }).then(() => {
             let src = this.editor.saveToTypeScript();
 

@@ -255,7 +255,7 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
 
-    public loadMonaco(): Promise<void> {
+    public loadMonacoAsync(): Promise<void> {
         if (this.editor || this.loadingMonaco) return Promise.resolve();
         this.loadingMonaco = true;
         this.extraLibs = Object.create(null);
@@ -872,7 +872,7 @@ export class Editor extends srceditor.Editor {
         let editorDiv = document.getElementById("monacoEditorInner");
         editorArea.insertBefore(loading, editorDiv);
 
-        return this.loadMonaco()
+        return this.loadMonacoAsync()
             .then(() => {
                 if (!this.editor) return;
                 let toolbox = document.getElementById('monacoEditorToolbox');
