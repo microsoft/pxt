@@ -603,12 +603,11 @@ export class ProjectView
             pxt.tickEvent("import.blocks")
             pxt.debug('importing microbit.co.uk blocks project')
             core.showLoading(lf("loading project..."))
-            compiler.getBlocksAsync()
-                .then(info => this.createProjectAsync({
+            this.createProjectAsync({
                     filesOverride: {
-                        "main.blocks": pxt.blocks.importXml(data.source, info)
+                        "main.blocks": data.source
                     }, name: data.meta.name
-                })).done(() => core.hideLoading());
+                }).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             pxt.tickEvent("import.td")
@@ -1643,7 +1642,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "pub":
         case "edit":
             pxt.tickEvent("hash." + hash.cmd);
-            let existing = workspace.getHeaders()
+            const existing = workspace.getHeaders()
                 .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
             core.showLoading(lf("loading project..."));
             (existing
@@ -1655,10 +1654,11 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
-            let fileContents = Util.stringToUint8Array(atob(hash.arg));
+            const fileContents = Util.stringToUint8Array(atob(hash.arg));
+            window.location.hash = "";
             core.showLoading(lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
-                .done(() => core.hideLoading())
+                .done(() => core.hideLoading());
             break;
     }
 }
@@ -1746,9 +1746,6 @@ $(document).ready(() => {
                         return theEditor.loadHeaderAsync(existing)
                     else return workspace.installByIdAsync(hash.arg)
                         .then(hd => theEditor.loadHeaderAsync(hd))
-                case "project":
-                    let fileContents = Util.stringToUint8Array(atob(hash.arg));
-                    return theEditor.importProjectFromFileAsync(fileContents);
                 default:
                     handleHash(hash); break;
             }
