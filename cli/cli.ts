@@ -1057,15 +1057,23 @@ function readLocalPxTarget() {
     return cfg
 }
 
-function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeProjects: boolean = false) {
-    let prev = process.cwd()
-    let folders = pxt.appTarget.bundleddirs;
+function bundledDirs(includeProjects: boolean): string[] {
+    let folders: string[] = [];
+    if (pxt.appTarget.bundleddirs) folders = folders.concat(pxt.appTarget.bundleddirs);
+    if (pxt.appTarget.bundledmodules) folders = folders.concat(pxt.appTarget.bundledmodules);
 
     if (includeProjects) {
-        let projects = nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true).filter(f => /prj$/.test(f));
+        const projects = nodeutil
+            .allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true)
+            .filter(f => /prj$/.test(f));
         folders = folders.concat(projects);
     }
+    return folders;
+}
 
+function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeProjects: boolean = false) {
+    let prev = process.cwd()
+    const folders = bundledDirs(includeProjects);
     return Promise.mapSeries(folders, (dirname) => {
         process.chdir(path.join(nodeutil.targetDir, dirname))
         mainPkg = new pxt.MainPackage(new Host())
@@ -1396,7 +1404,7 @@ function buildTargetCoreAsync() {
     if (isFork)
         forceCloudBuild = true
     cfg.bundleddirs = cfg.bundleddirs.map(s => forkPref() + s)
-    dirsToWatch = cfg.bundleddirs.slice()
+    dirsToWatch = bundledDirs(true);
     if (!isFork && pxt.appTarget.id != "core") {
         dirsToWatch.push("sim"); // simulator
         if (fs.existsSync("theme")) {
@@ -1473,8 +1481,9 @@ function buildTargetCoreAsync() {
             fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
             pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
-            delete targetlight.bundleddirs
-            delete targetlight.bundledpkgs
+            delete targetlight.bundleddirs;
+            delete targetlight.bundledmodules;
+            delete targetlight.bundledpkgs;
             delete targetlight.appTheme
             const targetlightjson = JSON.stringify(targetlight, null, 2);
             fs.writeFileSync("built/targetlight.json", targetlightjson)
@@ -3289,7 +3298,8 @@ function uploadDocsTranslationsAsync(crowdinDir: string, prj: string, key: strin
 
 function uploadBundledTranslationsAsync(crowdinDir: string, prj: string, key: string): Promise<void> {
     const todo: string[] = [];
-    pxt.appTarget.bundleddirs.forEach(dir => {
+
+    bundledDirs(false).forEach(dir => {
         const locdir = path.join(dir, "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
@@ -3312,11 +3322,12 @@ function uploadBundledTranslationsAsync(crowdinDir: string, prj: string, key: st
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
     const cred = crowdinCredentials();
-    if (!cred) return Promise.resolve();
+    if (!cred || !pxt.appTarget.bundleddirs) return Promise.resolve();
 
     const crowdinDir = pxt.appTarget.id;
     const name = parsed.arguments[0] || "";
     const todo: string[] = [];
+
     pxt.appTarget.bundleddirs
         .filter(dir => !name || dir == "libs/" + name)
         .forEach(dir => {
