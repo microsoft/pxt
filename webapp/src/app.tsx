@@ -1642,7 +1642,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "pub":
         case "edit":
             pxt.tickEvent("hash." + hash.cmd);
-            let existing = workspace.getHeaders()
+            const existing = workspace.getHeaders()
                 .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
             core.showLoading(lf("loading project..."));
             (existing
@@ -1654,10 +1654,11 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
-            let fileContents = Util.stringToUint8Array(atob(hash.arg));
+            const fileContents = Util.stringToUint8Array(atob(hash.arg));
+            window.location.hash = "";
             core.showLoading(lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
-                .done(() => core.hideLoading())
+                .done(() => core.hideLoading());
             break;
     }
 }
@@ -1745,9 +1746,6 @@ $(document).ready(() => {
                         return theEditor.loadHeaderAsync(existing)
                     else return workspace.installByIdAsync(hash.arg)
                         .then(hd => theEditor.loadHeaderAsync(hd))
-                case "project":
-                    let fileContents = Util.stringToUint8Array(atob(hash.arg));
-                    return theEditor.importProjectFromFileAsync(fileContents);
                 default:
                     handleHash(hash); break;
             }
