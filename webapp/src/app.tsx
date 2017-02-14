@@ -614,15 +614,12 @@ export class ProjectView
             pxt.debug('importing microbit.co.uk TD project')
             core.showLoading("loading project...")
             this.createProjectAsync({
-                filesOverride: { "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">", "main.ts": "  " },
+                filesOverride: { "main.blocks": "", "main.ts": "  " },
                 name: data.meta.name
             })
-                .then(() => this.textEditor.loadMonacoAsync())
                 .then(() => tdlegacy.td2tsAsync(data.source))
                 .then(text => {
-                    const main = pkg.mainEditorPkg().files["main.ts"];
-                    this.setFile(main);
-                    this.textEditor.overrideFile(text);
+                    this.textEditor.overrideFile(text)
                 }).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
