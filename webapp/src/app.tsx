@@ -604,10 +604,10 @@ export class ProjectView
             pxt.debug('importing microbit.co.uk blocks project')
             core.showLoading(lf("loading project..."))
             this.createProjectAsync({
-                    filesOverride: {
-                        "main.blocks": data.source
-                    }, name: data.meta.name
-                }).done(() => core.hideLoading());
+                filesOverride: {
+                    "main.blocks": data.source
+                }, name: data.meta.name
+            }).done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             pxt.tickEvent("import.td")
@@ -618,9 +618,8 @@ export class ProjectView
                 name: data.meta.name
             })
                 .then(() => tdlegacy.td2tsAsync(data.source))
-                .then(text => {
-                    this.textEditor.overrideFile(text)
-                }).done(() => core.hideLoading());
+                .then(text => this.textEditor.overrideFile(text))
+                .done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
             || (!forkid && Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
@@ -1610,10 +1609,11 @@ function parseHash(): { cmd: string; arg: string } {
     return { cmd: '', arg: '' };
 }
 
-function handleHash(hash: { cmd: string; arg: string }) {
-    if (!hash) return;
+function handleHash(hash: { cmd: string; arg: string }): boolean {
+    if (!hash) return false;
     let editor = theEditor;
-    if (!editor) return;
+    if (!editor) return false;
+
     switch (hash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
@@ -1622,19 +1622,19 @@ function handleHash(hash: { cmd: string; arg: string }) {
         case "follow":
             pxt.tickEvent("hash.follow")
             editor.newEmptyProject(undefined, hash.arg);
-            break;
+            return true;
         case "newproject":
             pxt.tickEvent("hash.newproject")
             editor.newProject();
-            break;
+            return true;
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
-            break;
+            return true;
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
-            break;
+            return true;
         case "sandbox":
         case "pub":
         case "edit":
@@ -1647,7 +1647,7 @@ function handleHash(hash: { cmd: string; arg: string }) {
                 : workspace.installByIdAsync(hash.arg)
                     .then(hd => theEditor.loadHeaderAsync(hd)))
                 .done(() => core.hideLoading())
-            break;
+            return true;
         case "sandboxproject":
         case "project":
             pxt.tickEvent("hash." + hash.cmd);
@@ -1656,8 +1656,10 @@ function handleHash(hash: { cmd: string; arg: string }) {
             core.showLoading(lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading());
-            break;
+            return true;
     }
+
+    return false;
 }
 
 function initHashchange() {
@@ -1734,23 +1736,13 @@ $(document).ready(() => {
         }).then(() => pxt.winrt.initAsync(ih))
         .then(() => {
             electron.init();
-            switch (hash.cmd) {
-                case "sandbox":
-                case "pub":
-                case "edit":
-                    let existing = workspace.getHeaders().filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
-                    if (existing)
-                        return theEditor.loadHeaderAsync(existing)
-                    else return workspace.installByIdAsync(hash.arg)
-                        .then(hd => theEditor.loadHeaderAsync(hd))
-                default:
-                    handleHash(hash); break;
-            }
+            if (hash.cmd && handleHash(hash))
+                return Promise.resolve();
 
+            // default handlers
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
             let hd = workspace.getHeaders()[0]
-            if (ent)
-                hd = workspace.getHeader(ent.id)
+            if (ent) hd = workspace.getHeader(ent.id)
             if (hd) return theEditor.loadHeaderAsync(hd)
             else theEditor.newProject();
             return Promise.resolve();
