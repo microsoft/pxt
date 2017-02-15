@@ -119,6 +119,46 @@ namespace ts.pxtc.decompiler {
 
     type OutputNode = ExpressionNode | TextNode;
 
+    export interface RenameLocation {
+        name: string;
+        diff: number;
+        span: ts.TextSpan;
+    }
+
+    export class RenameMap {
+        constructor(private renames: RenameLocation[]) {
+            this.renames.sort((a, b) => a.span.start - b.span.start);
+        }
+
+        public getRenamesInSpan(start: number, end: number) {
+            const res: RenameLocation[] = [];
+
+            for (const rename of this.renames) {
+                if (rename.span.start > end) {
+                    break;
+                }
+
+                else if (rename.span.start >= start) {
+                    res.push(rename);
+                }
+            }
+
+            return res;
+        }
+
+        public getRenameForPosition(position: number) {
+            for (const rename of this.renames) {
+                if (rename.span.start > position) {
+                    return undefined;
+                }
+                else if (rename.span.start === position) {
+                    return rename;
+                }
+            }
+            return undefined;
+        }
+    }
+
 
     class LSHost implements ts.LanguageServiceHost {
             constructor(private p: ts.Program) {}
@@ -160,40 +200,18 @@ namespace ts.pxtc.decompiler {
      * names in the given file. All variables in Blockly are global, so this is
      * necessary to prevent local variables from colliding.
      */
-    export function fixNameCollisions(p: Program, fileName: string, s: SourceFile) {
+    export function buildRenameMap(p: Program, s: SourceFile): RenameMap {
         let service = ts.createLanguageService(new LSHost(p))
-        // let s = service.getSourceFile(fileName);
-        const allRenames: [string, ts.TextSpan][] = [];
+        const allRenames: RenameLocation[] = [];
 
         collectNameCollisions();
 
+
         if (allRenames.length) {
-            allRenames.sort((a, b) => a[1].start - b[1].start);
-
-            let changeStart = allRenames[0][1].start;
-            let changeEnd = 0;
-            let offset = 0;
-            let newText = s.getFullText();
-
-            allRenames.forEach(([name, span]) => {
-                let { start, length } = span;
-
-                changeStart = Math.min(changeStart, start);
-                changeEnd = Math.max(changeEnd, start + length);
-
-                start += offset;
-                offset += (name.length - length);
-
-                newText = newText.slice(0, start) + name + newText.slice(start + length);
-            });
-
-            return s.update(newText, {
-                span: { start: changeStart, length: changeEnd - changeStart },
-                newLength: changeEnd - changeStart + offset
-            });
+            return new RenameMap(allRenames);
         }
 
-        return s;
+        return undefined;
 
         function collectNameCollisions(): void {
             const takenNames: Map<boolean> = {};
@@ -210,7 +228,11 @@ namespace ts.pxtc.decompiler {
                             const renames = service.findRenameLocations(s.fileName, child.name.pos + 1, false, false);
                             if (renames) {
                                 renames.forEach(r => {
-                                    allRenames.push([newName, r.textSpan]);
+                                    allRenames.push({
+                                        name: newName,
+                                        diff: newName.length - name.length,
+                                        span: r.textSpan
+                                    });
                                 });
                             }
                         }
@@ -255,7 +277,7 @@ namespace ts.pxtc.decompiler {
         snippetMode?: boolean; // do not emit "on start"
     }
 
-    export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions): pxtc.CompileResult {
+    export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
         let stmts: ts.Statement[] = file.statements;
         let result: pxtc.CompileResult = {
             blocksInfo: blocksInfo,
@@ -496,10 +518,6 @@ ${output}</xml>`;
             }
         }
 
-        function getExpressionNode(type: string): ExpressionNode {
-            return { kind: "expr", type }
-        }
-
         function getBinaryExpression(n: ts.BinaryExpression): ExpressionNode {
             const op = n.operatorToken.getText();
             const npp = ops[op];
@@ -587,7 +605,7 @@ ${output}</xml>`;
         }
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
-            return getFieldBlock("variables_get", "VAR", getVariableName(identifier.text));
+            return getFieldBlock("variables_get", "VAR", getVariableName(identifier));
         }
 
         function getNumericLiteral(value: string): ExpressionNode {
@@ -636,7 +654,7 @@ ${output}</xml>`;
         function getPrefixUnaryExpression(node: PrefixUnaryExpression): OutputNode {
             switch (node.operator) {
                 case SK.ExclamationToken:
-                    const r = getExpressionNode("logic_negate");
+                    const r: ExpressionNode = { kind: "expr", type: "logic_negate" };
                     r.inputs = [getValue("BOOL", node.operand, ShadowType.Boolean)]
                     return r;
                 case SK.PlusToken:
@@ -785,7 +803,28 @@ ${output}</xml>`;
                 mutation: {}
             };
 
-            const parts = node.getText().split("\n");
+            let text = node.getText();
+            const start = node.getStart();
+            const end = node.getEnd();
+
+            if (renameMap) {
+                const renames = renameMap.getRenamesInSpan(start, end);
+
+                if (renames.length) {
+                    let offset = 0;
+
+                    renames.forEach(rename => {
+                        const sIndex = rename.span.start + offset - start;
+                        const eIndex = sIndex + rename.span.length;
+
+                        offset += rename.diff;
+
+                        text = text.slice(0, sIndex) + rename.name + text.slice(eIndex);
+                    });
+                }
+            }
+
+            const parts = text.split("\n");
             r.mutation["numlines"] = parts.length.toString();
 
             parts.forEach((p, i) => {
@@ -833,9 +872,9 @@ ${output}</xml>`;
 
             switch (n.operatorToken.kind) {
                 case SK.EqualsToken:
-                    return getVariableSetOrChangeBlock(name, n.right);
+                    return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
                 case SK.PlusEqualsToken:
-                    return getVariableSetOrChangeBlock(name, n.right, true);
+                    return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
                     return {
                         kind: "statement",
@@ -846,7 +885,7 @@ ${output}</xml>`;
                             value: negateNumericNode(n.right),
                             shadowType: ShadowType.Number
                         }],
-                        fields: [getField("VAR", getVariableName(name))]
+                        fields: [getField("VAR", getVariableName(n.left as ts.Identifier))]
                     };
                 default:
                     error(n, Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]));
@@ -900,7 +939,7 @@ ${output}</xml>`;
             const r: StatementNode = {
                 kind: "statement",
                 type: "controls_simple_for",
-                fields: [getField("VAR", getVariableName(indexVar))],
+                fields: [getField("VAR", getVariableName(initializer.declarations[0].name as ts.Identifier))],
                 inputs: [],
                 handlers: []
             };
@@ -936,23 +975,19 @@ ${output}</xml>`;
             return r;
         }
 
-        function getVariableSetOrChangeBlock(name: string, value: Node | number, changed = false, overrideName = false): StatementNode {
-            if (!overrideName) {
-                name = getVariableName(name);
-            }
-
+        function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
             // We always do a number shadow even if the variable is not of type number
             return {
                 kind: "statement",
                 type: changed ? "variables_change" : "variables_set",
                 inputs: [getValue("VALUE", value, ShadowType.Number)],
-                fields: [getField("VAR", name)]
+                fields: [getField("VAR", getVariableName(name))]
             };
         }
 
         function getVariableDeclarationStatement(n: ts.VariableDeclaration): StatementNode {
             if (addVariableDeclaration(n)) {
-                return getVariableSetOrChangeBlock((n.name as ts.Identifier).text, n.initializer)
+                return getVariableSetOrChangeBlock(n.name as ts.Identifier, n.initializer)
             }
             return undefined;
         }
@@ -965,7 +1000,7 @@ ${output}</xml>`;
                 return;
             }
 
-            return getVariableSetOrChangeBlock((node.operand as ts.Identifier).text, isPlusPlus ? 1 : -1, true);
+            return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
         }
 
         function getCallStatement(node: ts.CallExpression) {
@@ -1190,7 +1225,7 @@ ${output}</xml>`;
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
                     unusedDeclarations.forEach(([name, node]) => {
-                        const v = getVariableSetOrChangeBlock(name, (node as ts.VariableDeclaration).initializer, false, true);
+                        const v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
                         v.next = current;
                         current = v;
                     });
@@ -1317,15 +1352,14 @@ ${output}</xml>`;
             return true;
         }
 
-        function getVariableName(name: string) {
-            const existingName = findVariableName(name);
-            if (existingName) {
-                return existingName;
+        function getVariableName(name: ts.Identifier) {
+            if (renameMap) {
+                const rename = renameMap.getRenameForPosition(name.getStart());
+                if (rename) {
+                    return rename.name;
+                }
             }
-            else {
-                addVariable(name);
-                return name;
-            }
+            return name.text;
         }
 
         function findVariableName(name: string) {

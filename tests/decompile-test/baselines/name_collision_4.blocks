@@ -42,7 +42,7 @@
 <block type="pxt-on-start">
 <statement name="HANDLER">
 <block type="variables_set">
-<field name="VAR">z</field>
+<field name="VAR">x</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -50,7 +50,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">z</field>
+<field name="VAR">x</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>

@@ -284,8 +284,7 @@ namespace ts.pxtc {
         let file = resp.ast.getSourceFile(fileName);
         const apis = getApiInfo(resp.ast);
         const blocksInfo = pxtc.getBlocksInfo(apis);
-        file = pxtc.decompiler.fixNameCollisions(resp.ast, fileName, file);
-        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false }, pxtc.decompiler.buildRenameMap(resp.ast, file))
         return bresp;
     }
 

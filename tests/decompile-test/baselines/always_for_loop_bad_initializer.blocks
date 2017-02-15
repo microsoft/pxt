@@ -10,9 +10,7 @@
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="for &#40;1 &#43; 1&#59; x &#60;&#61; 5&#59; x&#43;&#43;&#41; &#123;&#125;"
-/>
+<mutation numlines="1" line0="for &#40;1 &#43; 1&#59; x &#60;&#61; 5&#59; x&#43;&#43;&#41; &#123;&#125;" />
 <next>
 <block type="variables_set">
 <field name="VAR">x2</field>
@@ -23,14 +21,10 @@ line0="for &#40;1 &#43; 1&#59; x &#60;&#61; 5&#59; x&#43;&#43;&#41; &#123;&#125;
 </value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="for &#40;&#59; x2 &#60;&#61; 5&#59; x2&#43;&#43;&#41; &#123;&#125;"
-/>
+<mutation numlines="1" line0="for &#40;&#59; x2 &#60;&#61; 5&#59; x2&#43;&#43;&#41; &#123;&#125;" />
 <next>
 <block type="typescript_statement">
-<mutation numlines="1"
-line0="for &#40;let x &#61; 0&#44; y &#61; 2&#59; x &#60;&#61; 5&#59; x&#43;&#43;&#41; &#123;&#125;"
-/>
+<mutation numlines="1" line0="for &#40;let y &#61; 0&#44; z &#61; 2&#59; y &#60;&#61; 5&#59; y&#43;&#43;&#41; &#123;&#125;" />
 </block>
 </next>
 </block>
