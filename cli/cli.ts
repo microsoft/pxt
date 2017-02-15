@@ -1984,12 +1984,22 @@ pxt_modules
         "taskName": "deploy",
         "isBuildCommand": true,
         "problemMatcher": "$tsc",
-        "args": ["deploy"]
+        "args": [""]
     }, {
         "taskName": "build",
         "isTestCommand": true,
         "problemMatcher": "$tsc",
-        "args": ["build"]
+        "args": [""]
+    }, {
+        "taskName": "clean",
+        "isTestCommand": true,
+        "problemMatcher": "$tsc",
+        "args": [""]
+    }, {
+        "taskName": "serial",
+        "isTestCommand": true,
+        "problemMatcher": "$tsc",
+        "args": [""]
     }]
 }
 `
@@ -3431,6 +3441,13 @@ export function testAsync() {
         .then((compileOpts) => { });
 }
 
+export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    serial.monitorSerial((info, buffer) => {
+        console.log(buffer.toString('utf8'));
+    })
+    return Promise.resolve();
+}
+
 export interface SavedProject {
     name: string;
     files: Map<string>;
@@ -3812,6 +3829,7 @@ function initCommands() {
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
+    simpleCmd("serial", "listen and print serial commands to console", serialAsync);
 
     p.defineCommand({
         name: "login",

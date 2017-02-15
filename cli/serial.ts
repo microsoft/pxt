@@ -12,6 +12,73 @@ import * as commandParser from './commandparser';
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
+export interface SerialPortInfo {
+    comName: string;
+    pnpId: string;
+    manufacturer: string;
+
+    opened?: boolean;
+    port?: any;
+}
+
+export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => void) {
+    if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
+    if (pxt.appTarget.serial.useHF2) {
+        return
+    }
+
+    console.log('serial: monitoring ports...')
+
+    let SerialPort: any;
+    try {
+        SerialPort = require("serialport");
+    } catch (er) {
+        console.warn('serial: failed to load, skipping...');
+        return;
+    }
+    const serialPorts: pxt.Map<SerialPortInfo> = {};
+    function close(info: SerialPortInfo) {
+        console.log('serial: closing ' + info.pnpId);
+        delete serialPorts[info.pnpId];
+    }
+
+    function open(info: SerialPortInfo) {
+        console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
+        serialPorts[info.pnpId] = info;
+        info.port = new SerialPort(info.comName, {
+            baudrate: 115200,
+            autoOpen: false
+        }); // this is the openImmediately flag [default is true]
+        info.port.open(function (error: any) {
+            if (error) {
+                console.log('failed to open: ' + error);
+                close(info);
+            } else {
+                console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
+                info.opened = true;
+                info.port.on('data', (buffer: Buffer) => onData(info, buffer));
+                info.port.on('error', function () { close(info); });
+                info.port.on('close', function () { close(info); });
+            }
+        });
+    }
+
+    const manufacturerRx = pxt.appTarget.serial.manufacturerFilter
+        ? new RegExp(pxt.appTarget.serial.manufacturerFilter, "i")
+        : undefined;
+    function filterPort(info: SerialPortInfo): boolean {
+        return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
+    }
+
+    setInterval(() => {
+        SerialPort.list(function (err: any, ports: SerialPortInfo[]) {
+            ports.filter(filterPort)
+                .filter(info => !serialPorts[info.pnpId])
+                .forEach((info) => open(info));
+        });
+    }, 5000);
+}
+
 class Serial {
     buf = new U.PromiseBuffer<Buffer>()
     isclosed = false;
@@ -20,7 +87,7 @@ class Serial {
     lock = new U.PromiseQueue()
     openpromise: Promise<void>;
 
-    constructor(public info: server.SerialPortInfo) {
+    constructor(public info: SerialPortInfo) {
         let SerialPort = require("serialport");
         info.port = new SerialPort(info.comName, {
             baudrate: 115200,
@@ -129,7 +196,7 @@ function sambaCmd(ch: string, addr: number, len?: number) {
 }
 export function flashSerialAsync(c: commandParser.ParsedCommand) {
     let SerialPort = require("serialport");
-    let listAsync: () => Promise<server.SerialPortInfo[]> = Promise.promisify(SerialPort.list) as any
+    let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(SerialPort.list) as any
 
     let f = fs.readFileSync(c.arguments[0])
     let blocks = pxtc.UF2.parseFile(f as any)
