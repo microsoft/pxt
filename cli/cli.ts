@@ -1300,7 +1300,7 @@ bring it to our attention. Post an issue or email us:
 ---------------------------------------------
 Third Party Code Components
 ---------------------------------------------
-    
+
     `;
 
     function lic(dep: string) {
@@ -2716,7 +2716,7 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
                 else {
                     const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
                     fs.writeFileSync(outFile, decompiled)
-                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile})`));
+                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile}`));
                 }
             }, error => {
                 errors.push((`decompiler test FAILED; ${basename} was unable to decompile due to: ${error}`))
@@ -2949,7 +2949,7 @@ function getCasesFromFile(fileText: string): DecompilerErrorTestCase[] {
 function decompileAsync(parsed: commandParser.ParsedCommand) {
     return Promise.mapSeries(parsed.arguments, f => {
         const outFile = replaceFileExtension(f, ".blocks")
-        return decompileAsyncWorker(f)
+        return decompileAsyncWorker(f, parsed.flags["dep"] as string)
             .then(result => {
                 fs.writeFileSync(outFile, result)
                 console.log("Wrote " + outFile)
@@ -2970,12 +2970,16 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         pkg.getCompileOptionsAsync()
             .then(opts => {
                 opts.ast = true;
-                const decompiled = pxtc.decompile(opts, "main.ts");
-                if (decompiled.success) {
-                    resolve(decompiled.outfiles["main.blocks"]);
-                }
-                else {
-                    reject("Could not decompile " + f)
+                    const decompiled = pxtc.decompile(opts, "main.ts");
+                    if (decompiled.success) {
+                        resolve(decompiled.outfiles["main.blocks"]);
+                    }
+                    else {
+                        reject("Could not decompile " + f + ": " + JSON.stringify(decompiled.diagnostics, undefined, 4))
+                    }
+                try {
+                } catch (e) {
+                    reject("Exception while decompiling " + f);
                 }
             });
     });
@@ -3919,7 +3923,6 @@ function initCommands() {
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
-    advancedCommand("decompile", "decompile typescript files", decompileAsync, "<file1.ts> <file2.ts> ...");
     advancedCommand("testdecompiler", "run decompiler tests", testDecompilerAsync, "<dir>");
     advancedCommand("testdecompilererrors", "run decompiler error tests", testDecompilerErrorsAsync, "<dir>");
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
@@ -3946,6 +3949,16 @@ function initCommands() {
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
+
+    p.defineCommand({
+        name: "decompile",
+        help: "decompile typescript files",
+        argString: "<file1.ts> <file2.ts> ...",
+        advanced: true,
+        flags: {
+           dep: { description: "include specified path as a dependency to the project", type: "string", argument: "path" }
+        }
+    }, decompileAsync);
 
     p.defineCommand({
         name: "gdb",

@@ -119,6 +119,138 @@ namespace ts.pxtc.decompiler {
 
     type OutputNode = ExpressionNode | TextNode;
 
+
+    class LSHost implements ts.LanguageServiceHost {
+            constructor(private p: ts.Program) {}
+
+            getCompilationSettings(): ts.CompilerOptions {
+                const opts = this.p.getCompilerOptions();
+                opts.noLib = true;
+                return opts;
+            }
+
+            getNewLine(): string { return "\n" }
+
+            getScriptFileNames(): string[] {
+                return this.p.getSourceFiles().map(f => f.fileName);
+            }
+
+            getScriptVersion(fileName: string): string {
+                return "0";
+            }
+
+            getScriptSnapshot(fileName: string): ts.IScriptSnapshot {
+                const f = this.p.getSourceFile(fileName);
+                return {
+                    getLength: () => f.getFullText().length,
+                    getText: () => f.getFullText(),
+                    getChangeRange: () => undefined
+                };
+            }
+
+            getCurrentDirectory(): string { return "."; }
+
+            getDefaultLibFileName(options: ts.CompilerOptions): string { return null; }
+
+            useCaseSensitiveFileNames(): boolean { return true; }
+    }
+
+    /**
+     * Uses the language service to ensure that there are no duplicate variable
+     * names in the given file. All variables in Blockly are global, so this is
+     * necessary to prevent local variables from colliding.
+     */
+    export function fixNameCollisions(p: Program, fileName: string, s: SourceFile) {
+        let service = ts.createLanguageService(new LSHost(p))
+        // let s = service.getSourceFile(fileName);
+        const allRenames: [string, ts.TextSpan][] = [];
+
+        collectNameCollisions();
+
+        if (allRenames.length) {
+            allRenames.sort((a, b) => a[1].start - b[1].start);
+
+            let changeStart = allRenames[0][1].start;
+            let changeEnd = 0;
+            let offset = 0;
+            let newText = s.getFullText();
+
+            allRenames.forEach(([name, span]) => {
+                let { start, length } = span;
+
+                changeStart = Math.min(changeStart, start);
+                changeEnd = Math.max(changeEnd, start + length);
+
+                start += offset;
+                offset += (name.length - length);
+
+                newText = newText.slice(0, start) + name + newText.slice(start + length);
+            });
+
+            return s.update(newText, {
+                span: { start: changeStart, length: changeEnd - changeStart },
+                newLength: changeEnd - changeStart + offset
+            });
+        }
+
+        return s;
+
+        function collectNameCollisions(): void {
+            const takenNames: Map<boolean> = {};
+
+            checkChildren(s);
+
+            function checkChildren(n: Node): void {
+                ts.forEachChild(n, (child) => {
+                    if (isDeclaration(child) && isVariableLike(child) && child.name.kind === SK.Identifier) {
+                        const name = child.name.getText();
+
+                        if (takenNames[name]) {
+                            const newName = getNewName(name);
+                            const renames = service.findRenameLocations(s.fileName, child.name.pos + 1, false, false);
+                            if (renames) {
+                                renames.forEach(r => {
+                                    allRenames.push([newName, r.textSpan]);
+                                });
+                            }
+                        }
+                        else {
+                            takenNames[name] = true;
+                        }
+                    }
+                    checkChildren(child);
+                });
+            }
+
+            function getNewName(name: string) {
+
+                // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
+                if (name.length === 1) {
+                    const charCode = name.charCodeAt(0);
+                    if (charCode >= lowerCaseAlphabetStartCode && charCode <= lowerCaseAlphabetEndCode) {
+                        const offset = charCode - lowerCaseAlphabetStartCode;
+                        for (let i = 1; i < 26; i++) {
+                            const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
+                            if (!takenNames[newChar]) {
+                                takenNames[newChar] = true;
+                                return newChar;
+                            }
+                        }
+                    }
+                }
+
+                // For all other names, add a number to the end. Start at 2 because it probably makes more sense for kids
+                for (let i = 2; ; i++) {
+                    const toTest = name + i;
+                    if (!takenNames[toTest]) {
+                        takenNames[toTest] = true;
+                        return toTest;
+                    }
+                }
+            }
+        }
+    }
+
     export interface DecompileBlocksOptions {
         snippetMode?: boolean; // do not emit "on start"
     }
@@ -135,8 +267,6 @@ namespace ts.pxtc.decompiler {
         const takenNames: pxt.Map<boolean> = {}
 
         const unusedDeclarations: [string, ts.Node][] = []
-
-        //emitBlockStatement(stmts, undefined, true, true);
 
         const n = codeBlock(stmts, undefined, true, true);
         emitStatementNode(n);
@@ -586,22 +716,7 @@ ${output}</xml>`;
                         break;
                     case SK.VariableDeclaration:
                         const decl = node as ts.VariableDeclaration;
-                        let isAuto = false
-                        if (decl.initializer) {
-                            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
-                                isAuto = true
-                            }
-                            else if (isStringOrNumericLiteral(decl.initializer.kind)) {
-                                const text = decl.initializer.getText();
-                                isAuto = text === "0" || isEmptyString(text);
-                            }
-                            else {
-                                const callInfo: pxtc.CallInfo = (decl.initializer as any).callInfo
-                                if (callInfo && callInfo.isAutoCreate)
-                                    isAuto = true
-                            }
-                        }
-                        if (isAuto) {
+                        if (isAutoDeclaration(decl)) {
                             trackAutoDeclaration(decl);
                             // Don't emit null or automatic initializers;
                             // They are implicit within the blocks. But do add a name to the scope
@@ -1070,12 +1185,22 @@ ${output}</xml>`;
                 const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent);
                 const emitOnStart = topLevel && !options.snippetMode;
                 if (emitOnStart) {
+                    popScope();
+
+                    // Preserve any variable edeclarations that were never used
+                    let current = stmt;
+                    unusedDeclarations.forEach(([name, node]) => {
+                        const v = getVariableSetOrChangeBlock(name, (node as ts.VariableDeclaration).initializer, false, true);
+                        v.next = current;
+                        current = v;
+                    });
+
                     return {
                         kind: "statement",
                         type: ts.pxtc.ON_START_TYPE,
                         handlers: [{
                             name: "HANDLER",
-                            statement: stmt
+                            statement: current
                         }]
                     } as StatementNode;
                 }
@@ -1333,6 +1458,7 @@ ${output}</xml>`;
 
             switch (n.operatorToken.kind) {
                 case SK.EqualsToken:
+                    return checkExpression(n.right);
                 case SK.PlusEqualsToken:
                 case SK.MinusEqualsToken:
                     return undefined;
@@ -1361,14 +1487,22 @@ ${output}</xml>`;
         }
 
         function checkVariableDeclaration(n: ts.VariableDeclaration) {
+            let check: string;
+
             if (n.name.kind !== SK.Identifier) {
-                return Util.lf("Variable declarations may not use binding patterns");
+                check = Util.lf("Variable declarations may not use binding patterns");
             }
             else if (!n.initializer) {
-                return Util.lf("Variable declarations must have an initializer");
+                check = Util.lf("Variable declarations must have an initializer");
+            }
+            else if (!isAutoDeclaration(n)) {
+                check = checkExpression(n.initializer);
             }
 
-            return undefined;
+            if (check) {
+            }
+
+            return check;
         }
 
         function checkVariableStatement(n: ts.VariableStatement) {
@@ -1425,6 +1559,38 @@ ${output}</xml>`;
 
             return undefined;
         }
+    }
+
+    function isAutoDeclaration(decl: VariableDeclaration) {
+        if (decl.initializer) {
+            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword) {
+                return true
+            }
+            else if (isStringOrNumericLiteral(decl.initializer.kind)) {
+                const text = decl.initializer.getText();
+                return text === "0" || isEmptyString(text);
+            }
+            else {
+                const callInfo: pxtc.CallInfo = (decl.initializer as any).callInfo
+                if (callInfo && callInfo.isAutoCreate)
+                    return true
+            }
+        }
+        return false;
+    }
+
+    function getCallInfo(checker: ts.TypeChecker, node: ts.Node, apiInfo: ApisInfo) {
+        const symb = checker.getSymbolAtLocation(node);
+
+        if (symb) {
+            const qName = checker.getFullyQualifiedName(symb);
+
+            if (qName) {
+                return apiInfo.byQName[qName];
+            }
+        }
+
+        return undefined;
     }
 
     function checkExpression(n: ts.Node): string {
