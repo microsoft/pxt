@@ -312,7 +312,7 @@ class Host
             .then(v => v.val, e => null)
     }
 
-    downloadPackageAsync(pkg: pxt.Package) {
+    downloadPackageAsync(pkg: pxt.Package): Promise<any> {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 

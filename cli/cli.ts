@@ -952,7 +952,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         }
         if (!rdf) {
             if (!fs.existsSync(p))
-                return;
+                return undefined;
             rdf = readFileAsync(p)
         }
 
@@ -3569,7 +3569,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         .then(json => {
             if (!json) {
                 console.log("Couldn't extract.")
-                return
+                return undefined;
             }
             if (Array.isArray(json.scripts)) {
                 console.log("Legacy TD workspace.")
@@ -3595,7 +3595,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             let prjs: SavedProject[] = json.projects
             if (!prjs) {
                 console.log("No projects found.")
-                return
+                return undefined;
             }
             const dirs = writeProjects(prjs, outDir)
             return dirs;
@@ -4151,7 +4151,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
 
     if (compileId != "none") {
-        build.thisBuild = build.buildEngines[compileId]
+        build.setBuild(build.buildEngines[compileId]);
         if (!build.thisBuild) U.userError("cannot find build engine: " + compileId)
     }
 

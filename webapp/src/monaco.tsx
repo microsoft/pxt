@@ -55,7 +55,7 @@ export class Editor extends srceditor.Editor {
                     if (mainPkg) {
                         this.parent.setFile(mainPkg.files["main.ts"]);
                     }
-                    return;
+                    return undefined;
                 }
                 this.currFile = mainPkg.files["main.ts"];
                 blockFile = this.currFile.getVirtualFileName();
@@ -68,7 +68,7 @@ export class Editor extends srceditor.Editor {
             }
 
             if (!this.hasBlocks())
-                return
+                return undefined;
 
             // might be undefined
             let mainPkg = pkg.mainEditorPkg();
@@ -94,7 +94,7 @@ export class Editor extends srceditor.Editor {
                         }
                     }
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
-                        .then(resp => {
+                        .then((resp: any) => {
                             if (!resp.success) {
                                 this.currFile.diagnostics = resp.diagnostics;
                                 return failedAsync(blockFile);
@@ -140,7 +140,7 @@ export class Editor extends srceditor.Editor {
 
     public decompileAsync(blockFile: string): Promise<boolean> {
         return compiler.decompileAsync(blockFile)
-            .then(resp => resp.success);
+            .then((resp: any) => resp.success);
     }
 
     display() {
@@ -190,7 +190,7 @@ export class Editor extends srceditor.Editor {
 
     public formatCode(isAutomatic = false): string {
         Util.assert(this.editor != undefined); // Guarded
-        if (this.fileType != FileType.TypeScript) return;
+        if (this.fileType != FileType.TypeScript) return undefined;
 
         function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
             return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
@@ -205,7 +205,7 @@ export class Editor extends srceditor.Editor {
         }
         let tmp = pxtc.format(data.programText, data.charNo)
         if (isAutomatic && tmp.formatted == data.programText)
-            return;
+            return undefined;
         let formatted = tmp.formatted
         let line = 1
         let col = 0

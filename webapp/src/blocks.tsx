@@ -566,7 +566,7 @@ export class Editor extends srceditor.Editor {
         this.blockSubset = blockSubset;
         this.showToolboxCategories = showCategories;
         let toolbox = this.getDefaultToolbox(showCategories);
-        if (!this.blockInfo) return;
+        if (!this.blockInfo) return undefined;
         let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, showCategories, blockSubset);
         this.updateToolbox(tb, showCategories);
 

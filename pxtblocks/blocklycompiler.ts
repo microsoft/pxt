@@ -1339,7 +1339,7 @@ namespace pxt.blocks {
             removeAllPlaceholders();
         }
 
-        return [] // unreachable
+        //return [] // unreachable
     }
 
     export function callKey(e: Environment, b: B.Block): string {

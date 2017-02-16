@@ -60,7 +60,11 @@ export const buildEngines: Map<BuildEngine> = {
 }
 
 // once we have a different build engine, set this appropriately
-export var thisBuild = buildEngines['yotta']
+export let thisBuild = buildEngines['yotta']
+
+export function setBuild(newBuild: BuildEngine) {
+    thisBuild = newBuild;
+}
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = buildEngines['yotta']
