@@ -871,7 +871,7 @@ namespace ts.pxtc.BrowserImpl {
                     let res: Util.HttpResponse = {
                         statusCode: client.status,
                         headers: {},
-                        buffer: client.responseBody,
+                        buffer: client.response,
                         text: client.responseText,
                     }
                     client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {
