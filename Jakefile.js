@@ -15,10 +15,24 @@ function tscIn(task, dir, builtDir) {
     cmdIn(task, dir, command)
 }
 
+function tsc18In(task, dir, builtDir) {
+    let command = 'node ../node_modules/pxt-typescript/node_modules/typescript/bin/tsc'
+    if (process.env.sourceMaps === 'true') {
+        command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
+    }
+    cmdIn(task, dir, command)
+}
+
 function compileDir(name, deps) {
     if (!deps) deps = []
     let dd = expand([name].concat(deps))
     file('built/' + name + '.js', dd, { async: true }, function () { tscIn(this, name, "built") })
+}
+
+function compile18Dir(name, deps) {
+    if (!deps) deps = []
+    let dd = expand([name].concat(deps))
+    file('built/' + name + '.js', dd, { async: true }, function () { tsc18In(this, name, "built") })
 }
 
 function loadText(filename) {
@@ -65,7 +79,7 @@ task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
 })
 
 ju.catFiles('built/pxt.js', [
-    "node_modules/typescript/lib/typescript.js",
+    "node_modules/pxt-typescript/node_modules/typescript/lib/typescript.js",
     "built/pxtlib.js",
     "built/pxtsim.js",
     "built/cli.js"
@@ -81,9 +95,9 @@ file('built/nodeutil.js', ['built/cli.js'])
 file('built/pxt.d.ts', ['built/cli.js'], function () {
     jake.cpR("built/cli.d.ts", "built/pxt.d.ts")
 })
-file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
+file('built/typescriptServices.d.ts', ['node_modules/pxt-typescript/node_modules/typescript/lib/typescriptServices.d.ts'], function () {
     if (!fs.existsSync("built")) fs.mkdirSync("built");
-    jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
+    jake.cpR('node_modules/pxt-typescript/node_modules/typescript/lib/typescriptServices.d.ts', "built/")
 })
 
 file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
@@ -95,7 +109,7 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-compileDir("pxtlib", ["built/typescriptServices.d.ts"])
+compile18Dir("pxtlib", ["built/typescriptServices.d.ts"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
 compileDir("pxtblocks", ["built/pxtlib.js"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
@@ -259,7 +273,7 @@ file("built/web/pxtlib.js", [
         "getCompletionData"
     ]
 
-    let ts = fs.readFileSync("node_modules/typescript/lib/typescript.js", "utf8")
+    let ts = fs.readFileSync("node_modules/pxt-typescript/node_modules/typescript/lib/typescript.js", "utf8")
     ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/,
         f => f + " " + additionalExports.map(s => s + ": " + s + ",").join(" "))
     fs.writeFileSync("built/web/typescript.js", ts)

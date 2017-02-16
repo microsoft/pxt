@@ -244,7 +244,7 @@ export class ProjectView
         () => {
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
-                .done(resp => {
+                .done((resp: any) => {
                     this.editor.setDiagnostics(this.editorFile, state)
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                         let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
@@ -511,7 +511,7 @@ export class ProjectView
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
-                    .catch(e => {
+                    .catch((e: any) => {
                         if (e instanceof pxt.cpp.PkgConflictError) {
                             const confl = e as pxt.cpp.PkgConflictError
                             const remove = (lib: pxt.Package) => ({
@@ -966,7 +966,7 @@ export class ProjectView
                     hwdbg.handleMessage(msg as pxsim.DebuggerMessage)
                 }
             })
-            hwdbg.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
+            hwdbg.setPostMessage((msg) => simulator.driver.handleHwDebuggerMsg(msg));
             return hwdbg.startDebugAsync()
         })
     }
@@ -1715,7 +1715,7 @@ $(document).ready(() => {
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.language);
             const live = mlang && !!mlang[1];
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
             return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang, live);

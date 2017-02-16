@@ -131,7 +131,7 @@ namespace pxt.runner {
         Util.assert(!!pxt.appTarget);
 
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+        const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.language);
         const live = mlang && !!mlang[1];
 
         patchSemantic();
@@ -525,7 +525,7 @@ ${files["main.ts"]}
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/\###.*(?!$)/i);
-                if (steps.length < 1) return;
+                if (steps.length < 1) return undefined;
                 let options = steps[0];
                 steps = steps.slice(1, steps.length);
 
@@ -542,7 +542,7 @@ ${files["main.ts"]}
                 // Render current step
                 return renderMarkdownAsync(content, steps[step], { tutorial: true })
                     .then(() => {
-                        if (code == '') return;
+                        if (code == '') return undefined;
                         // Convert all blocks to blocks
                         return pxt.runner.decompileToBlocksAsync(code, {
                             emPixels: 14,
