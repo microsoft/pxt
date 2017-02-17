@@ -963,7 +963,7 @@ ${output}</xml>`;
                         kind: "expr",
                         type: "math_arithmetic",
                         fields: [getField("OP", "MINUS")],
-                            inputs:[
+                            inputs: [
                                 getValue("A", condition.right, ShadowType.Number),
                                 getValue("B", 1)
                             ]

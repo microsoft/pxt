@@ -1492,7 +1492,7 @@ namespace pxt.blocks {
                     const n = parseInt(element.getAttribute("numlines"));
                     this.declaredVariables = element.getAttribute("declaredvars");
                     for (let i = 0; i < n; i++) {
-                        const line = element.getAttribute("line"+ i);
+                        const line = element.getAttribute("line" + i);
                         that.appendDummyInput().appendField(line, "LINE" + i);
                     }
                 };
