@@ -205,13 +205,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                         <div className="five wide column">
                             <div className="ui grid right aligned">
-                                <div className="row">
+                                 {compileBtn ? <div className="row">
                                     <div className="column">
-                                        {compileBtn ? <sui.Button role="menuitem" class={`large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
+                                       <sui.Button role="menuitem" class={`large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } />
                                     </div>
-                                </div>
+                                </div> : undefined }
                                 {readOnly ? undefined :
-                                    <div className="row" style={{ paddingTop: 0 }}>
+                                    <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
                                         <div className="column">
                                             <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
                                                 <input id="fileNameInput"
