@@ -54,10 +54,6 @@ namespace ts.pxtc {
         blocksInfo?: BlocksInfo;
         usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: pxt.Map<string[]>;
-        quickFlash?: {
-            words: number[];
-            startAddr: number;
-        };
         // client options
         saveOnly?: boolean;
     }

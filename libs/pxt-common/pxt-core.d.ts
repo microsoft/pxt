@@ -141,12 +141,15 @@ interface Array<T> {
 }
 
 declare interface String {
+    // This block is currently disabled in favor of the built-in Blockly "Create text with" block, which compiles to "" + ""
+    // Add % sign back to the block annotation to re-enable
     /**
      * Returns a string that contains the concatenation of two or more strings.
      * @param other The string to append to the end of the string.
      */
     //% shim=String_::concat weight=80
-    //% blockId="string_concat" block="join %this=text|%other" blockNamespace="text"
+    //% blockId="string_concat" blockNamespace="text"
+    // block="join %this=text|%other"
     concat(other: string): string;
 
     /**
@@ -186,9 +189,12 @@ declare interface String {
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start:number, length?:number): string;
 
+    // This block is currently disabled, as it does not compile in some targets
+    // Add % sign back to the block annotation to re-enable
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
-    //% blockId="string_isempty" block="%this=text| is empty" blockNamespace="text"
+    //% blockId="string_isempty" blockNamespace="text"
+    // block="%this=text| is empty"
     isEmpty() : boolean;
 
     [index: number]: string;

@@ -6,15 +6,6 @@ namespace ts.pxtc {
 
 import pxtc = ts.pxtc
 
-
-// Polyfill for Uint8Array.slice for IE and Safari
-// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
-if (!Uint8Array.prototype.slice) {
-    Object.defineProperty(Uint8Array.prototype, 'slice', {
-        value: Array.prototype.slice
-    });
-}
-
 namespace ts.pxtc.Util {
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
@@ -660,10 +651,6 @@ namespace ts.pxtc.Util {
     }
 
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
-        // normalize code (keep synched with localized files)
-        if (!/^(es|pt|zh|sv|si)/i.test(code))
-            code = code.split("-")[0]
-
         if (live) {
             console.log(`loading live translations for ${code}`)
             return downloadLiveTranslationsAsync(code, "strings.json")

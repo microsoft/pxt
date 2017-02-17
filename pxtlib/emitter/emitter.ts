@@ -2618,7 +2618,10 @@ ${lbl}: .short 0xffff
             proc.emitLbl(els)
             proc.emitJmp(fin, emitExpr(node.whenFalse), ir.JmpMode.Always)
             proc.emitLbl(fin)
-            return ir.op(EK.JmpValue, [])
+
+            let v = ir.shared(ir.op(EK.JmpValue, []));
+            proc.emitExpr(v); // make sure we save it
+            return v;
         }
 
         function emitSpreadElementExpression(node: SpreadElementExpression) { }
@@ -3319,6 +3322,8 @@ ${lbl}: .short 0xffff
         res: CompileResult;
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
+        sourceHash = "";
+        checksumBlock: number[];
 
         strings: Map<string> = {};
         otherLiterals: string[] = [];

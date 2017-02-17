@@ -10,6 +10,7 @@ import * as child_process from 'child_process';
 import * as os from 'os';
 import * as util from 'util';
 import * as hid from './hid';
+import * as serial from './serial';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -408,17 +409,7 @@ export function expandDocFileTemplate(name: string) {
     return expandDocTemplateCore(template)
 }
 
-interface SerialPortInfo {
-    comName: string;
-    pnpId: string;
-    manufacturer: string;
-
-    opened?: boolean;
-    port?: any;
-}
-
 let wsSerialClients: WebSocket[] = [];
-let serialPorts: pxt.Map<SerialPortInfo> = {};
 let electronSocket: WebSocket = null;
 let webappReady = false;
 let electronPendingMessages: ElectronMessage[] = [];
@@ -646,69 +637,17 @@ function sendSerialMsg(msg: string) {
 }
 
 function initSerialMonitor() {
-    if (!pxt.appTarget.serial || !pxt.appTarget.serial.log) return;
-    if (pxt.appTarget.serial.useHF2) {
-        return
-    }
-
-    console.log('serial: monitoring ports...')
-
-    let SerialPort: any;
-    try {
-        SerialPort = require("serialport");
-    } catch (er) {
-        console.warn('serial: failed to load, skipping...');
-        return;
-    }
-
-    function close(info: SerialPortInfo) {
-        console.log('serial: closing ' + info.pnpId);
-        delete serialPorts[info.pnpId];
-    }
-
-    function open(info: SerialPortInfo) {
-        console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
-        serialPorts[info.pnpId] = info;
-        info.port = new SerialPort(info.comName, {
-            baudrate: 115200,
-            autoOpen: false
-        }); // this is the openImmediately flag [default is true]
-        info.port.open(function (error: any) {
-            if (error) {
-                console.log('failed to open: ' + error);
-                close(info);
-            } else {
-                console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
-                info.opened = true;
-                info.port.on('data', function (buffer: Buffer) {
-                    //console.log(`data received: ${buffer.length} bytes`);
-                    if (wsSerialClients.length == 0) return;
-                    // send it to ws clients
-                    let msg = JSON.stringify({
-                        type: 'serial',
-                        id: info.pnpId,
-                        data: buffer.toString('utf8')
-                    })
-                    sendSerialMsg(msg)
-                });
-                info.port.on('error', function () { close(info); });
-                info.port.on('close', function () { close(info); });
-            }
-        });
-    }
-
-    let manufacturerRx = pxt.appTarget.serial.manufacturerFilter ? new RegExp(pxt.appTarget.serial.manufacturerFilter, "i") : undefined;
-    function filterPort(info: SerialPortInfo): boolean {
-        return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
-    }
-
-    setInterval(() => {
-        SerialPort.list(function (err: any, ports: SerialPortInfo[]) {
-            ports.filter(filterPort)
-                .filter(info => !serialPorts[info.pnpId])
-                .forEach((info) => open(info));
-        });
-    }, 5000);
+    serial.monitorSerial(function (info, buffer) {
+        //console.log(`data received: ${buffer.length} bytes`);
+        if (wsSerialClients.length == 0) return;
+        // send it to ws clients
+        let msg = JSON.stringify({
+            type: 'serial',
+            id: info.pnpId,
+            data: buffer.toString('utf8')
+        })
+        sendSerialMsg(msg)
+    })
 }
 
 function openUrl(startUrl: string, browser: string) {
@@ -817,13 +756,8 @@ export function sendElectronMessage(message: ElectronMessage) {
 function streamPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: pxt.streams.JsonStream) => {
-            let vars: pxt.Map<string> = {
-                id: id,
-                objname: info.name,
-                time: info.time + ""
-            }
             let templ = expandDocFileTemplate("stream.html")
-            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
+            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, info as any, null, "/" + id)
             return html
         })
 }
@@ -833,7 +767,6 @@ function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
             let vars: pxt.Map<string> = info as any
-            vars["title"] = info.name
             let templ = expandDocFileTemplate("script.html")
             let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
             return html

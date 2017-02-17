@@ -22,7 +22,7 @@ namespace pxt.vs {
     }
 
     export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<{ [ns: string]: NameDefiniton }> {
-        if (readOnly) return;
+        if (readOnly) return monaco.Promise.as(undefined);
 
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
@@ -132,7 +132,7 @@ namespace pxt.vs {
             }
 
             let onGotAmdLoader = () => {
-                (window as any).require.config({ paths: { 'vs': pxt.webConfig.pxtCdnUrl + '/vs' }});
+                (window as any).require.config({ paths: { 'vs': pxt.webConfig.pxtCdnUrl + 'vs' }});
 
                 // Load monaco
                 (window as any).require(['vs/editor/editor.main'], () => {
@@ -146,7 +146,7 @@ namespace pxt.vs {
             if (!(<any>window).require) {
                 let loaderScript = document.createElement('script');
                 loaderScript.type = 'text/javascript';
-                loaderScript.src = pxt.webConfig.pxtCdnUrl + '/vs/loader.js';
+                loaderScript.src = pxt.webConfig.pxtCdnUrl + 'vs/loader.js';
                 loaderScript.addEventListener('load', onGotAmdLoader);
                 document.body.appendChild(loaderScript);
             } else {

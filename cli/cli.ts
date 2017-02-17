@@ -20,6 +20,7 @@ import * as build from './buildengine';
 import * as electron from "./electron";
 import * as commandParser from './commandparser';
 import * as hid from './hid';
+import * as serial from './serial';
 import * as gdb from './gdb';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
@@ -1983,12 +1984,22 @@ pxt_modules
         "taskName": "deploy",
         "isBuildCommand": true,
         "problemMatcher": "$tsc",
-        "args": ["deploy"]
+        "args": [""]
     }, {
         "taskName": "build",
         "isTestCommand": true,
         "problemMatcher": "$tsc",
-        "args": ["build"]
+        "args": [""]
+    }, {
+        "taskName": "clean",
+        "isTestCommand": true,
+        "problemMatcher": "$tsc",
+        "args": [""]
+    }, {
+        "taskName": "serial",
+        "isTestCommand": true,
+        "problemMatcher": "$tsc",
+        "args": [""]
     }]
 }
 `
@@ -2975,11 +2986,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
                         resolve(decompiled.outfiles["main.blocks"]);
                     }
                     else {
-                        reject("Could not decompile " + f + ": " + JSON.stringify(decompiled.diagnostics, undefined, 4))
-                    }
-                try {
-                } catch (e) {
-                    reject("Exception while decompiling " + f);
+                    reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
                 }
             });
     });
@@ -3378,7 +3385,7 @@ export function cleanAsync(parsed: commandParser.ParsedCommand) {
     return rimrafAsync("built", {})
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
-        .then(() => {})
+        .then(() => { })
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
@@ -3434,6 +3441,13 @@ export function testAsync() {
         .then((compileOpts) => { });
 }
 
+export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    serial.monitorSerial((info, buffer) => {
+        console.log(buffer.toString('utf8'));
+    })
+    return Promise.resolve();
+}
+
 export interface SavedProject {
     name: string;
     files: Map<string>;
@@ -3446,27 +3460,52 @@ export function extractAsync(parsed: commandParser.ParsedCommand): Promise<void>
     return extractAsyncInternal(filename, out as string, vscode);
 }
 
+function isScriptId(id: string) {
+    return /^((_[a-zA-Z0-9]{12})|([\d\-]{20,}))$/.test(id)
+}
+
+function fetchTextAsync(filename: string): Promise<Buffer> {
+    if (filename == "-" || !filename)
+        return nodeutil.readResAsync(process.stdin)
+
+    if (isScriptId(filename))
+        filename = Cloud.apiRoot + filename + "/text"
+
+    let m = /^(https:\/\/[^\/]+\/)([^\/]+)$/.exec(filename)
+    let fn2 = ""
+
+    if (m) {
+        let id = m[2]
+        if (/^api\//.test(id)) id = id.slice(4)
+        if (isScriptId(id)) {
+            fn2 = m[1] + "api/" + id + "/text"
+        }
+    }
+
+    if (/^https?:/.test(filename)) {
+        pxt.log(`Fetching ${filename}...`)
+        return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
+            .then(resp => {
+                if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
+                    pxt.log(`Trying also ${fn2}...`)
+                    return U.requestAsync({ url: fn2 })
+                } return resp
+            })
+            .then(resp => resp.buffer)
+    } else
+        return readFileAsync(filename)
+}
+
 function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<void> {
     if (filename && nodeutil.existDirSync(filename)) {
         pxt.log(`extracting folder ${filename}`);
         return Promise.all(fs.readdirSync(filename)
-            .filter(f => /\.hex/.test(f))
+            .filter(f => /\.(hex|uf2)/.test(f))
             .map(f => extractAsyncInternal(path.join(filename, f), out, vscode)))
             .then(() => { });
     }
 
-    return (filename == "-" || !filename
-        ? nodeutil.readResAsync(process.stdin)
-        : /^https?:/.test(filename) ?
-            U.requestAsync({ url: filename })
-                .then(resp => {
-                    let m = /^(https:\/\/[^\/]+\/)([a-z]+)$/.exec(filename)
-                    if (m && /^<!doctype/i.test(resp.text))
-                        return U.requestAsync({ url: m[1] + "api/" + m[2] + "/text" })
-                    else return resp
-                })
-                .then(resp => resp.buffer)
-            : readFileAsync(filename) as Promise<Buffer>)
+    return fetchTextAsync(filename)
         .then(buf => extractBufferAsync(buf, out))
         .then(dirs => {
             if (dirs && vscode) {
@@ -3489,7 +3528,9 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
                 if (!data) return null
                 if (!data.meta) data.meta = {} as any
                 let id = data.meta.cloudId || "?"
-                console.log(`.hex cloudId: ${id}`)
+                console.log(`.hex/uf2 cloudId: ${id}`)
+                if (data.meta.targetVersions)
+                    console.log(`target version: ${data.meta.targetVersions.target}, pxt ${data.meta.targetVersions.pxt}`);
                 let files: Map<string> = null
                 try {
                     files = JSON.parse(data.source)
@@ -3559,6 +3600,22 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             const dirs = writeProjects(prjs, outDir)
             return dirs;
         })
+}
+
+export function hexdumpAsync(c: commandParser.ParsedCommand) {
+    let filename = c.arguments[0]
+    let buf = fs.readFileSync(filename)
+    if (/^UF2\n/.test(buf.slice(0, 4).toString("utf8"))) {
+        let r = pxtc.UF2.toBin(buf as any)
+        if (r) {
+            console.log("UF2 file detected.")
+            console.log(pxtc.hex.hexDump(r.buf, r.start))
+            return Promise.resolve()
+        }
+    }
+    console.log("Binary file assumed.")
+    console.log(pxtc.hex.hexDump(buf))
+    return Promise.resolve()
 }
 
 function openVsCode(dirname: string) {
@@ -3772,6 +3829,7 @@ function initCommands() {
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
+    simpleCmd("serial", "listen and print serial commands to console", serialAsync);
 
     p.defineCommand({
         name: "login",
@@ -3947,6 +4005,8 @@ function initCommands() {
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+    advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
+    advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
 

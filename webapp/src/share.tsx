@@ -1,5 +1,3 @@
-/// <reference path="app.d.ts"/>
-
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as data from "./data";
@@ -14,13 +12,13 @@ type IProjectView = pxt.editor.IProjectView;
 
 export enum ShareMode {
     Screenshot,
-    Editor,
     Url,
     Simulator,
     Cli
 }
 
 export interface ShareEditorState {
+    advancedMenu?: boolean;
     mode?: ShareMode;
     screenshotId?: string;
     screenshotUri?: string;
@@ -35,7 +33,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         this.state = {
             currentPubId: undefined,
             pubCurrent: false,
-            visible: false
+            visible: false,
+            advancedMenu: false
         }
     }
 
@@ -43,12 +42,13 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         this.setState({ visible: false });
     }
 
-    show(header: Header) {
+    show(header: pxt.workspace.Header) {
         this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
+            || this.state.advancedMenu != nextState.advancedMenu
             || this.state.mode != nextState.mode
             || this.state.pubCurrent != nextState.pubCurrent
             || this.state.screenshotId != nextState.screenshotId
@@ -59,26 +59,17 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         if (!this.state.visible) return null;
 
         const cloud = pxt.appTarget.cloud || {};
-        const publishingEnabled = !!cloud.publishing;
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
+        const advancedMenu = !!this.state.advancedMenu;
 
         let ready = false;
         let mode = this.state.mode;
         let url = '';
         let embed = '';
         let help = lf("Copy this HTML to your website or blog.");
-        let helpUrl = "/share";
 
         if (header) {
-            if (!header.pubCurrent && !publishingEnabled) {
-                this.props.parent.exportAsync()
-                    .then(filedata => {
-                        header.pubCurrent = true;
-                        this.setState({ pubCurrent: true, currentPubId: filedata, screenshotId: undefined })
-                    });
-            }
-
             let rootUrl = pxt.appTarget.appTheme.embedUrl
             if (!/\/$/.test(rootUrl)) rootUrl += '/';
 
@@ -89,21 +80,18 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             ready = (!!currentPubId && header.pubCurrent);
             if (ready) {
                 url = `${rootUrl}${header.pubId}`;
-                let editUrl = `${rootUrl}#${publishingEnabled ? 'pub' : 'project'}:${currentPubId}`;
+                let editUrl = `${rootUrl}#pub:${currentPubId}`;
                 switch (mode) {
                     case ShareMode.Cli:
                         embed = `pxt extract ${header.pubId}`;
                         help = lf("Run this command from a shell.");
-                        helpUrl = "/cli";
                         break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
                         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                        embed = pxt.docs.runUrl(pxt.webConfig.runUrl || rootUrl + "--run", padding, header.pubId);
-                        break;
-                    case ShareMode.Editor:
-                        embed = pxt.docs.embedUrl(rootUrl, publishingEnabled ? 'sandbox' : 'sandboxproject', currentPubId, header.meta.blocksHeight);
+                        const runUrl = rootUrl + (pxt.webConfig.runUrl || "--run").replace(/^\//, '');
+                        embed = pxt.docs.runUrl(runUrl, padding, header.pubId);
                         break;
                     case ShareMode.Url:
                         embed = editUrl;
@@ -145,37 +133,40 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             this.props.parent.anonymousPublishAsync().done(() => {
                 this.setState({ pubCurrent: true });
             });
-        }
-        const formState = !ready ? 'warning' : this.props.parent.state.publishing ? 'loading' : 'success';
-        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") }];
-        if (embedding) formats.push({ mode: ShareMode.Editor, label: lf("Editor") });
-        if (!publishingEnabled) formats.push({ mode: ShareMode.Url, label: lf("Link") });
-        else {
-            formats.push({ mode: ShareMode.Simulator, label: lf("Simulator") });
-            formats.push({ mode: ShareMode.Cli, label: lf("Command line") }); 
+            this.forceUpdate();
         }
 
-        return <sui.Modal visible={this.state.visible} addClass="small searchdialog" header={lf("Share Project") }
-            onHide={() => this.setState({ visible: false }) }>
-            <div className={`ui ${formState} form`}>
-                { publishingEnabled ?
-                    <div className="ui warning message">
-                        <div className="header">{lf("Almost there!") }</div>
-                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                            lf("You acknowledge having consent to publish this project.") }</p>
-                        <sui.Button class={"green " + (this.props.parent.state.publishing ? "loading" : "") } text={lf("Publish project") } onClick={publish} />
-                    </div> : undefined }
-                { url && publishingEnabled ? <div className="ui success message">
-                    <h3>{lf("Project URL") }</h3>
-                    <div className="header"><a target="_blank" href={url}>{url}</a></div>
-                </div> : undefined }
-                { !ready && !publishingEnabled ? <div className="ui warning message">
-                    <h3>{lf("Loading...") }</h3>
-                </div> : undefined }
-                { ready ?
-                    <div className="ui form">
-                        <div className="inline fields">
-                            {formats.map(f =>
+        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") }];
+        formats.push({ mode: ShareMode.Simulator, label: lf("Simulator") });
+        formats.push({ mode: ShareMode.Cli, label: lf("Command line") });
+
+        const action = !ready ? lf("Publish project") : undefined;
+        const actionLoading = this.props.parent.state.publishing;
+
+        return <sui.Modal visible={this.state.visible} addClass="searchdialog" header={lf("Share Project") }
+            onHide={() => this.setState({ visible: false }) }
+            action={action}
+            actionClick={publish}
+            actionLoading={actionLoading}
+            hideClose={true}
+            >
+            <div className={`ui form`}>
+                { action ?
+                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                        lf("You acknowledge having consent to publish this project.") }</p>
+                    : undefined }
+                { url && ready ? <div>
+                    <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
+                    <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} />
+                </div>
+                    : undefined }
+                { ready ? <div>
+                    <div className="ui divider"></div>
+                    <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                    { advancedMenu ?
+                        <div className="ui form">
+                            <div className="inline fields">
+                                {formats.map(f =>
                                     <div key={f.mode.toString() } className="field">
                                         <div className="ui radio checkbox">
                                             <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
@@ -183,13 +174,13 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                                         </div>
                                     </div>
                                 ) }
-                        </div>
-                    </div> : undefined }
-                { ready ?
-                    <sui.Field>
-                        <p>{help} <span><a target="_blank" href={helpUrl}>{lf("Help...") }</a></span></p>
-                        <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
-                    </sui.Field> : null }
+                            </div>
+                        </div> : undefined }
+                    { advancedMenu ?
+                        <sui.Field>
+                            <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
+                        </sui.Field> : null }
+                </div> : undefined }
             </div>
         </sui.Modal>
     }

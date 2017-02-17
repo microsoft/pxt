@@ -77,8 +77,8 @@ declare namespace pxt {
     interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
-        sharing?: boolean;
         publishing?: boolean;
+        sharing?: boolean; // uses cloud-based anonymous sharing
         embedding?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages
@@ -151,6 +151,7 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
+        layoutOptions?: LayoutOptions;
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -160,9 +161,15 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         projectGallery?: string;
+        exampleGallery?: string;
         crowdinProject?: string;
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
+        allowParentController?: boolean; // allow parent iframe to control editor
+    }
+
+    interface LayoutOptions {
+        hideMenuBar?: boolean; // Hides the main menu bar
     }
 
     interface DocMenuEntry {
@@ -195,6 +202,7 @@ declare namespace ts.pxtc {
         flashCodeAlign?: number; // defaults to 1k
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
+        flashChecksumAddr?: number;
     }
 
     interface CompileOptions {

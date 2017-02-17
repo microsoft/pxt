@@ -1,5 +1,3 @@
-/// <reference path="app.d.ts"/>
-
 import * as pkg from "./package";
 import * as core from "./core";
 import * as data from "./data";

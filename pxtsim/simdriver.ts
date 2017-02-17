@@ -86,7 +86,7 @@ namespace pxsim {
             }
         }
 
-        private postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+        public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
@@ -111,10 +111,10 @@ namespace pxsim {
         }
 
         private createFrame(): HTMLDivElement {
-            let wrapper = document.createElement("div") as HTMLDivElement;
+            const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = 'simframe';
 
-            let frame = document.createElement('iframe') as HTMLIFrameElement;
+            const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');

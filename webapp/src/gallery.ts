@@ -5,7 +5,22 @@ export interface Gallery {
     cards: pxt.CodeCard[];
 }
 
-function parseMardown(md: string): Gallery[] {
+function parseExampleMarkdown(name: string, md: string): pxt.editor.ProjectCreationOptions {
+    if (!md) return undefined;
+
+    const m =  /```blocks\s*((.|\s)+?)\s*```/i.exec(md);
+    if (!m) return undefined;
+
+    return {
+        name,
+        filesOverride: {
+            "main.blocks": "",
+            "main.ts": m[1]
+        }
+    };
+}
+
+function parseGalleryMardown(md: string): Gallery[] {
     if (!md) return [];
 
     // second level titles are categories
@@ -42,8 +57,10 @@ function parseMardown(md: string): Gallery[] {
 
 export function loadGalleryAsync(name: string): Promise<Gallery[]> {
     return pxt.Cloud.downloadMarkdownAsync(name, pxt.Util.userLanguage(), pxt.Util.localizeLive)
-        .then(md => {
-            const galleries = parseMardown(md);
-            return galleries;
-        })
+        .then(md => parseGalleryMardown(md))
+}
+
+export function loadExampleAsync(name: string, path: string): Promise<pxt.editor.ProjectCreationOptions> {
+    return pxt.Cloud.downloadMarkdownAsync(path, pxt.Util.userLanguage(), pxt.Util.localizeLive)
+        .then(md => parseExampleMarkdown(name, md))
 }

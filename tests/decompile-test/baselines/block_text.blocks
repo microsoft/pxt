@@ -1,0 +1,132 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" line0="&#34;abc&#34;" />
+<next>
+<block type="variables_set">
+<field name="VAR">a</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text_join">
+<mutation items="3" />
+<value name="ADD0">
+<shadow type="text">
+<field name="TEXT">abc</field>
+</shadow>
+</value>
+<value name="ADD1">
+<shadow type="math_number">
+<field name="NUM">12</field>
+</shadow>
+</value>
+<value name="ADD2">
+<shadow type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">b</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="string_get">
+<value name="this">
+<shadow type="text">
+<field name="TEXT">abcdef</field>
+</shadow>
+</value>
+<value name="pos">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">c</field>
+<value name="VALUE">
+<shadow type="text">
+<field name="TEXT">hello</field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">d</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="logic_compare">
+<field name="OP">EQ</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">c</field>
+</block>
+</value>
+<value name="B">
+<shadow type="text">
+<field name="TEXT">goodbye</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">e</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="string_compare">
+<value name="this">
+<block type="variables_get">
+<field name="VAR">c</field>
+</block>
+</value>
+<value name="that">
+<shadow type="text">
+<field name="TEXT">goodbye</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">f</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="string_substr">
+<value name="this">
+<shadow type="text">
+<field name="TEXT">abcdef</field>
+</shadow>
+</value>
+<value name="start">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<value name="length">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

@@ -17,16 +17,9 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
-enum ScriptSearchMode {
-    Packages,
-    Projects
-}
-
 interface ScriptSearchState {
     searchFor?: string;
-    mode?: ScriptSearchMode;
     visible?: boolean;
-    search?: boolean;
 }
 
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
@@ -38,7 +31,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         super(props)
         this.state = {
             searchFor: '',
-            mode: ScriptSearchMode.Packages,
             visible: false
         }
     }
@@ -48,16 +40,12 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     showAddPackages() {
-        this.setState({ visible: true, mode: ScriptSearchMode.Packages, searchFor: '', search: true })
-    }
-
-    showOpenProject() {
-        this.setState({ visible: true, mode: ScriptSearchMode.Projects, searchFor: '', search: true })
+        this.setState({ visible: true, searchFor: '' })
     }
 
     fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages || this.state.mode != ScriptSearchMode.Packages) return [];
+        if (!cloud.packages) return [];
         let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
         let res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
@@ -67,66 +55,26 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return this.prevGhData || []
     }
 
-    fetchGalleries(): pxt.CodeCard[] {
-        if (this.state.mode != ScriptSearchMode.Projects
-            || this.props.parent.getSandboxMode()
-            || this.state.searchFor
-            || pxt.options.light
-            || !pxt.appTarget.appTheme.projectGallery) return [];
-        let res = this.getData(`gallery:${encodeURIComponent(pxt.appTarget.appTheme.projectGallery)}`) as gallery.Gallery[];
-        if (res) this.prevGalleries = Util.concat(res.map(g => g.cards));
-        return this.prevGalleries;
-    }
-
-    fetchUrlData(): Cloud.JsonScript[] {
-        if (this.state.mode != ScriptSearchMode.Projects) return []
-
-        let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-        if (scriptid) {
-            let res = this.getData(`cloud-search:${scriptid}`)
-            if (res) {
-                if (res.statusCode !== 404) {
-                    if (!this.prevUrlData) this.prevUrlData = [res]
-                    else this.prevUrlData.push(res)
-                }
-            }
-        }
-        return this.prevUrlData;
-    }
-
     fetchBundled(): pxt.PackageConfig[] {
-        if (this.state.mode != ScriptSearchMode.Packages || !!this.state.searchFor) return [];
+        if (!!this.state.searchFor) return [];
 
         const bundled = pxt.appTarget.bundledpkgs;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig);
     }
 
-    fetchLocalData(): Header[] {
-        if (this.state.mode != ScriptSearchMode.Projects) return [];
-
-        let headers: Header[] = this.getData("header:*")
-        if (this.state.searchFor)
-            headers = headers.filter(hdr => hdr.name.toLowerCase().indexOf(this.state.searchFor.toLowerCase()) > -1);
-        return headers;
-    }
-
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
-            || this.state.searchFor != nextState.searchFor
-            || this.state.mode != nextState.mode;
+            || this.state.searchFor != nextState.searchFor;
     }
 
     renderCore() {
         if (!this.state.visible) return null;
 
-        const headers = this.fetchLocalData();
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
-        const urldata = this.fetchUrlData();
-        const galleries = this.fetchGalleries();
 
-        const chgHeader = (hdr: Header) => {
+        const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
@@ -149,30 +97,17 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const kupd = (ev: __React.KeyboardEvent) => {
             if (ev.keyCode == 13) upd(ev);
         }
-        const installScript = (scr: Cloud.JsonScript) => {
-            this.hide();
-            if (this.state.mode == ScriptSearchMode.Projects) {
-                core.showLoading(lf("loading project..."));
-                workspace.installByIdAsync(scr.id)
-                    .then(r => this.props.parent.loadHeaderAsync(r))
-                    .done(() => core.hideLoading())
-            }
-        }
         const installGh = (scr: pxt.github.GitRepo) => {
             pxt.tickEvent("packages.github");
             this.hide();
-            if (this.state.mode == ScriptSearchMode.Packages) {
-                let p = pkg.mainEditorPkg();
-                core.showLoading(lf("downloading package..."));
-                pxt.packagesConfigAsync()
-                    .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
-                    .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
-                        .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
-                    .catch(core.handleNetworkError)
-                    .finally(() => core.hideLoading());
-            } else {
-                Util.oops()
-            }
+            let p = pkg.mainEditorPkg();
+            core.showLoading(lf("downloading package..."));
+            pxt.packagesConfigAsync()
+                .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
+                .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
+                    .then(cfg => addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
+                .catch(core.handleNetworkError)
+                .finally(() => core.hideLoading());
         }
         const addDepIfNoConflict = (config: pxt.PackageConfig, version: string) => {
             return pkg.mainPkg.findConflictsAsync(config, version)
@@ -228,67 +163,29 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         });
                 });
         }
-        const importHex = () => {
-            pxt.tickEvent("projects.import");
-            this.hide();
-            this.props.parent.importFileDialog();
-        }
-        const newProject = () => {
-            pxt.tickEvent("projects.new");
-            this.hide();
-            this.props.parent.newProject();
-        }
-        const saveProject = () => {
-            pxt.tickEvent("projects.save");
-            this.hide();
-            this.props.parent.saveAndCompile();
-        }
-        const renameProject = () => {
-            pxt.tickEvent("projects.rename");
-            this.hide();
-            this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
-        }
         const isEmpty = () => {
             if (this.state.searchFor) {
-                if (headers.length > 0
-                    || bundles.length > 0
-                    || ghdata.length > 0
-                    || urldata.length > 0)
+                if (bundles.length > 0
+                    || ghdata.length > 0)
                     return false;
                 return true;
             }
             return false;
         }
 
-        const headerText = this.state.mode == ScriptSearchMode.Packages ? lf("Add Package...")
-            : lf("Projects");
+        const headerText = lf("Add Package...");
         return (
             <sui.Modal visible={this.state.visible} header={headerText} addClass="large searchdialog"
                 onHide={() => this.setState({ visible: false }) }>
-                {!this.state.searchFor && this.state.mode == ScriptSearchMode.Projects ?
-                    <div className="ui vertical segment">
-                        <sui.Button
-                            class="primary"
-                            icon="file outline"
-                            text={lf("New Project...") }
-                            title={lf("Creates a new empty project") }
-                            onClick={() => newProject() } />
-                        {pxt.appTarget.compile ?
-                            <sui.Button
-                                icon="upload"
-                                text={lf("Import File...") }
-                                title={lf("Open files from your computer") }
-                                onClick={() => importHex() } /> : undefined}
-                    </div> : undefined}
                 <div className="ui vertical segment">
-                    {this.state.search ? <div className="ui search">
+                    <div className="ui search">
                         <div className="ui fluid action input" role="search">
                             <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
                             <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                                 <i className="search icon"></i>
                             </button>
                         </div>
-                    </div> : undefined }
+                    </div>
                     <div className="ui cards">
                         {bundles.map(scr =>
                             <codecard.CodeCardView
@@ -298,25 +195,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.installedVersion}
                                 onClick={() => chgBundle(scr) }
                                 />
-                        ) }
-                        {headers.map(scr =>
-                            <codecard.CodeCardView
-                                key={'local' + scr.id}
-                                name={scr.name}
-                                time={scr.recentUse}
-                                imageUrl={scr.icon}
-                                url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                onClick={() => chgHeader(scr) }
-                                />
-                        ) }
-                        {galleries.map(scr => <codecard.CodeCardView
-                            key={'gal' + scr.name}
-                            className="widedesktop only"
-                            name={scr.name}
-                            url={scr.url}
-                            imageUrl={scr.imageUrl}
-                            onClick={() => chgGallery(scr) }
-                            />
                         ) }
                         {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                             <codecard.CodeCardView
@@ -340,25 +218,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 color="red"
                                 />
                         ) }
-                        {urldata.map(scr =>
-                            <codecard.CodeCardView
-                                name={scr.name}
-                                time={scr.time}
-                                header={'/' + scr.id}
-                                description={scr.description}
-                                key={'cloud' + scr.id}
-                                onClick={() => installScript(scr) }
-                                url={'/' + scr.id}
-                                color="blue"
-                                />
-                        ) }
                     </div>
                     { isEmpty() ?
                         <div className="ui items">
                             <div className="ui item">
-                                {this.state.mode == ScriptSearchMode.Packages ?
-                                    lf("We couldn't find any packages matching '{0}'", this.state.searchFor) :
-                                    lf("We couldn't find any projects matching '{0}'", this.state.searchFor) }
+                                {lf("We couldn't find any packages matching '{0}'", this.state.searchFor) }
                             </div>
                         </div>
                         : undefined }

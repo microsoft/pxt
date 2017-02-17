@@ -5,7 +5,7 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
-    const blockColors: Map<number> = {
+    export const blockColors: Map<number> = {
         loops: 120,
         images: 45,
         variables: 330,
@@ -633,7 +633,7 @@ namespace pxt.blocks {
         }
 
         // Add the "Add package" category
-        if (tb && showCategories) {
+        if (tb && showCategories && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
             getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
@@ -941,7 +941,7 @@ namespace pxt.blocks {
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": lf("{id:var}item")
+                            "variable": lf("{id:var}index")
                             // Please note that most multilingual characters
                             // cannot be used as variable name at this point.
                             // Translate or decide the default variable name
@@ -1843,10 +1843,12 @@ namespace pxt.blocks {
         // builtin text
         installBuiltinHelpInfo('text');
 
-        // builtin text_length
+        // builtin text_length and text_join
         let msg: any = Blockly.Msg;
         msg.TEXT_LENGTH_TITLE = lf("length of %1");
+        msg.TEXT_JOIN_TITLE_CREATEWITH = lf("join");
         installBuiltinHelpInfo('text_length');
+        installBuiltinHelpInfo('text_join');
     }
 
     function initTooltip(blockInfo: pxtc.BlocksInfo) {

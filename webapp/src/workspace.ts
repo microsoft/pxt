@@ -24,6 +24,8 @@ let lf = U.lf
 let impl: WorkspaceProvider;
 
 export function setupWorkspace(id: string) {
+    U.assert(!impl, "workspace set twice");
+    pxt.debug(`workspace: ${id}`);
     switch (id) {
         case "fs":
         case "file":
@@ -87,7 +89,6 @@ export function getTextAsync(id: string): Promise<ScriptText> {
 
 export interface ScriptMeta {
     description: string;
-    islibrary: boolean;
     blocksWidth?: number;
     blocksHeight?: number;
 }
@@ -104,6 +105,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         editor: h.editor,
         text: text,
         meta: {
+            versions: pxt.appTarget.versions,
             blocksHeight: meta.blocksHeight,
             blocksWidth: meta.blocksWidth
         }

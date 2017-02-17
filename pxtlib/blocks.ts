@@ -171,6 +171,11 @@ namespace pxt.blocks {
             name: Util.lf("number of characters in the string"),
             tooltip: Util.lf("Returns the number of letters (including spaces) in the provided text."),
             url: 'reference/types/string-functions',
+        },
+        'text_join': {
+            name: Util.lf("join items to create text"),
+            tooltip: Util.lf("Create a piece of text by joining together any number of items."),
+            url: 'reference/types/string-functions',
         }
     };
 }
