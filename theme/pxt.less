@@ -257,23 +257,6 @@ div.simframe > iframe {
     top:0; left: 0; width:100%; height:100%;
 }
 
-/* Organization logo */
-.organization {
-    position:absolute;
-    top:1.3rem;
-    right:2rem;
-    height:2rem;
-    z-index:102;
-}
-.rtl .organization {
-    right:auto;
-    left:2rem;
-}
-
-.hideMenuBar .organization {
-    display: none;
-}
-
 /* Menu */ 
 .ui.menu .item.editor-menuitem {
     background: fade(@black, 30%) !important;
@@ -339,7 +322,7 @@ div.simframe > iframe {
 .ui.item.logo {
     font-size: 2.8rem;
     margin: 0;
-    padding: 0 0.3rem;
+    padding: 0.3rem;
 }
 .ui.item.logo .name {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
@@ -1000,18 +983,6 @@ Avatar
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    /* Organization logo */
-    .organization {
-        top:auto !important;
-        right:1rem;
-        left: auto;
-        bottom: 1rem;
-        height: 1.3rem;
-    }
-    .rtl .organization {
-        left:1rem;
-        right: auto;
-    }
     /* Blockly */
     span.blocklyTreeLabel {
         font-size:1rem;
@@ -1064,9 +1035,6 @@ Avatar
     }
     .hideEditorFloats #tutorialcard.bottom {
         bottom: 5rem !important;
-    }
-    .hideEditorFloats .organization {
-        display: none;
     }
     /* Simulator */
     div.simframe {
@@ -1150,18 +1118,6 @@ Avatar
     /* Hide the blockly toolbox search */
     #blocklySearchArea {
         display: none !important;
-    }
-    /* Organization logo */
-    .organization {
-        top:auto !important;
-        right:0.4rem;
-        left: auto;
-        bottom: 0.4rem;
-        height: 1.0rem;
-    }
-    .rtl .organization {
-        left:0.5rem;
-        right: auto;
     }
     .hideEditorFloats #editortools {
         height: 5rem !important;

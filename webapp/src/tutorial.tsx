@@ -30,9 +30,6 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
         const tutorialName = state.tutorialName;
 
         return <div className="ui item">
-            <div className="ui item">
-                {tutorialName}
-            </div>
             <div className="ui item tutorial-menuitem">
                 {tutorialSteps.map((step, index) =>
                     <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index) }/>
