@@ -1184,6 +1184,10 @@ namespace pxt.blocks {
         return mkBlock(stmts);
     }
 
+    // FIXME: Whenever we add unicode support, handle that here
+    const variableStatementRegex = /\s*(?:(?:let)|(?:const)|(?:var))\s+(.+)/
+    const declarationRegex = /\s*()/
+
     function compileTypescriptBlock(e: Environment, b: B.Block) {
         let res: JsNode[] = [];
         let i = 0;
@@ -1194,6 +1198,27 @@ namespace pxt.blocks {
 
             if (value !== null) {
                 res.push(mkText(value + "\n"));
+
+                const declaredVars: string = (b as any).declaredVariables
+                if (declaredVars) {
+                    const varNames = declaredVars.split(",");
+                    varNames.forEach(n => {
+                        const existing = lookup(e, n);
+                        if (existing) {
+                            existing.assigned = VarUsage.Assign;
+                            existing.mustBeGlobal = false;
+                        }
+                        else {
+                            e.bindings.push({
+                                name: n,
+                                type: mkPoint(null),
+                                assigned: VarUsage.Assign,
+                                declaredInLocalScope: 1,
+                                mustBeGlobal: false
+                            });
+                        }
+                    })
+                }
             }
             else {
                 break;

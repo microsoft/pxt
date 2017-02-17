@@ -2,8 +2,6 @@
 namespace ts.pxtc.decompiler {
     const SK = ts.SyntaxKind;
 
-    type NextNode = ts.Node | "ScopeEnd";
-
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
 
@@ -58,12 +56,6 @@ namespace ts.pxtc.decompiler {
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
         "Math.min": { blockId: "math_op2", block: "of %x|and %y" },
         "Math.max": { blockId: "math_op2", block: "of %x|and %y", fields: `<field name="op">max</field>` }
-    }
-
-    interface Scope {
-        renames: Map<string>;
-        usages: Map<boolean>;
-        autoDeclarations?: ts.VariableDeclaration[];
     }
 
     interface BlocklyNode {
@@ -285,12 +277,11 @@ namespace ts.pxtc.decompiler {
         }
         const fileText = file.getFullText();
         let output = ""
-        const scopes: Scope[] = [getNewScope()];
-        const takenNames: pxt.Map<boolean> = {}
 
-        const unusedDeclarations: [string, ts.Node][] = []
+        const varUsages: pxt.Map<boolean> = {};
+        const autoDeclarations: [string, ts.Node][] = [];
 
-        const n = codeBlock(stmts, undefined, true, true);
+        const n = codeBlock(stmts, undefined, true);
         emitStatementNode(n);
 
         result.outfiles[file.fileName.replace(/(\.blocks)?\.\w*$/i, '') + '.blocks'] = `<xml xmlns="http://www.w3.org/1999/xhtml">
@@ -605,7 +596,9 @@ ${output}</xml>`;
         }
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
-            return getFieldBlock("variables_get", "VAR", getVariableName(identifier));
+            const name = getVariableName(identifier);
+            varUsages[name] = true;
+            return getFieldBlock("variables_get", "VAR", name);
         }
 
         function getNumericLiteral(value: string): ExpressionNode {
@@ -702,12 +695,7 @@ ${output}</xml>`;
             }
         }
 
-        function getStatementBlock(n: NextNode, next?: NextNode[], parent?: ts.Node): StatementNode {
-            if (isScopeEnd(n)) {
-                popScope();
-                return getNext();
-            }
-
+        function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node): StatementNode {
             const node = n as ts.Node;
             let stmt: StatementNode;
 
@@ -717,12 +705,11 @@ ${output}</xml>`;
             else {
                 switch (node.kind) {
                     case SK.Block:
-                        pushScope();
                         return codeBlock((node as ts.Block).statements, next);
                     case SK.ExpressionStatement:
                         return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
                     case SK.VariableStatement:
-                        return codeBlock((node as ts.VariableStatement).declarationList.declarations, next, true, false, parent || node);
+                        return codeBlock((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
                     case SK.ArrowFunction:
                         return getArrowFunctionStatement(node as ts.ArrowFunction, next);
                     case SK.BinaryExpression:
@@ -735,11 +722,11 @@ ${output}</xml>`;
                     case SK.VariableDeclaration:
                         const decl = node as ts.VariableDeclaration;
                         if (isAutoDeclaration(decl)) {
-                            trackAutoDeclaration(decl);
                             // Don't emit null or automatic initializers;
-                            // They are implicit within the blocks. But do add a name to the scope
-                            if (addVariableDeclaration(decl)) {
-                            }
+                            // They are implicit within the blocks. But do track them in case they
+                            // never get used in the blocks (and thus won't be emitted again)
+
+                            trackAutoDeclaration(decl);
                             return getNext();
                         }
                         stmt = getVariableDeclarationStatement(node as ts.VariableDeclaration);
@@ -822,6 +809,17 @@ ${output}</xml>`;
                         text = text.slice(0, sIndex) + rename.name + text.slice(eIndex);
                     });
                 }
+            }
+
+            const declaredVariables: string[] = [];
+            if (node.kind === SK.VariableStatement) {
+                for (const declaration of (node as ts.VariableStatement).declarationList.declarations) {
+                    declaredVariables.push(getVariableName(declaration.name as ts.Identifier));
+                }
+            }
+
+            if (declaredVariables.length) {
+                r.mutation["declaredvars"] = declaredVariables.join(",");
             }
 
             const parts = text.split("\n");
@@ -933,9 +931,6 @@ ${output}</xml>`;
             const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
             const condition = n.condition as ts.BinaryExpression
 
-            pushScope();
-            addVariable(indexVar);
-
             const r: StatementNode = {
                 kind: "statement",
                 type: "controls_simple_for",
@@ -969,19 +964,18 @@ ${output}</xml>`;
             }
 
             r.handlers.push({ name: "DO", statement: getStatementBlock(n.statement) });
-
-            popScope();
-
             return r;
         }
 
         function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
+            const renamed = getVariableName(name);
+            varUsages[renamed] = true;
             // We always do a number shadow even if the variable is not of type number
             return {
                 kind: "statement",
                 type: changed ? "variables_change" : "variables_set",
                 inputs: [getValue("VALUE", value, ShadowType.Number)],
-                fields: [getField("VAR", getVariableName(name))]
+                fields: [getField("VAR", renamed)]
             };
         }
 
@@ -1162,13 +1156,12 @@ ${output}</xml>`;
             }
         }
 
-        function getArrowFunctionStatement(n: ts.ArrowFunction, next: NextNode[]) {
+        function getArrowFunctionStatement(n: ts.ArrowFunction, next: ts.Node[]) {
             if (n.parameters.length > 0 && !(n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern)) {
                 error(n);
                 return;
             }
 
-            pushScope();
             return getStatementBlock(n.body, next)
         }
 
@@ -1194,14 +1187,9 @@ ${output}</xml>`;
             return r;
         }
 
-        function codeBlock(statements: ts.Node[], next?: NextNode[], partOfCurrentBlock = false, topLevel = false, parent?: ts.Node) {
+        function codeBlock(statements: ts.Node[], next?: ts.Node[], topLevel = false, parent?: ts.Node) {
             const eventStatements: ts.Node[] = [];
-            const blockStatements: NextNode[] = next || [];
-
-            if (!partOfCurrentBlock) {
-                // Push a marker indicating where this block ends (for keeping track of variable names)
-                blockStatements.unshift("ScopeEnd")
-            }
+            const blockStatements: ts.Node[] = next || [];
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
             statements.reverse().forEach(statement => {
@@ -1215,16 +1203,17 @@ ${output}</xml>`;
 
             eventStatements.map(n => getStatementBlock(n)).forEach(emitStatementNode);
 
-            if (blockStatements.length > (partOfCurrentBlock ? 0 : 1)) {
+            if (blockStatements.length) {
                 // wrap statement in "on start" if top level
                 const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent);
                 const emitOnStart = topLevel && !options.snippetMode;
                 if (emitOnStart) {
-                    popScope();
-
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
-                    unusedDeclarations.forEach(([name, node]) => {
+                    autoDeclarations.forEach(([name, node]) => {
+                        if (varUsages[name]) {
+                            return;
+                        }
                         const v = getVariableSetOrChangeBlock((node as ts.VariableDeclaration).name as ts.Identifier, (node as ts.VariableDeclaration).initializer, false, true);
                         v.next = current;
                         current = v;
@@ -1308,34 +1297,8 @@ ${output}</xml>`;
             }
         }
 
-        function getNewScope(): Scope {
-            return { renames: {}, usages: {}, autoDeclarations: [] }
-        }
-
-        function getCurrentScope() {
-            return scopes[scopes.length - 1];
-        }
-
-        function pushScope() {
-            scopes.push(getNewScope())
-        }
-
-        function popScope() {
-            const current = scopes.pop();
-            current.autoDeclarations.forEach(v => {
-                const rename = current.renames[(v.name as ts.Identifier).text];
-                if (!current.usages[rename]) {
-                    unusedDeclarations.push([rename, v]);
-                }
-            })
-        }
-
-        function addVariable(name: string) {
-            getCurrentScope().renames[name] = getNewName(name);
-        }
-
         function trackAutoDeclaration(n: ts.VariableDeclaration) {
-            getCurrentScope().autoDeclarations.push(n);
+            autoDeclarations.push([getVariableName(n.name as ts.Identifier), n]);
         }
 
         function addVariableDeclaration(node: VariableDeclaration): boolean {
@@ -1347,8 +1310,6 @@ ${output}</xml>`;
                 error(node, Util.lf("Variable declarations must have an initializer"))
                 return false;
             }
-            const name = (node.name as ts.Identifier).text
-            addVariable(name)
             return true;
         }
 
@@ -1360,52 +1321,6 @@ ${output}</xml>`;
                 }
             }
             return name.text;
-        }
-
-        function findVariableName(name: string) {
-            for (let i = scopes.length - 1; i >= 0; i--) {
-                const rename = scopes[i].renames[name];
-                if (rename) {
-                    scopes[i].usages[rename] = true;
-                    return rename;
-                }
-            }
-            return undefined;
-        }
-
-        function isScopeEnd(n: NextNode): n is "ScopeEnd" {
-            return typeof n === "string"
-        }
-
-        function getNewName(name: string) {
-            if (!takenNames[name]) {
-                takenNames[name] = true;
-                return name;
-            }
-
-            // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
-            if (name.length === 1) {
-                const charCode = name.charCodeAt(0);
-                if (charCode >= lowerCaseAlphabetStartCode && charCode <= lowerCaseAlphabetEndCode) {
-                    const offset = charCode - lowerCaseAlphabetStartCode;
-                    for (let i = 1; i < 26; i++) {
-                        const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
-                        if (!takenNames[newChar]) {
-                            takenNames[newChar] = true;
-                            return newChar;
-                        }
-                    }
-                }
-            }
-
-            // For all other names, add a number to the end. Start at 2 because it probably makes more sense for kids
-            for (let i = 2; ; i++) {
-                const toTest = name + i;
-                if (!takenNames[toTest]) {
-                    takenNames[toTest] = true;
-                    return toTest;
-                }
-            }
         }
     }
 
