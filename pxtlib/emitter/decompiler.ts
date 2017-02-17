@@ -473,7 +473,7 @@ ${output}</xml>`;
 
         function getOutputBlock(n: ts.Node): OutputNode {
             if (checkExpression(n)) {
-                return getFieldBlock("typescript_expression", "EXPRESSION", n.getFullText())
+                return getTypeScriptExpressionBlock(n);
             }
             else {
                 switch (n.kind) {
@@ -507,6 +507,32 @@ ${output}</xml>`;
                 }
                 return undefined;
             }
+        }
+
+        function applyRenamesInRange(text: string, start: number, end: number) {
+            if (renameMap) {
+                const renames = renameMap.getRenamesInSpan(start, end);
+
+                if (renames.length) {
+                    let offset = 0;
+
+                    renames.forEach(rename => {
+                        const sIndex = rename.span.start + offset - start;
+                        const eIndex = sIndex + rename.span.length;
+
+                        offset += rename.diff;
+
+                        text = text.slice(0, sIndex) + rename.name + text.slice(eIndex);
+                    });
+                }
+            }
+
+            return text;
+        }
+
+        function getTypeScriptExpressionBlock(n: ts.Node) {
+            const text = applyRenamesInRange(n.getFullText(), n.getFullStart(), n.getEnd());
+            return getFieldBlock("typescript_expression", "EXPRESSION", text);
         }
 
         function getBinaryExpression(n: ts.BinaryExpression): ExpressionNode {
@@ -794,22 +820,7 @@ ${output}</xml>`;
             const start = node.getStart();
             const end = node.getEnd();
 
-            if (renameMap) {
-                const renames = renameMap.getRenamesInSpan(start, end);
-
-                if (renames.length) {
-                    let offset = 0;
-
-                    renames.forEach(rename => {
-                        const sIndex = rename.span.start + offset - start;
-                        const eIndex = sIndex + rename.span.length;
-
-                        offset += rename.diff;
-
-                        text = text.slice(0, sIndex) + rename.name + text.slice(eIndex);
-                    });
-                }
-            }
+            text = applyRenamesInRange(text, start, end);
 
             const declaredVariables: string[] = [];
             if (node.kind === SK.VariableStatement) {
@@ -1551,8 +1562,9 @@ ${output}</xml>`;
             case SK.TrueKeyword:
             case SK.FalseKeyword:
             case SK.ExpressionStatement:
-            case SK.ParenthesizedExpression:
                 return undefined;
+            case SK.ParenthesizedExpression:
+                return checkExpression((n as ts.ParenthesizedExpression).expression);
             case SK.Identifier:
                 return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
             case SK.BinaryExpression:

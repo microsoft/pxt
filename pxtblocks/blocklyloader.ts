@@ -1484,7 +1484,7 @@ namespace pxt.blocks {
         Blockly.Blocks["typescript_statement"] = {
             init: function () {
                 let that: Blockly.Block = this;
-                that.setColour(blockColors['logic'])
+                that.setColour("#717171")
                 that.setPreviousStatement(true);
                 that.setNextStatement(true);
 
@@ -1526,7 +1526,7 @@ namespace pxt.blocks {
         Blockly.Blocks["typescript_expression"] = {
             init: function () {
                 this.jsonInit({
-                    "colour": blockColors['logic'],
+                    "colour": "#717171",
                     "message0": "%1",
                     "args0": [
                         {
