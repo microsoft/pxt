@@ -150,7 +150,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 action={action}
                 actionClick={publish}
                 actionLoading={actionLoading}
-                closeIcon={false}
+                closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className={`ui form`}>
