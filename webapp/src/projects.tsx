@@ -180,6 +180,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             return false;
         }
 
+        const targetTheme = pxt.appTarget.appTheme;
+
         const tabs = [ProjectsTab.MyStuff];
         if (pxt.appTarget.appTheme.projectGallery) tabs.push(ProjectsTab.Make);
         if (pxt.appTarget.appTheme.exampleGallery) tabs.push(ProjectsTab.Code);
@@ -218,8 +220,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={true}
                 onClose={() => this.setState({ visible: false })} header={lf("Projects")} dimmer="blurring"
                 closeOnDimmerClick closeOnDocumentClick>
-                <sui.Segment inverted attached="top">
-                    <sui.Menu inverted pointing secondary>
+                <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
+                    <sui.Menu inverted={targetTheme.invertedMenu} pointing secondary>
                         {tabs.map(t =>
                         <sui.MenuItem key={`tab${t}`} active={tab == t} name={tabNames[t]} onClick={() => this.setState({ tab: t }) } />) }
                     </sui.Menu>
