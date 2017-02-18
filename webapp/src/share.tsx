@@ -167,18 +167,10 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                         <div className="ui divider"></div>
                         <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
                         { advancedMenu ?
-                            <div className="ui form">
-                                <div className="inline fields">
-                                    {formats.map(f =>
-                                        <div key={f.mode.toString() } className="field">
-                                            <div className="ui radio checkbox">
-                                                <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
-                                                <label>{f.label}</label>
-                                            </div>
-                                        </div>
-                                    ) }
-                                </div>
-                            </div> : undefined }
+                            <sui.Menu pointing secondary>
+                                {formats.map(f =>
+                                    <sui.MenuItem key={`tab${f.label}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
+                            </sui.Menu> : undefined }
                         { advancedMenu ?
                             <sui.Field>
                                 <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
