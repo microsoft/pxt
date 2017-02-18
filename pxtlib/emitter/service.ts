@@ -501,6 +501,14 @@ ${sipkg}
                         si.attributes = parseCommentString(
                             existing.attributes._source + "\n" +
                             si.attributes._source)
+                        if (existing.extendsTypes) {
+                            si.extendsTypes = si.extendsTypes || []
+                            existing.extendsTypes.forEach(t => {
+                                if (si.extendsTypes.indexOf(t) === -1) {
+                                    si.extendsTypes.push(t);
+                                }
+                            })
+                        }
                     }
                     res.byQName[qName] = si
                 }
