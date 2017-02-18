@@ -1327,7 +1327,8 @@ namespace pxt.blocks {
                     pxt.blocks.layout.shuffle(this, 1);
                 }
             };
-            menuOptions.push(shuffleOption);
+            // TODO: temporarily removing shuffle blocks option until we have a better way of surfacing it to content creators
+            //menuOptions.push(shuffleOption);
 
             const screenshotOption = {
                 text: lf("Download Screenshot"),
