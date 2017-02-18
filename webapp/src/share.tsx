@@ -56,7 +56,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     }
 
     renderCore() {
-        if (!this.state.visible) return null;
+        const { visible } = this.state;
+        if (!visible) return <div />;
 
         const cloud = pxt.appTarget.cloud || {};
         const embedding = !!cloud.embedding;
@@ -143,45 +144,48 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing;
 
-        return <sui.Modal visible={this.state.visible} addClass="searchdialog" header={lf("Share Project") }
-            onHide={() => this.setState({ visible: false }) }
-            action={action}
-            actionClick={publish}
-            actionLoading={actionLoading}
-            hideClose={true}
-            >
-            <div className={`ui form`}>
-                { action ?
-                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                        lf("You acknowledge having consent to publish this project.") }</p>
-                    : undefined }
-                { url && ready ? <div>
-                    <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
-                    <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} />
-                </div>
-                    : undefined }
-                { ready ? <div>
-                    <div className="ui divider"></div>
-                    <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
-                    { advancedMenu ?
-                        <div className="ui form">
-                            <div className="inline fields">
-                                {formats.map(f =>
-                                    <div key={f.mode.toString() } className="field">
-                                        <div className="ui radio checkbox">
-                                            <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
-                                            <label>{f.label}</label>
+        return (
+            <sui.Modal open={this.state.visible} dimmer="blurring" className="sharedialog" header={lf("Share Project")} size="small"
+                onClose={() => this.setState({ visible: false }) }
+                action={action}
+                actionClick={publish}
+                actionLoading={actionLoading}
+                closeIcon={false}
+                closeOnDimmerClick closeOnDocumentClick
+                >
+                <div className={`ui form`}>
+                    { action ?
+                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                            lf("You acknowledge having consent to publish this project.") }</p>
+                        : undefined }
+                    { url && ready ? <div>
+                        <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
+                        <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} />
+                    </div>
+                        : undefined }
+                    { ready ? <div>
+                        <div className="ui divider"></div>
+                        <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                        { advancedMenu ?
+                            <div className="ui form">
+                                <div className="inline fields">
+                                    {formats.map(f =>
+                                        <div key={f.mode.toString() } className="field">
+                                            <div className="ui radio checkbox">
+                                                <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
+                                                <label>{f.label}</label>
+                                            </div>
                                         </div>
-                                    </div>
-                                ) }
-                            </div>
-                        </div> : undefined }
-                    { advancedMenu ?
-                        <sui.Field>
-                            <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
-                        </sui.Field> : null }
-                </div> : undefined }
-            </div>
-        </sui.Modal>
+                                    ) }
+                                </div>
+                            </div> : undefined }
+                        { advancedMenu ?
+                            <sui.Field>
+                                <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
+                            </sui.Field> : null }
+                    </div> : undefined }
+                </div>
+            </sui.Modal>
+            )
     }
 }
