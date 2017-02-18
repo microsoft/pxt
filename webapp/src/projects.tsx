@@ -96,10 +96,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             || this.state.searchFor != nextState.searchFor;
     }
 
-    renderCore() {
-        if (!this.state.visible) return null;
+    private numDaysOld(d1: number) {
+        let diff = Math.abs((Date.now() / 1000) - d1);
+        return Math.floor(diff / (60 * 60 * 24));
+    }
 
-        const tab = this.state.tab;
+    renderCore() {
+        const {visible, tab} = this.state;
+        if (!visible) return <div />;
+
         const tabNames = [
             lf("My Stuff"),
             lf("Make"),
@@ -175,61 +180,114 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             return false;
         }
 
+        const targetTheme = pxt.appTarget.appTheme;
+
         const tabs = [ProjectsTab.MyStuff];
         if (pxt.appTarget.appTheme.projectGallery) tabs.push(ProjectsTab.Make);
         if (pxt.appTarget.appTheme.exampleGallery) tabs.push(ProjectsTab.Code);
 
+        const headersToday = headers.filter(
+            (h) => { let days = this.numDaysOld(h.modificationTime); return days == 0; });
+        const headersYesterday = headers.filter(
+            (h) => { let days = this.numDaysOld(h.modificationTime); return days == 1; });
+        const headersThisWeek = headers.filter(
+            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 1 && days <= 7; });
+        const headersLastWeek = headers.filter(
+            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 7 && days <= 14; });
+        const headersThisMonth = headers.filter(
+            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 14 && days <= 30; });
+        const headersOlder = headers.filter(
+            (h) => { let days = this.numDaysOld(h.modificationTime); return days > 30; });
+        const headersGrouped: {name: string, headers: pxt.workspace.Header[] }[] = [
+            {name: lf("Today"), headers: headersToday},
+            {name: lf("Yesterday"), headers: headersYesterday},
+            {name: lf("This Week"), headers: headersThisWeek},
+            {name: lf("Last Week"), headers: headersLastWeek},
+            {name: lf("This Month"), headers: headersThisMonth},
+            {name: lf("Older"), headers: headersOlder},
+        ];
+
+        const isLoading =
+            (tab == ProjectsTab.Make && makes.length == 0) ||
+            (tab == ProjectsTab.Code && codes.length == 0);
+
+        const tabClasses = sui.cx([
+                isLoading ? 'loading' : '',
+                'ui segment bottom attached tab active tabsegment'
+            ]);
+
         return (
-            <sui.Modal visible={this.state.visible} addClass="large searchdialog"
-                onHide={() => this.setState({ visible: false }) }>
-                <sui.Button
-                    icon="close"
-                    text={lf("Close") }
-                    class="cancel right labeled right floated"
-                    onClick={() => this.hide() } />
-                <div className="ui pointing secondary menu">
-                    {tabs.map(t =>
-                        <sui.Item key={`tab${t}`} class={`item ${tab == t ? "active" : ""}`} text={tabNames[t]} onClick={() => this.setState({ tab: t }) } />) }
-                </div>
-                {tab == ProjectsTab.MyStuff ? <div className="ui bottom attached tab active">
-                    <sui.Button
-                        class="primary"
-                        icon="file outline"
-                        text={lf("New Project...") }
-                        title={lf("Creates a new empty project") }
-                        onClick={() => newProject() } />
-                    {pxt.appTarget.compile ?
-                        <sui.Button
-                            icon="upload"
-                            text={lf("Import File...") }
-                            title={lf("Open files from your computer") }
-                            onClick={() => importHex() } /> : undefined}
-                    <div className="ui cards">
-                        {headers.map(scr =>
+            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={true}
+                onClose={() => this.setState({ visible: false })} header={lf("Projects")} dimmer="blurring"
+                closeOnDimmerClick closeOnDocumentClick>
+                <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
+                    <sui.Menu inverted={targetTheme.invertedMenu} pointing secondary>
+                        {tabs.map(t =>
+                        <sui.MenuItem key={`tab${t}`} active={tab == t} name={tabNames[t]} onClick={() => this.setState({ tab: t }) } />) }
+                    </sui.Menu>
+                </sui.Segment>
+                {tab == ProjectsTab.MyStuff ? <div className={tabClasses}>
+                    <div className="group">
+                        <h3 className="ui dividing header disabled">
+                            {lf("Create new")}
+                        </h3>
+                        <div className="ui cards">
                             <codecard.CodeCardView
-                                key={'local' + scr.id}
-                                name={scr.name}
-                                time={scr.recentUse}
-                                imageUrl={scr.icon}
-                                url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                onClick={() => chgHeader(scr) }
+                                key={'newproject'}
+                                icon="file outline"
+                                iconColor="primary"
+                                name={lf("New Project...")}
+                                description={lf("Creates a new empty project") }
+                                onClick={() => newProject() }
                                 />
-                        ) }
-                        {urldata.map(scr =>
+                            {pxt.appTarget.compile ?
                             <codecard.CodeCardView
-                                name={scr.name}
-                                time={scr.time}
-                                header={'/' + scr.id}
-                                description={scr.description}
-                                key={'cloud' + scr.id}
-                                onClick={() => installScript(scr) }
-                                url={'/' + scr.id}
-                                color="blue"
-                                />
-                        ) }
+                                key={'import'}
+                                icon="upload"
+                                iconColor="secondary"
+                                name={lf("Import File...") }
+                                description={lf("Open files from your computer") }
+                                onClick={() => importHex() }
+                                /> : undefined }
+                        </div>
+                    </div>
+                    {headersGrouped.filter(g => g.headers.length != 0).map(headerGroup =>
+                        <div key={'localgroup' + headerGroup.name} className="group">
+                            <h3 className="ui dividing header disabled">
+                                {headerGroup.name}
+                            </h3>
+                            <div className="ui cards">
+                                {headerGroup.headers.map(scr =>
+                                    <codecard.CodeCardView
+                                        key={'local' + scr.id}
+                                        name={scr.name}
+                                        time={scr.recentUse}
+                                        imageUrl={scr.icon}
+                                        url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
+                                        onClick={() => chgHeader(scr) }
+                                        />
+                                ) }
+                            </div>
+                        </div>
+                    )}
+                    <div className="group">
+                        <div className="ui cards">
+                            {urldata.map(scr =>
+                                <codecard.CodeCardView
+                                    name={scr.name}
+                                    time={scr.time}
+                                    header={'/' + scr.id}
+                                    description={scr.description}
+                                    key={'cloud' + scr.id}
+                                    onClick={() => installScript(scr) }
+                                    url={'/' + scr.id}
+                                    color="blue"
+                                    />
+                            ) }
+                        </div>
                     </div>
                 </div> : undefined }
-                {tab == ProjectsTab.Make ? <div className="ui bottom attached tab active">
+                {tab == ProjectsTab.Make ? <div className={tabClasses}>
                     <div className="ui cards">
                         {makes.map(scr => <codecard.CodeCardView
                             key={'gal' + scr.name}
@@ -241,7 +299,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         ) }
                     </div>
                 </div> : undefined }
-                {tab == ProjectsTab.Code ? <div className="ui bottom attached tab active">
+                {tab == ProjectsTab.Code ? <div className={tabClasses}>
                     <div className="ui cards">
                         {codes.map(scr => <codecard.CodeCardView
                             key={'gal' + scr.name}
