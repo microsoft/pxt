@@ -75,7 +75,7 @@ namespace pxsim {
         pins: Pin[];
 
         constructor(public props: EdgeConnectorProps) {
-            this.pins = props.pins.map(id => id ? new Pin(id) : null);
+            this.pins = props.pins.map(id => id != undefined ? new Pin(id) : null);
         }
 
         public getPin(id: number) {
