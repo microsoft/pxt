@@ -287,6 +287,7 @@ namespace ts.pxtc {
         blockAllowMultiple?: boolean;
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
+        blockFieldEditor?: string; // Custom field editor
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
@@ -302,6 +303,7 @@ namespace ts.pxtc {
         trackArgs?: number[];
         advanced?: boolean;
         deprecated?: boolean;
+        noteValue?: string; //  value for enum Note
 
         // on interfaces
         indexerGet?: string;

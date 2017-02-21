@@ -378,7 +378,11 @@ namespace pxt.blocks {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
-
+        const color =
+            fn.attributes.color
+            || (nsinfo ? nsinfo.attributes.color : undefined)
+            || blockColors[ns]
+            || 255;
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
 
@@ -434,7 +438,26 @@ namespace pxt.blocks {
                     // if a value is provided, move it first
                     if (pr.shadowValue)
                         dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
-                    i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
+
+                    const noteValidator = (text: string): string => {
+                        if (text === null) {
+                            return null;
+                        }
+                        text = String(text);
+
+                        let n = parseFloat(text || '0');
+                        if (isNaN(n) || n < 0) {
+                            // Invalid number.
+                            return null;
+                        }
+                        // Get the value in range.
+                        return String(Math.round(Number(text)));
+                    };
+
+                    if (fn.attributes.blockFieldEditor == "note_editor")
+                        i.appendField(new Blockly.FieldNote("262", color, noteValidator), attrNames[n].name);
+                    else
+                        i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
                 } else if (/\[\]$/.test(pr.type)) { // Array type
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
