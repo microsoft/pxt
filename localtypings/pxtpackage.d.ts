@@ -81,6 +81,9 @@ declare namespace pxt {
         blocks?: number;
         javascript?: number;
 
+        icon?: string;
+        iconColor?: string;
+
         onClick?: (e: any) => void; // React event
 
         target?: string;
