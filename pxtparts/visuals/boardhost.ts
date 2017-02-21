@@ -1,3 +1,4 @@
+
 namespace pxsim.visuals {
     export interface BoardViewOptions {
         visual: string |  BoardImageDefinition,

@@ -100,6 +100,7 @@ compileDir("pxtwinrt", ["built/pxtlib.js"])
 compileDir("pxtblocks", ["built/pxtlib.js"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
+compileDir("pxtparts", ["built/pxtsim.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
@@ -130,6 +131,7 @@ task("lint", [], { async: true }, function () {
         "pxtlib/emitter",
         "pxtrunner",
         "pxtsim",
+        "pxtparts",
         "pxtwinrt",
         "webapp/src",
         "monacots"]
@@ -223,6 +225,7 @@ file('built/localization.json', ju.expand1(
 task('wapp', [
     "built/web/pxtlib.js",
     "built/web/pxtsim.js",
+    "built/web/pxtparts.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js",
@@ -238,6 +241,7 @@ file("built/web/pxtlib.js", [
     "built/pxtlib.js",
     "built/pxtblocks.js",
     "built/pxtsim.js",
+    "built/pxtparts.js",
     "built/pxtrunner.js",
     "built/pxteditor.js",
     "built/pxtwinrt.js"
@@ -250,6 +254,7 @@ file("built/web/pxtlib.js", [
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
+    jake.cpR("built/pxtparts.js", "built/web/")
     jake.cpR("built/pxtrunner.js", "built/web/")
     jake.cpR("built/pxteditor.js", "built/web/")
     jake.cpR("built/pxtwinrt.js", "built/web/")
@@ -344,6 +349,7 @@ file('built/webapp/src/app.js', expand([
     "webapp",
     "built/web/pxtlib.js",
     "built/web/pxtsim.js",
+    "built/web/pxtparts.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js"
