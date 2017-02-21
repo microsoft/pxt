@@ -257,23 +257,6 @@ div.simframe > iframe {
     top:0; left: 0; width:100%; height:100%;
 }
 
-/* Organization logo */
-.organization {
-    position:absolute;
-    top:1.3rem;
-    right:2rem;
-    height:2rem;
-    z-index:102;
-}
-.rtl .organization {
-    right:auto;
-    left:2rem;
-}
-
-.hideMenuBar .organization {
-    display: none;
-}
-
 /* Menu */ 
 .ui.menu .item.editor-menuitem {
     background: fade(@black, 30%) !important;
@@ -336,10 +319,10 @@ div.simframe > iframe {
 }
 
 /* Logo */
-.ui.item.logo {
-    font-size: 2.8rem;
+.ui.menu .ui.item.logo {
+    font-size: 2.2rem;
     margin: 0;
-    padding: 0 0.3rem;
+    padding: 0rem !important;
 }
 .ui.item.logo .name {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
@@ -352,7 +335,7 @@ div.simframe > iframe {
 }
 
 .ui.item.logo img {
-    max-height: 2.5rem;
+    max-height: 2.0rem;
     margin-left: 1rem;
     margin-right: 1rem;
 }
@@ -450,6 +433,29 @@ div.simframe > iframe {
     display:inline-block;
     vertical-align: middle;
 }
+
+
+/*******************************
+        Projects Modal
+*******************************/
+
+
+.projectsdialog .ui.dividing.header, .projectsdialog .content > .header{
+    font-weight: normal !important;
+}
+
+.projectsdialog .ui.secondary.inverted.pointing.menu {
+    border: 0;
+}
+
+.projectsdialog .group {
+    padding:1rem;
+}
+
+.projectsdialog .tabsegment {
+    min-height: 450px;
+}
+
 /*******************************
              Blockly
 *******************************/
@@ -492,9 +498,6 @@ span.blocklyTreeLabel {
     font-size:1.25rem;
 }
 
-.blocklyFlyoutButton {
-    fill: rgb(165, 91, 128) !important;
-}
 .blocklyFlyoutButtonShadow {
     fill: none !important;
 }
@@ -1000,18 +1003,6 @@ Avatar
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    /* Organization logo */
-    .organization {
-        top:auto !important;
-        right:1rem;
-        left: auto;
-        bottom: 1rem;
-        height: 1.3rem;
-    }
-    .rtl .organization {
-        left:1rem;
-        right: auto;
-    }
     /* Blockly */
     span.blocklyTreeLabel {
         font-size:1rem;
@@ -1064,9 +1055,6 @@ Avatar
     }
     .hideEditorFloats #tutorialcard.bottom {
         bottom: 5rem !important;
-    }
-    .hideEditorFloats .organization {
-        display: none;
     }
     /* Simulator */
     div.simframe {
@@ -1150,18 +1138,6 @@ Avatar
     /* Hide the blockly toolbox search */
     #blocklySearchArea {
         display: none !important;
-    }
-    /* Organization logo */
-    .organization {
-        top:auto !important;
-        right:0.4rem;
-        left: auto;
-        bottom: 0.4rem;
-        height: 1.0rem;
-    }
-    .rtl .organization {
-        left:0.5rem;
-        right: auto;
     }
     .hideEditorFloats #editortools {
         height: 5rem !important;

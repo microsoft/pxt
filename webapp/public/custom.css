@@ -35,11 +35,6 @@ body {
     margin-right: 0.25rem;
 }
 
-
-.searchdialog {
-    margin-top: -20rem !important;
-}
-
 .searchdialog .cards {
     max-height: 20rem;
     overflow-y: auto;
