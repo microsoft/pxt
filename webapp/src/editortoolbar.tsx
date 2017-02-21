@@ -243,7 +243,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 <div className="ui grid equal width">
                     <div id="downloadArea" className="ui column items">
                         <div className="ui item">
-                            <sui.Button icon={`${collapsed ? 'toggle right' : 'toggle left'}`} class="large collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />
+                            <sui.Button icon={`${state.collapseEditorTools ? 'toggle right' : 'toggle left'}`} class="large collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />
                             {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
                         </div>
                     </div>
