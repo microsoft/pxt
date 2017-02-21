@@ -2151,7 +2151,7 @@ ${lbl}: .short 0xffff
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (!isUsed(node))
-                return;
+                return null;
 
             let attrs = parseComments(node)
             if (attrs.shim != null) {
@@ -2162,14 +2162,14 @@ ${lbl}: .short 0xffff
                         getParameters(node).length);
                 }
                 if (!hasShimDummy(node))
-                    return
+                    return null;
             }
 
             if (node.flags & NodeFlags.Ambient)
-                return;
+                return null;
 
             if (!node.body)
-                return;
+                return null;
 
             let info = getFunctionInfo(node)
             let lit: ir.Expr = null
@@ -3325,9 +3325,9 @@ ${lbl}: .short 0xffff
         sourceHash = "";
         checksumBlock: number[];
 
-        strings: Map<string> = {};
+        strings: MapLike<string> = {};
         otherLiterals: string[] = [];
-        codeHelpers: Map<string> = {};
+        codeHelpers: MapLike<string> = {};
         lblNo = 0;
 
         reset() {

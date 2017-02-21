@@ -211,11 +211,12 @@ namespace ts.pxtc {
                 return fileText.hasOwnProperty(fn)
             },
             getCanonicalFileName: fn => fn,
-            getDefaultLibFileName: () => "no-default-lib.d.ts",
+            getDefaultLibFileName: (options: CompilerOptions) => "no-default-lib.d.ts",
             writeFile: (fileName, data, writeByteOrderMark, onError) => {
                 res.outfiles[fileName] = data
             },
             getCurrentDirectory: () => ".",
+            getDirectories: (path: string) => ["."], //TODO: review
             useCaseSensitiveFileNames: () => true,
             getNewLine: () => "\n",
             readFile: fn => {

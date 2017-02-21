@@ -1,0 +1,44 @@
+Localization extraction: 65 files; 344 strings
+emitter/decompiler.ts(286,50): error TS2339: Property 'left' does not exist on type 'never'.
+emitter/decompiler.ts(287,51): error TS2339: Property 'right' does not exist on type 'never'.
+emitter/decompiler.ts(898,30): error TS2678: Type 'ShadowType.Boolean' is not comparable to type 'ShadowType.Number | ShadowType.String'.
+emitter/emitter.ts(72,33): error TS2339: Property 'ThisType' does not exist on type 'typeof TypeFlags'.
+emitter/emitter.ts(160,51): error TS2304: Cannot find name 'TemplateLiteralFragment'.
+emitter/emitter.ts(471,37): error TS2339: Property 'Reference' does not exist on type 'typeof TypeFlags'.
+emitter/emitter.ts(475,36): error TS2339: Property 'Interface' does not exist on type 'typeof TypeFlags'.
+emitter/emitter.ts(479,33): error TS2339: Property 'Reference' does not exist on type 'typeof TypeFlags'.
+emitter/emitter.ts(489,39): error TS2339: Property 'Class' does not exist on type 'typeof TypeFlags'.
+emitter/emitter.ts(489,72): error TS2339: Property 'ThisType' does not exist on type 'typeof TypeFlags'.
+emitter/emitter.ts(705,24): error TS2322: Type '{ diagnostics: { file: SourceFile; start: number; length: number; category: DiagnosticCategory.Er...' is not assignable to type 'EmitResult'.
+  Property 'emittedFiles' is missing in type '{ diagnostics: { file: SourceFile; start: number; length: number; category: DiagnosticCategory.Er...'.
+emitter/emitter.ts(790,16): error TS2322: Type '{ diagnostics: Diagnostic[]; emitSkipped: boolean; }' is not assignable to type 'EmitResult'.
+  Property 'emittedFiles' is missing in type '{ diagnostics: Diagnostic[]; emitSkipped: boolean; }'.
+emitter/emitter.ts(845,36): error TS2339: Property 'SpreadElementExpression' does not exist on type 'typeof SyntaxKind'.
+emitter/emitter.ts(1358,55): error TS2304: Cannot find name 'TemplateLiteralFragment'.
+emitter/emitter.ts(2168,40): error TS2339: Property 'Ambient' does not exist on type 'typeof NodeFlags'.
+emitter/emitter.ts(2581,47): error TS2304: Cannot find name 'TemplateLiteralFragment'.
+emitter/emitter.ts(2627,52): error TS2304: Cannot find name 'SpreadElementExpression'.
+emitter/emitter.ts(2639,40): error TS2339: Property 'Ambient' does not exist on type 'typeof NodeFlags'.
+emitter/emitter.ts(2959,21): error TS2349: Cannot invoke an expression whose type lacks a call signature. Type '((callbackfn: (value: BindingElement, index: number, array: BindingElement[]) => void, thisArg?: ...' has no compatible call signatures.
+emitter/emitter.ts(2959,68): error TS7006: Parameter 'e' implicitly has an 'any' type.
+emitter/emitter.ts(2978,17): error TS2365: Operator '===' cannot be applied to types 'SyntaxKind.Parameter | SyntaxKind.PropertyDeclaration | SyntaxKind.VariableDeclaration' and 'SyntaxKind.BindingElement'.
+emitter/emitter.ts(2980,77): error TS2352: Type 'VarOrParam' cannot be converted to type 'BindingElement'.
+  Type 'PropertyDeclaration' is not comparable to type 'BindingElement'.
+    Types of property 'kind' are incompatible.
+      Type 'SyntaxKind.PropertyDeclaration' is not comparable to type 'SyntaxKind.BindingElement'.
+emitter/emitter.ts(3038,40): error TS2339: Property 'Ambient' does not exist on type 'typeof NodeFlags'.
+emitter/formatter.ts(842,21): error TS7023: 'toStr' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+emitter/hexfile.ts(477,13): error TS2322: Type '{}' is not assignable to type 'Map<FuncInfo>'.
+  Property '__mapBrand' is missing in type '{}'.
+emitter/service.ts(266,49): error TS2349: Cannot invoke an expression whose type lacks a call signature. Type '{ <U>(this: [any, any, any, any, any], callbackfn: (value: any, index: number, array: any[]) => U...' has no compatible call signatures.
+emitter/service.ts(266,77): error TS7006: Parameter 'p' implicitly has an 'any' type.
+github.ts(256,17): error TS7030: Not all code paths return a value.
+simshim.ts(14,28): error TS2345: Argument of type 'Identifier | ModuleBlock | NamespaceDeclaration | JSDocNamespaceDeclaration' is not assignable to parameter of type 'Statement'.
+  Type 'Identifier' is not assignable to type 'Statement'.
+    Property '_statementBrand' is missing in type 'Identifier'.
+simshim.ts(44,20): error TS2345: Argument of type 'Identifier | ModuleBlock | NamespaceDeclaration | JSDocNamespaceDeclaration' is not assignable to parameter of type 'Statement'.
+  Type 'Identifier' is not assignable to type 'Statement'.
+simshim.ts(58,42): error TS2339: Property 'Reference' does not exist on type 'typeof TypeFlags'.
+jake aborted.
+TypeError: task.fail is not a function
+    at ChildProcess.ch.on (c:\OSS\pxt\pxt\jakeutil.js:106:18)

@@ -263,7 +263,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters || []).map(p => {
+                parameters: !hasParams ? null : (decl.parameters || []).map((p : any)  => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
@@ -539,11 +539,11 @@ ${sipkg}
         }
 
         // transitive closure of inheritance
-        let closed: Map<boolean> = {}
+        let closed: MapLike<boolean> = {}
         let closeSi = (si: SymbolInfo) => {
             if (U.lookup(closed, si.qName)) return;
             closed[si.qName] = true
-            let mine: Map<boolean> = {}
+            let mine: MapLike<boolean> = {}
             mine[si.qName] = true
             for (let e of si.extendsTypes || []) {
                 mine[e] = true

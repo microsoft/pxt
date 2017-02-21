@@ -253,7 +253,7 @@ namespace pxt.github {
         if (!url) return undefined;
 
         let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)(#(\w+))?$/i.exec(url.trim());
-        if (!m) return;
+        if (!m) return null;
 
         let r: { repo: string; tag?: string; path?: string; } = {
             repo: m ? m[3].toLowerCase() : null,

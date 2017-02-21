@@ -272,8 +272,9 @@ ${output}</xml>`;
 
                     closeBlockTag();
                     return;
-                }
 
+                }
+  
                 openBlockTag(npp.type)
 
                 if (npp.op) {
@@ -894,14 +895,15 @@ ${output}</xml>`;
                 // gets pulled out of the block
                 if (shadowType && !isLiteralNode(contents)) {
                     switch (shadowType) {
+                        case ShadowType.Boolean:
+                            emitBooleanLiteral(true);
+                            break;                        
                         case ShadowType.Number:
                             emitNumericLiteral("0")
                             break;
                         case ShadowType.String:
                             emitStringLiteral("")
                             break;
-                        case ShadowType.Boolean:
-                            emitBooleanLiteral(true)
                     }
                 }
                 emitOutputBlock(contents)

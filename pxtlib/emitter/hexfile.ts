@@ -237,7 +237,7 @@ namespace ts.pxtc {
         let bytecodeStartAddr: number;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
-        let asmLabels: Map<boolean> = {};
+        let asmLabels: MapLike<boolean> = {};
         export let asmTotalSource: string = "";
         export const defaultPageSize = 0x400;
 
