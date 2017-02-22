@@ -1482,7 +1482,7 @@ namespace pxt.blocks {
             }
         };
 
-        Blockly.Blocks["typescript_statement"] = {
+        Blockly.Blocks[pxtc.TS_STATEMENT_TYPE] = {
             init: function () {
                 let that: Blockly.Block = this;
                 that.setColour("#717171")
@@ -1521,10 +1521,17 @@ namespace pxt.blocks {
                 };
 
                 that.setEditable(false);
+
+                setHelpResources(this,
+                    pxtc.TS_STATEMENT_TYPE,
+                    lf("JavaScript statement"),
+                    lf("A JavaScript statement that could not be converted to blocks"),
+                    '/blocks/javascript-blocks'
+                );
             }
         };
 
-        Blockly.Blocks["typescript_expression"] = {
+        Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
             init: function () {
                 this.jsonInit({
                     "colour": "#717171",
@@ -1541,6 +1548,13 @@ namespace pxt.blocks {
                 this.setNextStatement(false);
                 this.setOutput(true);
                 this.setEditable(false);
+
+                setHelpResources(this,
+                    pxtc.TS_OUTPUT_TYPE,
+                    lf("JavaScript expression"),
+                    lf("A JavaScript expression that could not be converted to blocks"),
+                    '/blocks/javascript-blocks'
+                );
             }
         };
     }

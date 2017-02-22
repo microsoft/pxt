@@ -310,7 +310,7 @@ namespace pxt.blocks {
     function returnType(e: Environment, b: B.Block): Point {
         assert(b != null);
 
-        if (b.type == "placeholder" || b.type === "typescript_expression")
+        if (b.type == "placeholder" || b.type === pxtc.TS_OUTPUT_TYPE)
             return find((<any>b).p);
 
         if (b.type == "variables_get")
@@ -355,7 +355,7 @@ namespace pxt.blocks {
 
             placeholders[b.id][n] = mkPlaceholderBlock(e);
         }
-        else if (target.type === "typescript_expression" && !((target as any).p)) {
+        else if (target.type === pxtc.TS_OUTPUT_TYPE && !((target as any).p)) {
             (target as any).p = mkPoint(null);
         }
     }
@@ -716,7 +716,7 @@ namespace pxt.blocks {
                 expr = compileTextJoin(e, b, comments); break;
             case "lists_create_with":
                 expr = compileCreateList(e, b, comments); break;
-            case "typescript_expression":
+            case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
             default:
                 let call = e.stdCallTable[b.type];
@@ -1165,7 +1165,7 @@ namespace pxt.blocks {
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
                 break;
-            case "typescript_statement":
+            case pxtc.TS_STATEMENT_TYPE:
                 r = compileTypescriptBlock(e, b);
                 break;
             default:
@@ -1191,10 +1191,6 @@ namespace pxt.blocks {
         }
         return mkBlock(stmts);
     }
-
-    // FIXME: Whenever we add unicode support, handle that here
-    const variableStatementRegex = /\s*(?:(?:let)|(?:const)|(?:var))\s+(.+)/
-    const declarationRegex = /\s*()/
 
     function compileTypescriptBlock(e: Environment, b: B.Block) {
         let res: JsNode[] = [];

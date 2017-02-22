@@ -532,7 +532,7 @@ ${output}</xml>`;
 
         function getTypeScriptExpressionBlock(n: ts.Node) {
             const text = applyRenamesInRange(n.getFullText(), n.getFullStart(), n.getEnd());
-            return getFieldBlock("typescript_expression", "EXPRESSION", text);
+            return getFieldBlock(pxtc.TS_OUTPUT_TYPE, "EXPRESSION", text);
         }
 
         function getBinaryExpression(n: ts.BinaryExpression): ExpressionNode {
@@ -812,7 +812,7 @@ ${output}</xml>`;
         function getTypeScriptStatementBlock(node: ts.Node): StatementNode {
             const r: StatementNode = {
                 kind: "statement",
-                type: "typescript_statement",
+                type: pxtc.TS_STATEMENT_TYPE,
                 mutation: {}
             };
 
