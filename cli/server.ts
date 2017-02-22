@@ -668,7 +668,7 @@ function openUrl(startUrl: string, browser: string) {
     console.log(`opening ${startUrl}`)
 
     if (browser) {
-        child_process.spawn(getBrowserLocation(browser), [startUrl]);
+        child_process.spawn(getBrowserLocation(browser), [startUrl], { detached: true });
     }
     else {
         child_process.exec(`${cmds[process.platform]} ${startUrl}`);
