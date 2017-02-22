@@ -155,6 +155,13 @@ export function hide(completeHandler?: () => void) {
     $debugger.empty();
 }
 
+export function proxy(message: pxsim.SimulatorContentMessage) {
+    if (!driver) return;
+
+    driver.postMessage(message);
+    $debugger.empty();
+}
+
 function updateDebuggerButtons(brk: pxsim.DebuggerBreakpointMessage = null) {
     function btn(icon: string, name: string, label: string, click: () => void) {
         let b = $(`<button class="ui mini button teal" title="${Util.htmlEscape(label)}"></button>`)
