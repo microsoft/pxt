@@ -175,8 +175,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         const headerText = lf("Add Package...");
         return (
-            <sui.Modal open={this.state.visible} header={headerText} className="large searchdialog"
-                onClose={() => this.setState({ visible: false }) }>
+            <sui.Modal open={this.state.visible} dimmer="blurring" header={headerText} className="searchdialog" size="large"
+                onClose={() => this.setState({ visible: false }) }
+                closeIcon={true}
+                closeOnDimmerClick>
                 <div className="ui vertical segment">
                     <div className="ui search">
                         <div className="ui fluid action input" role="search">
