@@ -621,6 +621,9 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     handleUnmount = () => {
         const mountNode = this.getMountNode();
         mountNode.classList.remove('blurring', 'dimmable', 'dimmed', 'scrollable');
+
+        this._modalNode = null;
+
         cancelAnimationFrame(this.animationId);
     }
 
