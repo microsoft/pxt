@@ -62,7 +62,7 @@ body {
     margin-right: -2px;
 }
 
-#content .ui.button > .clear {
+.ui.button.icon.clear {
     background: transparent;
     padding: 0;
 }
