@@ -303,7 +303,7 @@ namespace ts.pxtc {
         trackArgs?: number[];
         advanced?: boolean;
         deprecated?: boolean;
-        noteValue?: string; //  value for enum Note
+        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
 
         // on interfaces
         indexerGet?: string;

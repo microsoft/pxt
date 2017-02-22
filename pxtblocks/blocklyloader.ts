@@ -383,15 +383,12 @@ namespace pxt.blocks {
             || (nsinfo ? nsinfo.attributes.color : undefined)
             || blockColors[ns]
             || 255;
+
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
 
         block.setTooltip(fn.attributes.jsDoc);
-        block.setColour(
-            fn.attributes.color
-            || (nsinfo ? nsinfo.attributes.color : undefined)
-            || blockColors[ns]
-            || 255);
+        block.setColour(color);
 
         parseFields(fn.attributes.block).map(field => {
             let i: any;
