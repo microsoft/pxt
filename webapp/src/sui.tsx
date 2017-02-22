@@ -656,7 +656,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     {this.props.header}
                     {this.props.closeIcon ? <Button
                         icon={closeIconName}
-                        class="cancel right labeled right floated"
+                        class="clear right floated"
                         onClick={() => this.handleClose(null) } /> : undefined }
                     {this.props.helpUrl ?
                         <a className="ui button icon-and-text right floated labeled" href={this.props.helpUrl} target="_docs">
