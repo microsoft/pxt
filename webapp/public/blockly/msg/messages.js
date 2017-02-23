@@ -499,6 +499,12 @@ Blockly.Msg.MATH_RANDOM_FLOAT_TITLE_RANDOM = 'random fraction';
 /// tooltip - Return a random fraction between 0 and 1.  The value may be equal to 0 but must be less than 1.
 Blockly.Msg.MATH_RANDOM_FLOAT_TOOLTIP = 'Return a random fraction between 0.0 (inclusive) and 1.0 (exclusive).';
 
+// Music Blocks.
+/// url - Information about note frequencies.
+Blockly.Msg.NOTE_PICKER_HELPURL = 'https://en.wikipedia.org/wiki/Piano_key_frequencies';
+/// tooltip 
+Blockly.Msg.NOTE_PICKER_TOOLTIP = 'Choose a note from the piano.';
+
 // Text Blocks.
 /// url - Information about how computers represent text (sometimes referred to as ''string''s).
 Blockly.Msg.TEXT_TEXT_HELPURL = 'https://en.wikipedia.org/wiki/String_(computer_science)';
