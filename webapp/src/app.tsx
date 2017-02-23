@@ -914,6 +914,37 @@ export class ProjectView
         this.setState({ running: false })
     }
 
+    proxySimulatorMessage(content: string) {
+        simulator.proxy({
+            type: "content",
+            content: content
+        } as pxsim.SimulatorContentMessage);
+    }
+
+    toggleSimulatorCollapse() {
+        const state = this.state;
+        if (!state.running && state.collapseEditorTools)
+            this.startStopSimulator();
+
+        if (state.collapseEditorTools) {
+            this.expandSimulator();
+        }
+        else {
+            this.collapseSimulator();
+        }
+    }
+
+    expandSimulator() {
+        this.startSimulator();
+        this.setState({ collapseEditorTools: false });
+    }
+
+    collapseSimulator() {
+        simulator.hide(() => {
+            this.setState({ collapseEditorTools: true });
+        })
+    }
+
     toggleSimulatorFullscreen() {
         pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.state.fullscreen });
         this.setState({ fullscreen: !this.state.fullscreen });

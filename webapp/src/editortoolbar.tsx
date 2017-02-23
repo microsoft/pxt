@@ -62,20 +62,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     toggleCollapse(view?: string) {
-        const state = this.props.parent.state;
-        pxt.tickEvent("editortools.toggleCollapse", { view: view, collapsedTo: '' + !state.collapseEditorTools });
-        if (!state.running && state.collapseEditorTools)
-            this.props.parent.startStopSimulator();
-
-        if (state.collapseEditorTools) {
-            this.props.parent.startSimulator();
-            this.props.parent.setState({ collapseEditorTools: false });
-        }
-        else {
-            simulator.hide(() => {
-                this.props.parent.setState({ collapseEditorTools: true });
-            })
-        }
+        pxt.tickEvent("editortools.toggleCollapse", { view: view, collapsedTo: '' + !this.props.parent.state.collapseEditorTools });
+        this.props.parent.toggleSimulatorCollapse();
     }
 
     private getCollapsedState(): string {
