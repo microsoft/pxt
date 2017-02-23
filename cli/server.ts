@@ -625,7 +625,7 @@ function initSocketServer(wsPort: number) {
 
     return new Promise<void>((resolve, reject) => {
         wsserver.on("Error", reject);
-        wsserver.listen(wsPort, "127.0.0.1", () => resolve());
+        wsserver.listen(wsPort, "0.0.0.0", () => resolve());
     });
 }
 
@@ -979,7 +979,7 @@ export function serveAsync(options: ServeOptions) {
 
     const serverPromise = new Promise<void>((resolve, reject) => {
         server.on("error", reject);
-        server.listen(serveOptions.port, "127.0.0.1", () => resolve());
+        server.listen(serveOptions.port, "0.0.0.0", () => resolve());
     });
 
     return Promise.all([wsServerPromise, serverPromise])
