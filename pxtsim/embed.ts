@@ -80,6 +80,11 @@ namespace pxsim {
         numberData?: number;
     }
 
+    export interface SimulatorContentMessage extends SimulatorMessage {
+        type: "content";
+        content: string;
+    }
+
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
         type: "screenshot";
         data: string;

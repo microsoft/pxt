@@ -697,9 +697,13 @@ ${output}</xml>`;
                 error(n);
                 return;
             }
-            const value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
+            let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
             if (callInfo.attrs.blockIdentity) {
+                if (callInfo.attrs.enumval && (n.parent as any).callInfo.attrs.useEnumVal) {
+                    value = callInfo.attrs.enumval;
+                }
+
                 let idfn = blocksInfo.apis.byQName[callInfo.attrs.blockIdentity];
                 let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
 

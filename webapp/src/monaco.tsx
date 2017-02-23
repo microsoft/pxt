@@ -48,6 +48,9 @@ export class Editor extends srceditor.Editor {
         }
 
         let promise = Promise.resolve().then(() => {
+            if (!this.hasBlocks())
+                return
+
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
                 let mainPkg = pkg.mainEditorPkg();
@@ -66,9 +69,6 @@ export class Editor extends srceditor.Editor {
                 this.forceDiagnosticsUpdate();
                 return this.showConversionFailedDialog(file);
             }
-
-            if (!this.hasBlocks())
-                return
 
             // might be undefined
             let mainPkg = pkg.mainEditorPkg();
@@ -580,7 +580,7 @@ export class Editor extends srceditor.Editor {
             "if": {
                 sig: ``,
                 snippet: `if (true) {
-    
+
 }`,
                 comment: lf("Runs code if the condition is true"),
                 metaData: {
@@ -590,7 +590,7 @@ export class Editor extends srceditor.Editor {
             }, "if ": {
                 sig: ``,
                 snippet: `if (true) {
-    
+
 } else {
 
 }`,
@@ -602,9 +602,9 @@ export class Editor extends srceditor.Editor {
             },"switch": {
                 sig: ``,
                 snippet: `switch(item) {
-    case 0: 
+    case 0:
         break;
-    case 1: 
+    case 1:
         break;
 }`,
                 comment: lf("Runs differnt code based on a value"),
@@ -618,7 +618,7 @@ export class Editor extends srceditor.Editor {
             "while": {
                 sig: `while(...)`,
                 snippet: `while(true) {
-    
+
 }`,
                 comment: lf("Repeat code while condition is true"),
                 metaData: {
@@ -629,7 +629,7 @@ export class Editor extends srceditor.Editor {
             "for": {
                 sig: ``,
                 snippet: `for(let i = 0; i < 5; i++) {
-    
+
 }`,
                 comment: lf("Repeat code a number of times in a loop"),
                 metaData: {
@@ -730,7 +730,8 @@ export class Editor extends srceditor.Editor {
                     sigToken.innerText = snippet
                         .replace(/^[^(]*\(/, '(')
                         .replace(/^\s*\{\{\}\}\n/gm, '')
-                        .replace(/\{\n\}/g, '{}');
+                        .replace(/\{\n\}/g, '{}')
+                        .replace(/(?:\{\{)|(?:\}\})/g, '');
 
                     monacoBlock.title = comment;
 
