@@ -267,6 +267,9 @@ namespace pxsim {
                     break;
                 case 'simulator':  this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
+                case 'pxteditor':
+                case 'custom':
+                    break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 default:
                     if (msg.type == 'radiopacket') {

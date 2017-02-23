@@ -84,12 +84,12 @@
             })
         }
 
-        function sendSimulatorContent() {
+        function sendSimulatorCustom() {
             var content = document.getElementById('simContent');
             sendMessage({
                 type: "pxteditor",
-                action: "simmessage",
-                content: content
+                action: "proxytosim",
+                content: content.value
             })
         }
 
@@ -97,6 +97,20 @@
             var workspace = document.getElementById('workspace');
             workspace.contentWindow.postMessage(message, "*");
         }
+
+        function handleMessage(ev) {
+            var msg = ev.data;
+            switch(msg.type) {
+                case "custom":
+                    console.log("Received a custom message from host");
+                    console.log(msg);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        window.addEventListener("message", handleMessage);
 
         </script>
     </head>
@@ -126,7 +140,7 @@
                 <br>
                 <textarea id="simContent" style="width: 90%; height: 12em"></textarea>
                 <br>
-                <input type="button" value="Send Simulator Content" onclick="sendSimulatorContent()">
+                <input type="button" value="Send Custom Message" onclick="sendSimulatorCustom()">
             </p>
 
         </div>
