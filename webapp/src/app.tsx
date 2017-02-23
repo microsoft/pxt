@@ -916,9 +916,9 @@ export class ProjectView
 
     proxySimulatorMessage(content: string) {
         simulator.proxy({
-            type: "content",
+            type: "custom",
             content: content
-        } as pxsim.SimulatorContentMessage);
+        } as pxsim.SimulatorCustomMessage);
     }
 
     toggleSimulatorCollapse() {

@@ -80,9 +80,9 @@ namespace pxsim {
         numberData?: number;
     }
 
-    export interface SimulatorContentMessage extends SimulatorMessage {
-        type: "content";
-        content: string;
+    export interface SimulatorCustomMessage extends SimulatorMessage {
+        type: "custom";
+        content: any;
     }
 
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
@@ -126,6 +126,11 @@ namespace pxsim {
                 case 'run': run(<SimulatorRunMessage>data); break;
                 case 'stop': stop(); break;
                 case 'mute': mute((<SimulatorMuteMessage>data).mute); break;
+                case 'custom':
+                    if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
+                    break;
+                case 'pxteditor':
+                    break; //handled elsewhere
                 case 'debugger':
                     if (runtime) {
                         runtime.handleDebuggerMsg(data as DebuggerMessage);

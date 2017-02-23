@@ -19,7 +19,7 @@ namespace pxt.editor {
         | "hidesimulator"
         | "showsimulator"
         | "newproject"
-        | "simmessage" // EditorMessageSimulatorMessageRequest
+        | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         ;
     }
 
@@ -39,12 +39,12 @@ namespace pxt.editor {
         options?: ProjectCreationOptions;
     }
 
-    export interface EditorMessageSimulatorMessageRequest extends EditorMessageRequest {
-        action: "simmessage";
+    export interface EditorMessageSimulatorMessageProxyRequest extends EditorMessageRequest {
+        action: "proxytosim";
         /**
          * Content to send to the simulator
          */
-        content: string;
+        content: any;
     }
 
     export interface EditorMessageResponse {
@@ -99,8 +99,8 @@ namespace pxt.editor {
                     const create = data as EditorMessageNewProjectRequest;
                     p = p.then(() => projectView.newProject(create.options)); break;
                 }
-                case "simulatormsg": {
-                    const simmsg = data as EditorMessageSimulatorMessageRequest;
+                case "proxytosim": {
+                    const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
                     p = p.then(() => projectView.proxySimulatorMessage(simmsg.content)); break;
                 }
             }

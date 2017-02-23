@@ -155,7 +155,7 @@ export function hide(completeHandler?: () => void) {
     $debugger.empty();
 }
 
-export function proxy(message: pxsim.SimulatorContentMessage) {
+export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
 
     driver.postMessage(message);
