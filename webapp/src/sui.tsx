@@ -270,6 +270,9 @@ export class Checkbox extends data.Component<{
     }
 }
 
+// Segment, Menu, Modal and Portal sui elements have been implemented using some of the workings of Semantic UI React (MIT)
+// https://github.com/Semantic-Org/Semantic-UI-React
+
 export interface SegmentProps {
     attached?: boolean | 'top' | 'bottom';
     basic?: boolean;
@@ -517,7 +520,6 @@ export interface ModalProps {
     closeIcon?: any;
     closeOnDimmerClick?: boolean;
     closeOnDocumentClick?: boolean;
-    defaultOpen?: boolean;
     dimmer?: boolean | 'blurring' | 'inverted';
     dimmerClassName?: string;
 
@@ -619,6 +621,9 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     handleUnmount = () => {
         const mountNode = this.getMountNode();
         mountNode.classList.remove('blurring', 'dimmable', 'dimmed', 'scrollable');
+
+        this._modalNode = null;
+
         cancelAnimationFrame(this.animationId);
     }
 
@@ -654,8 +659,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     {this.props.header}
                     {this.props.closeIcon ? <Button
                         icon={closeIconName}
-                        text={lf("Close") }
-                        class="cancel right labeled right floated"
+                        class="clear right floated"
                         onClick={() => this.handleClose(null) } /> : undefined }
                     {this.props.helpUrl ?
                         <a className="ui button icon-and-text right floated labeled" href={this.props.helpUrl} target="_docs">
