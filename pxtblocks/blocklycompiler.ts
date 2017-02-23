@@ -310,7 +310,7 @@ namespace pxt.blocks {
     function returnType(e: Environment, b: B.Block): Point {
         assert(b != null);
 
-        if (b.type == "placeholder")
+        if (b.type == "placeholder" || b.type === pxtc.TS_OUTPUT_TYPE)
             return find((<any>b).p);
 
         if (b.type == "variables_get")
@@ -347,12 +347,16 @@ namespace pxt.blocks {
 
     function attachPlaceholderIf(e: Environment, b: B.Block, n: string) {
         // Ugly hack to keep track of the type we want there.
-        if (!b.getInputTargetBlock(n)) {
+        const target = b.getInputTargetBlock(n);
+        if (!target) {
             if (!placeholders[b.id]) {
                 placeholders[b.id] = {};
             }
 
             placeholders[b.id][n] = mkPlaceholderBlock(e);
+        }
+        else if (target.type === pxtc.TS_OUTPUT_TYPE && !((target as any).p)) {
+            (target as any).p = mkPoint(null);
         }
     }
 
@@ -510,6 +514,10 @@ namespace pxt.blocks {
         if (n === Infinity || n === NaN) {
             U.userError(lf("Number entered is either too large or too small"));
         }
+    }
+
+    function extractTsExpression(e: Environment, b: B.Block, comments: string[]): JsNode {
+        return mkText(b.getFieldValue("EXPRESSION"));
     }
 
     function compileNumber(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -708,6 +716,8 @@ namespace pxt.blocks {
                 expr = compileTextJoin(e, b, comments); break;
             case "lists_create_with":
                 expr = compileCreateList(e, b, comments); break;
+            case pxtc.TS_OUTPUT_TYPE:
+                expr = extractTsExpression(e, b, comments); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
@@ -1155,6 +1165,9 @@ namespace pxt.blocks {
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
                 break;
+            case pxtc.TS_STATEMENT_TYPE:
+                r = compileTypescriptBlock(e, b);
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
@@ -1177,6 +1190,46 @@ namespace pxt.blocks {
             b = b.getNextBlock();
         }
         return mkBlock(stmts);
+    }
+
+    function compileTypescriptBlock(e: Environment, b: B.Block) {
+        let res: JsNode[] = [];
+        let i = 0;
+
+        while (true) {
+            const value = b.getFieldValue("LINE" + i);
+            i++;
+
+            if (value !== null) {
+                res.push(mkText(value + "\n"));
+
+                const declaredVars: string = (b as any).declaredVariables
+                if (declaredVars) {
+                    const varNames = declaredVars.split(",");
+                    varNames.forEach(n => {
+                        const existing = lookup(e, n);
+                        if (existing) {
+                            existing.assigned = VarUsage.Assign;
+                            existing.mustBeGlobal = false;
+                        }
+                        else {
+                            e.bindings.push({
+                                name: n,
+                                type: mkPoint(null),
+                                assigned: VarUsage.Assign,
+                                declaredInLocalScope: 1,
+                                mustBeGlobal: false
+                            });
+                        }
+                    })
+                }
+            }
+            else {
+                break;
+            }
+        }
+
+        return res;
     }
 
     // This function creates an empty environment where type inference has NOT yet

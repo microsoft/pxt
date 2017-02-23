@@ -12,9 +12,7 @@
 <block type="controls_simple_for">
 <field name="VAR">i</field>
 <value name="TO">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
@@ -32,6 +30,7 @@
 <statement name="DO">
 <block type="device_while">
 <value name="COND">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
@@ -40,8 +39,10 @@
 </shadow>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -58,21 +59,15 @@
 <block type="controls_simple_for">
 <field name="VAR">j</field>
 <value name="TO">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">item</field>
 </block>
@@ -101,41 +96,33 @@
 </value>
 <next>
 <block type="controls_if">
-<mutation elseif="1" else="1"></mutation>
+<mutation elseif="1" else="1" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">AND</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">EQ</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MULTIPLY</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">DIVIDE</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_modulo">
 <value name="DIVIDEND">
 <shadow type="math_number">
@@ -185,9 +172,11 @@
 </block>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">LT</field>
 <value name="A">
@@ -203,12 +192,15 @@
 </block>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">LTE</field>
 <value name="A">
@@ -224,6 +216,7 @@
 </block>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">GT</field>
 <value name="A">
@@ -241,6 +234,7 @@
 </block>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">GTE</field>
 <value name="A">
@@ -261,17 +255,8 @@
 </value>
 </block>
 </value>
-<statement name="DO0">
-<block type="variables_set">
-<field name="VAR">item</field>
-<value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-</value>
-</block>
-</statement>
 <value name="IF1">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
@@ -280,8 +265,10 @@
 </shadow>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -294,6 +281,16 @@
 </value>
 </block>
 </value>
+<statement name="DO0">
+<block type="variables_set">
+<field name="VAR">item</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</statement>
 <statement name="DO1">
 <block type="variables_change">
 <field name="VAR">item</field>

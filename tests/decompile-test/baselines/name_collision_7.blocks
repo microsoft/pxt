@@ -12,12 +12,7 @@
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
@@ -26,9 +21,7 @@
 </shadow>
 </value>
 <value name="B">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">x</field>
 </block>
@@ -47,12 +40,7 @@
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
@@ -61,9 +49,7 @@
 </shadow>
 </value>
 <value name="B">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">y</field>
 </block>
@@ -74,12 +60,7 @@
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
@@ -88,9 +69,7 @@
 </shadow>
 </value>
 <value name="B">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">x</field>
 </block>

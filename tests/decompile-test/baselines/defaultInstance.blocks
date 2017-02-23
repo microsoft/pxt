@@ -14,7 +14,7 @@
 </value>
 <next>
 <block type="test_class_defaultInstanceMethod">
-<mutation showing="true"></mutation>
+<mutation showing="true" />
 <value name="__instance__">
 <block type="test_createDefInstanceClass">
 </block>

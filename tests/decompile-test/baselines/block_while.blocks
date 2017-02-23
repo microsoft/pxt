@@ -3,12 +3,15 @@
 <statement name="HANDLER">
 <block type="device_while">
 <value name="COND">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_operation">
 <field name="OP">AND</field>
 <value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">LT</field>
 <value name="A">
@@ -24,6 +27,7 @@
 </block>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">LTE</field>
 <value name="A">
@@ -41,14 +45,14 @@
 </block>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_compare">
 <field name="OP">EQ</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">MULTIPLY</field>
 <value name="A">
@@ -64,9 +68,7 @@
 </block>
 </value>
 <value name="B">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">DIVIDE</field>
 <value name="A">
@@ -92,8 +94,10 @@
 <next>
 <block type="device_while">
 <value name="COND">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -106,7 +110,7 @@
 </value>
 <statement name="DO">
 <block type="controls_if">
-<mutation elseif="0" else="1"></mutation>
+<mutation elseif="0" else="1" />
 <value name="IF0">
 <shadow type="logic_boolean">
 <field name="BOOL">TRUE</field>

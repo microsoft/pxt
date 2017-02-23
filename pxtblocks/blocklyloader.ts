@@ -1501,6 +1501,82 @@ namespace pxt.blocks {
                 );
             }
         };
+
+        Blockly.Blocks[pxtc.TS_STATEMENT_TYPE] = {
+            init: function () {
+                let that: Blockly.Block = this;
+                that.setColour("#717171")
+                that.setPreviousStatement(true);
+                that.setNextStatement(true);
+
+                this.domToMutation = (element: Element) => {
+                    const n = parseInt(element.getAttribute("numlines"));
+                    this.declaredVariables = element.getAttribute("declaredvars");
+                    for (let i = 0; i < n; i++) {
+                        const line = element.getAttribute("line" + i);
+                        that.appendDummyInput().appendField(line, "LINE" + i);
+                    }
+                };
+
+                this.mutationToDom = () => {
+                    let mutation = document.createElement("mutation");
+                    let i = 0;
+
+                    while (true) {
+                        const val = that.getFieldValue("LINE" + i);
+                        if (val === null) {
+                            break;
+                        }
+
+                        mutation.setAttribute("line" + i, val);
+                        i++;
+                    }
+
+                    mutation.setAttribute("numlines", i.toString());
+                    if (this.declaredVariables) {
+                        mutation.setAttribute("declaredvars", this.declaredVariables);
+                    }
+
+                    return mutation;
+                };
+
+                that.setEditable(false);
+
+                setHelpResources(this,
+                    pxtc.TS_STATEMENT_TYPE,
+                    lf("JavaScript statement"),
+                    lf("A JavaScript statement that could not be converted to blocks"),
+                    '/blocks/javascript-blocks'
+                );
+            }
+        };
+
+        Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
+            init: function () {
+                this.jsonInit({
+                    "colour": "#717171",
+                    "message0": "%1",
+                    "args0": [
+                        {
+                            "type": "field_input",
+                            "name": "EXPRESSION",
+                            "text": ""
+                        }
+                    ]
+                });
+                this.setPreviousStatement(false);
+                this.setNextStatement(false);
+                this.setOutput(true);
+                this.setEditable(false);
+
+                setHelpResources(this,
+                    pxtc.TS_OUTPUT_TYPE,
+                    lf("JavaScript expression"),
+                    lf("A JavaScript expression that could not be converted to blocks"),
+                    '/blocks/javascript-blocks'
+                );
+            }
+        };
     }
 
     function initMath() {

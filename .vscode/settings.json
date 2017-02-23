@@ -1,6 +1,6 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-    "file.autoSave": "on",   
+    "file.autoSave": "on",
     "files.watcherExclude": {
         "**/.git/objects/**": true,
         "**/built/**": true,
@@ -8,16 +8,19 @@
         "**/yotta_modules/**": true,
         "**/yotta_targets": true,
         "**/pxt_modules/**": true
-    },    
+    },
     "search.exclude": {
         "**/node_modules": true,
         "**/bower_components": true,
         "**/yotta_modules/**": true,
         "**/yotta_targets": true,
         "**/pxt_modules/**": true
-    },    
+    },
     "typescript.tsdk": "node_modules/typescript/lib",
     "editor.formatOnType": false,
     "tslint.enable": true,
-    "tslint.rulesDirectory": "node_modules/tslint-microsoft-contrib"
+    "tslint.rulesDirectory": "node_modules/tslint-microsoft-contrib",
+    "files.associations": {
+        "*.blocks": "html"
+    }
 }

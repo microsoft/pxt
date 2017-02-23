@@ -4,9 +4,7 @@
 <block type="variables_set">
 <field name="VAR">x1</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_no_argument_output">
 </block>
 </value>
@@ -14,9 +12,7 @@
 <block type="variables_set">
 <field name="VAR">x2</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="logic_operation">
 <field name="OP">OR</field>
 <value name="A">
@@ -25,6 +21,7 @@
 </shadow>
 </value>
 <value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="test_boolean_argument_output">
 <value name="arg">
 <shadow type="logic_boolean">
@@ -39,9 +36,7 @@
 <block type="variables_set">
 <field name="VAR">x3</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
@@ -50,9 +45,7 @@
 </shadow>
 </value>
 <value name="B">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_number_argument_output">
 <value name="arg">
 <shadow type="math_number">
@@ -67,9 +60,7 @@
 <block type="variables_set">
 <field name="VAR">x4</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_string_argument_output">
 <value name="arg">
 <shadow type="text">
@@ -82,9 +73,7 @@
 <block type="variables_set">
 <field name="VAR">x5</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_enum_argument_output">
 <field name="arg">TestEnum.testValue1</field>
 </block>
@@ -93,9 +82,7 @@
 <block type="variables_set">
 <field name="VAR">x6</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_enum_function_argument_output">
 <field name="arg">EnumWithValueBlock.testValue2</field>
 </block>
@@ -104,9 +91,7 @@
 <block type="variables_set">
 <field name="VAR">x7</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_multiple_argument_output">
 <value name="arg1">
 <shadow type="math_number">
