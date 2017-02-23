@@ -48,6 +48,9 @@ export class Editor extends srceditor.Editor {
         }
 
         let promise = Promise.resolve().then(() => {
+            if (!this.hasBlocks())
+                return
+
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
                 let mainPkg = pkg.mainEditorPkg();
@@ -66,9 +69,6 @@ export class Editor extends srceditor.Editor {
                 this.forceDiagnosticsUpdate();
                 return this.showConversionFailedDialog(file);
             }
-
-            if (!this.hasBlocks())
-                return
 
             // might be undefined
             let mainPkg = pkg.mainEditorPkg();
