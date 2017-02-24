@@ -218,12 +218,18 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={true}
-                onClose={() => this.setState({ visible: false })} header={lf("Projects")} dimmer="blurring"
+                onClose={() => this.setState({ visible: false })} dimmer="blurring"
                 closeOnDimmerClick closeOnDocumentClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
-                    <sui.Menu inverted={targetTheme.invertedMenu} pointing secondary>
+                    <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
                         <sui.MenuItem key={`tab${t}`} active={tab == t} name={tabNames[t]} onClick={() => this.setState({ tab: t }) } />) }
+                        <div className="right menu">
+                            <sui.Button
+                                icon='close'
+                                class="clear inverted"
+                                onClick={() => this.setState({ visible: false })} />
+                        </div>
                     </sui.Menu>
                 </sui.Segment>
                 {tab == ProjectsTab.MyStuff ? <div className={tabClasses}>
