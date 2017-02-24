@@ -1227,6 +1227,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         // tutorial project is temporary, no need to delete
         let curr = pkg.mainEditorPkg().header
         curr.isDeleted = true
+        this.setState({ active: false });
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
@@ -1235,7 +1236,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     this.newProject();
                 }
             }).finally(() => {
-                this.setState({ tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
+                this.setState({ active: true, tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
             });
     }
 
