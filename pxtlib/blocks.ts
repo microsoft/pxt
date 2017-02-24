@@ -70,6 +70,7 @@ namespace pxt.blocks {
 
     export interface HelpItem {
         name: string;
+        category: string;
         url: string;
         tooltip?: string;
         operators?: Map<string[]>;
@@ -81,101 +82,121 @@ namespace pxt.blocks {
             name: Util.lf("a loop that repeats while the condition is true"),
             tooltip: Util.lf("Run the same sequence of actions while the condition is met."),
             url: '/blocks/loops/while',
+            category: 'loops'
         },
         'controls_simple_for': {
             name: Util.lf("a loop that repeats the number of times you say"),
-            url: 'blocks/loops/for'
+            url: 'blocks/loops/for',
+            category: 'loops'
         },
         'math_op2': {
             name: Util.lf("minimum or maximum of 2 numbers"),
             url: '/blocks/math',
             operators: {
                 'op': ["min", "max"]
-            }
+            },
+            category: 'math'
         },
         'math_op3': {
             name: Util.lf("absolute number"),
             tooltip: Util.lf("absolute value of a number"),
-            url: '/blocks/math/abs'
+            url: '/blocks/math/abs',
+            category: 'math'
         },
         'device_random': {
             name: Util.lf("pick random number"),
             tooltip: Util.lf("Returns a random integer between 0 and the specified bound (inclusive)."),
-            url: '/blocks/math/random'
+            url: '/blocks/math/random',
+            category: 'math'
         },
         'math_number': {
             name: Util.lf("{id:block}number"),
-            url: '/blocks/math/random'
+            url: '/blocks/math/random',
+            category: 'math'
         },
         'math_arithmetic': {
             name: Util.lf("arithmetic operation"),
             url: '/blocks/math',
             operators: {
                 'OP': ["ADD", "MINUS", "MULTIPLY", "DIVIDE", "POWER"]
-            }
+            },
+            category: 'math'
         },
         'math_modulo': {
             name: Util.lf("division remainder"),
             tooltip: Util.lf("Return the remainder from dividing the two numbers."),
             url: '/blocks/math',
+            category: 'math'
         },
         'variables_change': {
             name: Util.lf("update the value of a number variable"),
             tooltip: Util.lf("Changes the value of the variable by this amount"),
             url: '/blocks/variables/change-var',
+            category: 'variables'
         },
         'controls_repeat_ext': {
             name: Util.lf("a loop that repeats and increments an index"),
             tooltip: Util.lf("Do some statements several times."),
             url: '/blocks/loops/repeat',
+            category: 'loops'
         },
         'variables_get': {
             name: Util.lf("get the value of a variable"),
             tooltip: Util.lf("Returns the value of this variable."),
             url: '/blocks/variables',
+            category: 'variables'
         },
         'variables_set': {
             name: Util.lf("assign the value of a variable"),
             tooltip: Util.lf("Sets this variable to be equal to the input."),
             url: '/blocks/variables/assign',
+            category: 'variables'
         },
         'controls_if': {
             name: Util.lf("a conditional statement"),
             tooltip: Util.lf("If a value is true, then do some statements."),
             url: '/blocks/logic/if',
+            category: 'logic'
         },
         'logic_compare': {
             name: Util.lf("comparing two numbers"),
             url: '/blocks/logic/boolean',
+            category: 'logic'
         },
         'logic_operation': {
             name: Util.lf("boolean operation"),
             url: '/blocks/logic/boolean',
+            category: 'logic'
         },
         'logic_negate': {
             name: Util.lf("logical negation"),
             tooltip: Util.lf("Returns true if the input is false. Returns false if the input is true."),
             url: '/blocks/logic/boolean',
+            category: 'logic'
         },
         'logic_boolean': {
             name: Util.lf("a `true` or `false` value"),
             tooltip: Util.lf("Returns either true or false."),
             url: '/blocks/logic/boolean',
+            category: 'logic'
         },
         'text': {
             name: Util.lf("a piece of text"),
             tooltip: Util.lf("A letter, word, or line of text."),
             url: 'reference/types/string',
+            category: 'text'
         },
         'text_length': {
             name: Util.lf("number of characters in the string"),
             tooltip: Util.lf("Returns the number of letters (including spaces) in the provided text."),
             url: 'reference/types/string-functions',
+            category: 'text'
         },
         'text_join': {
             name: Util.lf("join items to create text"),
             tooltip: Util.lf("Create a piece of text by joining together any number of items."),
             url: 'reference/types/string-functions',
+            category: 'text'
         }
     };
 }

@@ -5,14 +5,14 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
-    export const blockColors: Map<number> = {
-        loops: 120,
-        images: 45,
-        variables: 330,
-        text: 160,
-        lists: 260,
-        math: 230,
-        logic: 210
+    export const blockColors: Map<number | string> = {
+        loops: '#107c10',
+        logic: '#008272',
+        math: '#0078d7',
+        images: '#5C2D91',
+        variables: '#A80000',
+        text: '#008272',
+        lists: '#D83B01'
     }
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
@@ -381,7 +381,7 @@ namespace pxt.blocks {
         const color =
             fn.attributes.color
             || (nsinfo ? nsinfo.attributes.color : undefined)
-            || blockColors[ns]
+            || blockColors[ns.toLowerCase()]
             || 255;
 
         if (fn.attributes.help)
@@ -881,17 +881,18 @@ namespace pxt.blocks {
 
     function setBuiltinHelpInfo(block: any, id: string) {
         const info = helpResources[id];
-        setHelpResources(block, id, info.name, info.tooltip, info.url);
+        setHelpResources(block, id, info.name, info.tooltip, info.url, String(blockColors[info.category]));
     }
 
     function installBuiltinHelpInfo(id: string) {
         const info = helpResources[id];
-        installHelpResources(id, info.name, info.tooltip, info.url)
+        installHelpResources(id, info.name, info.tooltip, info.url, String(blockColors[info.category]));
     }
 
-    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string) {
+    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string) {
         if (tooltip) block.setTooltip(tooltip);
         if (url) block.setHelpUrl(url);
+        if (colour) block.setColour(colour);
 
         let tb = document.getElementById('blocklyToolboxDefinition');
         let xml: HTMLElement = tb ? tb.querySelector(`category block[type~='${id}']`) as HTMLElement : undefined;
@@ -905,7 +906,7 @@ namespace pxt.blocks {
         };
     }
 
-    function installHelpResources(id: string, name: string, tooltip: any, url: string) {
+    function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string) {
         let block = Blockly.Blocks[id];
         let old = block.init;
         if (!old) return;
@@ -913,7 +914,7 @@ namespace pxt.blocks {
         block.init = function () {
             old.call(this);
             let block = this;
-            setHelpResources(this, id, name, tooltip, url);
+            setHelpResources(this, id, name, tooltip, url, colour);
         }
     }
 
@@ -989,7 +990,8 @@ namespace pxt.blocks {
                     function () {
                         return lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks.", thisBlock.getFieldValue('VAR'));
                     },
-                    info.url
+                    info.url,
+                    String(blockColors['loops'])
                 );
             },
             /**
@@ -1497,7 +1499,8 @@ namespace pxt.blocks {
                     ts.pxtc.ON_START_TYPE,
                     lf("on start event"),
                     lf("Run code when the program starts"),
-                    '/blocks/on-start'
+                    '/blocks/on-start',
+                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops'])
                 );
             }
         };
@@ -1546,7 +1549,8 @@ namespace pxt.blocks {
                     pxtc.TS_STATEMENT_TYPE,
                     lf("JavaScript statement"),
                     lf("A JavaScript statement that could not be converted to blocks"),
-                    '/blocks/javascript-blocks'
+                    '/blocks/javascript-blocks',
+                    '#717171'
                 );
             }
         };
@@ -1573,7 +1577,8 @@ namespace pxt.blocks {
                     pxtc.TS_OUTPUT_TYPE,
                     lf("JavaScript expression"),
                     lf("A JavaScript expression that could not be converted to blocks"),
-                    '/blocks/javascript-blocks'
+                    '/blocks/javascript-blocks',
+                    "#717171"
                 );
             }
         };
@@ -1618,7 +1623,8 @@ namespace pxt.blocks {
                     function () {
                         return thisBlock.getFieldValue('op') == 'min' ? lf("smaller value of 2 numbers") : lf("larger value of 2 numbers");
                     },
-                    info.url
+                    info.url,
+                    String(blockColors[info.category])
                 );
             }
         };
@@ -1672,7 +1678,8 @@ namespace pxt.blocks {
             'math_number',
             mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mInfo.url
+            mInfo.url,
+            String(blockColors[mInfo.category])
         );
 
         // builtin math_arithmetic
@@ -1697,7 +1704,8 @@ namespace pxt.blocks {
             function (block: any) {
                 return TOOLTIPS[block.getFieldValue('OP')];
             },
-            aInfo.url
+            aInfo.url,
+            String(blockColors[aInfo.category])
         );
 
         // builtin math_modulo
@@ -1734,6 +1742,7 @@ namespace pxt.blocks {
                 let block = goog.dom.createDom('block');
                 block.setAttribute('type', 'variables_get');
                 block.setAttribute('gap', '8');
+                block.setAttribute('colour', String(blockColors['variables']));
                 let field = goog.dom.createDom('field', null, variableList[i]);
                 field.setAttribute('name', 'VAR');
                 block.appendChild(field);
