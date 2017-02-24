@@ -753,6 +753,8 @@ export class Editor extends srceditor.Editor {
                             insertText = insertText.replace('{{}}', '');
                         } else
                             cursor += (insertText.length);
+
+                        insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
                         monacoEditor.editor.pushUndoStop();
                         monacoEditor.editor.executeEdits("", [
                             {
