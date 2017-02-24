@@ -2,6 +2,7 @@ namespace pxsim {
     export interface SimulatorDriverOptions {
         revealElement?: (el: HTMLElement) => void;
         removeElement?: (el: HTMLElement, onComplete?: () => void) => void;
+        unhideElement?: (el: HTMLElement) => void;
         onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
@@ -198,6 +199,15 @@ namespace pxsim {
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i];
                 this.options.removeElement(frame.parentElement, completeHandler);
+            }
+        }
+
+        public unhide() {
+            if (!this.options.unhideElement) return;
+            let frames = this.container.getElementsByTagName("iframe");
+            for (let i = 0; i < frames.length; ++i) {
+                let frame = frames[i];
+                this.options.unhideElement(frame.parentElement);
             }
         }
 
