@@ -542,11 +542,13 @@ namespace pxt.blocks {
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
         blockInfo.blocks.sort((f1, f2) => {
-            let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
-            let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
+            let ns1 = blockInfo.apis.byQName[f1.attributes.blockNamespace || f1.namespace.split('.')[0]];
+            let ns2 = blockInfo.apis.byQName[f2.attributes.blockNamespace || f2.namespace.split('.')[0]];
+
             if (ns1 && !ns2) return -1; if (ns2 && !ns1) return 1;
             let c = 0;
             if (ns1 && ns2) {
+
                 c = (ns2.attributes.weight || 50) - (ns1.attributes.weight || 50);
                 if (c != 0) return c;
             }
