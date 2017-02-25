@@ -157,6 +157,7 @@ function passwordUpdate(account: string, password: string) {
         const keytar = require("keytar") as KeyTar;
         keytar.replacePassword("pxt/" + pxt.appTarget.id, account, password);
     } catch (e) {
+        console.error(e)
     }
 }
 
@@ -267,12 +268,12 @@ export function pokeRepoAsync(parsed: commandParser.ParsedCommand): Promise<void
 export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
-        console.log(`crowdin upload skipped, crowdin project not specified in pxtarget.json`);
+        console.log(`crowdin operation skipped, crowdin project not specified in pxtarget.json`);
         return Promise.resolve();
     }
     const key = passwordGet(CROWDIN_KEY) || process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
-        console.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        console.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
 
