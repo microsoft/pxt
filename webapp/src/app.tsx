@@ -102,7 +102,8 @@ export class ProjectView
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         this.state = {
             showFiles: false,
-            active: document.visibilityState == 'visible'
+            active: document.visibilityState == 'visible',
+            collapseEditorTools: pxt.appTarget.simulator.headless
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -935,7 +936,12 @@ export class ProjectView
     }
 
     expandSimulator() {
-        this.startSimulator();
+        if (pxt.appTarget.simulator.headless) {
+            simulator.unhide();
+        }
+        else {
+            this.startSimulator();
+        }
         this.setState({ collapseEditorTools: false });
     }
 
