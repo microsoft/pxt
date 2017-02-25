@@ -215,6 +215,7 @@ namespace pxsim {
 
     // overriden at loadtime by specific implementation
     export let initCurrentRuntime: () => void = undefined;
+    export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
     export class Runtime {
         public board: BaseBoard;

@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.11.32",
+  "version": "0.11.44",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -75,7 +75,7 @@
   },
   "devDependencies": {
     "monaco-editor": "0.8.1",
-    "pxt-monaco-typescript": "2.1.1",
+    "pxt-monaco-typescript": "2.1.4",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",
@@ -83,6 +83,7 @@
     "pouchdb": "^5.2.1",
     "react": "^0.14.8",
     "react-dom": "^0.14.8",
+    "request": "^2.79.0",
     "semantic-ui-less": "^2.2.4",
     "typings": "^2.1.0",
     "tslint": "^3.9.0",

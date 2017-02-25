@@ -494,52 +494,21 @@ function bumpPxtCoreDepAsync() {
             }
             pkg["dependencies"]["pxt-core"] = newVer
             fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-            return runGitAsync("commit", "-m", `Bump pxt-core to ${newVer}`, "--", "package.json")
+            return nodeutil.runGitAsync("commit", "-m", `Bump pxt-core to ${newVer}`, "--", "package.json")
                 .then(() => pkg)
         })
 }
 
 function updateAsync() {
     return Promise.resolve()
-        .then(() => runGitAsync("pull"))
+        .then(() => nodeutil.runGitAsync("pull"))
         .then(() => bumpPxtCoreDepAsync())
         .then(() => nodeutil.runNpmAsync("install"));
 }
 
-function gitInfoAsync(args: string[]) {
-    return Promise.resolve()
-        .then(() => nodeutil.spawnWithPipeAsync({
-            cmd: "git",
-            args: args
-        }))
-        .then(buf => buf.toString("utf8").trim())
-
-}
-
-function currGitTagAsync() {
-    return gitInfoAsync(["describe", "--tags", "--exact-match"])
-        .then(t => {
-            if (!t)
-                U.userError("no git tag found")
-            return t
-        })
-}
-
-function needsGitCleanAsync() {
-    return Promise.resolve()
-        .then(() => nodeutil.spawnWithPipeAsync({
-            cmd: "git",
-            args: ["status", "--porcelain", "--untracked-files=no"]
-        }))
-        .then(buf => {
-            if (buf.length)
-                U.userError("Please commit all files to git before running 'pxt bump'")
-        })
-}
-
 function justBumpPkgAsync() {
     ensurePkgDir()
-    return needsGitCleanAsync()
+    return nodeutil.needsGitCleanAsync()
         .then(() => mainPkg.loadAsync())
         .then(() => {
             let v = pxt.semver.parse(mainPkg.config.version)
@@ -551,8 +520,8 @@ function justBumpPkgAsync() {
             mainPkg.config.version = pxt.semver.stringify(v)
             mainPkg.saveConfig()
         })
-        .then(() => runGitAsync("commit", "-a", "-m", mainPkg.config.version))
-        .then(() => runGitAsync("tag", "v" + mainPkg.config.version))
+        .then(() => nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version))
+        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version))
 }
 
 function bumpAsync(parsed: commandParser.ParsedCommand) {
@@ -562,18 +531,18 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
         if (upload) throw U.userError("upload only supported on packages");
 
         return Promise.resolve()
-            .then(() => runGitAsync("pull"))
+            .then(() => nodeutil.runGitAsync("pull"))
             .then(() => justBumpPkgAsync())
-            .then(() => runGitAsync("push", "--tags"))
-            .then(() => runGitAsync("push"))
+            .then(() => nodeutil.runGitAsync("push", "--tags"))
+            .then(() => nodeutil.runGitAsync("push"))
     }
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
-            .then(() => runGitAsync("pull"))
+            .then(() => nodeutil.runGitAsync("pull"))
             .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
             .then(() => nodeutil.runNpmAsync("version", "patch"))
-            .then(() => runGitAsync("push", "--tags"))
-            .then(() => runGitAsync("push"))
+            .then(() => nodeutil.runGitAsync("push", "--tags"))
+            .then(() => nodeutil.runGitAsync("push"))
             .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
@@ -587,11 +556,11 @@ function uploadTaggedTargetAsync() {
         fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push releases.");
         return Promise.resolve();
     }
-    return needsGitCleanAsync()
+    return nodeutil.needsGitCleanAsync()
         .then(() => Promise.all([
-            currGitTagAsync(),
-            gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
-            gitInfoAsync(["rev-parse", "HEAD"])
+            nodeutil.currGitTagAsync(),
+            nodeutil.gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
+            nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
         ]))
         // only build target after getting all the info
         .then(info =>
@@ -616,14 +585,6 @@ function uploadTaggedTargetAsync() {
                 fileContent: {}
             })
         })
-}
-
-function runGitAsync(...args: string[]) {
-    return nodeutil.spawnAsync({
-        cmd: "git",
-        args: args,
-        cwd: "."
-    })
 }
 
 function pkgVersion() {
@@ -1286,7 +1247,7 @@ bring it to our attention. Post an issue or email us:
 ---------------------------------------------
 Third Party Code Components
 ---------------------------------------------
-    
+
     `;
 
     function lic(dep: string) {
@@ -2702,7 +2663,7 @@ function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void>
                 else {
                     const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
                     fs.writeFileSync(outFile, decompiled)
-                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile})`));
+                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile}`));
                 }
             }, error => {
                 errors.push((`decompiler test FAILED; ${basename} was unable to decompile due to: ${error}`))
@@ -2935,7 +2896,7 @@ function getCasesFromFile(fileText: string): DecompilerErrorTestCase[] {
 function decompileAsync(parsed: commandParser.ParsedCommand) {
     return Promise.mapSeries(parsed.arguments, f => {
         const outFile = replaceFileExtension(f, ".blocks")
-        return decompileAsyncWorker(f)
+        return decompileAsyncWorker(f, parsed.flags["dep"] as string)
             .then(result => {
                 fs.writeFileSync(outFile, result)
                 console.log("Wrote " + outFile)
@@ -2956,11 +2917,11 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         pkg.getCompileOptionsAsync()
             .then(opts => {
                 opts.ast = true;
-                const decompiled = pxtc.decompile(opts, "main.ts");
-                if (decompiled.success) {
-                    resolve(decompiled.outfiles["main.blocks"]);
-                }
-                else {
+                    const decompiled = pxtc.decompile(opts, "main.ts");
+                    if (decompiled.success) {
+                        resolve(decompiled.outfiles["main.blocks"]);
+                    }
+                    else {
                     reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
                 }
             });
@@ -3956,7 +3917,6 @@ function initCommands() {
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
-    advancedCommand("decompile", "decompile typescript files", decompileAsync, "<file1.ts> <file2.ts> ...");
     advancedCommand("testdecompiler", "run decompiler tests", testDecompilerAsync, "<dir>");
     advancedCommand("testdecompilererrors", "run decompiler error tests", testDecompilerErrorsAsync, "<dir>");
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
@@ -3985,6 +3945,16 @@ function initCommands() {
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
+
+    p.defineCommand({
+        name: "decompile",
+        help: "decompile typescript files",
+        argString: "<file1.ts> <file2.ts> ...",
+        advanced: true,
+        flags: {
+           dep: { description: "include specified path as a dependency to the project", type: "string", argument: "path" }
+        }
+    }, decompileAsync);
 
     p.defineCommand({
         name: "gdb",

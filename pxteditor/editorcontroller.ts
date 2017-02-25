@@ -3,7 +3,7 @@ namespace pxt.editor {
         /**
          * identifier used to correlate request / responses
          */
-        id: string;
+        id?: string;
         /**
          * constant messageb identifier
          */
@@ -16,7 +16,10 @@ namespace pxt.editor {
         | "startsimulator"
         | "restartsimulator"
         | "stopsimulator" // EditorMessageStopRequest
+        | "hidesimulator"
+        | "showsimulator"
         | "newproject"
+        | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         ;
     }
 
@@ -36,6 +39,14 @@ namespace pxt.editor {
         options?: ProjectCreationOptions;
     }
 
+    export interface EditorMessageSimulatorMessageProxyRequest extends EditorMessageRequest {
+        action: "proxytosim";
+        /**
+         * Content to send to the simulator
+         */
+        content: any;
+    }
+
     export interface EditorMessageResponse {
         /**
          * Constant identifier
@@ -44,7 +55,7 @@ namespace pxt.editor {
         /**
          * Original request id
          */
-        id: string;
+        id?: string;
         /**
          * indicate if operation started or completed successfully
          */
@@ -78,6 +89,8 @@ namespace pxt.editor {
                 case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
                 case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
                 case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
+                case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
+                case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
                 case "stopsimulator": {
                     const stop = data as EditorMessageStopRequest;
                     p = p.then(() => projectView.stopSimulator(stop.unload)); break;
@@ -85,6 +98,10 @@ namespace pxt.editor {
                 case "newproject":  {
                     const create = data as EditorMessageNewProjectRequest;
                     p = p.then(() => projectView.newProject(create.options)); break;
+                }
+                case "proxytosim": {
+                    const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
+                    p = p.then(() => projectView.proxySimulatorMessage(simmsg.content)); break;
                 }
             }
             p.done(() => sendResponse(data, true, undefined),

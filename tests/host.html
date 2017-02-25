@@ -1,16 +1,150 @@
 <html>
     <head>
         <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
             iframe {
                 position:absolute;
-                left:0;
+                left:20%;
                 top:0;
-                width:100%;
+                width:80%;
                 height:100%;
+                border: 0;
+            }
+            #toolbox {
+                position: absolute;
+                left:0;
+                right:80%;
+                height:100%;
+                width:20%;
             }
         </style>
+        <script>
+        'use strict';
+
+        function start() {
+
+        }
+
+        function toBlocks() {
+            sendMessage({
+                type: "pxteditor",
+                action: "switchblocks"
+            })
+        }
+
+        function toJavascript() {
+            sendMessage({
+                type: "pxteditor",
+                action: "switchjavascript"
+            })
+        }
+
+        function startSimulator() {
+            sendMessage({
+                type: "pxteditor",
+                action: "startsimulator"
+            })
+        }
+
+        function stopSimulator() {
+            sendMessage({
+                type: "pxteditor",
+                action: "stopsimulator"
+            })
+        }
+
+        function restartSimulator() {
+            sendMessage({
+                type: "pxteditor",
+                action: "restartsimulator"
+            })
+        }
+
+        function hideSimulator() {
+            sendMessage({
+                type: "pxteditor",
+                action: "hidesimulator"
+            })
+        }
+
+        function showSimulator() {
+            sendMessage({
+                type: "pxteditor",
+                action: "showsimulator"
+            })
+        }
+
+        function newProject() {
+            sendMessage({
+                type: "pxteditor",
+                action: "newProject"
+            })
+        }
+
+        function sendSimulatorCustom() {
+            var content = document.getElementById('simContent');
+            sendMessage({
+                type: "pxteditor",
+                action: "proxytosim",
+                content: content.value
+            })
+        }
+
+        function sendMessage(message) {
+            var workspace = document.getElementById('workspace');
+            workspace.contentWindow.postMessage(message, "*");
+        }
+
+        function handleMessage(ev) {
+            var msg = ev.data;
+            switch(msg.type) {
+                case "custom":
+                    console.log("Received a custom message from host");
+                    console.log(msg);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        window.addEventListener("message", handleMessage);
+
+        </script>
     </head>
-    <body>
-        <iframe src="http://localhost:3232/index.html"/>
+    <body onload="start()">
+        <div id="toolbox">
+
+            <h1>PXT Host Test</h1>
+
+            <p>
+                <h3>Workspace Controls</h3>
+                <input type="button" value="Switch to Blocks" onclick="toBlocks()">
+                &nbsp;
+                <input type="button" value="Switch to Javascript" onclick="toJavascript()">
+                &nbsp;
+                <input type="button" value="New Project" onclick="newProject()">
+                <br>
+                <h3>Simulator Controls</h3>
+                <input type="button" value="Start Simulator" onclick="startSimulator()">
+                &nbsp;
+                <input type="button" value="Restart Simulator" onclick="restartSimulator()">
+                &nbsp;
+                <input type="button" value="Stop Simulator" onclick="stopSimulator()">
+                <br>
+                <input type="button" value="Hide Simulator" onclick="hideSimulator()">
+                &nbsp;
+                <input type="button" value="Show Simulator" onclick="showSimulator()">
+                <br>
+                <textarea id="simContent" style="width: 90%; height: 12em"></textarea>
+                <br>
+                <input type="button" value="Send Custom Message" onclick="sendSimulatorCustom()">
+            </p>
+
+        </div>
+        <iframe id="workspace" src="http://localhost:3232/index.html"/>
+
     </body>
 </html>

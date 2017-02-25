@@ -84,7 +84,7 @@ declare namespace pxt {
     }
 
     interface AppSimulator {
-        autoRun?: boolean;        
+        autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
         hideFullscreen?: boolean;
@@ -94,6 +94,7 @@ declare namespace pxt {
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
+        headless?: boolean; // whether simulator should still run while collapsed
     }
 
     interface TargetCompileService {
@@ -173,7 +174,7 @@ declare namespace pxt {
 
     interface DocMenuEntry {
         name: string;
-        // needs to have one of `path` or `subitems` 
+        // needs to have one of `path` or `subitems`
         path?: string;
         subitems?: DocMenuEntry[];
     }

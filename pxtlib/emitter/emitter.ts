@@ -7,6 +7,8 @@ namespace ts.pxtc {
     export import U = pxtc.Util;
 
     export const ON_START_TYPE = "pxt-on-start";
+    export const TS_STATEMENT_TYPE = "typescript_statement";
+    export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_ASM = "binary.asm";
@@ -287,6 +289,7 @@ namespace ts.pxtc {
         blockAllowMultiple?: boolean;
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
+        blockFieldEditor?: string; // Custom field editor
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
@@ -302,6 +305,7 @@ namespace ts.pxtc {
         trackArgs?: number[];
         advanced?: boolean;
         deprecated?: boolean;
+        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
 
         // on interfaces
         indexerGet?: string;

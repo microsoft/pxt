@@ -108,6 +108,10 @@ namespace pxt.editor {
         restartSimulator(): void;
         startSimulator(): void;
         runSimulator(): void;
+        expandSimulator(): void;
+        collapseSimulator(): void;
+        toggleSimulatorCollapse(): void;
+        proxySimulatorMessage(content: string): void;
 
         addPackage(): void;
         typecheckNow(): void;

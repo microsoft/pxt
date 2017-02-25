@@ -1,14 +1,15 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="pxt-on-start">
 <statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" line0="&#34;abc&#34;" />
+<next>
 <block type="variables_set">
 <field name="VAR">a</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="text_join">
-<mutation items="3"></mutation>
+<mutation items="3" />
 <value name="ADD0">
 <shadow type="text">
 <field name="TEXT">abc</field>
@@ -30,9 +31,7 @@
 <block type="variables_set">
 <field name="VAR">b</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="string_get">
 <value name="this">
 <shadow type="text">
@@ -58,15 +57,11 @@
 <block type="variables_set">
 <field name="VAR">d</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="logic_compare">
 <field name="OP">EQ</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">c</field>
 </block>
@@ -82,9 +77,7 @@
 <block type="variables_set">
 <field name="VAR">e</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="string_compare">
 <value name="this">
 <block type="variables_get">
@@ -102,9 +95,7 @@
 <block type="variables_set">
 <field name="VAR">f</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="string_substr">
 <value name="this">
 <shadow type="text">
@@ -134,9 +125,8 @@
 </block>
 </next>
 </block>
-</statement>
+</next>
 </block>
-<block type="text">
-<field name="TEXT">abc</field>
+</statement>
 </block>
 </xml>

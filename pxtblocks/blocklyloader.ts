@@ -378,16 +378,17 @@ namespace pxt.blocks {
         const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
+        const color =
+            fn.attributes.color
+            || (nsinfo ? nsinfo.attributes.color : undefined)
+            || blockColors[ns]
+            || 255;
 
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
 
         block.setTooltip(fn.attributes.jsDoc);
-        block.setColour(
-            fn.attributes.color
-            || (nsinfo ? nsinfo.attributes.color : undefined)
-            || blockColors[ns]
-            || 255);
+        block.setColour(color);
 
         parseFields(fn.attributes.block).map(field => {
             let i: any;
@@ -434,7 +435,26 @@ namespace pxt.blocks {
                     // if a value is provided, move it first
                     if (pr.shadowValue)
                         dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
-                    i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
+
+                    const noteValidator = (text: string): string => {
+                        if (text === null) {
+                            return null;
+                        }
+                        text = String(text);
+
+                        let n = parseFloat(text || '0');
+                        if (isNaN(n) || n < 0) {
+                            // Invalid number.
+                            return null;
+                        }
+                        // Get the value in range.
+                        return String(Math.round(Number(text)));
+                    };
+
+                    if (fn.attributes.blockFieldEditor == "note_editor")
+                        i.appendField(new Blockly.FieldNote("262", color, noteValidator), attrNames[n].name);
+                    else
+                        i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
                 } else if (/\[\]$/.test(pr.type)) { // Array type
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
@@ -522,11 +542,13 @@ namespace pxt.blocks {
         // create new toolbox and update block definitions
         let tb = toolbox ? <Element>toolbox.cloneNode(true) : undefined;
         blockInfo.blocks.sort((f1, f2) => {
-            let ns1 = blockInfo.apis.byQName[f1.namespace.split('.')[0]];
-            let ns2 = blockInfo.apis.byQName[f2.namespace.split('.')[0]];
+            let ns1 = blockInfo.apis.byQName[f1.attributes.blockNamespace || f1.namespace.split('.')[0]];
+            let ns2 = blockInfo.apis.byQName[f2.attributes.blockNamespace || f2.namespace.split('.')[0]];
+
             if (ns1 && !ns2) return -1; if (ns2 && !ns1) return 1;
             let c = 0;
             if (ns1 && ns2) {
+
                 c = (ns2.attributes.weight || 50) - (ns1.attributes.weight || 50);
                 if (c != 0) return c;
             }
@@ -1327,7 +1349,8 @@ namespace pxt.blocks {
                     pxt.blocks.layout.shuffle(this, 1);
                 }
             };
-            menuOptions.push(shuffleOption);
+            // TODO: temporarily removing shuffle blocks option until we have a better way of surfacing it to content creators
+            //menuOptions.push(shuffleOption);
 
             const screenshotOption = {
                 text: lf("Download Screenshot"),
@@ -1477,6 +1500,82 @@ namespace pxt.blocks {
                     lf("on start event"),
                     lf("Run code when the program starts"),
                     '/blocks/on-start'
+                );
+            }
+        };
+
+        Blockly.Blocks[pxtc.TS_STATEMENT_TYPE] = {
+            init: function () {
+                let that: Blockly.Block = this;
+                that.setColour("#717171")
+                that.setPreviousStatement(true);
+                that.setNextStatement(true);
+
+                this.domToMutation = (element: Element) => {
+                    const n = parseInt(element.getAttribute("numlines"));
+                    this.declaredVariables = element.getAttribute("declaredvars");
+                    for (let i = 0; i < n; i++) {
+                        const line = element.getAttribute("line" + i);
+                        that.appendDummyInput().appendField(line, "LINE" + i);
+                    }
+                };
+
+                this.mutationToDom = () => {
+                    let mutation = document.createElement("mutation");
+                    let i = 0;
+
+                    while (true) {
+                        const val = that.getFieldValue("LINE" + i);
+                        if (val === null) {
+                            break;
+                        }
+
+                        mutation.setAttribute("line" + i, val);
+                        i++;
+                    }
+
+                    mutation.setAttribute("numlines", i.toString());
+                    if (this.declaredVariables) {
+                        mutation.setAttribute("declaredvars", this.declaredVariables);
+                    }
+
+                    return mutation;
+                };
+
+                that.setEditable(false);
+
+                setHelpResources(this,
+                    pxtc.TS_STATEMENT_TYPE,
+                    lf("JavaScript statement"),
+                    lf("A JavaScript statement that could not be converted to blocks"),
+                    '/blocks/javascript-blocks'
+                );
+            }
+        };
+
+        Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
+            init: function () {
+                this.jsonInit({
+                    "colour": "#717171",
+                    "message0": "%1",
+                    "args0": [
+                        {
+                            "type": "field_input",
+                            "name": "EXPRESSION",
+                            "text": ""
+                        }
+                    ]
+                });
+                this.setPreviousStatement(false);
+                this.setNextStatement(false);
+                this.setOutput(true);
+                this.setEditable(false);
+
+                setHelpResources(this,
+                    pxtc.TS_OUTPUT_TYPE,
+                    lf("JavaScript expression"),
+                    lf("A JavaScript expression that could not be converted to blocks"),
+                    '/blocks/javascript-blocks'
                 );
             }
         };

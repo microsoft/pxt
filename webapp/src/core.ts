@@ -17,11 +17,14 @@ export type Component<S, T> = data.Component<S, T>;
 
 export function hideLoading() {
     $('.ui.page.dimmer .loadingcontent').remove();
-    $('body.dimmable').dimmer('hide');
+    $('body.main').dimmer('hide');
 }
 
 export function showLoading(msg: string) {
-    $('body.dimmable').dimmer('show');
+    $('body.main').dimmer({
+        closable: false
+    });
+    $('body.main').dimmer('show');
     $('.ui.page.dimmer').html(`
   <div class="content loadingcontent">
     <div class="ui text large loader msg">{lf("Please wait")}</div>
@@ -227,7 +230,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "body.dimmable",
+            context: "body.main",
             onHidden: () => {
                 modal.remove();
                 mo.remove();
@@ -363,7 +366,7 @@ export function shareLinkAsync(options: ShareOptions) {
     let modal = $(html)
     enableCopyable(modal);
     let done = false
-    $('body.dimmable').append(modal)
+    $('body.main').append(modal)
 
     return new Promise((resolve, reject) =>
         modal.modal({

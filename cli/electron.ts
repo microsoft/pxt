@@ -1,9 +1,15 @@
+/// <reference path="../typings/modules/request/index.d.ts"/>
+
 "use strict";
 
 import * as p from "./commandparser";
 import * as fs from "fs";
-import * as nodeutil from './nodeutil';
+import * as https from "https";
+import * as nodeutil from "./nodeutil";
 import * as path from "path";
+import * as request from "request";
+import * as url from "url";
+import U = pxt.Util;
 
 const npm = nodeutil.runNpmAsyncWithCwd;
 const npmCmd = nodeutil.addCmd("npm");
@@ -16,11 +22,25 @@ let isInit = false;
 let targetDir = process.cwd();
 let outDir = path.join(targetDir, "electron-out");
 
-function errorOut(msg: string): Promise<void> {
-    console.error(msg);
+interface GitHubAsset {
+    name: string;
+}
+
+interface GitHubRelease {
+    assets: GitHubAsset[];
+    "upload_url": string;
+}
+
+interface GitHubCreateReleaseInfo {
+    tag_name: string,
+    name: string
+}
+
+function errorOut(msg: string): Promise<any> {
+    console.error("ERROR: " + msg);
     process.exit(1)
 
-    return null;
+    return Promise.resolve();
 }
 
 export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
@@ -32,7 +52,7 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     }
 
     // Validate current target
-    const needsCurrentTarget = subcommand !== "package" || !parsed.flags["release"];
+    const needsCurrentTarget = subcommand !== "publish" && (subcommand !== "package" || !parsed.flags["release"]);
 
     if (needsCurrentTarget && (!fs.existsSync("pxtarget.json") || !fs.existsSync("package.json"))) {
         errorOut("This command requires to be in a valid target directory (pxtarget.json and package.json required)");
@@ -94,8 +114,7 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
     isInit = linkPath && path.resolve(linkPath) === path.resolve(process.cwd());
 
     if (parsed.flags["release"]) {
-        targetDir = path.join(pxtElectronPath, "src", "node_modules", targetNpmPackageName);
-        outDir = path.join(pxtElectronPath, "electron-out");
+        setReleaseDirs();
     }
 
     // Invoke subcommand
@@ -106,9 +125,16 @@ export function electronAsync(parsed: p.ParsedCommand): Promise<void> {
             return runAsync(parsed);
         case "package":
             return packageAsync(parsed);
+        case "publish":
+            return publishAsync(parsed);
         default:
             return errorOut("Unknown subcommand: " + subcommand);
     }
+}
+
+function setReleaseDirs(): void {
+    targetDir = path.join(pxtElectronPath, "src", "node_modules", targetNpmPackageName);
+    outDir = path.join(pxtElectronPath, "electron-out");
 }
 
 function initAsync(): Promise<void> {
@@ -175,6 +201,136 @@ function packageAsync(parsed: p.ParsedCommand): Promise<void> {
 
 function buildInstallerAsync(): Promise<void> {
     return electronGulpTask("dist");
+}
+
+function publishAsync(parsed: p.ParsedCommand): Promise<void> {
+    const builtRepoName = process.env["PXT_RELEASE_REPO_NAME"];
+    const builtRepoOrg = process.env["PXT_RELEASE_REPO_ORG"];
+    const accessToken = process.env["GITHUB_ACCESS_TOKEN"];
+    const currentOs = process.platform;
+    let builtRepoLocalPath: string;
+    let latestTag: string;
+    let releaseInfo: GitHubRelease;
+
+    targetNpmPackageName = process.env["PXT_ELECTRON_TARGET"];
+
+    if (!builtRepoName) {
+        return errorOut("PXT_RELEASE_REPO_NAME not specified");
+    }
+
+    if (!builtRepoOrg) {
+        return errorOut("PXT_RELEASE_REPO_ORG not specified");
+    }
+
+    if (!accessToken) {
+        return errorOut("GITHUB_ACCESS_TOKEN not specified");
+    }
+
+    if (!targetNpmPackageName) {
+        return errorOut("PXT_ELECTRON_TARGET not specified");
+    }
+
+    if (fs.existsSync(builtRepoName)) {
+        builtRepoLocalPath = builtRepoName;
+    } else {
+        if (fs.existsSync(path.join("..", builtRepoName))) {
+            builtRepoLocalPath = path.join("..", builtRepoName);
+        }
+    }
+
+    if (!builtRepoLocalPath) {
+        return errorOut("Release repo not cloned locally");
+    }
+
+    return nodeutil.gitInfoAsync(["--no-pager", "log", "--tags", "--simplify-by-decoration", "--pretty=\"format:%ai %d\""], builtRepoLocalPath, /*silent*/ true)
+        .then((output) => {
+            // Output is a list of tags sorted in reverse chronological order, example of a line: 2016-08-16 07:46:43 -0700  (tag: v0.3.30)
+            const tagVersionRegex = /tag: (v\d+\.\d+\.\d+\.*?)[,\)]/;
+            const execResult = tagVersionRegex.exec(output);
+
+            if (!execResult) {
+                return errorOut("Unable to determine latest tag of built repo");
+            }
+
+            latestTag = execResult[1];
+
+            return getOrCreateGHRelease(builtRepoOrg, builtRepoName, accessToken, latestTag);
+        })
+        .then((r: GitHubRelease) => {
+            releaseInfo = r;
+
+            const appAlreadyExists = releaseInfo.assets.some((a) => {
+                return a.name.indexOf(currentOs) !== -1;
+            });
+
+            if (appAlreadyExists) {
+                console.log("Electron app already published for this version");
+                return Promise.resolve();
+            }
+
+            parsed.flags["release"] = `${targetNpmPackageName}@${latestTag.substring(1)}`;
+            parsed.flags["installer"] = true;
+            setReleaseDirs();
+
+            return packageAsync(parsed)
+                .then(() => new Promise((resolve, reject) => {
+                    let uploadAssetPath: string;
+
+                    fs.readdirSync(outDir).forEach((p) => {
+                        const itemPath = path.join(outDir, p);
+
+                        if (!fs.statSync(itemPath).isDirectory() && itemPath.indexOf(currentOs) !== -1) {
+                            uploadAssetPath = itemPath;
+                        }
+                    });
+
+                    if (!uploadAssetPath) {
+                        errorOut("Could not find asset to upload");
+                    } else {
+                        const req = request.post(`${releaseInfo["upload_url"].replace(/{\?name,label}/, "")}?name=${path.basename(uploadAssetPath)}&access_token=${accessToken}`, (err, resp, body) => {
+                            if (err || resp.statusCode !== 201) {
+                                errorOut("Error in POST request while uploading app to GitHub release");
+                            } else {
+                                resolve();
+                            }
+                        });
+                        const form = req.form();
+
+                        form.append(uploadAssetPath, fs.createReadStream(uploadAssetPath));
+                    }
+                }))
+                .then(() => {
+                    console.log("App successfully published to GitHub");
+                });
+        });
+}
+
+function getOrCreateGHRelease(builtRepoOrg: string, builtRepoName: string, accessToken: string, latestTag: string): Promise<GitHubRelease> {
+    return U.httpGetJsonAsync(`https://api.github.com/repos/${builtRepoOrg}/${builtRepoName}/releases/tags/${latestTag}?access_token=${accessToken}`)
+        .catch((e) => {
+            const createRelease: GitHubCreateReleaseInfo = {
+                tag_name: latestTag,
+                name: latestTag
+            };
+
+            return U.requestAsync({
+                method: "POST",
+                url: `https://api.github.com/repos/${builtRepoOrg}/${builtRepoName}/releases?access_token=${accessToken}`,
+                data: createRelease,
+                allowHttpErrors: true
+            })
+                .then((resp) => {
+                    if (resp.statusCode !== 201) {
+                        return Promise.reject({ statusCode: resp.statusCode });
+                    }
+
+                    return Promise.resolve(resp.json);
+                });
+        })
+        .catch((e) => {
+            // Creating the release failed, error out
+            return errorOut("Bad status while creating release: " + e.statusCode);
+        });
 }
 
 function installLocalTargetAsync(): Promise<void> {

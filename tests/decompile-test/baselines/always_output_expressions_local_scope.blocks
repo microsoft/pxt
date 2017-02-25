@@ -1,0 +1,11 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1"
+line0="1 &#43; 1"
+/>
+</block>
+</statement>
+</block>
+</xml>
