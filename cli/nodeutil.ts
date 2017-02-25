@@ -74,7 +74,7 @@ export function spawnAsync(opts: SpawnOptions) {
         .then(() => { })
 }
 
-export function spawnWithPipeAsync(opts: SpawnOptions) {
+export function spawnWithPipeAsync(opts: SpawnOptions, silent: boolean = false) {
     if (opts.pipe === undefined) opts.pipe = true
     let info = opts.cmd + " " + opts.args.join(" ")
     if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
@@ -90,7 +90,9 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
         if (opts.pipe)
             ch.stdout.on('data', (buf: Buffer) => {
                 bufs.push(buf)
-                process.stdout.write(buf)
+                if (!silent) {
+                    process.stdout.write(buf)
+                }
             })
         ch.on('close', (code: number) => {
             if (code != 0)
@@ -115,6 +117,45 @@ export function runNpmAsyncWithCwd(cwd: string, ...args: string[]) {
         args: args,
         cwd
     });
+}
+
+export function runGitAsync(...args: string[]) {
+    return spawnAsync({
+        cmd: "git",
+        args: args,
+        cwd: "."
+    })
+}
+
+export function gitInfoAsync(args: string[], cwd?: string, silent: boolean = false) {
+    return Promise.resolve()
+        .then(() => spawnWithPipeAsync({
+            cmd: "git",
+            args: args,
+            cwd
+        }, silent))
+        .then(buf => buf.toString("utf8").trim())
+}
+
+export function currGitTagAsync() {
+    return gitInfoAsync(["describe", "--tags", "--exact-match"])
+        .then(t => {
+            if (!t)
+                Util.userError("no git tag found")
+            return t
+        })
+}
+
+export function needsGitCleanAsync() {
+    return Promise.resolve()
+        .then(() => spawnWithPipeAsync({
+            cmd: "git",
+            args: ["status", "--porcelain", "--untracked-files=no"]
+        }))
+        .then(buf => {
+            if (buf.length)
+                Util.userError("Please commit all files to git before running 'pxt bump'")
+        })
 }
 
 function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
@@ -227,7 +268,6 @@ export function readJson(fn: string) {
 }
 
 export function getPxtTarget(): pxt.TargetBundle {
-
     if (fs.existsSync(targetDir + "/built/target.json")) {
         let res: pxt.TargetBundle = readJson(targetDir + "/built/target.json")
         if (res.id && res.bundledpkgs) return res;
