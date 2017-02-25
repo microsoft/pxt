@@ -257,7 +257,12 @@ div.simframe > iframe {
     top:0; left: 0; width:100%; height:100%;
 }
 
-/* Menu */ 
+.simHeadless {
+    height: 0 !important;
+    width: 0 !important;
+}
+
+/* Menu */
 .ui.menu .item.editor-menuitem {
     background: fade(@black, 30%) !important;
     margin: 0.5rem;
@@ -402,7 +407,7 @@ div.simframe > iframe {
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
     background-color: #ccc;
-    box-shadow: 0 0 1px #ccc;    
+    box-shadow: 0 0 1px #ccc;
     -webkit-box-shadow: 0 0 1px #ccc;
 }
 
@@ -709,7 +714,7 @@ Avatar
 
 #root .avatar .message {
     margin-left: 4em;
-    margin-bottom: 1em;                    
+    margin-bottom: 1em;
 }
 
 .avatar .avatar-image {
@@ -897,7 +902,7 @@ Avatar
     }
     #cookiemsg {
         bottom: 7.5rem;
-    }        
+    }
 
     /* Full screen */
     .fullscreensim #filelist {
