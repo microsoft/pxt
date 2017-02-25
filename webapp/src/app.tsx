@@ -1293,7 +1293,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const rootClasses = sui.cx([
                 this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
                 this.state.collapseEditorTools ? " collapsedEditorTools" : '',
-                this.state.fullscreen ? 'fullscreen' : '',
+                this.state.fullscreen ? 'fullscreensim' : '',
                 !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
                 pxt.shell.layoutTypeClass(),
                 inTutorial ? 'tutorial' : '',
