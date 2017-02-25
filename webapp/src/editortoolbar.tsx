@@ -52,12 +52,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     startStopSimulator(view?: string) {
-        pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState() });
+        pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() });
         this.props.parent.startStopSimulator();
     }
 
     restartSimulator(view?: string) {
-        pxt.tickEvent("editortools.restart", { view: view, collapsed: this.getCollapsedState() });
+        pxt.tickEvent("editortools.restart", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() });
         this.props.parent.restartSimulator();
     }
 
@@ -68,6 +68,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
     private getCollapsedState(): string {
         return '' + this.props.parent.state.collapseEditorTools;
+    }
+
+    private getHeadlessState(): string {
+        return pxt.appTarget.simulator.headless ? "true": "false";
     }
 
     render() {
