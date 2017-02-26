@@ -418,9 +418,6 @@ div.simframe > iframe {
 .ui.button.getting-started-btn {
     &:extend(.green all);
 }
-.ui.button.download-button {
-    &:extend(.green all);
-}
 
 /*******************************
              Docs
@@ -463,6 +460,7 @@ div.simframe > iframe {
 
 .projectsdialog .tabsegment {
     min-height: 450px;
+    background: white !important;
 }
 
 /*******************************
@@ -907,7 +905,7 @@ Avatar
     }
 
     /* Full screen */
-    .fullscreen #filelist {
+    .fullscreensim #filelist {
         position: fixed;
         z-index:100;
         top:0;
@@ -919,7 +917,7 @@ Avatar
         min-width: 100%;
         height:100%;
     }
-    .fullscreen #boardview {
+    .fullscreensim #boardview {
         position: relative;
         height:100%;
         background-color: white;
@@ -934,48 +932,48 @@ Avatar
         background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
-    .fullscreen #simulator .ui.item:not(.simtoolbar),
-        .fullscreen #simulator .ui.menu,
-        .fullscreen #menubar .ui.item:not(.logo),
-        .fullscreen #maineditor,
-        .fullscreen #editortools {
+    .fullscreensim #simulator .ui.item:not(.simtoolbar),
+        .fullscreensim #simulator .ui.menu,
+        .fullscreensim #menubar .ui.item:not(.logo),
+        .fullscreensim #maineditor,
+        .fullscreensim #editortools {
         display: none !important;
         z-index: -10;
     }
-    .fullscreen .sandboxfooter {
+    .fullscreensim .sandboxfooter {
         z-index:100;
         bottom: 1rem;
     }
-    .fullscreen .ui.menu {
+    .fullscreensim .ui.menu {
         background: transparent !important;
     }
-    .fullscreen #filelist .simtoolbar {
+    .fullscreensim #filelist .simtoolbar {
         position: fixed;
         bottom: 2rem;
         left:auto;
         right:auto;
     }
-    .fullscreen #simulators {
+    .fullscreensim #simulators {
         position: relative;
         padding: 3rem;
         width: 100%;
         height: 100%;
     }
-    .fullscreen div.simframe {
+    .fullscreensim div.simframe {
         position:relative;
         width: 50%;
         height: 100%;
         float: left;
         padding-bottom: 0 !important;
     }
-    .fullscreen div.simframe > iframe {
+    .fullscreensim div.simframe > iframe {
         position:relative;
         max-width: 90%;
     }
-    .fullscreen div.simframe:only-child {
+    .fullscreensim div.simframe:only-child {
         width: 100%;
     }
-    .fullscreen div.simframe:only-child > iframe {
+    .fullscreensim div.simframe:only-child > iframe {
         max-width: 100%;
     }
 }

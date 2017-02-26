@@ -71,7 +71,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     private getHeadlessState(): string {
-        return pxt.appTarget.simulator.headless ? "true": "false";
+        return pxt.appTarget.simulator.headless ? "true" : "false";
     }
 
     render() {
@@ -111,7 +111,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
                                 {headless && run ? <sui.Button class="" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
                                 {headless && restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
-                                {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
+                                {compileBtn ? <sui.Button class={`primary download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
                             </div>
                         </div>
                         {readOnly ? undefined :
@@ -154,7 +154,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             <div className="row" style={readOnly ? undefined : { paddingTop: 0 }}>
                                 <div className="column">
                                     <div className="ui icon large buttons">
-                                        {compileBtn ? <sui.Button class={`download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
+                                        {compileBtn ? <sui.Button class={`primary download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
                                     </div>
                                 </div>
                             </div>
@@ -170,12 +170,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`large collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
                                     {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
                                     {restart ? <sui.Button key='restartbtn' class={`large restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
-                                    {compileBtn ? <sui.Button class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
+                                    {compileBtn ? <sui.Button class={`primary large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
                                 </div>
                             </div> :
                             <div className="left aligned six wide column">
                                 <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`large collapse-button ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
-                                {compileBtn ? <sui.Button class={`large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={ lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
+                                {compileBtn ? <sui.Button class={`primary large download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={ lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
                             </div> }
                         {readOnly ? undefined :
                             <div className="column four wide">
@@ -211,7 +211,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             <div className="ui grid right aligned">
                                  {compileBtn ? <div className="row">
                                     <div className="column">
-                                       <sui.Button role="menuitem" class={`large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } />
+                                       <sui.Button role="menuitem" class={`primary large fluid download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" text={lf("Download") } title={compileTooltip} onClick={() => this.compile('tablet') } />
                                     </div>
                                 </div> : undefined }
                                 {readOnly ? undefined :
@@ -245,19 +245,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="column computer only">
                 <div className="ui grid equal width">
-                    <div id="downloadArea" className="ui column items">
-                        {headless && collapsed ?
+                    <div id="downloadArea" className="ui column items">{headless && collapsed ?
                             <div className="ui item">
                                 <div className="ui icon large buttons">
                                     <sui.Button icon={`${state.collapseEditorTools ? 'toggle right' : 'toggle left'}`} class="large collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />
                                     {run ? <sui.Button role="menuitem" class="large" key='runmenubtn' icon={state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
                                     {restart ? <sui.Button key='restartbtn' class={`large restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
-                                    {compileBtn ? <sui.Button icon='icon download' class={`large download-button ${compileLoading ? 'loading' : ''}`} title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
+                                    {compileBtn ? <sui.Button icon='icon download' class={`primary large download-button ${compileLoading ? 'loading' : ''}`} title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
                                 </div>
                             </div> :
                             <div className="ui item">
                                 <sui.Button icon={`${state.collapseEditorTools ? 'toggle right' : 'toggle left'}`} class="large collapse-button" title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />
-                                {compileBtn ? <sui.Button icon='icon download' class={`huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
+                                {compileBtn ? <sui.Button icon='icon download' class={`primary huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={lf("Download") } title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
                             </div>
                         }
                     </div>

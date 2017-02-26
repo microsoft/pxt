@@ -65,6 +65,7 @@ body {
 .ui.button.icon.clear {
     background: transparent;
     padding: 0;
+    border: 0 !important;
     box-shadow: none !important;
 }
 
