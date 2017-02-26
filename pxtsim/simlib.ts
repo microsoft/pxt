@@ -169,6 +169,12 @@ namespace pxsim {
             let ctx = context();
             if (!ctx) return;
 
+            if (_vco) {
+                _vco.stop();
+                _vco.disconnect();
+                _vco = undefined;
+            }
+
             gain = Math.max(0, Math.min(1, gain));
             try {
                 _vco = ctx.createOscillator();
