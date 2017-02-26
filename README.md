@@ -23,7 +23,7 @@ More info:
 Examples of Editors built with PXT:
 
 * https://pxt.microbit.org
-* https://adafruit.pxt.io
+* https://pxt.adafruit.com
 
 ## Running a target from localhost
 
@@ -39,7 +39,7 @@ npm link ../pxt
 
 ## Build
 
-First, install (Node)[http://nodejs.org/]: minimum version 5.7. Then install the following:
+First, install [Node](https://nodejs.org/en/): minimum version 5.7. Then install the following:
 ```
 npm install -g jake
 npm install -g typings
