@@ -182,7 +182,8 @@ declare namespace pxt {
 
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;
-        bundleddirs: string[];
+        bundleddirs?: string[];
+        bundledmodules?: string[]; // bundled NPM modules
         versions: TargetVersions;
     }
 }
