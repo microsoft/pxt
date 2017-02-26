@@ -170,19 +170,18 @@ namespace pxsim {
             if (!ctx) return;
 
             gain = Math.max(0, Math.min(1, gain));
-            if (!_vco) {
-                try {
-                    _vco = ctx.createOscillator();
-                    _vca = ctx.createGain();
-                    _vco.connect(_vca);
-                    _vca.connect(ctx.destination);
-                    _vca.gain.value = gain;
-                    _vco.start(0);
-                } catch (e) {
-                    _vco = undefined;
-                    _vca = undefined;
-                    return;
-                }
+            try {
+                _vco = ctx.createOscillator();
+                _vca = ctx.createGain();
+                _vco.type = 'triangle';
+                _vco.connect(_vca);
+                _vca.connect(ctx.destination);
+                _vca.gain.value = gain;
+                _vco.start(0);
+            } catch (e) {
+                _vco = undefined;
+                _vca = undefined;
+                return;
             }
 
             _vco.frequency.value = frequency;
