@@ -951,8 +951,21 @@ export class ProjectView
         })
     }
 
+    // Close on escape
+    closeOnEscape = (e: KeyboardEvent) => {
+        if (e.keyCode !== 27) return
+        e.preventDefault()
+        this.toggleSimulatorFullscreen();
+    }
+
     toggleSimulatorFullscreen() {
         pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.state.fullscreen });
+        if (!this.state.fullscreen) {
+            document.addEventListener('keydown', this.closeOnEscape);
+        } else {
+            document.removeEventListener('keydown', this.closeOnEscape);
+        }
+
         this.setState({ fullscreen: !this.state.fullscreen });
     }
 
