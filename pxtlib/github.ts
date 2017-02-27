@@ -244,7 +244,7 @@ namespace pxt.github {
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
                 .then(rs => rs.filter(r => r.status == GitRepoStatus.Approved));
 
-        query += ` in:name,description,readme "for PXT/${appTarget.forkof || appTarget.id}"`
+        query += ` in:name,description,readme "for PXT/${appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
             .then((rs: SearchResults) => rs.items.map(item => mkRepo(item, config)).filter(r => r.status == GitRepoStatus.Approved));
     }

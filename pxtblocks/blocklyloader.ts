@@ -1363,7 +1363,7 @@ namespace pxt.blocks {
                                 uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                             BrowserUtils.browserDownloadDataUri(
                                 uri,
-                                `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
                         });
                 }
             };
