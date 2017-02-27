@@ -599,7 +599,7 @@ function pkgVersion() {
 function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
         .concat(nodeutil.allFiles("sim/public"))
-    pxt.debug(`target files: ${lst.join('\r\n    ')}`)
+    pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
 
@@ -982,6 +982,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // only keep the last version of each uploadFileName()
     opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
+    pxt.log(`target files:\r\n    ${opts.fileList.join('\r\n    ')}`)
 
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
