@@ -526,7 +526,7 @@ function justBumpPkgAsync() {
 }
 
 function bumpAsync(parsed: commandParser.ParsedCommand) {
-    const bumpPxt = !parsed.flags["noupdate"];
+    const bumpPxt = parsed.flags["update"];
     const upload = parsed.flags["upload"];
     if (fs.existsSync(pxt.CONFIG_NAME)) {
         if (upload) throw U.userError("upload only supported on packages");
@@ -3786,7 +3786,7 @@ function initCommands() {
         name: "bump",
         help: "bump target or package version",
         flags: {
-            noupdate: { description: "Don't publish the updated version" },
+            update: { description: "(package only) Updates pxt-core reference to the latest release" },
             upload: { description: "(package only) Upload after bumping" }
         }
     }, bumpAsync);

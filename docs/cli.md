@@ -77,3 +77,5 @@ where ``EMBEDURL`` is the published project URL.
 * [build](/cli/build), builds the current project
 * [deploy](/cli/deploy), builds and deploys the current project
 * [login](/cli/login), store a GitHub token
+* [bump](/cli/bump), increment the version number
+* [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
