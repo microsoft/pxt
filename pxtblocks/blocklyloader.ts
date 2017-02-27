@@ -882,12 +882,12 @@ namespace pxt.blocks {
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
-        const info = helpResources[id];
+        const info = pxt.blocks.helpResources()[id];
         setHelpResources(block, id, info.name, info.tooltip, info.url);
     }
 
     function installBuiltinHelpInfo(id: string) {
-        const info = helpResources[id];
+        const info = pxt.blocks.helpResources()[id];
         installHelpResources(id, info.name, info.tooltip, info.url)
     }
 
@@ -983,7 +983,7 @@ namespace pxt.blocks {
                 this.appendStatementInput('DO')
                     .appendField(lf("{id:for}do"));
 
-                const info = helpResources['controls_simple_for'];
+                const info = pxt.blocks.helpResources()['controls_simple_for'];
                 let thisBlock = this;
                 setHelpResources(this,
                     'controls_simple_for',
@@ -1613,7 +1613,7 @@ namespace pxt.blocks {
                 });
 
                 let thisBlock = this;
-                const info = helpResources['math_op2'];
+                const info = pxt.blocks.helpResources()['math_op2'];
                 setHelpResources(this,
                     'math_op2',
                     info.name,
@@ -1669,7 +1669,7 @@ namespace pxt.blocks {
 
         // builtin math_number
         //XXX Integer validation needed.
-        const mInfo = helpResources['math_number'];
+        const mInfo = pxt.blocks.helpResources()['math_number'];
         installHelpResources(
             'math_number',
             mInfo.name,
@@ -1692,7 +1692,7 @@ namespace pxt.blocks {
             'DIVIDE': lf("Return the quotient of the two numbers."),
             'POWER': lf("Return the first number raised to the power of the second number."),
         };
-        const aInfo = helpResources['math_arithmetic'];
+        const aInfo = pxt.blocks.helpResources()['math_arithmetic'];
         installHelpResources(
             'math_arithmetic',
             aInfo.name,
