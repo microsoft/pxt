@@ -555,8 +555,8 @@ namespace pxsim {
             this.setupTop = setupTop
             this.handleDebuggerMsg = handleDebuggerMsg
             this.entry = entryPoint
-            this.overwriteResume = (retPC: number) => { 
-                currResume = null; 
+            this.overwriteResume = (retPC: number) => {
+                currResume = null;
                 if (retPC >= 0)
                     this.currFrame.pc = retPC;
                 this.currFrame.overwrittenPC = true;
