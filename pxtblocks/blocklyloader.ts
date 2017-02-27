@@ -423,7 +423,7 @@ namespace pxt.blocks {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
                             v.attributes.blockImage ? {
-                                src: `/static/blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
+                                src: pxt.webConfig.targetCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
                                 width: 32,
                                 height: 32

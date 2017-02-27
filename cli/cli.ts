@@ -645,7 +645,9 @@ interface CommitInfo {
 }
 
 function uploadFileName(p: string) {
-    return p.replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
+    // normalize /, \ before filtering
+    return p.replace(/\\/g, '\/')
+        .replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
 }
 
 function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
@@ -912,6 +914,9 @@ function uploadCoreAsync(opts: UploadOptions) {
 
         let fileName = uploadFileName(p)
         let mime = U.getMime(p)
+
+        pxt.log(`    ${p} -> ${fileName} (${mime})`)
+
         let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
         let content = ""
         let data: Buffer;
@@ -982,7 +987,6 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // only keep the last version of each uploadFileName()
     opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
-    pxt.log(`target files:\r\n    ${opts.fileList.join('\r\n    ')}`)
 
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -2919,11 +2923,11 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         pkg.getCompileOptionsAsync()
             .then(opts => {
                 opts.ast = true;
-                    const decompiled = pxtc.decompile(opts, "main.ts");
-                    if (decompiled.success) {
-                        resolve(decompiled.outfiles["main.blocks"]);
-                    }
-                    else {
+                const decompiled = pxtc.decompile(opts, "main.ts");
+                if (decompiled.success) {
+                    resolve(decompiled.outfiles["main.blocks"]);
+                }
+                else {
                     reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
                 }
             });
@@ -3954,7 +3958,7 @@ function initCommands() {
         argString: "<file1.ts> <file2.ts> ...",
         advanced: true,
         flags: {
-           dep: { description: "include specified path as a dependency to the project", type: "string", argument: "path" }
+            dep: { description: "include specified path as a dependency to the project", type: "string", argument: "path" }
         }
     }, decompileAsync);
 
