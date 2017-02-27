@@ -607,7 +607,7 @@ export class Editor extends srceditor.Editor {
     case 1:
         break;
 }`,
-                comment: lf("Runs differnt code based on a value"),
+                comment: lf("Runs different code based on a value"),
                 metaData: {
                     callingConvention: ts.pxtc.ir.CallingConvention.Plain,
                     paramDefl: {}
