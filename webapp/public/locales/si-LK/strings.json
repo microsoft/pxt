@@ -188,7 +188,6 @@
   "Run this command from a shell.": "මේ විධානය ධාවනය කරන්න.",
   "Runs code if the condition is true": "කොන්දේසිය සත්‍යය නම් පමණක් කේතය දුවවන්න",
   "Runs code if the condition is true; else run other code": "කොන්දේසිය සත්‍යය වේ නම් කේතය ධාවනය කරන්න; එසේ නැතිනම් වෙනත් කේතයක් ධාවනය කරන්න",
-  "Runs differnt code based on a value": "අගය මත වෙනස් වන කේත ධාවනය වෙයි",
   "Save": "සුරකින්න",
   "Save failed!": "සුරැකීම අසාර්ථකයි!",
   "Save the data to your 'Downloads' folder.": "ඔබේ 'Downloads' ෆෝල්ඩරයට දත්ත සුරකින්න.",

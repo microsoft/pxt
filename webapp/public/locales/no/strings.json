@@ -183,7 +183,6 @@
   "Run this command from a shell.": "Kjør kommandoen fra et kommandovindu.",
   "Runs code if the condition is true": "Kjører kode hvis en betingelse er oppfylt",
   "Runs code if the condition is true; else run other code": "Utfører et stykke kode hvis en betingelse er oppfylt, ellers utføres et annet stykke kode",
-  "Runs differnt code based on a value": "Kjører forskjellige stykker kode bestemt av en verdi",
   "Save": "Lagre",
   "Save failed!": "Lagringen mislyktes!",
   "Save the data to your 'Downloads' folder.": "Lagre dataene i mappen \"Nedlastinger\".",
