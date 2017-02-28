@@ -26,6 +26,11 @@ namespace pxt.blocks {
             block: "math_number",
             defaultValue: "0"
         },
+        "numberMinMax": {
+            field: "NUM",
+            block: "math_number_minmax",
+            defaultValue: "0"
+        },
         "boolean": {
             field: "BOOL",
             block: "logic_boolean",
@@ -119,15 +124,26 @@ namespace pxt.blocks {
             let attr = attrNames["this"];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue || attr.name, attr.shadowType || "variables_get"));
         }
-        if (fn.parameters)
+        if (fn.parameters) {
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
                 (/^(string|number|boolean)$/.test(attrNames[pr.name].type)
                     || !!attrNames[pr.name].shadowType
                     || !!attrNames[pr.name].shadowValue))
                 .forEach(pr => {
                     let attr = attrNames[pr.name];
-                    block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
+                    let shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
+                    let container: any;
+                    if (fn.attributes.min && fn.attributes.max) {
+                        if (fn.attributes.min[pr.name] && fn.attributes.max[pr.name]) {
+                            container = document.createElement('mutation');
+                            container.setAttribute('min', fn.attributes.min[pr.name]);
+                            container.setAttribute('max', fn.attributes.max[pr.name]);
+                            shadowValue.firstChild.appendChild(container);
+                        }
+                    }
+                    block.appendChild(shadowValue);
                 })
+        }
         searchElementCache[fn.attributes.blockId] = block.cloneNode(true);
         return block;
     }
@@ -474,6 +490,8 @@ namespace pxt.blocks {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Boolean");
                 } else if (pr.type == "string") {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "String");
+                } else if (pr.type == "numberMinMax") {
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Number");
                 } else {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
                 }
@@ -568,6 +586,17 @@ namespace pxt.blocks {
                     builtinBlocks[fn.attributes.blockId].symbol = fn;
                 } else {
                     let pnames = parameterNames(fn);
+                    // use slider for min and max number
+                    if (fn.attributes.min && fn.attributes.max) {
+                        // change to numberMinMax only if min and max are defined
+                        for (let i = 0; i < fn.parameters.length; i++) {
+                            let pr = fn.parameters[i];
+                            if (fn.attributes.min[pr.name] && fn.attributes.max[pr.name]) {
+                                fn.parameters[i].type = "numberMinMax";
+                                pnames[pr.name].type = "numberMinMax";
+                            }
+                        }
+                    }
                     let block = createToolboxBlock(blockInfo, fn, pnames);
                     if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
                         if (tb && (!fn.attributes.debug || dbg))
@@ -1675,6 +1704,16 @@ namespace pxt.blocks {
             mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url
+        );
+
+        // builtin math_number_minmax
+        //XXX Integer validation needed.
+        const mMInfo = helpResources()['math_number_minmax'];
+        installHelpResources(
+            'math_number_minmax',
+            mMInfo.name,
+            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
+            mMInfo.url
         );
 
         // builtin math_arithmetic
