@@ -152,8 +152,8 @@ pxt extract ${url}`;
         const actionLoading = this.props.parent.state.publishing;
 
         return (
-            <sui.Modal open={this.state.visible} dimmer="blurring" className="sharedialog" header={lf("Share Project") } size="small"
-                onClose={() => this.setState({ visible: false }) }
+            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
+                onClose={() => this.setState({ visible: false }) } dimmer={true}
                 action={action}
                 actionClick={publish}
                 actionLoading={actionLoading}
