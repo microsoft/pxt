@@ -1083,7 +1083,17 @@ ${output}</xml>`;
                             (r.inputs || (r.inputs = [])).push(getValue(aName, e));
                         }
                         else {
-                            (r.fields || (r.fields = [])).push(getField(aName, (getPropertyAccessExpression(e as PropertyAccessExpression) as TextNode).value));
+                            const expr = getOutputBlock(e);
+                            if (expr.kind === "text") {
+                                (r.fields || (r.fields = [])).push(getField(aName, (expr as TextNode).value));
+                            }
+                            else {
+                                (r.inputs || (r.inputs = [])).push({
+                                    kind: "value",
+                                    name: aName,
+                                    value: expr
+                                });
+                            }
                         }
                         break;
                     default:
@@ -1579,11 +1589,20 @@ ${output}</xml>`;
                 return op2 === SK.MinusToken || op2 === SK.PlusToken || op2 === SK.ExclamationToken ?
                     undefined : Util.lf("Unsupported prefix unary operator{0}", op2);
             case SK.PropertyAccessExpression:
-                return (n as any).callInfo ? undefined : Util.lf("No call info found");
+                return checkPropertyAccessExpression(n as ts.PropertyAccessExpression);
             case SK.CallExpression:
                 return checkStatement(n);
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
+
+
+        function checkPropertyAccessExpression(n: ts.PropertyAccessExpression) {
+            const callInfo: pxtc.CallInfo = (n as any).callInfo;
+            if (callInfo && (callInfo.attrs.blockIdentity || callInfo.decl.kind === SK.EnumMember)) {
+                return undefined;
+            }
+            return Util.lf("No call info found");
+        }
     }
 
     function isEmptyString(a: string) {
