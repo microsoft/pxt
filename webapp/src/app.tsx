@@ -1308,17 +1308,17 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-                this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
-                this.state.collapseEditorTools ? " collapsedEditorTools" : '',
-                this.state.fullscreen ? 'fullscreensim' : '',
-                !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
-                pxt.shell.layoutTypeClass(),
-                inTutorial ? 'tutorial' : '',
-                pxt.options.light ? 'light' : '',
-                pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
-                showMenuBar ? '' : 'hideMenuBar',
-                'full-abs'
-            ]);
+            this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
+            this.state.collapseEditorTools ? " collapsedEditorTools" : '',
+            this.state.fullscreen ? 'fullscreensim' : '',
+            !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
+            pxt.shell.layoutTypeClass(),
+            inTutorial ? 'tutorial' : '',
+            pxt.options.light ? 'light' : '',
+            pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
+            showMenuBar ? '' : 'hideMenuBar',
+            'full-abs'
+        ]);
 
         return (
             <div id='root' className={rootClasses}>
@@ -1687,10 +1687,17 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "newproject":
             pxt.tickEvent("hash.newproject")
             editor.newProject();
+            window.location.hash = "";
+            return true;
+        case "newjavascript":
+            pxt.tickEvent("hash.newjavascript");
+            editor.newProject({ prj: pxt.appTarget.tsprj });
+            window.location.hash = "";
             return true;
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
+            window.location.hash = "";
             return true;
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
