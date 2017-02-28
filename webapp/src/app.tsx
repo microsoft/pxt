@@ -1295,7 +1295,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const fullscreen = run && !simOpts.hideFullscreen;
         const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
         const cookieKey = "cookieconsent"
-        const cookieConsent = !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = !!pxt.storage.getLocal(cookieKey) || electron.isElectron;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
 
@@ -1425,7 +1425,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                 </div> : undefined}
-                {cookieConsent ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
+                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
