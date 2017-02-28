@@ -710,12 +710,17 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 
 function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     let label = opts.label
-    if (!label) return Promise.resolve()
+    if (!label) {
+        console.log('no label; skip release upload');
+        return Promise.resolve();
+    }
     let tid = pxt.appTarget.id
     if (U.startsWith(label, tid + "/"))
         label = label.slice(tid.length + 1)
-    if (!/^v\d/.test(label))
-        return Promise.resolve()
+    if (!/^v\d/.test(label)) {
+        console.log('label is not a version; skipping release upload');
+        return Promise.resolve();
+    }
     let repoUrl = process.env["PXT_RELEASE_REPO"]
     if (!repoUrl) {
         console.log("no $PXT_RELEASE_REPO variable; not uploading label " + label)
@@ -727,6 +732,8 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     if (!mm) {
         U.userError("wrong format for $PXT_RELEASE_REPO")
     }
+
+    console.log(`create release ${label} in ${repoUrl}`);
 
     let user = mm[1]
     let pass = mm[2]
