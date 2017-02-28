@@ -726,19 +726,34 @@ namespace pxt.blocks {
     export function initSearch(workspace: Blockly.Workspace, tb: Element,
         searchAsync: (searchFor: pxtc.service.SearchOptions) => Promise<pxtc.service.SearchInfo[]>,
         updateToolbox: (tb: Element) => void) {
-        if ($(`#blocklySearchArea`).length) return;
 
-        let blocklySearchArea = document.createElement('div');
-        blocklySearchArea.id = 'blocklySearchArea';
+        let blocklySearchInputField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+        let blocklySearchInput = document.getElementById('blocklySearchInput') as HTMLElement;
 
-        let blocklySearchInput = document.createElement('div');
         let origClassName = 'ui fluid icon input';
-        blocklySearchInput.className = origClassName;
+        if (!blocklySearchInput) {
+            let blocklySearchArea = document.createElement('div');
+            blocklySearchArea.id = 'blocklySearchArea';
 
-        let blocklySearchInputField = document.createElement('input');
-        blocklySearchInputField.type = 'text';
-        blocklySearchInputField.placeholder = lf("Search...");
-        blocklySearchInputField.className = 'blocklySearchInputField';
+            blocklySearchInput = document.createElement('div');
+            blocklySearchInput.id = 'blocklySearchInput';
+            blocklySearchInput.className = origClassName;
+
+            blocklySearchInputField = document.createElement('input');
+            blocklySearchInputField.type = 'text';
+            blocklySearchInputField.placeholder = lf("Search...");
+            blocklySearchInputField.id = 'blocklySearchInputField';
+            blocklySearchInputField.className = 'blocklySearchInputField';
+
+            // Append to dom
+            let blocklySearchInputIcon = document.createElement('i');
+            blocklySearchInputIcon.className = 'search icon';
+
+            blocklySearchInput.appendChild(blocklySearchInputField);
+            blocklySearchInput.appendChild(blocklySearchInputIcon);
+            blocklySearchArea.appendChild(blocklySearchInput);
+            $('.blocklyToolboxDiv').prepend(blocklySearchArea);
+        }
 
         pxt.blocks.cachedSearchTb = tb;
         const searchHandler = Util.debounce(() => {
@@ -821,14 +836,6 @@ namespace pxt.blocks {
         pxt.BrowserUtils.isTouchEnabled() ?
             blocklySearchInputField.ontouchstart = searchHandler
             : blocklySearchInputField.onclick = searchHandler;
-
-        let blocklySearchInputIcon = document.createElement('i');
-        blocklySearchInputIcon.className = 'search icon';
-
-        blocklySearchInput.appendChild(blocklySearchInputField);
-        blocklySearchInput.appendChild(blocklySearchInputIcon);
-        blocklySearchArea.appendChild(blocklySearchInput);
-        $('.blocklyToolboxDiv').prepend(blocklySearchArea);
     }
 
     function categoryElement(tb: Element, nameid: string): Element {
