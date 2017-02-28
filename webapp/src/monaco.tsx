@@ -565,10 +565,10 @@ export class Editor extends srceditor.Editor {
 
         // Add the toolbox buttons
         if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            this.addToolboxCategory(group, lf("Add Package"), "#717171", ' ', false, null, () => {
+            this.addToolboxCategory(group, "", "#717171", "addpackage", false, null, () => {
                 this.resetFlyout();
                 this.parent.addPackage();
-            })
+            }, lf("{id:category}Add Package"))
         }
 
         // Inject toolbox icon css
