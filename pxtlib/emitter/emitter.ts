@@ -426,7 +426,7 @@ namespace ts.pxtc {
         res.jsDoc = ""
         cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
-            doccmt = doccmt.replace(/^\s*@param\s+({.*})?\s*(\w+)\s+\s*(.*)$/mg, (full: string, type: string, name: string , desc: string) => {
+            doccmt = doccmt.replace(/^\s*@param\s+({.*})?\s*(\w+)\s+\s*(.*)$/mg, (full: string, type: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
                 if (type) {
                     type.replace(/^{([0-9]+)-([0-9]+)}$/i, (full: string, min: string, max: string) => {
