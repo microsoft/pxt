@@ -234,9 +234,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </sui.Segment>
                 {tab == ProjectsTab.MyStuff ? <div className={tabClasses}>
                     <div className="group">
-                        <h3 className="ui dividing header disabled">
-                            {lf("Create new")}
-                        </h3>
                         <div className="ui cards">
                             <codecard.CodeCardView
                                 key={'newproject'}
