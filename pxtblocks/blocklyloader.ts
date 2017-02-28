@@ -456,8 +456,6 @@ namespace pxt.blocks {
                     else
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
-                } else if (/\[\]$/.test(pr.type)) { // Array type
-                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Array");
                 } else if (instance && n == "this") {
                     if (!fn.attributes.defaultInstance) {
                         i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
