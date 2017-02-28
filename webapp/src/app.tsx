@@ -1691,7 +1691,12 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
             return true;
         case "newjavascript":
             pxt.tickEvent("hash.newjavascript");
-            editor.newProject({ prj: pxt.appTarget.tsprj });
+            editor.newProject({
+                prj: pxt.appTarget.blocksprj,
+                filesOverride: {
+                    "main.blocks": ""
+                }
+            });
             window.location.hash = "";
             return true;
         case "gettingstarted":
