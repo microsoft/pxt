@@ -665,7 +665,7 @@ namespace pxt.blocks {
             for (let bi = 0; bi < blocks.length; ++bi) {
                 let blk = blocks.item(bi);
                 let type = blk.getAttribute("type");
-                let catName = blk.parentElement.getAttribute("name");
+                let catName = (blk.parentNode as Element).getAttribute("name");
                 let sticky = blk.getAttribute("sticky");
                 if (!blockSubset[type] && !sticky) {
                     blk.parentNode.removeChild(blk);
