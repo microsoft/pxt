@@ -141,8 +141,9 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
                         files: files
                     };
                     return existsAsync(path.join(dirname, "icon.jpeg"));
-                }).then(icon => {
-                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
+                }).then(exists => exists ? true : existsAsync(path.join(dirname, "icon.gif")))
+                .then(exists => {
+                    r.icon = exists ? "/icon/" + logicalDirname : undefined;
                     return r;
                 })
         })
