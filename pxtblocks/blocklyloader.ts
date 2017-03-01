@@ -1590,7 +1590,8 @@ namespace pxt.blocks {
             'math_number_minmax',
             mMInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
-            mMInfo.url
+            mMInfo.url,
+            String(blockColors[mMInfo.category])
         );
 
         // builtin math_arithmetic
