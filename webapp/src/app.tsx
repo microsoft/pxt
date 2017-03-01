@@ -95,13 +95,6 @@ export class ProjectView
     private lastChangeTime: number;
     private reload: boolean;
 
-    // https://github.com/jnordberg/gif.js
-    private recorder: {
-        addFrame(img: HTMLImageElement): void;
-        on(ev: string, handler: (blob: Blob) => void): void;
-        render(): void;
-    } = undefined; // GIF
-
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -124,15 +117,7 @@ export class ProjectView
             if (this.state.recording && msg && msg.type == "recorder") {
                 const scmsg = msg as pxsim.SimulatorRecorderMessage;
                 if (scmsg.action == "frame" && scmsg.data) {
-                    if (!this.recorder)
-                        this.recorder = new (window as any).GIF({
-                            workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
-                            workers: 1,
-                            repeat: 0
-                        });
-                    const img = document.createElement("img");
-                    img.onload = () => this.recorder.addFrame(img);
-                    img.src = scmsg.data;
+                    screenshot.addFrameAsync(scmsg.data).done();
                 }
             }
         }, false);
@@ -1005,24 +990,9 @@ export class ProjectView
 
     stopRecording() {
         if (this.state.recording) {
+            core.infoNotification("Rendering screencast...");
             simulator.driver.stopRecording();
-            if (this.recorder) {
-                this.recorder.on('finished', blob => {
-                    const buri = URL.createObjectURL(blob);
-                    screenshot.saveAsync(theEditor.state.header, buri)
-                        .done(() => {
-                            pxt.debug('screenshot saved')
-                            pxt.BrowserUtils.browserDownloadDataUri(
-                                buri,
-                                pkg.genFileName(""));
-                            setTimeout(() => URL.revokeObjectURL(buri), 5000); // wait until browser is done
-                        });
-                })
-                core.infoNotification(lf("Rendering screencast..."))
-                this.recorder.render();
-            }
-
-            this.recorder = undefined;
+            screenshot.stopRecording(this.state.header, pkg.genFileName(""));
             this.setState({ recording: false });
         }
     }

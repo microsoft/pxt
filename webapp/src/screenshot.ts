@@ -31,6 +31,45 @@ function renderIcon(img: HTMLImageElement): string {
     return icon;
 }
 
+// https://github.com/jnordberg/gif.js
+let recorder: {
+    addFrame(img: HTMLImageElement): void;
+    on(ev: string, handler: (blob: Blob) => void): void;
+    render(): void;
+} = undefined; // GIF
+
+export function addFrameAsync(uri: string): Promise<void> {
+    if (!recorder)
+        recorder = new (window as any).GIF({
+            workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
+            workers: 1,
+            repeat: 0
+        });
+
+    const rec = recorder;
+    return pxt.BrowserUtils.loadImageAsync(uri).then((img) => {
+        if (img) rec.addFrame(img);
+    });
+}
+
+export function stopRecording(header: Header, filename: string) {
+    const rec = recorder;
+    recorder = undefined;
+    if (!rec) return;
+    rec.on('finished', blob => {
+        const buri = URL.createObjectURL(blob);
+        saveAsync(header, buri)
+            .done(() => {
+                pxt.debug('screenshot saved')
+                pxt.BrowserUtils.browserDownloadDataUri(
+                    buri,
+                    filename);
+                setTimeout(() => URL.revokeObjectURL(buri), 5000); // wait until browser is done
+            });
+    })
+    rec.render();
+}
+
 export function saveAsync(header: Header, screenshot: string): Promise<void> {
     return pxt.BrowserUtils.loadImageAsync(screenshot)
         .then(img => {
