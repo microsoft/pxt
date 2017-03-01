@@ -501,6 +501,14 @@ ${sipkg}
                         si.attributes = parseCommentString(
                             existing.attributes._source + "\n" +
                             si.attributes._source)
+                        if (existing.extendsTypes) {
+                            si.extendsTypes = si.extendsTypes || []
+                            existing.extendsTypes.forEach(t => {
+                                if (si.extendsTypes.indexOf(t) === -1) {
+                                    si.extendsTypes.push(t);
+                                }
+                            })
+                        }
                     }
                     res.byQName[qName] = si
                 }
@@ -799,8 +807,9 @@ namespace ts.pxtc.service {
 
             if (!builtinItems) {
                 builtinItems = [];
-                for (const id in pxt.blocks.helpResources) {
-                    const helpItem = pxt.blocks.helpResources[id];
+                const helpResources = pxt.blocks.helpResources();
+                for (const id in helpResources) {
+                    const helpItem = helpResources[id];
 
                     if (helpItem.operators) {
                         for (const op in helpItem.operators) {

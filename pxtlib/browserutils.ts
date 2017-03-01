@@ -104,7 +104,7 @@ namespace pxt.BrowserUtils {
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
             ('ontouchstart' in window               // works on most browsers 
-            || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
+                || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
     export function os(): string {
@@ -277,9 +277,13 @@ namespace pxt.BrowserUtils {
         return browserDownloadBase64(btoa(Util.toUTF8(text)), name, contentType, onError)
     }
 
-    export function browserDownloadDataUri(uri: string, name: string) {
+    export function isBrowserDownloadInSameWindow(): boolean {
         const windowOpen = /downloadWindowOpen=1/i.test(window.location.href);
+        return windowOpen;
+    }
 
+    export function browserDownloadDataUri(uri: string, name: string) {
+        const windowOpen = isBrowserDownloadInSameWindow();
         if (windowOpen) {
             window.open(uri, "_self");
         } else if (pxt.BrowserUtils.isSafari()) {

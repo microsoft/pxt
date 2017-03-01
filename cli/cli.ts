@@ -157,6 +157,7 @@ function passwordUpdate(account: string, password: string) {
         const keytar = require("keytar") as KeyTar;
         keytar.replacePassword("pxt/" + pxt.appTarget.id, account, password);
     } catch (e) {
+        console.error(e)
     }
 }
 
@@ -267,12 +268,12 @@ export function pokeRepoAsync(parsed: commandParser.ParsedCommand): Promise<void
 export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
-        console.log(`crowdin upload skipped, crowdin project not specified in pxtarget.json`);
+        console.log(`crowdin operation skipped, crowdin project not specified in pxtarget.json`);
         return Promise.resolve();
     }
     const key = passwordGet(CROWDIN_KEY) || process.env[pxt.crowdin.KEY_VARIABLE] as string;
     if (!key) {
-        console.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+        console.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
         return Promise.resolve();
     }
 
@@ -494,52 +495,21 @@ function bumpPxtCoreDepAsync() {
             }
             pkg["dependencies"]["pxt-core"] = newVer
             fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-            return runGitAsync("commit", "-m", `Bump pxt-core to ${newVer}`, "--", "package.json")
+            return nodeutil.runGitAsync("commit", "-m", `Bump pxt-core to ${newVer}`, "--", "package.json")
                 .then(() => pkg)
         })
 }
 
 function updateAsync() {
     return Promise.resolve()
-        .then(() => runGitAsync("pull"))
+        .then(() => nodeutil.runGitAsync("pull"))
         .then(() => bumpPxtCoreDepAsync())
         .then(() => nodeutil.runNpmAsync("install"));
 }
 
-function gitInfoAsync(args: string[]) {
-    return Promise.resolve()
-        .then(() => nodeutil.spawnWithPipeAsync({
-            cmd: "git",
-            args: args
-        }))
-        .then(buf => buf.toString("utf8").trim())
-
-}
-
-function currGitTagAsync() {
-    return gitInfoAsync(["describe", "--tags", "--exact-match"])
-        .then(t => {
-            if (!t)
-                U.userError("no git tag found")
-            return t
-        })
-}
-
-function needsGitCleanAsync() {
-    return Promise.resolve()
-        .then(() => nodeutil.spawnWithPipeAsync({
-            cmd: "git",
-            args: ["status", "--porcelain", "--untracked-files=no"]
-        }))
-        .then(buf => {
-            if (buf.length)
-                U.userError("Please commit all files to git before running 'pxt bump'")
-        })
-}
-
 function justBumpPkgAsync() {
     ensurePkgDir()
-    return needsGitCleanAsync()
+    return nodeutil.needsGitCleanAsync()
         .then(() => mainPkg.loadAsync())
         .then(() => {
             let v = pxt.semver.parse(mainPkg.config.version)
@@ -551,29 +521,29 @@ function justBumpPkgAsync() {
             mainPkg.config.version = pxt.semver.stringify(v)
             mainPkg.saveConfig()
         })
-        .then(() => runGitAsync("commit", "-a", "-m", mainPkg.config.version))
-        .then(() => runGitAsync("tag", "v" + mainPkg.config.version))
+        .then(() => nodeutil.runGitAsync("commit", "-a", "-m", mainPkg.config.version))
+        .then(() => nodeutil.runGitAsync("tag", "v" + mainPkg.config.version))
 }
 
 function bumpAsync(parsed: commandParser.ParsedCommand) {
-    const bumpPxt = !parsed.flags["noupdate"];
+    const bumpPxt = parsed.flags["update"];
     const upload = parsed.flags["upload"];
     if (fs.existsSync(pxt.CONFIG_NAME)) {
         if (upload) throw U.userError("upload only supported on packages");
 
         return Promise.resolve()
-            .then(() => runGitAsync("pull"))
+            .then(() => nodeutil.runGitAsync("pull"))
             .then(() => justBumpPkgAsync())
-            .then(() => runGitAsync("push", "--tags"))
-            .then(() => runGitAsync("push"))
+            .then(() => nodeutil.runGitAsync("push", "--tags"))
+            .then(() => nodeutil.runGitAsync("push"))
     }
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
-            .then(() => runGitAsync("pull"))
+            .then(() => nodeutil.runGitAsync("pull"))
             .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
             .then(() => nodeutil.runNpmAsync("version", "patch"))
-            .then(() => runGitAsync("push", "--tags"))
-            .then(() => runGitAsync("push"))
+            .then(() => nodeutil.runGitAsync("push", "--tags"))
+            .then(() => nodeutil.runGitAsync("push"))
             .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
     else {
         throw U.userError("Couldn't find package or target JSON file; nothing to bump")
@@ -587,11 +557,11 @@ function uploadTaggedTargetAsync() {
         fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push releases.");
         return Promise.resolve();
     }
-    return needsGitCleanAsync()
+    return nodeutil.needsGitCleanAsync()
         .then(() => Promise.all([
-            currGitTagAsync(),
-            gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
-            gitInfoAsync(["rev-parse", "HEAD"])
+            nodeutil.currGitTagAsync(),
+            nodeutil.gitInfoAsync(["rev-parse", "--abbrev-ref", "HEAD"]),
+            nodeutil.gitInfoAsync(["rev-parse", "HEAD"])
         ]))
         // only build target after getting all the info
         .then(info =>
@@ -610,20 +580,12 @@ function uploadTaggedTargetAsync() {
             pxt.log("uploading " + v)
             return uploadCoreAsync({
                 label: "v" + v,
-                fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
+                fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
                 pkgversion: v,
                 githubOnly: true,
                 fileContent: {}
             })
         })
-}
-
-function runGitAsync(...args: string[]) {
-    return nodeutil.spawnAsync({
-        cmd: "git",
-        args: args,
-        cwd: "."
-    })
 }
 
 function pkgVersion() {
@@ -635,24 +597,16 @@ function pkgVersion() {
 }
 
 function targetFileList() {
-    let fp = forkPref()
-    let forkFiles = (name: string) => {
-        if (fp)
-            // make sure for the local files to follow fork files - this is the overriding order
-            return nodeutil.allFiles(fp + name).concat(nodeutil.allFiles(name, 8, true))
-        else
-            return nodeutil.allFiles(name)
-    }
-    let lst = onlyExts(forkFiles("built"), [".js", ".css", ".json", ".webmanifest"])
-        .concat(forkFiles("sim/public"))
-    pxt.debug(`target files: ${lst.join('\r\n    ')}`)
+    let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
+        .concat(nodeutil.allFiles("sim/public"))
+    pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
 
 export function uploadTargetAsync(label: string) {
     return uploadCoreAsync({
         label,
-        fileList: pxtFileList(forkPref() + "node_modules/pxt-core/").concat(targetFileList()),
+        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
         pkgversion: pkgVersion(),
         fileContent: {}
     })
@@ -691,7 +645,9 @@ interface CommitInfo {
 }
 
 function uploadFileName(p: string) {
-    return p.replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
+    // normalize /, \ before filtering
+    return p.replace(/\\/g, '\/')
+        .replace(/^.*(built\/web\/|\w+\/public\/|built\/)/, "")
 }
 
 function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
@@ -754,12 +710,17 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 
 function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     let label = opts.label
-    if (!label) return Promise.resolve()
+    if (!label) {
+        console.log('no label; skip release upload');
+        return Promise.resolve();
+    }
     let tid = pxt.appTarget.id
     if (U.startsWith(label, tid + "/"))
         label = label.slice(tid.length + 1)
-    if (!/^v\d/.test(label))
-        return Promise.resolve()
+    if (!/^v\d/.test(label)) {
+        console.log('label is not a version; skipping release upload');
+        return Promise.resolve();
+    }
     let repoUrl = process.env["PXT_RELEASE_REPO"]
     if (!repoUrl) {
         console.log("no $PXT_RELEASE_REPO variable; not uploading label " + label)
@@ -771,6 +732,8 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     if (!mm) {
         U.userError("wrong format for $PXT_RELEASE_REPO")
     }
+
+    console.log(`create release ${label} in ${repoUrl}`);
 
     let user = mm[1]
     let pass = mm[2]
@@ -958,6 +921,9 @@ function uploadCoreAsync(opts: UploadOptions) {
 
         let fileName = uploadFileName(p)
         let mime = U.getMime(p)
+
+        pxt.log(`    ${p} -> ${fileName} (${mime})`)
+
         let isText = /^(text\/.*|application\/.*(javascript|json))$/.test(mime)
         let content = ""
         let data: Buffer;
@@ -1049,11 +1015,6 @@ function readLocalPxTarget() {
     }
     nodeutil.setTargetDir(process.cwd())
     let cfg: pxt.TargetBundle = readJson("pxtarget.json")
-    if (forkPref()) {
-        let cfgF: pxt.TargetBundle = readJson(forkPref() + "pxtarget.json")
-        U.jsonMergeFrom(cfgF, cfg)
-        return cfgF
-    }
     return cfg
 }
 
@@ -1086,7 +1047,7 @@ function maxMTimeAsync(dirs: string[]) {
 }
 
 export function buildTargetAsync(): Promise<void> {
-    if (pxt.appTarget.forkof || pxt.appTarget.id == "core")
+    if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
     return simshimAsync()
         .then(() => buildFolderAsync('sim'))
@@ -1245,8 +1206,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
 }
 
-let forkPref = server.forkPref
-
 function buildSemanticUIAsync() {
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
@@ -1392,12 +1351,8 @@ function buildTargetCoreAsync() {
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
-    let isFork = !!pxt.appTarget.forkof
-    if (isFork)
-        forceCloudBuild = true
-    cfg.bundleddirs = cfg.bundleddirs.map(s => forkPref() + s)
     dirsToWatch = cfg.bundleddirs.slice()
-    if (!isFork && pxt.appTarget.id != "core") {
+    if (pxt.appTarget.id != "core") {
         dirsToWatch.push("sim"); // simulator
         if (fs.existsSync("theme")) {
             dirsToWatch.push("theme"); // simulator
@@ -1462,7 +1417,7 @@ function buildTargetCoreAsync() {
                 target: readJson("package.json")["version"],
                 pxt: pxt.appTarget.id == "core" ?
                     readJson("package.json")["version"] :
-                    readJson(forkPref() + "node_modules/pxt-core/package.json")["version"],
+                    readJson("node_modules/pxt-core/package.json")["version"],
             }
 
             saveThemeJson(cfg)
@@ -1522,11 +1477,6 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps = false) {
-    if (forkPref() && fs.existsSync("pxtarget.json")) {
-        console.log("Assuming target fork; building once.")
-        return buildTargetAsync()
-    }
-
     if (!fs.existsSync("sim/tsconfig.json")) {
         console.log("No sim/tsconfig.json; assuming npm installed package")
         return Promise.resolve()
@@ -2402,8 +2352,7 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
         .then(res => {
             reportDiagnostics(res.diagnostics);
             if (!res.success) U.userError("Compiler test failed")
-            if (!pxt.appTarget.forkof)
-                simulatorCoverage(res, opts)
+            simulatorCoverage(res, opts)
         })
         .then(() => opts);
 }
@@ -2981,11 +2930,11 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         pkg.getCompileOptionsAsync()
             .then(opts => {
                 opts.ast = true;
-                    const decompiled = pxtc.decompile(opts, "main.ts");
-                    if (decompiled.success) {
-                        resolve(decompiled.outfiles["main.blocks"]);
-                    }
-                    else {
+                const decompiled = pxtc.decompile(opts, "main.ts");
+                if (decompiled.success) {
+                    resolve(decompiled.outfiles["main.blocks"]);
+                }
+                else {
                     reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
                 }
             });
@@ -3844,7 +3793,7 @@ function initCommands() {
         name: "bump",
         help: "bump target or package version",
         flags: {
-            noupdate: { description: "Don't publish the updated version" },
+            update: { description: "(package only) Updates pxt-core reference to the latest release" },
             upload: { description: "(package only) Upload after bumping" }
         }
     }, bumpAsync);
@@ -4016,7 +3965,7 @@ function initCommands() {
         argString: "<file1.ts> <file2.ts> ...",
         advanced: true,
         flags: {
-           dep: { description: "include specified path as a dependency to the project", type: "string", argument: "path" }
+            dep: { description: "include specified path as a dependency to the project", type: "string", argument: "path" }
         }
     }, decompileAsync);
 

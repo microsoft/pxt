@@ -5,7 +5,7 @@
 @primaryColor: @pink;
 @secondaryColor: @grey;
 
-@red:#E81123;
+@red:#A80000;
 @orange:#D83B01;
 @yellow:#FFB900;
 @green:#107C10;
@@ -53,6 +53,7 @@
    Menu
 --------------------*/
 
+@mainMenuBackground: @white;
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
 

@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.11.43",
+  "version": "0.11.57",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -66,7 +66,8 @@
     "lzma": "^2.3.2",
     "marked": "^0.3.5",
     "fuse.js": "2.6.1",
-    "rimraf": "2.5.4"
+    "rimraf": "2.5.4",
+    "request": "^2.79.0"
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",

@@ -910,11 +910,10 @@ namespace pxt.blocks {
             return e.renames.oldToNew[name];
         }
 
-        let n = name.split(/[^a-zA-Z0-9_$]+/)
-            //.map((c, i) => (i ? c[0].toUpperCase() : c[0].toLowerCase()) + c.substr(1)) breaks roundtrip...
-            .join('');
+        let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
+            ts.isIdentifierPart(a.charCodeAt(0), ts.ScriptTarget.ES5) ? a : "");
 
-        if (/\d/.test(n.charAt(0)) || isReservedWord(name)) {
+        if (!n || !ts.isIdentifierStart(n.charCodeAt(0), ts.ScriptTarget.ES5)) {
             n = "_" + n;
         }
 

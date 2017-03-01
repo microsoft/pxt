@@ -230,7 +230,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "body.main",
+            context: "#root",
             onHidden: () => {
                 modal.remove();
                 mo.remove();

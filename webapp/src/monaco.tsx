@@ -161,7 +161,7 @@ export class Editor extends srceditor.Editor {
             let element = fnDict[ns];
             if (element.metaData && element.metaData.color && element.fns) {
                 let hexcolor = pxt.blocks.convertColour(element.metaData.color);
-                hexcolor = (inverted ? pxt.blocks.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
+                hexcolor = (inverted ? Blockly.PXTUtils.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
                 Object.keys(element.fns).forEach((fn) => {
                     rules.push({ token: `identifier.ts ${fn}`, foreground: hexcolor });
                 });
@@ -565,10 +565,10 @@ export class Editor extends srceditor.Editor {
 
         // Add the toolbox buttons
         if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            this.addToolboxCategory(group, lf("Add Package"), "#717171", ' ', false, null, () => {
+            this.addToolboxCategory(group, "", "#717171", "addpackage", false, null, () => {
                 this.resetFlyout();
                 this.parent.addPackage();
-            })
+            }, lf("{id:category}Add Package"))
         }
 
         // Inject toolbox icon css
@@ -607,7 +607,7 @@ export class Editor extends srceditor.Editor {
     case 1:
         break;
 }`,
-                comment: lf("Runs differnt code based on a value"),
+                comment: lf("Runs different code based on a value"),
                 metaData: {
                     callingConvention: ts.pxtc.ir.CallingConvention.Plain,
                     paramDefl: {}
@@ -672,7 +672,7 @@ export class Editor extends srceditor.Editor {
             } else {
                 // Selected category
                 treerow.style.background = appTheme.invertedToolbox ?
-                    `${pxt.blocks.fadeColour(color, pxt.blocks.highlightColorInvertedLuminocityMultiplier, false)}` :
+                    `${Blockly.PXTUtils.fadeColour(color, (Blockly as any).Options.invertedMultiplier, false)}` :
                     `${color}`;
                 treerow.style.color = '#fff';
                 treerow.className += ' blocklyTreeSelected';
@@ -753,6 +753,8 @@ export class Editor extends srceditor.Editor {
                             insertText = insertText.replace('{{}}', '');
                         } else
                             cursor += (insertText.length);
+
+                        insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
                         monacoEditor.editor.pushUndoStop();
                         monacoEditor.editor.executeEdits("", [
                             {
@@ -819,7 +821,7 @@ export class Editor extends srceditor.Editor {
             treerow.style.background = (color || '#ddd');
             treerow.onmouseenter = () => {
                 if (treerow != monacoEditor.selectedCategoryRow) {
-                    treerow.style.background = pxt.blocks.fadeColour(color || '#ddd', pxt.blocks.highlightColorInvertedLuminocityMultiplier, false);
+                    treerow.style.background = Blockly.PXTUtils.fadeColour(color || '#ddd', (Blockly as any).Options.invertedMultiplier, false);
                 }
             }
             treerow.onmouseleave = () => {
