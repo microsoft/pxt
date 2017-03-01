@@ -1009,17 +1009,21 @@ export class ProjectView
             if (this.recorder) {
                 this.recorder.on('finished', blob => {
                     const buri = URL.createObjectURL(blob);
-                    pxt.BrowserUtils.browserDownloadDataUri(
-                        buri,
-                        pkg.genFileName(""));
-                    setTimeout(() => URL.revokeObjectURL(buri), 5000); // wait until browser is done
+                    screenshot.saveAsync(theEditor.state.header, buri)
+                        .done(() => {
+                            pxt.debug('screenshot saved')
+                            pxt.BrowserUtils.browserDownloadDataUri(
+                                buri,
+                                pkg.genFileName(""));
+                            setTimeout(() => URL.revokeObjectURL(buri), 5000); // wait until browser is done
+                        });
                 })
                 core.infoNotification(lf("Rendering screencast..."))
                 this.recorder.render();
             }
 
             this.recorder = undefined;
-            this.setState({ recording: false});
+            this.setState({ recording: false });
         }
     }
 

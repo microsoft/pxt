@@ -349,4 +349,12 @@ namespace pxt.BrowserUtils {
         return dataurl;
     }
 
+    export function loadImageAsync(data: string): Promise<HTMLImageElement> {
+        const img = document.createElement("img") as HTMLImageElement;
+        return new Promise<HTMLImageElement>((resolve, reject) => {
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(undefined);
+            img.src = data;
+        });
+    }
 }
