@@ -1,5 +1,6 @@
 import * as workspace from "./workspace";
 import * as data from "./data";
+import * as core from "./core";
 
 type Header = pxt.workspace.Header;
 
@@ -45,7 +46,6 @@ interface IGIF {
 
 // https://github.com/jnordberg/gif.js
 let recorder: IGIF = undefined; // GIF
-let iconRecorder: IGIF = undefined; // GIF
 
 function renderAsync(rec: IGIF, fn?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
@@ -69,45 +69,48 @@ export function addFrameAsync(uri: string): Promise<void> {
             workers: 1,
             repeat: 0
         });
-        iconRecorder = new (window as any).GIF({
-            workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
-            workers: 1,
-            repeat: 0
-        });
     }
 
     const rec = recorder;
-    const irec = iconRecorder;
 
     if (rec.frames.length > MAX_FRAMES) return Promise.resolve(); // too many frames
 
     return pxt.BrowserUtils.loadImageAsync(uri)
         .then((img) => {
-            if (img) {
+            if (img && rec.frames.length < ICON_MAX_FRAMES)
                 rec.addFrame(img);
-                if (irec.frames.length < ICON_MAX_FRAMES)
-                    irec.addFrame(img);
-            }
         });
 }
 
 export function stopRecording(header: Header, filename: string) {
     const rec = recorder;
-    const irec = iconRecorder;
     recorder = undefined;
-    iconRecorder = undefined;
 
-    if (!rec || !irec) return;
+    if (!rec) return;
 
-    Promise.all([renderAsync(rec, filename), renderAsync(irec)])
-        .done(urls => {
-            if (!urls || urls.some(url => !url)) return;
-            workspace.saveScreenshotAsync(header, urls[0], urls[1])
+    let full: string;
+    let icon: string;
+
+    core.showLoading("rendering gif...");
+    renderAsync(rec, filename)
+        .then(url => {
+            full = url;
+            if (rec.frames.length < ICON_MAX_FRAMES) return url; // no enough images
+            else {
+                rec.frames = rec.frames.slice(0, ICON_MAX_FRAMES);
+                return renderAsync(rec);
+            }
+        }).then(url => {
+            icon = url;
+            if (!full || !icon) return;
+
+            workspace.saveScreenshotAsync(header, full, icon)
                 .done(() => {
                     data.invalidate("header:" + header.id);
                     data.invalidate("header:*");
                 });
         })
+        .finally(() => core.hideLoading());
 }
 
 export function saveAsync(header: Header, screenshot: string): Promise<void> {

@@ -990,7 +990,6 @@ export class ProjectView
 
     stopRecording() {
         if (this.state.recording) {
-            core.infoNotification("Rendering screencast...");
             simulator.driver.stopRecording();
             screenshot.stopRecording(this.state.header, pkg.genFileName(""));
             this.setState({ recording: false });
