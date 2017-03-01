@@ -540,12 +540,13 @@ export interface ModalProps {
 }
 
 export interface ModalState {
+    open?: boolean;
     marginTop?: number;
     scrolling?: boolean;
 }
 
 export class Modal extends data.Component<ModalProps, ModalState> {
-    _modalNode: any;
+    ref: any;
     id: string;
     animationId: number;
     constructor(props: ModalProps) {
@@ -561,22 +562,40 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         this.handleUnmount()
     }
 
+    componentWillMount() {
+        const { open } = this.props;
+        this.state = {open: open}
+    }
+
+    componentWillReceiveProps(nextProps: ModalProps) {
+        const newState: ModalState = {};
+        if (nextProps.open) {
+            newState.open = nextProps.open;
+        }
+
+        if (Object.keys(newState).length > 0) this.setState(newState)
+    }
+
     getMountNode = () => this.props.mountNode || document.body;
 
     handleClose = (e: Event) => {
         const { onClose } = this.props;
         if (onClose) onClose(e, this.props);
+
+        this.setState({ open: false })
     }
 
     handleOpen = (e: Event) => {
         const { onOpen } = this.props;
         if (onOpen) onOpen(e, this.props);
+
+        this.setState({ open: true })
     }
 
     setPosition = () => {
-        if (this._modalNode) {
+        if (this.ref) {
             const mountNode = this.getMountNode();
-            const { height } = this._modalNode.getBoundingClientRect();
+            const { height } = this.ref.getBoundingClientRect();
 
             const marginTop = -Math.round(height / 2);
             const scrolling = height >= window.innerHeight;
@@ -618,18 +637,18 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         this.setPosition()
     }
 
+    handleRef = (c: any) => (this.ref = c);
+
     handleUnmount = () => {
         const mountNode = this.getMountNode();
         mountNode.classList.remove('blurring', 'dimmable', 'dimmed', 'scrollable');
-
-        this._modalNode = null;
 
         cancelAnimationFrame(this.animationId);
     }
 
     renderCore() {
+        const { open } = this.state
         const {
-            open,
             basic,
             children,
             className,
@@ -654,7 +673,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const closeIconName = closeIcon === true ? 'close' : closeIcon;
 
         const modalJSX = (
-            <div className={classes} style={{ marginTop }} ref={c => (this._modalNode = c) } role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
+            <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
                     {this.props.closeIcon ? <Button
