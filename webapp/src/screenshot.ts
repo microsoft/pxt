@@ -50,15 +50,12 @@ let iconRecorder: IGIF = undefined; // GIF
 function renderAsync(rec: IGIF, fn?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         rec.on('finished', blob => {
-            if (fn) {
-                let ub = URL.createObjectURL(blob);
-                pxt.BrowserUtils.browserDownloadDataUri(
-                    ub,
-                    fn);
-                setTimeout(() => URL.revokeObjectURL(ub), 3000);
-            }
             const fileReader = new FileReader();
-            fileReader.onload = () => resolve(fileReader.result);
+            fileReader.onload = () => {
+                if (fn)
+                    pxt.BrowserUtils.browserDownloadDataUri(fileReader.result, fn);
+                resolve(fileReader.result);
+            };
             fileReader.readAsDataURL(blob);
         });
         rec.render();
@@ -75,7 +72,7 @@ export function addFrameAsync(uri: string): Promise<void> {
         iconRecorder = new (window as any).GIF({
             workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
             workers: 1,
-            repeat: 0,
+            repeat: 0
         });
     }
 
