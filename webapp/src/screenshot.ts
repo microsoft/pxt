@@ -5,6 +5,7 @@ type Header = pxt.workspace.Header;
 
 const ICON_WIDTH = 305;
 const ICON_HEIGHT = 200;
+const ICON_MAX_FRAMES = 32;
 
 function renderIcon(img: HTMLImageElement): string {
     let icon: string = null;
@@ -38,18 +39,27 @@ interface IGIF {
     addFrame(img: HTMLImageElement): void;
     on(ev: string, handler: (blob: Blob) => void): void;
     render(): void;
+    frames: any[];
 };
 
 // https://github.com/jnordberg/gif.js
 let recorder: IGIF = undefined; // GIF
 let iconRecorder: IGIF = undefined; // GIF
 
-function renderAsync(rec: IGIF): Promise<string> {
+function renderAsync(rec: IGIF, fn?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         rec.on('finished', blob => {
-            const buri = URL.createObjectURL(blob);
-            resolve(buri);
-        })
+            if (fn) {
+                let ub = URL.createObjectURL(blob);
+                pxt.BrowserUtils.browserDownloadDataUri(
+                    ub,
+                    fn);
+                setTimeout(() => URL.revokeObjectURL(ub), 3000);
+            }
+            const fileReader = new FileReader();
+            fileReader.onload = () => resolve(fileReader.result);
+            fileReader.readAsDataURL(blob);
+        });
         rec.render();
     });
 }
@@ -65,8 +75,6 @@ export function addFrameAsync(uri: string): Promise<void> {
             workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
             workers: 1,
             repeat: 0,
-            width: ICON_WIDTH,
-            height: ICON_HEIGHT
         });
     }
 
@@ -76,7 +84,8 @@ export function addFrameAsync(uri: string): Promise<void> {
         .then((img) => {
             if (img) {
                 rec.addFrame(img);
-                irec.addFrame(img);
+                if (irec.frames.length < ICON_MAX_FRAMES)
+                    irec.addFrame(img);
             }
         });
 }
@@ -89,13 +98,9 @@ export function stopRecording(header: Header, filename: string) {
 
     if (!rec || !irec) return;
 
-    Promise.all([renderAsync(rec), renderAsync(irec)])
+    Promise.all([renderAsync(rec, filename), renderAsync(irec)])
         .done(urls => {
             if (!urls || urls.some(url => !url)) return;
-
-            pxt.BrowserUtils.browserDownloadDataUri(
-                urls[0],
-                filename);
             workspace.saveScreenshotAsync(header, urls[0], urls[1])
                 .delay(3000)
                 .then(() => urls.forEach(url => URL.revokeObjectURL(url)));

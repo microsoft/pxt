@@ -157,7 +157,7 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
         if (!uri) return Promise.resolve();
         const m = uri.match(/^data:image\/(png|jpeg|gif);base64,(.*)$/);
         if (!m) {
-            console.log('unknown image format');
+            console.log(`unknown image format ${uri.slice(0, 100)}`);
             return Promise.resolve();
         }
         const ext = m[1];
