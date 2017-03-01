@@ -88,6 +88,7 @@ declare namespace pxt {
         stopOnChange?: boolean;
         hideRestart?: boolean;
         hideFullscreen?: boolean;
+        hideRecorder?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
