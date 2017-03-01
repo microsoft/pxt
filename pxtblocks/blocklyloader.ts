@@ -7,11 +7,11 @@ let lf = Util.lf;
 namespace pxt.blocks {
     export const blockColors: Map<number | string> = {
         loops: '#107c10',
-        logic: '#008272',
-        math: '#0078d7',
+        logic: '#006970',
+        math: '#712672',
         images: '#5C2D91',
         variables: '#A80000',
-        text: '#008272',
+        text: '#996600',
         lists: '#D83B01'
     }
 
@@ -188,7 +188,7 @@ namespace pxt.blocks {
                     }
 
                     if (nsn && nsn.attributes.advanced) {
-                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#5577EE", 'blocklyTreeIconadvanced')
+                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", 'blocklyTreeIconadvanced')
                         categories = getChildCategories(parentCategoryList)
                     }
 
