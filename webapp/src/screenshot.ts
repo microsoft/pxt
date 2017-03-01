@@ -62,23 +62,27 @@ function renderAsync(rec: IGIF, fn?: string): Promise<string> {
     });
 }
 
-export function addFrameAsync(uri: string): Promise<void> {
-    if (!recorder) {
-        recorder = new (window as any).GIF({
-            workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
-            workers: 1,
-            repeat: 0
-        });
-    }
+export function startRecording(width: number, height: number) {
+    if (recorder) return;
 
+    recorder = new (window as any).GIF({
+        workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
+        workers: 1,
+        repeat: 0,
+        width,
+        height
+    });
+
+}
+
+export function addFrameAsync(uri: string): Promise<void> {
     const rec = recorder;
 
-    if (rec.frames.length > MAX_FRAMES) return Promise.resolve(); // too many frames
+    if (!rec || rec.frames.length > MAX_FRAMES) return Promise.resolve(); // too many frames
 
     return pxt.BrowserUtils.loadImageAsync(uri)
         .then((img) => {
-            if (img && rec.frames.length < ICON_MAX_FRAMES)
-                rec.addFrame(img);
+            if (img) rec.addFrame(img);
         });
 }
 
@@ -86,7 +90,7 @@ export function stopRecording(header: Header, filename: string) {
     const rec = recorder;
     recorder = undefined;
 
-    if (!rec) return;
+    if (!rec || !rec.frames.length) return;
 
     let full: string;
     let icon: string;

@@ -277,12 +277,16 @@ namespace pxsim {
 
         updateDisplay() {
             this.board.updateView();
+            this.postFrame();
+        }
+
+        postFrame() {
             if (this.recording)
                 Runtime.postMessage(<SimulatorRecorderMessage>{
                     type: "recorder",
                     action: "frame",
                     data: this.board.screenshot()
-            })
+                })
         }
 
         private numDisplayUpdates = 0;

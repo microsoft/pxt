@@ -155,8 +155,16 @@ namespace pxsim {
             }
         }
 
-        public startRecording() {
-            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'start' });
+        public startRecording(): { width: number; height: number; } {
+            const frames = this.container.getElementsByTagName("iframe");
+            const frame = frames[0] as HTMLIFrameElement;
+            if (!frame) return undefined;
+
+            this.postMessage(<SimulatorRecorderMessage>{
+                type: 'recorder',
+                action: 'start'
+            });
+            return { width: frame.clientWidth, height: frame.clientHeight };
         }
 
         public stopRecording() {

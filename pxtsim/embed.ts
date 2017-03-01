@@ -91,9 +91,9 @@ namespace pxsim {
     }
 
     export interface SimulatorRecorderMessage extends SimulatorMessage {
-        type: "recorder",
-        action: "start" | "stop" | "frame",
-        data?: string
+        type: "recorder";
+        action: "start" | "stop" | "frame";
+        data?: string;
     }
 
     export interface TutorialMessage extends SimulatorMessage {
@@ -104,7 +104,7 @@ namespace pxsim {
 
     export interface TutorialStepLoadedMessage extends TutorialMessage {
         subtype: "steploaded";
-        data: {[index: string]: number };
+        data: { [index: string]: number };
         showCategories?: boolean;
         location?: string;
     }
@@ -187,7 +187,10 @@ namespace pxsim {
 
         function recorder(rec: SimulatorRecorderMessage) {
             switch (rec.action) {
-                case "start": runtime.recording = true; break;
+                case "start":
+                    runtime.recording = true;
+                    runtime.postFrame();
+                    break;
                 case "stop": runtime.recording = false; break;
             }
         }

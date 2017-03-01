@@ -999,8 +999,11 @@ export class ProjectView
     toggleRecording() {
         pxt.tickEvent("simulator.record")
         if (!this.state.recording) {
-            simulator.driver.startRecording();
-            this.setState({ recording: true });
+            let size = simulator.driver.startRecording();
+            if (size) {
+                screenshot.startRecording(size.width, size.height);
+                this.setState({ recording: true });
+            }
         }
         else this.stopRecording();
     }
