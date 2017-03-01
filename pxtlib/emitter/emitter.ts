@@ -321,6 +321,9 @@ namespace ts.pxtc {
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
+
+        // Dropdown grid field parameters
+        dropdownGridParams?: string;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
