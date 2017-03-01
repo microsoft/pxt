@@ -132,10 +132,9 @@ namespace pxt.blocks {
                 .forEach(pr => {
                     let attr = attrNames[pr.name];
                     let shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
-                    let container: any;
                     if (fn.attributes.min && fn.attributes.max) {
                         if (fn.attributes.min[pr.name] && fn.attributes.max[pr.name]) {
-                            container = document.createElement('mutation');
+                            let container = document.createElement('mutation');
                             container.setAttribute('min', fn.attributes.min[pr.name]);
                             container.setAttribute('max', fn.attributes.max[pr.name]);
                             shadowValue.firstChild.appendChild(container);
