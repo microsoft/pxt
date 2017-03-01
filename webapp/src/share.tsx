@@ -11,10 +11,10 @@ type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
 export enum ShareMode {
-    Screenshot,
     Url,
     Editor,
     Simulator,
+    Code,
     Cli
 }
 
@@ -44,7 +44,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     }
 
     show(header: pxt.workspace.Header) {
-        this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
+        this.setState({ visible: true, mode: ShareMode.Editor, pubCurrent: header.pubCurrent });
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
@@ -142,9 +142,10 @@ pxt extract ${url}`;
             this.forceUpdate();
         }
 
-        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") },
+        const formats = [
             { mode: ShareMode.Editor, label: lf("Editor") },
             { mode: ShareMode.Simulator, label: lf("Simulator") },
+            { mode: ShareMode.Code, label: lf("Code") },
             { mode: ShareMode.Cli, label: lf("Command line") }
         ];
 
