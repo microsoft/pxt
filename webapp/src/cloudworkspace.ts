@@ -130,6 +130,12 @@ function saveAsync(h: Header, text: ScriptText) {
     return saveCoreAsync(h, text)
 }
 
+function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
+    h.icon = icon;
+    data.invalidate("header:" + h.id)
+    return Promise.resolve();
+}
+
 function installAsync(h0: InstallHeader, text: ScriptText) {
     let h = <Header>h0
     h.id = U.guidGen();
@@ -381,5 +387,6 @@ export var provider: WorkspaceProvider = {
     installAsync,
     saveToCloudAsync,
     syncAsync,
-    resetAsync
+    resetAsync,
+    saveScreenshotAsync
 }
