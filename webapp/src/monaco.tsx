@@ -984,7 +984,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setViewState(pos: monaco.IPosition) {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
         this.editor.setScrollPosition(pos)
