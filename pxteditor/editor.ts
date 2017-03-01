@@ -53,6 +53,7 @@ namespace pxt.editor {
         showParts?: boolean;
         fullscreen?: boolean;
         mute?: boolean;
+        recording?: boolean;
     }
 
     export interface ProjectCreationOptions {

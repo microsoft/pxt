@@ -108,6 +108,13 @@ namespace pxsim {
                 if (source && frame.contentWindow == source) continue;
 
                 frame.contentWindow.postMessage(msg, "*");
+                if (msg.type == "recorder") {
+                    switch ((<SimulatorRecorderMessage>msg).action) {
+                        case 'start': U.addClass(frame, 'glow'); break;
+                        case 'stop': U.removeClass(frame, 'glow'); break;
+                    }
+                    break; // only dispatch recorder message to a single frame
+                }
             }
         }
 
@@ -142,9 +149,18 @@ namespace pxsim {
                     let frame = frames[i] as HTMLIFrameElement
                     if (!/grayscale/.test(frame.className))
                         U.addClass(frame, "grayscale");
+                    U.removeClass(frame, "glow");
                 }
                 this.scheduleFrameCleanup();
             }
+        }
+
+        public startRecording() {
+            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'start' });
+        }
+
+        public stopRecording() {
+            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'stop' })
         }
 
         private unload() {
@@ -275,7 +291,7 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
-                case 'simulator':  this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
                 case 'pxteditor':
                 case 'custom':
@@ -328,7 +344,7 @@ namespace pxsim {
                     return;
             }
 
-            this.postMessage({type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
+            this.postMessage({ type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
         }
 
         public setBreakpoints(breakPoints: number[]) {

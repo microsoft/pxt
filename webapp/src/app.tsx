@@ -95,6 +95,13 @@ export class ProjectView
     private lastChangeTime: number;
     private reload: boolean;
 
+    // https://github.com/jnordberg/gif.js
+    private recorder: {
+        addFrame(img: HTMLImageElement): void;
+        on(ev: string, handler: (blob: Blob) => void): void;
+        render(): void;
+    } = undefined; // GIF
+
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -107,6 +114,28 @@ export class ProjectView
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
+
+        this.initRecorder();
+    }
+
+    initRecorder() {
+        window.addEventListener('message', (ev: MessageEvent) => {
+            let msg = ev.data as pxsim.SimulatorMessage;
+            if (this.state.recording && msg && msg.type == "recorder") {
+                const scmsg = msg as pxsim.SimulatorRecorderMessage;
+                if (scmsg.action == "frame" && scmsg.data) {
+                    if (!this.recorder)
+                        this.recorder = new (window as any).GIF({
+                            workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
+                            workers: 1,
+                            repeat: 0
+                        });
+                    const img = document.createElement("img");
+                    img.onload = () => this.recorder.addFrame(img);
+                    img.src = scmsg.data;
+                }
+            }
+        }, false);
     }
 
     updateVisibility() {
@@ -917,6 +946,7 @@ export class ProjectView
     stopSimulator(unload?: boolean) {
         simulator.stop(unload)
         this.setState({ running: false })
+        this.stopRecording();
     }
 
     proxySimulatorMessage(content: string) {
@@ -971,6 +1001,35 @@ export class ProjectView
         }
 
         this.setState({ fullscreen: !this.state.fullscreen });
+    }
+
+    stopRecording() {
+        if (this.state.recording) {
+            simulator.driver.stopRecording();
+            if (this.recorder) {
+                this.recorder.on('finished', blob => {
+                    const buri = URL.createObjectURL(blob);
+                    pxt.BrowserUtils.browserDownloadDataUri(
+                        buri,
+                        pkg.genFileName(""));
+                    setTimeout(() => URL.revokeObjectURL(buri), 5000); // wait until browser is done
+                })
+                core.infoNotification(lf("Rendering screencast..."))
+                this.recorder.render();
+            }
+
+            this.recorder = undefined;
+            this.setState({ recording: false});
+        }
+    }
+
+    toggleRecording() {
+        pxt.tickEvent("simulator.record")
+        if (!this.state.recording) {
+            simulator.driver.startRecording();
+            this.setState({ recording: true });
+        }
+        else this.stopRecording();
     }
 
     toggleMute() {
@@ -1299,6 +1358,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const fullscreen = run && !simOpts.hideFullscreen;
+        const recorder = run;
+        const recording = recorder && !!this.state.recording;
         const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
         const cookieKey = "cookieconsent"
         const cookieConsented = !!pxt.storage.getLocal(cookieKey) || electron.isElectron;
@@ -1403,6 +1464,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
+                                {recorder ? <sui.Button key='recorderbtn' class={`recorder-button`} icon={recording ? 'square' : 'circle'} title={lf("Record animated gif") } onClick={() => this.toggleRecording() } /> : undefined }
                             </div>
                         </div>
                         <div className="ui item portrait hide">

@@ -84,6 +84,9 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
+        public screenshot(): string {
+            return undefined;
+        }
         public kill() { }
 
         protected serialOutBuffer: string = '';
@@ -227,6 +230,7 @@ namespace pxsim {
 
         dead = false;
         running = false;
+        recording = false;
         startTime = 0;
         id: string;
         globals: any = {};
@@ -272,7 +276,13 @@ namespace pxsim {
         }
 
         updateDisplay() {
-            this.board.updateView()
+            this.board.updateView();
+            if (this.recording)
+                Runtime.postMessage(<SimulatorRecorderMessage>{
+                    type: "recorder",
+                    action: "frame",
+                    data: this.board.screenshot()
+            })
         }
 
         private numDisplayUpdates = 0;

@@ -90,6 +90,12 @@ namespace pxsim {
         data: string;
     }
 
+    export interface SimulatorRecorderMessage extends SimulatorMessage {
+        type: "recorder",
+        action: "start" | "stop" | "frame",
+        data?: string
+    }
+
     export interface TutorialMessage extends SimulatorMessage {
         type: "tutorial";
         tutorial: string;
@@ -126,6 +132,7 @@ namespace pxsim {
                 case 'run': run(<SimulatorRunMessage>data); break;
                 case 'stop': stop(); break;
                 case 'mute': mute((<SimulatorMuteMessage>data).mute); break;
+                case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
                 case 'custom':
                     if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
@@ -178,6 +185,12 @@ namespace pxsim {
             runtime.board.receiveMessage(msg);
         }
 
+        function recorder(rec: SimulatorRecorderMessage) {
+            switch(rec.action) {
+                case "start": runtime.recording = true; break;
+                case "stop": runtime.recording = false; break;
+            }
+        }
     }
 }
 
