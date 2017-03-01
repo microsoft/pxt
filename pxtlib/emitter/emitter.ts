@@ -247,10 +247,10 @@ namespace ts.pxtc {
 
     function isSideEffectfulInitializer(init: Expression) {
         if (!init) return false;
+        if (isStringLiteral(init)) return false;
         switch (init.kind) {
             case SK.NullKeyword:
             case SK.NumericLiteral:
-            case SK.StringLiteral:
             case SK.TrueKeyword:
             case SK.FalseKeyword:
                 return false;
@@ -2633,7 +2633,7 @@ ${lbl}: .short 0xffff
         function emitBlock(node: Block) {
             node.statements.forEach(emit)
         }
-        function checkForLetOrConst(declList: VariableDeclarationList): boolean  {
+        function checkForLetOrConst(declList: VariableDeclarationList): boolean {
             if ((declList.flags & NodeFlags.Let) || (declList.flags & NodeFlags.Const)) {
                 return true;
             }
