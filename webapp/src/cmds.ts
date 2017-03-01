@@ -50,7 +50,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         }).then(() => { });
     }
 
-    if (resp.saveOnly) return Promise.resolve();
+    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow()) return Promise.resolve();
     else return showUploadInstructionsAsync(fn, url);
 }
 

@@ -304,7 +304,10 @@ class Host
         return hostCache.forceSetAsync({
             id: id,
             val: val
-        }).then(() => { })
+        }).then(() => { }, e => {
+            pxt.tickEvent('cache.store.failed', { error: e.name });
+            pxt.log(`cache store failed for ${id}: ${e.name}`)
+        })
     }
 
     cacheGetAsync(id: string): Promise<string> {

@@ -368,6 +368,10 @@ declare namespace Blockly {
         rtl?: boolean;
     }
 
+    interface ExtendedOptions extends Options {
+        toolboxType?: string;
+    }
+
     // tslint:disable-next-line
     interface callbackHandler { }
 
@@ -453,4 +457,8 @@ declare namespace Blockly {
     }
 
     var Tooltip: any;
+
+    class PXTUtils {
+        static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
+    }
 }

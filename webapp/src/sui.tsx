@@ -368,7 +368,7 @@ export interface MenuProps {
     color?: string;
     compact?: boolean;
     defaultActiveIndex?: number;
-    fixed?: 'left'| 'right'| 'bottom'| 'top';
+    fixed?: 'left' | 'right' | 'bottom' | 'top';
     floated?: boolean | 'right';
     fluid?: boolean;
     icon?: boolean | 'labeled';
@@ -423,30 +423,30 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
             name,
             onClick,
             position,
-            } = this.props;
+        } = this.props;
 
-            const classes = cx([
-                color,
-                position,
-                active ? 'active' : '',
-                icon === true || icon && !(name || content) ? 'icon' : '',
-                header ? 'header' : '',
-                link ? 'link' : '',
-                fitted ? (fitted == true ? `${fitted}` : `fitted ${fitted}`) : '',
-                'item',
-                className
-            ]);
+        const classes = cx([
+            color,
+            position,
+            active ? 'active' : '',
+            icon === true || icon && !(name || content) ? 'icon' : '',
+            header ? 'header' : '',
+            link || onClick ? 'link' : '',
+            fitted ? (fitted == true ? `${fitted}` : `fitted ${fitted}`) : '',
+            'item',
+            className
+        ]);
 
-            if (children ) {
-                return <div className={classes} onClick={this.handleClick}>{children}</div>
-            }
+        if (children) {
+            return <div className={classes} onClick={this.handleClick}>{children}</div>
+        }
 
-            return (
-                <div className={classes} onClick={this.handleClick}>
-                    {icon ? <i className={`icon ${icon}`} ></i> : undefined}
-                    {content || name}
-                </div>
-            )
+        return (
+            <div className={classes} onClick={this.handleClick}>
+                {icon ? <i className={`icon ${icon}`} ></i> : undefined}
+                {content || name}
+            </div>
+        )
     }
 }
 
@@ -610,7 +610,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         if (dimmer) {
             mountNode.classList.add('dimmable', 'dimmed');
 
-            if (dimmer === 'blurring') {
+            if (dimmer === 'blurring' && !pxt.options.light) {
                 mountNode.classList.add('blurring');
             }
         }
@@ -654,7 +654,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const closeIconName = closeIcon === true ? 'close' : closeIcon;
 
         const modalJSX = (
-            <div className={classes} style={{ marginTop }} ref={c => (this._modalNode = c)} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
+            <div className={classes} style={{ marginTop }} ref={c => (this._modalNode = c) } role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
                     {this.props.closeIcon ? <Button
@@ -683,14 +683,14 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         )
 
         const dimmerClasses = !dimmer
-        ? null
-        : cx([
-            'ui',
-            dimmer === 'inverted' ? 'inverted' : '',
-            pxt.options.light ? '' : "transition",
-            'page modals dimmer visible active',
-            dimmerClassName
-        ]);
+            ? null
+            : cx([
+                'ui',
+                dimmer === 'inverted' ? 'inverted' : '',
+                pxt.options.light ? '' : "transition",
+                'page modals dimmer visible active',
+                dimmerClassName
+            ]);
 
         const blurring = dimmer === 'blurring';
 
@@ -699,7 +699,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 closeOnRootNodeClick={closeOnDimmerClick}
                 closeOnDocumentClick={closeOnDocumentClick}
                 className={dimmerClasses}
-                mountNode={this.getMountNode()}
+                mountNode={this.getMountNode() }
                 onMount={this.handleMount}
                 onUnmount={this.handleUnmount}
                 onClose={this.handleClose}
@@ -756,7 +756,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     handleDocumentClick = (e: MouseEvent) => {
         const { closeOnDocumentClick, closeOnRootNodeClick } = this.props;
 
-        if ( !this.rootNode || !this.portalNode || this.portalNode.contains(e.target as Node)) return;
+        if (!this.rootNode || !this.portalNode || this.portalNode.contains(e.target as Node)) return;
         const didClickInRootNode = this.rootNode.contains(e.target as Node);
 
         if (closeOnDocumentClick && !didClickInRootNode || closeOnRootNodeClick && didClickInRootNode) {

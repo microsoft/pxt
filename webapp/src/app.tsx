@@ -1295,7 +1295,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const fullscreen = run && !simOpts.hideFullscreen;
         const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
         const cookieKey = "cookieconsent"
-        const cookieConsent = !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = !!pxt.storage.getLocal(cookieKey) || electron.isElectron;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
 
@@ -1308,17 +1308,17 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-                this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
-                this.state.collapseEditorTools ? " collapsedEditorTools" : '',
-                this.state.fullscreen ? 'fullscreensim' : '',
-                !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
-                pxt.shell.layoutTypeClass(),
-                inTutorial ? 'tutorial' : '',
-                pxt.options.light ? 'light' : '',
-                pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
-                showMenuBar ? '' : 'hideMenuBar',
-                'full-abs'
-            ]);
+            this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
+            this.state.collapseEditorTools ? " collapsedEditorTools" : '',
+            this.state.fullscreen ? 'fullscreensim' : '',
+            !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
+            pxt.shell.layoutTypeClass(),
+            inTutorial ? 'tutorial' : '',
+            pxt.options.light ? 'light' : '',
+            pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
+            showMenuBar ? '' : 'hideMenuBar',
+            'full-abs'
+        ]);
 
         return (
             <div id='root' className={rootClasses}>
@@ -1425,7 +1425,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                 </div> : undefined}
-                {cookieConsent ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
+                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
@@ -1687,10 +1687,22 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "newproject":
             pxt.tickEvent("hash.newproject")
             editor.newProject();
+            window.location.hash = "";
+            return true;
+        case "newjavascript":
+            pxt.tickEvent("hash.newjavascript");
+            editor.newProject({
+                prj: pxt.appTarget.blocksprj,
+                filesOverride: {
+                    "main.blocks": ""
+                }
+            });
+            window.location.hash = "";
             return true;
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
+            window.location.hash = "";
             return true;
         case "tutorial":
             pxt.tickEvent("hash.tutorial")

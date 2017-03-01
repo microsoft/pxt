@@ -345,6 +345,9 @@ div.blocklyWidgetDiv {
 .monacoToolboxDiv.hide {
     display: none;
 }
+.monaco-editor-hover {
+    z-index:1000;
+}
 
 #monacoEditorInner {
     position: relative !important;

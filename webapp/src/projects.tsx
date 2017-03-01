@@ -218,7 +218,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={true}
-                onClose={() => this.setState({ visible: false })} dimmer="blurring"
+                onClose={() => this.setState({ visible: false })} dimmer={true}
                 closeOnDimmerClick closeOnDocumentClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
@@ -234,9 +234,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </sui.Segment>
                 {tab == ProjectsTab.MyStuff ? <div className={tabClasses}>
                     <div className="group">
-                        <h3 className="ui dividing header disabled">
-                            {lf("Create new")}
-                        </h3>
                         <div className="ui cards">
                             <codecard.CodeCardView
                                 key={'newproject'}
@@ -296,8 +293,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 {tab == ProjectsTab.Make ? <div className={tabClasses}>
                     <div className="ui cards">
                         {makes.map(scr => <codecard.CodeCardView
-                            key={'gal' + scr.name}
+                            key={'make' + scr.name}
                             name={scr.name}
+                            description={scr.description}
                             url={scr.url}
                             imageUrl={scr.imageUrl}
                             onClick={() => chgMake(scr) }
@@ -308,8 +306,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 {tab == ProjectsTab.Code ? <div className={tabClasses}>
                     <div className="ui cards">
                         {codes.map(scr => <codecard.CodeCardView
-                            key={'gal' + scr.name}
+                            key={'code' + scr.name}
                             name={scr.name}
+                            description={scr.description}
                             url={scr.url}
                             imageUrl={scr.imageUrl}
                             onClick={() => chgCode(scr) }
