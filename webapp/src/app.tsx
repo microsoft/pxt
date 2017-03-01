@@ -505,7 +505,8 @@ export class ProjectView
                 this.setState({
                     header: h,
                     projectName: h.name,
-                    currFile: file
+                    currFile: file,
+                    sideDocsLoadUrl: ''
                 })
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
