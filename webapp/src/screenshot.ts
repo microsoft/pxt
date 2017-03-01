@@ -5,6 +5,7 @@ type Header = pxt.workspace.Header;
 
 const ICON_WIDTH = 305;
 const ICON_HEIGHT = 200;
+const MAX_FRAMES = 1024;
 const ICON_MAX_FRAMES = 32;
 
 function renderIcon(img: HTMLImageElement): string {
@@ -80,6 +81,9 @@ export function addFrameAsync(uri: string): Promise<void> {
 
     const rec = recorder;
     const irec = iconRecorder;
+
+    if (rec.frames.length > MAX_FRAMES) return Promise.resolve(); // too many frames
+
     return pxt.BrowserUtils.loadImageAsync(uri)
         .then((img) => {
             if (img) {
