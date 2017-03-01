@@ -132,13 +132,11 @@ namespace pxt.blocks {
                 .forEach(pr => {
                     let attr = attrNames[pr.name];
                     let shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
-                    if (fn.attributes.min && fn.attributes.max) {
-                        if (fn.attributes.min[pr.name] && fn.attributes.max[pr.name]) {
-                            let container = document.createElement('mutation');
-                            container.setAttribute('min', fn.attributes.min[pr.name]);
-                            container.setAttribute('max', fn.attributes.max[pr.name]);
-                            shadowValue.firstChild.appendChild(container);
-                        }
+                    if (pr.min && pr.max) {
+                        let container = document.createElement('mutation');
+                        container.setAttribute('min', pr.min);
+                        container.setAttribute('max', pr.max);
+                        shadowValue.firstChild.appendChild(container);
                     }
                     block.appendChild(shadowValue);
                 })
@@ -583,17 +581,6 @@ namespace pxt.blocks {
                     builtinBlocks[fn.attributes.blockId].symbol = fn;
                 } else {
                     let pnames = parameterNames(fn);
-                    // use slider for min and max number
-                    if (fn.attributes.min && fn.attributes.max) {
-                        // change to numberMinMax only if min and max are defined
-                        for (let i = 0; i < fn.parameters.length; i++) {
-                            let pr = fn.parameters[i];
-                            if (fn.attributes.min[pr.name] && fn.attributes.max[pr.name]) {
-                                fn.parameters[i].type = "numberMinMax";
-                                pnames[pr.name].type = "numberMinMax";
-                            }
-                        }
-                    }
                     let block = createToolboxBlock(blockInfo, fn, pnames);
                     if (injectBlockDefinition(blockInfo, fn, pnames, block)) {
                         if (tb && (!fn.attributes.debug || dbg))

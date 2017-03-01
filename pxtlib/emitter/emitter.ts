@@ -322,8 +322,8 @@ namespace ts.pxtc {
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
 
-        min?: Map<string>; // min range
-        max?: Map<string>; // max range
+        paramMin?: pxt.Map<string>; // min range
+        paramMax?: pxt.Map<string>; // max range
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -423,6 +423,8 @@ namespace ts.pxtc {
         }
 
         res.paramHelp = {}
+        res.paramMin = {}
+        res.paramMax = {}
         res.jsDoc = ""
         cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
@@ -430,10 +432,8 @@ namespace ts.pxtc {
                 res.paramHelp[name] = desc
                 if (type) {
                     type.replace(/^\[([0-9]+)-([0-9]+)\]$/i, (full: string, min: string, max: string) => {
-                        if (!res.min) res.min = {}
-                        if (!res.max) res.max = {}
-                        res.min[name] = min
-                        res.max[name] = max
+                        res.paramMin[name] = min
+                        res.paramMax[name] = max
                         return ""
                     })
                 }
