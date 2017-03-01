@@ -155,8 +155,11 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
 
     function writeUriAsync(name: string, uri: string) {
         if (!uri) return Promise.resolve();
-        const m = uri.match(/^data:image\/(png|jpeg);base64,(.*)$/);
-        if (!m) return Promise.resolve();
+        const m = uri.match(/^data:image\/(png|jpeg|gif);base64,(.*)$/);
+        if (!m) {
+            console.log('unknown image format');
+            return Promise.resolve();
+        }
         const ext = m[1];
         const data = m[2];
         const fn = path.join(dirname, name + "." + ext);

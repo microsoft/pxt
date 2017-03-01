@@ -3,12 +3,15 @@ import * as data from "./data";
 
 type Header = pxt.workspace.Header;
 
+const ICON_WIDTH = 305;
+const ICON_HEIGHT = 200;
+
 function renderIcon(img: HTMLImageElement): string {
     let icon: string = null;
     if (img && img.width > 0 && img.height > 0) {
         const cvs = document.createElement("canvas") as HTMLCanvasElement;
-        cvs.width = 305;
-        cvs.height = 200;
+        cvs.width = ICON_WIDTH;
+        cvs.height = ICON_HEIGHT;
         let ox = 0;
         let oy = 0;
         let iw = 0;
@@ -31,43 +34,72 @@ function renderIcon(img: HTMLImageElement): string {
     return icon;
 }
 
-// https://github.com/jnordberg/gif.js
-let recorder: {
+interface IGIF {
     addFrame(img: HTMLImageElement): void;
     on(ev: string, handler: (blob: Blob) => void): void;
     render(): void;
-} = undefined; // GIF
+};
+
+// https://github.com/jnordberg/gif.js
+let recorder: IGIF = undefined; // GIF
+let iconRecorder: IGIF = undefined; // GIF
+
+function renderAsync(rec: IGIF): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        rec.on('finished', blob => {
+            const buri = URL.createObjectURL(blob);
+            resolve(buri);
+        })
+        rec.render();
+    });
+}
 
 export function addFrameAsync(uri: string): Promise<void> {
-    if (!recorder)
+    if (!recorder) {
         recorder = new (window as any).GIF({
             workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
             workers: 1,
             repeat: 0
         });
+        iconRecorder = new (window as any).GIF({
+            workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
+            workers: 1,
+            repeat: 0,
+            width: ICON_WIDTH,
+            height: ICON_HEIGHT
+        });
+    }
 
     const rec = recorder;
-    return pxt.BrowserUtils.loadImageAsync(uri).then((img) => {
-        if (img) rec.addFrame(img);
-    });
+    const irec = iconRecorder;
+    return pxt.BrowserUtils.loadImageAsync(uri)
+        .then((img) => {
+            if (img) {
+                rec.addFrame(img);
+                irec.addFrame(img);
+            }
+        });
 }
 
 export function stopRecording(header: Header, filename: string) {
     const rec = recorder;
+    const irec = iconRecorder;
     recorder = undefined;
-    if (!rec) return;
-    rec.on('finished', blob => {
-        const buri = URL.createObjectURL(blob);
-        saveAsync(header, buri)
-            .done(() => {
-                pxt.debug('screenshot saved')
-                pxt.BrowserUtils.browserDownloadDataUri(
-                    buri,
-                    filename);
-                setTimeout(() => URL.revokeObjectURL(buri), 5000); // wait until browser is done
-            });
-    })
-    rec.render();
+    iconRecorder = undefined;
+
+    if (!rec || !irec) return;
+
+    Promise.all([renderAsync(rec), renderAsync(irec)])
+        .done(urls => {
+            if (!urls || urls.some(url => !url)) return;
+
+            pxt.BrowserUtils.browserDownloadDataUri(
+                urls[0],
+                filename);
+            workspace.saveScreenshotAsync(header, urls[0], urls[1])
+                .delay(3000)
+                .then(() => urls.forEach(url => URL.revokeObjectURL(url)));
+        })
 }
 
 export function saveAsync(header: Header, screenshot: string): Promise<void> {
