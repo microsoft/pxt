@@ -102,8 +102,10 @@ export function stopRecording(header: Header, filename: string) {
         .done(urls => {
             if (!urls || urls.some(url => !url)) return;
             workspace.saveScreenshotAsync(header, urls[0], urls[1])
-                .delay(3000)
-                .then(() => urls.forEach(url => URL.revokeObjectURL(url)));
+                .done(() => {
+                    data.invalidate("header:" + header.id);
+                    data.invalidate("header:*");
+                });
         })
 }
 

@@ -843,8 +843,15 @@ export function serveAsync(options: ServeOptions) {
         }
 
         if (elts[0] == "icon") {
-            const name = path.join(userProjectsDir, elts[1], "icon.jpeg");
+            let name = path.join(userProjectsDir, elts[1], "icon.jpeg");
             return existsAsync(name)
+                .then(exists => {
+                    if (exists) return true;
+                    else {
+                        name = path.join(userProjectsDir, elts[1], "icon.gif");
+                        return existsAsync(name);
+                    }
+                })
                 .then(exists => exists ? sendFile(name) : error(404));
         }
 
