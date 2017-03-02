@@ -65,6 +65,16 @@ function renderAsync(rec: IGIF, fn?: string): Promise<string> {
 export function startRecording(width: number, height: number) {
     if (recorder) return;
 
+    // scale down as needed
+    const MAX_SIZE = 320;
+    if (width > height && width > MAX_SIZE) {
+        height *= MAX_SIZE / width;
+        width = MAX_SIZE;
+    } else if (height > width && height > MAX_SIZE) {
+        width *= 320 / height;
+        height = 320;
+    }
+
     recorder = new (window as any).GIF({
         workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
         workers: 1,
