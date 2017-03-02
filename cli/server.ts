@@ -632,81 +632,6 @@ function initSerialMonitor() {
     })
 }
 
-function openUrl(startUrl: string, browser: string) {
-    if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_&]+$/.test(startUrl)) {
-        console.error("invalid URL to open: " + startUrl)
-        return
-    }
-    let cmds: pxt.Map<string> = {
-        darwin: "open",
-        win32: "start",
-        linux: "xdg-open"
-    }
-    if (/^win/.test(os.platform()) && !/^[a-z0-9]+:\/\//i.test(startUrl))
-        startUrl = startUrl.replace('/', '\\');
-    else
-        startUrl = startUrl.replace('\\', '/');
-
-    console.log(`opening ${startUrl}`)
-
-    if (browser) {
-        child_process.spawn(getBrowserLocation(browser), [startUrl], { detached: true });
-    }
-    else {
-        child_process.exec(`${cmds[process.platform]} ${startUrl}`);
-    }
-}
-
-function getBrowserLocation(browser: string) {
-    let browserPath: string;
-
-    const normalizedBrowser = browser.toLowerCase();
-
-    if (normalizedBrowser === "chrome") {
-        switch (os.platform()) {
-            case "win32":
-            case "win64":
-                browserPath = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe";
-                break;
-            case "darwin":
-                browserPath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-                break;
-            case "linux":
-                browserPath = "/opt/google/chrome/chrome";
-                break;
-            default:
-                break;
-        }
-    }
-    else if (normalizedBrowser === "firefox") {
-        browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
-        switch (os.platform()) {
-            case "win32":
-            case "win64":
-                browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
-                break;
-            case "darwin":
-                browserPath = "/Applications/Firefox.app";
-                break;
-            case "linux":
-            default:
-                break;
-        }
-    }
-    else if (normalizedBrowser === "ie") {
-        browserPath = "C:/Program Files/Internet Explorer/iexplore.exe";
-    }
-    else if (normalizedBrowser === "safari") {
-        browserPath = "/Applications/Safari.app/Contents/MacOS/Safari";
-    }
-
-    if (browserPath && fs.existsSync(browserPath)) {
-        return browserPath;
-    }
-
-    return browser;
-}
-
 export interface ElectronMessage {
     type: string;
     args?: any
@@ -975,7 +900,7 @@ export function serveAsync(options: ServeOptions) {
             console.log(`---------------------------------------------`);
 
             if (options.autoStart) {
-                openUrl(start, options.browser);
+                nodeutil.openUrl(start, options.browser);
             }
         });
 }

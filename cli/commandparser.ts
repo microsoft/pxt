@@ -1,3 +1,5 @@
+import * as nodeutil from "./nodeutil"
+
 const MaxColumns = 100;
 const argRegex = /^(-+)?(.+)$/;
 
@@ -16,6 +18,7 @@ export interface CommandFlag {
 export interface Command {
     name: string;
     help: string;
+    onlineHelp?: boolean;
 
     priority?: number;
     advanced?: boolean;
@@ -246,6 +249,9 @@ export class CommandParser {
                 printLine(flagNames[i], maxWidth, flagDescriptions[i], print);
             }
         }
+
+        if (c.onlineHelp)
+            nodeutil.openUrl("https://pxt.io/cli/" + c.name, "");
     }
 
     private printTopLevelHelp(advanced: boolean, print: (s: string) => void) {
