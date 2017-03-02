@@ -324,6 +324,8 @@ namespace ts.pxtc {
 
         paramMin?: pxt.Map<string>; // min range
         paramMax?: pxt.Map<string>; // max range
+        // String that can be used to pass parameters to constructors of custom field editors
+        blockFieldEditorParams?: string;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
