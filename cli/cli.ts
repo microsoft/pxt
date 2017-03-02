@@ -3404,8 +3404,9 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string;
     const ghpages = parsed.flags["githubpages"];
-    if (ghpages) return ghpPushAsync();
-    else return internalStaticPkgAsync(route);
+    let p = rimrafAsync(builtPackaged, {})
+    if (ghpages) return p.then(() => ghpPushAsync());
+    else return p.then(() => internalStaticPkgAsync(route));
 }
 
 function internalStaticPkgAsync(label: string) {
