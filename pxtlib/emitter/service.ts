@@ -8,14 +8,16 @@ namespace ts.pxtc {
         initializer?: string;
         defaults?: string[];
         properties?: PropertyDesc[];
-        min?: string; // min range value to use slider
-        max?: string; // max range value to use slider
+        options?: Map<PropertyOption>;
     }
-
 
     export interface PropertyDesc {
         name: string;
         type: string;
+    }
+
+    export interface PropertyOption {
+        value: string;
     }
 
     export enum SymbolKind {
@@ -280,6 +282,9 @@ namespace ts.pxtc {
                             return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
                         });
                     }
+                    let options: Map<PropertyOption> = {};
+                    if (minVal) options['min'] = {value: minVal};
+                    if (maxVal) options['max'] = {value: maxVal};
                     return {
                         name: n,
                         description: desc,
@@ -287,8 +292,7 @@ namespace ts.pxtc {
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
                         properties: props,
-                        min: minVal ? minVal : undefined,
-                        max: maxVal ? maxVal : undefined
+                        options: options
                     }
                 })
             }
