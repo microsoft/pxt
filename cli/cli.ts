@@ -3346,9 +3346,8 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    let pref = path.resolve("built/packaged/")
-    let label = parsed.flags["label"] as string;
-    if (!label) label = "local"
+    const pref = path.resolve("built/packaged/")
+    const label = parsed.arguments[0] || "local";
     return uploadCoreAsync({
         label: label,
         pkgversion: "0.0.0",
@@ -3846,9 +3845,7 @@ function initCommands() {
         name: "staticpkg",
         help: "packages the target into static HTML pages",
         onlineHelp: true,
-        flags: {
-            label: { description: "version tag", argument: "DIR" }
-        }
+        argString: "<dir>"
     }, staticpkgAsync);
 
     p.defineCommand({
