@@ -3341,6 +3341,18 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
     else return JSON.stringify(trg, null, 2);
 }
 
+export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
+     let pref = path.resolve("built/packaged/")
+     let label = parsed.flags["label"] as string;
+     if (!label) label = "local"
+     return uploadCoreAsync({
+             label: label,
+             pkgversion: "0.0.0",
+             fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+             localDir: "/" + label + "/"
+         })
+ }
+
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
@@ -3823,6 +3835,13 @@ function initCommands() {
     }, buildAsync);
 
     simpleCmd("clean", "removes built folders", cleanAsync);
+    p.defineCommand({
+        name: "staticpkg",
+        help: "packages the target into static HTML pages",
+        flags: {
+            label: { description: "version tag", argument: "DIR" }
+        }
+    }, staticpkgAsync);
 
     p.defineCommand({
         name: "extract",
