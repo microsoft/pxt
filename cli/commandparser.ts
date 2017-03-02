@@ -1,5 +1,3 @@
-import * as nodeutil from "./nodeutil"
-
 const MaxColumns = 100;
 const argRegex = /^(-+)?(.+)$/;
 
@@ -251,7 +249,7 @@ export class CommandParser {
         }
 
         if (c.onlineHelp)
-            nodeutil.openUrl("https://pxt.io/cli/" + c.name, "");
+            print(`More information at ${"https://pxt.io/cli/" + c.name} .`);
     }
 
     private printTopLevelHelp(advanced: boolean, print: (s: string) => void) {
