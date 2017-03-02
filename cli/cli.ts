@@ -3804,9 +3804,9 @@ function initCommands() {
         return Promise.resolve();
     }, "[all|command]");
 
-    simpleCmd("deploy", "build and deploy current package", deployAsync);
+    simpleCmd("deploy", "build and deploy current package", deployAsync, undefined, true);
     simpleCmd("run", "build and run current package in the simulator", runAsync);
-    simpleCmd("update", "update pxt-core reference and install updated version", updateAsync);
+    simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
     simpleCmd("serial", "listen and print serial commands to console", serialAsync);
@@ -3814,6 +3814,7 @@ function initCommands() {
     p.defineCommand({
         name: "login",
         help: "stores the PXT, GitHub or Crowdin access token",
+        onlineHelp: true,
         argString: "<service> <token>",
         numArgs: 2
     }, loginAsync);
@@ -3823,6 +3824,7 @@ function initCommands() {
     p.defineCommand({
         name: "bump",
         help: "bump target or package version",
+        onlineHelp: true,
         flags: {
             update: { description: "(package only) Updates pxt-core reference to the latest release" },
             upload: { description: "(package only) Upload after bumping" }
@@ -3831,7 +3833,8 @@ function initCommands() {
 
     p.defineCommand({
         name: "build",
-        help: "build current package",
+        help: "builds current package",
+        onlineHelp: true,
         flags: {
             cloud: { description: "Force build to happen in the cloud" },
             debug: { description: "Emit debug information with build" }
@@ -3842,6 +3845,7 @@ function initCommands() {
     p.defineCommand({
         name: "staticpkg",
         help: "packages the target into static HTML pages",
+        onlineHelp: true,
         flags: {
             label: { description: "version tag", argument: "DIR" }
         }
@@ -3926,6 +3930,7 @@ function initCommands() {
     p.defineCommand({
         name: "electron",
         help: "SUBCOMMANDS: 'init': prepare target for running inside Electron app; 'run': runs current target inside Electron app; 'package': generates a packaged Electron app for current target",
+        onlineHelp: true,
         flags: {
             appsrc: {
                 description: "path to the root of the PXT Electron app in the pxt repo",
@@ -4057,12 +4062,12 @@ function initCommands() {
         advanced: true
     }, gendocsAsync);
 
-    function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, advanced = false): void {
-        p.defineCommand({ name, help, argString, advanced }, callback);
+    function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
+        p.defineCommand({ name, help, onlineHelp, argString }, callback);
     }
 
-    function advancedCommand(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string) {
-        simpleCmd(name, help, callback, argString, true);
+    function advancedCommand(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp = false) {
+        p.defineCommand({ name, help, onlineHelp, argString, advanced: true }, callback);
     }
 }
 
