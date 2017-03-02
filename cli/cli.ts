@@ -1076,7 +1076,32 @@ function ghpInitAsync() {
         .then(() => ghpGitAsync("rm", "-rf", "."))
         .then(() => {
             fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
-            nodeutil.cpR(".gitattributes", "built/gh-pages/.gitattributes")
+            fs.writeFileSync("built/gh-pages/.gitattributes",
+`# enforce unix style line endings
+*.ts text eol=lf
+*.tsx text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+*.yaml text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.py text eol=lf
+*.exp text eol=lf
+*.manifest text eol=lf
+
+# do not enforce text for everything - it causes issues with random binary files
+
+*.sln text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+`);
             return ghpGitAsync("add", ".")
         })
         .then(() => ghpGitAsync("commit", "-m", "Initial."))
