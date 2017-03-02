@@ -13,6 +13,7 @@ type IProjectView = pxt.editor.IProjectView;
 export enum ShareMode {
     Url,
     Editor,
+    Gif,
     Simulator,
     Code,
     Cli
@@ -92,6 +93,9 @@ pxt extract ${url}`;
                     case ShareMode.Editor:
                         embed = pxt.docs.embedUrl(rootUrl, "pub", header.pubId);
                         break;
+                    case ShareMode.Gif:
+                        embed = `<a href="${editUrl}"><img src="${header.icon}" /></a>`;
+                        break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
@@ -144,10 +148,11 @@ pxt extract ${url}`;
 
         const formats = [
             { mode: ShareMode.Editor, label: lf("Editor") },
+            header.icon ? { mode: ShareMode.Gif, label: lf("Gif") } : undefined,
             { mode: ShareMode.Simulator, label: lf("Simulator") },
             { mode: ShareMode.Code, label: lf("Code") },
             { mode: ShareMode.Cli, label: lf("Command line") }
-        ];
+        ].filter(f => !!f);
 
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing;
@@ -162,6 +167,9 @@ pxt extract ${url}`;
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className={`ui form`}>
+                    { action && header.icon ?
+                        <img src={header.icon} className={"floated left"} /> : undefined
+                    }
                     { action ?
                         <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
                             lf("You acknowledge having consent to publish this project.") }</p>
