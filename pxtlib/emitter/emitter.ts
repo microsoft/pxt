@@ -323,7 +323,7 @@ namespace ts.pxtc {
         paramDefl: pxt.Map<string>;
 
         // Dropdown grid field parameters
-        dropdownGridParams?: string;
+        blockFieldEditorParams?: string;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]

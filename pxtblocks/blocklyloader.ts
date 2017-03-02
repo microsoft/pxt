@@ -453,8 +453,8 @@ namespace pxt.blocks {
 
                     if (fn.attributes.blockFieldEditor == "note_editor")
                         i.appendField(new Blockly.FieldNote("262", color, noteValidator), attrNames[n].name);
-                    else if (fn.attributes.blockFieldEditor == "grid") {
-                        const params = fn.attributes.dropdownGridParams.split(",");
+                    else if (fn.attributes.blockFieldEditor == "FieldDropdownGrid") {
+                        const params = fn.attributes.blockFieldEditorParams.split(",");
                         const cols = parseInt(params[0]);
                         const width = parseInt(params[1]);
                         const useTooltips = params[2] === "true";
