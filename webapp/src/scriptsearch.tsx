@@ -69,8 +69,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     renderCore() {
-        if (!this.state.visible) return null;
-
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
 
