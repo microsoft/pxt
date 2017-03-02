@@ -322,7 +322,7 @@ namespace ts.pxtc {
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
 
-        // Dropdown grid field parameters
+        // String that can be used to pass parameters to constructors of custom field editors
         blockFieldEditorParams?: string;
     }
 
