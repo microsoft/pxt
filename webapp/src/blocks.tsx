@@ -587,8 +587,8 @@ export class Editor extends srceditor.Editor {
             this.editor.updateToolbox(tb);
         } else {
             // Toolbox mode is different, need to refresh.
-            this.editor = undefined;
             this.delayLoadXml = this.getCurrentSource();
+            this.editor = undefined;
             this.loadingXml = false;
             if (this.loadingXmlPromise) {
                 this.loadingXmlPromise.cancel();
