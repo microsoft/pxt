@@ -103,7 +103,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     renderCore() {
         const {visible, tab} = this.state;
-        if (!visible) return <div />;
 
         const tabNames = [
             lf("My Stuff"),
