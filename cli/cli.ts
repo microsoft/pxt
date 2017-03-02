@@ -1064,21 +1064,10 @@ function ghpGitAsync(...args: string[]) {
     })
 }
 
-export function ghpPushAsync() {
-    let repoName = ""
-    return ghpSetupRepoAsync()
-        .then(name => internalStaticPkgAsync((repoName = name)))
-        .then(() => {
-        nodeutil.cpR(builtPackaged + "/" + repoName, "built/gh-pages")
-    })
-        .then(() => ghpGitAsync("add", "."))
-        .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
-        .then(() => ghpGitAsync("push"))
-}
+function ghpInitAsync() {
+    if (fs.existsSync("built/gh-pages/.git"))
+        return Promise.resolve();
 
-export function ghpInitAsync() {
-    if (fs.existsSync("built/gh-pages"))
-        U.userError("built/gh-pages already exists")
     nodeutil.cpR(".git", "built/gh-pages/.git")
     return ghpGitAsync("checkout", "gh-pages")
         .then(() => U.userError("gh-pages branch already exists"), (e: any) => { })
@@ -1090,6 +1079,17 @@ export function ghpInitAsync() {
         })
         .then(() => ghpGitAsync("commit", "-m", "Initial."))
         .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
+}
+
+export function ghpPushAsync() {
+    let repoName = ""
+    return ghpInitAsync()
+        .then(() => ghpSetupRepoAsync())
+        .then(name => internalStaticPkgAsync((repoName = name)))
+        .then(() => nodeutil.cpR(builtPackaged + "/" + repoName, "built/gh-pages"))
+        .then(() => ghpGitAsync("add", "."))
+        .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
+        .then(() => ghpGitAsync("push"))
 }
 
 function maxMTimeAsync(dirs: string[]) {
@@ -3400,8 +3400,10 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const label = parsed.arguments[0] || "local";
-    return internalStaticPkgAsync(label);
+    const route = parsed.flags["route"] as string;
+    const ghpages = parsed.flags["githubpages"];
+    if (ghpages) return ghpPushAsync();
+    else return internalStaticPkgAsync(route);
 }
 
 function internalStaticPkgAsync(label: string) {
@@ -3411,7 +3413,7 @@ function internalStaticPkgAsync(label: string) {
         label: label || "main",
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-        localDir: "/" + label + "/"
+        localDir: label ? "/" + label + "/" : "/"
     }).then(() => renderDocs(dir))
 }
 
@@ -3904,7 +3906,17 @@ function initCommands() {
         name: "staticpkg",
         help: "packages the target into static HTML pages",
         onlineHelp: true,
-        argString: "<dir>"
+        flags: {
+            "route": {
+                description: "route appended to generated files",
+                argument: "route",
+                type: "string"
+            },
+            "githubpages": {
+                description: "Generate a web site compatiable with GitHub pages",
+                aliases: ["ghpages"]
+            }
+        }
     }, staticpkgAsync);
 
     p.defineCommand({
