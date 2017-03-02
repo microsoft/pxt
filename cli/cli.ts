@@ -1076,6 +1076,7 @@ function ghpInitAsync() {
         .then(() => ghpGitAsync("rm", "-rf", "."))
         .then(() => {
             fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
+            nodeutil.cpR(".gitattributes", "built/gh-pages/.gitattributes")
             return ghpGitAsync("add", ".")
         })
         .then(() => ghpGitAsync("commit", "-m", "Initial."))
