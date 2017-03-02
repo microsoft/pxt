@@ -1037,6 +1037,86 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         .then(() => { });
 }
 
+function ghpSetupRepoAsync() {
+    function getreponame() {
+        let cfg = fs.readFileSync("gh-pages/.git/config", "utf8")
+        let m = /^\s*url\s*=\s*.*github.*\/([^\/\s]+)$/mi.exec(cfg)
+        if (!m) U.userError("cannot determine GitHub repo name")
+        return m[1].replace(/\.git$/, "")
+    }
+    if (fs.existsSync("gh-pages")) {
+        console.log("Skipping init of gh-pages; you can delete it first to get full re-init")
+        return Promise.resolve(getreponame())
+    }
+
+    nodeutil.cpR(".git", "gh-pages/.git")
+    return ghpGitAsync("checkout", "gh-pages")
+        .then(() => getreponame())
+}
+
+function ghpGitAsync(...args: string[]) {
+    return nodeutil.spawnAsync({
+        cmd: "git",
+        cwd: "gh-pages",
+        args: args
+    })
+}
+
+function ghpInitAsync() {
+    if (fs.existsSync("gh-pages/.git"))
+        return Promise.resolve();
+
+    nodeutil.cpR(".git", "gh-pages/.git")
+    return ghpGitAsync("checkout", "gh-pages")
+        .then(() => Promise.resolve()) // branch already exists
+
+        .catch((e: any) => ghpGitAsync("checkout", "--orphan", "gh-pages"))
+        .then(() => ghpGitAsync("rm", "-rf", "."))
+        .then(() => {
+            fs.writeFileSync("gh-pages/index.html", "Under construction.")
+            fs.writeFileSync("gh-pages/.gitattributes",
+`# enforce unix style line endings
+*.ts text eol=lf
+*.tsx text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+*.yaml text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.py text eol=lf
+*.exp text eol=lf
+*.manifest text eol=lf
+
+# do not enforce text for everything - it causes issues with random binary files
+
+*.sln text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+`);
+            return ghpGitAsync("add", ".")
+        })
+        .then(() => ghpGitAsync("commit", "-m", "Initial."))
+        .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
+}
+
+export function ghpPushAsync() {
+    let repoName = ""
+    return ghpInitAsync()
+        .then(() => ghpSetupRepoAsync())
+        .then(name => internalStaticPkgAsync((repoName = name)))
+        .then(() => nodeutil.cpR(builtPackaged + "/" + repoName, "gh-pages"))
+        .then(() => ghpGitAsync("add", "."))
+        .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
+        .then(() => ghpGitAsync("push"))
+}
+
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
     return Promise.map(dirs, dn => readDirAsync(dn)
@@ -1499,8 +1579,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
-let builtPackaged = "built/packaged"
-
+const builtPackaged = "packaged"
 function renderDocs(localDir: string) {
     let dst = path.resolve(builtPackaged + localDir)
 
@@ -1515,7 +1594,7 @@ function renderDocs(localDir: string) {
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
-    let dirs: Map<boolean> = {}
+    const dirs: Map<boolean> = {}
     for (const f of nodeutil.allFiles("docs", 8)) {
         let dd = path.join(dst, f)
         let dir = path.dirname(dd)
@@ -3346,22 +3425,32 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const pref = path.resolve("built/packaged/")
-    const label = parsed.arguments[0] || "local";
+    const route = parsed.flags["route"] as string;
+    const ghpages = parsed.flags["githubpages"];
+    let p = rimrafAsync(builtPackaged, {})
+        .then(() => buildTargetAsync());
+    if (ghpages) return p.then(() => ghpPushAsync());
+    else return p.then(() => internalStaticPkgAsync(route));
+}
+
+function internalStaticPkgAsync(label: string) {
+    const pref = path.resolve(builtPackaged);
+    const dir = label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
-        label: label,
+        label: label || "main",
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-        localDir: "/" + label + "/"
-    })
+        localDir: label ? "/" + label + "/" : "/"
+    }).then(() => renderDocs(dir))
 }
 
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
+        .then(() => rimrafAsync(builtPackaged, {}))
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
-        .then(() => { })
+        .then(() => { });
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
@@ -3845,7 +3934,17 @@ function initCommands() {
         name: "staticpkg",
         help: "packages the target into static HTML pages",
         onlineHelp: true,
-        argString: "<dir>"
+        flags: {
+            "route": {
+                description: "route appended to generated files",
+                argument: "route",
+                type: "string"
+            },
+            "githubpages": {
+                description: "Generate a web site compatiable with GitHub pages",
+                aliases: ["ghpages"]
+            }
+        }
     }, staticpkgAsync);
 
     p.defineCommand({

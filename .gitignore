@@ -6,6 +6,8 @@ webapp/public/closure-library
 node_modules
 *.sw?
 built
+packaged
+gh-pages
 /typings
 kind_modules
 pxt_modules

@@ -2,21 +2,25 @@
 
 ### @description Compiles PXT editor into static HTML files
 
-Compiles PXT editor into static HTML files
+Packages the target into static HTML pages
 
 ```
-pxt staticpkg [<dir>]
+pxt staticpkg [--route route] [--githubpages]
 ```
 
 ## Description
 
 Compiles the PXT editor into static HTML files that can be served without a server or integrated into an app. The resulting files are placed in ``built/packaged``.
 
-## Options
+## Flags:
 
-### <dir> (optional)
+### route <value> (optional)
 
 Output directory and routing path. If missing, defaults to ``local``. The route will be injected into the all the paths in the application.
+
+### githubpages (optional)
+
+Generate a web site compatiable with GitHub pages.
 
 ## Local testing
 
