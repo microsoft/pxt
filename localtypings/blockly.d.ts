@@ -61,6 +61,12 @@ declare namespace Blockly {
         customContextMenu?: any;
     }
 
+    interface FieldDropdownGridToolTipConfig  {
+        enabled: boolean;
+        xOffset?: number;
+        yOffset?: number;
+    }
+
     const Blocks: {
         [index: string]: BlockDefinition;
     }
@@ -98,6 +104,9 @@ declare namespace Blockly {
     }
     class FieldNote extends FieldNumber{
         constructor(note: string, colour: string | number, opt_validator?: any); 
+    }
+    class FieldDropdownGrid extends FieldDropdown {
+        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], col?: number, width?: number, tooltipCfg?: FieldDropdownGridToolTipConfig ); 
     }
     
     class Block {

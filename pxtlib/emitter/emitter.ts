@@ -321,6 +321,9 @@ namespace ts.pxtc {
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
+
+        // String that can be used to pass parameters to constructors of custom field editors
+        blockFieldEditorParams?: string;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
