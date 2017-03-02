@@ -861,7 +861,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "workerjs": opts.localDir + "worker.js",
             "tdworkerjs": opts.localDir + "tdworker.js",
             "monacoworkerjs": opts.localDir + "monacoworker.js",
-            "pxtVersion": opts.pkgversion,
+            "pxtVersion": pxtVersion(),
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
             "targetVersion": opts.pkgversion,
@@ -957,7 +957,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             }
                         trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
-                        data = new Buffer(JSON.stringify(trg, null, 2), "utf8")
+                        data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
                         trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
@@ -1418,9 +1418,7 @@ function buildTargetCoreAsync() {
                 tag: info.tag,
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
-                pxt: pxt.appTarget.id == "core" ?
-                    readJson("package.json")["version"] :
-                    readJson("node_modules/pxt-core/package.json")["version"],
+                pxt: pxtVersion()
             }
 
             saveThemeJson(cfg)
@@ -1441,6 +1439,12 @@ function buildTargetCoreAsync() {
         .then(() => {
             console.log("target.json built.")
         })
+}
+
+function pxtVersion(): string {
+    return pxt.appTarget.id == "core" ?
+        readJson("package.json")["version"] :
+        readJson("node_modules/pxt-core/package.json")["version"];
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
@@ -3342,16 +3346,16 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-     let pref = path.resolve("built/packaged/")
-     let label = parsed.flags["label"] as string;
-     if (!label) label = "local"
-     return uploadCoreAsync({
-             label: label,
-             pkgversion: "0.0.0",
-             fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-             localDir: "/" + label + "/"
-         })
- }
+    let pref = path.resolve("built/packaged/")
+    let label = parsed.flags["label"] as string;
+    if (!label) label = "local"
+    return uploadCoreAsync({
+        label: label,
+        pkgversion: "0.0.0",
+        fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
+        localDir: "/" + label + "/"
+    })
+}
 
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
