@@ -3428,6 +3428,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string;
     const ghpages = parsed.flags["githubpages"];
     let p = rimrafAsync(builtPackaged, {})
+        .then(() => buildTargetAsync());
     if (ghpages) return p.then(() => ghpPushAsync());
     else return p.then(() => internalStaticPkgAsync(route));
 }
