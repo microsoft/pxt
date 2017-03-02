@@ -1070,8 +1070,9 @@ function ghpInitAsync() {
 
     nodeutil.cpR(".git", "built/gh-pages/.git")
     return ghpGitAsync("checkout", "gh-pages")
-        .then(() => U.userError("gh-pages branch already exists"), (e: any) => { })
-        .then(() => ghpGitAsync("checkout", "--orphan", "gh-pages"))
+        .then(() => Promise.resolve()) // branch already exists
+
+        .catch((e: any) => ghpGitAsync("checkout", "--orphan", "gh-pages"))
         .then(() => ghpGitAsync("rm", "-rf", "."))
         .then(() => {
             fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
