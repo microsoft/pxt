@@ -2951,6 +2951,9 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 }
 
 function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    if (!nodeutil.existDirSync("docs"))
+        return Promise.resolve();
+
     const ignorePreviousSuccesses = parsed && !!parsed.flags["i"];
     let filenameMatch: RegExp;
 
@@ -3629,6 +3632,9 @@ function getFiles(): string[] {
 }
 
 function checkDocsAsync(): Promise<void> {
+    if (!nodeutil.existDirSync("docs"))
+        return Promise.resolve();
+
     console.log(`checking docs`);
     let files = getFiles();
 
