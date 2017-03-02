@@ -448,16 +448,16 @@ function travisAsync() {
         return buildTargetAsync()
             .then(() => checkDocsAsync())
             .then(() => testSnippetsAsync())
+            .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
                 if (!process.env["PXT_ACCESS_TOKEN"]) {
                     // pull request, don't try to upload target
                     pxt.log('no token, skipping upload')
                     return Promise.resolve();
                 }
-                let trg = readLocalPxTarget()
+                const trg = readLocalPxTarget()
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
-                        .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
                         .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
