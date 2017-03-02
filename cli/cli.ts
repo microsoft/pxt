@@ -1039,44 +1039,42 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
 
 function ghpSetupRepoAsync() {
     function getreponame() {
-        let cfg = fs.readFileSync("built/gh-pages/.git/config", "utf8")
+        let cfg = fs.readFileSync("gh-pages/.git/config", "utf8")
         let m = /^\s*url\s*=\s*.*github.*\/([^\/\s]+)$/mi.exec(cfg)
         if (!m) U.userError("cannot determine GitHub repo name")
         return m[1].replace(/\.git$/, "")
     }
-    if (fs.existsSync("built/gh-pages")) {
-        console.log("Skipping init of built/gh-pages; you can delete it first to get full re-init")
+    if (fs.existsSync("gh-pages")) {
+        console.log("Skipping init of gh-pages; you can delete it first to get full re-init")
         return Promise.resolve(getreponame())
     }
 
-    nodeutil.cpR(".git", "built/gh-pages/.git")
+    nodeutil.cpR(".git", "gh-pages/.git")
     return ghpGitAsync("checkout", "gh-pages")
-        .then(() => getreponame(), (e: any) => {
-            U.userError("No gh-pages branch. Try 'pxt ghpinit' first.")
-        })
+        .then(() => getreponame())
 }
 
 function ghpGitAsync(...args: string[]) {
     return nodeutil.spawnAsync({
         cmd: "git",
-        cwd: "built/gh-pages",
+        cwd: "gh-pages",
         args: args
     })
 }
 
 function ghpInitAsync() {
-    if (fs.existsSync("built/gh-pages/.git"))
+    if (fs.existsSync("gh-pages/.git"))
         return Promise.resolve();
 
-    nodeutil.cpR(".git", "built/gh-pages/.git")
+    nodeutil.cpR(".git", "gh-pages/.git")
     return ghpGitAsync("checkout", "gh-pages")
         .then(() => Promise.resolve()) // branch already exists
 
         .catch((e: any) => ghpGitAsync("checkout", "--orphan", "gh-pages"))
         .then(() => ghpGitAsync("rm", "-rf", "."))
         .then(() => {
-            fs.writeFileSync("built/gh-pages/index.html", "Under construction.")
-            fs.writeFileSync("built/gh-pages/.gitattributes",
+            fs.writeFileSync("gh-pages/index.html", "Under construction.")
+            fs.writeFileSync("gh-pages/.gitattributes",
 `# enforce unix style line endings
 *.ts text eol=lf
 *.tsx text eol=lf
@@ -1113,7 +1111,7 @@ export function ghpPushAsync() {
     return ghpInitAsync()
         .then(() => ghpSetupRepoAsync())
         .then(name => internalStaticPkgAsync((repoName = name)))
-        .then(() => nodeutil.cpR(builtPackaged + "/" + repoName, "built/gh-pages"))
+        .then(() => nodeutil.cpR(builtPackaged + "/" + repoName, "gh-pages"))
         .then(() => ghpGitAsync("add", "."))
         .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
         .then(() => ghpGitAsync("push"))
@@ -1581,7 +1579,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
-const builtPackaged = "built/packaged"
+const builtPackaged = "packaged"
 function renderDocs(localDir: string) {
     let dst = path.resolve(builtPackaged + localDir)
 
@@ -3448,9 +3446,10 @@ function internalStaticPkgAsync(label: string) {
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
+        .then(() => rimrafAsync(builtPackaged, {}))
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
-        .then(() => { })
+        .then(() => { });
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
