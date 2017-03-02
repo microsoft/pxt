@@ -219,7 +219,8 @@ function pkginfoAsync(repopath: string) {
     const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
         console.log(`name: ${cfg.name}`)
         console.log(`description: ${cfg.description}`)
-        console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
+        if (pxt.appTarget.appTheme)
+            console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
     return pxt.packagesConfigAsync()
@@ -1050,7 +1051,7 @@ export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
     return simshimAsync()
-        .then(() => buildFolderAsync('sim'))
+        .then(() => buildFolderAsync('sim', true))
         .then(buildTargetCoreAsync)
         .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
@@ -1353,15 +1354,17 @@ function buildTargetCoreAsync() {
     let statFiles: Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
     if (pxt.appTarget.id != "core") {
-        dirsToWatch.push("sim"); // simulator
         if (fs.existsSync("theme")) {
             dirsToWatch.push("theme"); // simulator
             dirsToWatch.push(path.join("theme", "site", "globals")); // simulator
         }
-        dirsToWatch = dirsToWatch.concat(
-            fs.readdirSync("sim")
-                .map(p => path.join("sim", p))
-                .filter(p => fs.statSync(p).isDirectory()));
+        if (fs.existsSync("sim")) {
+            dirsToWatch.push("sim"); // simulator
+            dirsToWatch = dirsToWatch.concat(
+                fs.readdirSync("sim")
+                    .map(p => path.join("sim", p))
+                    .filter(p => fs.statSync(p).isDirectory()));
+        }
     }
 
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
@@ -2259,6 +2262,8 @@ function runCoreAsync(res: pxtc.CompileResult) {
 }
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
+    if (!nodeutil.existDirSync("sim")) return;
+
     let decls: Map<ts.Symbol> = {}
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
@@ -2359,6 +2364,10 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
 
 function simshimAsync() {
     console.log("Looking for shim annotations in the simulator.")
+    if (!nodeutil.existDirSync("sim")) {
+        console.log("no sim folder, skipping.")
+        return Promise.resolve();
+    }
     let prog = pxtc.plainTsc("sim")
     let shims = pxt.simshim(prog)
     let filename = "sims.d.ts"
