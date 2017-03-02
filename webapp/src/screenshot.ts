@@ -86,17 +86,17 @@ export function addFrameAsync(uri: string): Promise<void> {
         });
 }
 
-export function stopRecording(header: Header, filename: string) {
+export function stopRecordingAsync(header: Header, filename: string): Promise<boolean> {
     const rec = recorder;
     recorder = undefined;
 
-    if (!rec || !rec.frames.length) return;
+    if (!rec || !rec.frames.length) return Promise.resolve(false);
 
     let full: string;
     let icon: string;
 
     core.showLoading("rendering gif...");
-    renderAsync(rec, filename)
+    return renderAsync(rec, filename)
         .then(url => {
             full = url;
             if (rec.frames.length < ICON_MAX_FRAMES) return url; // no enough images
@@ -106,15 +106,14 @@ export function stopRecording(header: Header, filename: string) {
             }
         }).then(url => {
             icon = url;
-            if (!full || !icon) return;
+            if (!full || !icon) return Promise.resolve(false);
 
-            workspace.saveScreenshotAsync(header, full, icon)
-                .done(() => {
+            return workspace.saveScreenshotAsync(header, full, icon)
+                .then(() => {
                     data.invalidate("header:" + header.id);
                     data.invalidate("header:*");
-                });
-        })
-        .finally(() => core.hideLoading());
+                }).then(() => true)
+        }).finally(() => core.hideLoading());
 }
 
 export function saveAsync(header: Header, screenshot: string): Promise<void> {
