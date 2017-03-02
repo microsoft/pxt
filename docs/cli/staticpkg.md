@@ -20,7 +20,12 @@ Output directory and routing path. If missing, defaults to ``local``. The route 
 
 ## Local testing
 
-After running 
+After running the command, mount a web server from serves ``/<div>`` to the ``built/package/<dir>`` folder. You can use [http-server](https://www.npmjs.com/package/http-server) for easy testing.
+
+```
+npm install -g http-server
+http-server -c-1 built/packaged
+```
 
 ## See Also
 
