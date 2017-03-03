@@ -324,8 +324,8 @@ namespace ts.pxtc {
 
         paramMin?: pxt.Map<string>; // min range
         paramMax?: pxt.Map<string>; // max range
-        // String that can be used to pass parameters to constructors of custom field editors
-        blockFieldEditorParams?: string;
+        // Map for custom field editor parameters
+        blockFieldEditorParams?: pxt.Map<string>;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -407,6 +407,9 @@ namespace ts.pxtc {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (U.endsWith(n, ".defl")) {
                         res.paramDefl[n.slice(0, n.length - 5)] = v
+                    } else if (U.startsWith(n, "blockFieldEditorParams")) {
+                        if (!res.blockFieldEditorParams) res.blockFieldEditorParams = {}
+                        res.blockFieldEditorParams[n.slice(23, n.length)] = v
                     } else {
                         (<any>res)[n] = v;
                     }
