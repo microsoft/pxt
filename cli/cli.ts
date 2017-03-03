@@ -622,6 +622,7 @@ interface UploadOptions {
     target?: string;
     localDir?: string;
     githubOnly?: boolean;
+    builtPackaged?: string;
 }
 
 interface BlobReq {
@@ -973,7 +974,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         }).then(() => {
 
             if (opts.localDir) {
-                let fn = path.join(builtPackaged + opts.localDir, fileName)
+                U.assert(!!opts.builtPackaged);
+                let fn = path.join(opts.builtPackaged + opts.localDir, fileName)
                 nodeutil.mkdirP(path.dirname(fn))
                 return writeFileAsync(fn, data)
             }
@@ -999,7 +1001,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
-                console.log("Release files written to", path.resolve(builtPackaged + opts.localDir))
+                console.log("Release files written to", path.resolve(opts.builtPackaged + opts.localDir))
             })
 
     return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -1106,11 +1108,11 @@ function ghpInitAsync() {
         .then(() => ghpGitAsync("push", "--set-upstream", "origin", "gh-pages"))
 }
 
-export function ghpPushAsync() {
+export function ghpPushAsync(builtPackaged: string) {
     let repoName = ""
     return ghpInitAsync()
         .then(() => ghpSetupRepoAsync())
-        .then(name => internalStaticPkgAsync((repoName = name)))
+        .then(name => internalStaticPkgAsync(builtPackaged, (repoName = name)))
         .then(() => nodeutil.cpR(builtPackaged + "/" + repoName, "gh-pages"))
         .then(() => ghpGitAsync("add", "."))
         .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
@@ -1579,8 +1581,7 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
 }
 
-const builtPackaged = "packaged"
-function renderDocs(localDir: string) {
+function renderDocs(builtPackaged: string, localDir: string) {
     let dst = path.resolve(builtPackaged + localDir)
 
     nodeutil.cpR("node_modules/pxt-core/docfiles", dst + "/docfiles")
@@ -3427,27 +3428,31 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string;
     const ghpages = parsed.flags["githubpages"];
+    const builtPackaged = parsed.flags["output"] as string || "built/packaged";
+
+    pxt.log(`packaging editor to ${builtPackaged}`)
+
     let p = rimrafAsync(builtPackaged, {})
         .then(() => buildTargetAsync());
-    if (ghpages) return p.then(() => ghpPushAsync());
-    else return p.then(() => internalStaticPkgAsync(route));
+    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged));
+    else return p.then(() => internalStaticPkgAsync(builtPackaged, route));
 }
 
-function internalStaticPkgAsync(label: string) {
+function internalStaticPkgAsync(builtPackaged: string, label: string) {
     const pref = path.resolve(builtPackaged);
-    const dir = label ? "/" + label + "/" : "/"
+    const localDir = label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/").concat(targetFileList()),
-        localDir: label ? "/" + label + "/" : "/"
-    }).then(() => renderDocs(dir))
+        localDir,
+        builtPackaged
+    }).then(() => renderDocs(builtPackaged, localDir))
 }
 
 export function cleanAsync(parsed: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
-        .then(() => rimrafAsync(builtPackaged, {}))
         .then(() => rimrafAsync("libs/**/built", {}))
         .then(() => rimrafAsync("projects/**/built", {}))
         .then(() => { });
@@ -3938,11 +3943,17 @@ function initCommands() {
             "route": {
                 description: "route appended to generated files",
                 argument: "route",
-                type: "string"
+                type: "string",
+                aliases: ["r"]
             },
             "githubpages": {
                 description: "Generate a web site compatiable with GitHub pages",
-                aliases: ["ghpages"]
+                aliases: ["ghpages", "gh"]
+            },
+            "output": {
+                description: "Specifies the output folder for the generated files",
+                argument: "output",
+                aliases: ["o"]
             }
         }
     }, staticpkgAsync);
