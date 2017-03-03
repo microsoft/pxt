@@ -3763,7 +3763,7 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
             .then(() => gitAsync(["push"]))
     })
 
-    return p.then(() => gitAsync(["checkout", ",master"]))
+    return p.then(() => gitAsync(["checkout", "master"]))
         .then(() => {
             pxt.log('branches created, please verify create PRs and validate')
         })
