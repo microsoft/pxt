@@ -4124,7 +4124,7 @@ function initCommands() {
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
-    advancedCommand("cherrypick", "creates new branch, cherry-pick commit, push", cherryPickAsync, "<commit>");
+    advancedCommand("cherrypick", "creates new branch, cherry-pick commit, push for all servicing branches", cherryPickAsync, "<commit>");
 
     p.defineCommand({
         name: "decompile",
