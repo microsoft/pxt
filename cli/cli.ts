@@ -3430,6 +3430,8 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
 
+    pxt.log(`packaging editor to ${builtPackaged}`)
+
     let p = rimrafAsync(builtPackaged, {})
         .then(() => buildTargetAsync());
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged));
