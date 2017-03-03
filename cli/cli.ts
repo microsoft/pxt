@@ -3755,7 +3755,7 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
             .then(() => gitAsync(["pull"]))
             .then(() => gitAsync(["checkout", "-B", pr, "--track", `origin/` + branch]))
             .then(() => gitAsync(["cherry-pick", commit]))
-            .then(() => gitAsync(["push", "--set-upstream", "origin", pr]))
+            .then(() => gitAsync(["push"]))
     })
 
     return p.then(() => gitAsync(["checkout", ",master"]))
