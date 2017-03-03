@@ -1769,7 +1769,7 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd)))
-        .done(() => core.hideLoading());
+            .finally(() => core.hideLoading());
 }
 
 function initHashchange() {

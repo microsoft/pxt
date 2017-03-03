@@ -256,7 +256,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                 description={lf("Open files from your computer") }
                                 onClick={() => importHex() }
                                 /> : undefined }
-                            {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing ?
+                            {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                             <codecard.CodeCardView
                                 key={'importurl'}
                                 icon="upload"
