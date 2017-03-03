@@ -3736,7 +3736,8 @@ function getFiles(): string[] {
 }
 
 function cherryPickAsync(parsed: commandParser.ParsedCommand) {
-    const commit = parsed.arguments[0];
+    const name = parsed.arguments[0];
+    const commit = parsed.arguments[1];
     let majorVersion = parseInt(pxtVersion().split('.')[0]);
     const gitAsync = (args: string[]) => nodeutil.spawnAsync({
         cmd: "git",
@@ -3749,7 +3750,7 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 
     let p = gitAsync(["pull"]);
     branches.forEach(branch => {
-        const pr = `${branch}/pr/${commit}`;
+        const pr = `cp/${name}`;
         p = p.then(() => gitAsync(["checkout", branch]))
             .then(() => gitAsync(["checkout", "-b", pr]))
             .then(() => gitAsync(["cherry-pick", commit]))
@@ -4124,7 +4125,7 @@ function initCommands() {
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
-    advancedCommand("cherrypick", "creates new branch, cherry-pick commit, push for all servicing branches", cherryPickAsync, "<commit>");
+    advancedCommand("cherrypick", "creates new branch, cherry-pick commit, push for all servicing branches", cherryPickAsync, "<name> <commit>");
 
     p.defineCommand({
         name: "decompile",
