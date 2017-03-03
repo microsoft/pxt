@@ -1078,6 +1078,27 @@ export class ProjectView
         })
     }
 
+    importUrlDialog() {
+        let input: HTMLInputElement;
+        core.confirmAsync({
+            header: lf("Open project URL"),
+            onLoaded: ($el) => {
+                input = $el.find('input')[0] as HTMLInputElement;
+            },
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>${lf("Copy the URL of the project.")}</label>
+    <input type="url" class="ui button blue fluid"></input>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                pxt.tickEvent("menu.open.file");
+                this.importFile(input.files[0]);
+            }
+        })
+    }
+
     launchFullEditor() {
         pxt.tickEvent("sandbox.openfulleditor");
         Util.assert(pxt.shell.isSandboxMode());
