@@ -692,6 +692,8 @@ namespace pxt.blocks {
         else switch (b.type) {
             case "math_number":
                 expr = compileNumber(e, b, comments); break;
+            case "math_number_minmax":
+                expr = compileNumber(e, b, comments); break;
             case "math_op2":
                 expr = compileMathOp2(e, b, comments); break;
             case "math_op3":
