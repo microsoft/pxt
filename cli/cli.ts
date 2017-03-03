@@ -756,12 +756,12 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     if (cuser && !/travis/.test(cuser))
         user += "-" + cuser
 
-    let cred = [
+    const cred = [
         "-c", "credential.helper=",
         "-c", "user.name=" + user,
         "-c", "user.email=" + user + "@build.pxt.io",
     ]
-    let gitAsync = (args: string[]) => nodeutil.spawnAsync({
+    const gitAsync = (args: string[]) => nodeutil.spawnAsync({
         cmd: "git",
         cwd: trgPath,
         args: cred.concat(args)
@@ -1075,7 +1075,7 @@ function ghpInitAsync() {
         .then(() => {
             fs.writeFileSync("gh-pages/index.html", "Under construction.")
             fs.writeFileSync("gh-pages/.gitattributes",
-`# enforce unix style line endings
+                `# enforce unix style line endings
 *.ts text eol=lf
 *.tsx text eol=lf
 *.md text eol=lf
@@ -3735,6 +3735,33 @@ function getFiles(): string[] {
     return res
 }
 
+function cherryPickAsync(parsed: commandParser.ParsedCommand) {
+    const commit = parsed.arguments[0];
+    let majorVersion = parseInt(pxtVersion().split('.')[0]);
+    const gitAsync = (args: string[]) => nodeutil.spawnAsync({
+        cmd: "git",
+        args
+    })
+
+    let branches: string[] = [];
+    for (let i = majorVersion - 1; i >= 0; --i) branches.push("v" + i);
+    pxt.log(`cherry picking ${commit} into ${branches.join(', ')}`)
+
+    let p = gitAsync(["pull"]);
+    branches.forEach(branch => {
+        const pr = `${branch}/pr/${commit}`;
+        p = p.then(() => gitAsync(["checkout", branch]))
+            .then(() => gitAsync(["checkout", "-b", pr]))
+            .then(() => gitAsync(["cherry-pick", commit]))
+            .then(() => gitAsync(["git", "push", "--set-upstream", "origin", pr]))
+    })
+
+    return p.then(() => gitAsync(["checkout", ",master"]))
+        .then(() => {
+            pxt.log('branches created, please verify create PRs and validate')
+        })
+}
+
 function checkDocsAsync(): Promise<void> {
     if (!nodeutil.existDirSync("docs"))
         return Promise.resolve();
@@ -4097,6 +4124,7 @@ function initCommands() {
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
+    advancedCommand("cherrypick", "creates new branch, cherry-pick commit, push for all servicing branches", cherryPickAsync, "<commit>");
 
     p.defineCommand({
         name: "decompile",
