@@ -975,7 +975,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
             if (opts.localDir) {
                 U.assert(!!opts.builtPackaged);
-                let fn = path.join(opts.builtPackaged + opts.localDir, fileName)
+                let fn = path.join(opts.builtPackaged, opts.localDir, fileName)
                 nodeutil.mkdirP(path.dirname(fn))
                 return writeFileAsync(fn, data)
             }
@@ -1001,7 +1001,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
-                console.log("Release files written to", path.resolve(opts.builtPackaged + opts.localDir))
+                pxt.log("Release files written to" + path.resolve(opts.builtPackaged, opts.localDir))
             })
 
     return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -1113,7 +1113,7 @@ export function ghpPushAsync(builtPackaged: string) {
     return ghpInitAsync()
         .then(() => ghpSetupRepoAsync())
         .then(name => internalStaticPkgAsync(builtPackaged, (repoName = name)))
-        .then(() => nodeutil.cpR(builtPackaged + "/" + repoName, "gh-pages"))
+        .then(() => nodeutil.cpR(path.join(builtPackaged, repoName), "gh-pages"))
         .then(() => ghpGitAsync("add", "."))
         .then(() => ghpGitAsync("commit", "-m", "Auto-push"))
         .then(() => ghpGitAsync("push"))
@@ -1582,9 +1582,9 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 }
 
 function renderDocs(builtPackaged: string, localDir: string) {
-    let dst = path.resolve(builtPackaged + localDir)
+    let dst = path.resolve(path.join(builtPackaged, localDir))
 
-    nodeutil.cpR("node_modules/pxt-core/docfiles", dst + "/docfiles")
+    nodeutil.cpR("node_modules/pxt-core/docfiles", path.join(dst, "/docfiles"))
     if (fs.existsSync("docfiles"))
         nodeutil.cpR("docfiles", dst + "/docfiles")
 
@@ -3426,7 +3426,7 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const route = parsed.flags["route"] as string;
+    const route = parsed.flags["route"] as string || "";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
 
@@ -3440,7 +3440,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
 function internalStaticPkgAsync(builtPackaged: string, label: string) {
     const pref = path.resolve(builtPackaged);
-    const localDir = label ? "/" + label + "/" : "/"
+    const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
