@@ -393,7 +393,6 @@ namespace ts.pxtc {
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
             paramDefl: {},
-            blockFieldEditorParams: {},
             callingConvention: ir.CallingConvention.Plain,
             _source: cmt
         }
@@ -407,6 +406,7 @@ namespace ts.pxtc {
                     if (U.endsWith(n, ".defl")) {
                         res.paramDefl[n.slice(0, n.length - 5)] = v
                     } else if (U.startsWith(n, "blockFieldEditorParams")) {
+                        if (!res.blockFieldEditorParams) res.blockFieldEditorParams = {}
                         res.blockFieldEditorParams[n.slice(23, n.length)] = v
                     } else {
                         (<any>res)[n] = v;
