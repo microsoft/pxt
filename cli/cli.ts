@@ -3750,11 +3750,11 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 
     let p = gitAsync(["pull"]);
     branches.forEach(branch => {
-        const pr = `cp/${name}`;
+        const pr = `${branch}/${name}`;
         p = p.then(() => gitAsync(["checkout", branch]))
             .then(() => gitAsync(["checkout", "-b", pr]))
             .then(() => gitAsync(["cherry-pick", commit]))
-            .then(() => gitAsync(["git", "push", "--set-upstream", "origin", pr]))
+            .then(() => gitAsync(["push", "--set-upstream", "origin", pr]))
     })
 
     return p.then(() => gitAsync(["checkout", ",master"]))
