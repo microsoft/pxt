@@ -1080,6 +1080,7 @@ export class ProjectView
 
     importUrlDialog() {
         let input: HTMLInputElement;
+        const shareUrl = pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl;
         core.confirmAsync({
             header: lf("Open project URL"),
             onLoaded: ($el) => {
@@ -1088,13 +1089,16 @@ export class ProjectView
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label>${lf("Copy the URL of the project.")}</label>
-    <input type="url" class="ui button blue fluid"></input>
+    <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
   </div>
 </div>`,
         }).done(res => {
             if (res) {
-                pxt.tickEvent("menu.open.file");
-                this.importFile(input.files[0]);
+                pxt.tickEvent("menu.open.url");
+                if (input.value.toLowerCase().indexOf(shareUrl) == 0) {
+                    const id = input.value.slice(shareUrl.length);
+                    loadHeaderBySharedId(id);
+                }
             }
         })
     }
@@ -1740,14 +1744,8 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "pub":
         case "edit":
             pxt.tickEvent("hash." + hash.cmd);
-            const existing = workspace.getHeaders()
-                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
-            core.showLoading(lf("loading project..."));
-            (existing
-                ? theEditor.loadHeaderAsync(existing)
-                : workspace.installByIdAsync(hash.arg)
-                    .then(hd => theEditor.loadHeaderAsync(hd)))
-                .done(() => core.hideLoading())
+            window.location.hash = "";
+            loadHeaderBySharedId(hash.arg);
             return true;
         case "sandboxproject":
         case "project":
@@ -1761,6 +1759,17 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     }
 
     return false;
+}
+
+function loadHeaderBySharedId(id: string) {
+    const existing = workspace.getHeaders()
+        .filter(h => h.pubCurrent && h.pubId == id)[0]
+    core.showLoading(lf("loading project..."));
+    (existing
+        ? theEditor.loadHeaderAsync(existing)
+        : workspace.installByIdAsync(id)
+            .then(hd => theEditor.loadHeaderAsync(hd)))
+        .done(() => core.hideLoading());
 }
 
 function initHashchange() {
