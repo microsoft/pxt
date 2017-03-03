@@ -26,6 +26,11 @@ namespace pxt.blocks {
             block: "math_number",
             defaultValue: "0"
         },
+        "numberMinMax": {
+            field: "NUM",
+            block: "math_number_minmax",
+            defaultValue: "0"
+        },
         "boolean": {
             field: "BOOL",
             block: "logic_boolean",
@@ -119,15 +124,23 @@ namespace pxt.blocks {
             let attr = attrNames["this"];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue || attr.name, attr.shadowType || "variables_get"));
         }
-        if (fn.parameters)
+        if (fn.parameters) {
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
                 (/^(string|number|boolean)$/.test(attrNames[pr.name].type)
                     || !!attrNames[pr.name].shadowType
                     || !!attrNames[pr.name].shadowValue))
                 .forEach(pr => {
                     let attr = attrNames[pr.name];
-                    block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
+                    let shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
+                    if (pr.options && pr.options['min'] && pr.options['max']) {
+                        let container = document.createElement('mutation');
+                        container.setAttribute('min', pr.options['min'].value);
+                        container.setAttribute('max', pr.options['max'].value);
+                        shadowValue.firstChild.appendChild(container);
+                    }
+                    block.appendChild(shadowValue);
                 })
+        }
         searchElementCache[fn.attributes.blockId] = block.cloneNode(true);
         return block;
     }
@@ -485,6 +498,8 @@ namespace pxt.blocks {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Boolean");
                 } else if (pr.type == "string") {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "String");
+                } else if (pr.type == "numberMinMax") {
+                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Number");
                 } else {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
                 }
@@ -1579,6 +1594,17 @@ namespace pxt.blocks {
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url,
             String(blockColors[mInfo.category])
+        );
+
+        // builtin math_number_minmax
+        //XXX Integer validation needed.
+        const mMInfo = helpResources()['math_number_minmax'];
+        installHelpResources(
+            'math_number_minmax',
+            mMInfo.name,
+            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
+            mMInfo.url,
+            String(blockColors[mMInfo.category])
         );
 
         // builtin math_arithmetic

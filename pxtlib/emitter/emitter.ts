@@ -322,6 +322,8 @@ namespace ts.pxtc {
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
 
+        paramMin?: pxt.Map<string>; // min range
+        paramMax?: pxt.Map<string>; // max range
         // String that can be used to pass parameters to constructors of custom field editors
         blockFieldEditorParams?: string;
     }
@@ -423,11 +425,20 @@ namespace ts.pxtc {
         }
 
         res.paramHelp = {}
+        res.paramMin = {}
+        res.paramMax = {}
         res.jsDoc = ""
         cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
-            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
+            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(\[.*\])?\s+(.*)$/mg, (full: string, name: string, type: string, desc: string) => {
                 res.paramHelp[name] = desc
+                if (type) {
+                    type.replace(/^\[([0-9]+)-([0-9]+)\]$/i, (full: string, min: string, max: string) => {
+                        res.paramMin[name] = min
+                        res.paramMax[name] = max
+                        return ""
+                    })
+                }
                 return ""
             })
             res.jsDoc += doccmt

@@ -121,6 +121,11 @@ namespace pxt.blocks {
                 url: '/blocks/math/random',
                 category: 'math'
             },
+            'math_number_minmax': {
+                name: Util.lf("{id:block}number"),
+                url: '/blocks/math/random',
+                category: 'math'
+            },
             'math_arithmetic': {
                 name: Util.lf("arithmetic operation"),
                 url: '/blocks/math',
