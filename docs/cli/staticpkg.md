@@ -5,7 +5,7 @@
 Packages the target into static HTML pages
 
 ```
-pxt staticpkg [--route route] [--githubpages]
+pxt staticpkg [--route route] [--githubpages] [--output output]
 ```
 
 ## Description
@@ -16,11 +16,21 @@ Compiles the PXT editor into static HTML files that can be served without a serv
 
 ### route <value> (optional)
 
-Output directory and routing path. If missing, defaults to ``local``. The route will be injected into the all the paths in the application.
+Routing path. If missing, defaults to ``local``. The route will be injected into the all the paths in the application.
 
 ### githubpages (optional)
 
 Generate a web site compatiable with GitHub pages.
+
+### output (optional)
+
+Directory for generated files. 
+
+### ~ hint
+
+This directory is cleaned before starting the process.
+
+### ~
 
 ## Local testing
 
