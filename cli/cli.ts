@@ -3741,8 +3741,8 @@ function getFiles(): string[] {
 }
 
 function cherryPickAsync(parsed: commandParser.ParsedCommand) {
-    const name = parsed.arguments[0];
-    const commit = parsed.arguments[1];
+    const commit = parsed.arguments[0];
+    const name = parsed.flags["name"] || commit.slice(0, 7);
     let majorVersion = parseInt(pxtVersion().split('.')[0]);
     const gitAsync = (args: string[]) => nodeutil.spawnAsync({
         cmd: "git",
@@ -3763,10 +3763,7 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
             .then(() => gitAsync(["push", "--set-upstream", "origin", pr]));
     })
 
-    return p.then(() => gitAsync(["checkout", "master"]))
-        .then(() => {
-            pxt.log('branches created, please verify create PRs and validate')
-        })
+    return p.catch(() => gitAsync(["checkout", "master"]));
 }
 
 function checkDocsAsync(): Promise<void> {
@@ -4137,7 +4134,20 @@ function initCommands() {
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
-    advancedCommand("cherrypick", "creates new branch, cherry-pick commit, push for all servicing branches", cherryPickAsync, "<name> <commit>");
+    p.defineCommand({
+        name: "cherrypick",
+        aliases: ["cp"],
+        help: "recursively cherrypicks and push branches",
+        argString: "<commit>",
+        advanced: true,
+        flags: {
+            "name": {
+                description: "name of the branch",
+                type: "string",
+                argument: "name"
+            }
+        }
+    }, cherryPickAsync);
 
     p.defineCommand({
         name: "decompile",
