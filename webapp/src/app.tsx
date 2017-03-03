@@ -1095,8 +1095,8 @@ export class ProjectView
         }).done(res => {
             if (res) {
                 pxt.tickEvent("menu.open.url");
-                if (input.value.toLowerCase().indexOf(shareUrl) == 0) {
-                    const id = input.value.slice(shareUrl.length);
+                const id = pxt.Cloud.parseScriptId(input.value);
+                if (id) {
                     loadHeaderBySharedId(id);
                 }
             }
