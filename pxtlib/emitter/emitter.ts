@@ -322,8 +322,8 @@ namespace ts.pxtc {
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
 
-        // String that can be used to pass parameters to constructors of custom field editors
-        blockFieldEditorParams?: string;
+        // Map for custom field editor parameters
+        blockFieldEditorParams?: pxt.Map<string>;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -393,6 +393,7 @@ namespace ts.pxtc {
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
             paramDefl: {},
+            blockFieldEditorParams: {},
             callingConvention: ir.CallingConvention.Plain,
             _source: cmt
         }
@@ -405,6 +406,8 @@ namespace ts.pxtc {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (U.endsWith(n, ".defl")) {
                         res.paramDefl[n.slice(0, n.length - 5)] = v
+                    } else if (U.startsWith(n, "blockFieldEditorParams")) {
+                        res.blockFieldEditorParams[n.slice(23, n.length)] = v
                     } else {
                         (<any>res)[n] = v;
                     }

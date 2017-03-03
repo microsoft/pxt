@@ -453,18 +453,9 @@ namespace pxt.blocks {
 
                     if (fn.attributes.blockFieldEditor == "note_editor")
                         i.appendField(new Blockly.FieldNote("262", color, noteValidator), attrNames[n].name);
-                    else if (fn.attributes.blockFieldEditor == "FieldDropdownGrid") {
-                        const params = fn.attributes.blockFieldEditorParams.split(",");
-                        const cols = parseInt(params[0]);
-                        const width = parseInt(params[1]);
-                        const useTooltips = params[2] === "true";
-                        const tooltipXOffset = !!params[3] ? parseInt(params[3]) : null;
-                        const tooltipYOffset = !!params[4] ? parseInt(params[4]) : null;
-                        i.appendField(new Blockly.FieldDropdownGrid(dd, cols, width, {
-                            enabled: useTooltips,
-                            xOffset: tooltipXOffset,
-                            yOffset: tooltipYOffset
-                        }), attrNames[n].name);
+                    else if (fn.attributes.blockFieldEditor == "FieldGridPicker") {
+                        const params = fn.attributes.blockFieldEditorParams;
+                        i.appendField(new Blockly.FieldGridPicker(dd, color, params), attrNames[n].name);
                     }
                     else
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
