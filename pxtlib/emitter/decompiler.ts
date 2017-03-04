@@ -700,7 +700,8 @@ ${output}</xml>`;
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
             if (callInfo.attrs.blockIdentity) {
-                if (callInfo.attrs.enumval && (n.parent as any).callInfo.attrs.useEnumVal) {
+                const parentCallInfo = n.parent && (n.parent as any).callInfo;
+                if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
                     value = callInfo.attrs.enumval;
                 }
 

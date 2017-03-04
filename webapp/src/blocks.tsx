@@ -546,7 +546,7 @@ export class Editor extends srceditor.Editor {
             zoom: {
                 enabled: false,
                 controls: false,
-                /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
+                wheel: true,
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05
