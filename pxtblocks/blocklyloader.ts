@@ -26,11 +26,6 @@ namespace pxt.blocks {
             block: "math_number",
             defaultValue: "0"
         },
-        "numberMinMax": {
-            field: "NUM",
-            block: "math_number_minmax",
-            defaultValue: "0"
-        },
         "boolean": {
             field: "BOOL",
             block: "logic_boolean",
@@ -131,12 +126,15 @@ namespace pxt.blocks {
                     || !!attrNames[pr.name].shadowValue))
                 .forEach(pr => {
                     let attr = attrNames[pr.name];
-                    let shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
+                    let shadowValue: Element;
                     if (pr.options && pr.options['min'] && pr.options['max']) {
+                        shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, 'math_number_minmax');
                         let container = document.createElement('mutation');
                         container.setAttribute('min', pr.options['min'].value);
                         container.setAttribute('max', pr.options['max'].value);
                         shadowValue.firstChild.appendChild(container);
+                    } else {
+                        shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
                     }
                     block.appendChild(shadowValue);
                 })
@@ -489,8 +487,6 @@ namespace pxt.blocks {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Boolean");
                 } else if (pr.type == "string") {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "String");
-                } else if (pr.type == "numberMinMax") {
-                    i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, "Number");
                 } else {
                     i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
                 }

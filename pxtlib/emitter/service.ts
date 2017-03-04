@@ -288,7 +288,7 @@ namespace ts.pxtc {
                     return {
                         name: n,
                         description: desc,
-                        type: (minVal && maxVal) ? "numberMinMax" : typeOf(p.type, p),
+                        type: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
                         properties: props,
