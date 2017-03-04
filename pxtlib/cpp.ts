@@ -491,7 +491,7 @@ namespace pxt.cpp {
             return outp
         }
 
-        const currSettings: Map<any> = {}
+        const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
         const optSettings: Map<any> = {}
         const settingSrc: Map<Package> = {}
 
