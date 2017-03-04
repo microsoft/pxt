@@ -270,8 +270,8 @@ namespace ts.pxtc {
                 parameters: !hasParams ? null : (decl.parameters || []).map(p => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
-                    let minVal = attributes.paramMin[n] || undefined
-                    let maxVal = attributes.paramMax[n] || undefined
+                    let minVal = attributes.paramMin ? attributes.paramMin[n] : undefined
+                    let maxVal = attributes.paramMax ? attributes.paramMax[n] : undefined
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
                     let props: PropertyDesc[];
                     if (attributes.mutate && p.type.kind === SK.FunctionType) {
