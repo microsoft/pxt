@@ -66,9 +66,25 @@ namespace pxt.blocks {
 
         switch (mutationType) {
             case MutatorTypes.ObjectDestructuringMutator:
-                if (!info.parameters || info.parameters.length !== 1 || info.parameters[0].properties.length === 0) {
-                    console.error("Mutating blocks only supported for functions with one parameter that has multiple properties");
-                    return;
+                if (!info.parameters || info.parameters.length < 1) {
+                    console.error("Destructuring mutations require at least one parameter")
+                }
+                else {
+                    let found = false;
+                    for (const param of info.parameters) {
+                        if (param.type.indexOf("=>") !== -1) {
+                            if (!param.properties || param.properties.length === 0) {
+                                console.error("Destructuring mutations only supported for functions with an event parameter that has multiple properties");
+                                return;
+                            }
+                            found = true;
+                        }
+                    }
+
+                    if (!found) {
+                        console.error("Destructuring mutations must have an event parameter");
+                        return;
+                    }
                 }
                 m = new DestructuringMutator(b, info);
                 break;
@@ -229,6 +245,7 @@ namespace pxt.blocks {
         private parameters: string[];
         private parameterTypes: {[index: string]: string};
         private parameterRenames: {[index: string]: string} = {};
+        private paramIndex: number;
 
         constructor(b: Blockly.Block, info: pxtc.SymbolInfo) {
             super(b, info);
@@ -302,10 +319,15 @@ namespace pxt.blocks {
             if (savedParameters) {
                 const split = savedParameters.split(",");
                 const properties: NamedProperty[] = [];
+
+                if (this.paramIndex === undefined) {
+                    this.paramIndex = this.getParameterIndex();
+                }
+
                 split.forEach(saved => {
                     // Parse the old way of storing renames to maintain backwards compatibility
                     const parts = saved.split(":");
-                    if (this.info.parameters[0].properties.some(p => p.name === parts[0])) {
+                    if (this.info.parameters[this.paramIndex].properties.some(p => p.name === parts[0])) {
                         properties.push({
                             property: parts[0],
                             newName: parts[1]
@@ -359,7 +381,11 @@ namespace pxt.blocks {
             this.parameters = [];
             this.parameterTypes = {};
 
-            return this.info.parameters[0].properties.map(property => {
+            if (this.paramIndex === undefined) {
+                this.paramIndex = this.getParameterIndex();
+            }
+
+            return this.info.parameters[this.paramIndex].properties.map(property => {
                 // Used when compiling the destructured arguments
                 this.parameterTypes[property.name] = property.type;
 
@@ -405,6 +431,15 @@ namespace pxt.blocks {
 
         private propertyId(property: string) {
             return this.block.type + "_" + property;
+        }
+
+        private getParameterIndex() {
+            for (let i = 0; i < this.info.parameters.length; i++) {
+                if (this.info.parameters[i].type.indexOf("=>") !== -1) {
+                    return i;
+                }
+            }
+            return undefined;
         }
     }
 
