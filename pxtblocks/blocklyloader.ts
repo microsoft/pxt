@@ -645,9 +645,19 @@ namespace pxt.blocks {
 
             // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
+            let removeAdvanced = false;
             for (let i = 0; i < cats.length; i++) {
-                cats[i].setAttribute('name',
-                    Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
+                if (cats[i].getAttribute('name') === "Advanced" && cats[i].childElementCount === 0) {
+                    removeAdvanced = true;
+                }
+                else {
+                    cats[i].setAttribute('name',
+                        Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
+                }
+            }
+
+            if (removeAdvanced) {
+                removeCategory(tb, "Advanced");
             }
         }
 
