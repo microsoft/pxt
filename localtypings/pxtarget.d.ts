@@ -138,6 +138,7 @@ declare namespace pxt {
         hideSideDocs?: boolean;
         sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
+        feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
@@ -178,6 +179,7 @@ declare namespace pxt {
         name: string;
         // needs to have one of `path` or `subitems`
         path?: string;
+        tutorial?: boolean;
         subitems?: DocMenuEntry[];
     }
 
