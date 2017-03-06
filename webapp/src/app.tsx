@@ -1691,10 +1691,14 @@ function initTheme() {
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
 
-    let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
-    if (boardDef.image) {
-        boardDef.image = patchCdn(boardDef.image)
-        if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+    if (pxt.appTarget.simulator
+        && pxt.appTarget.simulator.boardDefinition
+        && pxt.appTarget.simulator.boardDefinition.visual) {
+        let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+        if (boardDef.image) {
+            boardDef.image = patchCdn(boardDef.image)
+            if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+        }
     }
 }
 

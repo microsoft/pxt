@@ -962,10 +962,14 @@ function uploadCoreAsync(opts: UploadOptions) {
                     } else {
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
                         trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
-                        let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
-                        if (boardDef.image) {
-                            boardDef.image = uploadArtFile(boardDef.image);
-                            if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
+                        if (trg.simulator
+                            && trg.simulator.boardDefinition
+                            && trg.simulator.boardDefinition.visual) {
+                            let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+                            if (boardDef.image) {
+                                boardDef.image = uploadArtFile(boardDef.image);
+                                if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
+                            }
                         }
                         content = JSON.stringify(trg, null, 2);
                         if (isJs)
