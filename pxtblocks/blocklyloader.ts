@@ -1636,7 +1636,7 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
-        let varname = lf("{id:var}item");
+        let varname = lf("{id:var}myvariable");
         Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
             let button = goog.dom.createDom('button');
