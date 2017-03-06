@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
