@@ -141,7 +141,6 @@ svg {
 
 .blocklyText {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-    font-size:1rem !important;  
 }
 
 .blocklyCheckbox,
