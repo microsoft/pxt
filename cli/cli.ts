@@ -962,6 +962,11 @@ function uploadCoreAsync(opts: UploadOptions) {
                     } else {
                         trg.appTheme.appLogo = uploadArtFile(trg.appTheme.appLogo);
                         trg.appTheme.cardLogo = uploadArtFile(trg.appTheme.cardLogo)
+                        if ((trg.simulator.boardDefinition.visual as any).image) {
+                            let boardDef = trg.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+                            boardDef.image = uploadArtFile(boardDef.image);
+                            if (boardDef.outlineImage) boardDef.outlineImage = uploadArtFile(boardDef.outlineImage);
+                        }
                         content = JSON.stringify(trg, null, 2);
                         if (isJs)
                             content = targetJsPrefix + content
