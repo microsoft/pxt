@@ -52,6 +52,7 @@ namespace pxsim {
     export interface StackFrame {
         fn: LabelFn;
         pc: number;
+        overwrittenPC?: boolean;
         depth: number;
         r0?: any;
         parent: StackFrame;
@@ -215,6 +216,7 @@ namespace pxsim {
 
     // overriden at loadtime by specific implementation
     export let initCurrentRuntime: () => void = undefined;
+    export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
     export class Runtime {
         public board: BaseBoard;
@@ -432,8 +434,11 @@ namespace pxsim {
                     runtime = __this
                     while (!!p) {
                         __this.currFrame = p;
+                        __this.currFrame.overwrittenPC = false;
                         p = p.fn(p)
                         __this.maybeUpdateDisplay()
+                        if (__this.currFrame.overwrittenPC)
+                            p = __this.currFrame
                     }
                 } catch (e) {
                     if (__this.errorHandler)
@@ -550,7 +555,12 @@ namespace pxsim {
             this.setupTop = setupTop
             this.handleDebuggerMsg = handleDebuggerMsg
             this.entry = entryPoint
-            this.overwriteResume = (retPC: number) => { currResume = null; setupResume(this.currFrame, retPC) }
+            this.overwriteResume = (retPC: number) => {
+                currResume = null;
+                if (retPC >= 0)
+                    this.currFrame.pc = retPC;
+                this.currFrame.overwrittenPC = true;
+            }
             runtime = this;
 
             initCurrentRuntime();

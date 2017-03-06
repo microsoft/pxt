@@ -651,6 +651,10 @@ namespace ts.pxtc.Util {
     }
 
     export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
+        // normalize code (keep synched with localized files)
+        if (!/^(es|pt|si|sv|zh)/i.test(code))
+            code = code.split("-")[0]
+
         if (live) {
             console.log(`loading live translations for ${code}`)
             return downloadLiveTranslationsAsync(code, "strings.json")

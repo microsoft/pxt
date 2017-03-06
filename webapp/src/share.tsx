@@ -13,6 +13,7 @@ type IProjectView = pxt.editor.IProjectView;
 export enum ShareMode {
     Screenshot,
     Url,
+    Editor,
     Simulator,
     Cli
 }
@@ -57,7 +58,6 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
     renderCore() {
         const { visible } = this.state;
-        if (!visible) return <div />;
 
         const cloud = pxt.appTarget.cloud || {};
         const embedding = !!cloud.embedding;
@@ -84,8 +84,12 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 let editUrl = `${rootUrl}#pub:${currentPubId}`;
                 switch (mode) {
                     case ShareMode.Cli:
-                        embed = `pxt extract ${header.pubId}`;
+                        embed = `pxt target ${pxt.appTarget.id}
+pxt extract ${url}`;
                         help = lf("Run this command from a shell.");
+                        break;
+                    case ShareMode.Editor:
+                        embed = pxt.docs.embedUrl(rootUrl, "pub", header.pubId);
                         break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
@@ -137,16 +141,18 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             this.forceUpdate();
         }
 
-        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") }];
-        formats.push({ mode: ShareMode.Simulator, label: lf("Simulator") });
-        formats.push({ mode: ShareMode.Cli, label: lf("Command line") });
+        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") },
+            { mode: ShareMode.Editor, label: lf("Editor") },
+            { mode: ShareMode.Simulator, label: lf("Simulator") },
+            { mode: ShareMode.Cli, label: lf("Command line") }
+        ];
 
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing;
 
         return (
-            <sui.Modal open={this.state.visible} dimmer="blurring" className="sharedialog" header={lf("Share Project")} size="small"
-                onClose={() => this.setState({ visible: false }) }
+            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
+                onClose={() => this.setState({ visible: false }) } dimmer={true}
                 action={action}
                 actionClick={publish}
                 actionLoading={actionLoading}
@@ -178,6 +184,6 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                     </div> : undefined }
                 </div>
             </sui.Modal>
-            )
+        )
     }
 }

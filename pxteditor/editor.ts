@@ -84,6 +84,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         importFileDialog(): void;
+        importUrlDialog(): void;
         removeProject(): void;
         editText(): void;
 

@@ -3,6 +3,12 @@
 PXT is built to allow targeting different coding environment, called **targets**. 
 In this page, we'll go through the steps necessary to get your target with your own blocks and runtime.
 
+Examples of targets are:
+
+* https://pxt.microbit.org
+* https://pxt.adafruit.com
+* http://microsoft.github.io/pxt-sample/
+
 Since this is a rather technical topic, we assume that the reader is familiar with Node.JS, NPM
 and JavaScript and/or C++.
 

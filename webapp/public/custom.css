@@ -65,6 +65,8 @@ body {
 .ui.button.icon.clear {
     background: transparent;
     padding: 0;
+    border: 0 !important;
+    box-shadow: none !important;
 }
 
 .rtl .ui.menu .ui.dropdown .menu > .item .icon:not(.dropdown) {
@@ -342,6 +344,9 @@ div.blocklyWidgetDiv {
 }
 .monacoToolboxDiv.hide {
     display: none;
+}
+.monaco-editor-hover {
+    z-index:1000;
 }
 
 #monacoEditorInner {

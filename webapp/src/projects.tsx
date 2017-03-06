@@ -103,7 +103,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     renderCore() {
         const {visible, tab} = this.state;
-        if (!visible) return <div />;
 
         const tabNames = [
             lf("My Stuff"),
@@ -154,6 +153,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             pxt.tickEvent("projects.import");
             this.hide();
             this.props.parent.importFileDialog();
+        }
+        const importUrl = () => {
+            pxt.tickEvent("projects.importurl");
+            this.hide();
+            this.props.parent.importUrlDialog();
         }
         const newProject = () => {
             pxt.tickEvent("projects.new");
@@ -218,19 +222,22 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={true}
-                onClose={() => this.setState({ visible: false })} header={lf("Projects")} dimmer="blurring"
+                onClose={() => this.setState({ visible: false })} dimmer={true}
                 closeOnDimmerClick closeOnDocumentClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
-                    <sui.Menu inverted={targetTheme.invertedMenu} pointing secondary>
+                    <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
                         <sui.MenuItem key={`tab${t}`} active={tab == t} name={tabNames[t]} onClick={() => this.setState({ tab: t }) } />) }
+                        <div className="right menu">
+                            <sui.Button
+                                icon='close'
+                                class={`clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
+                                onClick={() => this.setState({ visible: false })} />
+                        </div>
                     </sui.Menu>
                 </sui.Segment>
                 {tab == ProjectsTab.MyStuff ? <div className={tabClasses}>
                     <div className="group">
-                        <h3 className="ui dividing header disabled">
-                            {lf("Create new")}
-                        </h3>
                         <div className="ui cards">
                             <codecard.CodeCardView
                                 key={'newproject'}
@@ -248,6 +255,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                 name={lf("Import File...") }
                                 description={lf("Open files from your computer") }
                                 onClick={() => importHex() }
+                                /> : undefined }
+                            {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
+                            <codecard.CodeCardView
+                                key={'importurl'}
+                                icon="upload"
+                                iconColor="secondary"
+                                name={lf("Import URL...") }
+                                description={lf("Open a shared project URL") }
+                                onClick={() => importUrl() }
                                 /> : undefined }
                         </div>
                     </div>
@@ -290,8 +306,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 {tab == ProjectsTab.Make ? <div className={tabClasses}>
                     <div className="ui cards">
                         {makes.map(scr => <codecard.CodeCardView
-                            key={'gal' + scr.name}
+                            key={'make' + scr.name}
                             name={scr.name}
+                            description={scr.description}
                             url={scr.url}
                             imageUrl={scr.imageUrl}
                             onClick={() => chgMake(scr) }
@@ -302,8 +319,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 {tab == ProjectsTab.Code ? <div className={tabClasses}>
                     <div className="ui cards">
                         {codes.map(scr => <codecard.CodeCardView
-                            key={'gal' + scr.name}
+                            key={'code' + scr.name}
                             name={scr.name}
+                            description={scr.description}
                             url={scr.url}
                             imageUrl={scr.imageUrl}
                             onClick={() => chgCode(scr) }

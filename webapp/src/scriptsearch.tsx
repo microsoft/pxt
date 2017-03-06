@@ -69,8 +69,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     renderCore() {
-        if (!this.state.visible) return null;
-
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
 
@@ -175,7 +173,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         const headerText = lf("Add Package...");
         return (
-            <sui.Modal open={this.state.visible} dimmer="blurring" header={headerText} className="searchdialog" size="large"
+            <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" size="large"
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
                 closeOnDimmerClick>

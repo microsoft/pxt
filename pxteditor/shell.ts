@@ -43,9 +43,7 @@ namespace pxt.shell {
     }
 
     export function isReadOnly() {
-        // TODO: Temporary disabling readonly functionality
-        return false;
-        /*return isSandboxMode()
-            && !/[?&]edit=1/i.test(window.location.href);*/
+        return isSandboxMode()
+            && !/[?&]edit=1/i.test(window.location.href);
     }
 }

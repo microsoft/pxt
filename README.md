@@ -23,7 +23,12 @@ More info:
 Examples of Editors built with PXT:
 
 * https://pxt.microbit.org
-* https://adafruit.pxt.io
+* https://pxt.adafruit.com
+
+## Branches
+
+* ``master`` is the active development branch, currently ``v1.*`` builds
+* ``v0`` is the servicing branch for ``v0.*`` builds
 
 ## Running a target from localhost
 
@@ -39,7 +44,7 @@ npm link ../pxt
 
 ## Build
 
-First, install (Node)[http://nodejs.org/]: minimum version 5.7. Then install the following:
+First, install [Node](https://nodejs.org/en/): minimum version 5.7. Then install the following:
 ```
 npm install -g jake
 npm install -g typings
@@ -67,7 +72,6 @@ of an app target (e.g. pxt-microbit). PXT will open the editor in your default w
 Alternatively, if you clone your pxt and pxt-microbit directories next to each
 other, you can serve your local pxt-microbit repo from within the pxt repo by
 running `jake serve`.
-
 
 ### Icons
 

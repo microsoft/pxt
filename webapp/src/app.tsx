@@ -102,7 +102,8 @@ export class ProjectView
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         this.state = {
             showFiles: false,
-            active: document.visibilityState == 'visible'
+            active: document.visibilityState == 'visible',
+            collapseEditorTools: pxt.appTarget.simulator.headless
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -504,7 +505,8 @@ export class ProjectView
                 this.setState({
                     header: h,
                     projectName: h.name,
-                    currFile: file
+                    currFile: file,
+                    sideDocsLoadUrl: ''
                 })
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
@@ -594,7 +596,6 @@ export class ProjectView
 
     importHex(data: pxt.cpp.HexFile) {
         const targetId = pxt.appTarget.id;
-        const forkid = pxt.appTarget.forkof;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
@@ -622,8 +623,7 @@ export class ProjectView
                 .done(() => core.hideLoading());
             return;
         } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
-            || (!forkid && Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
-            || (forkid && data.meta.cloudId == pxt.CLOUD_ID + forkid) // trying to load main target file into white-label
+            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
         ) {
             pxt.tickEvent("import.pxt")
             pxt.debug("importing project")
@@ -841,7 +841,13 @@ export class ProjectView
 
     saveAndCompile() {
         this.saveFile();
-        this.compile(true);
+
+        if (!pxt.appTarget.compile.hasHex) {
+            this.saveProjectToFile();
+        }
+        else {
+            this.compile(true);
+        }
     }
 
     compile(saveOnly = false) {
@@ -916,9 +922,9 @@ export class ProjectView
 
     proxySimulatorMessage(content: string) {
         simulator.proxy({
-            type: "content",
+            type: "custom",
             content: content
-        } as pxsim.SimulatorContentMessage);
+        } as pxsim.SimulatorCustomMessage);
     }
 
     toggleSimulatorCollapse() {
@@ -935,7 +941,12 @@ export class ProjectView
     }
 
     expandSimulator() {
-        this.startSimulator();
+        if (pxt.appTarget.simulator.headless) {
+            simulator.unhide();
+        }
+        else {
+            this.startSimulator();
+        }
         this.setState({ collapseEditorTools: false });
     }
 
@@ -945,8 +956,21 @@ export class ProjectView
         })
     }
 
+    // Close on escape
+    closeOnEscape = (e: KeyboardEvent) => {
+        if (e.keyCode !== 27) return
+        e.preventDefault()
+        this.toggleSimulatorFullscreen();
+    }
+
     toggleSimulatorFullscreen() {
         pxt.tickEvent("simulator.fullscreen", { view: 'computer', fullScreenTo: '' + !this.state.fullscreen });
+        if (!this.state.fullscreen) {
+            document.addEventListener('keydown', this.closeOnEscape);
+        } else {
+            document.removeEventListener('keydown', this.closeOnEscape);
+        }
+
         this.setState({ fullscreen: !this.state.fullscreen });
     }
 
@@ -1050,6 +1074,31 @@ export class ProjectView
             if (res) {
                 pxt.tickEvent("menu.open.file");
                 this.importFile(input.files[0]);
+            }
+        })
+    }
+
+    importUrlDialog() {
+        let input: HTMLInputElement;
+        const shareUrl = pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl;
+        core.confirmAsync({
+            header: lf("Open project URL"),
+            onLoaded: ($el) => {
+                input = $el.find('input')[0] as HTMLInputElement;
+            },
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>${lf("Copy the URL of the project.")}</label>
+    <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                pxt.tickEvent("menu.open.url");
+                const id = pxt.Cloud.parseScriptId(input.value);
+                if (id) {
+                    loadHeaderBySharedId(id);
+                }
             }
         })
     }
@@ -1227,6 +1276,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         // tutorial project is temporary, no need to delete
         let curr = pkg.mainEditorPkg().header
         curr.isDeleted = true
+        this.setState({ active: false });
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
@@ -1235,7 +1285,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     this.newProject();
                 }
             }).finally(() => {
-                this.setState({ tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
+                this.setState({ active: true, tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
             });
     }
 
@@ -1277,7 +1327,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const fullscreen = run && !simOpts.hideFullscreen;
         const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
         const cookieKey = "cookieconsent"
-        const cookieConsent = !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = !!pxt.storage.getLocal(cookieKey) || electron.isElectron;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
 
@@ -1290,17 +1340,17 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-                this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
-                this.state.collapseEditorTools ? " collapsedEditorTools" : '',
-                this.state.fullscreen ? 'fullscreen' : '',
-                !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
-                pxt.shell.layoutTypeClass(),
-                inTutorial ? 'tutorial' : '',
-                pxt.options.light ? 'light' : '',
-                pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
-                showMenuBar ? '' : 'hideMenuBar',
-                'full-abs'
-            ]);
+            this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
+            this.state.collapseEditorTools ? " collapsedEditorTools" : '',
+            this.state.fullscreen ? 'fullscreensim' : '',
+            !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
+            pxt.shell.layoutTypeClass(),
+            inTutorial ? 'tutorial' : '',
+            pxt.options.light ? 'light' : '',
+            pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
+            showMenuBar ? '' : 'hideMenuBar',
+            'full-abs'
+        ]);
 
         return (
             <div id='root' className={rootClasses}>
@@ -1318,7 +1368,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialName} /> : null}
                             </div> : undefined }
-                            {!inTutorial ? <sui.Item class="editor-menuitem">
+                            {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
                                 <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
                                 <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
@@ -1407,7 +1457,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                 </div> : undefined}
-                {cookieConsent ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
+                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
@@ -1640,6 +1690,16 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
+
+    if (pxt.appTarget.simulator
+        && pxt.appTarget.simulator.boardDefinition
+        && pxt.appTarget.simulator.boardDefinition.visual) {
+        let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+        if (boardDef.image) {
+            boardDef.image = patchCdn(boardDef.image)
+            if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+        }
+    }
 }
 
 function parseHash(): { cmd: string; arg: string } {
@@ -1669,10 +1729,22 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "newproject":
             pxt.tickEvent("hash.newproject")
             editor.newProject();
+            window.location.hash = "";
+            return true;
+        case "newjavascript":
+            pxt.tickEvent("hash.newjavascript");
+            editor.newProject({
+                prj: pxt.appTarget.blocksprj,
+                filesOverride: {
+                    "main.blocks": ""
+                }
+            });
+            window.location.hash = "";
             return true;
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
+            window.location.hash = "";
             return true;
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
@@ -1682,14 +1754,8 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "pub":
         case "edit":
             pxt.tickEvent("hash." + hash.cmd);
-            const existing = workspace.getHeaders()
-                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
-            core.showLoading(lf("loading project..."));
-            (existing
-                ? theEditor.loadHeaderAsync(existing)
-                : workspace.installByIdAsync(hash.arg)
-                    .then(hd => theEditor.loadHeaderAsync(hd)))
-                .done(() => core.hideLoading())
+            window.location.hash = "";
+            loadHeaderBySharedId(hash.arg);
             return true;
         case "sandboxproject":
         case "project":
@@ -1703,6 +1769,17 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     }
 
     return false;
+}
+
+function loadHeaderBySharedId(id: string) {
+    const existing = workspace.getHeaders()
+        .filter(h => h.pubCurrent && h.pubId == id)[0]
+    core.showLoading(lf("loading project..."));
+    (existing
+        ? theEditor.loadHeaderAsync(existing)
+        : workspace.installByIdAsync(id)
+            .then(hd => theEditor.loadHeaderAsync(hd)))
+            .finally(() => core.hideLoading());
 }
 
 function initHashchange() {

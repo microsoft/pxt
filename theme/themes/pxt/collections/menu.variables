@@ -4,5 +4,6 @@
 
 /* PXT Variables */
 
+@background: @mainMenuBackground;
 @invertedBackground: @mainMenuInvertedBackground;
 @mainMenuMinHeight: @minHeight;
