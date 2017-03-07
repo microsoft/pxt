@@ -102,6 +102,7 @@ declare namespace pxt {
         yottaTarget?: string; // bbc-microbit-classic-gcc
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
+        yottaConfig?: any; // additional config
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         platformioIni?: string[];
         gittag: string;

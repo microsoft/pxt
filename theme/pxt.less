@@ -621,6 +621,12 @@ span.blocklyTreeIcon {
     border-radius: 5px;
 }
 
+/* Fade out disabled blocks, but don't completely lose the colour */
+.blocklyDisabled > .blocklyPathDark {
+    display: block !important;
+    fill-opacity: 0.5;
+}
+
 /*******************************
         Monaco Editor
 *******************************/
