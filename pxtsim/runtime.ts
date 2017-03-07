@@ -231,6 +231,7 @@ namespace pxsim {
         dead = false;
         running = false;
         recording = false;
+        lastRecordedUri: string;
         startTime = 0;
         id: string;
         globals: any = {};
@@ -281,12 +282,16 @@ namespace pxsim {
         }
 
         postFrame() {
-            if (this.recording)
-                Runtime.postMessage(<SimulatorRecorderMessage>{
-                    type: "recorder",
-                    action: "frame",
-                    data: this.board.screenshot()
-                })
+            if (!this.recording) return;
+            const uri = this.board.screenshot();
+            if (uri == this.lastRecordedUri) return;
+
+            Runtime.postMessage(<SimulatorRecorderMessage>{
+                type: "recorder",
+                action: "frame",
+                data: uri
+            })
+            this.lastRecordedUri = uri;
         }
 
         private numDisplayUpdates = 0;

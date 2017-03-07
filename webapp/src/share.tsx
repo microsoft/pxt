@@ -147,7 +147,7 @@ pxt extract ${url}`;
 
         const formats = [
             { mode: ShareMode.Editor, label: lf("Editor") },
-            header.icon ? { mode: ShareMode.Gif, label: lf("Gif") } : undefined,
+            header && header.icon ? { mode: ShareMode.Gif, label: lf("Gif") } : undefined,
             { mode: ShareMode.Simulator, label: lf("Simulator") },
             { mode: ShareMode.Code, label: lf("Code") },
             { mode: ShareMode.Cli, label: lf("Command line") }
@@ -166,7 +166,7 @@ pxt extract ${url}`;
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className={`ui form`}>
-                    { action && header.icon ?
+                    { action && header && header.icon ?
                         <img src={header.icon} className={"floated left"} /> : undefined
                     }
                     { action ?
