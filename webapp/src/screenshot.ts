@@ -77,7 +77,7 @@ export function startRecording(width: number, height: number) {
 
     recorder = new (window as any).GIF({
         workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
-        workers: 1,
+        workers: 2,
         repeat: 0,
         width,
         height
