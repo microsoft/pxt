@@ -232,6 +232,7 @@ namespace pxsim {
         running = false;
         recording = false;
         lastRecordedUri: string;
+        recordingTimer = 0;
         startTime = 0;
         id: string;
         globals: any = {};
@@ -271,7 +272,7 @@ namespace pxsim {
         }
 
         kill() {
-            this.dead = true
+            this.dead = true;
             // TODO fix this
             this.setRunning(false);
         }
@@ -279,6 +280,21 @@ namespace pxsim {
         updateDisplay() {
             this.board.updateView();
             this.postFrame();
+        }
+
+        startRecording() {
+            if (this.recording) return;
+
+            this.recording = true;
+            this.recordingTimer = setInterval(() => this.postFrame(), 50);
+        }
+
+        stopRecording() {
+            if (!this.recording) return;
+            if (this.recordingTimer) clearInterval(this.recordingTimer);
+            this.recording = false;
+            this.recordingTimer = 0;
+            this.lastRecordedUri = undefined;
         }
 
         postFrame() {
@@ -313,6 +329,7 @@ namespace pxsim {
                     this.startTime = U.now();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
+                    this.stopRecording();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
                 }
                 if (this.stateChanged) this.stateChanged();

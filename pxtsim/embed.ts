@@ -188,10 +188,11 @@ namespace pxsim {
         function recorder(rec: SimulatorRecorderMessage) {
             switch (rec.action) {
                 case "start":
-                    runtime.recording = true;
-                    runtime.postFrame();
+                    runtime.startRecording();
                     break;
-                case "stop": runtime.recording = false; break;
+                case "stop":
+                    runtime.stopRecording();
+                    break;
             }
         }
     }
