@@ -37,7 +37,7 @@
 #maineditor {
     left: @simulatorWidth;
     right: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 .rtl #maineditor {
     left:0;
@@ -612,6 +612,19 @@ span.blocklyTreeIcon {
 }
 .blocklyTreeIcon.blocklyTreeIconlists::before {
     content: "\f0cb";
+}
+
+/* Blockly Slider field */
+.blocklyWidgetDiv .goog-slider-horizontal {
+    background: white;
+    border: 2px solid black;
+    border-radius: 5px;
+}
+
+/* Fade out disabled blocks, but don't completely lose the colour */
+.blocklyDisabled > .blocklyPathDark {
+    display: block !important;
+    fill-opacity: 0.5;
 }
 
 /*******************************

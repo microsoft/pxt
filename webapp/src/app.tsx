@@ -505,7 +505,8 @@ export class ProjectView
                 this.setState({
                     header: h,
                     projectName: h.name,
-                    currFile: file
+                    currFile: file,
+                    sideDocsLoadUrl: ''
                 })
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
@@ -840,7 +841,13 @@ export class ProjectView
 
     saveAndCompile() {
         this.saveFile();
-        this.compile(true);
+
+        if (!pxt.appTarget.compile.hasHex) {
+            this.saveProjectToFile();
+        }
+        else {
+            this.compile(true);
+        }
     }
 
     compile(saveOnly = false) {
@@ -1067,6 +1074,31 @@ export class ProjectView
             if (res) {
                 pxt.tickEvent("menu.open.file");
                 this.importFile(input.files[0]);
+            }
+        })
+    }
+
+    importUrlDialog() {
+        let input: HTMLInputElement;
+        const shareUrl = pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl;
+        core.confirmAsync({
+            header: lf("Open project URL"),
+            onLoaded: ($el) => {
+                input = $el.find('input')[0] as HTMLInputElement;
+            },
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>${lf("Copy the URL of the project.")}</label>
+    <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                pxt.tickEvent("menu.open.url");
+                const id = pxt.Cloud.parseScriptId(input.value);
+                if (id) {
+                    loadHeaderBySharedId(id);
+                }
             }
         })
     }
@@ -1308,17 +1340,17 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-                this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
-                this.state.collapseEditorTools ? " collapsedEditorTools" : '',
-                this.state.fullscreen ? 'fullscreensim' : '',
-                !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
-                pxt.shell.layoutTypeClass(),
-                inTutorial ? 'tutorial' : '',
-                pxt.options.light ? 'light' : '',
-                pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
-                showMenuBar ? '' : 'hideMenuBar',
-                'full-abs'
-            ]);
+            this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
+            this.state.collapseEditorTools ? " collapsedEditorTools" : '',
+            this.state.fullscreen ? 'fullscreensim' : '',
+            !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
+            pxt.shell.layoutTypeClass(),
+            inTutorial ? 'tutorial' : '',
+            pxt.options.light ? 'light' : '',
+            pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
+            showMenuBar ? '' : 'hideMenuBar',
+            'full-abs'
+        ]);
 
         return (
             <div id='root' className={rootClasses}>
@@ -1362,6 +1394,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined}
                                         <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                         {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined}
+                                        {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined }
+                                        {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
 
                                 {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
@@ -1658,6 +1692,16 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
+
+    if (pxt.appTarget.simulator
+        && pxt.appTarget.simulator.boardDefinition
+        && pxt.appTarget.simulator.boardDefinition.visual) {
+        let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+        if (boardDef.image) {
+            boardDef.image = patchCdn(boardDef.image)
+            if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+        }
+    }
 }
 
 function parseHash(): { cmd: string; arg: string } {
@@ -1687,10 +1731,22 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "newproject":
             pxt.tickEvent("hash.newproject")
             editor.newProject();
+            window.location.hash = "";
+            return true;
+        case "newjavascript":
+            pxt.tickEvent("hash.newjavascript");
+            editor.newProject({
+                prj: pxt.appTarget.blocksprj,
+                filesOverride: {
+                    "main.blocks": ""
+                }
+            });
+            window.location.hash = "";
             return true;
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted")
             editor.newProject();
+            window.location.hash = "";
             return true;
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
@@ -1700,14 +1756,8 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "pub":
         case "edit":
             pxt.tickEvent("hash." + hash.cmd);
-            const existing = workspace.getHeaders()
-                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
-            core.showLoading(lf("loading project..."));
-            (existing
-                ? theEditor.loadHeaderAsync(existing)
-                : workspace.installByIdAsync(hash.arg)
-                    .then(hd => theEditor.loadHeaderAsync(hd)))
-                .done(() => core.hideLoading())
+            window.location.hash = "";
+            loadHeaderBySharedId(hash.arg);
             return true;
         case "sandboxproject":
         case "project":
@@ -1721,6 +1771,17 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     }
 
     return false;
+}
+
+function loadHeaderBySharedId(id: string) {
+    const existing = workspace.getHeaders()
+        .filter(h => h.pubCurrent && h.pubId == id)[0]
+    core.showLoading(lf("loading project..."));
+    (existing
+        ? theEditor.loadHeaderAsync(existing)
+        : workspace.installByIdAsync(id)
+            .then(hd => theEditor.loadHeaderAsync(hd)))
+            .finally(() => core.hideLoading());
 }
 
 function initHashchange() {

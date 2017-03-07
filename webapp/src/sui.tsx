@@ -540,25 +540,39 @@ export interface ModalProps {
 }
 
 export interface ModalState {
+    open?: boolean;
     marginTop?: number;
     scrolling?: boolean;
 }
 
 export class Modal extends data.Component<ModalProps, ModalState> {
-    _modalNode: any;
+    ref: any;
     id: string;
     animationId: number;
     constructor(props: ModalProps) {
         super(props)
         this.id = Util.guidGen();
-    }
-
-    componentDidMount() {
-        this.setPosition()
+        this.state = {
+            open: this.props.open
+        }
     }
 
     componentWillUnmount() {
-        this.handleUnmount()
+        this.handlePortalUnmount()
+    }
+
+    componentWillMount() {
+        const { open } = this.props;
+        this.state = {open: open}
+    }
+
+    componentWillReceiveProps(nextProps: ModalProps) {
+        const newState: ModalState = {};
+        if (nextProps.open != undefined) {
+            newState.open = nextProps.open;
+        }
+
+        if (Object.keys(newState).length > 0) this.setState(newState)
     }
 
     getMountNode = () => this.props.mountNode || document.body;
@@ -566,17 +580,23 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     handleClose = (e: Event) => {
         const { onClose } = this.props;
         if (onClose) onClose(e, this.props);
+
+        if (this.state.open != false)
+            this.setState({open: false})
     }
 
     handleOpen = (e: Event) => {
         const { onOpen } = this.props;
         if (onOpen) onOpen(e, this.props);
+
+        if (this.state.open != true)
+            this.setState({open: true})
     }
 
     setPosition = () => {
-        if (this._modalNode) {
+        if (this.ref) {
             const mountNode = this.getMountNode();
-            const { height } = this._modalNode.getBoundingClientRect();
+            const { height } = this.ref.getBoundingClientRect();
 
             const marginTop = -Math.round(height / 2);
             const scrolling = height >= window.innerHeight;
@@ -603,14 +623,14 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         this.animationId = requestAnimationFrame(this.setPosition);
     }
 
-    handleMount = () => {
+    handlePortalMount = () => {
         const { dimmer } = this.props;
         const mountNode = this.getMountNode();
 
         if (dimmer) {
             mountNode.classList.add('dimmable', 'dimmed');
 
-            if (dimmer === 'blurring') {
+            if (dimmer === 'blurring' && !pxt.options.light) {
                 mountNode.classList.add('blurring');
             }
         }
@@ -618,18 +638,18 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         this.setPosition()
     }
 
-    handleUnmount = () => {
+    handleRef = (c: any) => (this.ref = c);
+
+    handlePortalUnmount = () => {
         const mountNode = this.getMountNode();
         mountNode.classList.remove('blurring', 'dimmable', 'dimmed', 'scrollable');
 
-        this._modalNode = null;
-
-        cancelAnimationFrame(this.animationId);
+        if (this.animationId) cancelAnimationFrame(this.animationId);
     }
 
     renderCore() {
+        const { open } = this.state
         const {
-            open,
             basic,
             children,
             className,
@@ -654,7 +674,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const closeIconName = closeIcon === true ? 'close' : closeIcon;
 
         const modalJSX = (
-            <div className={classes} style={{ marginTop }} ref={c => (this._modalNode = c) } role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
+            <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
                     {this.props.closeIcon ? <Button
@@ -700,8 +720,8 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 closeOnDocumentClick={closeOnDocumentClick}
                 className={dimmerClasses}
                 mountNode={this.getMountNode() }
-                onMount={this.handleMount}
-                onUnmount={this.handleUnmount}
+                onMount={this.handlePortalMount}
+                onUnmount={this.handlePortalUnmount}
                 onClose={this.handleClose}
                 onOpen={this.handleOpen}
                 open={open}>
@@ -726,6 +746,7 @@ interface PortalProps {
 }
 
 interface PortalState {
+    open?: boolean;
 }
 
 export class Portal extends data.Component<PortalProps, PortalState> {
@@ -736,21 +757,37 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     }
 
     componentDidMount() {
-        if (this.props.open) {
+        if (this.state.open) {
             this.renderPortal();
         }
     }
 
     componentDidUpdate(prevProps: PortalProps, prevState: PortalState) {
-        this.renderPortal();
+        if (this.state.open) {
+            this.renderPortal()
+        }
 
-        if (prevProps.open && !this.props.open) {
+        if (prevState.open && !this.state.open) {
             this.unmountPortal();
         }
     }
 
     componentWillUnmount() {
         this.unmountPortal();
+    }
+
+    componentWillMount() {
+        const { open } = this.props;
+        this.state = {open: open}
+    }
+
+    componentWillReceiveProps(nextProps: ModalProps) {
+        const newState: ModalState = {};
+        if (nextProps.open != undefined) {
+            newState.open = nextProps.open;
+        }
+
+        if (Object.keys(newState).length > 0) this.setState(newState)
     }
 
     handleDocumentClick = (e: MouseEvent) => {
@@ -767,11 +804,17 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     close = (e: Event) => {
         const { onClose } = this.props;
         if (onClose) onClose(e);
+
+        if (this.state.open != false)
+            this.setState({open: false})
     }
 
     open = (e: Event) => {
         const { onOpen } = this.props;
         if (onOpen) onOpen(e);
+
+        if (this.state.open != true)
+            this.setState({open: true})
     }
 
     mountPortal = () => {

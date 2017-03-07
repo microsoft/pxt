@@ -103,7 +103,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     renderCore() {
         const {visible, tab} = this.state;
-        if (!visible) return <div />;
 
         const tabNames = [
             lf("My Stuff"),
@@ -154,6 +153,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             pxt.tickEvent("projects.import");
             this.hide();
             this.props.parent.importFileDialog();
+        }
+        const importUrl = () => {
+            pxt.tickEvent("projects.importurl");
+            this.hide();
+            this.props.parent.importUrlDialog();
         }
         const newProject = () => {
             pxt.tickEvent("projects.new");
@@ -218,7 +222,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={true}
-                onClose={() => this.setState({ visible: false })} dimmer="blurring"
+                onClose={() => this.setState({ visible: false })} dimmer={true}
                 closeOnDimmerClick closeOnDocumentClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
@@ -234,9 +238,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </sui.Segment>
                 {tab == ProjectsTab.MyStuff ? <div className={tabClasses}>
                     <div className="group">
-                        <h3 className="ui dividing header disabled">
-                            {lf("Create new")}
-                        </h3>                        
                         <div className="ui cards">
                             <codecard.CodeCardView
                                 key={'newproject'}
@@ -254,6 +255,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                 name={lf("Import File...") }
                                 description={lf("Open files from your computer") }
                                 onClick={() => importHex() }
+                                /> : undefined }
+                            {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
+                            <codecard.CodeCardView
+                                key={'importurl'}
+                                icon="upload"
+                                iconColor="secondary"
+                                name={lf("Import URL...") }
+                                description={lf("Open a shared project URL") }
+                                onClick={() => importUrl() }
                                 /> : undefined }
                         </div>
                     </div>

@@ -84,6 +84,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         importFileDialog(): void;
+        importUrlDialog(): void;
         removeProject(): void;
         editText(): void;
 
@@ -112,6 +113,8 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
+
+        startTutorial(tutorialId: string): void;
 
         addPackage(): void;
         typecheckNow(): void;

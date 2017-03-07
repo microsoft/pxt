@@ -95,14 +95,14 @@ export class ArgumentClass {
     argumentB: string;
 }
 
-//% mutate=true
+//% mutate=objectdestructuring
 //% mutateText="My Arguments"
 //% mutateDefaults="argumentA;argumentA,argumentB"
 // ...
 export function addSomeEventHandler((a: ArgumentClass) => void) { };
 ```
 
-In the above example, setting `mutate=true` will cause this API to use Blockly "mutators"
+In the above example, setting `mutate=objectdestructuring` will cause this API to use Blockly "mutators"
 to let users change what parameters appear in the blocks. Each parameter will be given an
 optional variable field in the block that defines a variable that can be used within the callback.
 The variable fields compile to object destructuring in the TypeScript code. For example:
@@ -115,8 +115,46 @@ addSomeEventHandler(({argumentA, argumentB}) => {
 
 ```
 
-For an example of this pattern in action, see the `radio.onDataPacketReceived` block. The other attributes
-related to mutators include:
+For an example of this pattern in action, see the `radio.onDataPacketReceived` block in
+the microbit target.
+
+In some cases it can be useful to change the runtime behavior of the API based on the properties selected by the
+user. To enable that behavior, create an enum with entries that have the same names as the argument object's
+properties and add an extra parameter taking in an enum array to the API. For example:
+
+```typescript
+
+export class ArgumentClass {
+    argumentA: number;
+    argumentB: string;
+}
+
+enum ArgNames {
+    argumentA,
+    argumentB
+}
+
+//% mutate=objectdestructuring
+//% mutateText="My Arguments"
+//% mutateDefaults="argumentA;argumentA,argumentB"
+//% mutatePropertyEnum="argNames"
+// ...
+export function addSomeEventHandler(args: ArgNames[], (a: ArgumentClass) => void) { };
+```
+
+Note the `mutatePropertyEnum` attribute added to the comment annotations. The block for this API will
+look the same as the previous example but the compiled code will also include the arguments passed:
+
+```typescript
+
+addSomeEventHandler([ArgNames.argumentA, ArgNames.argumentB], ({argumentA, argumentB}) => {
+
+})
+
+```
+
+
+The other attributes related to object destructuring mutators include:
 
 * `mutateText` - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
 * `mutateDefaults` - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
@@ -186,6 +224,8 @@ export function showNumber(value: number, interval: number = 150): void
 value is used as the shadow value.
 * An optional `help` attribute can be used to point to an specific documentation path.
 * If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
+* If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using range
+     - `@param` power [0-7] a value in the range 0..7, where 0 is the lowest power and 7 is the highest. `eg:` 7
 
 ## Objects and Instance methods
 
@@ -216,7 +256,7 @@ export function createMessage(text: string) : Message {
 
 ### Auto-create
 
-If object has a reasonable default constructor, and it is harmless to call this 
+If object has a reasonable default constructor, and it is harmless to call this
 constructor even if the variable needs to be overwritten later, then it's useful
 to designate a parameter-less function as auto-create, like this:
 

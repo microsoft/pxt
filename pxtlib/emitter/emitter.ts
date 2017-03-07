@@ -247,10 +247,10 @@ namespace ts.pxtc {
 
     function isSideEffectfulInitializer(init: Expression) {
         if (!init) return false;
+        if (isStringLiteral(init)) return false;
         switch (init.kind) {
             case SK.NullKeyword:
             case SK.NumericLiteral:
-            case SK.StringLiteral:
             case SK.TrueKeyword:
             case SK.FalseKeyword:
                 return false;
@@ -314,6 +314,7 @@ namespace ts.pxtc {
         mutate?: string;
         mutateText?: string;
         mutateDefaults?: string;
+        mutatePropertyEnum?: string;
 
         _name?: string;
         _source?: string;
@@ -321,6 +322,11 @@ namespace ts.pxtc {
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
+
+        paramMin?: pxt.Map<string>; // min range
+        paramMax?: pxt.Map<string>; // max range
+        // Map for custom field editor parameters
+        blockFieldEditorParams?: pxt.Map<string>;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -402,6 +408,15 @@ namespace ts.pxtc {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (U.endsWith(n, ".defl")) {
                         res.paramDefl[n.slice(0, n.length - 5)] = v
+                    } else if (U.endsWith(n, ".min")) {
+                        if (!res.paramMin) res.paramMin = {}
+                        res.paramMin[n.slice(0, n.length - 4)] = v
+                    } else if (U.endsWith(n, ".max")) {
+                        if (!res.paramMax) res.paramMax = {}
+                        res.paramMax[n.slice(0, n.length - 4)] = v
+                    } else if (U.startsWith(n, "blockFieldEditorParams")) {
+                        if (!res.blockFieldEditorParams) res.blockFieldEditorParams = {}
+                        res.blockFieldEditorParams[n.slice(23, n.length)] = v
                     } else {
                         (<any>res)[n] = v;
                     }
@@ -2633,7 +2648,7 @@ ${lbl}: .short 0xffff
         function emitBlock(node: Block) {
             node.statements.forEach(emit)
         }
-        function checkForLetOrConst(declList: VariableDeclarationList): boolean  {
+        function checkForLetOrConst(declList: VariableDeclarationList): boolean {
             if ((declList.flags & NodeFlags.Let) || (declList.flags & NodeFlags.Const)) {
                 return true;
             }
