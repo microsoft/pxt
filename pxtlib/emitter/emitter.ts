@@ -306,7 +306,7 @@ namespace ts.pxtc {
         advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
-        field? :  Object;
+        field?:  Object;
         // on interfaces
         indexerGet?: string;
         indexerSet?: string;
