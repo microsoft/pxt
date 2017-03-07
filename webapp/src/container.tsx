@@ -20,12 +20,20 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         this.props.parent.setSideDoc(path);
     }
 
+    openTutorial(path: string) {
+        pxt.tickEvent(`docstutorial`, { path });
+        this.props.parent.startTutorial(path);
+    }
+
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         const sideDocs = !(pxt.shell.isSandboxMode() || pxt.options.light || targetTheme.hideSideDocs);
         return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
-            {targetTheme.docMenu.map(m => <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>) }
-            {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path)).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
+            {targetTheme.docMenu.map(m =>
+               !m.tutorial ? <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className={`ui item ${sideDocs && !/^https?:/i.test(m.path) ? "widedesktop hide" : ""}`}>{m.name}</a>
+                : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } />
+                ) }
+            {sideDocs ? targetTheme.docMenu.filter(m => !/^https?:/i.test(m.path) && !m.tutorial).map(m => <sui.Item key={"docsmenuwide" + m.path} role="menuitem" text={m.name} class="widedesktop only" onClick={() => this.openDoc(m.path) } />) : undefined  }
         </sui.DropdownMenuItem>
     }
 }

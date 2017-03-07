@@ -1394,6 +1394,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined}
                                         <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                         {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined}
+                                        {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined }
+                                        {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
 
                                 {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
@@ -1690,6 +1692,16 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
+
+    if (pxt.appTarget.simulator
+        && pxt.appTarget.simulator.boardDefinition
+        && pxt.appTarget.simulator.boardDefinition.visual) {
+        let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+        if (boardDef.image) {
+            boardDef.image = patchCdn(boardDef.image)
+            if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+        }
+    }
 }
 
 function parseHash(): { cmd: string; arg: string } {

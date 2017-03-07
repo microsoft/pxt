@@ -408,6 +408,12 @@ namespace ts.pxtc {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (U.endsWith(n, ".defl")) {
                         res.paramDefl[n.slice(0, n.length - 5)] = v
+                    } else if (U.endsWith(n, ".min")) {
+                        if (!res.paramMin) res.paramMin = {}
+                        res.paramMin[n.slice(0, n.length - 4)] = v
+                    } else if (U.endsWith(n, ".max")) {
+                        if (!res.paramMax) res.paramMax = {}
+                        res.paramMax[n.slice(0, n.length - 4)] = v
                     } else if (U.startsWith(n, "blockFieldEditorParams")) {
                         if (!res.blockFieldEditorParams) res.blockFieldEditorParams = {}
                         res.blockFieldEditorParams[n.slice(23, n.length)] = v
@@ -429,20 +435,11 @@ namespace ts.pxtc {
         }
 
         res.paramHelp = {}
-        res.paramMin = {}
-        res.paramMax = {}
         res.jsDoc = ""
         cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
-            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(\[.*\])?\s+(.*)$/mg, (full: string, name: string, type: string, desc: string) => {
+            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
-                if (type) {
-                    type.replace(/^\[([0-9]+)-([0-9]+)\]$/i, (full: string, min: string, max: string) => {
-                        res.paramMin[name] = min
-                        res.paramMax[name] = max
-                        return ""
-                    })
-                }
                 return ""
             })
             res.jsDoc += doccmt
