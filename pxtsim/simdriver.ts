@@ -164,7 +164,11 @@ namespace pxsim {
                 type: 'recorder',
                 action: 'start'
             });
-            return { width: frame.clientWidth, height: frame.clientHeight };
+            const height = frame.clientHeight;
+            const width = this.runOptions.aspectRatio
+                ? Math.floor(height * this.runOptions.aspectRatio)
+                : frame.clientWidth;
+            return { width, height };
         }
 
         public stopRecording() {
