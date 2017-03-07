@@ -42,6 +42,16 @@ function genericContent(props: UiProps) {
     ]
 }
 
+function addClass(el: HTMLElement, cls: string) {
+    if (el.classList) el.classList.add(cls);
+    else if (el.className.indexOf(cls) < 0) el.className += ' ' + cls;
+}
+
+function removeClass(el: HTMLElement, cls: string) {
+    if (el.classList) el.classList.remove(cls);
+    else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
+}
+
 export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
     popup() {
         if (this.props.popup) {
@@ -611,9 +621,9 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 newState.scrolling = scrolling;
 
                 if (scrolling) {
-                    mountNode.classList.add('scrolling');
+                    addClass(mountNode, 'scrolling');
                 } else {
-                    mountNode.classList.remove('scrolling');
+                    removeClass(mountNode, 'scrolling');
                 }
             }
 
@@ -628,10 +638,11 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const mountNode = this.getMountNode();
 
         if (dimmer) {
-            mountNode.classList.add('dimmable', 'dimmed');
+            addClass(mountNode, 'dimmable');
+            addClass(mountNode, 'dimmed');
 
             if (dimmer === 'blurring' && !pxt.options.light) {
-                mountNode.classList.add('blurring');
+                addClass(mountNode, 'blurring');
             }
         }
 
@@ -642,7 +653,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
     handlePortalUnmount = () => {
         const mountNode = this.getMountNode();
-        mountNode.classList.remove('blurring', 'dimmable', 'dimmed', 'scrollable');
+        removeClass(mountNode, 'blurring');
+        removeClass(mountNode, 'dimmable');
+        removeClass(mountNode, 'dimmed');
+        removeClass(mountNode, 'scrollable');
 
         if (this.animationId) cancelAnimationFrame(this.animationId);
     }
