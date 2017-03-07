@@ -8,22 +8,30 @@
 
   <!-- @include meta.html -->
   <!-- @include head.html -->
+
   <style>
-    .masthead.segment {
+    .targets.segment {
       min-height: 700px;
+    }
+    
+    .targets h2 {
+      font-size: 1.5em;
+      font-weight: normal;
+      margin-top: 0.2em;
+      white-space: nowrap;
+    }
+
+    .targets .welcomeheader {
+      font-weight: 300;
+    }
+
+    .masthead.segment {
+      min-height: 250px;
       padding: 1em 0em;
     }
     
-    .masthead .logo.item img {
-      margin-right: 1em;
-    }
-    
-    .masthead .ui.menu .ui.button {
-      margin-left: 0.5em;
-    }
-    
     .masthead h1.ui.header {
-      margin-top: 0.5em;
+      margin-top: 1em;
       margin-bottom: 0em;
       font-size: 4em;
       font-weight: normal;
@@ -73,19 +81,59 @@
     .footer.segment {
       padding: 5em 0em;
     }
-    
-    .ui.menu {
-      display: none;
+
+    .ui.header.makecode {
+      font-size: 1.5em;
+      font-weight: normal;
+      font-variant: small-caps;
+      color: white;
     }
     
-    .ui.inverted.mspurple {
-      background: #5C2D91;
+    .ui.inverted.targets {
+      background: #2a7af3;
+    }
+
+    .ui.inverted.masthead {
+      background: #34495e;
+    }
+
+    .targets > .ui.cards {
+      padding: 2rem;
+    }
+
+    .ui.cards > .card {
+      box-shadow: none;
+      vertical-align: bottom;
+    }
+
+    .targets > .ui.cards > .card > .image, .ui.card > .image {
+      padding: 1.5rem;
+    }
+    .targets > .ui.cards > .card > .image > img, .ui.card > .image > img {
+      height: 200px;
     }
     
     .ui.inverted.white {
       background: none;
       color: 1px solid white;
     }
+
+    @media only screen and (min-width: 1200px) {
+        
+      .targets > .ui.cards {
+        padding: 5rem;
+      }
+      .targets > .ui.cards > .card > .image > img, .ui.card > .image > img {
+        height: 250px;
+      }
+
+      .menubar {
+        margin-left: 2rem;
+      }
+    }
+
+
+
   </style>
 </head>
 
@@ -94,18 +142,83 @@
   <!-- @include header.html -->
 
   <div class="pusher">
-    <div class="ui container">
-      <a href="https://www.microsoft.com" class="ui small left image" style="margin:0.5em">
-        <img class="ui image" src="/static/images/Microsoft-logo_rgb_c-gray.png" />
-      </a>
-    </div>
-    <div class="ui inverted vertical masthead center aligned segment mspurple">
+
+    <div class="ui inverted vertical center aligned segment targets">
+
+      <div class="ui padded menubar">
+        <div class="ui secondary menu">
+          <div class="ui item small image" style="margin:0.5em">
+            <img class="ui image" src="/static/images/Microsoft-logo_rgb_c-white.png" />
+            <span class="ui item inverted header makecode">MakeCode</span>
+        </div>
+        </div>
+      </div>
+
       <div class="ui text container">
-        <a href="https://pxt.microbit.org" class="ui centered medium image" style="margin-top:10em">
-          <img class="ui image" src="/static/images/microbit.simplified.svg" />
-        </a>
-        <h1 class="ui inverted header">code the micro:bit</h1>
-        <a href="https://pxt.microbit.org#gettingstarted" class="ui inverted huge white button">Start coding<i class="right arrow icon"></i></a>
+        <h1 class="ui inverted welcomeheader">Hello! Choose an editor to get started.</h1>
+        <p>
+        </p>
+      </div>
+
+      <div class="ui three stackable link cards ">
+        <div class="ui card raised">
+          <div class="ui segment attached top">
+            <h3>Micro:bit Foundation</h3>
+            <h2>micro:bit</h2>
+          </div>
+
+          <div class="image">
+            <img class="ui large bordered rounded image" src="/static/images/microbit.simplified.svg" />
+          </div>
+
+          <div class="ui inverted segment attached bottom">
+            <a class="ui inverted button blue huge" href="https://pxt.microbit.org#gettingstarted">Start Coding</a>
+          </div>
+        </div>
+
+
+        <div class="ui card raised">
+          <div class="ui segment attached top">
+            <h3>Adafruit</h3>
+            <h2>Circuit Playground Express</h2>
+          </div>
+
+          <div class="image">
+            <div class="ui orange right ribbon label"> Beta </div>
+            <img class="ui large bordered rounded image" src="/static/images/circuit.simplified.svg" />
+          </div>
+
+          <div class="ui inverted segment attached bottom">
+            <a class="ui inverted button blue huge" href="https://pxt.adafruit.com#gettingstarted">Start Coding</a>
+          </div>
+        </div>
+
+
+        <div class="ui card raised">
+          <div class="ui segment attached top">
+            <h3>Calliope</h3>
+            <h2>Mini</h2>
+          </div>
+
+          <div class="image">
+            <div class="ui orange right ribbon label"> Beta </div>
+            <img class="ui large bordered rounded image" src="/static/images/calliope.simplified.svg" />
+          </div>
+
+          <div class="ui inverted segment attached bottom">
+            <a class="ui inverted button blue huge" href="https://pxt.calliope.cc#gettingstarted">Start Coding</a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="ui vertical masthead center aligned segment">
+      <div class="ui text container">
+        <h1 class="ui header">Microsoft MakeCode</h1>
+        <p>
+        </p>
       </div>
     </div>
 
@@ -126,11 +239,11 @@
       </div>
     </div>
 
-    <div class="ui vertical stripe segment">
+    <div class="ui inverted vertical stripe segment">
       <div class="ui middle aligned stackable grid container">
         <div class="row">
           <div class="eight wide column">
-            <h3 class="ui header">Kodu for micro:bit</h3>
+            <h3>Kodu for micro:bit</h3>
             <p>Control your Kodu with the micro:bit! You can control character movement using the accelerometer, jump and shoot
               with a button press, display animations and scrolling text on the screen, interface with other devices through
               the IO pins, and much more..</p>
