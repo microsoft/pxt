@@ -259,7 +259,7 @@ namespace pxt.blocks {
         }
 
         public compileMutation(e: Environment, comments: string[]): JsNode {
-            if (!this.parameters.length) {
+            if (!this.info.attributes.mutatePropertyEnum && !this.parameters.length) {
                 return undefined;
             }
 
