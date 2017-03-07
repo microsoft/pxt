@@ -167,7 +167,7 @@ pxt extract ${url}`;
                 >
                 <div className={`ui form`}>
                     { action && header && header.icon ?
-                        <img src={header.icon} className={"floated left"} /> : undefined
+                        <img src={header.icon} className={"ui medium image centered"} /> : undefined
                     }
                     { action ?
                         <p>{lf("You need to publish your project to share it or embed it in other web pages.") +

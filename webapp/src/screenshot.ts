@@ -71,8 +71,8 @@ export function startRecording(width: number, height: number) {
         height *= MAX_SIZE / width;
         width = MAX_SIZE;
     } else if (height > width && height > MAX_SIZE) {
-        width *= 320 / height;
-        height = 320;
+        width *= MAX_SIZE / height;
+        height = MAX_SIZE;
     }
 
     recorder = new (window as any).GIF({
