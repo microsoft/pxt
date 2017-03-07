@@ -273,7 +273,14 @@ namespace pxt.blocks {
                 return escapedParam;
             }).join(", ");
 
-            return mkText(`({ ${declarationString} }) => `);
+            const lambdaString = ` ({ ${declarationString} }) => `;
+
+            if (this.info.attributes.mutatePropertyEnum) {
+                return mkText(` [${this.parameters.map(p => `${this.info.attributes.mutatePropertyEnum}.${p}`).join(", ")}],${lambdaString}`)
+            }
+            else {
+                return mkText(lambdaString);
+            }
         }
 
         public getDeclaredVariables(): pxt.Map<string> {

@@ -314,6 +314,7 @@ namespace ts.pxtc {
         mutate?: string;
         mutateText?: string;
         mutateDefaults?: string;
+        mutatePropertyEnum?: string;
 
         _name?: string;
         _source?: string;
