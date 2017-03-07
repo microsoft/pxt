@@ -16,6 +16,7 @@ export interface CommandFlag {
 export interface Command {
     name: string;
     help: string;
+    onlineHelp?: boolean;
 
     priority?: number;
     advanced?: boolean;
@@ -246,6 +247,9 @@ export class CommandParser {
                 printLine(flagNames[i], maxWidth, flagDescriptions[i], print);
             }
         }
+
+        if (c.onlineHelp)
+            print(`More information at ${"https://pxt.io/cli/" + c.name} .`);
     }
 
     private printTopLevelHelp(advanced: boolean, print: (s: string) => void) {

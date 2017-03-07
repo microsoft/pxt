@@ -519,7 +519,8 @@ export class ProjectView
                 this.setState({
                     header: h,
                     projectName: h.name,
-                    currFile: file
+                    currFile: file,
+                    sideDocsLoadUrl: ''
                 })
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h).done()
@@ -1113,6 +1114,31 @@ export class ProjectView
         })
     }
 
+    importUrlDialog() {
+        let input: HTMLInputElement;
+        const shareUrl = pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl;
+        core.confirmAsync({
+            header: lf("Open project URL"),
+            onLoaded: ($el) => {
+                input = $el.find('input')[0] as HTMLInputElement;
+            },
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>${lf("Copy the URL of the project.")}</label>
+    <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                pxt.tickEvent("menu.open.url");
+                const id = pxt.Cloud.parseScriptId(input.value);
+                if (id) {
+                    loadHeaderBySharedId(id);
+                }
+            }
+        })
+    }
+
     launchFullEditor() {
         pxt.tickEvent("sandbox.openfulleditor");
         Util.assert(pxt.shell.isSandboxMode());
@@ -1406,6 +1432,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank">{lf("Terms Of Use") }</a> : undefined}
                                         <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } />
                                         {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined}
+                                        {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined }
+                                        {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
 
                                 {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
@@ -1703,6 +1731,16 @@ function initTheme() {
 
     theme.appLogo = patchCdn(theme.appLogo)
     theme.cardLogo = patchCdn(theme.cardLogo)
+
+    if (pxt.appTarget.simulator
+        && pxt.appTarget.simulator.boardDefinition
+        && pxt.appTarget.simulator.boardDefinition.visual) {
+        let boardDef = pxt.appTarget.simulator.boardDefinition.visual as pxsim.BoardImageDefinition;
+        if (boardDef.image) {
+            boardDef.image = patchCdn(boardDef.image)
+            if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
+        }
+    }
 }
 
 function parseHash(): { cmd: string; arg: string } {
@@ -1757,14 +1795,8 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "pub":
         case "edit":
             pxt.tickEvent("hash." + hash.cmd);
-            const existing = workspace.getHeaders()
-                .filter(h => h.pubCurrent && h.pubId == hash.arg)[0]
-            core.showLoading(lf("loading project..."));
-            (existing
-                ? theEditor.loadHeaderAsync(existing)
-                : workspace.installByIdAsync(hash.arg)
-                    .then(hd => theEditor.loadHeaderAsync(hd)))
-                .done(() => core.hideLoading())
+            window.location.hash = "";
+            loadHeaderBySharedId(hash.arg);
             return true;
         case "sandboxproject":
         case "project":
@@ -1778,6 +1810,17 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     }
 
     return false;
+}
+
+function loadHeaderBySharedId(id: string) {
+    const existing = workspace.getHeaders()
+        .filter(h => h.pubCurrent && h.pubId == id)[0]
+    core.showLoading(lf("loading project..."));
+    (existing
+        ? theEditor.loadHeaderAsync(existing)
+        : workspace.installByIdAsync(id)
+            .then(hd => theEditor.loadHeaderAsync(hd)))
+            .finally(() => core.hideLoading());
 }
 
 function initHashchange() {

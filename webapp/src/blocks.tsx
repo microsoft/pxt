@@ -546,7 +546,7 @@ export class Editor extends srceditor.Editor {
             zoom: {
                 enabled: false,
                 controls: false,
-                /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
+                wheel: true,
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05
@@ -587,8 +587,8 @@ export class Editor extends srceditor.Editor {
             this.editor.updateToolbox(tb);
         } else {
             // Toolbox mode is different, need to refresh.
-            this.editor = undefined;
             this.delayLoadXml = this.getCurrentSource();
+            this.editor = undefined;
             this.loadingXml = false;
             if (this.loadingXmlPromise) {
                 this.loadingXmlPromise.cancel();

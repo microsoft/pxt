@@ -119,15 +119,26 @@ namespace pxt.blocks {
             let attr = attrNames["this"];
             block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue || attr.name, attr.shadowType || "variables_get"));
         }
-        if (fn.parameters)
+        if (fn.parameters) {
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
                 (/^(string|number|boolean)$/.test(attrNames[pr.name].type)
                     || !!attrNames[pr.name].shadowType
                     || !!attrNames[pr.name].shadowValue))
                 .forEach(pr => {
                     let attr = attrNames[pr.name];
-                    block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType));
+                    let shadowValue: Element;
+                    if (pr.options && pr.options['min'] && pr.options['max']) {
+                        shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, 'math_number_minmax');
+                        let container = document.createElement('mutation');
+                        container.setAttribute('min', pr.options['min'].value);
+                        container.setAttribute('max', pr.options['max'].value);
+                        shadowValue.firstChild.appendChild(container);
+                    } else {
+                        shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
+                    }
+                    block.appendChild(shadowValue);
                 })
+        }
         searchElementCache[fn.attributes.blockId] = block.cloneNode(true);
         return block;
     }
@@ -453,6 +464,10 @@ namespace pxt.blocks {
 
                     if (fn.attributes.blockFieldEditor == "note_editor")
                         i.appendField(new Blockly.FieldNote("262", color, noteValidator), attrNames[n].name);
+                    else if (fn.attributes.blockFieldEditor == "FieldGridPicker") {
+                        const params = fn.attributes.blockFieldEditorParams;
+                        i.appendField(new Blockly.FieldGridPicker(dd, color, params), attrNames[n].name);
+                    }
                     else
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
@@ -626,9 +641,19 @@ namespace pxt.blocks {
 
             // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
+            let removeAdvanced = false;
             for (let i = 0; i < cats.length; i++) {
-                cats[i].setAttribute('name',
-                    Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
+                if (cats[i].getAttribute('name') === "Advanced" && cats[i].childElementCount === 0) {
+                    removeAdvanced = true;
+                }
+                else {
+                    cats[i].setAttribute('name',
+                        Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
+                }
+            }
+
+            if (removeAdvanced) {
+                removeCategory(tb, "Advanced");
             }
         }
 
@@ -1566,6 +1591,17 @@ namespace pxt.blocks {
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url,
             String(blockColors[mInfo.category])
+        );
+
+        // builtin math_number_minmax
+        //XXX Integer validation needed.
+        const mMInfo = helpResources()['math_number_minmax'];
+        installHelpResources(
+            'math_number_minmax',
+            mMInfo.name,
+            (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
+            mMInfo.url,
+            String(blockColors[mMInfo.category])
         );
 
         // builtin math_arithmetic
