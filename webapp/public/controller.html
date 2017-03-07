@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-manifest="" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8">
+</head>
+<style type="text/css">
+    @import "/cdn/semantic.css";
+</style>
+<style>    
+    #logs {
+        position: absolute;
+        left: 0;
+        top: 1rem;
+        width: 100%;
+        height: 6rem;
+        border: 0;
+    }
+    
+    #iframe {
+        position: absolute;
+        left: 0;
+        top: 7rem;
+        width: 100%;
+        height: calc(100% - 7rem);
+        border: 0;
+    }
+</style>
+<script>
+    function sendMessage(action) {
+        var logs = document.getElementById("logs");
+        logs.innerText += action + "\n";
+        document.getElementById("iframe").contentWindow.postMessage({
+            type: "pxteditor",
+            id: "xxxxxxxxx",
+            action: action
+        }, "*")
+    }
+
+</script>
+<body>
+    <div id="buttons" class="ui buttons">
+        <button class="ui button" onclick="sendMessage('switchblocks')">switch to blocks</button>
+        <button class="ui button" onclick="sendMessage('switchjavascript')">switch to javascript</button>
+        <button class="ui button" onclick="sendMessage('startsimulator')">start sim</button>
+        <button class="ui button" onclick="sendMessage('restartsimulator')">reset sim</button>
+        <button class="ui button" onclick="sendMessage('stopsimulator')">stop sim</button>
+        <button class="ui button" onclick="sendMessage('newproject')">newproject</button>
+    </div>
+    <pre id="logs" class="ui"></pre>
+    <iframe id="iframe" src="http://localhost:3232/index.html?editorlayout=ide" />
+</body>
+
+<script>
+
+</script>
+
+</html>

@@ -10,6 +10,7 @@ import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
 import * as codecard from "./codecard";
+import * as blocks from "./blocks"
 
 
 import Util = pxt.Util;
@@ -47,6 +48,9 @@ export class Editor extends srceditor.Editor {
         }
 
         let promise = Promise.resolve().then(() => {
+            if (!this.hasBlocks())
+                return
+
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
                 let mainPkg = pkg.mainEditorPkg();
@@ -66,9 +70,6 @@ export class Editor extends srceditor.Editor {
                 return this.showConversionFailedDialog(file);
             }
 
-            if (!this.hasBlocks())
-                return
-
             // might be undefined
             let mainPkg = pkg.mainEditorPkg();
             let xml: string;
@@ -80,7 +81,7 @@ export class Editor extends srceditor.Editor {
             let blocksInfo: pxtc.BlocksInfo;
             return this.parent.saveFileAsync()
                 .then(() => compiler.getBlocksAsync())
-                .then((bi) => {
+                .then((bi: pxtc.BlocksInfo) => {
                     blocksInfo = bi;
                     pxt.blocks.initBlocks(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
@@ -131,7 +132,7 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else {
                 pxt.tickEvent("typescript.discardText");
-                this.overrideFile(this.parent.blocksEditor.saveToTypeScript());
+                this.overrideFile(this.parent.saveBlocksToTypeScript());
                 this.parent.setFile(bf);
             }
         })
@@ -160,7 +161,7 @@ export class Editor extends srceditor.Editor {
             let element = fnDict[ns];
             if (element.metaData && element.metaData.color && element.fns) {
                 let hexcolor = pxt.blocks.convertColour(element.metaData.color);
-                hexcolor = (inverted ? pxt.blocks.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#','');
+                hexcolor = (inverted ? Blockly.PXTUtils.fadeColour(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
                 Object.keys(element.fns).forEach((fn) => {
                     rules.push({ token: `identifier.ts ${fn}`, foreground: hexcolor });
                 });
@@ -179,7 +180,7 @@ export class Editor extends srceditor.Editor {
             rules: rules
         });
 
-        this.editor.updateOptions({theme: 'pxtTheme'});
+        this.editor.updateOptions({ theme: 'pxtTheme' });
     }
 
     beforeCompile() {
@@ -239,8 +240,8 @@ export class Editor extends srceditor.Editor {
 
     isIncomplete() {
         return this.editor && (this.editor as any)._view ?
-                (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible :
-                false;
+            (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible :
+            false;
     }
 
     resize(e?: Event) {
@@ -254,7 +255,7 @@ export class Editor extends srceditor.Editor {
         this.isReady = true
     }
 
-    public loadMonaco(): Promise<void> {
+    public loadMonacoAsync(): Promise<void> {
         if (this.editor || this.loadingMonaco) return Promise.resolve();
         this.loadingMonaco = true;
         this.extraLibs = Object.create(null);
@@ -322,9 +323,9 @@ export class Editor extends srceditor.Editor {
 
             this.editor.onDidBlurEditorText(() => {
                 if (this.isIncomplete()) {
-                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: true, noSemanticValidation: true});
+                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: true, noSemanticValidation: true });
                 } else {
-                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: false, noSemanticValidation: false});
+                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: false, noSemanticValidation: false });
                 }
             })
 
@@ -379,7 +380,7 @@ export class Editor extends srceditor.Editor {
                 this.editor.focus();
             });
             monacoEditorInner.ondrop = ((ev: DragEvent) => {
-                let insertText = ev.dataTransfer.getData('Snippet');
+                let insertText = ev.dataTransfer.getData('text'); // IE11 only support "text"
                 if (!insertText)
                     return;
                 ev.preventDefault();
@@ -390,10 +391,12 @@ export class Editor extends srceditor.Editor {
                 let model = this.editor.getModel();
                 let currPos = this.editor.getPosition();
                 let cursor = model.getOffsetAt(currPos)
+                if (!position) // IE11 fails to locate the mouse
+                    position = currPos;
 
                 insertText = (currPos.column > 1) ? '\n' + insertText :
-                                model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                                    insertText + '\n' : insertText;
+                    model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
+                        insertText + '\n' : insertText;
                 if (insertText.indexOf('{{}}') > -1) {
                     cursor += (insertText.indexOf('{{}}'));
                     insertText = insertText.replace('{{}}', '');
@@ -520,7 +523,7 @@ export class Editor extends srceditor.Editor {
 
     private updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
-        if (!appTheme.monacoToolbox) return;
+        if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
         // Toolbox div
         let toolbox = document.getElementById('monacoEditorToolbox');
         // Move the monaco editor to make room for the toolbox div
@@ -558,21 +561,94 @@ export class Editor extends srceditor.Editor {
             monacoEditor.addToolboxCategory(group, ns, metaElement.metaData.color, metaElement.metaData.icon, true, fnElement.fns);
         })
 
+        Editor.addBuiltinCategories(group, monacoEditor);
+
         // Add the toolbox buttons
-        this.addToolboxCategory(group, "Add Package", "#717171", ' ', false, null, () => {
-            this.resetFlyout();
-            this.parent.addPackage();
-        })
+        if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+            this.addToolboxCategory(group, "", "#717171", "addpackage", false, null, () => {
+                this.resetFlyout();
+                this.parent.addPackage();
+            }, lf("{id:category}Add Package"))
+        }
 
         // Inject toolbox icon css
         pxt.blocks.injectToolboxIconCss();
     }
 
-    private addToolboxCategory(group: HTMLDivElement,
-        ns: string, metaColor: string,
-        icon: string, injectIconClass: boolean = true,
-        fns?: { [fn: string]: pxt.vs.MethodDef },
-        onClick?: () => void) {
+    static addBuiltinCategories(group: HTMLDivElement, monacoEditor: Editor) {
+        monacoEditor.addToolboxCategory(group, "", pxt.blocks.blockColors["logic"].toString(), "logic", false, {
+            "if": {
+                sig: ``,
+                snippet: `if (true) {
+
+}`,
+                comment: lf("Runs code if the condition is true"),
+                metaData: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
+            }, "if ": {
+                sig: ``,
+                snippet: `if (true) {
+
+} else {
+
+}`,
+                comment: lf("Runs code if the condition is true; else run other code"),
+                metaData: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
+            },"switch": {
+                sig: ``,
+                snippet: `switch(item) {
+    case 0:
+        break;
+    case 1:
+        break;
+}`,
+                comment: lf("Runs different code based on a value"),
+                metaData: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
+            }
+        }, null, lf("{id:category}Logic"));
+        monacoEditor.addToolboxCategory(group, "", pxt.blocks.blockColors["loops"].toString(), "loops", false, {
+            "while": {
+                sig: `while(...)`,
+                snippet: `while(true) {
+
+}`,
+                comment: lf("Repeat code while condition is true"),
+                metaData: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
+            },
+            "for": {
+                sig: ``,
+                snippet: `for(let i = 0; i < 5; i++) {
+
+}`,
+                comment: lf("Repeat code a number of times in a loop"),
+                metaData: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
+            }
+        }, null, lf("{id:category}Loops"));
+    }
+
+    private addToolboxCategory(
+        group: HTMLDivElement,
+        ns: string,
+        metaColor: string,
+        icon: string,
+        injectIconClass: boolean = true,
+        fns?: pxt.Map<pxt.vs.MethodDef>,
+        onClick?: () => void,
+        category?: string) {
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
         // Create a tree item
@@ -596,7 +672,7 @@ export class Editor extends srceditor.Editor {
             } else {
                 // Selected category
                 treerow.style.background = appTheme.invertedToolbox ?
-                    `${pxt.blocks.fadeColour(color, pxt.blocks.highlightColorInvertedLuminocityMultiplier, false)}` :
+                    `${Blockly.PXTUtils.fadeColour(color, (Blockly as any).Options.invertedMultiplier, false)}` :
                     `${color}`;
                 treerow.style.color = '#fff';
                 treerow.className += ' blocklyTreeSelected';
@@ -615,6 +691,7 @@ export class Editor extends srceditor.Editor {
             monacoFlyout.style.height = `${monacoEditor.editor.getLayoutInfo().contentHeight}px`;
             monacoFlyout.style.display = 'block';
             monacoFlyout.className = 'monacoFlyout';
+            monacoFlyout.style.transform = 'none';
 
             if (onClick) {
                 // No flyout
@@ -642,7 +719,6 @@ export class Editor extends srceditor.Editor {
                     monacoBlock.draggable = true;
 
                     const elem = fns[fn];
-                    const sig = elem.sig;
                     const snippet = elem.snippet;
                     const comment = elem.comment;
                     const metaData = elem.metaData;
@@ -654,9 +730,8 @@ export class Editor extends srceditor.Editor {
                     sigToken.innerText = snippet
                         .replace(/^[^(]*\(/, '(')
                         .replace(/^\s*\{\{\}\}\n/gm, '')
-                        .replace(/\{\n\}/g, '{}');
-                    const docToken = document.createElement('span'); docToken.className = 'docs';
-                    docToken.innerText = comment.split('.')[0];
+                        .replace(/\{\n\}/g, '{}')
+                        .replace(/(?:\{\{)|(?:\}\})/g, '');
 
                     monacoBlock.title = comment;
 
@@ -668,16 +743,18 @@ export class Editor extends srceditor.Editor {
                         let model = monacoEditor.editor.getModel();
                         let currPos = monacoEditor.editor.getPosition();
                         let cursor = model.getOffsetAt(currPos)
-                        let insertText = `${ns}.${snippet}`;
+                        let insertText = ns ? `${ns}.${snippet}` : snippet;
                         insertText = (currPos.column > 1) ? '\n' + insertText :
-                                        model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                                            insertText + '\n' : insertText;
+                            model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
+                                insertText + '\n' : insertText;
 
                         if (insertText.indexOf('{{}}') > -1) {
                             cursor += (insertText.indexOf('{{}}'));
                             insertText = insertText.replace('{{}}', '');
                         } else
                             cursor += (insertText.length);
+
+                        insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
                         monacoEditor.editor.pushUndoStop();
                         monacoEditor.editor.executeEdits("", [
                             {
@@ -697,12 +774,12 @@ export class Editor extends srceditor.Editor {
                         pxt.tickEvent("monaco.toolbox.itemdrag");
                         let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
 
-                        setTimeout(function(){
+                        setTimeout(function () {
                             monacoFlyout.style.transform = "translateX(-9999px)";
                         });
 
-                        let insertText = `${ns}.${snippet}`;
-                        ev2.dataTransfer.setData('Snippet', insertText);
+                        let insertText = ns ? `${ns}.${snippet}` : snippet;
+                        ev2.dataTransfer.setData('text', insertText); // IE11 only supports text
                     }
                     monacoBlock.ondragend = (ev2: DragEvent) => {
                         monacoFlyout.style.transform = "none";
@@ -711,7 +788,6 @@ export class Editor extends srceditor.Editor {
 
                     monacoBlock.appendChild(methodToken);
                     monacoBlock.appendChild(sigToken);
-                    monacoBlock.appendChild(docToken);
                     monacoFlyout.appendChild(monacoBlock);
                 })
             }
@@ -723,7 +799,7 @@ export class Editor extends srceditor.Editor {
         let iconNone = document.createElement('span');
         let label = document.createElement('span');
 
-        let iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
+        let iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
         iconBlank.className = 'blocklyTreeIcon';
         iconBlank.setAttribute('role', 'presentation');
         iconNone.className = `blocklyTreeIcon ${iconClass}`;
@@ -745,7 +821,7 @@ export class Editor extends srceditor.Editor {
             treerow.style.background = (color || '#ddd');
             treerow.onmouseenter = () => {
                 if (treerow != monacoEditor.selectedCategoryRow) {
-                    treerow.style.background = pxt.blocks.fadeColour(color || '#ddd', pxt.blocks.highlightColorInvertedLuminocityMultiplier, false);
+                    treerow.style.background = Blockly.PXTUtils.fadeColour(color || '#ddd', (Blockly as any).Options.invertedMultiplier, false);
                 }
             }
             treerow.onmouseleave = () => {
@@ -761,7 +837,7 @@ export class Editor extends srceditor.Editor {
             pxt.blocks.appendToolboxIconCss(iconClass, icon);
         }
         treerow.style.paddingLeft = '0px';
-        label.innerText = `${Util.capitalize(ns)}`;
+        label.innerText = `${Util.capitalize(category || ns)}`;
     }
 
     getId() {
@@ -799,89 +875,90 @@ export class Editor extends srceditor.Editor {
         let editorDiv = document.getElementById("monacoEditorInner");
         editorArea.insertBefore(loading, editorDiv);
 
-        return this.loadMonaco()
-        .then(() => {
-            if (!this.editor) return;
-            let toolbox = document.getElementById('monacoEditorToolbox');
+        return this.loadMonacoAsync()
+            .then(() => {
+                if (!this.editor) return;
+                let toolbox = document.getElementById('monacoEditorToolbox');
 
-            let ext = file.getExtension()
-            let modeMap: any = {
-                "cpp": "cpp",
-                "h": "cpp",
-                "json": "json",
-                "md": "text",
-                "ts": "typescript",
-                "js": "javascript",
-                "svg": "xml",
-                "blocks": "xml",
-                "asm": "asm"
-            }
-            if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
-
-            this.editor.updateOptions({ readOnly: file.isReadonly() });
-
-            let proto = "pkg:" + file.getName();
-            let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
-            if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
-            if (model) this.editor.setModel(model);
-
-            if (mode == "typescript" && !file.isReadonly()) {
-                toolbox.innerHTML = '';
-                this.beginLoadToolbox(file);
-            }
-
-            // Set the current file
-            this.currFile = file;
-
-            this.setValue(file.content)
-            this.setDiagnostics(file, this.snapshotState())
-
-            this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
-
-            if (this.fileType == FileType.Markdown)
-                this.parent.setSideMarkdown(file.content);
-
-            this.currFile.setForceChangeCallback((from: string, to: string) => {
-                if (from != to) {
-                    pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
-                    this.loadFileAsync(this.currFile);
+                let ext = file.getExtension()
+                let modeMap: any = {
+                    "cpp": "cpp",
+                    "h": "cpp",
+                    "json": "json",
+                    "md": "text",
+                    "ts": "typescript",
+                    "js": "javascript",
+                    "svg": "xml",
+                    "blocks": "xml",
+                    "asm": "asm"
                 }
-            });
+                if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
-            if (!file.isReadonly()) {
-                model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent2) => {
-                    // Remove any Highlighted lines
-                    if (this.highlightDecorations)
-                        this.editor.deltaDecorations(this.highlightDecorations, []);
+                const readOnly = file.isReadonly() || pxt.shell.isReadOnly();
+                this.editor.updateOptions({ readOnly: readOnly });
 
-                    // Remove any current error shown, as a change has been made.
-                    let viewZones = this.editorViewZones || [];
-                    (this.editor as any).changeViewZones(function (changeAccessor: any) {
-                        viewZones.forEach((id: any) => {
-                            changeAccessor.removeZone(id);
-                        });
-                    });
-                    this.editorViewZones = [];
+                let proto = "pkg:" + file.getName();
+                let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
+                if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
+                if (model) this.editor.setModel(model);
 
-                    if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
-                        this.editor.setValue(" ");
+                if (mode == "typescript") {
+                    toolbox.innerHTML = '';
+                    this.beginLoadToolbox(file);
+                }
+
+                // Set the current file
+                this.currFile = file;
+
+                this.setValue(file.content)
+                this.setDiagnostics(file, this.snapshotState())
+
+                this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
+
+                if (this.fileType == FileType.Markdown)
+                    this.parent.setSideMarkdown(file.content);
+
+                this.currFile.setForceChangeCallback((from: string, to: string) => {
+                    if (from != to) {
+                        pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
+                        this.loadFileAsync(this.currFile);
                     }
-                    this.updateDiagnostics();
-                    this.changeCallback();
                 });
-            }
 
-            if (mode == "typescript" && !file.isReadonly()) {
-                toolbox.className = 'monacoToolboxDiv';
-            } else {
-                toolbox.className = 'monacoToolboxDiv hide';
-            }
+                if (!file.isReadonly()) {
+                    model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent2) => {
+                        // Remove any Highlighted lines
+                        if (this.highlightDecorations)
+                            this.editor.deltaDecorations(this.highlightDecorations, []);
 
-            this.resize();
-            this.resetFlyout(true);
-        }).finally(() => {
-            editorArea.removeChild(loading);
-        });
+                        // Remove any current error shown, as a change has been made.
+                        let viewZones = this.editorViewZones || [];
+                        (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                            viewZones.forEach((id: any) => {
+                                changeAccessor.removeZone(id);
+                            });
+                        });
+                        this.editorViewZones = [];
+
+                        if (!e.isRedoing && !e.isUndoing && !this.editor.getValue()) {
+                            this.editor.setValue(" ");
+                        }
+                        this.updateDiagnostics();
+                        this.changeCallback();
+                    });
+                }
+
+                if (mode == "typescript" && !file.isReadonly()) {
+                    toolbox.className = 'monacoToolboxDiv';
+                } else {
+                    toolbox.className = 'monacoToolboxDiv hide';
+                }
+
+                this.resize();
+                this.resetFlyout(true);
+            }).finally(() => {
+                editorArea.removeChild(loading);
+            });
     }
 
     private beginLoadToolbox(file: pkg.File) {
@@ -907,7 +984,7 @@ export class Editor extends srceditor.Editor {
     }
 
     setViewState(pos: monaco.IPosition) {
-        Util.assert(this.editor != undefined); // Guarded
+        if (!this.editor) return;
         if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
         this.editor.setScrollPosition(pos)

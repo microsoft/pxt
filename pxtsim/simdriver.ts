@@ -2,6 +2,7 @@ namespace pxsim {
     export interface SimulatorDriverOptions {
         revealElement?: (el: HTMLElement) => void;
         removeElement?: (el: HTMLElement, onComplete?: () => void) => void;
+        unhideElement?: (el: HTMLElement) => void;
         onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
         onDebuggerResume?: () => void;
@@ -86,7 +87,7 @@ namespace pxsim {
             }
         }
 
-        private postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+        public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
@@ -111,10 +112,10 @@ namespace pxsim {
         }
 
         private createFrame(): HTMLDivElement {
-            let wrapper = document.createElement("div") as HTMLDivElement;
+            const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = 'simframe';
 
-            let frame = document.createElement('iframe') as HTMLIFrameElement;
+            const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
             frame.allowFullscreen = true;
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
@@ -201,6 +202,15 @@ namespace pxsim {
             }
         }
 
+        public unhide() {
+            if (!this.options.unhideElement) return;
+            let frames = this.container.getElementsByTagName("iframe");
+            for (let i = 0; i < frames.length; ++i) {
+                let frame = frames[i];
+                this.options.unhideElement(frame.parentElement);
+            }
+        }
+
         public run(js: string, opts: SimulatorRunOptions = {}) {
             this.runOptions = opts;
             this.runId = this.nextId();
@@ -267,6 +277,9 @@ namespace pxsim {
                     break;
                 case 'simulator':  this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial': break; //handled elsewhere
+                case 'pxteditor':
+                case 'custom':
+                    break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 default:
                     if (msg.type == 'radiopacket') {

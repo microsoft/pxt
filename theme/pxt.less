@@ -1,5 +1,5 @@
 /* Import all components */
-@import 'semantic';
+@import 'pxtsemantic';
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
 
@@ -19,6 +19,12 @@
   bottom: 0rem;
 }
 
+.hideMenuBar #filelist,
+.hideMenuBar #maineditor,
+.hideMenuBar #sidedocs{
+    top: 0;
+}
+
 .full-abs {
     position: absolute !important;
     left: 0;
@@ -31,7 +37,7 @@
 #maineditor {
     left: @simulatorWidth;
     right: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 .rtl #maineditor {
     left:0;
@@ -214,11 +220,10 @@ body#docs.tutorial {
 /* Cookie Message */
 #cookiemsg {
    position: absolute;
-   left: 1rem;
-   bottom: 0.5rem;
+   right: 2rem;
+   bottom: 12rem;
    width: 18rem;
    text-align: left;
-   display:none;
    z-index:1000;
 }
 
@@ -228,8 +233,13 @@ body#docs.tutorial {
 }
 
 .rtl #cookiemsg {
-    left:auto;
-    right:1rem;
+    right:auto;
+    left:2rem;
+    text-align: right;
+}
+
+.collapsedEditorTools #cookiemsg {
+   bottom: 6rem;
 }
 
 /* Simulator */
@@ -247,20 +257,12 @@ div.simframe > iframe {
     top:0; left: 0; width:100%; height:100%;
 }
 
-/* Organization logo */
-.organization {
-    position:absolute;
-    top:1.3rem;
-    right:2rem;
-    height:2rem;
-    z-index:102;
-}
-.rtl .organization {
-    right:auto;
-    left:2rem;
+.simHeadless {
+    height: 0 !important;
+    width: 0 !important;
 }
 
-/* Menu */ 
+/* Menu */
 .ui.menu .item.editor-menuitem {
     background: fade(@black, 30%) !important;
     margin: 0.5rem;
@@ -322,10 +324,10 @@ div.simframe > iframe {
 }
 
 /* Logo */
-.ui.item.logo {
-    font-size: 2.8rem;
+.ui.menu .ui.item.logo {
+    font-size: 2.2rem;
     margin: 0;
-    padding: 0 0.3rem;
+    padding: 0rem !important;
 }
 .ui.item.logo .name {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
@@ -338,7 +340,7 @@ div.simframe > iframe {
 }
 
 .ui.item.logo img {
-    max-height: 2.5rem;
+    max-height: 2.0rem;
     margin-left: 1rem;
     margin-right: 1rem;
 }
@@ -352,13 +354,15 @@ div.simframe > iframe {
 /* Sandbox */
 .sandboxfooter {
     position:absolute;
-    bottom:1rem;
-    left:1rem;
+    bottom:0rem;
+    right:1rem;
     z-index:5;
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem !important;
 }
 .rtl .sandboxfooter{
-    left: auto;
-    right:1rem;
+    right: auto;
+    left:1rem;
 }
 
 /* code card */
@@ -403,7 +407,7 @@ div.simframe > iframe {
 ::-webkit-scrollbar-thumb {
     border-radius: 4px;
     background-color: #ccc;
-    box-shadow: 0 0 1px #ccc;    
+    box-shadow: 0 0 1px #ccc;
     -webkit-box-shadow: 0 0 1px #ccc;
 }
 
@@ -412,9 +416,6 @@ div.simframe > iframe {
     &:extend(.grey all);
 }
 .ui.button.getting-started-btn {
-    &:extend(.green all);
-}
-.ui.button.download-button {
     &:extend(.green all);
 }
 
@@ -434,6 +435,34 @@ div.simframe > iframe {
     display:inline-block;
     vertical-align: middle;
 }
+
+
+/*******************************
+        Projects Modal
+*******************************/
+
+
+.ui.modal.projectsdialog .ui.dividing.header, .ui.modal.projectsdialog .content > .header{
+    font-weight: normal !important;
+}
+
+.ui.modal.projectsdialog .ui.secondary.inverted.pointing.menu {
+    border: 0;
+}
+
+.ui.modal.projectsdialog .group {
+    padding:1rem;
+}
+
+.ui.modal.projectsdialog > .content {
+    padding: 0 !important;
+}
+
+.ui.modal.projectsdialog .tabsegment {
+    min-height: 450px;
+    background: white !important;
+}
+
 /*******************************
              Blockly
 *******************************/
@@ -467,17 +496,15 @@ span.blocklyTreeLabel, text.blocklyText, input.blocklyHtmlInput {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
 }
 
+/* Using 1rem creates font size issues in Edge
 text.blocklyText {
     font-size:1rem !important;
-}
+} */
 
 span.blocklyTreeLabel {
     font-size:1.25rem;
 }
 
-.blocklyFlyoutButton {
-    fill: rgb(165, 91, 128) !important;
-}
 .blocklyFlyoutButtonShadow {
     fill: none !important;
 }
@@ -587,6 +614,19 @@ span.blocklyTreeIcon {
     content: "\f0cb";
 }
 
+/* Blockly Slider field */
+.blocklyWidgetDiv .goog-slider-horizontal {
+    background: white;
+    border: 2px solid black;
+    border-radius: 5px;
+}
+
+/* Fade out disabled blocks, but don't completely lose the colour */
+.blocklyDisabled > .blocklyPathDark {
+    display: block !important;
+    fill-opacity: 0.5;
+}
+
 /*******************************
         Monaco Editor
 *******************************/
@@ -687,7 +727,7 @@ Avatar
 
 #root .avatar .message {
     margin-left: 4em;
-    margin-bottom: 1em;                    
+    margin-bottom: 1em;
 }
 
 .avatar .avatar-image {
@@ -873,13 +913,12 @@ Avatar
         left: inherit;
         right: 0 !important;
     }
-    /* Sandbox, Cookie message */
-    .sandboxfooter, #cookiemsg {
-        bottom: 5rem;
+    #cookiemsg {
+        bottom: 7.5rem;
     }
 
     /* Full screen */
-    .fullscreen #filelist {
+    .fullscreensim #filelist {
         position: fixed;
         z-index:100;
         top:0;
@@ -891,7 +930,7 @@ Avatar
         min-width: 100%;
         height:100%;
     }
-    .fullscreen #boardview {
+    .fullscreensim #boardview {
         position: relative;
         height:100%;
         background-color: white;
@@ -906,48 +945,48 @@ Avatar
         background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
-    .fullscreen #simulator .ui.item:not(.simtoolbar),
-        .fullscreen #simulator .ui.menu,
-        .fullscreen #menubar .ui.item:not(.logo),
-        .fullscreen #maineditor,
-        .fullscreen #editortools {
+    .fullscreensim #simulator .ui.item:not(.simtoolbar),
+        .fullscreensim #simulator .ui.menu,
+        .fullscreensim #menubar .ui.item:not(.logo),
+        .fullscreensim #maineditor,
+        .fullscreensim #editortools {
         display: none !important;
         z-index: -10;
     }
-    .fullscreen .sandboxfooter {
+    .fullscreensim .sandboxfooter {
         z-index:100;
         bottom: 1rem;
     }
-    .fullscreen .ui.menu {
+    .fullscreensim .ui.menu {
         background: transparent !important;
     }
-    .fullscreen #filelist .simtoolbar {
+    .fullscreensim #filelist .simtoolbar {
         position: fixed;
         bottom: 2rem;
         left:auto;
         right:auto;
     }
-    .fullscreen #simulators {
+    .fullscreensim #simulators {
         position: relative;
         padding: 3rem;
         width: 100%;
         height: 100%;
     }
-    .fullscreen div.simframe {
+    .fullscreensim div.simframe {
         position:relative;
         width: 50%;
         height: 100%;
         float: left;
         padding-bottom: 0 !important;
     }
-    .fullscreen div.simframe > iframe {
+    .fullscreensim div.simframe > iframe {
         position:relative;
         max-width: 90%;
     }
-    .fullscreen div.simframe:only-child {
+    .fullscreensim div.simframe:only-child {
         width: 100%;
     }
-    .fullscreen div.simframe:only-child > iframe {
+    .fullscreensim div.simframe:only-child > iframe {
         max-width: 100%;
     }
 }
@@ -984,18 +1023,6 @@ Avatar
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    /* Organization logo */
-    .organization {
-        top:auto !important;
-        right:1rem;
-        left: auto;
-        bottom: 1rem;
-        height: 1.3rem;
-    }
-    .rtl .organization {
-        left:1rem;
-        right: auto;
-    }
     /* Blockly */
     span.blocklyTreeLabel {
         font-size:1rem;
@@ -1041,16 +1068,13 @@ Avatar
         bottom: 11rem !important;
     }
     .hideEditorFloats #editortools {
-        height: 4.5rem !important;
+        height: 5rem !important;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
-        bottom: 4.5rem !important;
+        bottom: 5rem !important;
     }
     .hideEditorFloats #tutorialcard.bottom {
-        bottom: 5.5rem !important;
-    }
-    .hideEditorFloats .organization {
-        display: none;
+        bottom: 5rem !important;
     }
     /* Simulator */
     div.simframe {
@@ -1082,15 +1106,6 @@ Avatar
     }
     #getting-started-btn {
         top: @mobileMenuHeight;
-    }
-    /* Sandbox */
-    .sandboxfooter {
-        left: auto;
-        right:1rem;
-    }
-    .rtl .sandboxfooter{
-        right: auto;
-        left:1rem;
     }
     /* Logo */
     .ui.item.logo img {
@@ -1144,22 +1159,10 @@ Avatar
     #blocklySearchArea {
         display: none !important;
     }
-    /* Organization logo */
-    .organization {
-        top:auto !important;
-        right:0.4rem;
-        left: auto;
-        bottom: 0.4rem;
-        height: 1.0rem;
-    }
-    .rtl .organization {
-        left:0.5rem;
-        right: auto;
-    }
     .hideEditorFloats #editortools {
-        height: 4rem !important;
+        height: 5rem !important;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: 4rem !important;
+        bottom: 5rem !important;
     }
 }

@@ -14,4 +14,5 @@ They are meant for people creating PXT targets (experiences).
 
 * [writing docs](/writing-docs), leverage the markdown-based documentation system
 * [translations](/translate)
- 
+
+* technical docs about flash format and [embedding source code](/source-embedding) and [partial flashing](/partial-flashing)

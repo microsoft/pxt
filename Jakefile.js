@@ -27,7 +27,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'testdecompilererrors'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -54,10 +54,6 @@ task('testlang', ['built/pxt.js'], { async: true }, function () {
 
 task('testdecompiler', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "tests/decompile-test", 'node ../../built/pxt.js testdecompiler .')
-})
-
-task('testdecompilererrors', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "tests/decompile-test/errors", 'node ../../../built/pxt.js testdecompilererrors .')
 })
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
@@ -295,7 +291,12 @@ task('serve', ['default'], { async: true }, function () {
     if (process.env.browser) {
         cmdArg += ' -browser ' + process.env.browser;
     }
-    cmdIn(this, '../pxt-microbit', 'node ../pxt/built/pxt.js serve ' + cmdArg)
+
+    let destination = '../pxt-microbit';
+    if (process.env.target) {
+        destination = '../' + process.env.target;
+    }
+    cmdIn(this, destination, 'node ../pxt/built/pxt.js serve ' + cmdArg)
 })
 
 file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/release/src/monaco.contribution.js'], function () {
@@ -341,7 +342,7 @@ file('built/webapp/src/app.js', expand([
     "built/web/pxtsim.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js",
-    "built/web/pxtwinrt.js"    
+    "built/web/pxtwinrt.js"
 ]), { async: true }, function () {
     tscIn(this, "webapp", "built/webapp")
 })

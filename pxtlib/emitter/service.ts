@@ -8,12 +8,16 @@ namespace ts.pxtc {
         initializer?: string;
         defaults?: string[];
         properties?: PropertyDesc[];
+        options?: Map<PropertyOption>;
     }
-
 
     export interface PropertyDesc {
         name: string;
         type: string;
+    }
+
+    export interface PropertyOption {
+        value: string;
     }
 
     export enum SymbolKind {
@@ -266,6 +270,8 @@ namespace ts.pxtc {
                 parameters: !hasParams ? null : (decl.parameters || []).map(p => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
+                    let minVal = attributes.paramMin ? attributes.paramMin[n] : undefined
+                    let maxVal = attributes.paramMax ? attributes.paramMax[n] : undefined
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
                     let props: PropertyDesc[];
                     if (attributes.mutate && p.type.kind === SK.FunctionType) {
@@ -276,13 +282,17 @@ namespace ts.pxtc {
                             return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
                         });
                     }
+                    let options: Map<PropertyOption> = {};
+                    if (minVal) options['min'] = {value: minVal};
+                    if (maxVal) options['max'] = {value: maxVal};
                     return {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
-                        properties: props
+                        properties: props,
+                        options: options
                     }
                 })
             }
@@ -501,6 +511,14 @@ ${sipkg}
                         si.attributes = parseCommentString(
                             existing.attributes._source + "\n" +
                             si.attributes._source)
+                        if (existing.extendsTypes) {
+                            si.extendsTypes = si.extendsTypes || []
+                            existing.extendsTypes.forEach(t => {
+                                if (si.extendsTypes.indexOf(t) === -1) {
+                                    si.extendsTypes.push(t);
+                                }
+                            })
+                        }
                     }
                     res.byQName[qName] = si
                 }
@@ -799,8 +817,9 @@ namespace ts.pxtc.service {
 
             if (!builtinItems) {
                 builtinItems = [];
-                for (const id in pxt.blocks.helpResources) {
-                    const helpItem = pxt.blocks.helpResources[id];
+                const helpResources = pxt.blocks.helpResources();
+                for (const id in helpResources) {
+                    const helpItem = helpResources[id];
 
                     if (helpItem.operators) {
                         for (const op in helpItem.operators) {

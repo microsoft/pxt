@@ -35,11 +35,6 @@ body {
     margin-right: 0.25rem;
 }
 
-
-.searchdialog {
-    margin-top: -20rem !important;
-}
-
 .searchdialog .cards {
     max-height: 20rem;
     overflow-y: auto;
@@ -65,6 +60,13 @@ body {
 .rtl #content .ui.button > .icon-and-text {
     margin-left: 4px;
     margin-right: -2px;
+}
+
+.ui.button.icon.clear {
+    background: transparent;
+    padding: 0;
+    border: 0 !important;
+    box-shadow: none !important;
 }
 
 .rtl .ui.menu .ui.dropdown .menu > .item .icon:not(.dropdown) {
@@ -342,6 +344,9 @@ div.blocklyWidgetDiv {
 }
 .monacoToolboxDiv.hide {
     display: none;
+}
+.monaco-editor-hover {
+    z-index:1000;
 }
 
 #monacoEditorInner {

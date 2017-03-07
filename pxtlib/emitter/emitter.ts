@@ -7,6 +7,8 @@ namespace ts.pxtc {
     export import U = pxtc.Util;
 
     export const ON_START_TYPE = "pxt-on-start";
+    export const TS_STATEMENT_TYPE = "typescript_statement";
+    export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_ASM = "binary.asm";
@@ -245,10 +247,10 @@ namespace ts.pxtc {
 
     function isSideEffectfulInitializer(init: Expression) {
         if (!init) return false;
+        if (isStringLiteral(init)) return false;
         switch (init.kind) {
             case SK.NullKeyword:
             case SK.NumericLiteral:
-            case SK.StringLiteral:
             case SK.TrueKeyword:
             case SK.FalseKeyword:
                 return false;
@@ -287,6 +289,7 @@ namespace ts.pxtc {
         blockAllowMultiple?: boolean;
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
+        blockFieldEditor?: string; // Custom field editor
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
@@ -302,6 +305,7 @@ namespace ts.pxtc {
         trackArgs?: number[];
         advanced?: boolean;
         deprecated?: boolean;
+        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
 
         // On block
         subcategory?: string;
@@ -315,6 +319,7 @@ namespace ts.pxtc {
         mutate?: string;
         mutateText?: string;
         mutateDefaults?: string;
+        mutatePropertyEnum?: string;
 
         _name?: string;
         _source?: string;
@@ -322,6 +327,11 @@ namespace ts.pxtc {
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
         paramDefl: pxt.Map<string>;
+
+        paramMin?: pxt.Map<string>; // min range
+        paramMax?: pxt.Map<string>; // max range
+        // Map for custom field editor parameters
+        blockFieldEditorParams?: pxt.Map<string>;
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
@@ -403,6 +413,15 @@ namespace ts.pxtc {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (U.endsWith(n, ".defl")) {
                         res.paramDefl[n.slice(0, n.length - 5)] = v
+                    } else if (U.endsWith(n, ".min")) {
+                        if (!res.paramMin) res.paramMin = {}
+                        res.paramMin[n.slice(0, n.length - 4)] = v
+                    } else if (U.endsWith(n, ".max")) {
+                        if (!res.paramMax) res.paramMax = {}
+                        res.paramMax[n.slice(0, n.length - 4)] = v
+                    } else if (U.startsWith(n, "blockFieldEditorParams")) {
+                        if (!res.blockFieldEditorParams) res.blockFieldEditorParams = {}
+                        res.blockFieldEditorParams[n.slice(23, n.length)] = v
                     } else {
                         (<any>res)[n] = v;
                     }
@@ -2631,7 +2650,10 @@ ${lbl}: .short 0xffff
             proc.emitLbl(els)
             proc.emitJmp(fin, emitExpr(node.whenFalse), ir.JmpMode.Always)
             proc.emitLbl(fin)
-            return ir.op(EK.JmpValue, [])
+
+            let v = ir.shared(ir.op(EK.JmpValue, []));
+            proc.emitExpr(v); // make sure we save it
+            return v;
         }
 
         function emitSpreadElementExpression(node: SpreadElementExpression) { }
@@ -2639,7 +2661,7 @@ ${lbl}: .short 0xffff
         function emitBlock(node: Block) {
             node.statements.forEach(emit)
         }
-        function checkForLetOrConst(declList: VariableDeclarationList): boolean  {
+        function checkForLetOrConst(declList: VariableDeclarationList): boolean {
             if ((declList.flags & NodeFlags.Let) || (declList.flags & NodeFlags.Const)) {
                 return true;
             }
@@ -3332,6 +3354,8 @@ ${lbl}: .short 0xffff
         res: CompileResult;
         options: CompileOptions;
         usedClassInfos: ClassInfo[] = [];
+        sourceHash = "";
+        checksumBlock: number[];
 
         strings: Map<string> = {};
         otherLiterals: string[] = [];

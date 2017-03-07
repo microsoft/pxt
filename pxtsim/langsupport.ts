@@ -207,7 +207,7 @@ namespace pxsim {
     }
 
     export function decr(v: any): void {
-        if (noRefCounting()) return
+        if (!refCounting) return
         if (v instanceof RefObject) {
             let o = <RefObject>v
             check(o.refcnt > 0)
@@ -261,7 +261,7 @@ namespace pxsim {
     }
 
     export function incr(v: any) {
-        if (noRefCounting()) return v
+        if (!refCounting) return v
         if (v instanceof RefObject) {
             let o = <RefObject>v
             check(o.refcnt > 0)
@@ -274,7 +274,7 @@ namespace pxsim {
     }
 
     export function dumpLivePointers() {
-        if (noRefCounting()) return
+        if (!refCounting) return
         Object.keys(liveRefObjs).forEach(k => {
             (<RefObject>liveRefObjs[k]).print()
         })

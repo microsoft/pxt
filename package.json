@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "0.11.9",
+  "version": "1.0.19",
   "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -22,6 +22,7 @@
     "built/buildengine.js",
     "built/hid.js",
     "built/gdb.js",
+    "built/serial.js",
     "built/pxt.js",
     "built/pxt-common.json",
     "built/blockly.d.ts",
@@ -64,7 +65,9 @@
     "highlight.js": "^9.7.0",
     "lzma": "^2.3.2",
     "marked": "^0.3.5",
-    "fuse.js": "2.6.1"
+    "fuse.js": "2.6.1",
+    "rimraf": "2.5.4",
+    "request": "^2.79.0"
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",
@@ -73,7 +76,7 @@
   },
   "devDependencies": {
     "monaco-editor": "0.8.1",
-    "pxt-monaco-typescript": "2.1.1",
+    "pxt-monaco-typescript": "2.1.4",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",

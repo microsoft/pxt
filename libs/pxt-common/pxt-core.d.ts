@@ -44,7 +44,7 @@ interface Array<T> {
     //% helper=arrayUnshift weight=69
     //% blockId="array_unshift" block="unshift into %this|with first item %item" blockNamespace="lists"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
-    unshift(value:T): number; 
+    unshift(value:T): number;
 
     /**
       * Returns a section of an array.
@@ -64,7 +64,7 @@ interface Array<T> {
     splice(start: number, deleteCount: number): void;
 
     /**
-      * Sorts the elements of an array in place and returns the array. The sort is not necessarily stable. 
+      * Sorts the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
       */
     //% helper=arraySort weight=40
@@ -141,12 +141,15 @@ interface Array<T> {
 }
 
 declare interface String {
+    // This block is currently disabled in favor of the built-in Blockly "Create text with" block, which compiles to "" + ""
+    // Add % sign back to the block annotation to re-enable
     /**
      * Returns a string that contains the concatenation of two or more strings.
      * @param other The string to append to the end of the string.
      */
     //% shim=String_::concat weight=80
-    //% blockId="string_concat" block="join %this|%other" blockNamespace="text"
+    //% blockId="string_concat" blockNamespace="text"
+    // block="join %this=text|%other"
     concat(other: string): string;
 
     /**
@@ -154,7 +157,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=77
-    //% blockId="string_get" block="char from %this|at %pos" blockNamespace="text"
+    //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -174,7 +177,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
-    //% blockId="string_compare" block="compare %this| to %that" blockNamespace="text"
+    //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
     compare(that: string): number;
 
     /**
@@ -183,12 +186,15 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
-    //% blockId="string_substr" block="substring of %this|from %start|of length %length" blockNamespace="text"
+    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start:number, length?:number): string;
 
+    // This block is currently disabled, as it does not compile in some targets
+    // Add % sign back to the block annotation to re-enable
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
-    //% blockId="string_isempty" block="%this| is empty" blockNamespace="text"
+    //% blockId="string_isempty" blockNamespace="text"
+    // block="%this=text| is empty"
     isEmpty() : boolean;
 
     [index: number]: string;
@@ -231,7 +237,7 @@ declare namespace String {
     //% help=math/string-from-char-code
     //% shim=String_::fromCharCode
     //% advanced=true
-    //% blockNamespace="Math" blockId="stringFromCharCode" block="text from char code %code" weight=1 color=230
+    //% blockNamespace="Math" blockId="stringFromCharCode" block="text from char code %code" weight=1
     function fromCharCode(code: number): string;
 }
 

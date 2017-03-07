@@ -17,8 +17,7 @@ declare namespace pxt {
 
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
-        forkof?: string; // id of a target we're based on
-        nickname?: string; // friendly id used when generating files, folders, etc... forkof or id is used instead if missing
+        nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
         name: string;
         description?: string;
         corepkg: string;
@@ -77,14 +76,16 @@ declare namespace pxt {
     interface AppCloud {
         workspaces?: boolean;
         packages?: boolean;
-        sharing?: boolean;
         publishing?: boolean;
+        sharing?: boolean; // uses cloud-based anonymous sharing
+        importing?: boolean; // import url dialog
+        embedding?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages
     }
 
     interface AppSimulator {
-        autoRun?: boolean;        
+        autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
         hideFullscreen?: boolean;
@@ -94,12 +95,14 @@ declare namespace pxt {
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
+        headless?: boolean; // whether simulator should still run while collapsed
     }
 
     interface TargetCompileService {
         yottaTarget?: string; // bbc-microbit-classic-gcc
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
+        yottaConfig?: any; // additional config
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         platformioIni?: string[];
         gittag: string;
@@ -136,6 +139,7 @@ declare namespace pxt {
         hideSideDocs?: boolean;
         sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
+        feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
         privacyUrl?: string;
         termsOfUseUrl?: string;
@@ -150,6 +154,7 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
+        layoutOptions?: LayoutOptions;
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -159,15 +164,23 @@ declare namespace pxt {
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         projectGallery?: string;
+        exampleGallery?: string;
         crowdinProject?: string;
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
+        allowParentController?: boolean; // allow parent iframe to control editor
+        blocksOnly?: boolean; // blocks only workspace
+    }
+
+    interface LayoutOptions {
+        hideMenuBar?: boolean; // Hides the main menu bar
     }
 
     interface DocMenuEntry {
         name: string;
-        // needs to have one of `path` or `subitems` 
+        // needs to have one of `path` or `subitems`
         path?: string;
+        tutorial?: boolean;
         subitems?: DocMenuEntry[];
     }
 
@@ -194,6 +207,7 @@ declare namespace ts.pxtc {
         flashCodeAlign?: number; // defaults to 1k
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
+        flashChecksumAddr?: number;
     }
 
     interface CompileOptions {

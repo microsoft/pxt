@@ -50,7 +50,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         }).then(() => { });
     }
 
-    if (resp.saveOnly) return Promise.resolve();
+    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow()) return Promise.resolve();
     else return showUploadInstructionsAsync(fn, url);
 }
 
@@ -117,10 +117,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         }
     });
 
-    if (/quickflash/i.test(window.location.href))
-        return hwdbg.partialFlashAsync(resp, deploy)
-    else
-        return deploy()
+    return deploy()
 }
 
 export function initCommandsAsync(): Promise<void> {

@@ -330,7 +330,6 @@ export class Editor extends srceditor.Editor {
         let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
-        pxt.blocks.initMouse(this.editor);
         // zoom out on mobile by default
         if (pxt.BrowserUtils.isMobile())
             this.editor.zoomCenter(-4);
@@ -354,7 +353,7 @@ export class Editor extends srceditor.Editor {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
-                    if (ev.newValue == lf("Add Package")) {
+                    if (ev.newValue == lf("{id:category}Add Package")) {
                         (this.editor as any).toolbox_.clearSelection();
                         this.parent.addPackage();
                     }
@@ -529,11 +528,12 @@ export class Editor extends srceditor.Editor {
     }
 
     private getBlocklyOptions(showCategories: boolean = true) {
-        let toolbox = showCategories ?
+        const readOnly = pxt.shell.isReadOnly();
+        const toolbox = showCategories ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
-        let blocklyOptions: Blockly.Options = {
-            toolbox: toolbox,
+        const blocklyOptions: Blockly.ExtendedOptions = {
+            toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
             media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
             sound: true,
@@ -541,10 +541,12 @@ export class Editor extends srceditor.Editor {
             collapse: false,
             comments: true,
             disable: false,
+            readOnly: readOnly,
+            toolboxType: pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal',
             zoom: {
                 enabled: false,
                 controls: false,
-                /* wheel: true, wheel as a zoom is confusing and incosistent with monaco */
+                wheel: true,
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05
@@ -573,6 +575,9 @@ export class Editor extends srceditor.Editor {
     }
 
     private updateToolbox(tb: Element, showCategories: boolean = true) {
+        // no toolbox when readonly
+        if (pxt.shell.isReadOnly()) return;
+
         pxt.debug('updating toolbox');
         if (((this.editor as any).toolbox_ && showCategories) || ((this.editor as any).flyout_ && !showCategories)) {
             // Toolbox is consistent with current mode, safe to update
@@ -582,8 +587,8 @@ export class Editor extends srceditor.Editor {
             this.editor.updateToolbox(tb);
         } else {
             // Toolbox mode is different, need to refresh.
+            this.delayLoadXml = this.getCurrentSource();
             this.editor = undefined;
-            this.delayLoadXml = this.currFile.content;
             this.loadingXml = false;
             if (this.loadingXmlPromise) {
                 this.loadingXmlPromise.cancel();

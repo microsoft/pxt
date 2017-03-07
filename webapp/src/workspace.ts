@@ -24,6 +24,8 @@ let lf = U.lf
 let impl: WorkspaceProvider;
 
 export function setupWorkspace(id: string) {
+    U.assert(!impl, "workspace set twice");
+    pxt.debug(`workspace: ${id}`);
     switch (id) {
         case "fs":
         case "file":
@@ -87,26 +89,23 @@ export function getTextAsync(id: string): Promise<ScriptText> {
 
 export interface ScriptMeta {
     description: string;
-    islibrary: boolean;
     blocksWidth?: number;
     blocksHeight?: number;
 }
 
-export function publishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
-    let saveId = {}
+// https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
+export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
+    const saveId = {}
     h.saveId = saveId
-    let stext = JSON.stringify(text, null, 2) + "\n"
-    let scrReq = {
-        baseid: h.pubId,
+    const stext = JSON.stringify(text, null, 2) + "\n"
+    const scrReq = {
         name: h.name,
-        description: meta.description,
-        islibrary: meta.islibrary,
-        ishidden: false,
-        userplatform: ["pxt-web"],
         target: h.target,
+        description: meta.description,
         editor: h.editor,
-        text: stext,
+        text: text,
         meta: {
+            versions: pxt.appTarget.versions,
             blocksHeight: meta.blocksHeight,
             blocksWidth: meta.blocksWidth
         }

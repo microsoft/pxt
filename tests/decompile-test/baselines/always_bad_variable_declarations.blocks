@@ -1,0 +1,9 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="x" numlines="1" line0="let x&#58; number&#59;" />
+</block>
+</statement>
+</block>
+</xml>

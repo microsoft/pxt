@@ -3,7 +3,8 @@
     "description": "Project that defines a variety of blocks to be used in decopmiler test cases",
     "files": [
         "basic.ts",
-        "mb.ts"
+        "mb.ts",
+        "core.ts"
     ],
     "public": true,
     "dependencies": {},

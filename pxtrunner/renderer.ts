@@ -109,7 +109,7 @@ namespace pxt.runner {
                 else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" sandbox="allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -158,7 +158,7 @@ namespace pxt.runner {
                     if (uri)
                         BrowserUtils.browserDownloadDataUri(
                             uri,
-                            (name || `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${filename}`) + ".png");
+                            (name || `${pxt.appTarget.nickname || pxt.appTarget.id}-${filename}`) + ".png");
                 });
         }
     }
@@ -206,7 +206,7 @@ namespace pxt.runner {
             let compiled = r.compileJS && r.compileJS.success;
             let hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
                 ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
-            let hexname = `${appTarget.nickname || appTarget.forkof || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
+            let hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
             fillWithWidget(options, c, js, s, {
                 run: options.simulator && compiled,
                 hexname: hexname,
@@ -508,7 +508,7 @@ namespace pxt.runner {
                 if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                 let $sim = $(`<div class="ui centered card"><div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe>
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe>
                     </div>
                     </div></div>`)
                 $sim.find("iframe").attr("src", getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($c.text().trim()));

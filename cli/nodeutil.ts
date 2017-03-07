@@ -7,6 +7,7 @@ import * as https from 'https';
 import * as events from 'events';
 import * as crypto from 'crypto';
 import * as path from 'path';
+import * as os from 'os';
 
 Promise = require("bluebird");
 
@@ -74,7 +75,7 @@ export function spawnAsync(opts: SpawnOptions) {
         .then(() => { })
 }
 
-export function spawnWithPipeAsync(opts: SpawnOptions) {
+export function spawnWithPipeAsync(opts: SpawnOptions, silent: boolean = false) {
     if (opts.pipe === undefined) opts.pipe = true
     let info = opts.cmd + " " + opts.args.join(" ")
     if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
@@ -90,7 +91,9 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
         if (opts.pipe)
             ch.stdout.on('data', (buf: Buffer) => {
                 bufs.push(buf)
-                process.stdout.write(buf)
+                if (!silent) {
+                    process.stdout.write(buf)
+                }
             })
         ch.on('close', (code: number) => {
             if (code != 0)
@@ -115,6 +118,45 @@ export function runNpmAsyncWithCwd(cwd: string, ...args: string[]) {
         args: args,
         cwd
     });
+}
+
+export function runGitAsync(...args: string[]) {
+    return spawnAsync({
+        cmd: "git",
+        args: args,
+        cwd: "."
+    })
+}
+
+export function gitInfoAsync(args: string[], cwd?: string, silent: boolean = false) {
+    return Promise.resolve()
+        .then(() => spawnWithPipeAsync({
+            cmd: "git",
+            args: args,
+            cwd
+        }, silent))
+        .then(buf => buf.toString("utf8").trim())
+}
+
+export function currGitTagAsync() {
+    return gitInfoAsync(["describe", "--tags", "--exact-match"])
+        .then(t => {
+            if (!t)
+                Util.userError("no git tag found")
+            return t
+        })
+}
+
+export function needsGitCleanAsync() {
+    return Promise.resolve()
+        .then(() => spawnWithPipeAsync({
+            cmd: "git",
+            args: ["status", "--porcelain", "--untracked-files=no"]
+        }))
+        .then(buf => {
+            if (buf.length)
+                Util.userError("Please commit all files to git before running 'pxt bump'")
+        })
 }
 
 function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.HttpResponse> {
@@ -227,7 +269,6 @@ export function readJson(fn: string) {
 }
 
 export function getPxtTarget(): pxt.TargetBundle {
-
     if (fs.existsSync(targetDir + "/built/target.json")) {
         let res: pxt.TargetBundle = readJson(targetDir + "/built/target.json")
         if (res.id && res.bundledpkgs) return res;
@@ -287,6 +328,81 @@ export function allFiles(top: string, maxDepth = 8, allowMissing = false, includ
 
 export function existDirSync(name: string): boolean {
     return fs.existsSync(name) && fs.statSync(name).isDirectory();
+}
+
+export function openUrl(startUrl: string, browser: string) {
+    if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_&]+$/.test(startUrl)) {
+        console.error("invalid URL to open: " + startUrl)
+        return
+    }
+    let cmds: pxt.Map<string> = {
+        darwin: "open",
+        win32: "start",
+        linux: "xdg-open"
+    }
+    if (/^win/.test(os.platform()) && !/^[a-z0-9]+:\/\//i.test(startUrl))
+        startUrl = startUrl.replace('/', '\\');
+    else
+        startUrl = startUrl.replace('\\', '/');
+
+    console.log(`opening ${startUrl}`)
+
+    if (browser) {
+        child_process.spawn(getBrowserLocation(browser), [startUrl], { detached: true });
+    }
+    else {
+        child_process.exec(`${cmds[process.platform]} ${startUrl}`);
+    }
+}
+
+function getBrowserLocation(browser: string) {
+    let browserPath: string;
+
+    const normalizedBrowser = browser.toLowerCase();
+
+    if (normalizedBrowser === "chrome") {
+        switch (os.platform()) {
+            case "win32":
+            case "win64":
+                browserPath = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe";
+                break;
+            case "darwin":
+                browserPath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+                break;
+            case "linux":
+                browserPath = "/opt/google/chrome/chrome";
+                break;
+            default:
+                break;
+        }
+    }
+    else if (normalizedBrowser === "firefox") {
+        browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
+        switch (os.platform()) {
+            case "win32":
+            case "win64":
+                browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
+                break;
+            case "darwin":
+                browserPath = "/Applications/Firefox.app";
+                break;
+            case "linux":
+            default:
+                break;
+        }
+    }
+    else if (normalizedBrowser === "ie") {
+        browserPath = "C:/Program Files/Internet Explorer/iexplore.exe";
+    }
+    else if (normalizedBrowser === "safari") {
+        browserPath = "/Applications/Safari.app/Contents/MacOS/Safari";
+    }
+
+    if (browserPath && fs.existsSync(browserPath)) {
+        return browserPath;
+    }
+
+    return browser;
 }
 
 init();

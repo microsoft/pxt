@@ -1,4 +1,4 @@
-let item = 0
+let item = 1
 for (let i = 0; i < 4; i++) {
     while (true || !(!(false))) {
         for (let i = 0; i < item + 7; i++) {

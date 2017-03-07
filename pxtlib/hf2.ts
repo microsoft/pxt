@@ -101,23 +101,23 @@ namespace pxt.HF2 {
     const HF2_STATUS_EXEC_ERR = 0x02
 
 
-    export function write32(buf: Uint8Array, pos: number, v: number) {
+    export function write32(buf: ArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
         buf[pos + 2] = (v >> 16) & 0xff;
         buf[pos + 3] = (v >> 24) & 0xff;
     }
 
-    export function write16(buf: Uint8Array, pos: number, v: number) {
+    export function write16(buf: ArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
     }
 
-    export function read32(buf: Uint8Array, pos: number) {
-        return buf[pos] | (buf[pos + 1] << 8) | (buf[pos + 2] << 16) | (buf[pos + 3] << 32)
+    export function read32(buf: ArrayLike<number>, pos: number) {
+        return (buf[pos] | (buf[pos + 1] << 8) | (buf[pos + 2] << 16) | (buf[pos + 3] << 24)) >>> 0
     }
 
-    export function read16(buf: Uint8Array, pos: number) {
+    export function read16(buf: ArrayLike<number>, pos: number) {
         return buf[pos] | (buf[pos + 1] << 8)
     }
 
@@ -316,6 +316,14 @@ namespace pxt.HF2 {
                 .then(() => this.reconnectAsync())
         }
 
+        readWordsAsync(addr: number, numwords: number) {
+            let args = new Uint8Array(8)
+            write32(args, 0, addr)
+            write32(args, 4, numwords)
+            U.assert(numwords <= 64) // just sanity check
+            return this.talkAsync(HF2_CMD_READ_WORDS, args)
+        }
+
         flashAsync(blocks: pxtc.UF2.Block[]) {
             let start = Date.now()
             let fstart = 0
@@ -335,6 +343,14 @@ namespace pxt.HF2 {
                     let size = blocks.length * this.pageSize
                     log(`Starting flash (${Math.round(size / 1024)}kB).`)
                     fstart = Date.now()
+                    return onlyChangedBlocksAsync(blocks, (a, l) => this.readWordsAsync(a, l))
+                })
+                .then(res => {
+                    if (res.length != blocks.length) {
+                        blocks = res
+                        let size = blocks.length * this.pageSize
+                        log(`Performing partial flash (${Math.round(size / 1024)}kB).`)
+                    }
                 })
                 .then(() => loopAsync(0))
                 .then(() => {
@@ -383,5 +399,57 @@ namespace pxt.HF2 {
                 })
         }
 
+    }
+
+    export type ReadAsync = (addr: number, len: number) => Promise<ArrayLike<number>>
+    function readChecksumBlockAsync(readWordsAsync: ReadAsync): Promise<pxtc.hex.ChecksumBlock> {
+        if (!pxt.appTarget.compile.flashChecksumAddr)
+            return Promise.resolve(null as pxtc.hex.ChecksumBlock)
+        return readWordsAsync(pxt.appTarget.compile.flashChecksumAddr, 12)
+            .then(buf => {
+                let blk = pxtc.hex.parseChecksumBlock(buf)
+                if (!blk)
+                    return null
+                return readWordsAsync(blk.endMarkerPos, 1)
+                    .then(w => {
+                        if (read32(w, 0) != blk.endMarker) {
+                            pxt.log("end-marker mismatch")
+                            return null
+                        }
+                        return blk
+                    })
+            })
+    }
+
+    export function onlyChangedBlocksAsync(blocks: pxtc.UF2.Block[], readWordsAsync: ReadAsync) {
+        if (!pxt.appTarget.compile.flashChecksumAddr)
+            return Promise.resolve(blocks)
+        let blBuf = pxtc.UF2.readBytes(blocks, pxt.appTarget.compile.flashChecksumAddr, 12 * 4)
+        let blChk = pxtc.hex.parseChecksumBlock(blBuf)
+        if (!blChk)
+            return Promise.resolve(blocks)
+        return readChecksumBlockAsync(readWordsAsync)
+            .then(devChk => {
+                if (!devChk)
+                    return blocks
+                let regionsOk = devChk.regions.filter(r => {
+                    let hasMatching = blChk.regions.some(r2 =>
+                        r.checksum == r2.checksum &&
+                        r.length == r2.length &&
+                        r.start == r2.start)
+                    return hasMatching
+                })
+                if (regionsOk.length == 0)
+                    return blocks
+                log("skipping flash at: " +
+                    regionsOk.map(r =>
+                        `${pxtc.assembler.tohex(r.start)} (${r.length / 1024}kB)`)
+                        .join(", "))
+                let unchangedAddr = (a: number) =>
+                    regionsOk.some(r => r.start <= a && a < r.start + r.length)
+                return blocks.filter(b =>
+                    !(unchangedAddr(b.targetAddr) &&
+                        unchangedAddr(b.targetAddr + b.payloadSize - 1)))
+            })
     }
 }

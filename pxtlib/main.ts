@@ -26,6 +26,7 @@ namespace pxt {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
+        if (!trg.appTheme) trg.appTheme = {}
         if (!trg.appTheme.embedUrl)
             trg.appTheme.embedUrl = trg.appTheme.homeUrl
         let cs = appTarget.compileService
@@ -262,7 +263,7 @@ namespace pxt {
         }
 
         saveConfig() {
-            let cfg = JSON.stringify(this.config, null, 4) + "\n"
+            const cfg = JSON.stringify(this.config, null, 4) || "\n"
             this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
         }
 

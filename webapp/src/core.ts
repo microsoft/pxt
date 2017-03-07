@@ -17,11 +17,14 @@ export type Component<S, T> = data.Component<S, T>;
 
 export function hideLoading() {
     $('.ui.page.dimmer .loadingcontent').remove();
-    $('body.dimmable').dimmer('hide');
+    $('body.main').dimmer('hide');
 }
 
 export function showLoading(msg: string) {
-    $('body.dimmable').dimmer('show');
+    $('body.main').dimmer({
+        closable: false
+    });
+    $('body.main').dimmer('show');
     $('.ui.page.dimmer').html(`
   <div class="content loadingcontent">
     <div class="ui text large loader msg">{lf("Please wait")}</div>
@@ -93,25 +96,6 @@ export function warningNotification(msg: string) {
 export function infoNotification(msg: string) {
     pxt.debug(msg)
     htmlmsg("info", msg)
-}
-
-export function cookieNotification() {
-    const key = "cookieconsent"
-    let seen = !!pxt.storage.getLocal(key);
-    if (!seen) {
-        let $d = $('#cookiemsg');
-        $d.html(
-            `
-            <button arial-label="${lf("Continue")}" class="ui right floated icon button"><i class="remove icon"></i></button>
-            ${lf("By using this site you agree to the use of cookies for analytics.")}
-            <a target="_blank" class="ui link" href="${pxt.appTarget.appTheme.privacyUrl}">${lf("Learn more")}</a>
-            `
-        ).fadeIn('fast')
-        $d.find('button').click(() => {
-            pxt.storage.setLocal(key, "1");
-            $d.fadeOut();
-        });
-    }
 }
 
 export function handleNetworkError(e: any, ignoredCodes?: number[]) {
@@ -246,7 +230,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         mo = modal.modal({
             observeChanges: true,
             closeable: !options.hideCancel,
-            context: "body.dimmable",
+            context: "#root",
             onHidden: () => {
                 modal.remove();
                 mo.remove();
@@ -382,7 +366,7 @@ export function shareLinkAsync(options: ShareOptions) {
     let modal = $(html)
     enableCopyable(modal);
     let done = false
-    $('body.dimmable').append(modal)
+    $('body.main').append(modal)
 
     return new Promise((resolve, reject) =>
         modal.modal({

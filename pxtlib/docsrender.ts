@@ -214,7 +214,8 @@ namespace pxt.docs {
         }
 
         d.finish = () => injectHtml(d.html, params,
-            ["body", "menu", "breadcrumb", "targetlogo", "github"])
+            ["body", "menu", "breadcrumb", "targetlogo", "github",
+             "JSON"])
     }
 
     export function renderMarkdown(template: string, src: string,
@@ -222,12 +223,32 @@ namespace pxt.docs {
         breadcrumb: BreadcrumbEntry[] = null, filepath: string = null,
         locale: Map<string> = null): string {
 
-        let params: Map<string> = pubinfo || {}
+        let hasPubInfo = true
 
+        if (!pubinfo) {
+            hasPubInfo = false
+            pubinfo = {}
+        }
         if (!theme) theme = {}
+        if (!breadcrumb) breadcrumb = []
 
-        if (!breadcrumb)
-            breadcrumb = []
+        delete pubinfo["private"] // just in case
+
+        if (pubinfo["time"]) {
+            let tm = parseInt(pubinfo["time"])
+            if (!pubinfo["timems"])
+                pubinfo["timems"] = 1000 * tm + ""
+            if (!pubinfo["humantime"])
+                pubinfo["humantime"] = U.isoTime(tm)
+        }
+        if (pubinfo["name"]) {
+            pubinfo["dirname"] = pubinfo["name"].replace(/[^A-Za-z0-9_]/g, "-")
+            pubinfo["title"] = pubinfo["name"]
+        }
+
+        if (hasPubInfo) {
+            pubinfo["JSON"] = JSON.stringify(pubinfo, null, 4).replace(/</g, "\\u003c")
+        }
 
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
@@ -242,7 +263,7 @@ namespace pxt.docs {
         let d: RenderData = {
             html: template,
             theme: theme,
-            params: params,
+            params: pubinfo,
             breadcrumb: breadcrumb,
             filepath: filepath
         }
@@ -294,8 +315,8 @@ namespace pxt.docs {
             return f
         })
 
-        // replace pre-tempate in markdow
-        src = src.replace(/@([a-z]+)@/ig, (m, param) => params[param] || 'unknown macro')
+        // replace pre-template in markdown
+        src = src.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
         let html = marked(src)
 
@@ -314,7 +335,7 @@ namespace pxt.docs {
             if (tp == "@") {
                 let expansion = U.lookup(d.settings, cmd)
                 if (expansion != null) {
-                    params[cmd] = args
+                    pubinfo[cmd] = args
                 } else {
                     expansion = U.lookup(d.macros, cmd)
                     if (expansion == null)
@@ -345,18 +366,18 @@ namespace pxt.docs {
             }
         })
 
-        if (!params["title"]) {
+        if (!pubinfo["title"]) {
             let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)
             if (titleM)
-                params["title"] = html2Quote(titleM[1])
+                pubinfo["title"] = html2Quote(titleM[1])
         }
 
-        if (!params["description"]) {
+        if (!pubinfo["description"]) {
             let descM = /<p>([^]+?)<\/p>/.exec(html)
             if (descM)
-                params["description"] = html2Quote(descM[1])
+                pubinfo["description"] = html2Quote(descM[1])
         }
-        params["twitter"] = html2Quote(theme.twitter || "@mspxtio");
+        pubinfo["twitter"] = html2Quote(theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first
@@ -381,8 +402,14 @@ namespace pxt.docs {
             html += injectBody(k + "-container", registers[k])
         }
 
-        params["body"] = html
-        params["name"] = params["title"] + " - " + params["targetname"]
+        pubinfo["body"] = html
+        pubinfo["name"] = pubinfo["title"] + " - " + pubinfo["targetname"]
+
+        for (let k of Object.keys(theme)) {
+            let v = (theme as any)[k]
+            if (typeof v == "string")
+                pubinfo["theme_" + k] = v
+        }
 
         return d.finish()
     }
@@ -403,18 +430,18 @@ namespace pxt.docs {
     export function embedUrl(rootUrl: string, tag: string, id: string, height?: number): string {
         const url = `${rootUrl}#${tag}:${id}`;
         let padding = '70%';
-        return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`;
+        return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe></div>`;
     }
 
     export function runUrl(url: string, padding: string, id: string): string {
-        let embed = `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}?id=${encodeURIComponent(id)}" allowfullscreen="allowfullscreen" sandbox="allow-scripts allow-same-origin" frameborder="0"></iframe></div>`;
+        let embed = `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}?id=${encodeURIComponent(id)}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-scripts allow-same-origin" frameborder="0"></iframe></div>`;
         return embed;
     }
 
     export function docsEmbedUrl(rootUrl: string, id: string, height?: number): string {
         const docurl = `${rootUrl}--docs?projectid=${id}`;
         height = Math.ceil(height || 300);
-        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe></div>`
+        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe></div>`
     }
 
     const inlineTags: Map<number> = {

@@ -5,7 +5,7 @@
 <field name="VAR">x</field>
 <value name="VALUE">
 <shadow type="math_number">
-<field name="NUM">0</field>
+<field name="NUM">1</field>
 </shadow>
 </value>
 <next>
@@ -58,10 +58,12 @@
 </value>
 <next>
 <block type="controls_if">
-<mutation elseif="0" else="0"></mutation>
+<mutation elseif="0" else="0" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -103,8 +105,10 @@
 <next>
 <block type="device_while">
 <value name="COND">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -148,7 +152,7 @@
 <field name="VAR">c</field>
 <value name="VALUE">
 <shadow type="math_number">
-<field name="NUM">0</field>
+<field name="NUM">1</field>
 </shadow>
 </value>
 <next>
@@ -164,7 +168,7 @@
 <field name="VAR">d</field>
 <value name="VALUE">
 <shadow type="math_number">
-<field name="NUM">0</field>
+<field name="NUM">1</field>
 </shadow>
 </value>
 <next>

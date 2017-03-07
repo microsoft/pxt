@@ -76,7 +76,8 @@ namespace pxt.BrowserUtils {
     //Chrome and Edge lie about being Safari
     export function isSafari(): boolean {
         //Could also check isMac but I don't want to risk excluding iOS
-        return !isChrome() && !isEdge() && !!navigator && /Safari/i.test(navigator.userAgent);
+        //Checking for iPhone, iPod or iPad as well as Safari in order to detect home screen browsers on iOS
+        return !isChrome() && !isEdge() && !!navigator && /(Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
     }
 
     //Safari and WebKit lie about being Firefox
@@ -103,7 +104,7 @@ namespace pxt.BrowserUtils {
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
             ('ontouchstart' in window               // works on most browsers 
-            || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
+                || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
     export function os(): string {
@@ -276,11 +277,15 @@ namespace pxt.BrowserUtils {
         return browserDownloadBase64(btoa(Util.toUTF8(text)), name, contentType, onError)
     }
 
-    export function browserDownloadDataUri(uri: string, name: string) {
+    export function isBrowserDownloadInSameWindow(): boolean {
         const windowOpen = /downloadWindowOpen=1/i.test(window.location.href);
+        return windowOpen;
+    }
 
+    export function browserDownloadDataUri(uri: string, name: string) {
+        const windowOpen = isBrowserDownloadInSameWindow();
         if (windowOpen) {
-            window.open(uri);
+            window.open(uri, "_self");
         } else if (pxt.BrowserUtils.isSafari()) {
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database

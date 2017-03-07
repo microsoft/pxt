@@ -74,6 +74,12 @@ where ``EMBEDURL`` is the published project URL.
 
 ## Commands
 
+Run ``pxt help`` for the list of all commands. The following list of links contains more info on specific commands.
+
 * [build](/cli/build), builds the current project
 * [deploy](/cli/deploy), builds and deploys the current project
 * [login](/cli/login), store a GitHub token
+* [bump](/cli/bump), increment the version number
+* [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
+* [staticpkg](/cli/staticpkg), compiles editor into flat file system
+* [cherrypick](/cli/cherrypick), recursive cherry picking
