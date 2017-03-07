@@ -124,10 +124,6 @@ namespace pxt.blocks.layout {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;   
 }
 
-.blocklyText {    
-    font-size:1rem !important;
-}
-
 .rtl .blocklyText {
     text-align:right;
 }
