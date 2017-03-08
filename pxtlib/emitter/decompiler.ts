@@ -51,11 +51,11 @@ namespace ts.pxtc.decompiler {
      */
     const multiLineCommentRegex = /^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*(.*?)(?:\*?\*\/)?$/
 
-    const builtinBlocks: pxt.Map<{ block: string; blockId: string; field?: FieldNode }> = {
+    const builtinBlocks: pxt.Map<{ block: string; blockId: string; }> = {
         "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
         "Math.min": { blockId: "math_op2", block: "of %x|and %y" },
-        "Math.max": { blockId: "math_op2", block: "of %x|and %y", field:  { kind: "field", name: "op", value: "max" } }
+        "Math.max": { blockId: "math_op2", block: "of %x|and %y" }
      }
 
     interface BlocklyNode {
@@ -1028,7 +1028,6 @@ ${output}</xml>`;
                 }
                 info.attrs.block = builtin.block;
                 info.attrs.blockId = builtin.blockId;
-                info.attrs.field = builtin.field;
             }
 
             if (info.attrs.imageLiteral) {
@@ -1056,10 +1055,6 @@ ${output}</xml>`;
             const r: StatementNode = {
                 kind: "statement",
                 type: info.attrs.blockId
-            }
-
-            if (info.attrs.field) {
-                r.fields = [info.attrs.field as FieldNode]
             }
 
             info.args.forEach((e, i) => {
@@ -1112,6 +1107,14 @@ ${output}</xml>`;
                                 name: vName,
                                 value: getMathRandomArgumentExpresion(e)
                             };
+                        }
+                        else if (info.qName == "Math.max") {
+                            (r.fields || (r.fields = [])).push({
+                                kind: "field",
+                                name: "op",
+                                value: "max"
+                            });
+                            v = getValue(vName, e);
                         }
                         else {
                             v = getValue(vName, e);
@@ -1508,7 +1511,6 @@ ${output}</xml>`;
                 }
                 info.attrs.block = builtin.block;
                 info.attrs.blockId = builtin.blockId;
-                info.attrs.field = builtin.field;
             }
 
             if (info.attrs.imageLiteral) {
