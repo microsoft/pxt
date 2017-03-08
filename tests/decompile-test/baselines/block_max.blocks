@@ -11,7 +11,6 @@
 <next>
 <block type="math_op2">
 <field name="op">max</field>
-<field name="op">max</field>
 <value name="x">
 <shadow type="math_number">
 <field name="NUM">0</field>

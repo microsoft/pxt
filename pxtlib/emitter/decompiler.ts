@@ -1057,6 +1057,15 @@ ${output}</xml>`;
                 type: info.attrs.blockId
             }
 
+            if (info.qName == "Math.max") {
+                (r.fields || (r.fields = [])).push({
+                    kind: "field",
+                    name: "op",
+                    value: "max"
+                });
+            }
+
+
             info.args.forEach((e, i) => {
                 if (i === 0 && info.attrs.defaultInstance) {
                     if (e.getText() === info.attrs.defaultInstance) {
@@ -1112,14 +1121,6 @@ ${output}</xml>`;
                                 name: vName,
                                 value: getMathRandomArgumentExpresion(e)
                             };
-                        }
-                        else if (info.qName == "Math.max") {
-                            (r.fields || (r.fields = [])).push({
-                                kind: "field",
-                                name: "op",
-                                value: "max"
-                            });
-                            v = getValue(vName, e);
                         }
                         else {
                             v = getValue(vName, e);
