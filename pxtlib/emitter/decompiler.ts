@@ -1067,6 +1067,11 @@ ${output}</xml>`;
                     }
                 }
 
+                if (info.attrs.mutatePropertyEnum && i === info.args.length - 2) {
+                    // Implicit in the blocks
+                    return;
+                }
+
                 switch (e.kind) {
                     case SK.ArrowFunction:
                         const m = getDestructuringMutation(e as ArrowFunction);
@@ -1137,41 +1142,15 @@ ${output}</xml>`;
         // }
 
         function getDestructuringMutation(callback: ts.ArrowFunction): Map<string> {
-            if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
-                const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
-
-                const renames: { [index: string]: string } = {};
-
-                const properties = elements.map(e => {
-                    if (checkName(e.propertyName) && checkName(e.name)) {
-                        const name = (e.name as Identifier).text;
-                        if (e.propertyName) {
-                            const propName = (e.propertyName as Identifier).text;
-                            renames[propName] = name;
-                            return propName;
-                        }
-                        return name;
-                    }
-                    else {
-                        return "";
-                    }
-                });
-
+            const bindings = getObjectBindingProperties(callback);
+            if (bindings) {
                 return {
-                    "callbackproperties": properties.join(","),
-                    "renamemap": Util.htmlEscape(JSON.stringify(renames))
+                    "callbackproperties": bindings[0].join(","),
+                    "renamemap": Util.htmlEscape(JSON.stringify(bindings[1]))
                 };
             }
 
             return undefined;
-
-            function checkName(name: Node) {
-                if (name && name.kind !== SK.Identifier) {
-                    error(name, Util.lf("Only identifiers may be used for variable names in object destructuring patterns"));
-                    return false;
-                }
-                return true;
-            }
         }
 
         function getMathRandomArgumentExpresion(e: ts.Expression): OutputNode {
@@ -1533,7 +1512,8 @@ ${output}</xml>`;
             });
 
             const argumentDifference = info.args.length - argNames.length;
-            if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1)) {
+            if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1) && !checkForDestructuringMutation()) {
+
                 const hasCallback = hasArrowFunction(info);
                 if (argumentDifference > 1 || !hasCallback) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -1541,6 +1521,39 @@ ${output}</xml>`;
             }
 
             return undefined;
+
+            function checkForDestructuringMutation() {
+                // If the mutatePropertyEnum is set, the array literal and the destructured
+                // properties must have matching names
+                if (info.attrs.mutatePropertyEnum && argumentDifference === 2 && info.args.length >= 2) {
+                    const arrayArg = info.args[info.args.length - 2] as ArrayLiteralExpression;
+                    const callbackArg = info.args[info.args.length - 1] as ArrowFunction;
+
+                    if (arrayArg.kind === SK.ArrayLiteralExpression && callbackArg.kind === SK.ArrowFunction) {
+                        const propNames: string[] = [];
+
+                        // Make sure that all elements in the array literal are enum values
+                        const allLiterals = !arrayArg.elements.some((e: PropertyAccessExpression) => {
+                            if (e.kind === SK.PropertyAccessExpression && e.expression.kind === SK.Identifier) {
+                                propNames.push(e.name.text);
+                                return (e.expression as ts.Identifier).text !== info.attrs.mutatePropertyEnum;
+                            }
+                            return true;
+                        });
+
+                        if (allLiterals) {
+                            // Also need to check that the array literal's values and the destructured values match
+                            const bindings = getObjectBindingProperties(callbackArg);
+
+                            if (bindings) {
+                                const names = bindings[0];
+                                return names.length === propNames.length && !propNames.some(p => names.indexOf(p) === -1);
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
         }
     }
 
@@ -1574,6 +1587,41 @@ ${output}</xml>`;
         }
 
         return undefined;
+    }
+
+    function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], Map<string>] {
+        if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
+            const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
+
+            const renames: { [index: string]: string } = {};
+
+            const properties = elements.map(e => {
+                if (checkName(e.propertyName) && checkName(e.name)) {
+                    const name = (e.name as Identifier).text;
+                    if (e.propertyName) {
+                        const propName = (e.propertyName as Identifier).text;
+                        renames[propName] = name;
+                        return propName;
+                    }
+                    return name;
+                }
+                else {
+                    return "";
+                }
+            });
+
+            return [properties, renames];
+        }
+
+        return undefined;
+
+        function checkName(name: Node) {
+            if (name && name.kind !== SK.Identifier) {
+                // error(name, Util.lf("Only identifiers may be used for variable names in object destructuring patterns"));
+                return false;
+            }
+            return true;
+        }
     }
 
     function checkExpression(n: ts.Node): string {
