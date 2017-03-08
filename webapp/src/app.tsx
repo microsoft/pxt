@@ -1781,7 +1781,42 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd)))
-            .finally(() => core.hideLoading());
+        .finally(() => core.hideLoading());
+}
+
+function importLegacyDomainScriptsAsync(): Promise<void> {
+    const domain = pxt.appTarget.appTheme.legacyDomain;
+    if (!domain) return Promise.resolve();
+
+    pxt.debug('injecting import iframe');
+    let frame = document.createElement("iframe") as HTMLIFrameElement;
+    function clean() {
+        if (frame) {
+            pxt.debug('cleaning import iframe')
+            window.removeEventListener('message', receiveMessage, false)
+            document.removeChild(frame);
+            frame = undefined;
+        }
+    }
+    function receiveMessage(ev: MessageEvent) {
+        if (ev.data && ev.data.type == 'transfer' && ev.data.type == 'export' && ev.data.data) {
+            clean();
+            // DATA!!!
+
+            // clear transfer domain
+        }
+    }
+
+    frame.setAttribute("style", "position:absolute; width:1px; height:1px; right:0em; bottom:0em;");
+    const url = `https://${domain}/api/transfer/${pxt.webConfig.targetUrl.replace(/^https:\/\//, '')}?storageid=${pxt.storage.storageId()}`;
+    pxt.debug('transfer from ' + url);
+    frame.src = url;
+    frame.onerror = clean
+
+    window.addEventListener('message', receiveMessage, false)
+    document.appendChild(frame);
+
+    return Promise.resolve();
 }
 
 function initHashchange() {
@@ -1868,7 +1903,8 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd)
             else theEditor.newProject();
             return Promise.resolve();
-        }).done(() => { });
+        }).then(() => importLegacyDomainScriptsAsync())
+        .done(() => { });
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)

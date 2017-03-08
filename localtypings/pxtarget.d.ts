@@ -135,6 +135,7 @@ declare namespace pxt {
         organizationWideLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
+        legacyDomain?: string;
         docMenu?: DocMenuEntry[];
         hideSideDocs?: boolean;
         sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
