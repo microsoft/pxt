@@ -5,9 +5,13 @@ namespace pxt.editor {
          */
         id?: string;
         /**
-         * constant messageb identifier
+         * constant message identifier
          */
         type: "pxteditor";
+        /**
+         * flag for no ack response
+         */
+        norepsonse?: boolean;
         /**
          * Request action
          */
@@ -112,11 +116,13 @@ namespace pxt.editor {
     }
 
     function sendResponse(request: EditorMessageRequest, success: boolean, error: any) {
-        window.parent.postMessage({
-            type: "pxteditor",
-            id: request.id,
-            success,
-            error
-        }, "*");
+        if (!request.norepsonse) {
+            window.parent.postMessage({
+                type: "pxteditor",
+                id: request.id,
+                success,
+                error
+            }, "*");
+        }
     }
 }
