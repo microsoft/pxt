@@ -249,7 +249,7 @@ export class CommandParser {
         }
 
         if (c.onlineHelp)
-            print(`More information at ${"https://pxt.io/cli/" + c.name} .`);
+            print(`More information at ${"https://makecode.com/cli/" + c.name} .`);
     }
 
     private printTopLevelHelp(advanced: boolean, print: (s: string) => void) {
