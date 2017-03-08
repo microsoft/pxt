@@ -89,6 +89,7 @@
             sendMessage({
                 type: "pxteditor",
                 action: "proxytosim",
+                noresponse: true,
                 content: content.value
             })
         }
@@ -144,7 +145,7 @@
             </p>
 
         </div>
-        <iframe id="workspace" src="http://localhost:3232/index.html"/>
+        <iframe id="workspace" src="http://localhost:3232/index.html?editorlayout=ide"/>
 
     </body>
 </html>
