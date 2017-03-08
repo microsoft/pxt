@@ -1,6 +1,8 @@
-# Programming Experience Toolkit - pxt.io
+# Microsoft Make Code
 
-* [Try it live!](https://pxt.io)
+(also code-named PXT)
+
+* [Try it live!](https://makecode.com)
 
 [![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt)
 
@@ -17,13 +19,13 @@ The main features of PXT are:
 * a command-line package manager
 
 More info:
-* [About PXT](https://www.pxt.io/about)
-* [Documentation](https://www.pxt.io/docs)
+* [About](https://makecode.com/about)
+* [Documentation](https://makecode.com/docs)
 
 Examples of Editors built with PXT:
 
 * https://pxt.microbit.org
-* https://pxt.adafruit.com
+* https://makecode.adafruit.com
 
 ## Branches
 
@@ -32,7 +34,7 @@ Examples of Editors built with PXT:
 
 ## Running a target from localhost
 
-Please follow the [instructions here](https://www.pxt.io/cli).
+Please follow the [instructions here](https://makecode.com/cli).
 
 ## Linking a target to PXT
 
