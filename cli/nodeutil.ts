@@ -112,7 +112,6 @@ export function runNpmAsync(...args: string[]) {
 }
 
 export function runNpmAsyncWithCwd(cwd: string, ...args: string[]) {
-    console.log("npm", args);
     return spawnAsync({
         cmd: addCmd("npm"),
         args: args,
