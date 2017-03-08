@@ -21,7 +21,7 @@ if (!window.parent || window.parent == window) {
 }
 
 // https://pxt.microbit.org/api/transfer/makecode.microbit.org?storageid=([a-z]+)
-var m = /^https:\/\/[a-z0-9.\/]+\/api\/transfer\/([^?]+)\?storageid=([a-z]+)$/i.test(window.location.href);
+var m = /^https:\/\/[a-z0-9.\/]+\/api\/transfer\/([^?]+)\?storageid=([a-z]+)$/i.exec(window.location.href);
 if (!m) {
     console.error('unknown url scheme')
     return;

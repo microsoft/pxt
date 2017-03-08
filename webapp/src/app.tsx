@@ -1806,6 +1806,7 @@ function importLegacyDomainScriptsAsync(): Promise<void> {
             // clear transfer domain
         }
     }
+    window.addEventListener('message', receiveMessage, false)
 
     frame.setAttribute("style", "position:absolute; width:1px; height:1px; right:0em; bottom:0em;");
     const url = `https://${domain}/api/transfer/${pxt.webConfig.targetUrl.replace(/^https:\/\//, '')}?storageid=${pxt.storage.storageId()}`;
@@ -1813,8 +1814,7 @@ function importLegacyDomainScriptsAsync(): Promise<void> {
     frame.src = url;
     frame.onerror = clean
 
-    window.addEventListener('message', receiveMessage, false)
-    document.appendChild(frame);
+    document.documentElement.appendChild(frame);
 
     return Promise.resolve();
 }
