@@ -1,7 +1,11 @@
 # About
 
-**Microsoft MakeCode** (PXT is the OSS name) is a framework for creating special-purpose programming experiences for beginners,
-especially focused on computer science education. PXT's underlying programming language 
+**Microsoft MakeCode** is a framework for creating special-purpose programming experiences for beginners,
+especially focused on computer science education. 
+
+Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
+
+PXT's underlying programming language 
 is a subset of TypeScript (leaving out JavaScript dynamic features).
 
 The main features of PXT are:

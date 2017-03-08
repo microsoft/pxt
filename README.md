@@ -4,8 +4,7 @@
 
 [![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt)
 
-Microsoft MakeCode is based on the open source project Microsoft Programming Experience Toolkit (PXT).
-While MakeCode is used in the live editors, PXT is used in all the GitHub sources.
+Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
 
 PXT is a framework for creating special-purpose programming experiences for
 beginners, especially focused on computer science education. PXT's underlying
