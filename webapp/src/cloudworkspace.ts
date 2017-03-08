@@ -372,6 +372,70 @@ function resetAsync() {
         })
 }
 
+function importLegacyScriptsAsync(): Promise<void> {
+    const key = 'legacyScriptsImported';
+    const domain = pxt.appTarget.appTheme.legacyDomain;
+    if (!domain || !!pxt.storage.getLocal(key))
+        return Promise.resolve();
+
+    pxt.debug('injecting import iframe');
+    let frame = document.createElement("iframe") as HTMLIFrameElement;
+    function clean() {
+        if (frame) {
+            pxt.debug('cleaning import iframe')
+            window.removeEventListener('message', receiveMessage, false)
+            document.documentElement.removeChild(frame);
+            frame.contentWindow.postMessage({
+                type: "transfer",
+                action: "clear"
+            }, `https://${domain}`);
+            frame = undefined;
+        }
+    }
+    function receiveMessage(ev: MessageEvent) {
+        if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'export' && ev.data.data) {
+            const dbdata: {
+                header: pxt.workspace.Header[];
+                text: pxt.workspace.ScriptText[];
+            } = ev.data.data;
+
+            pxt.debug(`received ${dbdata.header.length} projects`);
+            let i = 0;
+            function pushOne() {
+                if (i >= dbdata.header.length) {
+                    pxt.log('done importing scripts');
+                    pxt.storage.setLocal(key, '1');
+                    clean();
+                    return;
+                }
+
+                const hd = dbdata.header[i];
+                const td = dbdata.text[i];
+                delete (hd as any)._id;
+                delete (hd as any)._rev;
+                delete (hd as any).id;
+                pxt.debug(`importing ${hd.name}`)
+                i++;
+                installAsync(hd, td)
+                    .then(pushOne);
+            }
+
+            pushOne();
+        }
+    }
+    window.addEventListener('message', receiveMessage, false)
+
+    frame.setAttribute("style", "position:absolute; width:1px; height:1px; right:0em; bottom:0em;");
+    const url = `https://${domain}/api/transfer/${pxt.webConfig.targetUrl.replace(/^https:\/\//, '')}?storageid=${pxt.storage.storageId()}`;
+    pxt.debug('transfer from ' + url);
+    frame.src = url;
+    frame.onerror = clean
+
+    document.documentElement.appendChild(frame);
+
+    return Promise.resolve();
+}
+
 export var provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
@@ -381,5 +445,6 @@ export var provider: WorkspaceProvider = {
     installAsync,
     saveToCloudAsync,
     syncAsync,
-    resetAsync
+    resetAsync,
+    importLegacyScriptsAsync
 }
