@@ -208,6 +208,7 @@ declare interface String {
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
 declare function parseInt(text: string): number;
 
+// tsc expects to find these, it seems
 interface Object {}
 interface Function {}
 interface IArguments {}

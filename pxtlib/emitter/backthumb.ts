@@ -71,13 +71,15 @@ ${lbl}:`
         call_reg(reg: string) {
             return "blx " + reg;
         }
+        // Note: magic number #43 in cmp op below distinguishes a RefMap (Object literal)
+        // from RefRecord. It comes from pxt.h: const PPVoid RefMapMarker = (PPVoid)(void*)43;
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return `
     ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
     ldrh r3, [r0, #2] ; ld-vtable
     lsls r3, r3, #${vtableShift}
     ldr r3, [r3, #4] ; iface table
-    cmp r3, #43
+    cmp r3, #43 
     beq .objlit
 .nonlit:
     lsls r1, ${isSet ? "r2" : "r1"}, #2

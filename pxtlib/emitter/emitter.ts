@@ -1,6 +1,12 @@
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
+// generate IR (ir.ts) from a pass over the TypeScript AST
+// we unify records/classes/interfaces as follows:
+// - a record cannot have different fields with the same name (unlike in C++)
+// - we collect all field names used in a global table (ifaceMembers) 
+//   and assign each name a unique globalindex
+// - we use heritage clauses to define a vtable, along lines of C++/C#/Java
 namespace ts.pxtc {
     export const assert = Util.assert;
     export const oops = Util.oops;
@@ -106,7 +112,6 @@ namespace ts.pxtc {
         return isRefType(tp)
     }
 
-
     function getBitSize(decl: TypedDecl) {
         if (!decl || !decl.type) return BitSize.None
         if (!(typeOf(decl).flags & TypeFlags.Number)) return BitSize.None
@@ -195,14 +200,14 @@ namespace ts.pxtc {
     }
 
     function isInAnyWayGeneric(node: FunctionLikeDeclaration) {
-        return isGenericFunction(node) || hasGenericParent(node)
-    }
+        function hasGenericParent(node: Node): boolean {
+            let par = getEnclosingFunction(node)
+            if (par)
+                return isGenericFunction(par) || hasGenericParent(par)
+            return false
+        }
 
-    function hasGenericParent(node: Node): boolean {
-        let par = getEnclosingFunction(node)
-        if (par)
-            return isGenericFunction(par) || hasGenericParent(par)
-        return false
+        return isGenericFunction(node) || hasGenericParent(node)
     }
 
     function getEnclosingFunction(node0: Node) {
@@ -336,11 +341,11 @@ namespace ts.pxtc {
 
     export interface ClassInfo {
         id: string;
-        baseClassInfo: ClassInfo;
-        decl: ClassDeclaration;
+        baseClassInfo: ClassInfo;           // the super class of this class
+        decl: ClassDeclaration;             // point back to AST
         numRefFields: number;
-        allfields: FieldWithAddInfo[];
-        methods: FunctionLikeDeclaration[];
+        allfields: FieldWithAddInfo[];      // all data fields, those of base class, followed by those in this class
+        methods: FunctionLikeDeclaration[]; // methods contributed by this class
         refmask: boolean[];
         attrs: CommentAttrs;
         isUsed?: boolean;
@@ -654,8 +659,8 @@ namespace ts.pxtc {
         thisParameter?: ParameterDeclaration; // a bit bogus
         usages?: TypeBinding[][];
         prePassUsagesEmitted?: number;
-        virtualRoot?: FunctionAddInfo;
-        virtualInstances?: FunctionAddInfo[];
+        virtualRoot?: FunctionAddInfo;         // for a method m, this is the highest instance of m in inheritance chain
+        virtualInstances?: FunctionAddInfo[];  // for a method m, the collection of methods n overriding m
         virtualIndex?: number;
         isUsed?: boolean;
         parentClassInfo?: ClassInfo;
@@ -696,7 +701,7 @@ namespace ts.pxtc {
         let variableStatus: pxt.Map<VariableAddInfo> = {};
         let functionInfo: pxt.Map<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
-        let ifaceMembers: pxt.Map<number> = {}
+        let ifaceMembers: pxt.Map<number> = {}      // each name appearing in interface (one big itable)
         let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
 
@@ -882,7 +887,7 @@ namespace ts.pxtc {
             return getNodeId(f) + ""
         }
 
-        function getFunctionInfo(f: FunctionLikeDeclaration) {
+        function getFunctionInfo(f: FunctionLikeDeclaration): FunctionAddInfo {
             let key = nodeKey(f)
             let info = functionInfo[key]
             if (!info)
@@ -920,6 +925,7 @@ namespace ts.pxtc {
             }
         }
 
+        // helper to work with binding introduced by type parameters
         function scope(f: () => void) {
             let prevProc = proc;
             let prevBindings = typeBindings.slice()
@@ -999,6 +1005,7 @@ namespace ts.pxtc {
                     switch (h.token) {
                         case SK.ExtendsKeyword:
                             if (!h.types || h.types.length != 1)
+                                // shouldn't this have been caught before? why are we checking?
                                 throw userError(9228, lf("invalid extends clause"))
                             let tp = typeOf(h.types[0])
                             if (isClassType(tp)) {
@@ -1016,10 +1023,13 @@ namespace ts.pxtc {
             return null
         }
 
+        // important: this is called after code gen, so we know
+        // all the names that appear globally in the interface table
         function getVTable(inf: ClassInfo) {
             assert(inf.isUsed)
             if (inf.vtable)
                 return inf.vtable
+            // make a copy of the base class' vtable
             let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
 
             scope(() => {
@@ -1027,27 +1037,33 @@ namespace ts.pxtc {
 
                 for (let m of inf.methods) {
                     let minf = getFunctionInfo(m)
+                    let proc = lookupProc(m, inf.bindings)
                     if (minf.virtualRoot) {
+                        // m overrides an ancestor, so we need a vtable entry
                         let key = classFunctionKey(m)
                         let done = false
-                        let proc = lookupProc(m, inf.bindings)
                         for (let i = 0; i < tbl.length; ++i) {
                             if (classFunctionKey(tbl[i].action) == key) {
+                                // override existing entry with this class' implementation
                                 tbl[i] = proc
                                 minf.virtualIndex = i
                                 done = true
                             }
                         }
                         if (!done) {
+                            // there is no entry in the vtable yet, so add one now
                             minf.virtualIndex = tbl.length
                             tbl.push(proc)
                         }
                     }
                 }
                 inf.vtable = tbl
+
+                // now for interfaces
                 inf.itable = []
                 inf.itableInfo = []
 
+                // create an itable entry for this class
                 let storeIface = (name: string, proc: ir.Procedure) => {
                     let id = getIfaceMemberId(name)
                     inf.itable[id] = proc
@@ -1068,13 +1084,14 @@ namespace ts.pxtc {
                     assert(!!proc)
                     storeIface(getName(fn), proc)
                 }
-
+  
+                // create getters/setters as needed
                 for (let fld0 of inf.allfields) {
                     let fld = fld0 as FieldWithAddInfo
                     let fname = getName(fld)
                     let setname = "set/" + fname
-
-                    if (isIfaceMemberUsed(fname)) {
+ 
+                    if (isIfaceMember(fname)) {
                         if (!fld.irGetter)
                             fld.irGetter = mkBogusMethod(inf, fname)
                         let idx = fieldIndexCore(inf, fld, typeOf(fld))
@@ -1085,7 +1102,7 @@ namespace ts.pxtc {
                         })
                     }
 
-                    if (isIfaceMemberUsed(setname)) {
+                    if (isIfaceMember(setname)) {
                         if (!fld.irSetter) {
                             fld.irSetter = mkBogusMethod(inf, setname)
                             fld.irSetter.parameters.unshift({
@@ -1103,10 +1120,14 @@ namespace ts.pxtc {
                         })
                     }
                 }
+
+                // go through the inheritance hierarchy (sub-to-super) to populate itable
+                // (note that this emulates vtable construction as well as considers methods
+                // that are not presented in the vtable). 
                 for (let curr = inf; curr; curr = curr.baseClassInfo) {
                     for (let m of curr.methods) {
                         let n = getName(m)
-                        if (isIfaceMemberUsed(n)) {
+                        if (isIfaceMember(n)) {
                             let id = getIfaceMemberId(n)
                             if (!inf.itable[id]) {
                                 storeIface(n, lookupProc(m, curr.bindings))
@@ -1114,9 +1135,14 @@ namespace ts.pxtc {
                         }
                     }
                 }
+
+                // because we draw from one interface map (ifaceMembers)
+                // inf.itable can have lots of gaps (avoid undefined)
                 for (let i = 0; i < inf.itable.length; ++i)
                     if (!inf.itable[i])
-                        inf.itable[i] = null // avoid undefined
+                        inf.itable[i] = null
+
+                // NOTE: this map is not not class specific, its simply inverting iFaceMembers
                 for (let k of Object.keys(ifaceMembers)) {
                     inf.itableInfo[ifaceMembers[k]] = k
                 }
@@ -1124,7 +1150,6 @@ namespace ts.pxtc {
 
             return inf.vtable
         }
-
 
         function getClassInfo(t: Type, decl: ClassDeclaration = null, bindings: TypeBinding[] = null) {
             if (!decl)
@@ -1135,6 +1160,7 @@ namespace ts.pxtc {
                     : decl.typeParameters
                         ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
                         : []
+            // TODO: check AST to see if Interface with same name declared
             let id = "C" + getNodeId(decl) + refMask(bindings)
             let info: ClassInfo = classInfos[id]
             if (!info) {
@@ -1172,8 +1198,11 @@ namespace ts.pxtc {
                         }
                     }
                     if (info.baseClassInfo) {
+                        // this class has all the fields of base class + those contributed locally
+                        // (shadowing will be handled via )
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                         info.numRefFields = -1
+                        // compute top-most method in inheritance chain, for each method
                         let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
                         for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
                             for (let m of curr.methods) {
@@ -1183,6 +1212,7 @@ namespace ts.pxtc {
                         for (let m of info.methods) {
                             let prev = U.lookup(nameMap, classFunctionKey(m))
                             if (prev) {
+                                // if method m is overriding, do some checks
                                 let minf = getFunctionInfo(m)
                                 let pinf = getFunctionInfo(prev)
                                 if (prev.parameters.length != m.parameters.length)
@@ -1197,6 +1227,7 @@ namespace ts.pxtc {
                             }
                         }
                     } else {
+                        // why do we order refs before primitive for a root class?
                         info.allfields = reffields.concat(primitivefields)
                         info.numRefFields = reffields.length
                     }
@@ -1400,6 +1431,8 @@ ${lbl}: .short 0xffff
             }
             return coll
         }
+        // this encoding of object literals doesn't appear
+        // to allow subtyping
         function emitObjectLiteral(node: ObjectLiteralExpression) {
             let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment) => {
@@ -1407,9 +1440,10 @@ ${lbl}: .short 0xffff
                 if (isRefCountedExpr(p.initializer))
                     refSuff = "Ref"
                 proc.emitExpr(ir.rtcall("pxtrt::mapSet" + refSuff, [
-                    ir.op(EK.Incr, [expr]),
-                    ir.numlit(getIfaceMemberId(p.name.getText())),
-                    emitExpr(p.initializer)
+                    ir.op(EK.Incr, [expr]),                         // map
+                    // exposed field (no class or interface)
+                    ir.numlit(getIfaceMemberId(p.name.getText())),  // key
+                    emitExpr(p.initializer)                         // value
                 ]))
             })
             return expr
@@ -1519,7 +1553,7 @@ ${lbl}: .short 0xffff
             return !isOnDemandDecl(decl) || usedDecls.hasOwnProperty(nodeKey(decl))
         }
 
-        function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+               function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
             if (!bindings || !bindings.length) markUsed(decl)
             else {
                 let info = getFunctionInfo(decl)
@@ -1591,7 +1625,7 @@ ${lbl}: .short 0xffff
 
             if (nm == "TD_NOOP") {
                 assert(!hasRet)
-                return ir.numlit(0)
+                return ir.numlit(0) 
             }
 
             if (nm == "TD_ID") {
@@ -1758,7 +1792,7 @@ ${lbl}: .short 0xffff
                     // no additional arguments
                 } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
                     if (!recv)
-                        recv = (<PropertyAccessExpression>funcExpr).expression
+                        recv = (<>funcExpr).expression
                     if (recv.kind == SK.SuperKeyword) {
                         isSuper = true
                     }
@@ -1804,6 +1838,8 @@ ${lbl}: .short 0xffff
                     let name = getName(decl)
                     let res = mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
                     if (decl.kind == SK.PropertySignature) {
+                        // TODO: what happens if a RefRecord has been passed in?
+                        // TODO: this assumes a RefMap
                         let pid = res.data as ir.ProcId
                         pid.mapIdx = pid.ifaceIndex
                         let refSuff = ""
@@ -1898,7 +1934,7 @@ ${lbl}: .short 0xffff
             return decl.members.filter(m => m.kind == SK.Constructor)[0] as ConstructorDeclaration
         }
 
-        function isIfaceMemberUsed(name: string) {
+        function isIfaceMember(name: string) {
             return U.lookup(ifaceMembers, name) != null
         }
 
@@ -1909,7 +1945,7 @@ ${lbl}: .short 0xffff
             bin.usedClassInfos.push(info)
             for (let m of info.methods) {
                 let minf = getFunctionInfo(m)
-                if (isIfaceMemberUsed(getName(m)) || (minf.virtualRoot && minf.virtualRoot.isUsed))
+                if (isIfaceMember(getName(m)) || (minf.virtualRoot && minf.virtualRoot.isUsed))
                     markFunctionUsed(m, info.bindings)
             }
 
@@ -2027,7 +2063,7 @@ ${lbl}: .short 0xffff
                 userError(9233, lf("function expressions cannot be generic"))
 
             if (caps.length > 0 && isGenericFunction(node))
-                userError(9234, lf("nested functions cannot be generic yet"))
+                userError(9234, lf("nested functions cannot be generic"))
 
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
@@ -2300,9 +2336,12 @@ ${lbl}: .short 0xffff
             throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
-        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, t: Type) {
+        // direct field access is only done when we know we have a class (ClassInfo)
+        // otherwise, it will be done through the interface table
+        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, t: Type): FieldAccessInfo {
             let attrs = parseComments(fld)
             return {
+                // note that these indices are not normalized via itable
                 idx: info.allfields.indexOf(fld),
                 name: getName(fld),
                 isRef: isRefType(t),
@@ -2320,7 +2359,7 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function getFieldInfo(info: ClassInfo, fieldName: string) {
+        function getFieldInfo(info: ClassInfo, fieldName: string): FieldWithAddInfo {
             const field = info.allfields.filter(f => (<Identifier>f.name).text == fieldName)[0]
             if (!field) {
                 userError(9224, lf("field {0} not found", fieldName))
@@ -2490,7 +2529,7 @@ ${lbl}: .short 0xffff
 
         }
 
-        function emitBinaryExpression(node: BinaryExpression): ir.Expr {
+                                                       function emitBinaryExpression(node: BinaryExpression): ir.Expr {
             if (node.operatorToken.kind == SK.EqualsToken) {
                 return handleAssignment(node);
             }
