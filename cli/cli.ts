@@ -498,9 +498,12 @@ function bumpPxtCoreDepAsync(): Promise<void> {
                     return;
                 }
 
-                console.log(`Bumping pxt-core dep version: ${currVer} -> ${newVer}`)
+                console.log(`Bumping ${knownPackage} dep version: ${currVer} -> ${newVer}`)
                 if (currVer != "*" && pxt.semver.strcmp(currVer, newVer) > 0) {
                     U.userError(`Trying to downgrade ${knownPackage}.`)
+                }
+                if (currVer != "*" && pxt.semver.majorCmp(currVer, newVer) < 0) {
+                    U.userError(`Trying to automatically update major version, please edit package.json manually.`)
                 }
                 pkg["dependencies"][knownPackage] = newVer
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
