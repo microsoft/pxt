@@ -4,7 +4,7 @@ The **Microsoft Programming Experience Toolkit (PXT)** is a framework for creati
 especially focused on computer science education. PXT's underlying programming language 
 is a subset of TypeScript (leaving out JavaScript dynamic features).
 
-PXT is also named **MakeCode** for non-techies.
+PXT is also named **Microsoft MakeCode** on user facing editors.
 
 The main features of PXT are:
 
