@@ -466,39 +466,50 @@ function travisAsync() {
     }
 }
 
-function bumpPxtCoreDepAsync() {
+function bumpPxtCoreDepAsync(): Promise<void> {
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") return Promise.resolve(pkg)
 
-    let gitPull = Promise.resolve()
+    let gitPull = Promise.resolve();
+    let commitMsg: string = undefined;
 
-    if (fs.existsSync("node_modules/pxt-core/.git")) {
-        gitPull = nodeutil.spawnAsync({
-            cmd: "git",
-            args: ["pull"],
-            cwd: "node_modules/pxt-core"
-        })
-    }
+    ["pxt-core", "pxt-common-packages"].forEach(knownPackage => {
+        const modulePath = path.join("node_modules", knownPackage)
+        if (fs.existsSync(path.join(modulePath, ".git"))) {
+            gitPull = nodeutil.spawnAsync({
+                cmd: "git",
+                args: ["pull"],
+                cwd: modulePath
+            })
+        }
 
-    return gitPull
-        .then(() => {
-            let kspkg = readJson("node_modules/pxt-core/package.json")
-            let currVer = pkg["dependencies"]["pxt-core"]
-            let newVer = kspkg["version"]
-            if (currVer == newVer) {
-                console.log(`Referenced pxt-core dep up to date: ${currVer}`)
-                return pkg
-            }
+        gitPull
+            .then(() => {
+                let kspkg = readJson(path.join(modulePath, "package.json"));
+                let currVer = pkg["dependencies"][knownPackage]
+                if (!currVer) return; // not referenced
+                let newVer = kspkg["version"]
+                if (currVer == newVer) {
+                    console.log(`Referenced ${knownPackage} dep up to date: ${currVer}`)
+                    return;
+                }
 
-            console.log(`Bumping pxt-core dep version: ${currVer} -> ${newVer}`)
-            if (currVer != "*" && pxt.semver.strcmp(currVer, newVer) > 0) {
-                U.userError("Trying to downgrade pxt-core.")
-            }
-            pkg["dependencies"]["pxt-core"] = newVer
-            fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-            return nodeutil.runGitAsync("commit", "-m", `Bump pxt-core to ${newVer}`, "--", "package.json")
-                .then(() => pkg)
-        })
+                console.log(`Bumping pxt-core dep version: ${currVer} -> ${newVer}`)
+                if (currVer != "*" && pxt.semver.strcmp(currVer, newVer) > 0) {
+                    U.userError(`Trying to downgrade ${knownPackage}.`)
+                }
+                pkg["dependencies"][knownPackage] = newVer
+                fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
+                commitMsg += `Bump ${knownPackage} to ${newVer}
+`;
+            })
+    })
+
+    if (commitMsg)
+        gitPull = gitPull
+            .then(() => nodeutil.runGitAsync("commit", "-m", commitMsg, "--", "package.json"));
+
+    return gitPull;
 }
 
 function updateAsync() {
