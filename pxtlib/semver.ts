@@ -81,6 +81,12 @@ namespace pxt.semver {
         return r
     }
 
+    export function majorCmp(a: string, b: string) {
+        let aa = tryParse(a)
+        let bb = tryParse(b)
+        return aa.major - bb.major;
+    }
+
     export function strcmp(a: string, b: string) {
         let aa = tryParse(a)
         let bb = tryParse(b)
