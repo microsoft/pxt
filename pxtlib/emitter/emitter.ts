@@ -307,6 +307,11 @@ namespace ts.pxtc {
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
 
+        // On block
+        subcategory?: string;
+        // On namepspace
+        subcategories?: string[];
+
         // on interfaces
         indexerGet?: string;
         indexerSet?: string;
@@ -452,6 +457,14 @@ namespace ts.pxtc {
             res.callingConvention = ir.CallingConvention.Async
         if (res.promise)
             res.callingConvention = ir.CallingConvention.Promise
+        if (res.subcategories) {
+            try {
+                res.subcategories = JSON.parse(res.subcategories as any);
+            }
+            catch (e) {
+                res.subcategories = undefined;
+            }
+        }
 
         return res
     }
