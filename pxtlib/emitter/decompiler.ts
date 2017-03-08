@@ -51,12 +51,12 @@ namespace ts.pxtc.decompiler {
      */
     const multiLineCommentRegex = /^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*(.*?)(?:\*?\*\/)?$/
 
-    const builtinBlocks: pxt.Map<{ block: string; blockId: string; fields?: string }> = {
+    const builtinBlocks: pxt.Map<{ block: string; blockId: string; }> = {
         "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
         "Math.min": { blockId: "math_op2", block: "of %x|and %y" },
-        "Math.max": { blockId: "math_op2", block: "of %x|and %y", fields: `<field name="op">max</field>` }
-    }
+        "Math.max": { blockId: "math_op2", block: "of %x|and %y" }
+     }
 
     interface BlocklyNode {
         kind: string;
@@ -1056,6 +1056,15 @@ ${output}</xml>`;
                 kind: "statement",
                 type: info.attrs.blockId
             }
+
+            if (info.qName == "Math.max") {
+                (r.fields || (r.fields = [])).push({
+                    kind: "field",
+                    name: "op",
+                    value: "max"
+                });
+            }
+
 
             info.args.forEach((e, i) => {
                 if (i === 0 && info.attrs.defaultInstance) {
