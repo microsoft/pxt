@@ -483,6 +483,10 @@ function bumpPxtCoreDepAsync(): Promise<void> {
             })
         }
 
+        // not referenced
+        if (!fs.existsSync(path.join(modulePath, "package.json")))
+            return;
+
         gitPull
             .then(() => {
                 let kspkg = readJson(path.join(modulePath, "package.json"));
