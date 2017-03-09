@@ -375,8 +375,12 @@ function resetAsync() {
 function importLegacyScriptsAsync(): Promise<void> {
     const key = 'legacyScriptsImported';
     const domain = pxt.appTarget.appTheme.legacyDomain;
-    if (!domain || !!pxt.storage.getLocal(key))
+    if (!domain || !pxt.webConfig.targetUrl || !!pxt.storage.getLocal(key))
         return Promise.resolve();
+
+    const targetDomain = pxt.webConfig.targetUrl.replace(/^https:\/\//, '');
+    if (domain == targetDomain)
+        return Promise.resolve(); // nothing to do
 
     pxt.debug('injecting import iframe');
     let frame = document.createElement("iframe") as HTMLIFrameElement;
@@ -427,7 +431,7 @@ function importLegacyScriptsAsync(): Promise<void> {
     window.addEventListener('message', receiveMessage, false)
 
     frame.setAttribute("style", "position:absolute; width:1px; height:1px; right:0em; bottom:0em;");
-    const url = `https://${domain}/api/transfer/${pxt.webConfig.targetUrl.replace(/^https:\/\//, '')}?storageid=${pxt.storage.storageId()}`;
+    const url = `https://${domain}/api/transfer/${targetDomain}?storageid=${pxt.storage.storageId()}`;
     pxt.debug('transfer from ' + url);
     frame.src = url;
     frame.onerror = clean
