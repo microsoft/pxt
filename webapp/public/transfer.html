@@ -63,7 +63,7 @@
                                     return;
                                 }
                                 var data = ev.data;
-                                if (data && data.type == 'transfer' && data.type == 'clear') {
+                                if (data && data.type == 'transfer' && data.action == 'clear') {
                                     console.log('dropping databases')
                                     db.destroyAsync()
                                         .then(function () {
