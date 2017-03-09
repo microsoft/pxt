@@ -336,7 +336,7 @@ div.blocklyWidgetDiv {
 }
 
 .monacoToolboxDiv {
-    position: relative;
+    position: absolute;
     display: inline-block;
     overflow-x: visible;
     overflow-y: auto;
@@ -352,4 +352,5 @@ div.blocklyWidgetDiv {
 #monacoEditorInner {
     position: relative !important;
     display: inline-block;
+    float: right;
 }
