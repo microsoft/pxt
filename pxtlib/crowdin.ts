@@ -5,7 +5,10 @@ namespace pxt.crowdin {
         Util.assert(!!prj && !!key && !!cmd);
         const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
         let suff = "?key=" + key;
-        if (branch) args["branch"] = branch;
+        if (branch) {
+            if (!args) args = {};
+            args["branch"] = branch;
+        }
         if (args) suff += "&" + Object.keys(args).map(k => `${k}=${encodeURIComponent(args[k])}`).join("&");
         return apiRoot + cmd + suff;
     }
