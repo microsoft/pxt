@@ -308,7 +308,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string): Promise<void> {
     const fn = path.basename(p);
     const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
-    console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}`);
+    console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
     return pxt.crowdin.uploadTranslationAsync(branch, prj, key, fn, JSON.stringify(data));
 }
 
