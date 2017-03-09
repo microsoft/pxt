@@ -246,9 +246,11 @@ export class Editor extends srceditor.Editor {
 
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
-        let monacoToolbox = document.getElementById('monacoEditorToolbox')
-        if (monacoArea && monacoToolbox && this.editor)
-            this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight });
+        let monacoToolbox = document.getElementById('monacoEditorToolbox');
+
+        if (monacoArea && monacoToolbox && this.editor) {
+            this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.clientWidth, height: monacoArea.offsetHeight });
+        }
     }
 
     prepare() {
