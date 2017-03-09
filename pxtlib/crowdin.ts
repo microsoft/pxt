@@ -1,10 +1,11 @@
 namespace pxt.crowdin {
     export const KEY_VARIABLE = "CROWDIN_KEY";
 
-    function apiUri(prj: string, key: string, cmd: string, args?: Map<string>) {
+    function apiUri(branch: string, prj: string, key: string, cmd: string, args?: Map<string>) {
         Util.assert(!!prj && !!key && !!cmd);
         const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
         let suff = "?key=" + key;
+        if (branch) args["branch"] = branch;
         if (args) suff += "&" + Object.keys(args).map(k => `${k}=${encodeURIComponent(args[k])}`).join("&");
         return apiRoot + cmd + suff;
     }
@@ -18,9 +19,9 @@ namespace pxt.crowdin {
         validatedOnly?: boolean;
     }
 
-    export function downloadTranslationsAsync(prj: string, key: string, filename: string, options: DownloadOptions = {}): Promise<Map<Map<string>>> {
+    export function downloadTranslationsAsync(branch: string, prj: string, key: string, filename: string, options: DownloadOptions = {}): Promise<Map<Map<string>>> {
         const q: Map<string> = { json: "true" }
-        const infoUri = apiUri(prj, key, "info", q);
+        const infoUri = apiUri(branch, prj, key, "info", q);
 
         const r: Map<Map<string>> = {};
         filename = normalizeFileName(filename);
@@ -33,7 +34,7 @@ namespace pxt.crowdin {
             const nextFile = (): Promise<void> => {
                 const item = todo.pop();
                 if (!item) return Promise.resolve();
-                const exportFileUri = apiUri(prj, key, "export-file", {
+                const exportFileUri = apiUri(branch, prj, key, "export-file", {
                     file: filename,
                     language: item.code,
                     export_translated_only: options.translatedOnly ? "1" : "0",
@@ -65,11 +66,11 @@ namespace pxt.crowdin {
         }
     }
 
-    export function createDirectoryAsync(prj: string, key: string, name: string, incr?: () => void): Promise<void> {
+    export function createDirectoryAsync(branch: string, prj: string, key: string, name: string, incr?: () => void): Promise<void> {
         name = normalizeFileName(name);
-        pxt.debug(`create directory ${name}`)
+        pxt.debug(`create directory ${branch || ""}/${name}`)
         if (!incr) incr = mkIncr(name);
-        return Util.multipartPostAsync(apiUri(prj, key, "add-directory"), { json: "true", name: name })
+        return Util.multipartPostAsync(apiUri(branch, prj, key, "add-directory"), { json: "true", name: name })
             .then(resp => {
                 pxt.debug(`crowdin resp: ${resp.statusCode}`)
                 // 400 returned by folder already exists
@@ -81,12 +82,12 @@ namespace pxt.crowdin {
                     pxt.log(`parent directory missing for ${name}`)
                     const par = name.replace(/\/[^\/]+$/, "")
                     if (par != name) {
-                        return createDirectoryAsync(prj, key, par, incr)
-                            .then(() => createDirectoryAsync(prj, key, name, incr)); // retry
+                        return createDirectoryAsync(branch, prj, key, par, incr)
+                            .then(() => createDirectoryAsync(branch, prj, key, name, incr)); // retry
                     }
                 }
 
-                throw new Error(`cannot create dir ${name}: ${resp.toString()} ${JSON.stringify(data)}`)
+                throw new Error(`cannot create dir ${branch || ""}/${name}: ${resp.toString()} ${JSON.stringify(data)}`)
             })
     }
 
@@ -94,7 +95,7 @@ namespace pxt.crowdin {
         return filename.replace(/\\/g, '/');
     }
 
-    export function uploadTranslationAsync(prj: string, key: string, filename: string, data: string) {
+    export function uploadTranslationAsync(branch: string, prj: string, key: string, filename: string, data: string) {
         Util.assert(!!prj);
         Util.assert(!!key);
 
@@ -110,7 +111,7 @@ namespace pxt.crowdin {
             opts["json"] = "";
             opts["escape_quotes"] = "0";
             incr();
-            return Util.multipartPostAsync(apiUri(prj, key, op), opts, filename, data)
+            return Util.multipartPostAsync(apiUri(branch, prj, key, op), opts, filename, data)
                 .then(resp => handleResponseAsync(resp))
         }
 
@@ -124,7 +125,7 @@ namespace pxt.crowdin {
                 return uploadAsync("add-file", {})
             }
             else if (code == 404 && data.error.code == 17) {
-                return createDirectoryAsync(prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
+                return createDirectoryAsync(branch, prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
             } else if (code == 200) {
                 return Promise.resolve()
