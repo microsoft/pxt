@@ -164,6 +164,89 @@ Append `-ignore` to any of the above to ignore a snippet in automated testing:
     callFunction(;
     ```
 
+## Anchors
+
+Sections of document can be named by adding ``#some-name`` after a section header.
+These will be used as the `id` attribute of the corresponding `<hX>` tag, so they
+can be used in links.
+For example:
+
+```markdown
+## Examples #ex
+### Example 1
+...
+### Example 2 #ex2
+...
+### Example 3
+...
+## See also #also
+...
+```
+
+This will result in:
+
+```html
+<h2 id='ex'>Examples</h2>
+<h3>Example 1</h3>
+...
+<h3 id='ex2'>Example 2</h3>
+...
+<h3>Example 3</h3>
+...
+<h2 id='also'>See also</h2>
+...
+```
+
+Sections stretch until a header with the same or smaller number
+of `#` in front is found. This isn't relevant for plain HTML, but
+matters when overriding sections (see below).
+
+Thus, the section named `ex` contains Examples 1, 2, and 3.
+Section `ex2` contains only Example 2,
+and section `also` contains the See also paragraph.
+
+
+## Inheriting docs
+
+Targets inherit main PXT docs for common language features, but can override
+parts of each document. 
+
+By default, all upstream PXT docs are visible in the target. They consist mostly of the language
+reference. If a target defines a document with a name matching an upstream document, the target's
+version will be used. If the target's version includes macro ```# @extends```, then the upstream
+version will be used as base and sections in it overridden.
+
+Sections are overridden based on matching their ids. For example, a target's version of
+the document above can look as follows:
+
+```markdown
+# @extends
+### #ex2
+My example
+## See Also These! #also
+My links
+```
+
+Effectively, the resulting markdown will be:
+
+```markdown
+## Examples #ex
+### Example 1
+...
+### Example 2 #ex2
+My example
+### Example 3
+...
+## See Also These! #also
+My links
+```
+
+If the title of section is omitted, the title from the upstream version is taken.
+
+Only named sections of the upstream document can be overridden. This is because
+of possible mixups related to localization.
+
+
 ## Automated testing
 
 Run `pxt snippets` in the project's root directory. This will automatically check that all code
