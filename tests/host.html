@@ -89,6 +89,7 @@
             sendMessage({
                 type: "pxteditor",
                 action: "proxytosim",
+                noresponse: true,
                 content: content.value
             })
         }
@@ -117,7 +118,7 @@
     <body onload="start()">
         <div id="toolbox">
 
-            <h1>PXT Host Test</h1>
+            <h1>MakeCode Host Test</h1>
 
             <p>
                 <h3>Workspace Controls</h3>
@@ -144,7 +145,7 @@
             </p>
 
         </div>
-        <iframe id="workspace" src="http://localhost:3232/index.html"/>
+        <iframe id="workspace" src="http://localhost:3232/index.html?editorlayout=ide"/>
 
     </body>
 </html>

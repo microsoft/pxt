@@ -200,6 +200,10 @@ namespace pxsim {
                 let frame = frames[i];
                 this.options.removeElement(frame.parentElement, completeHandler);
             }
+            // Execute the complete handler if there are no frames in sim view
+            if (frames.length == 0 && completeHandler) {
+                completeHandler();
+            }
         }
 
         public unhide() {

@@ -35,6 +35,7 @@
     "built/pxtsim.d.ts",
     "built/pxtblocks.d.ts",
     "built/pxtrunner.d.ts",
+    "built/pxteditor.d.ts",
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
