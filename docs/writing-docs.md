@@ -246,6 +246,26 @@ If the title of section is omitted, the title from the upstream version is taken
 Only named sections of the upstream document can be overridden. This is because
 of possible mixups related to localization.
 
+## Docs file lookup
+
+The lookup of path `https://some.domain.com/v0/foo/bar` proceeds as follows:
+* take the main repo of the target corresponding to `some.domain.com` at `master`
+* check if any of `docs/v0/foo/bar-ref.json`, `docs/v0/foo/bar.html`, 
+  `docs/v0/foo/bar.md` exists; if so use it and stop
+* see if `docs/v0-ref.json` exists and if so set the current path to `foo/bar` and proceed
+* otherwise, go for `docs/index-ref.json` and proceed with path `v0/foo/bar`
+  (we assume below that the path is `foo/bar` though)
+* the `-ref.json` file should contain something like `"appref": "https://github.com/foo/bar-built#v0.1.8"`
+* checkout the main repo (not the built repo!) at `v0.1.8` at make it the current repo
+* check for `docs/foo/bar.md`
+* if it exists and doesn't contain `# @extends` use it and stop
+* get `package.json` and `pxtarget.json` from the current repo
+* check for base file `common-docs/foo/bar.md` in checkout of `pxt-core` version from `package.json`
+* if it fails, for every bundled package `P` from `pxtarget.json` look for base file in the checkout of
+  `pxt-common-packages` (version from `package.json`) for `P/docs/foo/bar.md`
+* if no base file is found, 404
+* otherwise, either server the base file as is, or patch it up using the instructions 
+  in Inheriting docs above
 
 ## Automated testing
 
