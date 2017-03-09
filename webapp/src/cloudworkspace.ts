@@ -384,11 +384,12 @@ function importLegacyScriptsAsync(): Promise<void> {
         if (frame) {
             pxt.debug('cleaning import iframe')
             window.removeEventListener('message', receiveMessage, false)
-            document.documentElement.removeChild(frame);
             frame.contentWindow.postMessage({
                 type: "transfer",
                 action: "clear"
             }, `https://${domain}`);
+            let temp = frame;
+            setTimeout(() => document.documentElement.removeChild(temp), 2000);
             frame = undefined;
         }
     }
