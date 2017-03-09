@@ -248,14 +248,13 @@ of possible mixups related to localization.
 
 ## Docs file lookup
 
-The lookup of path `https://some.domain.com/v0/foo/bar` proceeds as follows:
+The lookup of path `https://some.domain.com/qux/foo/bar` proceeds as follows:
 * take the main repo of the target corresponding to `some.domain.com` at `master`
-* check if any of `docs/v0/foo/bar-ref.json`, `docs/v0/foo/bar.html`, 
-  `docs/v0/foo/bar.md` exists; if so use it and stop
-* see if `docs/v0-ref.json` exists and if so set the current path to `foo/bar` and proceed
-* otherwise, go for `docs/index-ref.json` and proceed with path `v0/foo/bar`
-  (we assume below that the path is `foo/bar` though)
-* the `-ref.json` file should contain something like `"appref": "https://github.com/foo/bar-built#v0.1.8"`
+* check if any of `docs/qux/foo/bar-ref.json` or `docs/qux/foo/bar.html`exists; if so use it and stop
+* see if `docs/qux-ref.json` exists; it should contain something like `"appref": "https://github.com/foo/bar-built#v0.1.8"`
+* otherwise, see if `qux` looks like a version number and if so resolve it using semver; let's assume it resolves to `v0.1.8`
+* otherwise, if `qux` is the exact string `latest`, use `master` branch instead of `v0.1.8`
+* otherwise, redirect to `/latest/qux/foo/bar`
 * checkout the main repo (not the built repo!) at `v0.1.8` at make it the current repo
 * check for `docs/foo/bar.md`
 * if it exists and doesn't contain `# @extends` use it and stop
