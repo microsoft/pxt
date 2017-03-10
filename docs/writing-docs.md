@@ -253,6 +253,8 @@ The lookup of path `https://some.domain.com/v2/foo/bar` proceeds as follows:
 * check if any of `docs/foo/bar-ref.json` or `docs/foo/bar.html` exists; if so use it and stop
 * check for `docs/foo/bar.md`
 * if it exists and doesn't contain `# @extends` use it and stop
+* for every bundled package `P` from `pxtarget.json`, that is not in
+  `pxt-common-packages`, look for `P/docs/foo/bar.md`; if found use it and stop (no expansion here)
 * get `package.json` and `pxtarget.json` from the main target repo
 * check for base file `common-docs/foo/bar.md` in checkout of `pxt-core` branch from `package.json`;
   eg `"dependencies": { "pxt-core": "3.2.1" }` will result in looking into `pxt-core` repo at `v3` branch
