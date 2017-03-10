@@ -490,10 +490,12 @@ namespace ts.pxtc {
         res._name = getName(node)
         if (node.kind == SK.FunctionDeclaration && res.block === "true" && !res.blockId) {
             const fn = (node as any) as ts.FunctionDeclaration;
-            res.blockId = getDeclName(fn);
-            res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
-                .filter(p => !p.questionToken)
-                .map(p => `${p.symbol.name} %${p.symbol.name}`).join('|') : ''}`;
+            if (fn.parent) {
+                res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
+                res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
+                    .filter(p => !p.questionToken)
+                    .map(p => `${p.symbol.name} %${p.symbol.name}`).join('|') : ''}`;
+            }
         }
         node.pxtCommentAttrs = res
         return res
