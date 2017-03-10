@@ -246,6 +246,10 @@ If the title of section is omitted, the title from the upstream version is taken
 Only named sections of the upstream document can be overridden. This is because
 of possible mixups related to localization.
 
+Do not introduce new section ids in the target's document - they will appear as errors at the end.
+Also, if you were to override a section with nested subsections, like the `ex` section above,
+it is not necessary to specify nested subsections again (i.e., `#ex2` can be skipped).
+
 ## Docs file lookup
 
 The lookup of path `https://some.domain.com/v2/foo/bar` proceeds as follows:
@@ -273,6 +277,10 @@ The lookup of path `https://some.domain.com/foo/bar` where `foo` doesn't look li
 If the page is requested in non-English language, the `.md` files are first fetched
 from crowdin on the same branch as they would have been fetched from the repo (either `master` 
 or `vN`).
+
+To see how this resolution applies in a particular target,
+you can try to load an non-existing URL - the error page will show you the list of locations
+tried. You may need to click a little 'More info' button to see it.
 
 ## Automated testing
 

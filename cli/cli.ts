@@ -2261,6 +2261,13 @@ export function serviceAsync(parsed: commandParser.ParsedCommand) {
         })
 }
 
+export function augmnetDocsAsync(parsed: commandParser.ParsedCommand) {
+    let f0 = fs.readFileSync(parsed.arguments[0], "utf8")
+    let f1 = fs.readFileSync(parsed.arguments[1], "utf8")
+    console.log(pxt.docs.augmentDocs(f0, f1))
+    return Promise.resolve()
+}
+
 export function timeAsync() {
     ensurePkgDir();
     let min: Map<number> = null;
@@ -4152,6 +4159,7 @@ function initCommands() {
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
     advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
     advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
+    advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
     advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
 
