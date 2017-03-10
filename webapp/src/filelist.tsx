@@ -100,6 +100,34 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
     }
 
+    private addFile() {
+        const f = "custom.ts";
+        const p = pkg.mainEditorPkg();
+        if (p.files[f]) // already in there
+            return Promise.resolve();
+
+        p.setFile(f, `
+/**
+ * ${lf("Custom blocks")}
+ */
+//% weight=100 color=#f00000
+namespace custom {
+    /**
+     * TODO: ${lf("describe your function here")}
+     * @param value ${lf("describe value here")}
+     */    
+    //% block
+    export function foo(value: number) {
+        // TODO: ${lf("add code here")} 
+    }
+}
+`);
+        return p.updateConfigAsync(cfg => {
+            if (cfg.files.indexOf(f) < 0) cfg.files.push(f);
+        }).then(() => p.savePkgAsync())
+          .then(() => this.props.parent.reloadHeaderAsync());
+    }
+
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
@@ -107,6 +135,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
+                <sui.Button class="primary label" icon="newfile" onClick={(e) => this.addFile() } />
             </div>
             {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
         </div>;
