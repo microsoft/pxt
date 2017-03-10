@@ -1,4 +1,4 @@
-# Programming Experience Toolkit CLI
+# MakeCode CLI (pxt)
 
 This package provides `pxt` command line tool.
 

@@ -7,6 +7,7 @@ CACHE:
 /cdn/marked/marked.min.js
 /cdn/highlight.js/highlight.pack.js
 /cdn/lzma/lzma_worker-min.js
+/cdn/fuse.min.js
 /cdn/jquery.js
 /cdn/pxtlib.js
 /cdn/pxtblocks.js
@@ -16,7 +17,6 @@ CACHE:
 /cdn/semantic.css
 /cdn/custom.css
 /cdn/icons.css
-/cdn/fonts/icons.woff2
 @defaultLocaleStrings@
 @cachedHexFiles@
 
