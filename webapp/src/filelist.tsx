@@ -110,8 +110,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const p = pkg.mainEditorPkg();
             p.setFile(customFile, `
 /**
- * Use this file to define custom functions and blocks.
- * Read more at ${pxt.webConfig.targetUrl}/blocks/custom
+ * ${lf("Use this file to define custom functions and blocks.")}
+ * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'custom-blocks' )}
  */
 
 /**
