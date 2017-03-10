@@ -248,23 +248,25 @@ of possible mixups related to localization.
 
 ## Docs file lookup
 
-The lookup of path `https://some.domain.com/qux/foo/bar` proceeds as follows:
-* take the main repo of the target corresponding to `some.domain.com` at `master`
-* check if any of `docs/qux/foo/bar-ref.json` or `docs/qux/foo/bar.html`exists; if so use it and stop
-* see if `docs/qux-ref.json` exists; it should contain something like `"appref": "https://github.com/foo/bar-built#v0.1.8"`
-* otherwise, see if `qux` looks like a version number and if so resolve it using semver; let's assume it resolves to `v0.1.8`
-* otherwise, if `qux` is the exact string `latest`, use `master` branch instead of `v0.1.8`
-* otherwise, redirect to `/latest/qux/foo/bar`
-* checkout the main repo (not the built repo!) at `v0.1.8` at make it the current repo
+The lookup of path `https://some.domain.com/v2/foo/bar` proceeds as follows:
+* take the main repo of the target corresponding to `some.domain.com` at branch `v2`
+* check if any of `docs/foo/bar-ref.json` or `docs/foo/bar.html` exists; if so use it and stop
 * check for `docs/foo/bar.md`
 * if it exists and doesn't contain `# @extends` use it and stop
-* get `package.json` and `pxtarget.json` from the current repo
-* check for base file `common-docs/foo/bar.md` in checkout of `pxt-core` version from `package.json`
+* get `package.json` and `pxtarget.json` from the main target repo
+* check for base file `common-docs/foo/bar.md` in checkout of `pxt-core` branch from `package.json`;
+  eg `"dependencies": { "pxt-core": "3.2.1" }` will result in looking into `pxt-core` repo at `v3` branch
 * if it fails, for every bundled package `P` from `pxtarget.json` look for base file in the checkout of
   `pxt-common-packages` (version from `package.json`) for `P/docs/foo/bar.md`
 * if no base file is found, 404
 * otherwise, either server the base file as is, or patch it up using the instructions 
   in Inheriting docs above
+
+If there is say no `v7` branch of a repo, but `package.json` at `master` has `"version": "7.3.1"`,
+then `master` is used instead of `v7`.
+
+The lookup of path `https://some.domain.com/foo/bar` where `foo` doesn't look like
+`v0`, `v1` etc. proceeds like above but with `master` instead of `v2`.
 
 ## Automated testing
 
