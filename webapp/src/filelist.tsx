@@ -102,27 +102,37 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addFile() {
-        const p = pkg.mainEditorPkg();
-        p.setFile(customFile, `
+        core.confirmAsync({
+            header: lf("Add custom blocks?"),
+            body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
+        }).then(v => {
+            if (!v) return;
+            const p = pkg.mainEditorPkg();
+            p.setFile(customFile, `
+/**
+ * Use this file to define custom functions and blocks.
+ * Read more at ${pxt.webConfig.targetUrl}/blocks/custom
+ */
+
 /**
  * ${lf("Custom blocks")}
  */
-//% weight=100 color=#f00000
+//% weight=100 color=#f00000 icon="\uf0c3"
 namespace custom {
     /**
      * TODO: ${lf("describe your function here")}
-     * @param value ${lf("describe value here")}
+     * @param value ${lf("describe value here")}, eg: 5
      */    
     //% block
-    export function foo(value: number) {
-        // TODO: ${lf("add code here")} 
+    export function fib(value: number): number {
+        return value <= 1 ? value : fib(value -1) + fib(value - 2);
     }
 }
 `);
-        return p.updateConfigAsync(cfg => {
-            if (cfg.files.indexOf(f) < 0) cfg.files.push(f);
-        }).then(() => p.savePkgAsync())
-          .then(() => this.props.parent.reloadHeaderAsync());
+            return p.updateConfigAsync(cfg => cfg.files.push(customFile))
+                .then(() => p.savePkgAsync())
+                .then(() => this.props.parent.reloadHeaderAsync())
+        });
     }
 
     renderCore() {
