@@ -16,6 +16,7 @@ interface FileListState {
     expands: pxt.Map<boolean>;
 }
 
+const customFile = "custom.ts";
 export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     constructor(props: ISettingsProps) {
@@ -101,12 +102,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addFile() {
-        const f = "custom.ts";
         const p = pkg.mainEditorPkg();
-        if (p.files[f]) // already in there
-            return Promise.resolve();
-
-        p.setFile(f, `
+        p.setFile(customFile, `
 /**
  * ${lf("Custom blocks")}
  */
@@ -131,11 +128,12 @@ namespace custom {
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
+        const plus = !pkg.mainEditorPkg().files[customFile]
         return <div className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
             <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
-                <sui.Button class="primary label" icon="newfile" onClick={(e) => this.addFile() } />
+                {plus ? <sui.Button class="primary label" icon="plus" onClick={(e) => this.addFile() } /> : undefined }
             </div>
             {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
         </div>;
