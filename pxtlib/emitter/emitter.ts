@@ -490,7 +490,7 @@ namespace ts.pxtc {
         res._name = getName(node)
         if (node.kind == SK.FunctionDeclaration && res.block === "true" && !res.blockId) {
             const fn = (node as any) as ts.FunctionDeclaration;
-            if (fn.parent) {
+            if ((fn.symbol as any).parent) {
                 res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
                 res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
                     .filter(p => !p.questionToken)
