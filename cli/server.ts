@@ -681,6 +681,32 @@ function scriptPageTestAsync(id: string) {
 
 }
 
+function readMd(pathname: string): string {
+    let tryRead = (fn: string) => {
+        if (fileExistsSync(fn))
+            return fs.readFileSync(fn, "utf8")
+        return null
+    }
+
+    let targetMd = tryRead(docsDir + "/" + pathname + ".md")
+    if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
+        return targetMd
+
+    let dirs = [
+        root + "/node_modules/common-docs/",
+    ]
+    for (let pkg of pxt.appTarget.bundleddirs) {
+        dirs.push(root + "/" + pkg + "/docs/")
+    }
+    for (let d of dirs) {
+        let template = tryRead(d + pathname + ".md")
+        if (template)
+            return pxt.docs.augmentDocs(template, targetMd)
+    }
+
+    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).map(s => "* ``" + s + "``\n").join("")
+}
+
 let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
@@ -848,33 +874,32 @@ export function serveAsync(options: ServeOptions) {
             if (fileExistsSync(webFile + ".html")) {
                 webFile += ".html"
                 pathname += ".html"
-            } else if (fileExistsSync(webFile + ".md")) {
-                webFile += ".md"
-                pathname += ".md"
+            } else {
+                webFile = ""
             }
         }
 
-        if (fileExistsSync(webFile)) {
-            if (/\.md$/.test(webFile)) {
-                let bc = elts.map((e, i) => {
-                    return {
-                        href: "/" + elts.slice(0, i + 1).join("/"),
-                        name: e
-                    }
-                })
-                let templ = expandDocFileTemplate("docs.html")
-                let html = pxt.docs.renderMarkdown(templ, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc, pathname)
-                sendHtml(html)
-            } else if (/\.html$/.test(webFile)) {
+        if (webFile) {
+            if (/\.html$/.test(webFile)) {
                 let html = expandHtml(fs.readFileSync(webFile, "utf8"))
                 sendHtml(html)
             } else {
                 sendFile(webFile)
             }
-            return
+        } else {
+            let md = readMd(pathname)
+            let bc = elts.map((e, i) => {
+                return {
+                    href: "/" + elts.slice(0, i + 1).join("/"),
+                    name: e
+                }
+            })
+            let templ = expandDocFileTemplate("docs.html")
+            let html = pxt.docs.renderMarkdown(templ, md, pxt.appTarget.appTheme, null, bc, pathname)
+            sendHtml(html)
         }
 
-        return error(404, "Not found :(\n")
+        return
     });
 
     // if user has a server.js file, require it
