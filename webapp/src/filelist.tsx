@@ -117,7 +117,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 /**
  * ${lf("Custom blocks")}
  */
-//% weight=100 color=#18bf50 icon="\uf0c3"
+//% weight=100 color=#0fbc11 icon="\uf0c3"
 namespace custom {
     /**
      * TODO: ${lf("describe your function here")}
