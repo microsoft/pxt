@@ -1021,7 +1021,6 @@ export class Editor extends srceditor.Editor {
             for (let d of file.diagnostics) {
                 let endPos = model.getPositionAt(d.start + d.length);
                 monacoErrors.push({
-                    source: file.getName(),
                     severity: monaco.Severity.Error,
                     message: String(d.messageText),
                     startLineNumber: d.line,
