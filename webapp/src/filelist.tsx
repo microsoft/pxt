@@ -117,7 +117,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 /**
  * ${lf("Custom blocks")}
  */
-//% weight=100 color=#f00000 icon="\uf0c3"
+//% weight=100 color=#18bf50 icon="\uf0c3"
 namespace custom {
     /**
      * TODO: ${lf("describe your function here")}
@@ -130,6 +130,7 @@ namespace custom {
 }
 `);
             return p.updateConfigAsync(cfg => cfg.files.push(customFile))
+                .then(() => this.props.parent.setFile(p.lookupFile(customFile)))
                 .then(() => p.savePkgAsync())
                 .then(() => this.props.parent.reloadHeaderAsync())
         });
@@ -138,7 +139,7 @@ namespace custom {
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
-        const plus = !pkg.mainEditorPkg().files[customFile]
+        const plus = show && !pkg.mainEditorPkg().files[customFile]
         return <div className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
             <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
