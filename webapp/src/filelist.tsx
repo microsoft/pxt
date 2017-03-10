@@ -130,7 +130,7 @@ namespace custom {
 }
 `);
             return p.updateConfigAsync(cfg => cfg.files.push(customFile))
-                .then(() => this.props.parent.setFile(p.lookupFile(customFile)))
+                .then(() => this.props.parent.setFile(p.lookupFile("this/" + customFile)))
                 .then(() => p.savePkgAsync())
                 .then(() => this.props.parent.reloadHeaderAsync())
         });
