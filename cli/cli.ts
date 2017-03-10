@@ -443,7 +443,10 @@ function travisAsync() {
     if (pkg["name"] == "pxt-core") {
         let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
         if (uploadLocs)
-            p = p.then(() => execCrowdinAsync("upload", "built/strings.json"));
+            p = p
+            .then(() => execCrowdinAsync("upload", "built/strings.json"))
+            .then(() => buildWebStringsAsync())
+            .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
         return p;
     } else {
         return buildTargetAsync()
