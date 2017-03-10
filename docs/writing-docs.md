@@ -268,6 +268,10 @@ then `master` is used instead of `v7`.
 The lookup of path `https://some.domain.com/foo/bar` where `foo` doesn't look like
 `v0`, `v1` etc. proceeds like above but with `master` instead of `v2`.
 
+If the page is requested in non-English language, the `.md` files are first fetched
+from crowdin on the same branch as they would have been fetched from the repo (either `master` 
+or `vN`).
+
 ## Automated testing
 
 Run `pxt snippets` in the project's root directory. This will automatically check that all code
