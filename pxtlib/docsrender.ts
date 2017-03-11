@@ -280,6 +280,17 @@ namespace pxt.docs {
                 out += this.options.xhtml ? '/>' : '>';
                 return out;
             }
+            renderer.heading = function (text: string, level: number, raw: string) {
+                let m = /(.*)#([\w\-]+)\s*$/.exec(text)
+                let id = ""
+                if (m) {
+                    text = m[1]
+                    id = m[2]
+                } else {
+                    id = raw.toLowerCase().replace(/[^\w]+/g, '-')
+                }
+                return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
+            } as any
             marked.setOptions({
                 renderer: renderer,
                 gfm: true,

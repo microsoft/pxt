@@ -683,12 +683,14 @@ function scriptPageTestAsync(id: string) {
 
 function readMd(pathname: string): string {
     let tryRead = (fn: string) => {
-        if (fileExistsSync(fn))
-            return fs.readFileSync(fn, "utf8")
+        if (fileExistsSync(fn + ".md"))
+            return fs.readFileSync(fn + ".md", "utf8")
+        if (fileExistsSync(fn + "/index.md"))
+            return fs.readFileSync(fn + "/index.md", "utf8")
         return null
     }
 
-    let targetMd = tryRead(docsDir + "/" + pathname + ".md")
+    let targetMd = tryRead(docsDir + "/" + pathname)
     if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
         return targetMd
 
@@ -699,7 +701,7 @@ function readMd(pathname: string): string {
         dirs.push(root + "/" + pkg + "/docs/")
     }
     for (let d of dirs) {
-        let template = tryRead(d + pathname + ".md")
+        let template = tryRead(d + pathname)
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }
