@@ -79,7 +79,7 @@ namespace pxt.Cloud {
             }).then(resp => {
                 if (resp.statusCode == 404)
                     return privateGetTextAsync(url);
-                else return resp.json as string;
+                else return resp.text
             });
         else return privateGetTextAsync(url);
     }
