@@ -222,7 +222,7 @@ svg {
 }
 
 /* breadcrumbs in inverted view */
-.inverted .ui.breadcrumb a {
+.inverted .ui.breadcrumb a, .inverted .ui.breadcrumb .icon {
     color: white;
 }
 
