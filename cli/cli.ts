@@ -1458,10 +1458,93 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
         });
 }
 
+function updateTOC(cfg: pxt.TargetBundle) {
+    // Update Table of Contents from SUMMARY.md file
+    let summaryFile = "docs/SUMMARY.md";
+    if (fs.existsSync(summaryFile)) {
+        let buf = fs.readFileSync(summaryFile);
+        let contents = buf.toString("utf8")
+
+        let marked = pxt.docs.requireMarked();
+        let options = {
+            renderer: new marked.Renderer(),
+            gfm: true,
+            tables: false,
+            breaks: false,
+            pedantic: false,
+            sanitize: false,
+            smartLists: false,
+            smartypants: false
+        };
+
+        let dummy: pxt.TOCMenuEntry = {name: 'dummy', subitems: []};
+        let currentStack: pxt.TOCMenuEntry[] = [];
+        currentStack.push(dummy);
+
+        let tokens = marked.lexer(contents, options);
+        tokens.forEach((token: any) => {
+            switch (token.type) {
+                case "heading":
+                    if (token.depth == 3) {
+                        // heading
+                    }
+                    break;
+                case "list_start":
+                    break;
+                case "list_item_start":
+                    let newItem: pxt.TOCMenuEntry = {
+                        name: '',
+                        subitems: []
+                    };
+                    currentStack.push(newItem);
+                    break;
+                case "text":
+                    token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
+                        currentStack[currentStack.length - 1].name = name;
+                        currentStack[currentStack.length - 1].path = path;
+                    });
+                    break;
+                case "list_item_end":
+                    let docEntry = currentStack.pop();
+                    currentStack[currentStack.length - 1].subitems.push(docEntry);
+                    break;
+                case "list_end":
+                    break;
+                default:
+            }
+        })
+        cfg.appTheme.TOC = dummy.subitems;
+    }
+    if (!cfg.appTheme.TOC || cfg.appTheme.TOC.length == 0) return;
+
+    let previousNode: pxt.TOCMenuEntry;
+    // Scan tree and build next / prev paths
+    let buildPrevNext = (node: pxt.TOCMenuEntry) => {
+        if (previousNode) {
+            node.prevName = previousNode.name;
+            node.prevPath = previousNode.path;
+
+            previousNode.nextName = node.name;
+            previousNode.nextPath = node.path;
+        }
+        if (node.path) {
+            previousNode = node;
+        }
+        node.subitems.forEach((tocItem, tocIndex) => {
+            buildPrevNext(tocItem);
+        })
+    }
+
+    cfg.appTheme.TOC.forEach((tocItem, tocIndex) => {
+        buildPrevNext(tocItem)
+    })
+}
+
 function buildTargetCoreAsync() {
     let previousForceCloudBuild = forceCloudBuild;
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
+    updateTOC(cfg);
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
