@@ -52,6 +52,13 @@
 
         $('.ui.dropdown')
         .dropdown();
+
+        $('.ui.accordion')
+        .accordion({
+            closeNested: true,
+            selector: {
+                trigger: '.title .icon'
+            }});
     });
 </script>
 </body>

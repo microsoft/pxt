@@ -113,9 +113,12 @@
 </aside>
 
 <aside id=inner-dropdown class=toc>
-    <div class="ui dropdown item" title="@TITLE@">
-        @NAME@<i class="dropdown icon"></i>
-        <div class="menu">
+    <div class="ui inverted accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="dropdown icon"></i>
+            <a class="header" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
             @ITEMS@
         </div>
     </div>
