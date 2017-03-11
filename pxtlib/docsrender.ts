@@ -181,7 +181,6 @@ namespace pxt.docs {
             let mparams: Map<string> = {
                 NAME: m.name,
             }
-            m.path = m.path.replace('.md', '');
             if (m.path && !/^(https?:|\/)/.test(m.path))
                 return error("Invalid link: " + m.path)
             mparams["LINK"] = m.path
@@ -217,12 +216,12 @@ namespace pxt.docs {
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath.replace('.md', '')}" class="navigation navigation-prev " aria-label="Previous page: ${currentTocEntry.prevName}">
+                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " aria-label="Previous page: ${currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath.replace('.md', '')}" class="navigation navigation-next " aria-label="Next page: ${currentTocEntry.nextName}">
+                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " aria-label="Next page: ${currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }

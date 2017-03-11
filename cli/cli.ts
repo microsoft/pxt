@@ -1502,7 +1502,7 @@ function updateTOC(cfg: pxt.TargetBundle) {
                 case "text":
                     token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
                         currentStack[currentStack.length - 1].name = name;
-                        currentStack[currentStack.length - 1].path = path;
+                        currentStack[currentStack.length - 1].path = path.replace('.md','');
                     });
                     break;
                 case "list_item_end":
