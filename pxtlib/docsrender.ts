@@ -184,7 +184,7 @@ namespace pxt.docs {
             if (m.path && !/^(https?:|\/)/.test(m.path))
                 return error("Invalid link: " + m.path)
             mparams["LINK"] = m.path
-            if (`${m.path}.md` == d.filepath) {
+            if (m.path == d.filepath) {
                 mparams["ACTIVE"] = 'active';
                 currentTocEntry = m;
             }
