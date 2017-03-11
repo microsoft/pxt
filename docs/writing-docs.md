@@ -250,6 +250,10 @@ Do not introduce new section ids in the target's document - they will appear as 
 Also, if you were to override a section with nested subsections, like the `ex` section above,
 it is not necessary to specify nested subsections again (i.e., `#ex2` can be skipped).
 
+The sections in the upstream document are treated as a tree, following the nesting level
+of headers. In the target document, sections stretch from the beginning of a section with
+id, until the next section with id starts, that is the tree structure is not required.
+
 ## Docs file lookup
 
 The lookup of path `https://some.domain.com/v2/foo/bar` proceeds as follows:
