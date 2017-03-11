@@ -1492,6 +1492,7 @@ function updateTOC(cfg: pxt.TargetBundle) {
                 case "list_start":
                     break;
                 case "list_item_start":
+                case "loose_item_start":
                     let newItem: pxt.TOCMenuEntry = {
                         name: '',
                         subitems: []
@@ -1505,6 +1506,7 @@ function updateTOC(cfg: pxt.TargetBundle) {
                     });
                     break;
                 case "list_item_end":
+                case "loose_item_end":
                     let docEntry = currentStack.pop();
                     currentStack[currentStack.length - 1].subitems.push(docEntry);
                     break;
