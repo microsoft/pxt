@@ -307,12 +307,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        const fmd = path.join(docsDir, innerPath.slice(pxt.appTarget.id.length + 1) + ".md");
-        return existsAsync(fmd)
-            .then(e => {
-                if (!e) throw throwError(404);
-                return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
-            });
+        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
     }
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
@@ -729,8 +724,13 @@ export function serveAsync(options: ServeOptions) {
         }
 
         const sendJson = (v: any) => {
-            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
-            res.end(JSON.stringify(v))
+            if (typeof v == "string") {
+                res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf8' })
+                res.end(v)
+            } else {
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
+                res.end(JSON.stringify(v))
+            }
         }
 
         const sendHtml = (s: string) => {
