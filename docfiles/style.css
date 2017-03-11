@@ -155,7 +155,7 @@ svg {
 }
 
 .header .ui.mini.image {
-    display: inline;
+    display: inline !important;
 }
 
 /* page layout */
@@ -259,6 +259,13 @@ svg {
 
 .navigation.navigation-prev {
     left: 300px;
+}
+
+.ui.menu.tocmenu {
+    left: 0px;
+    top: -5px;
+    min-height: 1200px !important;
+    overflow: visible !important
 }
 
 @media only screen and (max-width: 1272px) {

@@ -45,10 +45,13 @@
 <script>
     $(document).ready(function() {
         $('.ui.sidebar')
-        .sidebar({closable: false, dimPage: false})
+        .sidebar({dimPage: false})
         .sidebar(
             'attach events', '#togglesidebar'
         );
+
+        $('.ui.dropdown')
+        .dropdown();
     });
 </script>
 </body>
