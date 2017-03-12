@@ -563,7 +563,7 @@ function bumpAsync(parsed: commandParser.ParsedCommand) {
     else if (fs.existsSync("pxtarget.json"))
         return Promise.resolve()
             .then(() => nodeutil.runGitAsync("pull"))
-            .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
+            .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
             .then(() => nodeutil.runNpmAsync("version", "patch"))
             .then(() => nodeutil.runGitAsync("push", "--tags"))
             .then(() => nodeutil.runGitAsync("push"))
