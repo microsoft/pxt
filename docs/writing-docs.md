@@ -20,20 +20,20 @@ The following macros are custom extensions to markdown.
 
 ### avatar
 
-    ```
-    ### ~avatar [class]
+```
+### ~avatar [class]
 
-    [content]
+[content]
 
-    ### ~
-    ```
+### ~
+```
     
 See [blink lesson](https://m.pxt.io/lessons/blink/activity) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/lessons/blink/activity.md).
 
 ## Inline button rendering
 
-Use `` ``|primary button|`` `` or `` ``||secondary button||`` `` to render a button like element.
+Use ``` ``|primary button|`` ``` or ``` ``||secondary button||`` ``` to render a button like element.
 
 
 ## Inline code snippets
@@ -62,6 +62,7 @@ The **blocks** language renders a JavaScript snippet into blocks and provide a s
     ```blocks
     basic.showNumber(5)
     ```
+
 See [forever docs](https://m.pxt.io/reference/basic/show-string) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
 
@@ -99,7 +100,7 @@ The **cards** language displays a code card for each function call.
     `);
     basic.showString("Hello!");
     basic.clearScreen();
-    ````
+    ```
     
 ### namespaces
 
@@ -108,7 +109,8 @@ The **namespaces** language display a code card for the first symbol of each nam
     ```namespaces
     basic.showNumber(0);
     input.onButtonPressed(() => {});
-    ````
+    ```
+
 See [basic namespace docs](https://m.pxt.io/reference) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference.md).
 
