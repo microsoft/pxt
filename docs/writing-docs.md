@@ -28,7 +28,7 @@ The following macros are custom extensions to markdown.
 ### ~
 ```
     
-See [blink lesson](https://m.pxt.io/lessons/blink/activity) 
+See [blink lesson](https://makecode.com/lessons/blink/activity) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/lessons/blink/activity.md).
 
 ## Inline button rendering
@@ -63,7 +63,7 @@ The **blocks** language renders a JavaScript snippet into blocks and provide a s
     basic.showNumber(5)
     ```
 
-See [forever docs](https://m.pxt.io/reference/basic/show-string) 
+See [forever docs](https://pxt.microbit.org/reference/basic/show-string) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
 
 ### project
@@ -82,7 +82,7 @@ The **sig** displays a signature of the first function call in the snippet.
     basic.showNumber(5)
     ```
 
-See [forever docs](https://m.pxt.io/reference/basic/show-string) 
+See [forever docs](https://makecode.com/reference/basic/show-string) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
 
 ### cards
@@ -111,7 +111,7 @@ The **namespaces** language display a code card for the first symbol of each nam
     input.onButtonPressed(() => {});
     ```
 
-See [basic namespace docs](https://m.pxt.io/reference) 
+See [basic namespace docs](https://pxt.microbit.org/reference) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference.md).
 
 ### block
@@ -138,7 +138,7 @@ The **shuffle** macro shuffles the blocks from a program which makes for a great
     basic.showNumber(5)
     ```
 
-See [basic namespace docs](https://m.pxt.io/reference/basic) 
+See [basic namespace docs](https://makecode.com/reference/basic) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic.md).
 
 ### codecard

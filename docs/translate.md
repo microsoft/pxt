@@ -8,7 +8,7 @@ and you can volunteer to translate parts of the web site.
 
 ## Crowdin project
 
-The project below contains the resources from https://www.pxt.io and the menu items of https://pxt.microbit.org.
+The project below contains the resources from https://makecode.com and the menu items of @homeurl@.
 
 * [https://crowdin.com/project/kindscript](https://crowdin.com/project/kindscript)
 
@@ -39,7 +39,7 @@ You will find target specific localization files under folders in crowdin. For e
 * ``core-strings.json``: contains the block definitions
 * ``core-jsdoc-strings.json``: contains the descriptions
 
-The block definition should be carefully translated using the [block definition syntax](https://www.pxt.io/defining-blocks). 
+The block definition should be carefully translated using the [block definition syntax](https://makecode.com/defining-blocks). 
 Open the developer tools and watch the console, PXT wil validate the localized string and flag potential issues.
 
 ### Block localization guidance
@@ -92,5 +92,5 @@ Check out `pxt-sample` target for an example!
 
 ## Supported languages
 
-Check out https://www.pxt.io/api/i18n/langs for current list of configured
+Check out https://makecode.com/api/i18n/langs for current list of configured
 languages. If you need additional languages there, let us know!
