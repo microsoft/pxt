@@ -40,11 +40,6 @@ div.listing A:hover
     text-decoration: underline; 
 }
 
-.mainbody {
-    margin-top: 6em;
-    margin-bottom: 3em;
-}
-
 .prodname {
     font-weight: normal;
     font-size: 1.8em;
@@ -157,4 +152,157 @@ svg {
     transform: translate(-50%, -50%);
     width: calc(100% - 1em);
     max-height: calc(100% - 1em);
+}
+
+.header .ui.mini.image {
+    display: inline !important;
+}
+
+/* page layout */
+
+.mainbody {
+    margin-top: 2em;
+    padding-bottom: 3em;
+}
+
+/* Styling the table of contents much like the Semantic UI documentation site: http://semantic-ui.com/introduction/getting-started.html */
+.pusher > .full.height {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
+}
+
+.full.height > .toc {
+  position: relative;
+  z-index: 1;
+  width: 300px;
+  -webkit-box-flex: 0;
+  -webkit-flex: 0 0 auto;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto;
+}
+
+.full.height > .toc .ui.menu {
+  border-radius: 0;
+  border-width: 0 1px 0 0;
+  box-shadow: none;
+  margin: 0;
+  width: inherit;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.ui.vertical.menu .menu .item {
+    font-size: 1em;
+}
+
+.article {
+  -webkit-box-flex: 1;
+
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  min-width: 0px;
+  margin-bottom: 2em;
+}
+
+.fixed.menu > .container {
+    margin-left: 0em !important;
+    margin-right: 0em !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.fixed.menu > .container > .item {
+    margin: 10px;
+}
+
+/* breadcrumbs in inverted view */
+.inverted .ui.breadcrumb a, .inverted .ui.breadcrumb .icon {
+    color: white;
+}
+
+/* inverted link colour */
+.ui.inverted.link.list .item, .ui.inverted.link.list a.item, .ui.inverted.link.list .item a:not(.ui) {
+    color: rgba(255, 255, 255, 0.8)
+}
+
+/* navigation */
+.navigation {
+    position: fixed;
+    top: 50px;
+    bottom: 0;
+    margin: 0;
+    padding: 10px;
+    max-width: 150px;
+    min-width: 90px;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+    font-size: 40px;
+    color: #ccc;
+    text-align: center;
+    -webkit-transition: all 350ms ease;
+    -moz-transition: all 350ms ease;
+    -o-transition: all 350ms ease;
+    transition: all 350ms ease;
+}
+
+.navigation.navigation-next {
+    right: 0;
+}
+
+.navigation.navigation-prev {
+    left: 300px;
+}
+
+.ui.menu.tocmenu {
+    left: 0px;
+    top: -5px;
+    min-height: 1200px !important;
+    overflow: visible !important
+}
+
+@media only screen and (max-width: 1272px) {
+    .full.height > .toc {
+        width: 200px;
+    }
+    .navigation.navigation-prev {
+        left: 200px;
+    }
+}
+
+@media only screen and (max-width: 1144px) {
+    .full.height > .toc {
+        display: none;
+    }
+    .navigation {
+       position: static;
+        top: auto;
+        max-width: 50%;
+        width: 50%;
+        display: inline-block;
+        float: left;
+    }
+    .navigation.navigation-prev {
+        left: 0px;
+    }
+}
+
+@media only screen and (min-width: 1145px) {
+    .fixed.main.menu {
+        display: none;
+    }
+
+    .mainbody {
+        margin-top: 2em;
+        margin-bottom: 2em;
+        padding-left: 6rem;
+        padding-right: 6rem;
+    }
 }

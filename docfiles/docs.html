@@ -12,19 +12,55 @@
 </head>
 
 <body id='root' class='root'>
-    
-<!-- @include header.html -->
 
-<div id="docs" class="ui main container mainbody">
-    @breadcrumb@
-    @body@
-    @github@
+<!-- @include tocheader.html -->
+
+<div class="pusher">
+
+<div class="full height">
+
+    <!-- @include toc.html -->
+    
+    <div class="article">
+        
+        <!-- @include header.html -->
+
+        <div id="docs" class="main ui container mainbody">
+            @body@
+            @github@
+        </div>
+
+        @prev@
+        @next@
+    </div>
+</div>
+
 </div>
 
 <!-- @include footer.html -->
+
 <!-- @include macros.html -->
 <!-- @include tracking.html -->
 
+<script>
+    $(document).ready(function() {
+        $('.ui.sidebar')
+        .sidebar({dimPage: false})
+        .sidebar(
+            'attach events', '#togglesidebar'
+        );
+
+        $('.ui.dropdown')
+        .dropdown();
+
+        $('.ui.accordion')
+        .accordion({
+            closeNested: true,
+            selector: {
+                trigger: '.title .icon'
+            }});
+    });
+</script>
 </body>
 
 </html>

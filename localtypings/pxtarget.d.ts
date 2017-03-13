@@ -137,6 +137,7 @@ declare namespace pxt {
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
+        TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
         sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
@@ -167,6 +168,7 @@ declare namespace pxt {
         projectGallery?: string;
         exampleGallery?: string;
         crowdinProject?: string;
+        crowdinBranch?: string; // optional branch specification
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
@@ -183,6 +185,18 @@ declare namespace pxt {
         path?: string;
         tutorial?: boolean;
         subitems?: DocMenuEntry[];
+    }
+
+    interface TOCMenuEntry {
+        name: string;
+        path?: string;
+        subitems?: TOCMenuEntry[];
+
+        prevName?: string;
+        prevPath?: string;
+
+        nextName?: string;
+        nextPath?: string;
     }
 
     interface TargetBundle extends AppTarget {

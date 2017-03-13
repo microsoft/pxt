@@ -65,9 +65,9 @@ namespace pxt.Cloud {
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         docid = docid.replace(/^\//, "");
-        let url = `md/${pxt.appTarget.id}/${docid}`;
+        let url = `md/${pxt.appTarget.id}/${docid}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
         if (locale != "en") {
-            url += `?lang=${encodeURIComponent(Util.userLanguage())}`
+            url += `&lang=${encodeURIComponent(Util.userLanguage())}`
             if (live) url += "&live=1"
         }
         if (Cloud.isLocalHost() && !live)
