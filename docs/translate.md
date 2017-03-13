@@ -32,9 +32,6 @@ Note that there may be a delay of up to 5 minutes before your changes in Crowdin
 
 All the editor interface strings, like the "Download" button are in the ``strings.json`` file.
 
-We also maintain a prioritized list of strings in the file ``live-strings.json``. 
-These strings extracted by instrumenting the web site and inspecting which string gets shown to the user. Start localizing this file for best effect!
-
 ## Translating the blocks and reference documentation
 
 You will find target specific localization files under folders in crowdin. For example, all blocks, reference translations for the **microbit** are under ``/microbit`` , one for the block definition and one for the descriptions:

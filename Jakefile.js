@@ -415,6 +415,7 @@ ju.catFiles("built/web/semantic.js",
         "node_modules/semantic-ui-less/definitions/modules/modal.js",
         "node_modules/semantic-ui-less/definitions/modules/popup.js",
         "node_modules/semantic-ui-less/definitions/modules/search.js",
+        "node_modules/semantic-ui-less/definitions/modules/sidebar.js",
         "node_modules/semantic-ui-less/definitions/modules/transition.js",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")

@@ -125,6 +125,7 @@ namespace pxt.docs {
         let macros = U.clone(stdmacros)
         let settings = U.clone(stdsettings)
         let menus: Map<string> = {}
+        let toc: Map<string> = {}
         let params = d.params
         let theme = d.theme
 
@@ -146,6 +147,8 @@ namespace pxt.docs {
                 settings[name] = body
             } else if (/menu/.test(attrs["class"])) {
                 menus[name] = body
+            } else if (/toc/.test(attrs["class"])) {
+                toc[name] = body
             } else {
                 macros[name] = body
             }
@@ -172,6 +175,31 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
+        let currentTocEntry: TOCMenuEntry;
+        let recTOC = (m: TOCMenuEntry, lev: number) => {
+            let templ = toc["item"]
+            let mparams: Map<string> = {
+                NAME: m.name,
+            }
+            if (m.path && !/^(https?:|\/)/.test(m.path))
+                return error("Invalid link: " + m.path)
+            mparams["LINK"] = m.path
+            if ((m.path && d.filepath && d.filepath.indexOf(m.path) >= 0)) {
+                mparams["ACTIVE"] = 'active';
+                currentTocEntry = m;
+            }
+            if (m.subitems && m.subitems.length > 0) {
+                if (lev == 0) templ = toc["top-dropdown"]
+                else templ = toc["inner-dropdown"]
+                mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
+            } else {
+                if (/^-+$/.test(m.name)) {
+                    templ = toc["divider"]
+                }
+            }
+            return injectHtml(templ, mparams, ["ITEMS"])
+        }
+
         let breadcrumbHtml = '';
         if (d.breadcrumb && d.breadcrumb.length > 1) {
             breadcrumbHtml = `
@@ -183,12 +211,27 @@ namespace pxt.docs {
             </div>`;
         }
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
+        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
         params["breadcrumb"] = breadcrumbHtml;
+
+        if (currentTocEntry) {
+            if (currentTocEntry.prevPath) {
+                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " aria-label="Previous page: ${currentTocEntry.prevName}">
+                                    <i class="icon angle left"></i>
+                                </a>`;
+            }
+            if (currentTocEntry.nextPath) {
+                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " aria-label="Next page: ${currentTocEntry.nextName}">
+                                    <i class="icon angle right"></i>
+                                </a>`;
+            }
+        }
+
         if (theme.boardName)
             params["boardname"] = html2Quote(theme.boardName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
-        params["targetname"] = theme.name || "PXT"
+        params["targetname"] = theme.name || "Microsoft MakeCode"
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         if (d.filepath && theme.githubUrl) {
             //I would have used NodeJS path library, but this code may have to work in browser
@@ -214,7 +257,7 @@ namespace pxt.docs {
         }
 
         d.finish = () => injectHtml(d.html, params,
-            ["body", "menu", "breadcrumb", "targetlogo", "github",
+            ["body", "menu", "TOC", "prev", "next", "breadcrumb", "targetlogo", "github",
              "JSON"])
     }
 
