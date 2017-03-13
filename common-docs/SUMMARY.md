@@ -38,8 +38,14 @@
 
 * [FAQ](/faq)
 * [Help Translate](/translate)
+* [Sharing projects](/share)
 * [Offline support](/offline)
+
+## Developers
+
 * [Command Line Interface](/cli)
+* [Visual Studio Code support](/code)
+* [Coding on Raspberry Pi](/raspberry-pi)
 
 * [Support](/support)
 
