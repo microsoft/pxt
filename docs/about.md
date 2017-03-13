@@ -1,7 +1,11 @@
 # About
 
-The Microsoft Programming Experience Toolkit (PXT) is a framework for creating special-purpose programming experiences for beginners,
-especially focused on computer science education. PXT's underlying programming language 
+**Microsoft MakeCode** is a framework for creating special-purpose programming experiences for beginners,
+especially focused on computer science education. 
+
+Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
+
+PXT's underlying programming language 
 is a subset of TypeScript (leaving out JavaScript dynamic features).
 
 The main features of PXT are:
@@ -22,7 +26,8 @@ The Programming Experience Toolkit (PXT) is currently developed at Microsoft Res
 The BBC micro:bit is a small wearable and programmable mbed-based device that visibly features a 5x5 LED display, accelerometer, 
 compass, buttons, I/O pins, Micro USB plug, Bluetooth Low Energy antenna, ARM Cortex-M0 processor, and battery plug. 
 
-* [Try the PXT editor](https://pxt.microbit.org) for BBC micro:bit!
+* [Try the micro:bit editor](https://pxt.microbit.org) for BBC micro:bit!
+* [Try the Adafruit editor](https://makecode.adafruit.com) for Adafruit Circuit Playground Express!
 
 ## Open Source
 

@@ -185,7 +185,7 @@ export class Editor extends srceditor.Editor {
 
     beforeCompile() {
         if (this.editor)
-            this.formatCode()
+            this.editor.getAction('editor.action.formatDocument').run();
     }
 
     public formatCode(isAutomatic = false): string {
@@ -246,9 +246,11 @@ export class Editor extends srceditor.Editor {
 
     resize(e?: Event) {
         let monacoArea = document.getElementById('monacoEditorArea');
-        let monacoToolbox = document.getElementById('monacoEditorToolbox')
-        if (monacoArea && monacoToolbox && this.editor)
-            this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.offsetWidth - 1, height: monacoArea.offsetHeight });
+        let monacoToolbox = document.getElementById('monacoEditorToolbox');
+
+        if (monacoArea && monacoToolbox && this.editor) {
+            this.editor.layout({ width: monacoArea.offsetWidth - monacoToolbox.clientWidth, height: monacoArea.offsetHeight });
+        }
     }
 
     prepare() {
@@ -268,9 +270,6 @@ export class Editor extends srceditor.Editor {
             this.loadingMonaco = false;
 
             this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
-
-            this.editor.getActions().filter(action => action.id == "editor.action.formatDocument")[0]
-                .run = () => Promise.resolve(this.beforeCompile());
 
             this.editor.addAction({
                 id: "save",
@@ -320,14 +319,6 @@ export class Editor extends srceditor.Editor {
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS],
                 run: () => Promise.resolve(this.zoomOut())
             });
-
-            this.editor.onDidBlurEditorText(() => {
-                if (this.isIncomplete()) {
-                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: true, noSemanticValidation: true });
-                } else {
-                    (monaco.languages.typescript.typescriptDefaults as any)._diagnosticsOptions = ({ noSyntaxValidation: false, noSemanticValidation: false });
-                }
-            })
 
             if (pxt.appTarget.appTheme.hasReferenceDocs) {
                 let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
@@ -412,6 +403,7 @@ export class Editor extends srceditor.Editor {
                         forceMoveMarkers: false
                     }
                 ]);
+                this.beforeCompile();
                 this.editor.pushUndoStop();
 
                 let endPos = model.getPositionAt(cursor);
@@ -764,6 +756,7 @@ export class Editor extends srceditor.Editor {
                                 forceMoveMarkers: false
                             }
                         ]);
+                        monacoEditor.beforeCompile();
                         monacoEditor.editor.pushUndoStop();
                         let endPos = model.getPositionAt(cursor);
                         monacoEditor.editor.setPosition(endPos);
@@ -1021,55 +1014,24 @@ export class Editor extends srceditor.Editor {
         if (this.fileType != FileType.TypeScript) return
 
         let file = this.currFile
-        let lines: string[] = this.editor.getModel().getLinesContent();
-        let fontSize = this.parent.settings.editorFontSize - 3;
-        let lineHeight = this.editor.getConfiguration().lineHeight;
-        let borderSize = lineHeight / 10;
-
-        let viewZones = this.editorViewZones || [];
-        this.annotationLines = [];
-
-        (this.editor as any).changeViewZones(function (changeAccessor: any) {
-            viewZones.forEach(id => {
-                changeAccessor.removeZone(id);
-            });
-        });
-        this.editorViewZones = [];
-        this.errorLines = [];
+        let monacoErrors: monaco.editor.IMarkerData[] = []
 
         if (file && file.diagnostics) {
+            let model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
-                if (this.errorLines.filter(lineNumber => lineNumber == d.line).length > 0 || this.errorLines.length > 0) continue;
-                let viewZoneId: any = null;
-                (this.editor as any).changeViewZones(function (changeAccessor: any) {
-                    let wrapper = document.createElement('div');
-                    wrapper.className = `zone-widget error-view-zone`;
-                    let container = document.createElement('div');
-                    container.className = `zone-widget-container marker-widget`;
-                    container.setAttribute('role', 'tooltip');
-                    container.style.setProperty("border", `solid ${borderSize}px rgb(255, 90, 90)`);
-                    container.style.setProperty("border", `solid ${borderSize}px rgb(255, 90, 90)`);
-                    container.style.setProperty("top", `${lineHeight / 4}`);
-                    let domNode = document.createElement('div');
-                    domNode.className = `block descriptioncontainer`;
-                    domNode.style.setProperty("font-size", fontSize.toString() + "px");
-                    domNode.style.setProperty("line-height", lineHeight.toString() + "px");
-                    domNode.innerText = ts.flattenDiagnosticMessageText(d.messageText, "\n");
-                    container.appendChild(domNode);
-                    wrapper.appendChild(container);
-                    viewZoneId = changeAccessor.addZone({
-                        afterLineNumber: d.line + 1,
-                        heightInLines: 1,
-                        domNode: wrapper
-                    });
-                });
-                this.editorViewZones.push(viewZoneId);
-                this.errorLines.push(d.line);
-                if (lines[d.line] === this.diagSnapshot[d.line]) {
-                    this.annotationLines.push(d.line)
-                }
+                let endPos = model.getPositionAt(d.start + d.length);
+                monacoErrors.push({
+                    severity: monaco.Severity.Error,
+                    message: String(d.messageText),
+                    startLineNumber: d.line,
+                    startColumn: d.column,
+                    endLineNumber: d.endLine || endPos.lineNumber,
+                    endColumn: d.endColumn || endPos.column
+                })
             }
+            monaco.editor.setModelMarkers(model, 'typescript', monacoErrors);
         }
+
     }
 
     private highlightDecorations: string[] = [];

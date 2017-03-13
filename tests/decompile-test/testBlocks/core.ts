@@ -59,3 +59,12 @@ declare interface String {
 
     [index: number]: string;
 }
+
+namespace Math {
+    /**
+      * Returns the larger of two supplied numeric expressions. 
+      */
+    export function max(a: number, b: number): number {
+        return 0;
+    }
+}

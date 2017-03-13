@@ -255,8 +255,8 @@ namespace pxt.vs {
 
         // validation settings
         monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-            noSyntaxValidation: false,
-            noSemanticValidation: false
+            noSyntaxValidation: true,
+            noSemanticValidation: true
         });
 
         // compiler options
@@ -290,6 +290,7 @@ namespace pxt.vs {
             tabCompletion: true,
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
+            formatOnPaste: true,
             //automaticLayout: true,
             mouseWheelScrollSensitivity: 0.5,
             quickSuggestionsDelay: 200,

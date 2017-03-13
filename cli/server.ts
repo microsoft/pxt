@@ -311,12 +311,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        const fmd = path.join(docsDir, innerPath.slice(pxt.appTarget.id.length + 1) + ".md");
-        return existsAsync(fmd)
-            .then(e => {
-                if (!e) throw throwError(404);
-                return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
-            });
+        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
     }
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
@@ -685,6 +680,34 @@ function scriptPageTestAsync(id: string) {
 
 }
 
+function readMd(pathname: string): string {
+    let tryRead = (fn: string) => {
+        if (fileExistsSync(fn + ".md"))
+            return fs.readFileSync(fn + ".md", "utf8")
+        if (fileExistsSync(fn + "/index.md"))
+            return fs.readFileSync(fn + "/index.md", "utf8")
+        return null
+    }
+
+    let targetMd = tryRead(docsDir + "/" + pathname)
+    if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
+        return targetMd
+
+    let dirs = [
+        root + "/node_modules/common-docs/",
+    ]
+    for (let pkg of pxt.appTarget.bundleddirs) {
+        dirs.push(root + "/" + pkg + "/docs/")
+    }
+    for (let d of dirs) {
+        let template = tryRead(d + pathname)
+        if (template)
+            return pxt.docs.augmentDocs(template, targetMd)
+    }
+
+    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).map(s => "* ``" + s + "``\n").join("")
+}
+
 let serveOptions: ServeOptions;
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
@@ -705,8 +728,13 @@ export function serveAsync(options: ServeOptions) {
         }
 
         const sendJson = (v: any) => {
-            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
-            res.end(JSON.stringify(v))
+            if (typeof v == "string") {
+                res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf8' })
+                res.end(v)
+            } else {
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
+                res.end(JSON.stringify(v))
+            }
         }
 
         const sendHtml = (s: string) => {
@@ -859,33 +887,32 @@ export function serveAsync(options: ServeOptions) {
             if (fileExistsSync(webFile + ".html")) {
                 webFile += ".html"
                 pathname += ".html"
-            } else if (fileExistsSync(webFile + ".md")) {
-                webFile += ".md"
-                pathname += ".md"
+            } else {
+                webFile = ""
             }
         }
 
-        if (fileExistsSync(webFile)) {
-            if (/\.md$/.test(webFile)) {
-                let bc = elts.map((e, i) => {
-                    return {
-                        href: "/" + elts.slice(0, i + 1).join("/"),
-                        name: e
-                    }
-                })
-                let templ = expandDocFileTemplate("docs.html")
-                let html = pxt.docs.renderMarkdown(templ, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc, pathname)
-                sendHtml(html)
-            } else if (/\.html$/.test(webFile)) {
+        if (webFile) {
+            if (/\.html$/.test(webFile)) {
                 let html = expandHtml(fs.readFileSync(webFile, "utf8"))
                 sendHtml(html)
             } else {
                 sendFile(webFile)
             }
-            return
+        } else {
+            let md = readMd(pathname)
+            let bc = elts.map((e, i) => {
+                return {
+                    href: "/" + elts.slice(0, i + 1).join("/"),
+                    name: e
+                }
+            })
+            let templ = expandDocFileTemplate("docs.html")
+            let html = pxt.docs.renderMarkdown(templ, md, pxt.appTarget.appTheme, null, bc, pathname)
+            sendHtml(html)
         }
 
-        return error(404, "Not found :(\n")
+        return
     });
 
     // if user has a server.js file, require it

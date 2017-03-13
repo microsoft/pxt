@@ -1,0 +1,82 @@
+<html>
+
+<head>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pouchdb/5.2.1/pouchdb.min.js"></script>
+</head>
+
+<body>
+
+    <h1>Sorry we've moved!</h1>
+
+    <script>
+        function getAllAsync(db, name) {
+            return db.allDocs({
+                include_docs: true,
+                startkey: name + "--",
+                endkey: name + "--\uffff"
+            }).then(function (resp) { return resp.rows.map(function (e) { return e.doc; }) })
+        }
+
+        function transfer() {
+            if (!window.parent || window.parent == window) {
+                console.error('no parent window');
+                return;
+            }
+
+            // https://pxt.microbit.org/api/transfer/makecode.microbit.org?storageid=([a-z]+)
+            var m = /^https:\/\/[a-z0-9.\/]+\/api\/transfer\/([^?]+)\?storageid=([a-z]+)$/i.exec(window.location.href);
+            if (!m) {
+                console.error('unknown url scheme')
+                return;
+            }
+            var targetOrigin = 'https://' + m[1];
+            var storageId = m[2];
+
+            console.log('transferring projects to ' + targetOrigin + ' from storage ' + storageId);
+
+            console.log('opening database')
+            var db = new PouchDB("pxt-" + storageId, { revs_limit: 2 })
+            var resp = {};
+            db.get('pouchdbsupportabletest')
+                .catch(function (error) {
+                    if (error && error.error && error.name == 'indexed_db_went_bad') {
+                        console.log('database corrupted');
+                        return;
+                    }
+                    console.log('database opened')
+                    getAllAsync(db, "header")
+                        .then(function (rh) {
+                            resp.header = rh;
+                            return getAllAsync(db, "text")
+                        }).then(function (rt) {
+                            resp.text = rt;
+                            console.log('sending database')
+                            window.parent.postMessage({
+                                type: 'transfer',
+                                action: 'export',
+                                data: resp
+                            }, targetOrigin);
+                            window.addEventListener('message', function (ev) {
+                                var origin = event.origin || event.originalEvent.origin;
+                                if (origin != targetOrigin) {
+                                    console.error('clear command coming from unknown origin ' + origin)
+                                    return;
+                                }
+                                var data = ev.data;
+                                if (data && data.type == 'transfer' && data.action == 'clear') {
+                                    console.log('dropping databases')
+                                    db.destroy()
+                                        .then(function () {
+                                            console.log('databases dropped')
+                                        })
+                                }
+                            })
+                        })
+                });
+        }
+
+        transfer();
+    </script>
+</body>
+
+</html>

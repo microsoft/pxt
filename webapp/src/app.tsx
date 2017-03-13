@@ -1242,7 +1242,7 @@ export class ProjectView
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
 <p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
-<p>${lf("{0} version:", "PXT")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
+<p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
 ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
         }).done();
@@ -1302,7 +1302,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
     exitTutorial() {
         pxt.tickEvent("tutorial.exit");
-        core.showLoading(lf("exiting tutorial..."));
+        core.showLoading(lf("leaving tutorial..."));
         this.exitTutorialAsync()
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading());
@@ -1442,12 +1442,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
                                 {inTutorial ? <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() } /> : undefined}
 
-                                {!sandbox ? <span id="organization" className="ui item logo">
+                                {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                                         ? <img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } />
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } />) : null}
-                                </span> : undefined }
+                                </a> : undefined }
                             </div>
                         </div>
                     </div> : undefined}
@@ -1820,7 +1820,7 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd)))
-            .finally(() => core.hideLoading());
+        .finally(() => core.hideLoading());
 }
 
 function initHashchange() {
@@ -1907,7 +1907,8 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd)
             else theEditor.newProject();
             return Promise.resolve();
-        }).done(() => { });
+        }).then(() => workspace.importLegacyScriptsAsync())
+        .done(() => { });
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)
