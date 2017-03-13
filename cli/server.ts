@@ -690,7 +690,7 @@ function readMd(pathname: string): string {
         return targetMd
 
     let dirs = [
-        root + "/node_modules/common-docs/",
+        root + "/node_modules/pxt-core/common-docs/",
     ]
     for (let pkg of pxt.appTarget.bundleddirs) {
         dirs.push(root + "/" + pkg + "/docs/")
