@@ -143,7 +143,7 @@ namespace pxt.blocks {
             'variables_change': {
                 name: Util.lf("update the value of a number variable"),
                 tooltip: Util.lf("Changes the value of the variable by this amount"),
-                url: '/blocks/variables/change-var',
+                url: '/blocks/variables/change',
                 category: 'variables'
             },
             'controls_repeat_ext': {
