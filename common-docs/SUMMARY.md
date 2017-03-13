@@ -41,7 +41,7 @@
 * [Sharing projects](/share)
 * [Offline support](/offline)
 
-## Developers
+## Developers #devs
 
 * [Command Line Interface](/cli)
 * [Visual Studio Code support](/code)
