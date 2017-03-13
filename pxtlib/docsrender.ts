@@ -231,7 +231,7 @@ namespace pxt.docs {
             params["boardname"] = html2Quote(theme.boardName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
-        params["targetname"] = theme.name || "PXT"
+        params["targetname"] = theme.name || "Microsoft MakeCode"
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         if (d.filepath && theme.githubUrl) {
             //I would have used NodeJS path library, but this code may have to work in browser
@@ -256,9 +256,17 @@ namespace pxt.docs {
                 params[k] = v
         }
 
-        d.finish = () => injectHtml(d.html, params,
-            ["body", "menu", "TOC", "prev", "next", "breadcrumb", "targetlogo", "github",
-             "JSON"])
+        d.finish = () => injectHtml(d.html, params, [
+            "body",
+            "menu",
+            "TOC",
+            "prev",
+            "next",
+            "breadcrumb",
+            "targetlogo",
+            "github",
+            "JSON"
+        ])
     }
 
     export function renderMarkdown(template: string, src: string,
@@ -323,6 +331,17 @@ namespace pxt.docs {
                 out += this.options.xhtml ? '/>' : '>';
                 return out;
             }
+            renderer.heading = function (text: string, level: number, raw: string) {
+                let m = /(.*)#([\w\-]+)\s*$/.exec(text)
+                let id = ""
+                if (m) {
+                    text = m[1]
+                    id = m[2]
+                } else {
+                    id = raw.toLowerCase().replace(/[^\w]+/g, '-')
+                }
+                return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
+            } as any
             marked.setOptions({
                 renderer: renderer,
                 gfm: true,
@@ -544,5 +563,195 @@ namespace pxt.docs {
             text: html,
             missing: missing
         }
+    }
+
+    interface Section {
+        level: number;
+        title: string;
+        id: string;
+        start: number;
+        text: string;
+        children: Section[];
+    }
+
+    function lookupSection(template: Section, id: string): Section {
+        if (template.id == id) return template
+        for (let ch of template.children) {
+            let r = lookupSection(ch, id)
+            if (r) return r
+        }
+        return null
+    }
+
+    function splitMdSections(md: string, template: Section) {
+        let lineNo = 0
+        let openSections: Section[] = [{
+            level: 0,
+            id: "",
+            title: "",
+            start: lineNo,
+            text: "",
+            children: []
+        }]
+        md = md.replace(/\r/g, "")
+        let lines = md.split(/\n/)
+        let skipThese: pxt.Map<boolean> = {}
+        for (let l of lines) {
+            let m = /^\s*(#+)\s*(.*?)(#(\S+)\s*)?$/.exec(l)
+            let templSect: Section = null
+            if (template && m) {
+                if (!m[4]) m = null
+                else if (skipThese[m[4]]) m = null
+                else {
+                    templSect = lookupSection(template, m[4])
+                    let skip = (s: Section) => {
+                        if (s.id) skipThese[s.id] = true
+                        s.children.forEach(skip)
+                    }
+                    if (templSect) skip(templSect)
+                }
+            }
+            if (m) {
+                let level = template ? 1 : m[1].length
+                let s: Section = {
+                    level: level,
+                    title: m[2].trim(),
+                    id: m[4] || "",
+                    start: lineNo,
+                    text: "",
+                    children: []
+                }
+                if (templSect) {
+                    l = ""
+                    for (let i = 0; i < templSect.level; ++i)
+                        l += "#"
+                    l += " "
+                    l += s.title || templSect.title
+                    l += " #" + s.id
+                }
+                while (openSections[openSections.length - 1].level >= s.level)
+                    openSections.pop()
+                let parent = openSections[openSections.length - 1]
+                parent.children.push(s)
+                openSections.push(s)
+            }
+            openSections[openSections.length - 1].text += l + "\n"
+            lineNo++
+        }
+        return openSections[0]
+    }
+
+    let testedAugment = false
+    export function augmentDocs(baseMd: string, childMd: string) {
+        if (!testedAugment) testAugment()
+        if (!childMd) return baseMd
+        let templ = splitMdSections(baseMd, null)
+        let repl = splitMdSections(childMd, templ)
+        let lookup: pxt.Map<string> = {}
+        let used: pxt.Map<boolean> = {}
+        for (let ch of repl.children) {
+            U.assert(ch.children.length == 0)
+            U.assert(!!ch.id)
+            lookup[ch.id] = ch.text
+        }
+        let replaceInTree = (s: Section) => {
+            if (s.id && lookup[s.id] !== undefined) {
+                used[s.id] = true
+                s.text = lookup[s.id]
+                s.children = []
+            }
+            s.children.forEach(replaceInTree)
+        }
+        replaceInTree(templ)
+        let resMd = ""
+        let flatten = (s: Section) => {
+            resMd += s.text
+            s.children.forEach(flatten)
+        }
+        flatten(templ)
+
+        let leftover = ""
+        let hd = repl.text
+            .replace(/^\s*#+\s*@extends.*/mg, "")
+            .replace(/^\s*\n/mg, "")
+        if (hd.trim()) leftover += hd.trim() + "\n"
+        for (let s of repl.children) {
+            if (!used[s.id]) leftover += s.text
+        }
+        if (leftover) {
+            resMd += "## Couldn't apply replacement logic to:\n" + leftover
+        }
+        return resMd
+    }
+
+    function testAugment() {
+        function test(a: string, b: string, c: string) {
+            let r = augmentDocs(a, b).trim()
+            c = c.trim()
+            if (r != c) {
+                console.log(`*** Template:\n${a}\n*** Input:\n${b}\n*** Expected:\n${c}\n*** Output:\n${r}`)
+                throw new Error("augment docs test fail")
+            }
+        }
+        testedAugment = true
+        let templ0 = `
+# T0
+## Examples #ex
+### Example 1
+TEx1
+### Example 2 #ex2
+TEx2
+### Example 3
+TEx3
+
+## See also #also
+TAlso
+`
+        let inp0 = `
+# @extends
+# #ex2
+My example
+## See Also These! #also
+My links
+`
+        let outp0 = `
+# T0
+## Examples #ex
+### Example 1
+TEx1
+### Example 2 #ex2
+My example
+### Example 3
+TEx3
+
+## See Also These! #also
+My links
+`
+        let inp1 = `
+# @extends
+### #ex
+Foo
+#### Example 1
+Ex1
+#### Example 2x #ex2
+Ex2
+## See Also These! #also
+My links
+`
+        let outp1 = `
+# T0
+## Examples #ex
+Foo
+#### Example 1
+Ex1
+#### Example 2x #ex2
+Ex2
+## See Also These! #also
+My links
+`
+        test(templ0, "", templ0)
+        test(templ0, " ", templ0)
+        test(templ0, inp0, outp0)
+        test(templ0, inp1, outp1)
     }
 }

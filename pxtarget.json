@@ -1,8 +1,8 @@
 {
     "id": "core",
-    "name": "PXT",
-    "title": "Programming Experience Toolkit",
-    "description": "PXT provides Blocks / JavaScript tools and editors.",
+    "name": "Microsoft MakeCode",
+    "title": "Microsoft MakeCode",
+    "description": "A toolkit to build JavaScript Blocks editors.",
     "bundleddirs": [],
     "compile": {
         "hasHex": false,
@@ -10,13 +10,13 @@
         "floatingPoint": false
     },
     "appTheme": {
-        "logoUrl": "https://www.pxt.io/",
+        "logoUrl": "https://makecode.com/",
         "logo": "./static/logo.svg",
         "docsLogo": "./static/logo.svg",
         "portraitLogo": "./static/logo.svg",
-        "homeUrl": "https://www.pxt.io/",
-        "cardLogo": "https://az851932.vo.msecnd.net/pub/hlngunfh",
-        "appLogo": "https://az851932.vo.msecnd.net/pub/hbcabbim",
+        "homeUrl": "https://makecode.com/",
+        "cardLogo": "./static/images/blocks.png",
+        "appLogo": "./static/images/blocks.png",
         "crowdinProject": "kindscript",
         "crowdinBranch": "v0",
         "docMenu": [
