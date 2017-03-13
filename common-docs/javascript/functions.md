@@ -43,12 +43,17 @@ TypeScript can figure the return type out by looking at the return statements, s
 
 ## Arrow Functions
 
-Arrow functions (also known as "lamba" functions) are used extensively to provide event handlers for
+Arrow functions (also known as "lamba" functions) 
+provide a lightweight syntax for functions. Arrow functions are used extensively to provide event handlers for
 many APIs. For example:
 
 ```typescript
-input.onButtonPressed(Button.A, () => {
-    
+function forever(handler: RefAction) {
+    // call handler in a loop...
+}
+
+forever(() => { // arrow function!
+   // do something
 })
 ```
 
