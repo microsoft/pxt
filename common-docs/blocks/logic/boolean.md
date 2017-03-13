@@ -1,19 +1,17 @@
 # Boolean
 
-true or false.
-
 A Boolean has one of two possible values: `true`; `false`.  Boolean (logical) operators (*and*, *or*, *not*) take Boolean inputs and yields a Boolean value. Comparison operators on other types ([numbers](/reference/types/number), [strings](/reference/types/string) yields a Boolean value.
 
 The following blocks represent the true and false Boolean values, which can be plugged in anywhere a Boolean value is expected:
 
-```blocks
+```block
 true;
 false;
 ```
 
 The next three blocks represent the three Boolean (logic) operators:
 
-```blocks
+```block
 true && false;
 true || false;
 !true;
@@ -21,7 +19,7 @@ true || false;
 
 The next six blocks represent comparison operators that yield a Boolean value. Most comparisons you will do involve [numbers](/reference/types/number):
 
-```blocks
+```block
 42 == 0;
 42 != 0;
 42 < 0;
@@ -44,7 +42,7 @@ Boolean operators take Boolean inputs and evaluate to a Boolean output:
 
 `A and B` evaluates to `true` if-and-only-if both A and B are true:
 
-```blocks
+```block
 false && false == false;
 false && true == false;
 true && false == false;
@@ -55,7 +53,7 @@ true && true == true;
 
 `A or B` evaluates to `true` if-and-only-if either A is true or B is true:
 
-```blocks
+```block
 false || false == false;
 false || true == true;
 true || false == true;
@@ -66,9 +64,9 @@ true || true == true;
 
 `not A` evaluates to the opposite (negation) of A:
 
-```blocks
+```block
 !false == true;
 !true == false;
 ```
 
-## Examples #examples
+## #examples

@@ -5,7 +5,7 @@ An event that runs when the program starts.
 The ``on start`` is a special event that runs when the program starts, before any other event. 
 Use this event to initialize your program.
 
-## Example #exstart
+## #exstart
 
 ## What about JavaScript?
 
@@ -17,3 +17,5 @@ When we transform the blocks into JavaScript, we always place all the event regi
 before launching the ``on start`` code.
 
 If a block from ``on start`` pauses, other registered events will have the opportunity to run as well.
+
+## #examples

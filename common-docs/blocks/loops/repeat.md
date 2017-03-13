@@ -6,3 +6,4 @@ Run part of the program the number of times you say. See the [for loop](/blocks/
 
 ![](/static/mb/blocks/contents-0.png)
 
+## #examples
