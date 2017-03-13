@@ -312,26 +312,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
 
-function directoryExistsSync(p: string): boolean {
-    try {
-        let stats = fs.lstatSync(p);
-        return stats && stats.isDirectory();
-    }
-    catch (e) {
-        return false;
-    }
-}
-
-function fileExistsSync(p: string): boolean {
-    try {
-        let stats = fs.lstatSync(p);
-        return stats && stats.isFile();
-    }
-    catch (e) {
-        return false;
-    }
-}
-
 export function lookupDocFile(name: string) {
     if (docfilesdirs.length <= 1)
         setupDocfilesdirs()
@@ -677,37 +657,9 @@ function scriptPageTestAsync(id: string) {
 }
 
 function readMd(pathname: string): string {
-    const content = resolveMd(docsDir, pathname);
+    const content = nodeutil.resolveMd(root, pathname);
     if (content) return content;
     return "# Not found\nChecked:\n" + [docsDir].concat(dirs).map(s => "* ``" + s + "``\n").join("")
-}
-
-// returns undefined if not found
-export function resolveMd(docs: string, pathname: string): string {
-    let tryRead = (fn: string) => {
-        if (fileExistsSync(fn + ".md"))
-            return fs.readFileSync(fn + ".md", "utf8")
-        if (fileExistsSync(fn + "/index.md"))
-            return fs.readFileSync(fn + "/index.md", "utf8")
-        return null
-    }
-
-    let targetMd = tryRead(path.join(docs, pathname))
-    if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
-        return targetMd
-
-    let dirs = [
-        root + "/node_modules/pxt-core/common-docs/",
-    ]
-    for (let pkg of pxt.appTarget.bundleddirs) {
-        dirs.push(path.join(root, pkg, docs))
-    }
-    for (let d of dirs) {
-        let template = tryRead(d + pathname)
-        if (template)
-            return pxt.docs.augmentDocs(template, targetMd)
-    }
-    return undefined;
 }
 
 let serveOptions: ServeOptions;
@@ -806,7 +758,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (options.packaged) {
             let filename = path.resolve(path.join(packagedDir, pathname))
-            if (fileExistsSync(filename)) {
+            if (nodeutil.fileExistsSync(filename)) {
                 return sendFile(filename)
             } else {
                 return error(404, "Packaged file not found")
@@ -870,7 +822,7 @@ export function serveAsync(options: ServeOptions) {
             }
             for (let dir of dd) {
                 let filename = path.resolve(path.join(dir, pathname))
-                if (fileExistsSync(filename)) {
+                if (nodeutil.fileExistsSync(filename)) {
                     sendFile(filename)
                     return;
                 }
@@ -878,8 +830,8 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let webFile = path.join(docsDir, pathname)
-        if (!fileExistsSync(webFile)) {
-            if (fileExistsSync(webFile + ".html")) {
+        if (!nodeutil.fileExistsSync(webFile)) {
+            if (nodeutil.fileExistsSync(webFile + ".html")) {
                 webFile += ".html"
                 pathname += ".html"
             } else {
@@ -912,7 +864,7 @@ export function serveAsync(options: ServeOptions) {
 
     // if user has a server.js file, require it
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
-    if (fileExistsSync(serverjs)) {
+    if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
         require(serverjs);
     }
