@@ -2,7 +2,7 @@
 
 Conditionally run code depending on whether a [Boolean](/blocks/logic/boolean) condition is true or false.
 
-```blocks
+```block
 if(true) {
 }
 ```

@@ -2,20 +2,20 @@
 
 [Assign](/blocks/variables/assign) (set) a variable's value
 
-```blocks
-let x = 0;
+```block
+let x = 1;
 ```
 
 Get a variable's value
 
-```blocks
-let x = 0;
-x;
+```block
+let x = 1;
+let y = x;
 ```
 
-[Change](/blocks/variables/change-var) a variable's value
+[Change](/blocks/variables/change) a variable's value
 
-```blocks
+```block
 let x = 0;
 x+=1;
 ```

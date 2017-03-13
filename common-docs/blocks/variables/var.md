@@ -20,7 +20,7 @@ to store something in the variable.
 
 For example, this code stores the number `2` in the `x` variable:
 
-```blocks
+```block
 let x = 2;
 ```
 Here's how to define a variable in the Block Editor:
@@ -33,7 +33,7 @@ Here's how to define a variable in the Block Editor:
 
 A variable is created for the number returned by the [brightness](/reference/led/brightness) function.
 
-```blocks
+```block
 let b = led.brightness();
 ```
 
@@ -48,7 +48,7 @@ basic.showNumber(counter);
 
 To change the contents of a variable use the assignment operator. The following code sets `counter` to 1 and then increments `counter` by 10:
 
-```blocks
+```block
 let counter = 1;
 counter = counter + 10;
 basic.showNumber(counter);
@@ -59,7 +59,7 @@ basic.showNumber(counter);
 If you want to remember and modify data, you'll need a variable. 
 A counter is a great example:
 
-```blocks
+```block
 let counter = 0;
 input.onButtonPressed(Button.A, () => { 
   counter = counter + 1;
@@ -71,7 +71,7 @@ input.onButtonPressed(Button.A, () => {
 
 Local variables exist only within the function or block of code where they're defined. For example:
 
-```blocks
+```block
 // x does NOT exist here.
 if (led.brightness() > 128) {
   // x exists here
