@@ -5,15 +5,17 @@ way to make a function that adds two numbers:
 
 ```typescript
 // Named function
-function add(x : number, y : number) {
+function add(x : number, y : number): number {
     return x + y;
 }
 
-basic.showNumber(add(1, 2))
+let sum = add(1, 2);
 ```
 
 ### ~ hint
+
 For the @boardname@, you must specify a [type](/javascript/types) for each function parameter. 
+
 ### ~ 
 
 Functions can refer to variables outside of the function body.
@@ -26,7 +28,7 @@ function addToZ(x: number, y: number) {
     return x + y + z;
 }
 
-basic.showNumber(addToZ(1, 2))
+let sum = addToZ(1, 2);
 ```
 
 Let's add a return type to our add function:
@@ -39,7 +41,7 @@ function add(x: number, y: number): number {
 
 TypeScript can figure the return type out by looking at the return statements, so you can optionally leave this off in many cases.
 
-# Arrow Functions
+## Arrow Functions
 
 Arrow functions (also known as "lamba" functions) are used extensively to provide event handlers for
 many APIs. For example:
@@ -52,7 +54,7 @@ input.onButtonPressed(Button.A, () => {
 
 [Read more about arrow functions...](http://devdocs.io/javascript/functions/arrow_functions)
 
-# Optional and Default Parameters
+## Optional and Default Parameters
 
 In TypeScript, the number of arguments given to a function has to match the number of parameters the function expects.
 
@@ -137,7 +139,7 @@ let result3 = buildName("Bob", "Adams");         // okay and returns "Bob Adams"
 let result4 = buildName(undefined, "Adams");     // okay and returns "Will Adams"
 ```
 
-# Rest Parameters
+## Rest Parameters
 
 Required, optional, and default parameters all have one thing in common: they talk about one parameter at a time.
 Sometimes, you want to work with multiple parameters as a group, or you may not know how many parameters a function will ultimately take.
