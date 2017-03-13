@@ -1460,13 +1460,13 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 
 function updateTOC(cfg: pxt.TargetBundle) {
     // Update Table of Contents from SUMMARY.md file
-    let summaryFile = "docs/SUMMARY.md";
-    if (fs.existsSync(summaryFile)) {
-        let buf = fs.readFileSync(summaryFile);
-        let contents = buf.toString("utf8")
-
-        let marked = pxt.docs.requireMarked();
-        let options = {
+    pxt.log('updating TOC')
+    const contents = server.resolveMd(path.join(nodeutil.targetDir, "docs"), "SUMMARY");
+    if (!contents) {
+        pxt.log('no SUMMARY file found');
+    } else {
+        const marked = pxt.docs.requireMarked();
+        const options = {
             renderer: new marked.Renderer(),
             gfm: true,
             tables: false,

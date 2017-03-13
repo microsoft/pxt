@@ -677,6 +677,13 @@ function scriptPageTestAsync(id: string) {
 }
 
 function readMd(pathname: string): string {
+    const content = resolveMd(docsDir, pathname);
+    if (content) return content;
+    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).map(s => "* ``" + s + "``\n").join("")
+}
+
+// returns undefined if not found
+export function resolveMd(docs: string, pathname: string): string {
     let tryRead = (fn: string) => {
         if (fileExistsSync(fn + ".md"))
             return fs.readFileSync(fn + ".md", "utf8")
@@ -685,7 +692,7 @@ function readMd(pathname: string): string {
         return null
     }
 
-    let targetMd = tryRead(docsDir + "/" + pathname)
+    let targetMd = tryRead(path.join(docs, pathname))
     if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
         return targetMd
 
@@ -693,15 +700,14 @@ function readMd(pathname: string): string {
         root + "/node_modules/pxt-core/common-docs/",
     ]
     for (let pkg of pxt.appTarget.bundleddirs) {
-        dirs.push(root + "/" + pkg + "/docs/")
+        dirs.push(path.join(root, pkg, docs))
     }
     for (let d of dirs) {
         let template = tryRead(d + pathname)
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }
-
-    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).map(s => "* ``" + s + "``\n").join("")
+    return undefined;
 }
 
 let serveOptions: ServeOptions;
