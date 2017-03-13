@@ -231,7 +231,8 @@ namespace pxt.docs {
             params["boardname"] = html2Quote(theme.boardName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
-        params["targetname"] = theme.name || "Microsoft MakeCode"
+        params["targetid"] = theme.id || "???";
+        params["targetname"] = theme.name || "Microsoft MakeCode";
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         if (d.filepath && theme.githubUrl) {
             //I would have used NodeJS path library, but this code may have to work in browser
