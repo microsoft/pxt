@@ -642,6 +642,90 @@ namespace pxt.docs {
         return openSections[0]
     }
 
+    export function buildTOC(summaryMD: string): pxt.TOCMenuEntry[] {
+        if (!summaryMD)
+            return null
+
+        const marked = pxt.docs.requireMarked();
+        const options = {
+            renderer: new marked.Renderer(),
+            gfm: true,
+            tables: false,
+            breaks: false,
+            pedantic: false,
+            sanitize: false,
+            smartLists: false,
+            smartypants: false
+        };
+
+        let dummy: pxt.TOCMenuEntry = { name: 'dummy', subitems: [] };
+        let currentStack: pxt.TOCMenuEntry[] = [];
+        currentStack.push(dummy);
+
+        let tokens = marked.lexer(summaryMD, options);
+        tokens.forEach((token: any) => {
+            switch (token.type) {
+                case "heading":
+                    if (token.depth == 3) {
+                        // heading
+                    }
+                    break;
+                case "list_start":
+                    break;
+                case "list_item_start":
+                case "loose_item_start":
+                    let newItem: pxt.TOCMenuEntry = {
+                        name: '',
+                        subitems: []
+                    };
+                    currentStack.push(newItem);
+                    break;
+                case "text":
+                    token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
+                        currentStack[currentStack.length - 1].name = name;
+                        currentStack[currentStack.length - 1].path = path.replace('.md', '');
+                    });
+                    break;
+                case "list_item_end":
+                case "loose_item_end":
+                    let docEntry = currentStack.pop();
+                    currentStack[currentStack.length - 1].subitems.push(docEntry);
+                    break;
+                case "list_end":
+                    break;
+                default:
+            }
+        })
+
+        let TOC = dummy.subitems
+        if (!TOC || TOC.length == 0) return null
+
+        let previousNode: pxt.TOCMenuEntry;
+        // Scan tree and build next / prev paths
+        let buildPrevNext = (node: pxt.TOCMenuEntry) => {
+            if (previousNode) {
+                node.prevName = previousNode.name;
+                node.prevPath = previousNode.path;
+
+                previousNode.nextName = node.name;
+                previousNode.nextPath = node.path;
+            }
+            if (node.path) {
+                previousNode = node;
+            }
+            node.subitems.forEach((tocItem, tocIndex) => {
+                buildPrevNext(tocItem);
+            })
+        }
+
+        TOC.forEach((tocItem, tocIndex) => {
+            buildPrevNext(tocItem)
+        })
+
+        return TOC
+    }
+
+
     let testedAugment = false
     export function augmentDocs(baseMd: string, childMd: string) {
         if (!testedAugment) testAugment()
