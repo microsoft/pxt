@@ -1657,7 +1657,13 @@ function renderDocs(builtPackaged: string, localDir: string) {
             })
             let html = ""
             if (U.endsWith(f, ".md"))
-                html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
+                html = pxt.docs.renderMarkdown({
+                    template: docsTemplate,
+                    markdown: str,
+                    theme: pxt.appTarget.appTheme,
+                    breadcrumb: bc,
+                    filepath: f,
+                })
             else
                 html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {

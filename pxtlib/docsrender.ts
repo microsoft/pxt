@@ -94,6 +94,7 @@ namespace pxt.docs {
         params: Map<string>;
         breadcrumb?: BreadcrumbEntry[];
         filepath?: string;
+        ghEditURLs?: string[];
 
         finish?: () => string;
         boxes?: Map<string>;
@@ -234,13 +235,17 @@ namespace pxt.docs {
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
-        if (d.filepath && theme.githubUrl) {
-            //I would have used NodeJS path library, but this code may have to work in browser
-            let leadingTrailingSlash = /^\/|\/$/;
-            let githubUrl = `${theme.githubUrl.replace(leadingTrailingSlash, '')}/blob/master/docs/${d.filepath.replace(leadingTrailingSlash, '')}`;
-            params["github"] = `<p style="margin-top:1em"><a href="${githubUrl}"><i class="write icon"></i>${lf("Edit this page on GitHub")}</a></p>`;
-        }
-        else {
+        let ghURLs = d.ghEditURLs || []
+        if (ghURLs.length) {
+            let ghText = `<p style="margin-top:1em">\n`
+            let linkLabel = lf("Edit this page on GitHub")
+            for (let u of ghURLs) {
+                ghText += `<a href="${u}"><i class="write icon"></i>${linkLabel}</a>\n`;
+                linkLabel = lf("Edit template of this page on GitHub")
+            }
+            ghText += `</p>\n`
+            params["github"] = ghText
+        } else {
             params["github"] = "";
         }
 
@@ -270,21 +275,31 @@ namespace pxt.docs {
         ])
     }
 
-    export function renderMarkdown(template: string, src: string,
-        theme: AppTheme = null, pubinfo: Map<string> = null,
-        breadcrumb: BreadcrumbEntry[] = null, filepath: string = null,
-        locale: Map<string> = null): string {
+    export interface RenderOptions {
+        template: string;
+        markdown: string;
+        theme?: AppTheme;
+        pubinfo?: Map<string>;
+        breadcrumb?: BreadcrumbEntry[];
+        filepath?: string;
+        locale?: Map<string>;
+        ghEditURLs?: string[];
+    }
 
+    export function renderMarkdown(opts: RenderOptions): string {
         let hasPubInfo = true
 
-        if (!pubinfo) {
+        if (!opts.pubinfo) {
             hasPubInfo = false
-            pubinfo = {}
+            opts.pubinfo = {}
         }
-        if (!theme) theme = {}
-        if (!breadcrumb) breadcrumb = []
 
-        delete pubinfo["private"] // just in case
+        let pubinfo = opts.pubinfo
+
+        if (!opts.theme) opts.theme = {}
+        if (!opts.breadcrumb) opts.breadcrumb = []
+
+        delete opts.pubinfo["private"] // just in case
 
         if (pubinfo["time"]) {
             let tm = parseInt(pubinfo["time"])
@@ -302,22 +317,24 @@ namespace pxt.docs {
             pubinfo["JSON"] = JSON.stringify(pubinfo, null, 4).replace(/</g, "\\u003c")
         }
 
+        let template = opts.template
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
             (full, fn) => {
-                let cont = (theme.htmlDocIncludes || {})[fn] || ""
+                let cont = (opts.theme.htmlDocIncludes || {})[fn] || ""
                 return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
             })
 
-        if (locale)
-            template = translate(template, locale).text
+        if (opts.locale)
+            template = translate(template, opts.locale).text
 
         let d: RenderData = {
             html: template,
-            theme: theme,
+            theme: opts.theme,
+            filepath: opts.filepath,
+            breadcrumb: opts.breadcrumb,
+            ghEditURLs: opts.ghEditURLs,
             params: pubinfo,
-            breadcrumb: breadcrumb,
-            filepath: filepath
         }
         prepTemplate(d)
 
@@ -365,8 +382,10 @@ namespace pxt.docs {
             })
         };
 
+        let markdown = opts.markdown
+
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
-        src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
+        markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
                 if (m) {
@@ -379,9 +398,9 @@ namespace pxt.docs {
         })
 
         // replace pre-template in markdown
-        src = src.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
+        markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
-        let html = marked(src)
+        let html = marked(markdown)
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -440,7 +459,7 @@ namespace pxt.docs {
             if (descM)
                 pubinfo["description"] = html2Quote(descM[1])
         }
-        pubinfo["twitter"] = html2Quote(theme.twitter || "@mspxtio");
+        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first
@@ -468,8 +487,8 @@ namespace pxt.docs {
         pubinfo["body"] = html
         pubinfo["name"] = pubinfo["title"] + " - " + pubinfo["targetname"]
 
-        for (let k of Object.keys(theme)) {
-            let v = (theme as any)[k]
+        for (let k of Object.keys(opts.theme)) {
+            let v = (opts.theme as any)[k]
             if (typeof v == "string")
                 pubinfo["theme_" + k] = v
         }

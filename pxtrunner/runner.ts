@@ -489,7 +489,12 @@ ${files["main.ts"]}
             }
         })
 
-        let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme, null, bc);
+        let html = pxt.docs.renderMarkdown({
+            template: template,
+            markdown: md,
+            theme: pxt.appTarget.appTheme,
+            breadcrumb: bc
+        });
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
         return pxt.runner.renderAsync({
