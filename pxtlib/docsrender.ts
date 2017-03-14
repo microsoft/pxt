@@ -175,7 +175,10 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
-        let breadcrumb: BreadcrumbEntry[] = []
+        let breadcrumb: BreadcrumbEntry[] = [{
+            name: lf("Docs"),
+            href: "/docs"
+        }]
 
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
