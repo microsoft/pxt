@@ -5,6 +5,7 @@ MakeCode is a toolkit to create JavaScript/Blocks online editors.
 
 Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
 
+* [Blog](/blog) - our release and developer blog
 * [static JavaScript (TypeScript subset)](/language) -- see which features are supported
 * [defining blocks](/defining-blocks), expose your APIs as blocks
 * [async functions and threads](/async)
