@@ -606,7 +606,15 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     setPosition = () => {
         if (this.ref) {
             const mountNode = this.getMountNode();
-            const { height } = this.ref.getBoundingClientRect();
+            let height: number;
+
+            // Check to make sure the ref is actually in the DOM or else IE11 throws an exception
+            if (this.ref.parentElement) {
+                height = this.ref.getBoundingClientRect().height;
+            }
+            else {
+                height = 0;
+            }
 
             const marginTop = -Math.round(height / 2);
             const scrolling = height >= window.innerHeight;

@@ -75,7 +75,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private packageOf(p: pkg.EditorPackage) {
         const expands = this.state.expands;
-        let del = p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built";
+        let del = p.getPkgId() != pxt.appTarget.id
+            && p.getPkgId() != "built"
+            && p.getPkgId() != pxt.appTarget.corepkg;
         let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => this.togglePkg(p) }>
             <i className={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`}></i>
