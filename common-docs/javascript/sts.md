@@ -42,7 +42,7 @@ As a result of this choice, many dynamic features of JavaScript (and thus TypeSc
 * type assertions
 
 STS also excludes features that we consider historical, 
-including the var statement and for-in loop (for-of is supported). Excluded program elements are:
+including the var statement and for-in loop (for-of is supported).
 If you think one of the above program elements should be introduced in an introductory programming
 language course, speak now or forever hold your peace.
 
@@ -77,8 +77,9 @@ If we’ve left something out that obviously should be in STS, please let us kno
 # Type checking in STS
 
 Typescript's type system is very rich with a complex notion of type compatability and substitutability.
-STS keeps many of its features (structural subtyping, for example), but dispenses with features that
-lead to run-time errors. Our goal is catch as many errors at compile-time as possible, while retaining
+STS keeps many of TypeScripts type checking rules (structural subtyping, for example), but modifies 
+the notion of type compatability/substitutability to reduce 
+run-time errors. Our goal is catch as many errors at compile-time as possible, while retaining
 an expressive language with arrays, functions, classes, and generics. This means we disallow explicit or
 implicit downcasts, for example, as well as the use of bivariance in function subtyping. 
 
@@ -98,15 +99,20 @@ TODO
 - currently, we do allow
 ```typeScript
 let x : number = null
-let x : number = undefined
+basic.showNumber(x)
+let y : number = undefined
+basic.showNumber(y)
 let s: string = null
+basic.showString(s)
 ```
 where null and undefined is coerced to the number 0. This is OK for number, but rather strange for strings. 
 ### ~
 
-## Undefined and null
+## Undefined, null, and default values
 
-[do we unify treatment of undefined and null; allow null only for references?]
+### ~ hint
+[do we unify treatment of undefined and null?; allow null only for references?]
+### ~
 
 ## Object types
 
@@ -122,12 +128,24 @@ are *separate types*, with the following type relationships:
 ### ~ hint
 TODO
 * implement more restrictive type checks outlined above
+* implement tuples
 ### ~
 
 ## Generics
 
-With the exclusion of the Any type, it´s very important to support generics. 
+With the exclusion of the Any type, it´s very important to support generics so that code can be reused
+across many types. STS supports generic functions and classes with the following restrictions:
+* generic functions cannot be used as values;
+* nested functions cannot be generic;
 
-# Default values
+### ~ hint
+TODO
+* type checking of generics should follow Java (which uses type erasure).
+### ~
 
-[our treatment of null, undefined and default values]
+## Void and Never
+
+TODO (not much)
+
+# Compilation of STS
+
