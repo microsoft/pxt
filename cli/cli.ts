@@ -444,9 +444,9 @@ function travisAsync() {
         let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
         if (uploadLocs)
             p = p
-            .then(() => execCrowdinAsync("upload", "built/strings.json"))
-            .then(() => buildWebStringsAsync())
-            .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
+                .then(() => execCrowdinAsync("upload", "built/strings.json"))
+                .then(() => buildWebStringsAsync())
+                .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
         return p;
     } else {
         return buildTargetAsync()
@@ -1460,85 +1460,12 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 
 function updateTOC(cfg: pxt.TargetBundle) {
     // Update Table of Contents from SUMMARY.md file
-    const contents = nodeutil.resolveMd(nodeutil.targetDir, "SUMMARY");
-    if (!contents) {
+    const summaryMD = nodeutil.resolveMd(nodeutil.targetDir, "SUMMARY");
+    if (!summaryMD) {
         pxt.log('no SUMMARY file found');
     } else {
-        const marked = pxt.docs.requireMarked();
-        const options = {
-            renderer: new marked.Renderer(),
-            gfm: true,
-            tables: false,
-            breaks: false,
-            pedantic: false,
-            sanitize: false,
-            smartLists: false,
-            smartypants: false
-        };
-
-        let dummy: pxt.TOCMenuEntry = {name: 'dummy', subitems: []};
-        let currentStack: pxt.TOCMenuEntry[] = [];
-        currentStack.push(dummy);
-
-        let tokens = marked.lexer(contents, options);
-        tokens.forEach((token: any) => {
-            switch (token.type) {
-                case "heading":
-                    if (token.depth == 3) {
-                        // heading
-                    }
-                    break;
-                case "list_start":
-                    break;
-                case "list_item_start":
-                case "loose_item_start":
-                    let newItem: pxt.TOCMenuEntry = {
-                        name: '',
-                        subitems: []
-                    };
-                    currentStack.push(newItem);
-                    break;
-                case "text":
-                    token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
-                        currentStack[currentStack.length - 1].name = name;
-                        currentStack[currentStack.length - 1].path = path.replace('.md','');
-                    });
-                    break;
-                case "list_item_end":
-                case "loose_item_end":
-                    let docEntry = currentStack.pop();
-                    currentStack[currentStack.length - 1].subitems.push(docEntry);
-                    break;
-                case "list_end":
-                    break;
-                default:
-            }
-        })
-        cfg.appTheme.TOC = dummy.subitems;
+        cfg.appTheme.TOC = pxt.docs.buildTOC(summaryMD)
     }
-    if (!cfg.appTheme.TOC || cfg.appTheme.TOC.length == 0) return;
-
-    let previousNode: pxt.TOCMenuEntry;
-    // Scan tree and build next / prev paths
-    let buildPrevNext = (node: pxt.TOCMenuEntry) => {
-        if (previousNode) {
-            node.prevName = previousNode.name;
-            node.prevPath = previousNode.path;
-
-            previousNode.nextName = node.name;
-            previousNode.nextPath = node.path;
-        }
-        if (node.path) {
-            previousNode = node;
-        }
-        node.subitems.forEach((tocItem, tocIndex) => {
-            buildPrevNext(tocItem);
-        })
-    }
-
-    cfg.appTheme.TOC.forEach((tocItem, tocIndex) => {
-        buildPrevNext(tocItem)
-    })
 }
 
 function buildTargetCoreAsync() {
@@ -1721,16 +1648,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
         let buf = fs.readFileSync(f)
         if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
-            let path = f.slice(5).split(/\//)
-            let bc = path.map((e, i) => {
-                return {
-                    href: "/" + path.slice(0, i + 1).join("/"),
-                    name: e
-                }
-            })
             let html = ""
             if (U.endsWith(f, ".md"))
-                html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
+                html = pxt.docs.renderMarkdown({
+                    template: docsTemplate,
+                    markdown: str,
+                    theme: pxt.appTarget.appTheme,
+                    filepath: f,
+                })
             else
                 html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
