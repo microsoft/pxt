@@ -3349,13 +3349,21 @@ export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedComma
     if (!cred) return Promise.resolve();
     const uploadDocs = parsed && parsed.flags["docs"];
     const crowdinDir = pxt.appTarget.id;
-    return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
-        .then(() => uploadDocs ? uploadDocsTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
-
+    if (crowdinDir == "core") {
+        if (!uploadDocs) {
+            pxt.log('missing --docs flag, skipping')
+            return Promise.resolve();
+        }
+        return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+            .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
+    } else return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
+            .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
 }
 
-function uploadDocsTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
-    const todo = nodeutil.allFiles("docs").filter(f => /\.md$/.test(f) && !/_locales/.test(f));
+function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
+    pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
+
+    const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f));
     const knownFolders: Map<boolean> = {};
     const ensureFolderAsync = (crowdd: string) => {
         if (!knownFolders[crowdd]) {
@@ -3376,7 +3384,7 @@ function uploadDocsTranslationsAsync(crowdinDir: string, branch: string, prj: st
             .then(() => pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, data))
             .then(nextFileAsync);
     }
-    return ensureFolderAsync(path.join(crowdinDir, "docs"))
+    return ensureFolderAsync(path.join(crowdinDir, srcDir))
         .then(nextFileAsync);
 }
 
@@ -4230,7 +4238,7 @@ function initCommands() {
         name: "uploadtrgtranslations",
         help: "upload translations for target",
         flags: {
-            docs: { description: "upload markdown as well" }
+            docs: { description: "upload markdown docs folder as well" }
         },
         advanced: true
     }, uploadTargetTranslationsAsync);
