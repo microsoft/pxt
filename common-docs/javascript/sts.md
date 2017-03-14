@@ -16,9 +16,10 @@ we believe has great potential for both introductory CS education, programming a
 In this document, we define a subset of TypeScript called Static TypeScript (STS, for short), 
 its properties and how it can help transform teaching of CS education. 
 The best way to think of STS is as C#/Java/C++ subset of TypeScript where all types are known at compile time,
-which permits efficient linking to a C++ runtime. STS maintains a JavaScript semantics as much as possible. 
+which permits efficient linking to a C++ runtime. STS tries to maintain as much of JavaScript semantics as much as possible.
+given that, we say... 
 
-# Goodbye: Any, Union, Intersection Types and JavaScript, the bad parts 
+# Goodbye: Any, Union, Intersection Types and the Bad Parts 
 
 In TypeScript, the *Any* type is “the one type that can represent any JavaScript value with no constraints”. 
 In TypeScript, every program expression, value, and function must have some type, even if not explicitly 
@@ -72,6 +73,7 @@ TypeScript elements not mentioned as included in STS in the previous sections ar
 for now (see later section for a list of these elements). 
 If we’ve left something out that obviously should be in STS, please let us know!
 
+
 # Type checking in STS
 
 Typescript's type system is very rich with a complex notion of type compatability and substitutability.
@@ -88,7 +90,23 @@ such as strings and objects. This means that code such as:
 let a: Object = 3
 ```
 is illegal in STS, as primitive types are not objects (though the primitive types do support basic methods,
-such as toString). There are no implicit conversions between primitive types, or between primitive and object types.
+such as toString). 
+
+### ~ hint
+TODO 
+- do not allow implicit conversions between primitive types, or between primitive and object types.
+- currently, we do allow
+```typeScript
+let x : number = null
+let x : number = undefined
+let s: string = null
+```
+where null and undefined is coerced to the number 0. This is OK for number, but rather strange for strings. 
+### ~
+
+## Undefined and null
+
+[do we unify treatment of undefined and null; allow null only for references?]
 
 ## Object types
 
@@ -96,10 +114,20 @@ In TypeScript, class and interface type references, array types, tuple types, an
 classified as object types. In STS, classes, records (described by interfaces), arrays, tuples, and functions
 are *separate types*, with the following type relationships:
 * classes and records are related by structural subtyping, as in TypeScript, with the 
-  restriction that classes can be treated as records (via a cast to an interface), but not vice versa;
+  restriction that classes can be treated as records (via a cast from class to interface), but not vice versa 
+  (casts from interfaces to classes are not permitted);
 * functions are related by classical function subtyping (no bivariance, as in TypeScript); 
 * function/method overloading is not permitted.
-STS supports anonymous record types (it doesn't currently)
+
+### ~ hint
+TODO
+* implement more restrictive type checks outlined above
+### ~
 
 ## Generics
 
+With the exclusion of the Any type, it´s very important to support generics. 
+
+# Default values
+
+[our treatment of null, undefined and default values]
