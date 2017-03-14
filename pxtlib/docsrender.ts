@@ -92,7 +92,6 @@ namespace pxt.docs {
         html: string;
         theme: AppTheme;
         params: Map<string>;
-        breadcrumb?: BreadcrumbEntry[];
         filepath?: string;
         ghEditURLs?: string[];
 
@@ -176,6 +175,8 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
+        let breadcrumb: BreadcrumbEntry[] = []
+
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
             let templ = toc["item"]
@@ -188,6 +189,10 @@ namespace pxt.docs {
             if ((m.path && d.filepath && d.filepath.indexOf(m.path) >= 0)) {
                 mparams["ACTIVE"] = 'active';
                 currentTocEntry = m;
+                breadcrumb.push({
+                    name: m.name,
+                    href: m.path
+                })
             }
             if (m.subitems && m.subitems.length > 0) {
                 if (lev == 0) templ = toc["top-dropdown"]
@@ -201,18 +206,20 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
+        params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
+        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
+
         let breadcrumbHtml = '';
-        if (d.breadcrumb && d.breadcrumb.length > 1) {
+        if (breadcrumb.length > 1) {
             breadcrumbHtml = `
             <div class="ui breadcrumb">
-                ${d.breadcrumb.map((b, i) =>
-                    `<a class="${i == d.breadcrumb.length - 1 ? "active" : ""} section" 
+                ${breadcrumb.map((b, i) =>
+                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section" 
                         href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
                     .join('<i class="right chevron icon divider"></i>')}
             </div>`;
         }
-        params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
+
         params["breadcrumb"] = breadcrumbHtml;
 
         if (currentTocEntry) {
@@ -240,7 +247,7 @@ namespace pxt.docs {
             let ghText = `<p style="margin-top:1em">\n`
             let linkLabel = lf("Edit this page on GitHub")
             for (let u of ghURLs) {
-                ghText += `<a href="${u}"><i class="write icon"></i>${linkLabel}</a>\n`;
+                ghText += `<a href="${u}"><i class="write icon"></i>${linkLabel}</a><br>\n`;
                 linkLabel = lf("Edit template of this page on GitHub")
             }
             ghText += `</p>\n`
@@ -280,7 +287,6 @@ namespace pxt.docs {
         markdown: string;
         theme?: AppTheme;
         pubinfo?: Map<string>;
-        breadcrumb?: BreadcrumbEntry[];
         filepath?: string;
         locale?: Map<string>;
         ghEditURLs?: string[];
@@ -297,7 +303,6 @@ namespace pxt.docs {
         let pubinfo = opts.pubinfo
 
         if (!opts.theme) opts.theme = {}
-        if (!opts.breadcrumb) opts.breadcrumb = []
 
         delete opts.pubinfo["private"] // just in case
 
@@ -332,7 +337,6 @@ namespace pxt.docs {
             html: template,
             theme: opts.theme,
             filepath: opts.filepath,
-            breadcrumb: opts.breadcrumb,
             ghEditURLs: opts.ghEditURLs,
             params: pubinfo,
         }

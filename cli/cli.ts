@@ -1648,20 +1648,12 @@ function renderDocs(builtPackaged: string, localDir: string) {
         let buf = fs.readFileSync(f)
         if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
-            let path = f.slice(5).split(/\//)
-            let bc = path.map((e, i) => {
-                return {
-                    href: "/" + path.slice(0, i + 1).join("/"),
-                    name: e
-                }
-            })
             let html = ""
             if (U.endsWith(f, ".md"))
                 html = pxt.docs.renderMarkdown({
                     template: docsTemplate,
                     markdown: str,
                     theme: pxt.appTarget.appTheme,
-                    breadcrumb: bc,
                     filepath: f,
                 })
             else

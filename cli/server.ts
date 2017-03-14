@@ -857,17 +857,10 @@ export function serveAsync(options: ServeOptions) {
             }
         } else {
             let md = readMd(pathname)
-            let bc = elts.map((e, i) => {
-                return {
-                    href: "/" + elts.slice(0, i + 1).join("/"),
-                    name: e
-                }
-            })
             let html = pxt.docs.renderMarkdown({
                 template: expandDocFileTemplate("docs.html"),
                 markdown: md,
                 theme: pxt.appTarget.appTheme,
-                breadcrumb: bc,
                 filepath: pathname
             })
             sendHtml(html)
