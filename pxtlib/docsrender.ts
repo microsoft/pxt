@@ -92,8 +92,8 @@ namespace pxt.docs {
         html: string;
         theme: AppTheme;
         params: Map<string>;
-        breadcrumb?: BreadcrumbEntry[];
         filepath?: string;
+        ghEditURLs?: string[];
 
         finish?: () => string;
         boxes?: Map<string>;
@@ -175,6 +175,11 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
+        let breadcrumb: BreadcrumbEntry[] = [{
+            name: lf("Docs"),
+            href: "/docs"
+        }]
+
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
             let templ = toc["item"]
@@ -187,6 +192,10 @@ namespace pxt.docs {
             if ((m.path && d.filepath && d.filepath.indexOf(m.path) >= 0)) {
                 mparams["ACTIVE"] = 'active';
                 currentTocEntry = m;
+                breadcrumb.push({
+                    name: m.name,
+                    href: m.path
+                })
             }
             if (m.subitems && m.subitems.length > 0) {
                 if (lev == 0) templ = toc["top-dropdown"]
@@ -200,18 +209,20 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
+        params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
+        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
+
         let breadcrumbHtml = '';
-        if (d.breadcrumb && d.breadcrumb.length > 1) {
+        if (breadcrumb.length > 1) {
             breadcrumbHtml = `
             <div class="ui breadcrumb">
-                ${d.breadcrumb.map((b, i) =>
-                    `<a class="${i == d.breadcrumb.length - 1 ? "active" : ""} section" 
+                ${breadcrumb.map((b, i) =>
+                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section" 
                         href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
                     .join('<i class="right chevron icon divider"></i>')}
             </div>`;
         }
-        params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
+
         params["breadcrumb"] = breadcrumbHtml;
 
         if (currentTocEntry) {
@@ -234,13 +245,17 @@ namespace pxt.docs {
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
         params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
-        if (d.filepath && theme.githubUrl) {
-            //I would have used NodeJS path library, but this code may have to work in browser
-            let leadingTrailingSlash = /^\/|\/$/;
-            let githubUrl = `${theme.githubUrl.replace(leadingTrailingSlash, '')}/blob/master/docs/${d.filepath.replace(leadingTrailingSlash, '')}`;
-            params["github"] = `<p style="margin-top:1em"><a href="${githubUrl}"><i class="write icon"></i>${lf("Edit this page on GitHub")}</a></p>`;
-        }
-        else {
+        let ghURLs = d.ghEditURLs || []
+        if (ghURLs.length) {
+            let ghText = `<p style="margin-top:1em">\n`
+            let linkLabel = lf("Edit this page on GitHub")
+            for (let u of ghURLs) {
+                ghText += `<a href="${u}"><i class="write icon"></i>${linkLabel}</a><br>\n`;
+                linkLabel = lf("Edit template of this page on GitHub")
+            }
+            ghText += `</p>\n`
+            params["github"] = ghText
+        } else {
             params["github"] = "";
         }
 
@@ -270,21 +285,29 @@ namespace pxt.docs {
         ])
     }
 
-    export function renderMarkdown(template: string, src: string,
-        theme: AppTheme = null, pubinfo: Map<string> = null,
-        breadcrumb: BreadcrumbEntry[] = null, filepath: string = null,
-        locale: Map<string> = null): string {
+    export interface RenderOptions {
+        template: string;
+        markdown: string;
+        theme?: AppTheme;
+        pubinfo?: Map<string>;
+        filepath?: string;
+        locale?: Map<string>;
+        ghEditURLs?: string[];
+    }
 
+    export function renderMarkdown(opts: RenderOptions): string {
         let hasPubInfo = true
 
-        if (!pubinfo) {
+        if (!opts.pubinfo) {
             hasPubInfo = false
-            pubinfo = {}
+            opts.pubinfo = {}
         }
-        if (!theme) theme = {}
-        if (!breadcrumb) breadcrumb = []
 
-        delete pubinfo["private"] // just in case
+        let pubinfo = opts.pubinfo
+
+        if (!opts.theme) opts.theme = {}
+
+        delete opts.pubinfo["private"] // just in case
 
         if (pubinfo["time"]) {
             let tm = parseInt(pubinfo["time"])
@@ -302,22 +325,23 @@ namespace pxt.docs {
             pubinfo["JSON"] = JSON.stringify(pubinfo, null, 4).replace(/</g, "\\u003c")
         }
 
+        let template = opts.template
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
             (full, fn) => {
-                let cont = (theme.htmlDocIncludes || {})[fn] || ""
+                let cont = (opts.theme.htmlDocIncludes || {})[fn] || ""
                 return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
             })
 
-        if (locale)
-            template = translate(template, locale).text
+        if (opts.locale)
+            template = translate(template, opts.locale).text
 
         let d: RenderData = {
             html: template,
-            theme: theme,
+            theme: opts.theme,
+            filepath: opts.filepath,
+            ghEditURLs: opts.ghEditURLs,
             params: pubinfo,
-            breadcrumb: breadcrumb,
-            filepath: filepath
         }
         prepTemplate(d)
 
@@ -365,8 +389,10 @@ namespace pxt.docs {
             })
         };
 
+        let markdown = opts.markdown
+
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
-        src = src.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
+        markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
                 if (m) {
@@ -379,9 +405,9 @@ namespace pxt.docs {
         })
 
         // replace pre-template in markdown
-        src = src.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
+        markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
-        let html = marked(src)
+        let html = marked(markdown)
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
@@ -440,7 +466,7 @@ namespace pxt.docs {
             if (descM)
                 pubinfo["description"] = html2Quote(descM[1])
         }
-        pubinfo["twitter"] = html2Quote(theme.twitter || "@mspxtio");
+        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first
@@ -468,8 +494,8 @@ namespace pxt.docs {
         pubinfo["body"] = html
         pubinfo["name"] = pubinfo["title"] + " - " + pubinfo["targetname"]
 
-        for (let k of Object.keys(theme)) {
-            let v = (theme as any)[k]
+        for (let k of Object.keys(opts.theme)) {
+            let v = (opts.theme as any)[k]
             if (typeof v == "string")
                 pubinfo["theme_" + k] = v
         }
@@ -641,6 +667,90 @@ namespace pxt.docs {
         }
         return openSections[0]
     }
+
+    export function buildTOC(summaryMD: string): pxt.TOCMenuEntry[] {
+        if (!summaryMD)
+            return null
+
+        const marked = pxt.docs.requireMarked();
+        const options = {
+            renderer: new marked.Renderer(),
+            gfm: true,
+            tables: false,
+            breaks: false,
+            pedantic: false,
+            sanitize: false,
+            smartLists: false,
+            smartypants: false
+        };
+
+        let dummy: pxt.TOCMenuEntry = { name: 'dummy', subitems: [] };
+        let currentStack: pxt.TOCMenuEntry[] = [];
+        currentStack.push(dummy);
+
+        let tokens = marked.lexer(summaryMD, options);
+        tokens.forEach((token: any) => {
+            switch (token.type) {
+                case "heading":
+                    if (token.depth == 3) {
+                        // heading
+                    }
+                    break;
+                case "list_start":
+                    break;
+                case "list_item_start":
+                case "loose_item_start":
+                    let newItem: pxt.TOCMenuEntry = {
+                        name: '',
+                        subitems: []
+                    };
+                    currentStack.push(newItem);
+                    break;
+                case "text":
+                    token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
+                        currentStack[currentStack.length - 1].name = name;
+                        currentStack[currentStack.length - 1].path = path.replace('.md', '');
+                    });
+                    break;
+                case "list_item_end":
+                case "loose_item_end":
+                    let docEntry = currentStack.pop();
+                    currentStack[currentStack.length - 1].subitems.push(docEntry);
+                    break;
+                case "list_end":
+                    break;
+                default:
+            }
+        })
+
+        let TOC = dummy.subitems
+        if (!TOC || TOC.length == 0) return null
+
+        let previousNode: pxt.TOCMenuEntry;
+        // Scan tree and build next / prev paths
+        let buildPrevNext = (node: pxt.TOCMenuEntry) => {
+            if (previousNode) {
+                node.prevName = previousNode.name;
+                node.prevPath = previousNode.path;
+
+                previousNode.nextName = node.name;
+                previousNode.nextPath = node.path;
+            }
+            if (node.path) {
+                previousNode = node;
+            }
+            node.subitems.forEach((tocItem, tocIndex) => {
+                buildPrevNext(tocItem);
+            })
+        }
+
+        TOC.forEach((tocItem, tocIndex) => {
+            buildPrevNext(tocItem)
+        })
+
+        return TOC
+    }
+
 
     let testedAugment = false
     export function augmentDocs(baseMd: string, childMd: string) {

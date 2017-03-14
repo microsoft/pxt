@@ -124,7 +124,10 @@ pxt extract ${url}`;
                                 file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                             if (pkg.File.tsFileNameRx.test(file.getName())) {
                                 let fileContents = file.content;
-                                let mdContent = pxt.docs.renderMarkdown(`@body@`, `\`\`\`javascript\n${fileContents}\n\`\`\``);
+                                let mdContent = pxt.docs.renderMarkdown({
+                                    template: `@body@`,
+                                    markdown: `\`\`\`javascript\n${fileContents}\n\`\`\``
+                                });
                                 embed = `<a style="text-decoration: none;" href="${editUrl}">${mdContent}</a>`;
                             }
                         }
