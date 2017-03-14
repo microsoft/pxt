@@ -804,8 +804,9 @@ namespace ts.pxtc.Util {
         }
 
         function addF(name: string, val: string) {
+            const fn = name.split('/').reverse()[0];
             form += boundary + "\r\n"
-            form += "Content-Disposition: form-data; name=\"files[" + name + "]\"; filename=\"blah.md\"\r\n"
+            form += "Content-Disposition: form-data; name=\"files[" + name + "]\"; filename=\"" + fn + "\"\r\n"
             form += "\r\n"
             form += val + "\r\n"
         }
