@@ -39,6 +39,7 @@ As a result of this choice, many dynamic features of JavaScript (and thus TypeSc
 * access to the “this” pointer outside of a class;
 * the typeof expression;
 * type assertions
+
 STS also excludes features that we consider historical, 
 including the var statement and for-in loop (for-of is supported). Excluded program elements are:
 If you think one of the above program elements should be introduced in an introductory programming
@@ -55,9 +56,9 @@ STS contains a lot of the good parts of TypeScript, including
 * namespaces (a form of modules) 
 * standard control-flow statements
   * if ... else if ... else statements
-* loops: while, do ... while, for(;;) and for ... of statements
-* break/continue statements; also with labeled loops
-* switch statement
+  * loops: while, do ... while, for(;;) and for ... of statements
+  * break/continue statements; also with labeled loops
+  * switch statement
 * standard Boolean/arithmetic expressions
   * conditional operator ? and lazy boolean operators
   * all arithmetic operators (including bitwise operators);
@@ -66,6 +67,7 @@ STS contains a lot of the good parts of TypeScript, including
   * array literals [1, 2, 3]
   * object literals { foo: 1, bar: "two" }
 * string templates (`x is ${x}` )
+
 TypeScript elements not mentioned as included in STS in the previous sections are excluded from STS 
 for now (see later section for a list of these elements). 
 If we’ve left something out that obviously should be in STS, please let us know!
