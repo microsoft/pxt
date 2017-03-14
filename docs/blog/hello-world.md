@@ -1,6 +1,6 @@
 # Hello Microsoft MakeCode!
 
-### Posted on 3/14/2017
+**Posted on March 14th, 2017**
 
 Welcome to the official release and developer blog of Microsoft MakeCode, also known as PXT.
 

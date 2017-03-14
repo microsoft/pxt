@@ -1,16 +1,8 @@
 # Microsoft MakeCode Blog
 
-```codecard
-[
-{
-  "name": "Hello World!",
-  "url":"/blog/hello-world",
-  "imageUrl": "/static/blog/hello-world/icon.png",
-  "description": "Welcome to the Microsoft MakeCode blog."
-}
-]
-```
+## [Hello World](/blog/hello-world)
+March 14th, 2017
 
-### History
+Welcome to the official release and developer blog of Microsoft MakeCode, also known as PXT...
+[Read more](/blog/hello-world)
 
-* [Hello World](/blog/hello-world), 3/14/2017
