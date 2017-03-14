@@ -482,14 +482,12 @@ ${files["main.ts"]}
     export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
         const path = options.path;
         const parts = (path || '').split('/');
-        const bc = !path ? null : parts.map((e, i) => {
-            return {
-                href: "/" + parts.slice(0, i + 1).join("/"),
-                name: e
-            }
-        })
 
-        let html = pxt.docs.renderMarkdown(template, md, pxt.appTarget.appTheme, null, bc);
+        let html = pxt.docs.renderMarkdown({
+            template: template,
+            markdown: md,
+            theme: pxt.appTarget.appTheme,
+        });
         $(content).html(html);
         $(content).find('a').attr('target', '_blank');
         return pxt.runner.renderAsync({

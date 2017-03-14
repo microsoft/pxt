@@ -638,8 +638,13 @@ export function sendElectronMessage(message: ElectronMessage) {
 function streamPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: pxt.streams.JsonStream) => {
-            let templ = expandDocFileTemplate("stream.html")
-            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, info as any, null, "/" + id)
+            let html = pxt.docs.renderMarkdown({
+                template: expandDocFileTemplate("stream.html"),
+                markdown: "",
+                theme: pxt.appTarget.appTheme,
+                pubinfo: info as any,
+                filepath: "/" + id
+            })
             return html
         })
 }
@@ -648,9 +653,13 @@ function streamPageTestAsync(id: string) {
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
-            let vars: pxt.Map<string> = info as any
-            let templ = expandDocFileTemplate("script.html")
-            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
+            let html = pxt.docs.renderMarkdown({
+                template: expandDocFileTemplate("script.html"),
+                markdown: "",
+                theme: pxt.appTarget.appTheme,
+                pubinfo: info as any,
+                filepath: "/" + id
+            })
             return html
         })
 
@@ -848,14 +857,12 @@ export function serveAsync(options: ServeOptions) {
             }
         } else {
             let md = readMd(pathname)
-            let bc = elts.map((e, i) => {
-                return {
-                    href: "/" + elts.slice(0, i + 1).join("/"),
-                    name: e
-                }
+            let html = pxt.docs.renderMarkdown({
+                template: expandDocFileTemplate("docs.html"),
+                markdown: md,
+                theme: pxt.appTarget.appTheme,
+                filepath: pathname
             })
-            let templ = expandDocFileTemplate("docs.html")
-            let html = pxt.docs.renderMarkdown(templ, md, pxt.appTarget.appTheme, null, bc, pathname)
             sendHtml(html)
         }
 
