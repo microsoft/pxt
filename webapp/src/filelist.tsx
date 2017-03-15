@@ -113,7 +113,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             p.setFile(customFile, `
 /**
  * ${lf("Use this file to define custom functions and blocks.")}
- * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'custom-blocks' )}
+ * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'blocks/custom' )}
  */
 
 enum MyEnum {
