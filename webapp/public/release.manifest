@@ -29,20 +29,19 @@ CACHE:
 /cdn/blockly/media/disconnect.wav
 /cdn/blockly/media/delete.mp3
 
-# monaco
-/cdn/vs/loader.js
-/cdn/vs/base/worker/workerMain.js
-/cdn/vs/basic-languages/src/bat.js
-/cdn/vs/basic-languages/src/cpp.js
-/cdn/vs/editor/editor.main.css
-/cdn/vs/editor/editor.main.js
-/cdn/vs/editor/editor.main.nls.js
-/cdn/vs/language/json/jsonMode.js
-/cdn/vs/language/json/jsonWorker.js
-/cdn/vs/language/typescript/lib/typescriptServices.js
-/cdn/vs/language/typescript/src/mode.js
-/cdn/vs/language/typescript/src/worker.js
-/cdn/monacoworker.js
+# monaco; keep in sync with webapp/public/index.html
+/blb/vs/loader.js
+/blb/vs/base/worker/workerMain.js
+/blb/vs/basic-languages/src/bat.js
+/blb/vs/basic-languages/src/cpp.js
+/blb/vs/editor/editor.main.css
+/blb/vs/editor/editor.main.js
+/blb/vs/editor/editor.main.nls.js
+/blb/vs/language/json/jsonMode.js
+/blb/vs/language/json/jsonWorker.js
+/blb/vs/language/typescript/lib/typescriptServices.js
+/blb/vs/language/typescript/src/mode.js
+/blb/vs/language/typescript/src/worker.js
 
 # ai
 https://az416426.vo.msecnd.net/scripts/a/ai.0.js
