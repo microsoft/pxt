@@ -180,6 +180,22 @@ namespace pxt.docs {
             href: "/docs"
         }]
 
+        let tocPath: TOCMenuEntry[] = []
+        let isCurrentTOC = (m: TOCMenuEntry) => {
+            for (let c of m.subitems || []) {
+                if (isCurrentTOC(c)) {
+                    tocPath.push(m)
+                    return true
+                }
+            }
+            if (d.filepath.indexOf(m.path) >= 0) {
+                tocPath.push(m)
+                return true
+            }
+            return false
+        };
+        (theme.TOC || []).forEach(isCurrentTOC)
+
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
             let templ = toc["item"]
@@ -189,7 +205,7 @@ namespace pxt.docs {
             if (m.path && !/^(https?:|\/)/.test(m.path))
                 return error("Invalid link: " + m.path)
             mparams["LINK"] = m.path
-            if ((m.path && d.filepath && d.filepath.indexOf(m.path) >= 0)) {
+            if (tocPath.indexOf(m) >= 0) {
                 mparams["ACTIVE"] = 'active';
                 currentTocEntry = m;
                 breadcrumb.push({
