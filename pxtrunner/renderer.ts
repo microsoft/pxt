@@ -58,7 +58,7 @@ namespace pxt.runner {
             return;
         }
 
-        let cdn = pxt.webConfig.pxtCdnUrl
+        let cdn = pxt.webConfig.commitCdnUrl
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu">'
             + ' <div class="right icon menu"></div></div>');

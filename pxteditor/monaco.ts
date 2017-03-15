@@ -225,7 +225,7 @@ namespace pxt.vs {
             }
 
             let onGotAmdLoader = () => {
-                (window as any).require.config({ paths: { 'vs': pxt.webConfig.pxtCdnUrl + 'vs' }});
+                (window as any).require.config({ paths: { 'vs': pxt.webConfig.commitCdnUrl + 'vs' }});
 
                 // Load monaco
                 (window as any).require(['vs/editor/editor.main'], () => {
@@ -239,7 +239,7 @@ namespace pxt.vs {
             if (!(<any>window).require) {
                 let loaderScript = document.createElement('script');
                 loaderScript.type = 'text/javascript';
-                loaderScript.src = pxt.webConfig.pxtCdnUrl + 'vs/loader.js';
+                loaderScript.src = pxt.webConfig.commitCdnUrl + 'vs/loader.js';
                 loaderScript.addEventListener('load', onGotAmdLoader);
                 document.body.appendChild(loaderScript);
             } else {

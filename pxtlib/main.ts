@@ -100,15 +100,16 @@ namespace pxt {
         workerjs: string;  // "/beta---worker",
         tdworkerjs: string;  // "/beta---tdworker",
         monacoworkerjs: string; // "/beta---monacoworker",
-        pxtVersion: string; // "0.3.8",
-        pxtRelId: string; // "zstad",
-        pxtCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zstad/c/",
+        pxtVersion: string; // "?",
+        pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
+        pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
+        commitCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
+        blobCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
         targetUrl: string; // "https://pxt.microbit.org"
-        targetVersion: string; // "0.2.108",
-        targetRelId: string; // "zowrj",
-        targetCdnUrl: string; // "https://az851932.vo.msecnd.net/app/zowrj/c/",
+        targetVersion: string; // "?",
+        targetRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
         targetId: string; // "microbit",
-        simUrl: string; // "https://trg-microbit.kindscript.net/sim/zowrj"
+        simUrl: string; // "https://trg-microbit.userpxt.io/beta---simulator"
         partsUrl?: string; // /beta---parts
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
@@ -124,10 +125,11 @@ namespace pxt {
             pxtVersion: "local",
             pxtRelId: "",
             pxtCdnUrl: "/cdn/",
+            commitCdnUrl: "/cdn/",
+            blobCdnUrl: "/blob/",
             targetUrl: "",
             targetVersion: "local",
             targetRelId: "",
-            targetCdnUrl: "/sim/",
             targetId: appTarget ? appTarget.id : "",
             simUrl: "/sim/simulator.html",
             partsUrl: "/sim/siminstructions.html"
@@ -139,7 +141,7 @@ namespace pxt {
 
     export function getOnlineCdnUrl(): string {
         if (!webConfig) return null
-        let m = /^(https:\/\/[^\/]+)/.exec(webConfig.pxtCdnUrl)
+        let m = /^(https:\/\/[^\/]+)/.exec(webConfig.commitCdnUrl)
         if (m) return m[1]
         else return null
     }

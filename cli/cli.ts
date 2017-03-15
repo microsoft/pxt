@@ -841,7 +841,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 function uploadArtFile(fn: string): string {
     if (!fn || /^(https?|data):/.test(fn)) return fn; // nothing to do
 
-    return "@pxtCdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
+    return "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
 }
 
 function gitHash(buf: Buffer) {
@@ -871,12 +871,13 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/siminstructions.html": "@partsUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/embed.js": "@targetUrl@@relprefix@embed",
-        "/cdn/": "@pxtCdnUrl@",
-        "/doccdn/": "@pxtCdnUrl@",
-        "/sim/": "@targetCdnUrl@",
+        "/cdn/": "@commitCdnUrl@",
+        "/doccdn/": "@commitCdnUrl@",
+        "/sim/": "@commitCdnUrl@",
+        "/blob/": "@blobCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
-        "@defaultLocaleStrings@": defaultLocale ? "@pxtCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
+        "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : ""
     }
 
@@ -889,9 +890,10 @@ function uploadCoreAsync(opts: UploadOptions) {
             "pxtVersion": pxtVersion(),
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
+            "commitCdnUrl": opts.localDir,
+            "blobCdnUrl": opts.localDir,
             "targetVersion": opts.pkgversion,
             "targetRelId": "",
-            "targetCdnUrl": opts.localDir,
             "targetUrl": "",
             "targetId": opts.target,
             "simUrl": opts.localDir + "simulator.html",

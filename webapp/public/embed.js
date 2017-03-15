@@ -4,27 +4,26 @@
     // This line gets patched up by the cloud
     var pxtConfig = null;
 
-    var appCdnRoot = "/cdn/";
     var scripts = [
-        "highlight.js/highlight.pack.js",
-        "bluebird.min.js",
-        "typescript.js",
-        "semantic.js",
-        "marked/marked.min.js",
-        "lzma/lzma_worker-min.js",
-        "blockly/blockly_compressed.js",
-        "blockly/blocks_compressed.js",
-        "blockly/msg/js/en.js",
-        "pxtlib.js",
-        "pxtblocks.js",
-        "pxteditor.js",
-        "pxtsim.js",
-        "target.js",
-        "pxtrunner.js"
-    ].map(function(s) { return appCdnRoot + s; })
+        "/blob/highlight.js/highlight.pack.js",
+        "/blob/bluebird.min.js",
+        "/blob/typescript.js",
+        "/blob/semantic.js",
+        "/blob/marked/marked.min.js",
+        "/blob/lzma/lzma_worker-min.js",
+        "/blob/blockly/blockly_compressed.js",
+        "/blob/blockly/blocks_compressed.js",
+        "/blob/blockly/msg/js/en.js",
+        "/blob/pxtlib.js",
+        "/blob/pxtblocks.js",
+        "/blob/pxteditor.js",
+        "/blob/pxtsim.js",
+        "/blob/target.js",
+        "/blob/pxtrunner.js"
+    ]
 
     if (typeof jQuery == "undefined")
-        scripts.unshift(appCdnRoot + "jquery.js")
+        scripts.unshift("/blob/jquery.js")
 
     var pxtCallbacks = []
 
