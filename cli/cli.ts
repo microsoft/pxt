@@ -452,8 +452,7 @@ function travisAsync() {
         return p;
     } else {
         return buildTargetAsync()
-            .then(() => checkDocsAsync())
-            .then(() => testSnippetsAsync())
+            .then(() => internalCheckDocsAsync(true))
             .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
                 if (!process.env["PXT_ACCESS_TOKEN"]) {
@@ -591,8 +590,7 @@ function uploadTaggedTargetAsync() {
         // only build target after getting all the info
         .then(info =>
             buildTargetAsync()
-                .then(() => checkDocsAsync())
-                .then(() => testSnippetsAsync())
+                .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
         .then(info => {
             process.env["TRAVIS_TAG"] = info[0]
@@ -3083,17 +3081,14 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+function testSnippetsAsync(snippetSources: Map<string>, re?: string, ignorePreviousSuccesses?: boolean): Promise<void> {
     if (!nodeutil.existDirSync("docs"))
         return Promise.resolve();
 
-    const ignorePreviousSuccesses = parsed && !!parsed.flags["i"];
     let filenameMatch: RegExp;
 
     try {
-        let pattern = '.*';
-        if (parsed && parsed.flags["re"])
-            pattern = parsed.flags["re"] as string;
+        let pattern = re || '.*';
         filenameMatch = new RegExp(pattern);
     }
     catch (e) {
@@ -3112,9 +3107,6 @@ function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> 
         }
         console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
     }
-
-    let files = getDocsFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
-    console.log(`checking ${files.length} documentation files`)
 
     let ignoreCount = 0
 
@@ -3139,10 +3131,11 @@ function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> 
         infos.forEach(info => console.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
 
-    return Promise.map(files, (fname: string) => {
-        let pkgName = fname.replace(/\\/g, '-').replace('.md', '')
-        let source = fs.readFileSync(fname, 'utf8')
-        let snippets = getSnippets(source)
+    return Promise.map(Object.keys(snippetSources), (fname: string) => {
+        pxt.debug(`compiling ${fname}`);
+        const pkgName = fname.replace(/\\/g, '-').replace('.md', '')
+        const source = snippetSources[fname];
+        const snippets = getSnippets(source)
         // [].concat.apply([], ...) takes an array of arrays and flattens it
         let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
         extraDeps.push("core")
@@ -3785,23 +3778,6 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     return dirs;
 }
 
-function getDocsFiles(): string[] {
-    let res: string[] = []
-    function loop(path: string) {
-        for (let fn of fs.readdirSync(path)) {
-            if (fn[0] == "." || fn[0] == "_") continue;
-            let fp = path + "/" + fn
-            let st = fs.statSync(fp)
-            if (st.isDirectory()) loop(fp)
-            else if (st.isFile()) res.push(fp.replace(/^docs/, ""))
-        }
-    }
-    loop("docs")
-    if (fs.existsSync("docs/_locales"))
-        loop("docs/_locales")
-    return res
-}
-
 function cherryPickAsync(parsed: commandParser.ParsedCommand) {
     const commit = parsed.arguments[0];
     const name = parsed.flags["name"] || commit.slice(0, 7);
@@ -3828,11 +3804,21 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
     return p.catch(() => gitAsync(["checkout", "master"]));
 }
 
-function checkDocsAsync(): Promise<void> {
+function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    return internalCheckDocsAsync(
+        !!parsed.flags["snippets"],
+        parsed.flags["re"] as string,
+        !!parsed.flags["i"]
+    )
+}
+
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, ignoreSuccesses?: boolean): Promise<void> {
+
     if (!nodeutil.existDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
     const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
+
     if (!summaryMD) {
         console.log('no SUMMARY.md file found, skipping check docs');
         return Promise.resolve();
@@ -3844,6 +3830,7 @@ function checkDocsAsync(): Promise<void> {
     let checked = 0;
     let broken = 0;
     let snipCount = 0;
+    let snippets: Map<string> = {};
 
     function checkTOCEntry(entry: pxt.TOCMenuEntry) {
         if (entry.path && !/^https:\/\//.test(entry.path))
@@ -3887,17 +3874,19 @@ function checkDocsAsync(): Promise<void> {
         })
 
         // look for snippets
-        const snippets = getSnippets(md)
-        snipCount += snippets.length
-        for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
-            const dir = "built/docs/snippets/" + snippets[snipIndex].type;
+        getSnippets(md).forEach((snippet, snipIndex) => {
+            snipCount++;
+            const dir = path.join("built/docs/snippets", snippet.type);
             const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
             nodeutil.mkdirP(dir);
-            fs.writeFileSync(fn, snippets[snipIndex].code);
-        }
+            snippets[fn] = snippet.code;
+            fs.writeFileSync(fn, snippet.code);
+        });
     }
 
     console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
+    if (compileSnippets)
+        return testSnippetsAsync(snippets, re, ignoreSuccesses)
     return Promise.resolve();
 }
 
@@ -4086,18 +4075,6 @@ function initCommands() {
     }, extractAsync);
 
     p.defineCommand({
-        name: "snippets",
-        help: "verifies that all documentation snippets compile to blocks",
-        flags: {
-            re: {
-                description: "regular expression that matches the snippets to test",
-                argument: "regex"
-            },
-            i: { description: "ignore past successes when running" }
-        }
-    }, testSnippetsAsync);
-
-    p.defineCommand({
         name: "serve",
         help: "start web server for your local target",
         flags: {
@@ -4204,7 +4181,19 @@ function initCommands() {
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
-    advancedCommand("checkdocs", "check docs for broken links, typing errors, etc...", checkDocsAsync);
+
+    p.defineCommand({
+        name: "checkdocs",
+        help: "check docs for broken links, typing errors, etc...",
+        flags: {
+            snippets: { description: "compile snippets" },
+            re: {
+                description: "regular expression that matches the snippets to test",
+                argument: "regex"
+            },
+            i: { description: "ignore past successes when running" }
+        }
+    }, checkDocsAsync);
 
     advancedCommand("api", "do authenticated API call", pc => apiAsync(pc.arguments[0], pc.arguments[1]), "<path> [data]");
     advancedCommand("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));
