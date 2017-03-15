@@ -3859,7 +3859,7 @@ function checkDocsAsync(): Promise<void> {
                 if (!urls.hasOwnProperty(url)) {
                     // TODO: correct resolution of static resources
                     urls[url] = /\.[a-z]+$/i.test(url)
-                        ? nodeutil.fileExistsSync(path.join(docsRoot, url))
+                        ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
                         : !!nodeutil.resolveMd(docsRoot, url);
                 }
                 if (!urls[url]) {
