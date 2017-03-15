@@ -3839,47 +3839,15 @@ function checkDocsAsync(): Promise<void> {
     }
     console.log(`checking docs`);
 
+    let todo: string[] = [];
     let urls: any = {};
     let checked = 0;
     let broken = 0;
     let snipCount = 0;
 
     function checkTOCEntry(entry: pxt.TOCMenuEntry) {
-        if (entry.path && !/^https:\/\//.test(entry.path)) {
-            checked++;
-            pxt.debug(`checking ${entry.path}`)
-            const md = nodeutil.resolveMd(docsRoot, entry.path);
-
-            // look for broken urls
-            md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
-                let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
-                // remove hash
-                url = url.replace(/#.*$/, '');
-                // cache value
-                if (!urls.hasOwnProperty(url)) {
-                    // TODO: correct resolution of static resources
-                    urls[url] = /\.[a-z]+$/i.test(url)
-                        ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
-                        : !!nodeutil.resolveMd(docsRoot, url);
-                }
-                if (!urls[url]) {
-                    console.error(`${entry.path}: broken link ${url}`);
-                    broken++;
-                }
-                return '';
-            })
-
-            // look for snippets
-            const snippets = getSnippets(md)
-            snipCount += snippets.length
-            for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
-                const dir = "built/docs/snippets/" + snippets[snipIndex].type;
-                const fn = `${dir}/${entry.path.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
-                nodeutil.mkdirP(dir);
-                fs.writeFileSync(fn, snippets[snipIndex].code);
-            }
-        }
-
+        if (entry.path && !/^https:\/\//.test(entry.path))
+            todo.push(entry.path);
         // look for sub items
         if (entry.subitems)
             entry.subitems.forEach(checkTOCEntry);
@@ -3887,6 +3855,47 @@ function checkDocsAsync(): Promise<void> {
 
     const toc = pxt.docs.buildTOC(summaryMD);
     toc.forEach(checkTOCEntry);
+
+    while (todo.length) {
+        checked++;
+        const entrypath = todo.pop();
+        pxt.debug(`checking ${entrypath}`)
+        const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
+
+        // look for broken urls
+        md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
+            let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
+            // remove hash
+            url = url.replace(/#.*$/, '');
+            // cache value
+            if (!urls.hasOwnProperty(url)) {
+                const isResource = /\.[a-z]+$/i.test(url);
+                if (!isResource) {
+                    pxt.debug(`link not in TOC: ${url}`)
+                    todo.push(url);
+                }
+                // TODO: correct resolution of static resources
+                urls[url] = isResource
+                    ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
+                    : nodeutil.resolveMd(docsRoot, url);
+            }
+            if (!urls[url]) {
+                console.error(`${entrypath}: broken link ${url}`);
+                broken++;
+            }
+            return '';
+        })
+
+        // look for snippets
+        const snippets = getSnippets(md)
+        snipCount += snippets.length
+        for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
+            const dir = "built/docs/snippets/" + snippets[snipIndex].type;
+            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
+            nodeutil.mkdirP(dir);
+            fs.writeFileSync(fn, snippets[snipIndex].code);
+        }
+    }
 
     console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
     return Promise.resolve();
