@@ -3081,7 +3081,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string, ignorePreviousSuccesses?: boolean): Promise<void> {
+function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
     let filenameMatch: RegExp;
     try {
         let pattern = re || '.*';
@@ -3092,19 +3092,6 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, ignorePreviousS
         filenameMatch = new RegExp('.*')
     }
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
-
-    const ignoreSnippets: pxt.Map<boolean> = {}
-    const ignorePath = "built/docs/snippets/goodsnippets.txt"
-
-    if (ignorePreviousSuccesses && fs.existsSync(ignorePath)) {
-        let numberOfIgnoreSnippets = 0
-        for (let line of fs.readFileSync(ignorePath, "utf8").split("\n")) {
-            ignoreSnippets[line] = true
-            numberOfIgnoreSnippets++
-        }
-        console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
-    }
-
     let ignoreCount = 0
 
     const successes: string[] = []
@@ -3126,11 +3113,6 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, ignorePreviousS
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         pxt.debug(`compiling ${snippet.name}`);
         const name = snippet.name;
-
-        if (name in ignoreSnippets && ignoreSnippets[name]) {
-            ignoreCount++
-            return addSuccess(name)
-        }
         const pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, Object.keys(snippet.packages)));
         return pkg.getCompileOptionsAsync().then(opts => {
             opts.ast = true
@@ -3172,14 +3154,6 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, ignorePreviousS
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
-        }
-        if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
-            let successData = successes.join("\n")
-            nodeutil.mkdirP(path.dirname(ignorePath));
-            fs.writeFileSync(ignorePath, successData)
-        }
-        else {
-            console.log("Some files were ignored, therefore won't write success log")
         }
     })
 }
@@ -3781,12 +3755,11 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
         !!parsed.flags["snippets"],
-        parsed.flags["re"] as string,
-        !!parsed.flags["i"]
+        parsed.flags["re"] as string
     )
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, ignoreSuccesses?: boolean): Promise<void> {
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise<void> {
     if (!nodeutil.existDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
@@ -3864,7 +3837,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, ignoreSu
     console.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
     fs.writeFileSync("built/noTOC.md", noTOCs.map(p => `[${p}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
-        return testSnippetsAsync(snippets, re, ignoreSuccesses)
+        return testSnippetsAsync(snippets, re)
     return Promise.resolve();
 }
 
@@ -4210,8 +4183,7 @@ function initCommands() {
             re: {
                 description: "regular expression that matches the snippets to test",
                 argument: "regex"
-            },
-            i: { description: "ignore past successes when running" }
+            }
         }
     }, checkDocsAsync);
 
