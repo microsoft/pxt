@@ -3169,16 +3169,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, ignorePreviousS
             ])
         })
     }, { concurrency: 4 }).then((a: any) => {
-        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
+        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
-            console.log(`Skipped ${ignoreCount} snippets`)
-        }
-        console.log('--------------------------------------------------------------------------------')
-        for (let f of failures) {
-            console.log(f.filename)
-            for (let diag of f.diagnostics) {
-                console.log(`  L ${diag.line}\t${diag.messageText}`)
-            }
+            pxt.log(`Skipped ${ignoreCount} snippets`)
         }
         if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
             let successData = successes.join("\n")
