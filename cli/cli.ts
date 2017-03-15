@@ -3982,7 +3982,7 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         "cards": true
     }
     const snippets = getSnippets(md);
-    const codeSnippets = snippets.filter(snip => !!supported[snip.type]);
+    const codeSnippets = snippets.filter(snip => !!supported[snip.type] && !/-ignore$/i.test(snip.type));
     const pkgs: pxt.Map<string> = {
         "core": "*"
     }
