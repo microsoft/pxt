@@ -3956,14 +3956,19 @@ export function publishGistAsync(parsed: commandParser.ParsedCommand) {
     return publishGistCoreAsync(!!parsed.flags["new"]);
 }
 
-interface SnippetInfo {
+export interface SnippetInfo {
     type: string
     code: string
     ignore: boolean
     index: number
 }
 
-function getSnippets(source: string): SnippetInfo[] {
+export interface CodeSnippet {
+    code: string;
+    packages: pxt.Map<string>;
+}
+
+export function getSnippets(source: string): SnippetInfo[] {
     let snippets: SnippetInfo[] = []
     let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
     let index = 0
@@ -3977,6 +3982,29 @@ function getSnippets(source: string): SnippetInfo[] {
         index++
         return ''
     })
+    return snippets
+}
+
+export function getCodeSnippets(md: string): CodeSnippet[] {
+    const supported: pxt.Map<boolean> = {
+        "blocks": true,
+        "block": true,
+        "typescript": true,
+        "sig": true,
+        "namespaces": true,
+        "cards": true
+    }
+    const snippets = getSnippets(md);
+    const codeSnippets = snippets.filter(snip => !!supported[snip.type]);
+    const pkgs: pxt.Map<string> = {
+        "core": "*"
+    }
+    snippets.filter(snip => snip.type == "package")
+        .map(snip => snip.code.split('\n'))
+        .map(line => line.replace(/\s*$/, '')).filter(line => !!line)
+        .forEach(line => {
+            pkgs[line] = "*";
+        })    
     return snippets
 }
 
