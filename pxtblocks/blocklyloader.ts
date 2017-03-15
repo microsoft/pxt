@@ -511,7 +511,7 @@ namespace pxt.blocks {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
                             v.attributes.blockImage ? {
-                                src: pxt.webConfig.targetCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
+                                src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
                                 width: 32,
                                 height: 32
@@ -1920,7 +1920,9 @@ namespace pxt.blocks {
             if (card) {
                 const cardEl = pxt.docs.codeCard.render({
                     header: renderTip(Blockly.Tooltip.element_),
-                    typeScript: pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
+                    typeScript: pxt.appTarget.appTheme.hideBlocklyJavascriptHint
+                        ? undefined
+                        : pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
                 })
                 Blockly.Tooltip.DIV.appendChild(cardEl);
             } else {

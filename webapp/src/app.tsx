@@ -193,6 +193,11 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == "main.ts";
     }
 
+    private isAnyEditeableJavaScriptOrPackageActive(): boolean {
+        return this.editor == this.textEditor
+            && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
+    }
+
     openJavaScript() {
         pxt.tickEvent("menu.javascript");
         if (this.isJavaScriptActive()) return;
@@ -204,7 +209,19 @@ export class ProjectView
         pxt.tickEvent("menu.blocks");
         if (this.isBlocksActive()) return;
         if (this.isJavaScriptActive()) this.textEditor.openBlocks();
-        else this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+        // any other editeable .ts or pxt.json
+        else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+          this.saveFileAsync()
+            .then(() => {
+                compiler.newProject();
+                return compiler.getBlocksAsync()
+            })
+            .done((bi: pxtc.BlocksInfo) => {
+                pxt.blocks.initBlocks(bi);
+                this.blocksEditor.updateBlocksInfo(bi);
+                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+            });
+        } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
     }
 
     openTypeScriptAsync(): Promise<void> {
@@ -603,6 +620,7 @@ export class ProjectView
         if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
             pxt.tickEvent("import.blocks")
             pxt.debug('importing microbit.co.uk blocks project')
+            pxt.debug('blocks: ' + data.source)
             core.showLoading(lf("loading project..."))
             this.createProjectAsync({
                 filesOverride: {
@@ -613,6 +631,7 @@ export class ProjectView
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             pxt.tickEvent("import.td")
             pxt.debug('importing microbit.co.uk TD project')
+            pxt.debug('td: ' + data.source)
             core.showLoading("loading project...")
             this.createProjectAsync({
                 filesOverride: { "main.blocks": "", "main.ts": "  " },
@@ -1686,8 +1705,7 @@ function initTheme() {
 
     function patchCdn(url: string): string {
         if (!url) return url;
-        return url.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
-            .replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
 
     theme.appLogo = patchCdn(theme.appLogo)
@@ -1840,7 +1858,7 @@ $(document).ready(() => {
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = mlang && !!mlang[1];
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

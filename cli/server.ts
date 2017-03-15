@@ -19,7 +19,6 @@ const userProjectsDirName = "projects";
 
 let root = ""
 let dirs = [""]
-let simdirs = [""]
 let docfilesdirs = [""]
 let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
@@ -40,10 +39,11 @@ function setupRootDir() {
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
     dirs = [
         "built/web",
+        path.join(nodeutil.targetDir, "built"),
+        path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public")
     ]
-    simdirs = [path.join(nodeutil.targetDir, "built"), path.join(nodeutil.targetDir, "sim/public")]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
     setupDocfilesdirs()
@@ -700,8 +700,8 @@ export function serveAsync(options: ServeOptions) {
             }
         }
 
-        const sendHtml = (s: string) => {
-            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf8' })
+        const sendHtml = (s: string, code = 200) => {
+            res.writeHead(code, { 'Content-Type': 'text/html; charset=utf8' })
             res.end(s)
         }
 
@@ -809,32 +809,23 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (!/\.js\.map$/.test(pathname) || pathname == "/cdn/target.js") {
-            let dd = dirs
-            if (pathname == "/cdn/target.js") {
-                pathname = pathname.slice(4)
-                dd = simdirs
-            } else if (U.startsWith(pathname, "/sim/")) {
-                pathname = pathname.slice(4)
-                dd = simdirs
-            } else if (U.startsWith(pathname, "/parts/")) {
-                dd = simdirs
-            } else if (U.startsWith(pathname, "/cdn/")) {
-                pathname = pathname.slice(4)
-                dd = dirs
-            } else if (U.startsWith(pathname, "/doccdn/")) {
-                pathname = pathname.slice(7)
-                dd = dirs
-            } else if (U.startsWith(pathname, "/docfiles/")) {
-                pathname = pathname.slice(10)
-                dd = docfilesdirs
-            }
-            for (let dir of dd) {
-                let filename = path.resolve(path.join(dir, pathname))
-                if (nodeutil.fileExistsSync(filename)) {
-                    sendFile(filename)
-                    return;
-                }
+        if (/\.js\.map$/.test(pathname)) {
+            error(404, "map files disabled")
+        }
+
+        let dd = dirs
+        let mm = /^\/(cdn|parts|sim|doccdn|blb)(\/.*)/.exec(pathname)
+        if (mm) {
+            pathname = mm[2]
+        } else if (U.startsWith(pathname, "/docfiles/")) {
+            pathname = pathname.slice(10)
+            dd = docfilesdirs
+        }
+        for (let dir of dd) {
+            let filename = path.resolve(path.join(dir, pathname))
+            if (nodeutil.fileExistsSync(filename)) {
+                sendFile(filename)
+                return;
             }
         }
 
@@ -863,7 +854,7 @@ export function serveAsync(options: ServeOptions) {
                 theme: pxt.appTarget.appTheme,
                 filepath: pathname
             })
-            sendHtml(html)
+            sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
         }
 
         return

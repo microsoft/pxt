@@ -80,6 +80,14 @@ namespace pxt.crowdin {
                 if (resp.statusCode == 200 || resp.statusCode == 400)
                     return Promise.resolve();
 
+                if (resp.statusCode == 500 && resp.text) {
+                    const json = JSON.parse(resp.text);
+                    if (json.error.code === 50) {
+                        pxt.log('directory already exists')
+                        return Promise.resolve();
+                    }
+                }
+
                 const data: any = resp.json || { error: {} }
                 if (resp.statusCode == 404 && data.error.code == 17) {
                     pxt.log(`parent directory missing for ${name}`)
@@ -90,7 +98,7 @@ namespace pxt.crowdin {
                     }
                 }
 
-                throw new Error(`cannot create dir ${branch || ""}/${name}: ${resp.toString()} ${JSON.stringify(data)}`)
+                throw new Error(`cannot create directory ${branch || ""}/${name}: ${resp.statusCode} ${JSON.stringify(data)}`)
             })
     }
 
