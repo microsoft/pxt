@@ -448,6 +448,7 @@ function travisAsync() {
                 .then(() => execCrowdinAsync("upload", "built/strings.json"))
                 .then(() => buildWebStringsAsync())
                 .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
+                .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
         return buildTargetAsync()
