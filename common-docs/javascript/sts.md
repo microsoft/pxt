@@ -16,9 +16,10 @@ we believe has great potential for both introductory CS education, programming a
 In this document, we define a subset of TypeScript called Static TypeScript (STS, for short), 
 its properties and how it can help transform teaching of CS education. 
 The best way to think of STS is as C#/Java/C++ subset of TypeScript where all types are known at compile time,
-which permits efficient linking to a C++ runtime. STS maintains a JavaScript semantics as much as possible. 
+which permits efficient linking to a C++ runtime. STS tries to maintain as much of JavaScript semantics as much as possible.
+given that, we say... 
 
-# Goodbye: Any, Union, Intersection Types and JavaScript, the bad parts 
+# Goodbye: Any, Union, Intersection Types and the Bad Parts 
 
 In TypeScript, the *Any* type is “the one type that can represent any JavaScript value with no constraints”. 
 In TypeScript, every program expression, value, and function must have some type, even if not explicitly 
@@ -41,7 +42,7 @@ As a result of this choice, many dynamic features of JavaScript (and thus TypeSc
 * type assertions
 
 STS also excludes features that we consider historical, 
-including the var statement and for-in loop (for-of is supported). Excluded program elements are:
+including the var statement and for-in loop (for-of is supported).
 If you think one of the above program elements should be introduced in an introductory programming
 language course, speak now or forever hold your peace.
 
@@ -72,11 +73,13 @@ TypeScript elements not mentioned as included in STS in the previous sections ar
 for now (see later section for a list of these elements). 
 If we’ve left something out that obviously should be in STS, please let us know!
 
+
 # Type checking in STS
 
 Typescript's type system is very rich with a complex notion of type compatability and substitutability.
-STS keeps many of its features (structural subtyping, for example), but dispenses with features that
-lead to run-time errors. Our goal is catch as many errors at compile-time as possible, while retaining
+STS keeps many of TypeScripts type checking rules (structural subtyping, for example), but modifies 
+the notion of type compatability/substitutability to reduce 
+run-time errors. Our goal is catch as many errors at compile-time as possible, while retaining
 an expressive language with arrays, functions, classes, and generics. This means we disallow explicit or
 implicit downcasts, for example, as well as the use of bivariance in function subtyping. 
 
@@ -88,7 +91,28 @@ such as strings and objects. This means that code such as:
 let a: Object = 3
 ```
 is illegal in STS, as primitive types are not objects (though the primitive types do support basic methods,
-such as toString). There are no implicit conversions between primitive types, or between primitive and object types.
+such as toString). 
+
+### ~ hint
+TODO 
+- do not allow implicit conversions between primitive types, or between primitive and object types.
+- currently, we do allow
+```typeScript
+let x : number = null
+basic.showNumber(x)
+let y : number = undefined
+basic.showNumber(y)
+let s: string = null
+basic.showString(s)
+```
+where null and undefined is coerced to the number 0. This is OK for number, but rather strange for strings. 
+### ~
+
+## Undefined, null, and default values
+
+### ~ hint
+[do we unify treatment of undefined and null?; allow null only for references?]
+### ~
 
 ## Object types
 
@@ -96,10 +120,32 @@ In TypeScript, class and interface type references, array types, tuple types, an
 classified as object types. In STS, classes, records (described by interfaces), arrays, tuples, and functions
 are *separate types*, with the following type relationships:
 * classes and records are related by structural subtyping, as in TypeScript, with the 
-  restriction that classes can be treated as records (via a cast to an interface), but not vice versa;
+  restriction that classes can be treated as records (via a cast from class to interface), but not vice versa 
+  (casts from interfaces to classes are not permitted);
 * functions are related by classical function subtyping (no bivariance, as in TypeScript); 
 * function/method overloading is not permitted.
-STS supports anonymous record types (it doesn't currently)
+
+### ~ hint
+TODO
+* implement more restrictive type checks outlined above
+* implement tuples
+### ~
 
 ## Generics
+
+With the exclusion of the Any type, it´s very important to support generics so that code can be reused
+across many types. STS supports generic functions and classes with the following restrictions:
+* generic functions cannot be used as values;
+* nested functions cannot be generic;
+
+### ~ hint
+TODO
+* type checking of generics should follow Java (which uses type erasure).
+### ~
+
+## Void and Never
+
+TODO (not much)
+
+# Compilation of STS
 

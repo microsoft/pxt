@@ -431,7 +431,8 @@ function travisAsync() {
     const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
-    const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
+    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
+        && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
 
     console.log("TRAVIS_TAG:", rel);
     console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
@@ -447,6 +448,7 @@ function travisAsync() {
                 .then(() => execCrowdinAsync("upload", "built/strings.json"))
                 .then(() => buildWebStringsAsync())
                 .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
+                .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
         return buildTargetAsync()
@@ -462,10 +464,10 @@ function travisAsync() {
                 const trg = readLocalPxTarget()
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
-                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
+                        .then(() => uploadLocs ? internalUploadTargetTranslationsAsync(!!rel) : Promise.resolve());
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
-                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
+                        .then(() => uploadLocs ? internalUploadTargetTranslationsAsync(!!rel) : Promise.resolve());
             })
     }
 }
@@ -3345,9 +3347,13 @@ function crowdinCredentials(): { prj: string; key: string; branch: string; } {
 }
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
+    const uploadDocs = parsed && !!parsed.flags["docs"];
+    return internalUploadTargetTranslationsAsync(uploadDocs);
+}
+
+function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
     const cred = crowdinCredentials();
     if (!cred) return Promise.resolve();
-    const uploadDocs = parsed && parsed.flags["docs"];
     const crowdinDir = pxt.appTarget.id;
     if (crowdinDir == "core") {
         if (!uploadDocs) {
@@ -3357,7 +3363,7 @@ export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedComma
         return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
     } else return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
-            .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
+        .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
 }
 
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
