@@ -1553,7 +1553,7 @@ ${lbl}: .short 0xffff
             return !isOnDemandDecl(decl) || usedDecls.hasOwnProperty(nodeKey(decl))
         }
 
-               function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+        function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
             if (!bindings || !bindings.length) markUsed(decl)
             else {
                 let info = getFunctionInfo(decl)
