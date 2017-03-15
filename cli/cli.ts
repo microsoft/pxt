@@ -910,6 +910,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/cdn/": opts.localDir,
             "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
+            "/blb/": opts.localDir,
             "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
@@ -971,6 +972,11 @@ function uploadCoreAsync(opts: UploadOptions) {
                         }
                     }
                     content = server.expandHtml(content)
+                }
+
+                if (/^sim/.test(fileName)) {
+                    // just force blobs for everything in simulator manifest
+                    content = content.replace(/\/(cdn|sim)\//g, "/blb/")
                 }
 
                 if (replFiles.indexOf(fileName) >= 0) {
