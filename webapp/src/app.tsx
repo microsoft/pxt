@@ -193,6 +193,11 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == "main.ts";
     }
 
+    private isAnyEditeableJavaScriptOrPackageActive(): boolean {
+        return this.editor == this.textEditor
+            && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
+    }
+
     openJavaScript() {
         pxt.tickEvent("menu.javascript");
         if (this.isJavaScriptActive()) return;
@@ -204,7 +209,19 @@ export class ProjectView
         pxt.tickEvent("menu.blocks");
         if (this.isBlocksActive()) return;
         if (this.isJavaScriptActive()) this.textEditor.openBlocks();
-        else this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+        // any other editeable .ts or pxt.json
+        else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+          this.saveFileAsync()
+            .then(() => {
+                compiler.newProject();
+                return compiler.getBlocksAsync()
+            })
+            .done((bi: pxtc.BlocksInfo) => {
+                pxt.blocks.initBlocks(bi);
+                this.blocksEditor.updateBlocksInfo(bi);
+                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+            });
+        } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
     }
 
     openTypeScriptAsync(): Promise<void> {

@@ -278,15 +278,15 @@ namespace ts.pxtc {
         promise?: boolean;
         hidden?: boolean;
         callingConvention: ir.CallingConvention;
-        block?: string;
-        blockId?: string;
-        blockGap?: string;
-        blockExternalInputs?: boolean;
+        block?: string; // format of the block
+        blockId?: string; // unique id of the block
+        blockGap?: string; // pixels in toolbox after the block is inserted
+        blockExternalInputs?: boolean; // force external inputs
         blockImportId?: string;
         blockBuiltin?: boolean;
         blockNamespace?: string;
         blockIdentity?: string;
-        blockAllowMultiple?: boolean;
+        blockAllowMultiple?: boolean; // override single block behavior for events
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         blockFieldEditor?: string; // Custom field editor
@@ -488,6 +488,15 @@ namespace ts.pxtc {
             return cached
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
+        if (node0.kind == SK.FunctionDeclaration && res.block === "true" && !res.blockId) {
+            const fn = node0 as ts.FunctionDeclaration;
+            if ((fn.symbol as any).parent) {
+                res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
+                res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
+                    .filter(p => !p.questionToken)
+                    .map(p => `${(p.name as ts.Identifier).text} %${(p.name as Identifier).text}`).join('|') : ''}`;
+            }
+        }
         node.pxtCommentAttrs = res
         return res
     }

@@ -10,7 +10,6 @@
     * [defining blocks](/defining-blocks)
     * [docs](/docs)
     * [language](/language)
-    * [packages](/packages)
     * [partial flashing](/partial-flashing)
     * [simshim](/simshim)
     * [source embedding](/source-embedding)
