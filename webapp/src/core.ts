@@ -18,6 +18,14 @@ export type Component<S, T> = data.Component<S, T>;
 export function hideLoading() {
     $('.ui.page.dimmer .loadingcontent').remove();
     $('body.main').dimmer('hide');
+
+    // If hiding failed, then the dimmer was probably never initialized
+    if (!$('.ui.page.dimmer').hasClass('hidden')) {
+        $('body.main').dimmer({
+            closable: false
+        });
+        $('body.main').dimmer('hide');
+    }
 }
 
 export function showLoading(msg: string) {
