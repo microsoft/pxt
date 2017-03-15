@@ -3131,7 +3131,6 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, ignorePreviousS
             ignoreCount++
             return addSuccess(name)
         }
-        pxt.debug(snippet.code)
         const pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, Object.keys(snippet.packages)));
         return pkg.getCompileOptionsAsync().then(opts => {
             opts.ast = true
@@ -3806,6 +3805,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, ignoreSu
     }
     console.log(`checking docs`);
 
+    const noTOCs: string[] = [];
     const todo: string[] = [];
     let urls: any = {};
     let checked = 0;
@@ -3842,7 +3842,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, ignoreSu
             if (!urls.hasOwnProperty(url)) {
                 const isResource = /\.[a-z]+$/i.test(url);
                 if (!isResource) {
-                    pxt.debug(`link not in TOC: ${url}`)
+                    pxt.debug(`link not in TOC: ${url}`);
+                    noTOCs.push(url);
                     todo.push(url);
                 }
                 // TODO: correct resolution of static resources
@@ -3867,7 +3868,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, ignoreSu
         });
     }
 
-    console.log(`checked ${checked} files: ${broken} broken links, ${snippets.length} snippets`);
+    console.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
+    fs.writeFileSync("built/noTOC.md", noTOCs.map(p => `[${p}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
         return testSnippetsAsync(snippets, re, ignoreSuccesses)
     return Promise.resolve();
