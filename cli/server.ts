@@ -814,7 +814,7 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let dd = dirs
-        let mm = /^\/(cdn|parts|sim|doccdn|blob)(\/.*)/.exec(pathname)
+        let mm = /^\/(cdn|parts|sim|doccdn|blb)(\/.*)/.exec(pathname)
         if (mm) {
             pathname = mm[2]
         } else if (U.startsWith(pathname, "/docfiles/")) {
