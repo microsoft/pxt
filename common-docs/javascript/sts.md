@@ -19,7 +19,7 @@ the [micro:bit](http://microbit.org), which has 16Kb of RAM.
 
 The best way to think of STS is as C#/Java/C++ subset of TypeScript where all types 
 are known at compile time, which permits efficient linking to a C++ runtime (in the
-case of the micro:bit, the [Lancaster University micro:bit DAL] (https://github.com/lancaster-university/microbit-dal)).
+case of the micro:bit, the [Lancaster University micro:bit DAL](https://github.com/lancaster-university/microbit-dal)).
 STS tries to maintain as much of JavaScript semantics as much as possible.
 given that, we say... 
 
