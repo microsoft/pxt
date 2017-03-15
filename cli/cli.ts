@@ -3113,7 +3113,7 @@ function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> 
         console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
     }
 
-    let files = getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
+    let files = getDocsFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
     console.log(`checking ${files.length} documentation files`)
 
     let ignoreCount = 0
@@ -3785,7 +3785,7 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     return dirs;
 }
 
-function getFiles(): string[] {
+function getDocsFiles(): string[] {
     let res: string[] = []
     function loop(path: string) {
         for (let fn of fs.readdirSync(path)) {
@@ -3831,45 +3831,62 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 function checkDocsAsync(): Promise<void> {
     if (!nodeutil.existDirSync("docs"))
         return Promise.resolve();
-
+    const docsRoot = nodeutil.targetDir;
+    const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
+    if (!summaryMD) {
+        console.log('no SUMMARY.md file found, skipping check docs');
+        return Promise.resolve();
+    }
     console.log(`checking docs`);
-    let files = getFiles();
 
-    // known urls
-    let urls: Map<string> = {};
-    files.forEach(f => urls[f.replace(/\.md$/i, '')] = f);
-
+    let urls: any = {};
     let checked = 0;
     let broken = 0;
     let snipCount = 0;
-    files.filter(f => /\.md$/i.test(f)).forEach(f => {
-        let header = false;
-        let contentType = U.getMime(f)
-        if (!contentType || !/^text/.test(contentType))
-            return;
-        checked++;
-        let text = fs.readFileSync("docs" + f).toString("utf8");
-        // look for broken urls
-        text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
-            let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
-            // remove hash
-            url = url.replace(/#.*$/, '');
-            if (!urls[url]) {
-                console.error(`${f}: broken link ${url}`);
-                broken++;
-            }
-            return '';
-        })
 
-        let snippets = getSnippets(text)
-        snipCount += snippets.length
-        for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
-            let dir = "built/docs/snippets/" + snippets[snipIndex].type;
-            let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
-            nodeutil.mkdirP(dir);
-            fs.writeFileSync(fn, snippets[snipIndex].code);
+    function checkTOCEntry(entry: pxt.TOCMenuEntry) {
+        if (entry.path && !/^https:\/\//.test(entry.path)) {
+            checked++;
+            pxt.debug(`checking ${entry.path}`)
+            const md = nodeutil.resolveMd(docsRoot, entry.path);
+
+            // look for broken urls
+            md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
+                let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
+                // remove hash
+                url = url.replace(/#.*$/, '');
+                // cache value
+                if (!urls.hasOwnProperty(url)) {
+                    // TODO: correct resolution of static resources
+                    urls[url] = /\.\w+$/.test(url)
+                        ? nodeutil.fileExistsSync(path.join(docsRoot, url))
+                        : !!nodeutil.resolveMd(docsRoot, url);
+                }
+                if (!urls[url]) {
+                    console.error(`${entry.path}: broken link ${url}`);
+                    broken++;
+                }
+                return '';
+            })
+
+            // look for snippets
+            const snippets = getSnippets(md)
+            snipCount += snippets.length
+            for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
+                const dir = "built/docs/snippets/" + snippets[snipIndex].type;
+                const fn = `${dir}/${entry.path.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
+                nodeutil.mkdirP(dir);
+                fs.writeFileSync(fn, snippets[snipIndex].code);
+            }
         }
-    });
+
+        // look for sub items
+        if (entry.subitems)
+            entry.subitems.forEach(checkTOCEntry);
+    }
+
+    const toc = pxt.docs.buildTOC(summaryMD);
+    toc.forEach(checkTOCEntry);
 
     console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
     return Promise.resolve();
@@ -4368,7 +4385,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
-        pxt.debug = console.log;
+        pxt.debug = console.debug || console.log;
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
