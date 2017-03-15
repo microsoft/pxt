@@ -122,7 +122,8 @@ function initConfig() {
     if (atok) {
         let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
         if (!mm) {
-            fatal("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+            console.error("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+            return
         }
         Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
         Cloud.accessToken = mm[2]
