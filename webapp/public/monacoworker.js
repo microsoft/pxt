@@ -2,4 +2,4 @@
 self.MonacoEnvironment = { 
     baseUrl: "/cdn/" 
 };
-importScripts("/cdn/vs/base/worker/workerMain.js");
+importScripts("/blb/vs/base/worker/workerMain.js");

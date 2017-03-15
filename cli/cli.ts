@@ -122,7 +122,8 @@ function initConfig() {
     if (atok) {
         let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
         if (!mm) {
-            fatal("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+            console.error("Invalid accessToken format, expecting something like 'https://example.com/?access_token=0abcd.XXXX'")
+            return
         }
         Cloud.apiRoot = mm[1].replace(/\/$/, "").replace(/\/api$/, "") + "/api/"
         Cloud.accessToken = mm[2]
@@ -841,7 +842,8 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 function uploadArtFile(fn: string): string {
     if (!fn || /^(https?|data):/.test(fn)) return fn; // nothing to do
 
-    return "@pxtCdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
+    fn = fn.replace(/^\.?\/*/, "/")
+    return "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
 }
 
 function gitHash(buf: Buffer) {
@@ -871,12 +873,13 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/siminstructions.html": "@partsUrl@",
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/embed.js": "@targetUrl@@relprefix@embed",
-        "/cdn/": "@pxtCdnUrl@",
-        "/doccdn/": "@pxtCdnUrl@",
-        "/sim/": "@targetCdnUrl@",
+        "/cdn/": "@commitCdnUrl@",
+        "/doccdn/": "@commitCdnUrl@",
+        "/sim/": "@commitCdnUrl@",
+        "/blb/": "@blobCdnUrl@",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
-        "@defaultLocaleStrings@": defaultLocale ? "@pxtCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
+        "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : ""
     }
 
@@ -889,9 +892,11 @@ function uploadCoreAsync(opts: UploadOptions) {
             "pxtVersion": pxtVersion(),
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
+            "commitCdnUrl": opts.localDir,
+            "blobCdnUrl": opts.localDir,
+            "cdnUrl": opts.localDir,
             "targetVersion": opts.pkgversion,
             "targetRelId": "",
-            "targetCdnUrl": opts.localDir,
             "targetUrl": "",
             "targetId": opts.target,
             "simUrl": opts.localDir + "simulator.html",
@@ -905,6 +910,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/cdn/": opts.localDir,
             "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
+            "/blb/": opts.localDir,
             "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
@@ -958,7 +964,19 @@ function uploadCoreAsync(opts: UploadOptions) {
             if (isText) {
                 content = data.toString("utf8")
                 if (fileName == "index.html") {
+                    if (!opts.localDir) {
+                        let m = pxt.appTarget.appTheme as Map<string>
+                        for (let k of Object.keys(m)) {
+                            if (/CDN$/.test(k))
+                                m[k.slice(0, k.length - 3)] = m[k]
+                        }
+                    }
                     content = server.expandHtml(content)
+                }
+
+                if (/^sim/.test(fileName)) {
+                    // just force blobs for everything in simulator manifest
+                    content = content.replace(/\/(cdn|sim)\//g, "/blb/")
                 }
 
                 if (replFiles.indexOf(fileName) >= 0) {
@@ -1291,6 +1309,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
         .forEach(k => {
             let fn = path.join('./docs', logos[k]);
             console.log(`importing ${fn}`)
+            logos[k + "CDN"] = uploadArtFile(logos[k])
             let b = fs.readFileSync(fn)
             let mimeType = '';
             if (/\.svg$/i.test(fn)) mimeType = "image/svg+xml";

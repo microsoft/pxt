@@ -1705,8 +1705,7 @@ function initTheme() {
 
     function patchCdn(url: string): string {
         if (!url) return url;
-        return url.replace("@pxtCdnUrl@", pxt.getOnlineCdnUrl())
-            .replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
     }
 
     theme.appLogo = patchCdn(theme.appLogo)
@@ -1859,7 +1858,7 @@ $(document).ready(() => {
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = mlang && !!mlang[1];
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(cfg.pxtCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
