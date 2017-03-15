@@ -1,8 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 importScripts(
-    "/blob/typescript.js",
-    "/blob/fuse.min.js",
-    "/blob/pxtlib.js"
+    "/blb/typescript.js",
+    "/blb/fuse.min.js",
+    "/blb/pxtlib.js"
 )
 
 let pm: any = postMessage;

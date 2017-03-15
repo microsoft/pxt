@@ -5,25 +5,25 @@
     var pxtConfig = null;
 
     var scripts = [
-        "/blob/highlight.js/highlight.pack.js",
-        "/blob/bluebird.min.js",
-        "/blob/typescript.js",
-        "/blob/semantic.js",
-        "/blob/marked/marked.min.js",
-        "/blob/lzma/lzma_worker-min.js",
-        "/blob/blockly/blockly_compressed.js",
-        "/blob/blockly/blocks_compressed.js",
-        "/blob/blockly/msg/js/en.js",
-        "/blob/pxtlib.js",
-        "/blob/pxtblocks.js",
-        "/blob/pxteditor.js",
-        "/blob/pxtsim.js",
-        "/blob/target.js",
-        "/blob/pxtrunner.js"
+        "/blb/highlight.js/highlight.pack.js",
+        "/blb/bluebird.min.js",
+        "/blb/typescript.js",
+        "/blb/semantic.js",
+        "/blb/marked/marked.min.js",
+        "/blb/lzma/lzma_worker-min.js",
+        "/blb/blockly/blockly_compressed.js",
+        "/blb/blockly/blocks_compressed.js",
+        "/blb/blockly/msg/js/en.js",
+        "/blb/pxtlib.js",
+        "/blb/pxtblocks.js",
+        "/blb/pxteditor.js",
+        "/blb/pxtsim.js",
+        "/blb/target.js",
+        "/blb/pxtrunner.js"
     ]
 
     if (typeof jQuery == "undefined")
-        scripts.unshift("/blob/jquery.js")
+        scripts.unshift("/blb/jquery.js")
 
     var pxtCallbacks = []
 

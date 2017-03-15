@@ -1,29 +1,29 @@
 CACHE MANIFEST
 
 CACHE:
-/blob/semantic.js
-/blob/main.js
-/blob/typescript.js
-/blob/marked/marked.min.js
-/blob/highlight.js/highlight.pack.js
-/blob/lzma/lzma_worker-min.js
-/blob/fuse.min.js
-/blob/jquery.js
-/blob/pxtlib.js
-/blob/pxtblocks.js
-/blob/pxtwinrt.js
-/blob/pxteditor.js
-/blob/pxtsim.js
-/blob/semantic.css
-/blob/custom.css
-/blob/icons.css
+/blb/semantic.js
+/blb/main.js
+/blb/typescript.js
+/blb/marked/marked.min.js
+/blb/highlight.js/highlight.pack.js
+/blb/lzma/lzma_worker-min.js
+/blb/fuse.min.js
+/blb/jquery.js
+/blb/pxtlib.js
+/blb/pxtblocks.js
+/blb/pxtwinrt.js
+/blb/pxteditor.js
+/blb/pxtsim.js
+/blb/semantic.css
+/blb/custom.css
+/blb/icons.css
 @defaultLocaleStrings@
 @cachedHexFiles@
 
 # blockly
-/blob/blockly/blockly_compressed.js
-/blob/blockly/blocks_compressed.js
-/blob/blockly/msg/js/en.js
+/blb/blockly/blockly_compressed.js
+/blb/blockly/blocks_compressed.js
+/blb/blockly/msg/js/en.js
 /cdn/blockly/media/sprites.png
 /cdn/blockly/media/click.mp3
 /cdn/blockly/media/disconnect.wav
@@ -49,7 +49,7 @@ https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 
 @workerjs@
 
-/blob/target.js
+/blb/target.js
   
 NETWORK:
 *
