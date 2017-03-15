@@ -431,7 +431,8 @@ function travisAsync() {
     const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
-    const uploadLocs = /^master$/.test(process.env.TRAVIS_BRANCH) && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
+    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
+        && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
 
     console.log("TRAVIS_TAG:", rel);
     console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
@@ -444,9 +445,10 @@ function travisAsync() {
         let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
         if (uploadLocs)
             p = p
-            .then(() => execCrowdinAsync("upload", "built/strings.json"))
-            .then(() => buildWebStringsAsync())
-            .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
+                .then(() => execCrowdinAsync("upload", "built/strings.json"))
+                .then(() => buildWebStringsAsync())
+                .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
+                .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
         return buildTargetAsync()
@@ -462,10 +464,10 @@ function travisAsync() {
                 const trg = readLocalPxTarget()
                 if (rel)
                     return uploadTargetAsync(trg.id + "/" + rel)
-                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
+                        .then(() => uploadLocs ? internalUploadTargetTranslationsAsync(!!rel) : Promise.resolve());
                 else
                     return uploadTargetAsync(trg.id + "/" + latest)
-                        .then(() => uploadLocs ? uploadTargetTranslationsAsync() : Promise.resolve());
+                        .then(() => uploadLocs ? internalUploadTargetTranslationsAsync(!!rel) : Promise.resolve());
             })
     }
 }
@@ -1460,86 +1462,12 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 
 function updateTOC(cfg: pxt.TargetBundle) {
     // Update Table of Contents from SUMMARY.md file
-    let summaryFile = "docs/SUMMARY.md";
-    if (fs.existsSync(summaryFile)) {
-        let buf = fs.readFileSync(summaryFile);
-        let contents = buf.toString("utf8")
-
-        let marked = pxt.docs.requireMarked();
-        let options = {
-            renderer: new marked.Renderer(),
-            gfm: true,
-            tables: false,
-            breaks: false,
-            pedantic: false,
-            sanitize: false,
-            smartLists: false,
-            smartypants: false
-        };
-
-        let dummy: pxt.TOCMenuEntry = {name: 'dummy', subitems: []};
-        let currentStack: pxt.TOCMenuEntry[] = [];
-        currentStack.push(dummy);
-
-        let tokens = marked.lexer(contents, options);
-        tokens.forEach((token: any) => {
-            switch (token.type) {
-                case "heading":
-                    if (token.depth == 3) {
-                        // heading
-                    }
-                    break;
-                case "list_start":
-                    break;
-                case "list_item_start":
-                case "loose_item_start":
-                    let newItem: pxt.TOCMenuEntry = {
-                        name: '',
-                        subitems: []
-                    };
-                    currentStack.push(newItem);
-                    break;
-                case "text":
-                    token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
-                        currentStack[currentStack.length - 1].name = name;
-                        currentStack[currentStack.length - 1].path = path.replace('.md','');
-                    });
-                    break;
-                case "list_item_end":
-                case "loose_item_end":
-                    let docEntry = currentStack.pop();
-                    currentStack[currentStack.length - 1].subitems.push(docEntry);
-                    break;
-                case "list_end":
-                    break;
-                default:
-            }
-        })
-        cfg.appTheme.TOC = dummy.subitems;
+    const summaryMD = nodeutil.resolveMd(nodeutil.targetDir, "SUMMARY");
+    if (!summaryMD) {
+        pxt.log('no SUMMARY file found');
+    } else {
+        cfg.appTheme.TOC = pxt.docs.buildTOC(summaryMD)
     }
-    if (!cfg.appTheme.TOC || cfg.appTheme.TOC.length == 0) return;
-
-    let previousNode: pxt.TOCMenuEntry;
-    // Scan tree and build next / prev paths
-    let buildPrevNext = (node: pxt.TOCMenuEntry) => {
-        if (previousNode) {
-            node.prevName = previousNode.name;
-            node.prevPath = previousNode.path;
-
-            previousNode.nextName = node.name;
-            previousNode.nextPath = node.path;
-        }
-        if (node.path) {
-            previousNode = node;
-        }
-        node.subitems.forEach((tocItem, tocIndex) => {
-            buildPrevNext(tocItem);
-        })
-    }
-
-    cfg.appTheme.TOC.forEach((tocItem, tocIndex) => {
-        buildPrevNext(tocItem)
-    })
 }
 
 function buildTargetCoreAsync() {
@@ -1722,16 +1650,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
         let buf = fs.readFileSync(f)
         if (/\.(md|html)$/.test(f)) {
             let str = buf.toString("utf8")
-            let path = f.slice(5).split(/\//)
-            let bc = path.map((e, i) => {
-                return {
-                    href: "/" + path.slice(0, i + 1).join("/"),
-                    name: e
-                }
-            })
             let html = ""
             if (U.endsWith(f, ".md"))
-                html = pxt.docs.renderMarkdown(docsTemplate, str, pxt.appTarget.appTheme, null, bc, f)
+                html = pxt.docs.renderMarkdown({
+                    template: docsTemplate,
+                    markdown: str,
+                    theme: pxt.appTarget.appTheme,
+                    filepath: f,
+                })
             else
                 html = server.expandHtml(str)
             html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
@@ -2348,6 +2274,13 @@ export function serviceAsync(parsed: commandParser.ParsedCommand) {
                 console.log("wrote results to " + fn)
             }
         })
+}
+
+export function augmnetDocsAsync(parsed: commandParser.ParsedCommand) {
+    let f0 = fs.readFileSync(parsed.arguments[0], "utf8")
+    let f1 = fs.readFileSync(parsed.arguments[1], "utf8")
+    console.log(pxt.docs.augmentDocs(f0, f1))
+    return Promise.resolve()
 }
 
 export function timeAsync() {
@@ -3414,17 +3347,29 @@ function crowdinCredentials(): { prj: string; key: string; branch: string; } {
 }
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
-    const cred = crowdinCredentials();
-    if (!cred) return Promise.resolve();
-    const uploadDocs = parsed && parsed.flags["docs"];
-    const crowdinDir = pxt.appTarget.id;
-    return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
-        .then(() => uploadDocs ? uploadDocsTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
-
+    const uploadDocs = parsed && !!parsed.flags["docs"];
+    return internalUploadTargetTranslationsAsync(uploadDocs);
 }
 
-function uploadDocsTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
-    const todo = nodeutil.allFiles("docs").filter(f => /\.md$/.test(f) && !/_locales/.test(f));
+function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
+    const cred = crowdinCredentials();
+    if (!cred) return Promise.resolve();
+    const crowdinDir = pxt.appTarget.id;
+    if (crowdinDir == "core") {
+        if (!uploadDocs) {
+            pxt.log('missing --docs flag, skipping')
+            return Promise.resolve();
+        }
+        return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+            .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
+    } else return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
+        .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
+}
+
+function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
+    pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
+
+    const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f));
     const knownFolders: Map<boolean> = {};
     const ensureFolderAsync = (crowdd: string) => {
         if (!knownFolders[crowdd]) {
@@ -3445,7 +3390,7 @@ function uploadDocsTranslationsAsync(crowdinDir: string, branch: string, prj: st
             .then(() => pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, data))
             .then(nextFileAsync);
     }
-    return ensureFolderAsync(path.join(crowdinDir, "docs"))
+    return ensureFolderAsync(path.join(crowdinDir, srcDir))
         .then(nextFileAsync);
 }
 
@@ -4242,6 +4187,7 @@ function initCommands() {
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
     advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
     advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
+    advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
     advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
 
@@ -4298,7 +4244,7 @@ function initCommands() {
         name: "uploadtrgtranslations",
         help: "upload translations for target",
         flags: {
-            docs: { description: "upload markdown as well" }
+            docs: { description: "upload markdown docs folder as well" }
         },
         advanced: true
     }, uploadTargetTranslationsAsync);

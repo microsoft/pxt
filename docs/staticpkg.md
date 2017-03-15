@@ -1,7 +1,7 @@
 # Deploying PXT with static files
 
 There are multiple ways to deploy your PXT target.
-* upload to pxt.io --- this is currently only supported for internal Microsoft targets
+* hosted by Microsoft --- this is currently only supported for internal Microsoft targets
 * publish your target to NPM and then require users to do ``pxt target yourtarget`` and 
   ``pxt serve``
 * generate static HTML/JS/CSS files and host them on HTTP server of your choosing (free
