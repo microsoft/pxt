@@ -488,13 +488,13 @@ namespace ts.pxtc {
             return cached
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
-        if (node.kind == SK.FunctionDeclaration && res.block === "true" && !res.blockId) {
-            const fn = (node as any) as ts.FunctionDeclaration;
+        if (node0.kind == SK.FunctionDeclaration && res.block === "true" && !res.blockId) {
+            const fn = node0 as ts.FunctionDeclaration;
             if ((fn.symbol as any).parent) {
                 res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
                 res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
                     .filter(p => !p.questionToken)
-                    .map(p => `${p.symbol.name} %${p.symbol.name}`).join('|') : ''}`;
+                    .map(p => `${(p.name as ts.Identifier).text} %${(p.name as Identifier).text}`).join('|') : ''}`;
             }
         }
         node.pxtCommentAttrs = res

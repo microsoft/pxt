@@ -103,7 +103,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
     }
 
-    private addFile() {
+    private addCustomBlocksFile() {
         core.confirmAsync({
             header: lf("Add custom blocks?"),
             body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
@@ -117,9 +117,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
  */
 
 enum MyEnum {
-    //% block=one
+    //% block="one"
     One,
-    //% block=two
+    //% block="two"
     Two
 }
 
@@ -164,7 +164,7 @@ namespace custom {
             <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
-                {plus ? <sui.Button class="primary label" icon="plus" onClick={(e) => this.addFile() } /> : undefined }
+                {plus ? <sui.Button class="primary label" icon="plus" onClick={(e) => this.addCustomBlocksFile() } /> : undefined }
             </div>
             {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
         </div>;
