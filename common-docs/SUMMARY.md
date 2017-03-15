@@ -19,6 +19,8 @@
         * [assign](/blocks/variables/assign)
         * [change var](/blocks/variables/change-var)
         * [var](/blocks/variables/var)
+    * [JavaScript blocks](/javascript-blocks)
+    * [Custom blocks](/custom)
 
 ## JavaScript #javaScript
 
@@ -45,6 +47,7 @@
 ## Developers #devs
 
 * Developers
+    * [Packages](/packages)
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Coding on Raspberry Pi](/raspberry-pi)
