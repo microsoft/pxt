@@ -15,23 +15,22 @@ const lf = Util.lf;
 
 export type Component<S, T> = data.Component<S, T>;
 
+let dimmerInitialized = false;
+
 export function hideLoading() {
     $('.ui.page.dimmer .loadingcontent').remove();
     $('body.main').dimmer('hide');
 
-    // If hiding failed, then the dimmer was probably never initialized
-    if (!$('.ui.page.dimmer').hasClass('hidden')) {
+    if (!dimmerInitialized) {
         $('body.main').dimmer({
             closable: false
         });
-        $('body.main').dimmer('hide');
     }
+    $('body.main').dimmer('hide');
 }
 
 export function showLoading(msg: string) {
-    $('body.main').dimmer({
-        closable: false
-    });
+    initializeDimmer();
     $('body.main').dimmer('show');
     $('.ui.page.dimmer').html(`
   <div class="content loadingcontent">
@@ -39,6 +38,13 @@ export function showLoading(msg: string) {
   </div>
 `)
     $('.ui.page.dimmer .msg').text(msg)
+}
+
+function initializeDimmer() {
+    $('body.main').dimmer({
+        closable: false
+    });
+    dimmerInitialized = true;
 }
 
 let asyncLoadingTimeout: number;
