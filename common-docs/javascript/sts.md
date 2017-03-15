@@ -10,13 +10,17 @@ Comments welcome.
 [TypeScript](http://typescriptlang.org) is a typed superset of JavaScript designed to enable JavaScript developers 
 to take advantage of code intellisense,
 static checking and refactoring made possible by types.  TypeScript is gradually typed, meaning that types are optional. 
-Type inference helps to assign types to untyped code. Inside of TypeScript lies a simple statically typed language that 
-we believe has great potential for both introductory CS education, programming and physical computing. 
+Type inference helps to assign types to untyped code.
 
 In this document, we define a subset of TypeScript called Static TypeScript (STS, for short), 
-its properties and how it can help transform teaching of CS education. 
-The best way to think of STS is as C#/Java/C++ subset of TypeScript where all types are known at compile time,
-which permits efficient linking to a C++ runtime. STS tries to maintain as much of JavaScript semantics as much as possible.
+which was created to make it possible to use a scripting language to program physical computers
+based on microcontrollers with small amounts of memory. The first use of Static TypeScript is for
+the [micro:bit](http://microbit.org), which has 16Kb of RAM.
+
+The best way to think of STS is as C#/Java/C++ subset of TypeScript where all types 
+are known at compile time, which permits efficient linking to a C++ runtime (in the
+case of the micro:bit, the [Lancaster University micro:bit DAL] (https://github.com/lancaster-university/microbit-dal)).
+STS tries to maintain as much of JavaScript semantics as much as possible.
 given that, we say... 
 
 # Goodbye: Any, Union, Intersection Types and the Bad Parts 
@@ -93,6 +97,9 @@ let a: Object = 3
 is illegal in STS, as primitive types are not objects (though the primitive types do support basic methods,
 such as toString). 
 
+In a major deviation from JavaScript, STS treats *numbers* as 32-bit integers rather than doubles (as in JavaScript).
+STS does not yet support floating point.
+
 ### ~ hint
 TODO 
 - do not allow implicit conversions between primitive types, or between primitive and object types.
@@ -148,3 +155,7 @@ TODO
 TODO (not much)
 
 # Compilation of STS
+
+# TODO
+
+[Need to address exceptions, regex, debugging, async!!!.]
