@@ -43,9 +43,8 @@ and use the CLI to build and deploy it.
 * start with `pxt install`, which will install all required PXT packages
 * use `pxt deploy` (or just `pxt`) to build and deploy the package to the device
 
-You can edit the package using [VSCode](https://code.visualstudio.com/).
-
-You can also [publish your own packages on GitHub](/packages).
+You can edit the package using [VSCode](https://code.visualstudio.com/)
+and publish it on GitHub.
 
 ### Creating a new project
 

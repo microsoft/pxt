@@ -453,8 +453,7 @@ function travisAsync() {
         return p;
     } else {
         return buildTargetAsync()
-            .then(() => checkDocsAsync())
-            .then(() => testSnippetsAsync())
+            .then(() => internalCheckDocsAsync(true))
             .then(() => npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve())
             .then(() => {
                 if (!process.env["PXT_ACCESS_TOKEN"]) {
@@ -592,8 +591,7 @@ function uploadTaggedTargetAsync() {
         // only build target after getting all the info
         .then(info =>
             buildTargetAsync()
-                .then(() => checkDocsAsync())
-                .then(() => testSnippetsAsync())
+                .then(() => internalCheckDocsAsync(true))
                 .then(() => info))
         .then(info => {
             process.env["TRAVIS_TAG"] = info[0]
@@ -3102,136 +3100,79 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    if (!nodeutil.existDirSync("docs"))
-        return Promise.resolve();
-
-    const ignorePreviousSuccesses = parsed && !!parsed.flags["i"];
+function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
     let filenameMatch: RegExp;
-
     try {
-        let pattern = '.*';
-        if (parsed && parsed.flags["re"])
-            pattern = parsed.flags["re"] as string;
+        let pattern = re || '.*';
         filenameMatch = new RegExp(pattern);
     }
     catch (e) {
         console.log(`pattern could not be compiled as a regular expression, ignoring`);
         filenameMatch = new RegExp('.*')
     }
-
-    let ignoreSnippets: { [k: string]: boolean } = {} //NodeJS doesn't yet support sets
-    const ignorePath = "built/docs/snippets/goodsnippets.txt"
-
-    if (ignorePreviousSuccesses && fs.existsSync(ignorePath)) {
-        let numberOfIgnoreSnippets = 0
-        for (let line of fs.readFileSync(ignorePath, "utf8").split("\n")) {
-            ignoreSnippets[line] = true
-            numberOfIgnoreSnippets++
-        }
-        console.log(`Ignoring ${numberOfIgnoreSnippets} snippets previously believed to be good`)
-    }
-
-    let files = getFiles().filter(f => path.extname(f) == ".md" && filenameMatch.test(path.basename(f))).map(f => path.join("docs", f))
-    console.log(`checking ${files.length} documentation files`)
-
+    snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
     let ignoreCount = 0
 
-    let successes: string[] = []
-
+    const successes: string[] = []
     interface FailureInfo {
         filename: string
         diagnostics: pxtc.KsDiagnostic[]
     }
-
-    let failures: FailureInfo[] = []
-
-    let addSuccess = (s: string) => {
+    const failures: FailureInfo[] = []
+    const addSuccess = (s: string) => {
         successes.push(s)
     }
-
-    let addFailure = (f: string, infos: pxtc.KsDiagnostic[]) => {
+    const addFailure = (f: string, infos: pxtc.KsDiagnostic[]) => {
         failures.push({
             filename: f,
             diagnostics: infos
         })
         infos.forEach(info => console.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
+    return Promise.map(snippets, (snippet: CodeSnippet) => {
+        pxt.debug(`compiling ${snippet.name}`);
+        const name = snippet.name;
+        const pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, Object.keys(snippet.packages)));
+        return pkg.getCompileOptionsAsync().then(opts => {
+            opts.ast = true
+            let resp = pxtc.compile(opts)
 
-    return Promise.map(files, (fname: string) => {
-        let pkgName = fname.replace(/\\/g, '-').replace('.md', '')
-        let source = fs.readFileSync(fname, 'utf8')
-        let snippets = getSnippets(source)
-        // [].concat.apply([], ...) takes an array of arrays and flattens it
-        let extraDeps: string[] = [].concat.apply([], snippets.filter(s => s.type == "package").map(s => s.code.split('\n')))
-        extraDeps.push("core")
-        let ignoredTypes = ["Text", "sig", "pre", "codecard", "cards", "package", "namespaces"]
-        let snippetsToCheck = snippets.filter(s => ignoredTypes.indexOf(s.type) < 0 && !s.ignore)
-        ignoreCount += snippets.length - snippetsToCheck.length
-
-        return Promise.map(snippetsToCheck, (snippet) => {
-            let name = `${pkgName}-${snippet.index}`
-            if (name in ignoreSnippets && ignoreSnippets[name]) {
-                ignoreCount++
-                return addSuccess(name)
-            }
-            let pkg = new pxt.MainPackage(new SnippetHost(name, snippet.code, extraDeps))
-            return pkg.getCompileOptionsAsync().then(opts => {
-                opts.ast = true
-                let resp = pxtc.compile(opts)
-
-                if (resp.success) {
-                    if (/^block/.test(snippet.type)) {
-                        //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-                        const file = resp.ast.getSourceFile('main.ts');
-                        const apis = pxtc.getApiInfo(resp.ast);
-                        const blocksInfo = pxtc.getBlocksInfo(apis);
-                        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
-                        const success = !!bresp.outfiles['main.blocks']
-                        if (success) return addSuccess(name)
-                        else return addFailure(name, bresp.diagnostics)
-                    }
-                    else {
-                        return addSuccess(name)
-                    }
+            if (resp.success) {
+                if (/^block/.test(snippet.type)) {
+                    //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
+                    const file = resp.ast.getSourceFile('main.ts');
+                    const apis = pxtc.getApiInfo(resp.ast);
+                    const blocksInfo = pxtc.getBlocksInfo(apis);
+                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false })
+                    const success = !!bresp.outfiles['main.blocks']
+                    if (success) return addSuccess(name)
+                    else return addFailure(name, bresp.diagnostics)
                 }
                 else {
-                    return addFailure(name, resp.diagnostics)
+                    return addSuccess(name)
                 }
-            }).catch((e: Error) => {
-                addFailure(name, [
-                    {
-                        code: 4242,
-                        category: ts.DiagnosticCategory.Error,
-                        messageText: e.message,
-                        fileName: name,
-                        start: 1,
-                        line: 1,
-                        length: 1,
-                        column: 1
-                    }
-                ])
-            })
+            }
+            else {
+                return addFailure(name, resp.diagnostics)
+            }
+        }).catch((e: Error) => {
+            addFailure(name, [
+                {
+                    code: 4242,
+                    category: ts.DiagnosticCategory.Error,
+                    messageText: e.message,
+                    fileName: name,
+                    start: 1,
+                    line: 1,
+                    length: 1,
+                    column: 1
+                }
+            ])
         })
     }, { concurrency: 4 }).then((a: any) => {
-        console.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
+        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
-            console.log(`Skipped ${ignoreCount} snippets`)
-        }
-        console.log('--------------------------------------------------------------------------------')
-        for (let f of failures) {
-            console.log(f.filename)
-            for (let diag of f.diagnostics) {
-                console.log(`  L ${diag.line}\t${diag.messageText}`)
-            }
-        }
-        if (filenameMatch.source == '.*' && !ignorePreviousSuccesses) {
-            let successData = successes.join("\n")
-            nodeutil.mkdirP(path.dirname(ignorePath));
-            fs.writeFileSync(ignorePath, successData)
-        }
-        else {
-            console.log("Some files were ignored, therefore won't write success log")
+            pxt.log(`Skipped ${ignoreCount} snippets`)
         }
     })
 }
@@ -3804,23 +3745,6 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
     return dirs;
 }
 
-function getFiles(): string[] {
-    let res: string[] = []
-    function loop(path: string) {
-        for (let fn of fs.readdirSync(path)) {
-            if (fn[0] == "." || fn[0] == "_") continue;
-            let fp = path + "/" + fn
-            let st = fs.statSync(fp)
-            if (st.isDirectory()) loop(fp)
-            else if (st.isFile()) res.push(fp.replace(/^docs/, ""))
-        }
-    }
-    loop("docs")
-    if (fs.existsSync("docs/_locales"))
-        loop("docs/_locales")
-    return res
-}
-
 function cherryPickAsync(parsed: commandParser.ParsedCommand) {
     const commit = parsed.arguments[0];
     const name = parsed.flags["name"] || commit.slice(0, 7);
@@ -3847,50 +3771,92 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
     return p.catch(() => gitAsync(["checkout", "master"]));
 }
 
-function checkDocsAsync(): Promise<void> {
+function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    return internalCheckDocsAsync(
+        !!parsed.flags["snippets"],
+        parsed.flags["re"] as string
+    )
+}
+
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise<void> {
     if (!nodeutil.existDirSync("docs"))
         return Promise.resolve();
+    const docsRoot = nodeutil.targetDir;
+    const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
 
+    if (!summaryMD) {
+        console.log('no SUMMARY.md file found, skipping check docs');
+        return Promise.resolve();
+    }
     console.log(`checking docs`);
-    let files = getFiles();
 
-    // known urls
-    let urls: Map<string> = {};
-    files.forEach(f => urls[f.replace(/\.md$/i, '')] = f);
-
+    const noTOCs: string[] = [];
+    const todo: string[] = [];
+    let urls: any = {};
     let checked = 0;
     let broken = 0;
     let snipCount = 0;
-    files.filter(f => /\.md$/i.test(f)).forEach(f => {
-        let header = false;
-        let contentType = U.getMime(f)
-        if (!contentType || !/^text/.test(contentType))
-            return;
+    let snippets: CodeSnippet[] = [];
+
+    function checkTOCEntry(entry: pxt.TOCMenuEntry) {
+        if (entry.path && !/^https:\/\//.test(entry.path)) {
+            const md = nodeutil.resolveMd(docsRoot, entry.path);
+            urls[entry.path] = md;
+            if (md)
+                todo.push(entry.path);
+        }
+        // look for sub items
+        if (entry.subitems)
+            entry.subitems.forEach(checkTOCEntry);
+    }
+
+    const toc = pxt.docs.buildTOC(summaryMD);
+    toc.forEach(checkTOCEntry);
+
+    while (todo.length) {
         checked++;
-        let text = fs.readFileSync("docs" + f).toString("utf8");
+        const entrypath = todo.pop();
+        pxt.debug(`checking ${entrypath}`)
+        const md = (urls[entrypath] as string) || nodeutil.resolveMd(docsRoot, entrypath);
         // look for broken urls
-        text.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
+        md.replace(/]\((\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
             // remove hash
             url = url.replace(/#.*$/, '');
+            // cache value
+            if (!urls.hasOwnProperty(url)) {
+                const isResource = /\.[a-z]+$/i.test(url);
+                if (!isResource) {
+                    pxt.debug(`link not in TOC: ${url}`);
+                    noTOCs.push(url);
+                    todo.push(url);
+                }
+                // TODO: correct resolution of static resources
+                urls[url] = isResource
+                    ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
+                    : nodeutil.resolveMd(docsRoot, url);
+            }
             if (!urls[url]) {
-                console.error(`${f}: broken link ${url}`);
+                pxt.log(`${entrypath}: broken link ${url}`);
                 broken++;
             }
             return '';
         })
 
-        let snippets = getSnippets(text)
-        snipCount += snippets.length
-        for (let snipIndex = 0; snipIndex < snippets.length; snipIndex++) {
-            let dir = "built/docs/snippets/" + snippets[snipIndex].type;
-            let fn = `${dir}/${f.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
+        // look for snippets
+        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => {
+            snippets.push(snippet);
+            const dir = path.join("built/docs/snippets", snippet.type);
+            const fn = `${dir}/${entrypath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.ts`;
             nodeutil.mkdirP(dir);
-            fs.writeFileSync(fn, snippets[snipIndex].code);
-        }
-    });
+            fs.writeFileSync(fn, snippet.code);
+        });
+    }
 
-    console.log(`checked ${checked} files: ${broken} broken links, ${snipCount} snippets`);
+    console.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
+    fs.writeFileSync("built/noTOC.md", noTOCs.map(p => `[${p}](${p})`).join('\n'), "utf8");
+    if (compileSnippets)
+        return testSnippetsAsync(snippets, re);
     return Promise.resolve();
 }
 
@@ -3960,20 +3926,20 @@ export function publishGistAsync(parsed: commandParser.ParsedCommand) {
     return publishGistCoreAsync(!!parsed.flags["new"]);
 }
 
-interface SnippetInfo {
-    type: string
-    code: string
-    ignore: boolean
-    index: number
+export interface SnippetInfo {
+    type: string;
+    code: string;
+    ignore: boolean;
+    index: number;
 }
 
-function getSnippets(source: string): SnippetInfo[] {
+export function getSnippets(source: string): SnippetInfo[] {
     let snippets: SnippetInfo[] = []
     let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
     let index = 0
     source.replace(re, (match, type, code) => {
         snippets.push({
-            type: type ? type.replace("-ignore", "") : "pre",
+            type: type ? type.replace(/-ignore$/i, "") : "pre",
             code: code,
             ignore: type ? /-ignore/g.test(type) : false,
             index: index
@@ -3982,6 +3948,48 @@ function getSnippets(source: string): SnippetInfo[] {
         return ''
     })
     return snippets
+}
+
+export interface CodeSnippet {
+    name: string;
+    code: string;
+    type: string;
+    packages: pxt.Map<string>;
+}
+
+export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
+    const supported: pxt.Map<boolean> = {
+        "blocks": true,
+        "block": true,
+        "typescript": true,
+        "sig": true,
+        "namespaces": true,
+        "cards": true
+    }
+    const snippets = getSnippets(md);
+    const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.type]);
+    const pkgs: pxt.Map<string> = {
+        "core": "*"
+    }
+    snippets.filter(snip => snip.type == "package")
+        .map(snip => snip.code.split('\n'))
+        .forEach(lines => lines
+            .map(l => l.replace(/\s*$/, ''))
+            .filter(line => !!line)
+            .forEach(line => {
+                pkgs[line] = "*";
+            })
+        );
+
+    const pkgName = fileName.replace(/\\/g, '-').replace(/.md$/i, '');
+    return codeSnippets.map((snip, i) => {
+        return {
+            name: `${pkgName}-${i}`,
+            code: snip.code,
+            type: snip.type,
+            packages: pkgs
+        };
+    })
 }
 
 function webstringsJson() {
@@ -4077,18 +4085,6 @@ function initCommands() {
             }
         }
     }, extractAsync);
-
-    p.defineCommand({
-        name: "snippets",
-        help: "verifies that all documentation snippets compile to blocks",
-        flags: {
-            re: {
-                description: "regular expression that matches the snippets to test",
-                argument: "regex"
-            },
-            i: { description: "ignore past successes when running" }
-        }
-    }, testSnippetsAsync);
 
     p.defineCommand({
         name: "serve",
@@ -4197,7 +4193,18 @@ function initCommands() {
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
-    advancedCommand("checkdocs", "check docs for broken links, typing errors, etc...", checkDocsAsync);
+
+    p.defineCommand({
+        name: "checkdocs",
+        help: "check docs for broken links, typing errors, etc...",
+        flags: {
+            snippets: { description: "compile snippets" },
+            re: {
+                description: "regular expression that matches the snippets to test",
+                argument: "regex"
+            }
+        }
+    }, checkDocsAsync);
 
     advancedCommand("api", "do authenticated API call", pc => apiAsync(pc.arguments[0], pc.arguments[1]), "<path> [data]");
     advancedCommand("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));
@@ -4387,7 +4394,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
-        pxt.debug = console.log;
+        pxt.debug = console.debug || console.log;
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
