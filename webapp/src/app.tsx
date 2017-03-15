@@ -620,6 +620,7 @@ export class ProjectView
         if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
             pxt.tickEvent("import.blocks")
             pxt.debug('importing microbit.co.uk blocks project')
+            pxt.debug('blocks: ' + data.source)
             core.showLoading(lf("loading project..."))
             this.createProjectAsync({
                 filesOverride: {
@@ -630,6 +631,7 @@ export class ProjectView
         } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
             pxt.tickEvent("import.td")
             pxt.debug('importing microbit.co.uk TD project')
+            pxt.debug('td: ' + data.source)
             core.showLoading("loading project...")
             this.createProjectAsync({
                 filesOverride: { "main.blocks": "", "main.ts": "  " },
