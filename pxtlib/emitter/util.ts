@@ -794,18 +794,19 @@ namespace ts.pxtc.Util {
     }
 
     export function multipartPostAsync(uri: string, data: any = {}, filename: string = null, filecontents: string = null): Promise<HttpResponse> {
-        const boundry = "--------------------------0461489f461126c5"
+        const boundary = "--------------------------0461489f461126c5"
         let form = ""
 
         function add(name: string, val: string) {
-            form += boundry + "\r\n"
+            form += boundary + "\r\n"
             form += "Content-Disposition: form-data; name=\"" + name + "\"\r\n\r\n"
             form += val + "\r\n"
         }
 
         function addF(name: string, val: string) {
-            form += boundry + "\r\n"
-            form += "Content-Disposition: form-data; name=\"files[" + name + "]\"; filename=\"blah.json\"\r\n"
+            const fn = name.split('/').reverse()[0];
+            form += boundary + "\r\n"
+            form += "Content-Disposition: form-data; name=\"files[" + name + "]\"; filename=\"" + fn + "\"\r\n"
             form += "\r\n"
             form += val + "\r\n"
         }
@@ -814,16 +815,17 @@ namespace ts.pxtc.Util {
         if (filename)
             addF(filename, filecontents)
 
-        form += boundry + "--\r\n"
+        form += boundary + "--\r\n"
 
-        return Util.httpRequestCoreAsync({
+        const req: HttpRequestOptions = {
             url: uri,
             method: "POST",
             headers: {
-                "Content-Type": "multipart/form-data; boundary=" + boundry.slice(2)
+                "Content-Type": "multipart/form-data; boundary=" + boundary.slice(2)
             },
             data: form
-        })
+        };
+        return Util.httpRequestCoreAsync(req);
     }
 
     export function toDataUri(data: string, mimetype?: string): string {
