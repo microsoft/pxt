@@ -53,25 +53,25 @@ language course, speak now or forever hold your peace.
 # Hello, Static TypeScript!
 
 STS contains a lot of the good parts of TypeScript, including
-* top-level code in a file; The “hello world” program really is just one line - console.log("Hello world")
-* lexically-scoped variable declarations via let and const
-* classes with static and instance fields, methods and constructors; method-like properties (get/set accessors); new keyword;
+* top-level code in a file; The “hello world” program really is just one line - `console.log("Hello world")`
+* lexically-scoped variable declarations via `let` and `const`
+* classes with static and instance fields, methods and constructors; method-like properties (get/set accessors); `new` keyword;
 * nested function definitions (with lexical scoping and recursion) and arrow functions
 * generic classes, methods, and functions for code reuse (see below for limitations)
 * namespaces (a form of modules) 
 * standard control-flow statements
-  * if ... else if ... else statements
-  * loops: while, do ... while, for(;;) and for ... of statements
-  * break/continue statements; also with labeled loops
-  * switch statement
+  * `if ... else if ... else` statements
+  * loops: `while`, `do ... while`, `for(;;)` and `for ... of` statements
+  * `break`/`continue` statements; also with labeled loops
+  * `switch` statement
 * standard Boolean/arithmetic expressions
-  * conditional operator ? and lazy boolean operators
+  * conditional operator `?` and lazy boolean operators
   * all arithmetic operators (including bitwise operators);
 * literals
   * Primitive literals
-  * array literals [1, 2, 3]
-  * object literals { foo: 1, bar: "two" }
-* string templates (`x is ${x}` )
+  * array literals `[1, 2, 3]`
+  * object literals `{ foo: 1, bar: "two" }`
+* string templates (`` `x is ${x}` ``)
 
 TypeScript elements not mentioned as included in STS in the previous sections are excluded from STS 
 for now (see later section for a list of these elements). 
