@@ -22,9 +22,7 @@ export function hideLoading() {
     $('body.main').dimmer('hide');
 
     if (!dimmerInitialized) {
-        $('body.main').dimmer({
-            closable: false
-        });
+        initializeDimmer();
     }
     $('body.main').dimmer('hide');
 }
