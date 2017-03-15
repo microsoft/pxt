@@ -842,6 +842,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
 function uploadArtFile(fn: string): string {
     if (!fn || /^(https?|data):/.test(fn)) return fn; // nothing to do
 
+    fn = fn.replace(/^\.?\/*/, "/")
     return "@cdnUrl@/blob/" + gitHash(fs.readFileSync("docs" + fn)) + "" + fn;
 }
 
@@ -962,6 +963,13 @@ function uploadCoreAsync(opts: UploadOptions) {
             if (isText) {
                 content = data.toString("utf8")
                 if (fileName == "index.html") {
+                    if (!opts.localDir) {
+                        let m = pxt.appTarget.appTheme as Map<string>
+                        for (let k of Object.keys(m)) {
+                            if (/CDN$/.test(k))
+                                m[k.slice(0, k.length - 3)] = m[k]
+                        }
+                    }
                     content = server.expandHtml(content)
                 }
 
@@ -1295,6 +1303,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
         .forEach(k => {
             let fn = path.join('./docs', logos[k]);
             console.log(`importing ${fn}`)
+            logos[k + "CDN"] = uploadArtFile(logos[k])
             let b = fs.readFileSync(fn)
             let mimeType = '';
             if (/\.svg$/i.test(fn)) mimeType = "image/svg+xml";
