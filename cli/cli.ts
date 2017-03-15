@@ -431,7 +431,7 @@ function travisAsync() {
     const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
-    const uploadLocs = /^(master|v\d+)$/.test(process.env.TRAVIS_BRANCH)
+    const uploadLocs = /^(master|v\d+\.\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
         && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
 
     console.log("TRAVIS_TAG:", rel);
