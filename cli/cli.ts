@@ -3777,7 +3777,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     let checked = 0;
     let broken = 0;
     let snipCount = 0;
-    const snippets: CodeSnippet[] = [];
+    let snippets: CodeSnippet[] = [];
 
     function checkTOCEntry(entry: pxt.TOCMenuEntry) {
         if (entry.path && !/^https:\/\//.test(entry.path)) {
@@ -3837,7 +3837,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     console.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
     fs.writeFileSync("built/noTOC.md", noTOCs.map(p => `[${p}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
-        return testSnippetsAsync(snippets, re)
+        return testSnippetsAsync(snippets, re);
     return Promise.resolve();
 }
 
@@ -3908,10 +3908,10 @@ export function publishGistAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export interface SnippetInfo {
-    type: string
-    code: string
-    ignore: boolean
-    index: number
+    type: string;
+    code: string;
+    ignore: boolean;
+    index: number;
 }
 
 export function getSnippets(source: string): SnippetInfo[] {
@@ -3920,7 +3920,7 @@ export function getSnippets(source: string): SnippetInfo[] {
     let index = 0
     source.replace(re, (match, type, code) => {
         snippets.push({
-            type: type ? type.replace("-ignore", "") : "pre",
+            type: type ? type.replace(/-ignore$/i, "") : "pre",
             code: code,
             ignore: type ? /-ignore/g.test(type) : false,
             index: index
@@ -3948,7 +3948,7 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         "cards": true
     }
     const snippets = getSnippets(md);
-    const codeSnippets = snippets.filter(snip => !!supported[snip.type] && !/-ignore$/i.test(snip.type));
+    const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.type]);
     const pkgs: pxt.Map<string> = {
         "core": "*"
     }
