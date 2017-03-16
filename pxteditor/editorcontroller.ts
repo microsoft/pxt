@@ -24,6 +24,8 @@ namespace pxt.editor {
         | "showsimulator"
         | "newproject"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
+        | "undo"
+        | "redo"
         ;
     }
 
@@ -95,6 +97,16 @@ namespace pxt.editor {
                 case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
                 case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
                 case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
+                case "redo": p = p.then(() => {
+                    const editor = projectView.editor;
+                    if (editor && editor.hasRedo())
+                        editor.redo();
+                });
+                case "undo": p = p.then(() => {
+                    const editor = projectView.editor;
+                    if (editor && editor.hasUndo())
+                        editor.undo();
+                });
                 case "stopsimulator": {
                     const stop = data as EditorMessageStopRequest;
                     p = p.then(() => projectView.stopSimulator(stop.unload)); break;
