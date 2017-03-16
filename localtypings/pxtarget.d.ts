@@ -156,7 +156,6 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
-        layoutOptions?: LayoutOptions;
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -175,9 +174,6 @@ declare namespace pxt {
         allowParentController?: boolean; // allow parent iframe to control editor
         blocksOnly?: boolean; // blocks only workspace
         hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
-    }
-
-    interface LayoutOptions {
         hideMenuBar?: boolean; // Hides the main menu bar
     }
 
