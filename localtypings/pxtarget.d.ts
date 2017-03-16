@@ -174,6 +174,7 @@ declare namespace pxt {
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
         blocksOnly?: boolean; // blocks only workspace
+        hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
     }
 
     interface LayoutOptions {
