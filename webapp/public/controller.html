@@ -29,9 +29,11 @@
 </style>
 <script>
     function sendMessage(action) {
+        console.log('send ' + action)
         var logs = document.getElementById("logs");
         logs.innerText += ">" + action + "\n";
-        document.getElementById("iframe").contentWindow.postMessage({
+        let editor = document.getElementById("iframe").contentWindow;
+        editor.postMessage({
             type: "pxteditor",
             id: "xxxxxxxxx",
             action: action
@@ -39,14 +41,19 @@
     }
 
     let projects = [];
-    function receiveMessage(msg) {
+    function receiveMessage(ev) {
+        let editor = document.getElementById("iframe").contentWindow;
+        let msg = ev.data;
+        console.log('received...')
+        console.log(msg)
         var logs = document.getElementById("logs");
         logs.innerText += "<" + msg.type + " " + msg.action + "\n";
         if (msg.type == "pxthost") {
             if (msg.action == "workspacesync") {
                 // no project
                 msg.projects = projects;
-                return msg;
+                editor.postMessage(msg, "*")
+                return;
             }
         }
     }
@@ -66,7 +73,7 @@
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
     </div>
     <pre id="logs" class="ui"></pre>
-    <iframe id="iframe" src="http://localhost:3232/index.html?editorlayout=ide" />
+    <iframe id="iframe" src="http://localhost:3232/index.html?dbg=1&editorlayout=ide" />
 </body>
 
 <script>

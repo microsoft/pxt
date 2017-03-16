@@ -38,7 +38,7 @@ function saveAsync(header: Header, text?: ScriptText): Promise<void> {
 }
 
 function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
-    return installAsync(h0, text);
+    return mem.provider.installAsync(h0, text);
 }
 
 function saveToCloudAsync(h: Header): Promise<void> {

@@ -176,6 +176,7 @@ namespace pxt.editor {
      * Posts a message from the editor to the host
      */
     export function postHostMessageAsync(msg: EditorMessageRequest): Promise<EditorMessageResponse> {
+        console.debug(`sending to host: `, msg)
         return new Promise<EditorMessageResponse>((resolve, reject) => {
             const env = Util.clone(msg);
             env.id = Util.guidGen();
