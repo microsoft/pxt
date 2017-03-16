@@ -24,14 +24,7 @@ function getTextAsync(id: string): Promise<ScriptText> {
 }
 
 function initAsync(trg: string): Promise<void> {
-    return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
-        type: "pxthost",
-        action: "workspaceinit",
-        response: true
-    }).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
-        const projects = msg.projects || [];
-        mem.init(trg, projects);
-    })
+    return mem.provider.initAsync(trg);
 }
 
 function saveAsync(header: Header, text?: ScriptText): Promise<void> {
@@ -53,8 +46,16 @@ function saveToCloudAsync(h: Header): Promise<void> {
 }
 
 function syncAsync(): Promise<void> {
-    Util.assert(false); // no implemented
-    return Promise.resolve();
+    return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+        type: "pxthost",
+        action: "workspacesync",
+        response: true
+    }).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
+        (msg.projects || []).forEach(mem.merge);
+    }).then(() => {
+            data.invalidate("header:")
+            data.invalidate("text:")
+        })
 }
 
 function resetAsync(): Promise<void> {

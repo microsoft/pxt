@@ -210,7 +210,7 @@ export function saveToCloudAsync(h: Header) {
     return impl.saveToCloudAsync(h)
 }
 
-function syncAsync() {
+export function syncAsync() {
     checkSession();
     return impl.syncAsync();
 }

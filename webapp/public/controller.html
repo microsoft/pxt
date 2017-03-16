@@ -30,13 +30,28 @@
 <script>
     function sendMessage(action) {
         var logs = document.getElementById("logs");
-        logs.innerText += action + "\n";
+        logs.innerText += ">" + action + "\n";
         document.getElementById("iframe").contentWindow.postMessage({
             type: "pxteditor",
             id: "xxxxxxxxx",
             action: action
         }, "*")
     }
+
+    let projects = [];
+    function receiveMessage(msg) {
+        var logs = document.getElementById("logs");
+        logs.innerText += "<" + msg.type + " " + msg.action + "\n";
+        if (msg.type == "pxthost") {
+            if (msg.action == "workspacesync") {
+                // no project
+                msg.projects = projects;
+                return msg;
+            }
+        }
+    }
+
+    window.addEventListener("message", receiveMessage, false);
 
 </script>
 <body>

@@ -29,10 +29,8 @@ import Cloud = pxt.Cloud;
 export let projects: pxt.Map<Project> = {};
 let target = "";
 
-// Inject projects into memory
-export function init(trg: string, prjs: Project[]) {
-    target = trg;
-    projects = Util.toDictionary(prjs, prj => prj.header.id);
+export function merge(prj: Project) {
+    projects[prj.header.id] = prj;
 }
 
 function getHeaders(): Header[] {
@@ -50,7 +48,7 @@ function getTextAsync(id: string): Promise<ScriptText> {
 }
 
 function initAsync(trg: string): Promise<void> {
-    init(trg, []);
+    target = trg;
     return Promise.resolve();
 }
 

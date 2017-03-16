@@ -41,9 +41,8 @@ namespace pxt.editor {
         | "undo"
         | "redo"
 
-        | "workspaceinit" // EditorWorspaceSyncRequest (first request)
+        | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
-       // | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacesave" // EditorWorkspaceSaveRequest
         ;
     }
@@ -76,7 +75,7 @@ namespace pxt.editor {
         /**
          * Synching projects from host into 
          */
-        action: "workspaceinit" | "workspacereset";
+        action: "workspacesync" | "workspacereset";
     }
 
     export interface EditorWorkspaceSyncResponse extends EditorMessageResponse {
