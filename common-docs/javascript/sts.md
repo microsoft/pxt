@@ -53,25 +53,25 @@ language course, speak now or forever hold your peace.
 # Hello, Static TypeScript!
 
 STS contains a lot of the good parts of TypeScript, including
-* top-level code in a file; The “hello world” program really is just one line - console.log("Hello world")
-* lexically-scoped variable declarations via let and const
-* classes with static and instance fields, methods and constructors; method-like properties (get/set accessors); new keyword;
+* top-level code in a file; The “hello world” program really is just one line - `console.log("Hello world")`
+* lexically-scoped variable declarations via `let` and `const`
+* classes with static and instance fields, methods and constructors; method-like properties (get/set accessors); `new` keyword;
 * nested function definitions (with lexical scoping and recursion) and arrow functions
 * generic classes, methods, and functions for code reuse (see below for limitations)
 * namespaces (a form of modules) 
 * standard control-flow statements
-  * if ... else if ... else statements
-  * loops: while, do ... while, for(;;) and for ... of statements
-  * break/continue statements; also with labeled loops
-  * switch statement
+  * `if ... else if ... else` statements
+  * loops: `while`, `do ... while`, `for(;;)` and `for ... of` statements
+  * `break`/`continue` statements; also with labeled loops
+  * `switch` statement
 * standard Boolean/arithmetic expressions
-  * conditional operator ? and lazy boolean operators
+  * conditional operator `?` and lazy boolean operators
   * all arithmetic operators (including bitwise operators);
 * literals
   * Primitive literals
-  * array literals [1, 2, 3]
-  * object literals { foo: 1, bar: "two" }
-* string templates (`x is ${x}` )
+  * array literals `[1, 2, 3]`
+  * object literals `{ foo: 1, bar: "two" }`
+* string templates (`` `x is ${x}` ``)
 
 TypeScript elements not mentioned as included in STS in the previous sections are excluded from STS 
 for now (see later section for a list of these elements). 
@@ -80,9 +80,9 @@ If we’ve left something out that obviously should be in STS, please let us kno
 
 # Type checking in STS
 
-Typescript's type system is very rich with a complex notion of type compatability and substitutability.
-STS keeps many of TypeScripts type checking rules (structural subtyping, for example), but modifies 
-the notion of type compatability/substitutability to reduce 
+Typescript's type system is very rich with a complex notion of type compatibility and substitutability.
+STS keeps many of TypeScript's type checking rules (structural subtyping, for example), but modifies 
+the notion of type compatibility/substitutability to reduce 
 run-time errors. Our goal is catch as many errors at compile-time as possible, while retaining
 an expressive language with arrays, functions, classes, and generics. This means we disallow explicit or
 implicit downcasts, for example, as well as the use of bivariance in function subtyping. 
@@ -95,7 +95,7 @@ such as strings and objects. This means that code such as:
 let a: Object = 3
 ```
 is illegal in STS, as primitive types are not objects (though the primitive types do support basic methods,
-such as toString). 
+such as `toString`). 
 
 In a major deviation from JavaScript, STS treats *numbers* as 32-bit integers rather than doubles (as in JavaScript).
 STS does not yet support floating point.
@@ -140,7 +140,7 @@ TODO
 
 ## Generics
 
-With the exclusion of the Any type, it´s very important to support generics so that code can be reused
+With the exclusion of the Any type, it's very important to support generics so that code can be reused
 across many types. STS supports generic functions and classes with the following restrictions:
 * generic functions cannot be used as values;
 * nested functions cannot be generic;
