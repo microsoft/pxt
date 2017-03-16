@@ -21,9 +21,9 @@ The best way to think of STS is as C#/Java/C++ subset of TypeScript where all ty
 are known at compile time, which permits efficient linking to a C++ runtime (in the
 case of the micro:bit, the [Lancaster University micro:bit DAL](https://github.com/lancaster-university/microbit-dal)).
 STS tries to maintain as much of JavaScript semantics as much as possible.
-given that, we say... 
+Given this desire, we say... 
 
-# Goodbye: Any, Union, Intersection Types and the Bad Parts 
+# Goodbye to Any, Union, Intersection Types and the Bad Parts 
 
 In TypeScript, the *Any* type is “the one type that can represent any JavaScript value with no constraints”. 
 In TypeScript, every program expression, value, and function must have some type, even if not explicitly 
