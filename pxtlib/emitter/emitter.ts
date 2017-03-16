@@ -1056,7 +1056,9 @@ namespace ts.pxtc {
             assert(inf.isUsed)
             if (inf.vtable)
                 return inf.vtable
-            let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
+            let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo) : []
+            // make a copy
+            tbl = tbl.length==0 ? [] : tbl.slice(0)
 
             scope(() => {
                 U.pushRange(typeBindings, inf.bindings)
