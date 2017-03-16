@@ -245,7 +245,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type: string;
+        type : "api" | "blockId" | "missingPackage" | "package";
         map?: pxt.Map<string>;
     }
 

@@ -67,7 +67,7 @@ let a;
 
 With `var` declarations, it doesn't matter how many times you declare your variables, you just get one:
 
-```typescript
+```typescript-ignore
 var x = 10;
 var x = 20; 
 ```
@@ -75,7 +75,7 @@ var x = 20;
 In the above example, all declarations of `x` actually refer to the *same* `x`, and this is perfectly valid.
 This often ends up being a source of bugs. Thankfully, `let` declarations are not as forgiving.
 
-```typescript
+```typescript-ignore
 let x = 10;
 let x = 20; // error: can't re-declare 'x' in the same scope
 ```
@@ -104,7 +104,7 @@ function sumMatrix(matrix: number[][]) {
 This version of the loop will actually perform the summation correctly because the inner loop's `i` shadows `i` from the outer loop.
 Shadowing should *usually* be avoided in the interest of write clearer code, such as
 
-```typescript
+```typescript-ignore
 function sumMatrix(matrix: number[][]) {
     let sum = 0;
     for (let i = 0; i < matrix.length; i++) {
