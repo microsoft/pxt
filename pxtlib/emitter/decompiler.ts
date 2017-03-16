@@ -699,8 +699,8 @@ ${output}</xml>`;
             }
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
-            if (callInfo.attrs.blockIdentity) {
-                const parentCallInfo = n.parent && (n.parent as any).callInfo;
+            const parentCallInfo: pxtc.CallInfo = n.parent && (n.parent as any).callInfo;
+            if (callInfo.attrs.blockIdentity && !(parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity)) {
                 if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
                     value = callInfo.attrs.enumval;
                 }
@@ -1094,7 +1094,7 @@ ${output}</xml>`;
                         const shadow = callInfo && !!callInfo.attrs.blockIdentity
                         const aName = U.htmlEscape(argNames[i]);
 
-                        if (shadow) {
+                        if (shadow && callInfo.attrs.blockIdentity !== info.qName) {
                             (r.inputs || (r.inputs = [])).push(getValue(aName, e));
                         }
                         else {
