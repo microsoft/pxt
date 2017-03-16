@@ -3342,9 +3342,13 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
     const nextFileAsync = (): Promise<void> => {
         const f = todo.pop();
         if (!f) return Promise.resolve();
-        const data = fs.readFileSync(f, 'utf8');
         const crowdf = path.join(crowdinDir, f);
         const crowdd = path.dirname(crowdf);
+        // check if directory has a .crowdinignore file
+        if (nodeutil.fileExistsSync(path.join(path.dirname(f), ".crowdinignore")))
+            return Promise.resolve();
+
+        const data = fs.readFileSync(f, 'utf8');
         pxt.log(`uploading ${f} to ${crowdf}`);
         return ensureFolderAsync(crowdd)
             .then(() => pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, data))
