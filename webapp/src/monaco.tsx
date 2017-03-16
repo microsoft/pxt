@@ -702,6 +702,7 @@ export class Editor extends srceditor.Editor {
                     + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
                     return w2 - w1;
                 }).forEach((fn) => {
+                    let monacoBlockArea = document.createElement('div');
                     let monacoBlock = document.createElement('div');
                     monacoBlock.className = 'monacoDraggableBlock';
 
@@ -781,7 +782,8 @@ export class Editor extends srceditor.Editor {
 
                     monacoBlock.appendChild(methodToken);
                     monacoBlock.appendChild(sigToken);
-                    monacoFlyout.appendChild(monacoBlock);
+                    monacoBlockArea.appendChild(monacoBlock);
+                    monacoFlyout.appendChild(monacoBlockArea);
                 })
             }
         };
