@@ -3798,13 +3798,26 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     let snipCount = 0;
     let snippets: CodeSnippet[] = [];
 
-    function checkTOCEntry(entry: pxt.TOCMenuEntry) {
-        if (entry.path && !/^https:\/\//.test(entry.path)) {
-            const md = nodeutil.resolveMd(docsRoot, entry.path);
-            urls[entry.path] = md;
-            if (md)
-                todo.push(entry.path);
+    function pushUrl(url: string) {
+        // cache value
+        if (!urls.hasOwnProperty(url)) {
+            const isResource = /\.[a-z]+$/i.test(url);
+            if (!isResource) {
+                pxt.debug(`link not in TOC: ${url}`);
+                noTOCs.push(url);
+            }
+            // TODO: correct resolution of static resources
+            urls[url] = isResource
+                ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
+                : nodeutil.resolveMd(docsRoot, url);
+            if (!isResource && urls[url])
+                todo.push(url);
         }
+    }
+
+    function checkTOCEntry(entry: pxt.TOCMenuEntry) {
+        if (entry.path && !/^https:\/\//.test(entry.path))
+            pushUrl(entry.path);
         // look for sub items
         if (entry.subitems)
             entry.subitems.forEach(checkTOCEntry);
@@ -3823,19 +3836,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
             // remove hash
             url = url.replace(/#.*$/, '');
-            // cache value
-            if (!urls.hasOwnProperty(url)) {
-                const isResource = /\.[a-z]+$/i.test(url);
-                if (!isResource) {
-                    pxt.debug(`link not in TOC: ${url}`);
-                    noTOCs.push(url);
-                    todo.push(url);
-                }
-                // TODO: correct resolution of static resources
-                urls[url] = isResource
-                    ? nodeutil.fileExistsSync(path.join(docsRoot, "docs", url))
-                    : nodeutil.resolveMd(docsRoot, url);
-            }
+            pushUrl(url);
             if (!urls[url]) {
                 pxt.log(`${entrypath}: broken link ${url}`);
                 broken++;
