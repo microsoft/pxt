@@ -3824,6 +3824,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     }
 
     const toc = pxt.docs.buildTOC(summaryMD);
+    if (!toc) {
+        pxt.log('unable to parse SUMMARY.md');
+        return Promise.resolve();
+    }
     toc.forEach(checkTOCEntry);
 
     while (todo.length) {
@@ -3854,7 +3858,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         });
     }
 
-    console.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
+    pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
     fs.writeFileSync("built/noTOC.md", noTOCs.map(p => `[${p}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
         return testSnippetsAsync(snippets, re);
