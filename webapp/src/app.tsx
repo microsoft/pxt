@@ -1346,7 +1346,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const fullscreen = run && !simOpts.hideFullscreen;
         const showMenuBar = !targetTheme.layoutOptions || !targetTheme.layoutOptions.hideMenuBar;
         const cookieKey = "cookieconsent"
-        const cookieConsented = !!pxt.storage.getLocal(cookieKey) || electron.isElectron;
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || !!pxt.storage.getLocal(cookieKey);
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
 
