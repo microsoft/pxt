@@ -29,6 +29,11 @@ namespace pxt.workspace {
 
     export type ScriptText = pxt.Map<string>;
 
+    export interface Project {
+        header: Header;
+        text?: ScriptText;
+    }
+
     export interface WorkspaceProvider {
         getHeaders(): Header[];
         getHeader(id: string): Header;

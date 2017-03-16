@@ -1834,6 +1834,7 @@ $(document).ready(() => {
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1]);
+    else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 

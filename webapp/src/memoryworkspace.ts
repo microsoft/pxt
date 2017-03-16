@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as ws from "./workspace";
 
 type Header = pxt.workspace.Header;
+type Project = pxt.workspace.Project;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
@@ -25,13 +26,14 @@ import Cloud = pxt.Cloud;
     }
 */
 
-interface Project {
-    header: Header;
-    text?: ScriptText;
-}
-
-let projects: pxt.Map<Project> = {};
+export let projects: pxt.Map<Project> = {};
 let target = "";
+
+// Inject projects into memory
+export function init(trg: string, prjs: Project[]) {
+    target = trg;
+    projects = Util.toDictionary(prjs, prj => prj.header.id);
+}
 
 function getHeaders(): Header[] {
     return Util.values(projects).map(p => p.header);
@@ -48,7 +50,7 @@ function getTextAsync(id: string): Promise<ScriptText> {
 }
 
 function initAsync(trg: string): Promise<void> {
-    target = target;
+    init(trg, []);
     return Promise.resolve();
 }
 
