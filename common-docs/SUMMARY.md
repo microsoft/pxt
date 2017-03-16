@@ -50,6 +50,7 @@
     * [Translate](/translate)
     * [Sharing projects](/share)
     * [Offline support](/offline)
+    * [Streaming](/streaming)
 
 ## Developers #devs
 
