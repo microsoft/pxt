@@ -1066,6 +1066,11 @@ namespace pxt.blocks {
     function compileStartEvent(e: Environment, b: B.Block): JsNode {
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.onStartText && body && body.children) {
+            body.children.unshift(mkStmt(mkText(`// ${pxtc.ON_START_COMMENT}`)))
+        }
+
         return body;
     }
 
