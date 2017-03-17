@@ -1121,12 +1121,15 @@ Avatar
         display: none;
     }
     /* Menu spacing */
-    #menubar .ui.menu .item {
+    #root:not(.sandbox) #menubar .ui.menu .item {
         padding: 0.3em !important;
     }
     #menubar .ui.menu .item.editor-menuitem {
         margin: calc(@mobileMenuHeight/10);
         padding: calc(@mobileMenuHeight/10);
+    }
+    #menubar .ui.menu .item.editor-menuitem .item {
+        padding: 0.4em !important;
     }
     .sandbox #menubar .ui.menu .item.editor-menuitem {
         margin: calc(@sandboxMobileMenuHeight/10);
