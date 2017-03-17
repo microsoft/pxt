@@ -1201,7 +1201,7 @@ namespace ts.pxtc {
             }
             // remove methods that are not used
             for (let ci in classInfos) {
-                classInfos[ci].methods = classInfos[ci].methods.filter((m) => getFunctionInfo(m).isUsed) 
+                classInfos[ci].methods = classInfos[ci].methods.filter((m) => getFunctionInfo(m).isUsed)
             }
             // recompute vtable info
             for (let ci in classInfos) {
