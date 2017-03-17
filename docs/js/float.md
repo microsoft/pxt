@@ -7,7 +7,7 @@ or by reference-counted, boxed 64 bit double precision floating point numbers.
 
 ### Add
 
-```asm
+```armasm
 add:
     ands r2, r0, r1
     lsls r2, r2, #31
@@ -31,7 +31,7 @@ Same as add.
 
 ### Or, and, xor
 
-```asm
+```armasm
 or:
     ands r2, r0, r1
     lsls r2, r2, #31
@@ -53,7 +53,7 @@ In C++.
 
 ### To int
 
-```asm
+```armasm
 toInt:
     asrs r0, r0, #1
     bcs .ok
