@@ -29,14 +29,47 @@
 </style>
 <script>
     function sendMessage(action) {
+        console.log('send ' + action)
         var logs = document.getElementById("logs");
-        logs.innerText += action + "\n";
-        document.getElementById("iframe").contentWindow.postMessage({
+        logs.innerText += ">" + action + "\n";
+        let editor = document.getElementById("iframe").contentWindow;
+        editor.postMessage({
             type: "pxteditor",
             id: "xxxxxxxxx",
             action: action
         }, "*")
     }
+
+    let projects = [
+{
+  "text": {
+    "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"dash_wheel_speed\" id=\"Z.~x[F0kmYKbiA{3yiK|\" disabled=\"true\" x=\"203\" y=\"113\">\n    <value name=\"left\">\n      <shadow type=\"math_number\" id=\"ST8}MLcWWE/DrA/gXR`r\">\n        <field name=\"NUM\">0</field>\n      </shadow>\n    </value>\n    <value name=\"right\">\n      <shadow type=\"math_number\" id=\"%%5=q4?dlI1*zD*lE=zH\">\n        <field name=\"NUM\">0</field>\n      </shadow>\n    </value>\n  </block>\n</xml>",
+    "main.ts": "\n",
+    "README.md": " ",
+    "pxt.json": "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
+  }
+}];
+
+    function receiveMessage(ev) {
+        let editor = document.getElementById("iframe").contentWindow;
+        let msg = ev.data;
+        console.log('received...')
+        console.log(msg)
+        var logs = document.getElementById("logs");
+        logs.innerText += "<" + msg.type + " " + msg.action + "\n";
+        if (msg.type == "pxthost") {
+            if (msg.action == "workspacesync") {
+                // no project
+                msg.projects = projects;
+                editor.postMessage(msg, "*")
+                return;
+            } else if (msg.action == "workspacesave") {
+                console.log(JSON.stringify(msg.project, null, 2))
+            }
+        }
+    }
+
+    window.addEventListener("message", receiveMessage, false);
 
 </script>
 <body>
@@ -51,7 +84,7 @@
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
     </div>
     <pre id="logs" class="ui"></pre>
-    <iframe id="iframe" src="http://localhost:3232/index.html?editorlayout=ide" />
+    <iframe id="iframe" src="http://localhost:3232/index.html?dbg=1&editorlayout=ide" />
 </body>
 
 <script>

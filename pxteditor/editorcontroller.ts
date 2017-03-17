@@ -1,17 +1,31 @@
 namespace pxt.editor {
-    export interface EditorMessageRequest {
+    export interface EditorMessage {
         /**
-         * identifier used to correlate request / responses
+         * Constant identifier
+         */
+        type: "pxteditor" | "pxthost",
+        /**
+         * Original request id
          */
         id?: string;
         /**
-         * constant message identifier
+         * flag to request response
          */
-        type: "pxteditor";
+        response?: boolean;
+    }
+
+    export interface EditorMessageResponse extends EditorMessage {
         /**
-         * flag for no ack response
+         * indicate if operation started or completed successfully
          */
-        norepsonse?: boolean;
+        success: boolean;
+        /**
+         * Error object if any
+         */
+        error?: any;
+    }
+
+    export interface EditorMessageRequest extends EditorMessage {
         /**
          * Request action
          */
@@ -26,6 +40,10 @@ namespace pxt.editor {
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
+
+        | "workspacesync" // EditorWorspaceSyncRequest
+        | "workspacereset"
+        | "workspacesave" // EditorWorkspaceSaveRequest
         ;
     }
 
@@ -53,25 +71,32 @@ namespace pxt.editor {
         content: any;
     }
 
-    export interface EditorMessageResponse {
+    export interface EditorWorkspaceSyncRequest extends EditorMessageRequest {
         /**
-         * Constant identifier
+         * Synching projects from host into 
          */
-        type: "pxteditor",
-        /**
-         * Original request id
-         */
-        id?: string;
-        /**
-         * indicate if operation started or completed successfully
-         */
-        success: boolean;
-        /**
-         * Error object if any
-         */
-        error?: any;
+        action: "workspacesync" | "workspacereset";
     }
 
+    export interface EditorWorkspaceSyncResponse extends EditorMessageResponse {
+        /*
+        * Full list of project, required for init
+        */
+        projects: pxt.workspace.Project[];
+    }
+
+    export interface EditorWorkspaceSaveRequest extends EditorMessageRequest {
+        action: "workspacesave";
+        /*
+        * Modified project
+        */
+        project: pxt.workspace.Project;
+    }
+
+    const pendingRequests: pxt.Map<{
+        resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
+        reject: (err: any) => void;
+    }> = {};
     /**
      * Binds incoming window messages to the project view. 
      * Requires the "allowParentController" flag in the pxtarget.json/appTheme object.
@@ -85,39 +110,48 @@ namespace pxt.editor {
         if (!window.parent) return;
 
         window.addEventListener("message", (msg: MessageEvent) => {
-            const data = msg.data as EditorMessageRequest;
-            if (!data || data.type != "pxteditor" || !data.action) return false;
+            const data = msg.data as EditorMessage;
+            if (!data || !/^pxt(host|editor)$/.test(data.type)) return false;
 
             let p = Promise.resolve();
-            switch (data.action.toLowerCase()) {
-                // TODO: make async
-                case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
-                case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
-                case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
-                case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
-                case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
-                case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
-                case "redo": p = p.then(() => {
-                    const editor = projectView.editor;
-                    if (editor && editor.hasRedo())
-                        editor.redo();
-                });
-                case "undo": p = p.then(() => {
-                    const editor = projectView.editor;
-                    if (editor && editor.hasUndo())
-                        editor.undo();
-                });
-                case "stopsimulator": {
-                    const stop = data as EditorMessageStopRequest;
-                    p = p.then(() => projectView.stopSimulator(stop.unload)); break;
+            if (data.type == "pxthost") { // response from the host
+                const req = pendingRequests[data.id];
+                if (!req) {
+                    pxt.debug(`unknown host request ${data.id}`);
+                } else {
+                    p = p.then(() => req.resolve(data as EditorMessageResponse));
                 }
-                case "newproject":  {
-                    const create = data as EditorMessageNewProjectRequest;
-                    p = p.then(() => projectView.newProject(create.options)); break;
-                }
-                case "proxytosim": {
-                    const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
-                    p = p.then(() => projectView.proxySimulatorMessage(simmsg.content)); break;
+            } else { // request from the host
+                const req = data as EditorMessageRequest;
+                switch (req.action.toLowerCase()) {
+                    case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
+                    case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
+                    case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
+                    case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
+                    case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
+                    case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
+                    case "redo": p = p.then(() => {
+                        const editor = projectView.editor;
+                        if (editor && editor.hasRedo())
+                            editor.redo();
+                    });
+                    case "undo": p = p.then(() => {
+                        const editor = projectView.editor;
+                        if (editor && editor.hasUndo())
+                            editor.undo();
+                    });
+                    case "stopsimulator": {
+                        const stop = data as EditorMessageStopRequest;
+                        p = p.then(() => projectView.stopSimulator(stop.unload)); break;
+                    }
+                    case "newproject": {
+                        const create = data as EditorMessageNewProjectRequest;
+                        p = p.then(() => projectView.newProject(create.options)); break;
+                    }
+                    case "proxytosim": {
+                        const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
+                        p = p.then(() => projectView.proxySimulatorMessage(simmsg.content)); break;
+                    }
                 }
             }
             p.done(() => sendResponse(data, true, undefined),
@@ -127,14 +161,27 @@ namespace pxt.editor {
         }, false)
     }
 
-    function sendResponse(request: EditorMessageRequest, success: boolean, error: any) {
-        if (!request.norepsonse) {
+    function sendResponse(request: EditorMessage, success: boolean, error: any) {
+        if (request.response) {
             window.parent.postMessage({
-                type: "pxteditor",
+                type: request.type,
                 id: request.id,
                 success,
                 error
             }, "*");
         }
+    }
+
+    /**
+     * Posts a message from the editor to the host
+     */
+    export function postHostMessageAsync(msg: EditorMessageRequest): Promise<EditorMessageResponse> {
+        console.debug(`sending to host: `, msg)
+        return new Promise<EditorMessageResponse>((resolve, reject) => {
+            const env = Util.clone(msg);
+            env.id = Util.guidGen();
+            pendingRequests[env.id] = { resolve, reject };
+            window.parent.postMessage(env, "*");
+        })
     }
 }

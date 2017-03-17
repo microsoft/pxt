@@ -1813,15 +1813,14 @@ $(document).ready(() => {
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
-
     const wsPortMatch = /ws=(\d+)/i.exec(window.location.href);
-
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
         window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
     } else {
         pxt.options.wsPort = 3233;
     }
+    pkg.setupAppTarget((window as any).pxtTargetBundle)
 
     enableAnalytics()
     appcache.init();
@@ -1834,17 +1833,15 @@ $(document).ready(() => {
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1]);
+    else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     pxt.docs.requireMarked = () => require("marked");
 
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
-    const cfg = pxt.webConfig;
 
-    pkg.setupAppTarget((window as any).pxtTargetBundle)
-
-    if (!pxt.BrowserUtils.isBrowserSupported()) {
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");
         let redirect = pxt.BrowserUtils.suggestedBrowserPath();
         if (redirect) {
@@ -1858,7 +1855,7 @@ $(document).ready(() => {
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = mlang && !!mlang[1];
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

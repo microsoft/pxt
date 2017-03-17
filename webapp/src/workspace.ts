@@ -8,6 +8,7 @@ import * as data from "./data";
 import * as cloudworkspace from "./cloudworkspace"
 import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
+import * as iframeworkspace from "./iframeworkspace"
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -34,6 +35,9 @@ export function setupWorkspace(id: string) {
         case "mem":
         case "memory":
             impl = memoryworkspace.provider;
+            break;
+        case "iframe":
+            impl = iframeworkspace.provider;
             break;
         case "cloud":
         default:
