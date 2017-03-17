@@ -212,12 +212,12 @@ namespace ts.pxtc.decompiler {
 
             function checkChildren(n: Node): void {
                 ts.forEachChild(n, (child) => {
-                    if (isDeclaration(child) && isVariableLike(child) && child.name.kind === SK.Identifier) {
-                        const name = child.name.getText();
+                    if (child.kind === SK.VariableDeclaration && (child as ts.VariableDeclaration).name.kind === SK.Identifier) {
+                        const name = (child as ts.VariableDeclaration).name.getText();
 
                         if (takenNames[name]) {
                             const newName = getNewName(name);
-                            const renames = service.findRenameLocations(s.fileName, child.name.pos + 1, false, false);
+                            const renames = service.findRenameLocations(s.fileName, (child as ts.VariableDeclaration).name.pos + 1, false, false);
                             if (renames) {
                                 renames.forEach(r => {
                                     allRenames.push({
