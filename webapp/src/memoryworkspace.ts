@@ -16,12 +16,25 @@ export let projects: pxt.Map<Project> = {};
 let target = "";
 
 export function merge(prj: Project) {
-    let h = prj.header;
+    let h: Header = prj.header;
     if (!h) {
-        h.id = U.guidGen();
-        h.recentUse = U.nowSeconds()
-        h.modificationTime = h.recentUse;
-        h.target = pxt.appTarget.id;
+        prj.header = h = {
+            id: U.guidGen(),
+            recentUse: U.nowSeconds(),
+            modificationTime: U.nowSeconds(),
+            target: target,
+            _rev: undefined,
+            blobId: undefined,
+            blobCurrent: undefined,
+            isDeleted: false,
+            name: lf("Untitled"),
+            meta: {
+
+            },
+            editor: pxt.BLOCKS_PROJECT_NAME,
+            pubId: undefined,
+            pubCurrent: undefined
+        }
     }
     projects[prj.header.id] = prj;
 }
