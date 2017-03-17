@@ -1197,6 +1197,7 @@ namespace ts.pxtc {
             for (let fi in functionInfo) {
                 functionInfo[fi].virtualParent = undefined
                 functionInfo[fi].virtualIndex = undefined
+                functionInfo[fi].virtualInstances = undefined
             }
             // remove methods that are not used
             for (let ci in classInfos) {
