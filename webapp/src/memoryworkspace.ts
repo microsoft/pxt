@@ -12,24 +12,17 @@ type InstallHeader = pxt.workspace.InstallHeader;
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-/*
-    interface WorkspaceProvider {
-        getHeaders(): Header[];
-        getHeader(id: string): Header;
-        getTextAsync(id: string): Promise<ScriptText>;
-        initAsync(target: string): Promise<void>;
-        saveAsync(h: Header, text?: ScriptText): Promise<void>;
-        installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
-        saveToCloudAsync(h: Header): Promise<void>;
-        syncAsync(): Promise<void>;
-        resetAsync(): Promise<void>;
-    }
-*/
-
 export let projects: pxt.Map<Project> = {};
 let target = "";
 
 export function merge(prj: Project) {
+    let h = prj.header;
+    if (!h) {
+        h.id = U.guidGen();
+        h.recentUse = U.nowSeconds()
+        h.modificationTime = h.recentUse;
+        h.target = pxt.appTarget.id;
+    }
     projects[prj.header.id] = prj;
 }
 

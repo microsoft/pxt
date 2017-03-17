@@ -30,7 +30,7 @@ namespace pxt.workspace {
     export type ScriptText = pxt.Map<string>;
 
     export interface Project {
-        header: Header;
+        header?: Header;
         text?: ScriptText;
     }
 
