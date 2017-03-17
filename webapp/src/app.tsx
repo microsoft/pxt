@@ -184,12 +184,12 @@ export class ProjectView
     }
 
     private isBlocksActive(): boolean {
-        return this.editor == this.blocksEditor
+        return !this.state.embedSimView && this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
     }
 
     private isJavaScriptActive(): boolean {
-        return this.editor == this.textEditor
+        return !this.state.embedSimView && this.editor == this.textEditor
             && this.editorFile && this.editorFile.name == "main.ts";
     }
 
@@ -200,14 +200,20 @@ export class ProjectView
 
     openJavaScript() {
         pxt.tickEvent("menu.javascript");
-        if (this.isJavaScriptActive()) return;
+        if (this.isJavaScriptActive()) {
+            if (this.state.embedSimView) this.setState({embedSimView: false});
+            return;
+        }
         if (this.isBlocksActive()) this.blocksEditor.openTypeScript();
         else this.setFile(pkg.mainEditorPkg().files["main.ts"])
     }
 
     openBlocks() {
         pxt.tickEvent("menu.blocks");
-        if (this.isBlocksActive()) return;
+        if (this.isBlocksActive()) {
+            if (this.state.embedSimView) this.setState({embedSimView: false});
+            return;
+        }
         if (this.isJavaScriptActive()) this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
@@ -233,6 +239,16 @@ export class ProjectView
                     header.pubCurrent = false
                 }
             });
+    }
+
+    openSimView() {
+        pxt.tickActivity("menu.simView");
+        if (this.state.embedSimView) {
+            this.startStopSimulator();
+        } else {
+            this.setState({embedSimView: true});
+            this.startSimulator();
+        }
     }
 
     public typecheckNow() {
@@ -378,7 +394,8 @@ export class ProjectView
 
         this.setState({
             currFile: fn,
-            showBlocks: false
+            showBlocks: false,
+            embedSimView: false
         })
         //this.fireResize();
     }
@@ -1347,6 +1364,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const showMenuBar = !targetTheme.hideMenuBar;
         const cookieKey = "cookieconsent"
         const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || !!pxt.storage.getLocal(cookieKey);
+        const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
 
@@ -1368,6 +1386,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             showMenuBar ? '' : 'hideMenuBar',
+            sandbox && simActive ? 'simView' : '',
             'full-abs'
         ]);
 
@@ -1386,8 +1405,13 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialName} /> : null}
-                            </div> : undefined }
+                            </div> : <div className="left menu">
+                                <span id="logo" className="ui item logo">
+                                    <img className="ui mini image" src={Util.toDataUri(rightLogo) } onClick={() => this.launchFullEditor() }/>
+                                </span>
+                            </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
+                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator")} icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
                                 <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
                                 <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
@@ -1400,10 +1424,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
                                         <div className="ui divider"></div>
-                                        <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
-                                            <i className="help icon"></i>
-                                            {lf("Help") }
-                                        </a>
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
                                         }
@@ -1417,8 +1437,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
 
-                                {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
-                                {sandbox ? <span className="ui item logo"><img className="ui mini image" src={Util.toDataUri(rightLogo) } /></span> : undefined}
+                                {sandbox ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
                                 {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
 
                                 {inTutorial ? <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() } /> : undefined}
@@ -1474,12 +1493,13 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
-                    <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
-                    <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
+                        {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
+                        <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
+                        <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
+                        <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download")}</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
-                    <button arial-label={lf("Ok") } className="ui right floated icon button" onClick={consentCookie}>
+                    <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
                     {lf("By using this site you agree to the use of cookies for analytics.") }
@@ -1813,15 +1833,14 @@ $(document).ready(() => {
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
-
     const wsPortMatch = /ws=(\d+)/i.exec(window.location.href);
-
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
         window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
     } else {
         pxt.options.wsPort = 3233;
     }
+    pkg.setupAppTarget((window as any).pxtTargetBundle)
 
     enableAnalytics()
     appcache.init();
@@ -1834,17 +1853,15 @@ $(document).ready(() => {
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1]);
+    else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
 
     pxt.docs.requireMarked = () => require("marked");
 
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
-    const cfg = pxt.webConfig;
 
-    pkg.setupAppTarget((window as any).pxtTargetBundle)
-
-    if (!pxt.BrowserUtils.isBrowserSupported()) {
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");
         let redirect = pxt.BrowserUtils.suggestedBrowserPath();
         if (redirect) {
@@ -1858,7 +1875,7 @@ $(document).ready(() => {
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = mlang && !!mlang[1];
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

@@ -6,4 +6,4 @@
 
 @background: @mainMenuBackground;
 @invertedBackground: @mainMenuInvertedBackground;
-@mainMenuMinHeight: @minHeight;
+@mainMenuMinHeight: @mainMenuHeight;
