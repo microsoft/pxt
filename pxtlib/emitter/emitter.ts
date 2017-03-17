@@ -1204,7 +1204,8 @@ namespace ts.pxtc {
             }
             // recompute vtable info
             for (let ci in classInfos) {
-                computeVtableInfo(classInfos[ci])
+                if (classInfos[ci].baseClassInfo)
+                    computeVtableInfo(classInfos[ci])
             }
         }
 
@@ -1581,6 +1582,7 @@ ${lbl}: .short 0xffff
         }
 
         function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+            getFunctionInfo(decl).isUsed = true
             if (!bindings || !bindings.length) markUsed(decl)
             else {
                 let info = getFunctionInfo(decl)
