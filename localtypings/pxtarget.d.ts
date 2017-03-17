@@ -214,6 +214,7 @@ declare namespace ts.pxtc {
         driveName?: string;
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
+        taggedInts?: boolean; // implies floatingPoint
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
