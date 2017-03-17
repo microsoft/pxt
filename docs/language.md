@@ -129,28 +129,35 @@ i.e., much closer to the metal.
 * objects use reference counting
 * classes are laid out using static type information (like in C), so there is little memory overhead
 
-PXT also supports dynamic objects, which are essentially string-to-value
-hashes - these have much higher memory overhead, and would be typically the only thing available
+PXT also supports dynamic objects (also reference counted), which are essentially string-to-value
+mappings - these have much higher memory overhead, and would be typically the only thing available
 in a dynamic language.
 
-This lends itself to significant performance improvements over typical dynamic VM implementations:
-* code is never in any byte-code form that needs to be interpreted; this results in execution
-  slowdowns of 2-3x compared to compiled C code;
-  typical JS interpreter would be more in the 50x range
-* there is no RAM overhead for user-code - code all sits in flash; in a dynamic VM
+All of this lends itself to significant performance improvements over typical dynamic VM implementations:
+* user programs are compiled directly to machine code, and are
+  never in any byte-code form that needs to be interpreted; this results in execution
+  10-20x faster than a typical JS interpreter
+* there is no RAM overhead for user-code - all code sits in flash; in a dynamic VM
   there are usually some data-structures representing code
-* due to lack of boxing and static class layout the memory consumption for equivalent program 
-  data is within 2x of C code; a dynamic VM would be at least twice that, not counting
-  the user-code structures mentioned above
+* due to lack of boxing and static class layout the memory consumption for objects
+  is around half the one you get in a dynamic VM (not counting
+  the user-code structures mentioned above)
 * while there is some runtime support code in PXT, it's typically around 100KB smaller than
   a dynamic VM, bringing down flash consumption and leaving more space for user code
 
-Interfacing C++ from PXT is simpler than interfacing typical dynamic VMs,
+The execution time, RAM and flash consumption of PXT code is as a rule of thumb 2x of
+compiled C code, making it competitive to write drivers and other user-space libraries.
+
+Interfacing C++ from PXT is easier than interfacing typical dynamic VMs,
 in particular for simple functions with numbers on input and output - there is
 no need for unboxing, checking types, or memory management.
 
 The main disadvantage of using static compilation is lack of dynamic features
 in the language, as explained above.
+
+While it is possible to run a dynamic VM even on an nRF51-class device
+(256KB of flash, 16KB of RAM), it leaves little space for innovative features
+on the software side, or more complex user programs and user-space (not C++) drivers.
 
 ## Smaller int types
 
