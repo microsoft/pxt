@@ -1107,6 +1107,14 @@ namespace ClassTest {
         }
     }
 
+    class E {
+        foo() {}
+    }
+
+    class F extends E {
+        foo() {}
+    }
+
     function testACall(a: A, v0: number, v1: number) {
         glb1 = 0
         a.foo()
