@@ -1068,9 +1068,6 @@ namespace ts.pxtc {
                         let key = classFunctionKey(m)
                         let done = false
                         let proc = lookupProc(m, inf.bindings)
-                        // BUG: proc may be undefined because of tree shaking
-                        // BUG: which can lead to tbl[i] being undefined later
-                        // BUG: resulting in exception on tbl[i].action
                         for (let i = 0; i < tbl.length; ++i) {
                             if (classFunctionKey(tbl[i].action) == key) {
                                 tbl[i] = proc
