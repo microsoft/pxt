@@ -35,6 +35,8 @@ export class Editor extends srceditor.Editor {
                 Util.nextTick(this.changeCallback)
                 this.isSaving = false;
                 this.changeMade = true;
+                // switch to previous coding experience
+                this.parent.openPreviousEditor();
             })
         }
         const setFileName = (v: string) => {
