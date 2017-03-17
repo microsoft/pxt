@@ -1127,6 +1127,7 @@ namespace ClassTest {
 
     export function run() {
         msg("ClassTest.run")
+        let f = new F()
         testACall(new A(), 1, 42)
         testACall(new B(), 2, 108)
         testACall(new C(), 3, 42)
