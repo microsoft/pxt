@@ -15,13 +15,17 @@
 #maineditor,
 #sidedocs {
   position: absolute;
-  top:@mainMenuHeight;
   bottom: 0rem;
 }
 
+#filelist, #maineditor, #sidedocs, #getting-started-btn {
+    top:@mainMenuHeight;
+}
+
 .hideMenuBar #filelist,
-.hideMenuBar #maineditor,
-.hideMenuBar #sidedocs{
+    .hideMenuBar #maineditor,
+    .hideMenuBar #sidedocs,
+    .hideMenuBar #getting-started-btn {
     top: 0;
 }
 
@@ -108,7 +112,6 @@
     display:none;
     z-index:9;
     position: absolute;
-    top: @mainMenuHeight;
     right: 2rem;
 }
 .rtl #getting-started-btn {
@@ -1103,11 +1106,12 @@ Avatar
     }
     /* Top Menu */
     #maineditor {
-        top:@mobileMenuHeight !important;
+        top:@mainMenuHeight;
     }
-    #getting-started-btn {
-        top: @mobileMenuHeight;
+    .hideMenuBar #maineditor {
+        top: 0;
     }
+
     /* Logo */
     .ui.item.logo img {
         max-height: 2.5rem;
