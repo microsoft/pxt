@@ -71,6 +71,7 @@ namespace pxt.editor {
 
         openBlocks(): void;
         openJavaScript(): void;
+        openPreviousEditor(): void;
 
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;

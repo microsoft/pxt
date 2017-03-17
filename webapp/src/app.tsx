@@ -91,6 +91,7 @@ export class ProjectView
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
+    prevEditorId: string;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -230,6 +231,14 @@ export class ProjectView
         } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
     }
 
+    openPreviousEditor() {
+        if (this.prevEditorId == "monacoEditor") {
+            this.openJavaScript();
+        } else {
+            this.openBlocks();
+        }
+    }
+
     openTypeScriptAsync(): Promise<void> {
         return this.saveTypeScriptAsync(true)
             .then(() => {
@@ -364,6 +373,7 @@ export class ProjectView
             .then(() => {
                 this.editorFile = this.state.currFile as pkg.File; // TODO
                 let previousEditor = this.editor;
+                this.prevEditorId = previousEditor.getId();
                 this.editor = editorOverride || this.pickEditorFor(this.editorFile)
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
