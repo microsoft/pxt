@@ -1,19 +1,23 @@
 {
   "name": "pxt-core",
   "version": "1.1.8",
-  "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
+  "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
     "JavaScript",
     "Blockly",
     "education",
-    "microbit"
+    "microbit",
+    "Adafruit",
+    "pxt",
+    "Microsoft",
+    "Microsoft MakeCode"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Microsoft/pxt.git"
   },
-  "author": "",
+  "author": "Microsoft Corporation",
   "license": "MIT",
   "homepage": "https://github.com/Microsoft/pxt#readme",
   "files": [
