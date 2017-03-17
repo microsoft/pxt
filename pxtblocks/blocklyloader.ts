@@ -511,7 +511,7 @@ namespace pxt.blocks {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
                             v.attributes.blockImage ? {
-                                src: pxt.webConfig.targetCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
+                                src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
                                 width: 32,
                                 height: 32
@@ -1897,6 +1897,8 @@ namespace pxt.blocks {
     function initTooltip(blockInfo: pxtc.BlocksInfo) {
 
         const renderTip = (el: any) => {
+            if (el.disabled)
+                return lf("This block is disabled and will not run. Attach this block to an event to enable it.")
             let tip = el.tooltip;
             while (goog.isFunction(tip)) {
                 tip = tip(el);
@@ -1920,7 +1922,7 @@ namespace pxt.blocks {
             if (card) {
                 const cardEl = pxt.docs.codeCard.render({
                     header: renderTip(Blockly.Tooltip.element_),
-                    typeScript: pxt.appTarget.appTheme.hideBlocklyJavascriptHint
+                    typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
                         ? undefined
                         : pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
                 })

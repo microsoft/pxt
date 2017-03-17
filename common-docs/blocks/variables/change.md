@@ -4,7 +4,7 @@ Set the value for local and global variables.
 
 ### ~ hint
 
-You can use the assignment operator with variables of each of the supported [types](/reference/types).
+You can use the assignment operator with variables of each of the supported [types](/types).
 
 ### ~
 

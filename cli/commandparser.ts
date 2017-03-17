@@ -107,6 +107,11 @@ export class CommandParser {
                 const flagName = command._aliasMap[match[2]];
 
                 if (!flagName) {
+                    if (match[2] == "debug" || match[2] == "d") {
+                        pxt.options.debug = true;
+                        pxt.debug = console.debug || console.log;
+                        continue;
+                    }
                     throw new Error(`Unrecognized flag '${match[2]}' for command '${command.name}'`)
                 }
 

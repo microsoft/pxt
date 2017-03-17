@@ -34,6 +34,13 @@
     * [Types](/javascript/types)
     * [Classes](/javascript/classes)
 
+## Types #types
+
+* [Types](/types)
+    * [Number](/types/number)
+    * [String](/types/string)
+    * [Boolean](/types/boolean)
+
 ## #other
 
 ## Miscellanous #misc
@@ -43,6 +50,7 @@
     * [Translate](/translate)
     * [Sharing projects](/share)
     * [Offline support](/offline)
+    * [Streaming](/streaming)
 
 ## Developers #devs
 
