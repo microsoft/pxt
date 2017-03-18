@@ -690,7 +690,7 @@ namespace ts.pxtc {
         thisParameter?: ParameterDeclaration; // a bit bogus
         usages?: TypeBinding[][];
         prePassUsagesEmitted?: number;
-        virtualRoot?: FunctionAddInfo;
+        virtualParent?: FunctionAddInfo;
         virtualInstances?: FunctionAddInfo[];
         virtualIndex?: number;
         isUsed?: boolean;
@@ -817,6 +817,7 @@ namespace ts.pxtc {
         reset();
         emit(rootFunction)
         layOutGlobals()
+        pruneMethodsAndRecompute()
         emitVTables()
 
         if (diagnostics.getModificationCount() == 0) {
@@ -1063,7 +1064,7 @@ namespace ts.pxtc {
 
                 for (let m of inf.methods) {
                     let minf = getFunctionInfo(m)
-                    if (minf.virtualRoot) {
+                    if (minf.virtualParent) {
                         let key = classFunctionKey(m)
                         let done = false
                         let proc = lookupProc(m, inf.bindings)
@@ -1161,6 +1162,53 @@ namespace ts.pxtc {
             return inf.vtable
         }
 
+        // this code determines if we will need a vtable entry
+        // by checking if we are overriding a method in a super class
+        function computeVtableInfo(info: ClassInfo) {
+            // walk up the inheritance chain to collect any methods
+            // we may be overriding in this class
+            let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
+            for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
+                for (let m of curr.methods) {
+                    nameMap[classFunctionKey(m)] = m
+                }
+            }
+            for (let m of info.methods) {
+                let prev = U.lookup(nameMap, classFunctionKey(m))
+                if (prev) {
+                    let minf = getFunctionInfo(m)
+                    let pinf = getFunctionInfo(prev)
+                    if (prev.parameters.length != m.parameters.length)
+                        error(m, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
+                    // pinf is just the parent (why not transitive?)
+                    minf.virtualParent = pinf
+                    if (!pinf.virtualParent)
+                        pinf.virtualParent = pinf
+                    assert(pinf.virtualParent == pinf)
+                    if (!pinf.virtualInstances)
+                        pinf.virtualInstances = []
+                    pinf.virtualInstances.push(minf)
+                }
+            }
+        }
+
+        function pruneMethodsAndRecompute() {
+            // reset the virtual info
+            for (let fi in functionInfo) {
+                functionInfo[fi].virtualParent = undefined
+                functionInfo[fi].virtualIndex = undefined
+                functionInfo[fi].virtualInstances = undefined
+            }
+            // remove methods that are not used
+            for (let ci in classInfos) {
+                classInfos[ci].methods = classInfos[ci].methods.filter((m) => getFunctionInfo(m).isUsed)
+            }
+            // recompute vtable info
+            for (let ci in classInfos) {
+                if (classInfos[ci].baseClassInfo)
+                    computeVtableInfo(classInfos[ci])
+            }
+        }
 
         function getClassInfo(t: Type, decl: ClassDeclaration = null, bindings: TypeBinding[] = null) {
             if (!decl)
@@ -1210,28 +1258,7 @@ namespace ts.pxtc {
                     if (info.baseClassInfo) {
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                         info.numRefFields = -1
-                        let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
-                        for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
-                            for (let m of curr.methods) {
-                                nameMap[classFunctionKey(m)] = m
-                            }
-                        }
-                        for (let m of info.methods) {
-                            let prev = U.lookup(nameMap, classFunctionKey(m))
-                            if (prev) {
-                                let minf = getFunctionInfo(m)
-                                let pinf = getFunctionInfo(prev)
-                                if (prev.parameters.length != m.parameters.length)
-                                    error(m, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
-                                minf.virtualRoot = pinf
-                                if (!pinf.virtualRoot)
-                                    pinf.virtualRoot = pinf
-                                assert(pinf.virtualRoot == pinf)
-                                if (!pinf.virtualInstances)
-                                    pinf.virtualInstances = []
-                                pinf.virtualInstances.push(minf)
-                            }
-                        }
+                        computeVtableInfo(info)
                     } else {
                         info.allfields = reffields.concat(primitivefields)
                         info.numRefFields = reffields.length
@@ -1556,6 +1583,7 @@ ${lbl}: .short 0xffff
         }
 
         function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+            getFunctionInfo(decl).isUsed = true
             if (!bindings || !bindings.length) markUsed(decl)
             else {
                 let info = getFunctionInfo(decl)
@@ -1804,7 +1832,10 @@ ${lbl}: .short 0xffff
                 } else
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
-                if (info.virtualRoot) info = info.virtualRoot
+                // if we call a method and it overrides then
+                // mark the virtual root class and all its overrides as used, 
+                // if their classes are used
+                if (info.virtualParent) info = info.virtualParent
                 if (!info.isUsed) {
                     info.isUsed = true
                     for (let vinst of info.virtualInstances || []) {
@@ -1812,7 +1843,7 @@ ${lbl}: .short 0xffff
                             markFunctionUsed(vinst.decl, bindings)
                     }
                 }
-                if (info.virtualRoot && !isSuper) {
+                if (info.virtualParent && !isSuper) {
                     assert(!bin.finalPass || info.virtualIndex != null)
                     return mkProcCallCore(null, info.virtualIndex, args.map(emitExpr))
                 }
@@ -1945,7 +1976,7 @@ ${lbl}: .short 0xffff
             bin.usedClassInfos.push(info)
             for (let m of info.methods) {
                 let minf = getFunctionInfo(m)
-                if (isIfaceMemberUsed(getName(m)) || (minf.virtualRoot && minf.virtualRoot.isUsed))
+                if (isIfaceMemberUsed(getName(m)) || (minf.virtualParent && minf.virtualParent.isUsed))
                     markFunctionUsed(m, info.bindings)
             }
 
@@ -2173,6 +2204,9 @@ ${lbl}: .short 0xffff
                 proc.emitClrs();
             }
 
+            // once we have emitted code for this function,
+            // we should emit code for all decls that are used
+            // as a result
             assert(!bin.finalPass || usedWorkList.length == 0)
             while (usedWorkList.length > 0) {
                 let f = usedWorkList.pop()
