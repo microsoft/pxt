@@ -1371,7 +1371,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const fullscreen = run && !simOpts.hideFullscreen;
-        const showMenuBar = !targetTheme.hideMenuBar;
+        const {
+            hideMenuBar,
+            hideEditorToolbar} = targetTheme;
         const cookieKey = "cookieconsent"
         const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
@@ -1395,14 +1397,15 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             inTutorial ? 'tutorial' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
-            showMenuBar ? '' : 'hideMenuBar',
+            hideMenuBar ? 'hideMenuBar' : '',
+            hideEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
             'full-abs'
         ]);
 
         return (
             <div id='root' className={rootClasses}>
-                {showMenuBar ?
+                {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                             {!sandbox ? <div className="left menu">
@@ -1460,7 +1463,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </a> : undefined }
                             </div>
                         </div>
-                    </div> : undefined}
+                    </div> }
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
@@ -1495,9 +1498,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
-                <div id="editortools" role="complementary">
+                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary">
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div>
+                </div> }
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}

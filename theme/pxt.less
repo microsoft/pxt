@@ -30,7 +30,7 @@ html, body {
     .hideMenuBar #maineditor,
     .hideMenuBar #sidedocs,
     .hideMenuBar #getting-started-btn {
-    top: 0;
+    top: 0 !important;
 }
 
 .full-abs {
@@ -50,6 +50,29 @@ html, body {
 .rtl #maineditor {
     left:0;
     right:@simulatorWidth;
+}
+
+/* Editor tools */
+#editortools {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    height: 5rem;
+    background-color: @editorToolsBackground;
+}
+
+#blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
+    bottom: 5rem;
+}
+
+.hideEditorToolbar #blocksArea,
+    .hideEditorToolbar #monacoEditor,
+    .hideEditorToolbar #pxtJsonEditor,
+    .hideEditorToolbar #filelist {
+    bottom: 0rem !important;
 }
 
 /* File list / Simulator layout */
@@ -300,21 +323,6 @@ div.simframe > iframe {
     -o-transition: background 1s; /* Opera */
     transition: background 1s;
     transition-timing-function: ease-in;
-}
-
-/* Editor tools */
-#editortools {
-    position: fixed;
-    top:auto;
-    bottom:0;
-    left: 0;
-    right:0;
-    z-index:3;
-    height: 5rem;
-    background-color: @editorToolsBackground;
-}
-#blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
-    bottom: 5rem !important;
 }
 
 /* Help card */
@@ -1090,19 +1098,19 @@ Avatar
         height: 10rem;
     }
     #blocksArea, #monacoEditor, #pxtJsonEditor, #msg {
-        bottom: 10rem !important;
+        bottom: 10rem;
     }
     #tutorialcard.bottom {
-        bottom: 11rem !important;
+        bottom: 11rem;
     }
     .hideEditorFloats #editortools {
-        height: 5rem !important;
+        height: 5rem;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
-        bottom: 5rem !important;
+        bottom: 5rem;
     }
     .hideEditorFloats #tutorialcard.bottom {
-        bottom: 5rem !important;
+        bottom: 5rem;
     }
     /* Simulator */
     div.simframe {
@@ -1199,10 +1207,10 @@ Avatar
         display: none !important;
     }
     .hideEditorFloats #editortools {
-        height: 5rem !important;
+        height: 5rem;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: 5rem !important;
+        bottom: 5rem;
     }
 }
 
