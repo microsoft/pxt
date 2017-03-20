@@ -121,7 +121,7 @@ export class Item extends data.Component<ItemProps, {}> {
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
-                title={this.props.title}
+                title={this.props.title || this.props.text}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}>
@@ -143,6 +143,7 @@ export class Button extends UiElement<ButtonProps> {
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.title}
+                aria-label={this.props.title || this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}

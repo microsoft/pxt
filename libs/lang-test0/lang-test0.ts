@@ -1107,6 +1107,14 @@ namespace ClassTest {
         }
     }
 
+    class E {
+        foo() {}
+    }
+
+    class F extends E {
+        foo() {}
+    }
+
     function testACall(a: A, v0: number, v1: number) {
         glb1 = 0
         a.foo()
@@ -1119,6 +1127,7 @@ namespace ClassTest {
 
     export function run() {
         msg("ClassTest.run")
+        let f = new F()
         testACall(new A(), 1, 42)
         testACall(new B(), 2, 108)
         testACall(new C(), 3, 42)
