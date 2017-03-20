@@ -180,7 +180,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 <div className="ui vertical segment">
                     <div className="ui search">
                         <div className="ui fluid action input" role="search">
-                            <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
+                            <input ref="searchInput" type="text" placeholder={lf("Search or enter project URL...") } onKeyUp={kupd} />
                             <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                                 <i className="search icon"></i>
                             </button>
