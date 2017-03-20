@@ -817,7 +817,7 @@ namespace ts.pxtc {
         reset();
         emit(rootFunction)
         layOutGlobals()
-        // TODO: recompute class info given tree shaking has taken place
+        pruneMethodsAndRecompute()
         emitVTables()
 
         if (diagnostics.getModificationCount() == 0) {
@@ -1168,8 +1168,6 @@ namespace ts.pxtc {
         // this code determines if we will need a vtable entry
         // by checking if we are overriding a method in a super class
         function computeVtableInfo(info: ClassInfo) {
-            // TODO: need to parameterize this by whether or not we've generated
-            // TODO: code for these methods
             // walk up the inheritance chain to collect any methods
             // we may be overriding in this class
             let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
@@ -1194,6 +1192,24 @@ namespace ts.pxtc {
                         pinf.virtualInstances = []
                     pinf.virtualInstances.push(minf)
                 }
+            }
+        }
+
+        function pruneMethodsAndRecompute() {
+            // reset the virtual info
+            for (let fi in functionInfo) {
+                functionInfo[fi].virtualParent = undefined
+                functionInfo[fi].virtualIndex = undefined
+                functionInfo[fi].virtualInstances = undefined
+            }
+            // remove methods that are not used
+            for (let ci in classInfos) {
+                classInfos[ci].methods = classInfos[ci].methods.filter((m) => getFunctionInfo(m).isUsed)
+            }
+            // recompute vtable info
+            for (let ci in classInfos) {
+                if (classInfos[ci].baseClassInfo)
+                    computeVtableInfo(classInfos[ci])
             }
         }
 
@@ -1570,6 +1586,7 @@ ${lbl}: .short 0xffff
         }
 
         function markFunctionUsed(decl: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+            getFunctionInfo(decl).isUsed = true
             if (!bindings || !bindings.length) markUsed(decl)
             else {
                 let info = getFunctionInfo(decl)
