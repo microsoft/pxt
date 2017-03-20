@@ -214,13 +214,6 @@ namespace pxsim {
         export function lsrs(x: number, y: number) { return x >>> y; }
         export function asrs(x: number, y: number) { return x >> y; }
 
-        export function cmp_lt(x: number, y: number) { return x < y; }
-        export function cmp_le(x: number, y: number) { return x <= y; }
-        export function cmp_ne(x: number, y: number) { return !cmp_eq(x, y); }
-        export function cmp_eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
-        export function cmp_gt(x: number, y: number) { return x > y; }
-        export function cmp_ge(x: number, y: number) { return x >= y; }
-
         export function ignore(v: any) { return v; }
     }
 

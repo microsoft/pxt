@@ -1,11 +1,28 @@
 namespace ts.pxtc {
-    // TODO: ARM specific code should be lifted out 
     const jsOpMap: pxt.Map<string> = {
         "numops::adds": "+",
         "numops::subs": "-",
         "numops::div": "/",
         "numops::mod": "%",
-        "numops::muls": "*"
+        "numops::muls": "*",
+        "numops::ands": "&",
+        "numops::orrs": "|",
+        "numops::eors": "^",
+        "numops::lsls": "<<",
+        "numops::asrs": ">>",
+        "numops::lsrs": ">>>",
+        "numops::le": "<=",
+        "numops::lt": "<",
+        "numops::ge": ">=",
+        "numops::gt": ">",
+        "numops::eq": "==",
+        "numops::eqq": "===",
+        "numops::neqq": "!==",
+        "numops::neq": "!=",
+        "langsupp::ptreq": "==",
+        "langsupp::ptreqq": "===",
+        "langsupp::ptrneqq": "!==",
+        "langsupp::ptrneq": "!=",
     }
 
     export function shimToJs(shimName: string) {

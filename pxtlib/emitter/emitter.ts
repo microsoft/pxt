@@ -2066,9 +2066,12 @@ ${lbl}: .short 0xffff
                     let ctorAttrs = parseComments(ctor)
                     addDefaultParameters(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map(emitExpr)
-                    if (ctorAttrs.shim)
+                    if (ctorAttrs.shim) {
+                        U.userError("shim=... on constructor not supported right now")
+                        // TODO need to deal with refMask and tagged ints here
                         // we drop 'obj' variable
                         return ir.rtcall(ctorAttrs.shim, compiled)
+                    }
                     compiled.unshift(ir.op(EK.Incr, [obj]))
                     proc.emitExpr(mkProcCall(ctor, compiled, []))
                     return obj
@@ -2871,7 +2874,7 @@ ${lbl}: .short 0xffff
             // in both cases unref is internal, so no mask
             if (typeOf(expr).flags & TypeFlags.String) {
                 return ir.rtcall("pxtrt::stringToBool", [inner])
-            } else if (isRefCountedExpr(expr)) {
+            } else if (opts.target.floatingPoint || isRefCountedExpr(expr)) {
                 return ir.rtcall("pxtrt::ptrToBool", [inner])
             } else {
                 return inner

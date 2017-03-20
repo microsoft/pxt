@@ -284,6 +284,17 @@ namespace pxsim {
         })
     }
 
+    export namespace langsupp {
+        export function toInt(v: number) { return (v | 0) } // TODO
+        export function toFloat(v: number) { return v }
+        export function toBoolean(v: any) {
+            if (v) return true
+            return false
+        }
+
+        export function ignore(v: any) { return v; }
+    }
+
     export namespace pxtcore {
         export var incr = pxsim.incr;
         export var decr = pxsim.decr;
