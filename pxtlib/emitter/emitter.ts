@@ -106,6 +106,9 @@ namespace ts.pxtc {
         return isRefType(tp)
     }
 
+    function toInt(e: ir.Expr): ir.Expr {
+        return e
+    }
 
     function getBitSize(decl: TypedDecl) {
         if (!decl || !decl.type) return BitSize.None
@@ -2509,7 +2512,7 @@ ${lbl}: .short 0xffff
                 case SK.LessThanLessThanToken: return "thumb::lsls";
                 case SK.GreaterThanGreaterThanToken: return "thumb::asrs"
                 case SK.GreaterThanGreaterThanGreaterThanToken: return "thumb::lsrs"
-                // these could be compiled to branches butthis is more code-size efficient
+                // these could be compiled to branches but this is more code-size efficient
                 case SK.LessThanEqualsToken: return "Number_::le";
                 case SK.LessThanToken: return "Number_::lt";
                 case SK.GreaterThanEqualsToken: return "Number_::ge";
