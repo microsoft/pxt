@@ -49,9 +49,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         if (scriptid) {
             let res = this.getData(`cloud-search:${scriptid}`)
             if (res) {
-                if (res.statusCode !== 404) {
+                if (res.statusCode !== 404)
                     this.prevUrlData = [res];
-                }
+                else this.prevUrlData = [];
             }
         }
         return this.prevUrlData;
