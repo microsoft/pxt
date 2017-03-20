@@ -53,6 +53,7 @@ namespace pxt.editor {
         showParts?: boolean;
         fullscreen?: boolean;
         mute?: boolean;
+        embedSimView?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -70,6 +71,7 @@ namespace pxt.editor {
 
         openBlocks(): void;
         openJavaScript(): void;
+        openPreviousEditor(): void;
 
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;
