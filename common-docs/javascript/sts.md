@@ -20,8 +20,8 @@ the [micro:bit](http://microbit.org), which has 16Kb of RAM.
 The best way to think of STS is as C#/Java/C++ subset of TypeScript where all types 
 are known at compile time, which permits efficient linking to a C++ runtime (in the
 case of the micro:bit, the [Lancaster University micro:bit DAL](https://github.com/lancaster-university/microbit-dal)).
-STS tries to maintain as much of JavaScript semantics as much as possible.
-Given this desire, we say... 
+STS tries to maintain as much of JavaScript semantics as much as possible, given the
+constraints imposed by a static typing discipline.
 
 # Goodbye to Any, Union, Intersection Types and the Bad Parts 
 
@@ -77,7 +77,6 @@ TypeScript elements not mentioned as included in STS in the previous sections ar
 for now (see later section for a list of these elements). 
 If we’ve left something out that obviously should be in STS, please let us know!
 
-
 # Type checking in STS
 
 Typescript's type system is very rich with a complex notion of type compatibility and substitutability.
@@ -124,13 +123,24 @@ where null and undefined is coerced to the number 0. This is OK for number, but 
 ## Object types
 
 In TypeScript, class and interface type references, array types, tuple types, and function types are all 
-classified as object types. In STS, classes, records (described by interfaces), arrays, tuples, and functions
+classified as object types, which are related by structural subtyping. 
+
+In STS, classes, records (described by interfaces), arrays, tuples, and functions
 are *separate types*, with the following type relationships:
 * classes and records are related by structural subtyping, as in TypeScript, with the 
-  restriction that classes can be treated as records (via a cast from class to interface), but not vice versa 
-  (casts from interfaces to classes are not permitted);
+  following additional restrictions:
+  * classes can be treated as records (via a cast from class to interface), but not vice versa  
+    (casts from interfaces to classes are not permitted);
+  * class-to-class casts can only be from subclass to superclass, as defined by the 
+    (transitive close of) the *extends* clause;
 * functions are related by classical function subtyping (no bivariance, as in TypeScript); 
 * function/method overloading is not permitted.
+
+STS' treatment of classes follows a nominal typing discipline, where one expects
+an object of class type to have the implementation associated with that class.
+In a pure structural subtyping discipline, one can define an object and then cast it to a
+class type, but that object's implementation can be completely unrelated to the implementation
+associated with the class.
 
 ### ~ hint
 TODO
