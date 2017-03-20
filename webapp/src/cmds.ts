@@ -58,6 +58,10 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const boardName = pxt.appTarget.appTheme.boardName || "???";
     const boardDriveName = pxt.appTarget.compile.driveName || "???";
 
+    // https://msdn.microsoft.com/en-us/library/cc848897.aspx
+    // "For security reasons, data URIs are restricted to downloaded resources. 
+    // Data URIs cannot be used for navigation, for scripting, or to populate frame or iframe elements"
+    const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     return core.confirmAsync({
         header: lf("Download completed..."),
@@ -66,18 +70,18 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
             boardDriveName, boardName),
         hideCancel: true,
         agreeLbl: lf("Done!"),
-        buttons: [{
+        buttons: [downloadAgain ? {
             label: lf("Download again"),
             icon: "download",
             class: "lightgrey",
             url,
             fileName: fn
-        }, !docUrl ? undefined : {
+        } : undefined, docUrl ? {
             label: lf("Help"),
             icon: "help",
             class: "lightgrey",
             url: docUrl
-        }],
+        } : undefined],
         timeout: 7000
     }).then(() => { });
 }
