@@ -90,7 +90,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const addUrl = (scr: pxt.Cloud.JsonScript) => {
             this.hide();
             let p = pkg.mainEditorPkg();
-            return p.addDepAsync(scr.name, scr.id)
+            return p.addDepAsync(scr.name, "pub:" + scr.id)
                 .then(() => this.props.parent.reloadHeaderAsync());
         }
         const addBundle = (scr: pxt.PackageConfig) => {
