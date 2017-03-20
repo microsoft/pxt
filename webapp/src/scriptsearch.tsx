@@ -53,6 +53,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     this.prevUrlData = [res];
                 else this.prevUrlData = [];
             }
+        } else {
+            this.prevUrlData = [];
         }
         return this.prevUrlData;
     }
