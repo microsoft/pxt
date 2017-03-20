@@ -349,7 +349,6 @@ namespace ts.pxtc {
         weight?: number;
         parts?: string;
         trackArgs?: number[];
-        argsFmt?: string;
         advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
@@ -1370,15 +1369,6 @@ ${lbl}: .short 0xffff
             }
         }
 
-        // int or double?
-        TODO
-        function mkSyntheticInt(v: number): LiteralExpression {
-            return <any>{
-                kind: SK.NumericLiteral,
-                text: v.toString()
-            }
-        }
-
         function emitLocalLoad(decl: VarOrParam) {
             if (isGlobalVar(decl)) {
                 let attrs = parseComments(decl)
@@ -1599,13 +1589,11 @@ ${lbl}: .short 0xffff
             let attrs: CommentAttrs = {
                 callingConvention: ir.CallingConvention.Plain,
                 paramDefl: {},
-                argsFmt: "_I"
             }
 
             let indexer: string = null
             if (!assign && t.flags & TypeFlags.String) {
                 indexer = "String_::charAt"
-                attrs.argsFmt = "_I:I"
             } else if (isArrayType(t))
                 indexer = assign ? "Array_::setAt" : "Array_::getAt"
             else if (isInterfaceType(t)) {
@@ -1614,7 +1602,7 @@ ${lbl}: .short 0xffff
             }
 
             if (indexer) {
-                if (typeOf(node.argumentExpression).flags & TypeFlags.NumberLike) {
+                if (isNumberLike(node.argumentExpression)) {
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, attrs, assign ? [assign] : [])
                 } else {
@@ -1700,14 +1688,18 @@ ${lbl}: .short 0xffff
         function emitShim(decl: Declaration, node: Node, args: Expression[]): ir.Expr {
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
-            let isNumber = !!(typeOf(node).flags & TypeFlags.NumberLike)
             let nm = attrs.shim
 
             if (nm.indexOf('(') >= 0) {
                 let parse = /(.*)\((\d+)\)$/.exec(nm)
                 if (parse) {
+                    if (args.length)
+                        U.userError("no arguments expected")
                     nm = parse[1]
-                    args.push(mkSyntheticInt(parseInt(parse[2])))
+                    if (opts.target.isNative) {
+                        hex.validateShim(getDeclName(decl), nm, attrs, true, [true])
+                    }
+                    return ir.rtcallMask(nm, 0, attrs.callingConvention, [ir.numlit(parseInt(parse[2]))])
                 }
             }
 
@@ -1722,7 +1714,7 @@ ${lbl}: .short 0xffff
             }
 
             if (opts.target.isNative) {
-                hex.validateShim(getDeclName(decl), nm, hasRet, args.length);
+                hex.validateShim(getDeclName(decl), nm, attrs, hasRet, args.map(isNumberLike))
             }
 
             return rtcallMask(nm, args, attrs)
@@ -2290,8 +2282,9 @@ ${lbl}: .short 0xffff
                 if (opts.target.isNative) {
                     hex.validateShim(getDeclName(node),
                         attrs.shim,
+                        attrs,
                         funcHasReturn(node),
-                        getParameters(node).length);
+                        getParameters(node).map(p => !!(typeOf(p).flags & TypeFlags.NumberLike)))
                 }
                 if (!hasShimDummy(node))
                     return
@@ -2546,30 +2539,39 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function isNumberLike(e: Expression) {
+            return !!(typeOf(e).flags & TypeFlags.NumberLike)
+        }
+
         function emitIntExpr(e: Expression) {
             let r = emitExpr(e)
-            if (typeOf(e).flags & TypeFlags.NumberLike)
+            if (isNumberLike(e))
                 return toInt(r)
             return r
         }
 
         function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: ir.Expr[] = null) {
-            let fmt = attrs.argsFmt || ""
+            let fmt = ""
+            let inf = hex.lookupFunc(name)
+            if (inf) fmt = inf.argsFmt
+
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
-                let f = fmt.charAt(i)
-                let isNumber = !!(typeOf(a).flags & TypeFlags.NumberLike)
+                if (!opts.target.taggedInts)
+                    return r
+                let f = fmt.charAt(i + 1)
+                let isNumber = isNumberLike(a)
                 if (!f) {
-                    if (isNumber) return toInt(r)
-                    else return r
+                    throw U.userError("not enough args for " + name)
                 } else if (f == "_" || f == "T") {
                     return r
                 } else if (f == "I") {
-                    U.assert(isNumber, "not a number in emit(I)")
+                    if (!isNumber)
+                        U.userError("argsFmt=...I... but argument not a number in " + name)
                     return toInt(r)
                 } else if (f == "F") {
-                    U.assert(isNumber, "not a number in emit(F)")
-                    U.assert(opts.target.floatingPoint)
+                    if (!isNumber)
+                        U.userError("argsFmt=...F... but argument not a number in " + name)
                     return ir.rtcallMask("langsupp::toFloat", getMask([a]),
                         ir.CallingConvention.Plain, [r])
                 } else {
@@ -2577,7 +2579,10 @@ ${lbl}: .short 0xffff
                 }
             })
             if (append) args2 = args2.concat(append)
-            return ir.rtcallMask(name, getMask(args), attrs.callingConvention, args2)
+            let r = ir.rtcallMask(name, getMask(args), attrs.callingConvention, args2)
+            if (fmt.charAt(0) == "I")
+                r = fromInt(r)
+            return r
         }
 
         function emitInJmpValue(expr: ir.Expr) {

@@ -602,7 +602,7 @@ ${baseLabel}:
         private emitCallRaw(name: string) {
             let inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
-            this.write(this.t.call_lbl(name) + " ; *" + inf.type + inf.args + " (raw)")
+            this.write(this.t.call_lbl(name) + " ; *" + inf.argsFmt + " (raw)")
         }
     }
 }

@@ -239,6 +239,35 @@ namespace pxt.cpp {
                 }
             }
 
+            function mapRunTimeType(tp: string) {
+                switch (tp.replace(/\s+/g, "")) {
+                    case "int32_t":
+                    case "uint32_t":
+                    case "unsigned":
+                    case "uint16_t":
+                    case "int16_t":
+                    case "short":
+                    case "uint8_t":
+                    case "byte":
+                    case "int8_t":
+                    case "sbyte":
+                    case "int":
+                        return "I";
+
+                    case "void": return "V";
+                    case "float": return "F";
+                    case "TNumber": return "T";
+                    case "bool": return "B";
+
+                    case "double":
+                        U.userError("double not supported yet")
+                        return "D"
+
+                    default:
+                        return "_";
+                }
+            }
+
             let outp = ""
             let inEnum = false
             let enumVal = 0
@@ -376,6 +405,7 @@ namespace pxt.cpp {
                     let funName = m[3]
                     let origArgs = m[4]
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
+                    let argsFmt = mapRunTimeType(retTp)
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
                         let m = /(.*)=\s*(-?\w+)$/.exec(s)
@@ -393,6 +423,8 @@ namespace pxt.cpp {
                         }
 
                         let argName = m[2]
+
+                        argsFmt += mapRunTimeType(m[1])
 
                         if (parsedAttrs.paramDefl[argName]) {
                             defl = parsedAttrs.paramDefl[argName]
@@ -414,8 +446,7 @@ namespace pxt.cpp {
                     let numArgs = args.length
                     let fi: pxtc.FuncInfo = {
                         name: currNs + "::" + funName,
-                        type: retTp == "void" ? "P" : "F",
-                        args: numArgs,
+                        argsFmt,
                         value: null
                     }
                     if (currDocComment) {

@@ -501,7 +501,8 @@ namespace ts.pxtc {
             oops();
         }
 
-        export function validateShim(funname: string, shimName: string, hasRet: boolean, numArgs: number) {
+        export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
+            hasRet: boolean, argIsNumber: boolean[]) {
             if (shimName == "TD_ID" || shimName == "TD_NOOP")
                 return
             if (U.lookup(asmLabels, shimName))
@@ -510,14 +511,24 @@ namespace ts.pxtc {
             let inf = lookupFunc(shimName)
             if (inf) {
                 if (!hasRet) {
-                    if (inf.type != "P")
+                    if (inf.argsFmt[0] != "V")
                         U.userError("expecting procedure for " + nm);
                 } else {
-                    if (inf.type != "F")
+                    if (inf.argsFmt[0] == "V")
                         U.userError("expecting function for " + nm);
                 }
-                if (numArgs != inf.args)
-                    U.userError("argument number mismatch: " + numArgs + " vs " + inf.args + " in C++")
+                for (let i = 0; i < argIsNumber.length; ++i) {
+                    let spec = inf.argsFmt[i + 1]
+                    if (!spec)
+                        U.userError("excessive parameters passed to " + nm)
+                    let needNum = spec == "I" || spec == "T" || spec == "F"
+                    if (needNum && !argIsNumber[i])
+                        U.userError("expecting number at parameter " + (i + 1) + " of " + nm)
+                    else if (!needNum && argIsNumber[i])
+                        U.userError("expecting non-number at parameter " + (i + 1) + " of " + nm)
+                }
+                if (argIsNumber.length != inf.argsFmt.length - 1)
+                    U.userError("not enough arguments for " + nm)
             } else {
                 U.userError("function not found: " + nm)
             }
@@ -680,7 +691,7 @@ ${lbl}: .string ${stringLiteral(s)}
 .balign 4
 ${lbl}: .short 0xffff, 0x0000
         .hex ${data}
-`)      
+`)
         }
     }
 
