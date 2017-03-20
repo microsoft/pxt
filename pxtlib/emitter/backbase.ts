@@ -77,7 +77,7 @@ namespace ts.pxtc {
 
     export class ProctoAssembler {
 
-        private t: AssemblerSnippets;
+        private t: ThumbSnippets; // TODO change back to AssemblerSnippets
         private bin: Binary;
         private resText = ""
         private exprStack: ir.Expr[] = []
@@ -426,7 +426,7 @@ ${baseLabel}:
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
 
-            if (name == "thumb::ignore")
+            if (name == "langsupp::ignore")
                 return
 
             if (U.startsWith(name, "thumb::")) {

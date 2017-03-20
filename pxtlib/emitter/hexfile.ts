@@ -672,6 +672,16 @@ ${lbl}meta: .short 0xffff, ${s.length}
 ${lbl}: .string ${stringLiteral(s)}
 `)
         }
+
+        for (let data of Object.keys(bin.doubles)) {
+            let lbl = bin.doubles[data]
+            // TODO add double vtable
+            bin.otherLiterals.push(`
+.balign 4
+${lbl}: .short 0xffff, 0x0000
+        .hex ${data}
+`)      
+        }
     }
 
     function vtableToAsm(info: ClassInfo) {

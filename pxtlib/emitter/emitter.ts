@@ -14,6 +14,42 @@ namespace ts.pxtc {
     export const BINARY_ASM = "binary.asm";
     export const BINARY_UF2 = "binary.uf2";
 
+    // in tagged mode, 
+    // * the lowest bit set means 31 bit signed integer
+    // * the lowest bit clear, and second lowest set means special constant
+    // NULL is represented by 0
+    export const taggedNull = 0
+    function taggedSpecialValue(n: number) { return (n << 2) | 2 }
+    export const taggedUndefined = taggedSpecialValue(1)
+    export const taggedFalse = taggedSpecialValue(2)
+    export const taggedTrue = taggedSpecialValue(3)
+    function fitsTaggedInt(vn: number) {
+        return (vn | 0) == vn && -1073741824 <= vn && vn <= 1073741823
+    }
+
+    export const thumbArithmeticInstr: Map<boolean> = {
+        "adds": true,
+        "subs": true,
+        "muls": true,
+        "ands": true,
+        "orrs": true,
+        "eors": true,
+        "lsls": true,
+        "asrs": true,
+        "lsrs": true,
+    }
+
+    export const numberArithmeticInstr: Map<boolean> = {
+        "div": true,
+        "mod": true,
+        "le": true,
+        "lt": true,
+        "ge": true,
+        "gt": true,
+        "eq": true,
+        "neq": true,
+    }
+
     let EK = ir.EK;
     export const SK = SyntaxKind;
 
@@ -106,7 +142,14 @@ namespace ts.pxtc {
         return isRefType(tp)
     }
 
+    // everything in numops:: operates on and returns tagged ints
+    // everything else (except as indicated with CommentAttrs), operates and returns regular ints
+
     function toInt(e: ir.Expr): ir.Expr {
+        return e
+    }
+
+    function fromInt(e: ir.Expr): ir.Expr {
         return e
     }
 
@@ -306,6 +349,7 @@ namespace ts.pxtc {
         weight?: number;
         parts?: string;
         trackArgs?: number[];
+        argsFmt?: string;
         advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
@@ -1326,6 +1370,8 @@ ${lbl}: .short 0xffff
             }
         }
 
+        // int or double?
+        TODO
         function mkSyntheticInt(v: number): LiteralExpression {
             return <any>{
                 kind: SK.NumericLiteral,
@@ -1369,7 +1415,7 @@ ${lbl}: .short 0xffff
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else {
                 if (node.text == "undefined")
-                    return ir.numlit(null)
+                    return emitLit(undefined)
                 else
                     throw unhandled(node, lf("Unknown or undeclared identifier"), 9235)
             }
@@ -1415,7 +1461,7 @@ ${lbl}: .short 0xffff
                             userError(9258, lf("Number is either too big or too small"))
                         }
                     }
-                    return ir.numlit(parsed)
+                    return emitLit(parsed)
                 }
             } else if (isStringLiteral(node)) {
                 return emitStringLiteral(node.text)
@@ -1425,6 +1471,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitTemplateExpression(node: TemplateExpression) {
+            // TODO use getMask() to avoid incr() on string literals
             let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
                 isEmptyStringLiteral(b) ? a :
                     ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
@@ -1517,7 +1564,7 @@ ${lbl}: .short 0xffff
                     ev = val + ""
                 }
                 if (/^[+-]?\d+$/.test(ev))
-                    return ir.numlit(parseInt(ev));
+                    return emitLit(parseInt(ev));
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
@@ -1549,20 +1596,27 @@ ${lbl}: .short 0xffff
         function emitIndexedAccess(node: ElementAccessExpression, assign: ir.Expr = null): ir.Expr {
             let t = typeOf(node.expression)
 
+            let attrs: CommentAttrs = {
+                callingConvention: ir.CallingConvention.Plain,
+                paramDefl: {},
+                argsFmt: "_I"
+            }
+
             let indexer: string = null
-            if (!assign && t.flags & TypeFlags.String)
+            if (!assign && t.flags & TypeFlags.String) {
                 indexer = "String_::charAt"
-            else if (isArrayType(t))
+                attrs.argsFmt = "_I:I"
+            } else if (isArrayType(t))
                 indexer = assign ? "Array_::setAt" : "Array_::getAt"
             else if (isInterfaceType(t)) {
-                let attrs = parseCommentsOnSymbol(t.symbol)
+                attrs = parseCommentsOnSymbol(t.symbol)
                 indexer = assign ? attrs.indexerSet : attrs.indexerGet
             }
 
             if (indexer) {
                 if (typeOf(node.argumentExpression).flags & TypeFlags.NumberLike) {
                     let args = [node.expression, node.argumentExpression]
-                    return rtcallMask(indexer, args, ir.CallingConvention.Plain, assign ? [assign] : [])
+                    return rtcallMask(indexer, args, attrs, assign ? [assign] : [])
                 } else {
                     throw unhandled(node, lf("non-numeric indexer on {0}", indexer), 9238)
                 }
@@ -1646,6 +1700,7 @@ ${lbl}: .short 0xffff
         function emitShim(decl: Declaration, node: Node, args: Expression[]): ir.Expr {
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
+            let isNumber = !!(typeOf(node).flags & TypeFlags.NumberLike)
             let nm = attrs.shim
 
             if (nm.indexOf('(') >= 0) {
@@ -1658,7 +1713,7 @@ ${lbl}: .short 0xffff
 
             if (nm == "TD_NOOP") {
                 assert(!hasRet)
-                return ir.numlit(0)
+                return emitLit(null)
             }
 
             if (nm == "TD_ID") {
@@ -1670,7 +1725,7 @@ ${lbl}: .short 0xffff
                 hex.validateShim(getDeclName(decl), nm, hasRet, args.length);
             }
 
-            return rtcallMask(nm, args, attrs.callingConvention)
+            return rtcallMask(nm, args, attrs)
         }
 
         function isNumericLiteral(node: Expression) {
@@ -1695,7 +1750,7 @@ ${lbl}: .short 0xffff
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
                             let defl = attrs.paramDefl[getName(prm)]
-                            args.push(irToNode(defl ? ir.numlit(parseInt(defl)) : null))
+                            args.push(irToNode(defl ? emitLit(parseInt(defl)) : null))
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
                                 userError(9212, lf("only numbers, null, true and false supported as default arguments"))
@@ -2297,11 +2352,11 @@ ${lbl}: .short 0xffff
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
-                        return emitIncrement(node.operand, "thumb::adds", false)
+                        return emitIncrement(node.operand, "numops::adds", false)
                     case SK.MinusMinusToken:
-                        return emitIncrement(node.operand, "thumb::subs", false)
+                        return emitIncrement(node.operand, "numops::subs", false)
                     case SK.MinusToken:
-                        return ir.rtcall("thumb::subs", [ir.numlit(0), emitExpr(node.operand)])
+                        return emitIntOp("numops::subs", emitLit(0), emitExpr(node.operand))
                     case SK.PlusToken:
                         return emitExpr(node.operand) // no-op
                     default:
@@ -2349,9 +2404,9 @@ ${lbl}: .short 0xffff
 
         function emitIncrement(trg: Expression, meth: string, isPost: boolean, one: Expression = null) {
             let cleanup = prepForAssignment(trg)
-            let oneExpr = one ? emitExpr(one) : ir.numlit(1)
+            let oneExpr = one ? emitExpr(one) : emitLit(1)
             let prev = ir.shared(emitExpr(trg))
-            let result = ir.shared(ir.rtcall(meth, [prev, oneExpr]))
+            let result = ir.shared(emitIntOp(meth, prev, oneExpr))
             emitStore(trg, irToNode(result))
             cleanup()
             return isPost ? prev : result
@@ -2363,9 +2418,9 @@ ${lbl}: .short 0xffff
             if (tp.flags & TypeFlags.Number) {
                 switch (node.operator) {
                     case SK.PlusPlusToken:
-                        return emitIncrement(node.operand, "thumb::adds", true)
+                        return emitIncrement(node.operand, "numops::adds", true)
                     case SK.MinusMinusToken:
-                        return emitIncrement(node.operand, "thumb::subs", true)
+                        return emitIncrement(node.operand, "numops::subs", true)
                     default:
                         break
                 }
@@ -2440,10 +2495,89 @@ ${lbl}: .short 0xffff
             return res
         }
 
-        function rtcallMask(name: string, args: Expression[], callingConv = ir.CallingConvention.Plain, append: ir.Expr[] = null) {
-            let args2 = args.map(emitExpr)
+        function mapIntOpName(n: string) {
+            if (!opts.target.floatingPoint) {
+                // legacy
+                if (U.startsWith(n, "numops::")) {
+                    let b = n.slice(8)
+                    if (U.lookup(thumbArithmeticInstr, b))
+                        return "thumb::" + b
+                    else
+                        return "Number_::" + b
+                }
+                switch (n) {
+                    case "langsupp::ptreq":
+                    case "langsupp::ptreqq":
+                        return "Number_::eq";
+                    case "langsupp::ptrneq":
+                    case "langsupp::ptrneqq":
+                        return "Number_::neq";
+                }
+            }
+
+            return n
+        }
+
+        function emitIntOp(op: string, left: ir.Expr, right: ir.Expr) {
+            op = mapIntOpName(op)
+            return ir.rtcallMask(op, opts.target.taggedInts ? 3 : 0,
+                ir.CallingConvention.Plain, [left, right])
+        }
+
+        function emitLit(v: number | boolean) {
+            if (opts.target.taggedInts) {
+                if (v === null) return ir.numlit(taggedNull)
+                else if (v === undefined) return ir.numlit(taggedUndefined)
+                else if (v === false) return ir.numlit(taggedFalse)
+                else if (v === true) return ir.numlit(taggedTrue)
+                else if (typeof v == "number") {
+                    if (fitsTaggedInt(v as number))
+                        return ir.numlit(((v as number) << 1) | 1)
+                    else {
+                        let lbl = bin.emitDouble(v as number)
+                        let ptr = ir.ptrlit(lbl, JSON.stringify(v))
+                        return ir.rtcall("pxt::ptrOfLiteral", [ptr])
+                    }
+                } else {
+                    throw U.oops("bad literal: " + v)
+                }
+            } else {
+                return ir.numlit(v)
+            }
+        }
+
+        function emitIntExpr(e: Expression) {
+            let r = emitExpr(e)
+            if (typeOf(e).flags & TypeFlags.NumberLike)
+                return toInt(r)
+            return r
+        }
+
+        function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: ir.Expr[] = null) {
+            let fmt = attrs.argsFmt || ""
+            let args2 = args.map((a, i) => {
+                let r = emitExpr(a)
+                let f = fmt.charAt(i)
+                let isNumber = !!(typeOf(a).flags & TypeFlags.NumberLike)
+                if (!f) {
+                    if (isNumber) return toInt(r)
+                    else return r
+                } else if (f == "_" || f == "T") {
+                    return r
+                } else if (f == "I") {
+                    U.assert(isNumber, "not a number in emit(I)")
+                    return toInt(r)
+                } else if (f == "F") {
+                    U.assert(isNumber, "not a number in emit(F)")
+                    U.assert(opts.target.floatingPoint)
+                    return ir.rtcallMask("langsupp::toFloat", getMask([a]),
+                        ir.CallingConvention.Plain, [r])
+                } else {
+                    throw U.oops("invalid format specifier: " + f)
+                }
+            })
             if (append) args2 = args2.concat(append)
-            return ir.rtcallMask(name, getMask(args), callingConv, args2)
+            return ir.rtcallMask(name, getMask(args), attrs.callingConvention, args2)
         }
 
         function emitInJmpValue(expr: ir.Expr) {
@@ -2471,7 +2605,7 @@ ${lbl}: .short 0xffff
                         proc.emitExpr(ir.op(EK.Decr, [left]))
                     else
                         // make sure we have reference and the stack is cleared
-                        proc.emitExpr(ir.rtcall("thumb::ignore", [left]))
+                        proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
                 } else {
                     if (isRefCountedExpr(node.left))
                         proc.emitExpr(ir.op(EK.Decr, [left]))
@@ -2534,29 +2668,27 @@ ${lbl}: .short 0xffff
 
         function simpleInstruction(k: SyntaxKind) {
             switch (k) {
-                case SK.PlusToken: return "thumb::adds";
-                case SK.MinusToken: return "thumb::subs";
+                case SK.PlusToken: return "numops::adds";
+                case SK.MinusToken: return "numops::subs";
                 // we could expose __aeabi_idiv directly...
-                case SK.SlashToken: return "Number_::div";
-                case SK.PercentToken: return "Number_::mod";
-                case SK.AsteriskToken: return "thumb::muls";
-                case SK.AmpersandToken: return "thumb::ands";
-                case SK.BarToken: return "thumb::orrs";
-                case SK.CaretToken: return "thumb::eors";
-                case SK.LessThanLessThanToken: return "thumb::lsls";
-                case SK.GreaterThanGreaterThanToken: return "thumb::asrs"
-                case SK.GreaterThanGreaterThanGreaterThanToken: return "thumb::lsrs"
+                case SK.SlashToken: return "numops::div";
+                case SK.PercentToken: return "numops::mod";
+                case SK.AsteriskToken: return "numops::muls";
+                case SK.AmpersandToken: return "numops::ands";
+                case SK.BarToken: return "numops::orrs";
+                case SK.CaretToken: return "numops::eors";
+                case SK.LessThanLessThanToken: return "numops::lsls";
+                case SK.GreaterThanGreaterThanToken: return "numops::asrs"
+                case SK.GreaterThanGreaterThanGreaterThanToken: return "numops::lsrs"
                 // these could be compiled to branches but this is more code-size efficient
-                case SK.LessThanEqualsToken: return "Number_::le";
-                case SK.LessThanToken: return "Number_::lt";
-                case SK.GreaterThanEqualsToken: return "Number_::ge";
-                case SK.GreaterThanToken: return "Number_::gt";
-                case SK.EqualsEqualsToken:
-                case SK.EqualsEqualsEqualsToken:
-                    return "Number_::eq";
-                case SK.ExclamationEqualsEqualsToken:
-                case SK.ExclamationEqualsToken:
-                    return "Number_::neq";
+                case SK.LessThanEqualsToken: return "numops::le";
+                case SK.LessThanToken: return "numops::lt";
+                case SK.GreaterThanEqualsToken: return "numops::ge";
+                case SK.GreaterThanToken: return "numops::gt";
+                case SK.EqualsEqualsToken: return "numops::eq";
+                case SK.EqualsEqualsEqualsToken: return "numops::eqq";
+                case SK.ExclamationEqualsEqualsToken: return "numops::neqq";
+                case SK.ExclamationEqualsToken: return "numops::neq";
 
                 default: return null;
             }
@@ -2577,7 +2709,11 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            let shim = (n: string) => rtcallMask(n, [node.left, node.right]);
+            let shim = (n: string) => {
+                n = mapIntOpName(n)
+                let args = [node.left, node.right]
+                return ir.rtcallMask(n, getMask(args), ir.CallingConvention.Plain, args.map(emitExpr))
+            }
 
             if (node.operatorToken.kind == SK.CommaToken) {
                 if (isNoopExpr(node.left))
@@ -2606,6 +2742,7 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusToken) {
                 if ((lt.flags & TypeFlags.String) || (rt.flags & TypeFlags.String)) {
+                    // TODO use getMask() to limit incr/decr
                     return ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
                         emitAsString(node.left),
                         emitAsString(node.right)])
@@ -2616,6 +2753,7 @@ ${lbl}: .short 0xffff
                 (lt.flags & TypeFlags.String)) {
 
                 let cleanup = prepForAssignment(node.left)
+                // TODO use getMask() to limit incr/decr
                 let post = ir.shared(ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
                     emitExpr(node.left),
                     emitAsString(node.right)]))
@@ -2637,7 +2775,7 @@ ${lbl}: .short 0xffff
                     case SK.ExclamationEqualsToken:
                         return ir.rtcall(
                             simpleInstruction(node.operatorToken.kind),
-                            [shim("String_::compare"), ir.numlit(0)])
+                            [fromInt(shim("String_::compare")), emitLit(0)])
                     default:
                         unhandled(node.operatorToken, lf("unknown string operator"), 9251)
                 }
@@ -2645,11 +2783,13 @@ ${lbl}: .short 0xffff
 
             switch (node.operatorToken.kind) {
                 case SK.EqualsEqualsToken:
+                    return shim("langsupp::ptreq");
                 case SK.EqualsEqualsEqualsToken:
-                    return shim("Number_::eq");
+                    return shim("langsupp::ptreqq");
                 case SK.ExclamationEqualsEqualsToken:
+                    return shim("langsupp::ptrneqq");
                 case SK.ExclamationEqualsToken:
-                    return shim("Number_::neq");
+                    return shim("langsupp::ptrneq");
                 default:
                     throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
             }
@@ -2662,7 +2802,7 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
             if (tp.flags & TypeFlags.NumberLike)
-                return ir.rtcall("Number_::toString", [r])
+                return ir.rtcall(mapIntOpName("numops::toString"), [r])
             else if (tp.flags & TypeFlags.Boolean)
                 return ir.rtcall("Boolean_::toString", [r])
             else if (tp.flags & TypeFlags.String)
@@ -2860,8 +3000,8 @@ ${lbl}: .short 0xffff
             //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it
             markUsed(declList.declarations[0])
             let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
-            //Start with null, TODO: Is this necessary
-            proc.emitExpr(iterVar.storeByRef(ir.numlit(0)))
+            //Start with undefined
+            proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
             proc.stackEmpty()
 
             // Store the expression (it could be a string literal, for example) for the collection being iterated over
@@ -2871,7 +3011,7 @@ ${lbl}: .short 0xffff
 
             // Declaration of iterating variable
             let intVarIter = proc.mkLocalUnnamed(); // i
-            proc.emitExpr(intVarIter.storeByRef(ir.numlit(0)))
+            proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
 
             emitBrk(node);
@@ -2882,7 +3022,9 @@ ${lbl}: .short 0xffff
             // i < a.length()
             // we use loadCore() on collection variable so that it doesn't get incr()ed
             // we could have used load() and rtcallMask to be more regular
-            proc.emitJmpZ(l.brk, ir.rtcall("Number_::lt", [intVarIter.load(), ir.rtcall(length, [collectionVar.loadCore()])]))
+            let len = ir.rtcall(length, [collectionVar.loadCore()])
+            let cmp = emitIntOp("numops::lt", intVarIter.load(), len)
+            proc.emitJmpZ(l.brk, toInt(cmp))
 
             // c = a[i]
             proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), intVarIter.load()])))
@@ -2891,12 +3033,13 @@ ${lbl}: .short 0xffff
             proc.emitLblDirect(l.cont);
 
             // i = i + 1
-            proc.emitExpr(intVarIter.storeByRef(ir.rtcall("thumb::adds", [intVarIter.load(), ir.numlit(1)])))
+            proc.emitExpr(intVarIter.storeByRef(
+                emitIntOp("numops::adds", intVarIter.load(), emitLit(1))))
 
             proc.emitJmp(l.fortop);
             proc.emitLblDirect(l.brk);
 
-            proc.emitExpr(collectionVar.storeByRef(ir.numlit(0))) // clear it, so it gets GCed
+            proc.emitExpr(collectionVar.storeByRef(emitLit(null))) // clear it, so it gets GCed
         }
 
         function emitForInOrForOfStatement(node: ForInStatement) { }
@@ -2939,7 +3082,7 @@ ${lbl}: .short 0xffff
             if (node.expression) {
                 v = emitExpr(node.expression)
             } else if (funcHasReturn(proc.action)) {
-                v = ir.numlit(null) // == return undefined
+                v = emitLit(undefined) // == return undefined
             }
             proc.emitJmp(getLabels(proc.action).ret, v, ir.JmpMode.Always)
         }
@@ -2974,21 +3117,21 @@ ${lbl}: .short 0xffff
                         expr = ir.op(EK.Incr, [expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
                     } else if (isRefCountedExpr(cc.expression)) {
-                        let cmpCall = ir.rtcallMask("Number_::eq", 3,
+                        let cmpCall = ir.rtcallMask(mapIntOpName("langsupp::ptreq"), 3,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
                         expr = ir.op(EK.Incr, [expr])
                         proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                     } else {
-                        if (cmpExpr.exprKind == EK.NumberLiteral) {
+                        // TODO re-enable this opt for small non-zero number literals
+                        if (!opts.target.taggedInts && cmpExpr.exprKind == EK.NumberLiteral) {
                             if (!quickCmpMode) {
                                 emitInJmpValue(expr)
                                 quickCmpMode = true
                             }
                             proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, plainExpr)
                         } else {
-                            let cmpCall = ir.rtcallMask("Number_::eq", 0,
-                                ir.CallingConvention.Plain, [cmpExpr, expr])
+                            let cmpCall = toInt(emitIntOp("numops::eq", cmpExpr, expr))
                             quickCmpMode = false
                             proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                         }
@@ -3153,7 +3296,7 @@ ${lbl}: .short 0xffff
                     return ir.op(EK.Incr, [node.cachedIR])
                 return node.cachedIR
             }
-            let res = catchErrors(node, emitExprInner) || ir.numlit(0)
+            let res = catchErrors(node, emitExprInner) || emitLit(undefined)
             if (node.needsIRCache) {
                 node.cachedIR = ir.shared(res)
                 return node.cachedIR
@@ -3244,11 +3387,11 @@ ${lbl}: .short 0xffff
                 case SK.NullKeyword:
                     let v = (node as any).valueOverride;
                     if (v) return v
-                    return ir.numlit(null);
+                    return emitLit(null);
                 case SK.TrueKeyword:
-                    return ir.numlit(true);
+                    return emitLit(true);
                 case SK.FalseKeyword:
-                    return ir.numlit(false);
+                    return emitLit(false);
                 case SK.TemplateHead:
                 case SK.TemplateMiddle:
                 case SK.TemplateTail:
@@ -3388,6 +3531,11 @@ ${lbl}: .short 0xffff
         return r;
     }
 
+    function doubleToBits(v: number) {
+        let a = new Float64Array(1)
+        a[0] = v
+        return U.toHex(new Uint8Array(a.buffer))
+    }
 
     export class Binary {
         procs: ir.Procedure[] = [];
@@ -3403,6 +3551,7 @@ ${lbl}: .short 0xffff
         checksumBlock: number[];
 
         strings: Map<string> = {};
+        doubles: Map<string> = {};
         otherLiterals: string[] = [];
         codeHelpers: Map<string> = {};
         lblNo = 0;
@@ -3420,12 +3569,21 @@ ${lbl}: .short 0xffff
             //proc.binary = this
         }
 
-        emitString(s: string): string {
-            if (this.strings.hasOwnProperty(s))
-                return this.strings[s]
-            let lbl = "_str" + this.lblNo++
-            this.strings[s] = lbl;
+        private emitLabelled(v: string, hash: Map<string>, lblpref: string) {
+            let r = U.lookup(hash, v)
+            if (r != null)
+                return r
+            let lbl = lblpref + this.lblNo++
+            hash[v] = lbl
             return lbl
+        }
+
+        emitDouble(v: number): string {
+            return this.emitLabelled(doubleToBits(v), this.doubles, "_dbl")
+        }
+
+        emitString(s: string): string {
+            return this.emitLabelled(s, this.strings, "_str")
         }
     }
 }
