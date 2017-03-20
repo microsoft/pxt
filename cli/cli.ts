@@ -218,24 +218,24 @@ function pkginfoAsync(repopath: string) {
     }
 
     const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
-        console.log(`name: ${cfg.name}`)
-        console.log(`description: ${cfg.description}`)
+        pxt.log(`name: ${cfg.name}`)
+        pxt.log(`description: ${cfg.description}`)
         if (pxt.appTarget.appTheme)
-            console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
+            pxt.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
     return pxt.packagesConfigAsync()
         .then(config => {
             const status = pxt.github.repoStatus(parsed, config);
-            console.log(`github org: ${parsed.owner}`);
-            if (parsed.tag) console.log(`github tag: ${parsed.tag}`);
-            console.log(`package status: ${status == pxt.github.GitRepoStatus.Approved ? "approved" : status == pxt.github.GitRepoStatus.Banned ? "banned" : "neutral"}`)
+            pxt.log(`github org: ${parsed.owner}`);
+            if (parsed.tag) pxt.log(`github tag: ${parsed.tag}`);
+            pxt.log(`package status: ${status == pxt.github.GitRepoStatus.Approved ? "approved" : status == pxt.github.GitRepoStatus.Banned ? "banned" : "neutral"}`)
             if (parsed.tag)
                 return pxt.github.downloadPackageAsync(repopath, config)
                     .then(pkg => {
                         let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
                         pkgInfo(cfg, parsed.tag)
-                        console.log(`size: ${JSON.stringify(pkg.files).length}`)
+                        pxt.debug(`size: ${JSON.stringify(pkg.files).length}`)
                     })
 
             return pxt.github.pkgConfigAsync(parsed.fullName)
@@ -243,11 +243,11 @@ function pkginfoAsync(repopath: string) {
                     pkgInfo(cfg)
                     return pxt.github.listRefsAsync(repopath)
                         .then(tags => {
-                            console.log("tags: " + tags.join(", "))
+                            pxt.log("tags: " + tags.join(", "))
                             return pxt.github.listRefsAsync(repopath, "heads")
                         })
                         .then(heads => {
-                            console.log("branches: " + heads.join(", "))
+                            pxt.log("branches: " + heads.join(", "))
                         })
                 })
         })
