@@ -119,7 +119,7 @@ namespace ts.pxtc {
             U.oops("unbound type parameter: " + checker.typeToString(t))
         }
         if (t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
-            return false
+            return target.taggedInts ? true : false
 
         let sym = t.getSymbol()
         if (sym) {
@@ -145,12 +145,19 @@ namespace ts.pxtc {
     // everything in numops:: operates on and returns tagged ints
     // everything else (except as indicated with CommentAttrs), operates and returns regular ints
 
-    function toInt(e: ir.Expr): ir.Expr {
-        return e
+    function fromInt(e: ir.Expr): ir.Expr {
+        if (!target.taggedInts) return e
+        return ir.rtcall("langsupp::fromInt", [e])
     }
 
-    function fromInt(e: ir.Expr): ir.Expr {
-        return e
+    function fromBool(e: ir.Expr): ir.Expr {
+        if (!target.taggedInts) return e
+        return ir.rtcall("langsupp::fromBool", [e])
+    }
+
+    function fromFloat(e: ir.Expr): ir.Expr {
+        if (!target.taggedInts) return e
+        return ir.rtcall("langsupp::fromFloat", [e])
     }
 
     function getBitSize(decl: TypedDecl) {
@@ -414,6 +421,7 @@ namespace ts.pxtc {
 
     let lf = assembler.lf;
     let checker: TypeChecker;
+    let target: CompileTarget;
     let lastSecondaryError: string
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
@@ -770,6 +778,7 @@ namespace ts.pxtc {
         host: CompilerHost,
         opts: CompileOptions,
         res: CompileResult): EmitResult {
+        target = opts.target
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let classInfos: pxt.Map<ClassInfo> = {}
@@ -1555,6 +1564,8 @@ ${lbl}: .short 0xffff
                 }
                 if (/^[+-]?\d+$/.test(ev))
                     return emitLit(parseInt(ev));
+                U.userError("enumval=shimanme not supported at the moment")
+                // TODO needs dealing with int conversions
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
@@ -2342,7 +2353,7 @@ ${lbl}: .short 0xffff
         function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
             let tp = typeOf(node.operand)
             if (node.operator == SK.ExclamationToken) {
-                return ir.rtcall("Boolean_::bang", [emitCondition(node.operand)])
+                return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
             }
 
             if (tp.flags & TypeFlags.Number) {
@@ -2498,6 +2509,10 @@ ${lbl}: .short 0xffff
                     let b = n.slice(8)
                     if (U.lookup(thumbArithmeticInstr, b))
                         return "thumb::" + b
+                    else if (b == "lt_bool")
+                        return "Number_::lt"
+                    else if (b == "eq_bool")
+                        return "Number_::eq"
                     else
                         return "Number_::" + b
                 }
@@ -2546,13 +2561,6 @@ ${lbl}: .short 0xffff
             return !!(typeOf(e).flags & TypeFlags.NumberLike)
         }
 
-        function emitIntExpr(e: Expression) {
-            let r = emitExpr(e)
-            if (isNumberLike(e))
-                return toInt(r)
-            return r
-        }
-
         function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: ir.Expr[] = null) {
             let fmt = ""
             let inf = hex.lookupFunc(name)
@@ -2571,7 +2579,10 @@ ${lbl}: .short 0xffff
                 } else if (f == "I") {
                     if (!isNumber)
                         U.userError("argsFmt=...I... but argument not a number in " + name)
-                    return toInt(r)
+                    return ir.rtcallMask("langsupp::toInt", getMask([a]),
+                        ir.CallingConvention.Plain, [r])
+                } else if (f == "B") {
+                    return emitCondition(a, r)
                 } else if (f == "F") {
                     if (!isNumber)
                         U.userError("argsFmt=...F... but argument not a number in " + name)
@@ -2583,8 +2594,14 @@ ${lbl}: .short 0xffff
             })
             if (append) args2 = args2.concat(append)
             let r = ir.rtcallMask(name, getMask(args), attrs.callingConvention, args2)
-            if (fmt.charAt(0) == "I")
-                r = fromInt(r)
+            if (opts.target.taggedInts) {
+                if (fmt.charAt(0) == "I")
+                    r = fromInt(r)
+                else if (fmt.charAt(0) == "B")
+                    r = fromBool(r)
+                else if (fmt.charAt(0) == "F")
+                    r = fromFloat(r)
+            }
             return r
         }
 
@@ -2595,32 +2612,56 @@ ${lbl}: .short 0xffff
         }
 
         function emitLazyBinaryExpression(node: BinaryExpression) {
-            let lbl = proc.mkLabel("lazy")
             let left = emitExpr(node.left)
             let isString = typeOf(node.left).flags & TypeFlags.String
-            if (node.operatorToken.kind == SK.BarBarToken) {
-                if (isString)
-                    left = ir.rtcall("pxtrt::emptyToNull", [left])
-                proc.emitJmp(lbl, left, ir.JmpMode.IfNotZero)
-            } else if (node.operatorToken.kind == SK.AmpersandAmpersandToken) {
+            let lbl = proc.mkLabel("lazy")
+
+            if (opts.target.floatingPoint) {
                 left = ir.shared(left)
-                if (isString) {
-                    let slbl = proc.mkLabel("lazyStr")
-                    proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
-                    proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
-                    proc.emitLbl(slbl)
-                    if (isRefCountedExpr(node.left))
-                        proc.emitExpr(ir.op(EK.Decr, [left]))
-                    else
-                        // make sure we have reference and the stack is cleared
-                        proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
-                } else {
-                    if (isRefCountedExpr(node.left))
-                        proc.emitExpr(ir.op(EK.Decr, [left]))
-                    proc.emitJmpZ(lbl, left)
-                }
+                let convCall = isString ? "langsupp::stringToBool" : "numops::toBool"
+                let cond = ir.rtcall(convCall, [left])
+                let lblSkip = proc.mkLabel("lazySkip")
+                let mode: ir.JmpMode =
+                    node.operatorToken.kind == SK.BarBarToken ? ir.JmpMode.IfZero :
+                        node.operatorToken.kind == SK.AmpersandAmpersandToken ? ir.JmpMode.IfNotZero :
+                            U.oops() as any
+
+                proc.emitJmp(lblSkip, cond, mode)
+                proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
+                proc.emitLbl(lblSkip)
+                if (isRefCountedExpr(node.left))
+                    proc.emitExpr(ir.op(EK.Decr, [left]))
+                else
+                    // make sure we have reference and the stack is cleared
+                    proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
+                proc.emitJmp(lbl, emitExpr(node.right))
+                proc.emitLbl(lbl)
+
             } else {
-                oops()
+                if (node.operatorToken.kind == SK.BarBarToken) {
+                    if (isString)
+                        left = ir.rtcall("pxtrt::emptyToNull", [left])
+                    proc.emitJmp(lbl, left, ir.JmpMode.IfNotZero)
+                } else if (node.operatorToken.kind == SK.AmpersandAmpersandToken) {
+                    left = ir.shared(left)
+                    if (isString) {
+                        let slbl = proc.mkLabel("lazyStr")
+                        proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
+                        proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
+                        proc.emitLbl(slbl)
+                        if (isRefCountedExpr(node.left))
+                            proc.emitExpr(ir.op(EK.Decr, [left]))
+                        else
+                            // make sure we have reference and the stack is cleared
+                            proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
+                    } else {
+                        if (isRefCountedExpr(node.left))
+                            proc.emitExpr(ir.op(EK.Decr, [left]))
+                        proc.emitJmpZ(lbl, left)
+                    }
+                } else {
+                    oops()
+                }
             }
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
@@ -2809,10 +2850,8 @@ ${lbl}: .short 0xffff
             if (isStringLiteral(e))
                 return r;
             let tp = typeOf(e)
-            if (tp.flags & TypeFlags.NumberLike)
+            if (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
                 return ir.rtcall(mapIntOpName("numops::toString"), [r])
-            else if (tp.flags & TypeFlags.Boolean)
-                return ir.rtcall("Boolean_::toString", [r])
             else if (tp.flags & TypeFlags.String)
                 return r // OK
             else {
@@ -2869,15 +2908,24 @@ ${lbl}: .short 0xffff
         function emitExpressionStatement(node: ExpressionStatement) {
             emitExprAsStmt(node.expression)
         }
-        function emitCondition(expr: Expression) {
-            let inner = emitExpr(expr)
-            // in both cases unref is internal, so no mask
-            if (typeOf(expr).flags & TypeFlags.String) {
-                return ir.rtcall("pxtrt::stringToBool", [inner])
-            } else if (opts.target.floatingPoint || isRefCountedExpr(expr)) {
-                return ir.rtcall("pxtrt::ptrToBool", [inner])
+        function emitCondition(expr: Expression, inner: ir.Expr = null) {
+            if (!inner)
+                inner = emitExpr(expr)
+            // in all cases decr is internal, so no mask
+            if (opts.target.floatingPoint) {
+                if (typeOf(expr).flags & TypeFlags.String) {
+                    return ir.rtcall("langsupp::stringToBoolDecr", [inner])
+                } else {
+                    return ir.rtcall("numops::toBoolDecr", [inner])
+                }
             } else {
-                return inner
+                if (typeOf(expr).flags & TypeFlags.String) {
+                    return ir.rtcall("pxtrt::stringToBool", [inner])
+                } else if (isRefCountedExpr(expr)) {
+                    return ir.rtcall("pxtrt::ptrToBool", [inner])
+                } else {
+                    return inner
+                }
             }
         }
         function emitIfStatement(node: IfStatement) {
@@ -3031,8 +3079,8 @@ ${lbl}: .short 0xffff
             // we use loadCore() on collection variable so that it doesn't get incr()ed
             // we could have used load() and rtcallMask to be more regular
             let len = ir.rtcall(length, [collectionVar.loadCore()])
-            let cmp = emitIntOp("numops::lt", intVarIter.load(), len)
-            proc.emitJmpZ(l.brk, toInt(cmp))
+            let cmp = emitIntOp("numops::lt_bool", intVarIter.load(), len)
+            proc.emitJmpZ(l.brk, cmp)
 
             // c = a[i]
             proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), intVarIter.load()])))
@@ -3139,7 +3187,7 @@ ${lbl}: .short 0xffff
                             }
                             proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, plainExpr)
                         } else {
-                            let cmpCall = toInt(emitIntOp("numops::eq", cmpExpr, expr))
+                            let cmpCall = emitIntOp("numops::eq_bool", cmpExpr, expr)
                             quickCmpMode = false
                             proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                         }

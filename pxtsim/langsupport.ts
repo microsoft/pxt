@@ -223,6 +223,8 @@ namespace pxsim {
             // OK (null)
         } else if (typeof v == "function") {
             // OK (function literal)
+        } else if (typeof v == "number") {
+            // OK (number)
         } else {
             throw new Error("bad decr")
         }
@@ -284,12 +286,31 @@ namespace pxsim {
         })
     }
 
+    export namespace numops {
+        export function toString(v: any) {
+            if (v === null) return "null"
+            else if (v === undefined) return "undefined"
+            return v.toString()
+        }
+        export function toBoolDecr(v: any) {
+            decr(v)
+            return !!v
+        }
+        export function toBool(v: any) {
+            decr(v)
+            return !!v
+        }
+    }
+
     export namespace langsupp {
         export function toInt(v: number) { return (v | 0) } // TODO
         export function toFloat(v: number) { return v }
-        export function toBoolean(v: any) {
-            if (v) return true
-            return false
+        export function stringToBoolDecr(v: string) {
+            decr(v)
+            return !!v
+        }
+        export function stringToBool(v: string) {
+            return !!v
         }
 
         export function ignore(v: any) { return v; }
