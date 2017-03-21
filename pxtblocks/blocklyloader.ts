@@ -626,7 +626,19 @@ namespace pxt.blocks {
             e.parentNode.removeChild(e);
     }
 
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+    export interface BlockFilters {
+        namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        defaultState?: FilterState; // hide, show or disable all by default
+    }
+
+    export enum FilterState {
+        Hidden = 0,
+        Visible = 1,
+        Disabled = 2
+    }
+
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: BlockFilters): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -760,30 +772,51 @@ namespace pxt.blocks {
         }
 
         // Filter the blocks
-        if (blockSubset) {
-            let keepcategories: { [index: string]: number } = {};
-            let categories = tb.querySelectorAll("category");
-            let blocks = tb.querySelectorAll("block");
-            for (let bi = 0; bi < blocks.length; ++bi) {
-                let blk = blocks.item(bi);
-                let type = blk.getAttribute("type");
-                let catName = (blk.parentNode as Element).getAttribute("name");
-                let sticky = blk.getAttribute("sticky");
-                if (!blockSubset[type] && !sticky) {
-                    blk.parentNode.removeChild(blk);
-                } else {
-                    keepcategories[catName] = 1;
-                    if (type.indexOf("variables") == 0) {
-                        keepcategories["Variables"] = 1;
+        if (filters) {
+            function filterBlocks(blocks: any, defaultState?: number) {
+                let hasChild: boolean = false;
+                for (let bi = 0; bi < blocks.length; ++bi) {
+                    let blk = blocks.item(bi);
+                    let type = blk.getAttribute("type");
+                    let blockState = filters.blocks && filters.blocks[type] != undefined ? filters.blocks[type] : (defaultState != undefined ? defaultState : filters.defaultState);
+                    switch (blockState) {
+                        case FilterState.Hidden:
+                            blk.parentNode.removeChild(blk); break;
+                        case FilterState.Disabled:
+                            blk.setAttribute("disabled", "true");
+                        case FilterState.Visible:
+                            hasChild = true; break;
                     }
                 }
+                return hasChild;
             }
+
             if (showCategories) {
+                // Go through namespaces and keep the ones with an override
+                let categories = tb.querySelectorAll("xml > category");
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
-                    let catName = cat.getAttribute("name");
-                    if (!keepcategories[catName] && catName != Util.lf("{id:category}Advanced")) {
+                    let catName = cat.getAttribute("nameid");
+                    let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
+                    let blocks = cat.querySelectorAll(`block`);
+                    // Hide the category entirely if there are no blocks shown
+                    if (!filterBlocks(blocks, categoryState)) {
                         cat.parentNode.removeChild(cat);
+                    }
+                }
+            } else {
+                let blocks = tb.querySelectorAll(`block`);
+                filterBlocks(blocks);
+            }
+
+            if (showCategories) {
+                // Go through all categories, hide the ones that have no blocks inside
+                let categories = tb.querySelectorAll("category");
+                for (let ci = 0; ci < categories.length; ++ci) {
+                    let cat = categories.item(ci);
+                    let blockCount = cat.querySelectorAll(`block`);
+                    if (blockCount.length == 0) {
+                        if (cat.parentNode) cat.parentNode.removeChild(cat);
                     }
                 }
             }
@@ -803,11 +836,11 @@ namespace pxt.blocks {
         return tb;
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: BlockFilters): Element {
         init();
         initTooltip(blockInfo);
 
-        let tb = createToolbox(blockInfo, toolbox, showCategories, blockSubset);
+        let tb = createToolbox(blockInfo, toolbox, showCategories, filters);
 
         // add trash icon to toolbox
         if (!$('#blocklyTrashIcon').length) {
