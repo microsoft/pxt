@@ -17,10 +17,10 @@ namespace ts.pxtc {
     // in tagged mode, 
     // * the lowest bit set means 31 bit signed integer
     // * the lowest bit clear, and second lowest set means special constant
-    // NULL is represented by 0
-    export const taggedNull = 0
+    // "undefined" is represented by 0
     function taggedSpecialValue(n: number) { return (n << 2) | 2 }
-    export const taggedUndefined = taggedSpecialValue(1)
+    export const taggedUndefined = 0
+    export const taggedNull = taggedSpecialValue(1)
     export const taggedFalse = taggedSpecialValue(2)
     export const taggedTrue = taggedSpecialValue(16)
     function fitsTaggedInt(vn: number) {
