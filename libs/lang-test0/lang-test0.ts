@@ -1043,8 +1043,23 @@ function testLazyRef() {
     control.assert(qq == null, "&r")
 }
 
+function testNullJS() {
+    let x: number
+    control.assert(x === undefined, "undef0")
+    control.assert(x == null, "null0")
+    x = null
+    control.assert(x === null, "null1")
+    control.assert(x == undefined, "undef1")
+    x = 0
+    control.assert(x != null, "null2")
+}
+
 function testNull() {
     msg("testNull")
+    if (hasFloat) {
+        testNullJS()
+        return
+    }
     let x = 0
     let y = 0
     x = null

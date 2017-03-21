@@ -304,7 +304,6 @@ namespace pxsim {
             return !!v
         }
         export function toBool(v: any) {
-            decr(v)
             return !!v
         }
     }

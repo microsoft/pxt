@@ -96,7 +96,7 @@ switch (step) {
         //console.log("OPT", proc.toString())
 
         proc.locals.forEach(l => {
-            write(`${locref(l)} = 0;`)
+            write(`${locref(l)} = ${target.floatingPoint ? "undefined" : "0"};`)
         })
 
         if (proc.args.length) {
