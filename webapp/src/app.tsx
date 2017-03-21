@@ -719,9 +719,9 @@ export class ProjectView
         } else core.warningNotification(lf("Oops, don't know how to load this file!"));
     }
 
-    importProjectAsync(project: pxt.workspace.Project): Promise<void> {
+    importProjectAsync(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void> {
         return workspace.installAsync(project.header, project.text)
-            .then(hd => this.loadHeaderAsync(hd));
+            .then(hd => this.loadHeaderAsync(hd, filters));
     }
 
     initDragAndDrop() {

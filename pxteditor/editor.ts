@@ -95,7 +95,7 @@ namespace pxt.editor {
         saveFileAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
-        importProjectAsync(prj: pxt.workspace.Project): Promise<void>;
+        importProjectAsync(prj: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void>;
 
         exportAsync(): Promise<string>;
 

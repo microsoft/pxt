@@ -98,6 +98,8 @@ namespace pxt.editor {
         action: "importproject";
         // project to load
         project: pxt.workspace.Project;
+        // (optional) filtering argument
+        filters?: pxt.editor.ProjectFilters;
     }
 
     const pendingRequests: pxt.Map<{
@@ -157,7 +159,7 @@ namespace pxt.editor {
                     }
                     case "importproject": {
                         const load = data as EditorMessageImportProjectRequest;
-                        p = p.then(() => projectView.importProjectAsync(load.project));
+                        p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
                     }
                     case "proxytosim": {
                         const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
