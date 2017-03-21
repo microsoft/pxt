@@ -2397,8 +2397,11 @@ function runCoreAsync(res: pxtc.CompileResult) {
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
         let r = new pxsim.Runtime(f)
         pxsim.Runtime.messagePosted = (msg) => {
-            if (msg.type == "serial")
-                console.log("SERIAL:", (msg as any).data)
+            if (msg.type == "serial") {
+                let d = (msg as any).data
+                if (typeof d == "string") d = d.replace(/\n$/, "")
+                console.log("SERIAL:", d)
+            }
         }
         r.errorHandler = (e) => {
             throw e;
