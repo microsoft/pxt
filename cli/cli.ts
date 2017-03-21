@@ -3532,6 +3532,11 @@ export function runAsync() {
         .then((compileOpts) => { });
 }
 
+function runFloatAsync() {
+    pxt.appTarget.compile.floatingPoint = true
+    return runAsync()
+}
+
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
         .then((compileOpts) => { });
@@ -4023,6 +4028,7 @@ function initCommands() {
 
     simpleCmd("deploy", "build and deploy current package", deployAsync, undefined, true);
     simpleCmd("run", "build and run current package in the simulator", runAsync);
+    advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");

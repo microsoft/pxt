@@ -27,7 +27,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testlangfloat', 'testdecompiler'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -50,6 +50,10 @@ task('testerr', ['built/pxt.js'], { async: true }, function () {
 
 task('testlang', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js run')
+})
+
+task('testlangfloat', ['built/pxt.js'], { async: true }, function () {
+    cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js runfloat')
 })
 
 task('testdecompiler', ['built/pxt.js'], { async: true }, function () {
