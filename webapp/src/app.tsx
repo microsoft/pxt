@@ -502,7 +502,7 @@ export class ProjectView
                     case 'steploaded':
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
-                        this.editor.filterToolbox(tt.data, showCategories, false);
+                        this.editor.filterToolbox({blocks: tt.data, defaultState: pxt.editor.FilterState.Hidden}, showCategories);
                         this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
                         tutorial.TutorialContent.refresh();
                         core.hideLoading();
@@ -513,10 +513,10 @@ export class ProjectView
     }
 
     reloadHeaderAsync() {
-        return this.loadHeaderAsync(this.state.header)
+        return this.loadHeaderAsync(this.state.header, this.state.filters)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, filters?: pxt.editor.ProjectFilters): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -525,7 +525,8 @@ export class ProjectView
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         this.setState({
-            showFiles: false
+            showFiles: false,
+            filters: filters
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -553,7 +554,7 @@ export class ProjectView
                     sideDocsLoadUrl: ''
                 })
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
-                    this.loadHeaderAsync(h).done()
+                    this.loadHeaderAsync(h, this.state.filters).done()
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
@@ -684,7 +685,7 @@ export class ProjectView
             const files = JSON.parse(data.source) as pxt.Map<string>;
             // we cannot load the workspace until we've loaded the project
             workspace.installAsync(h, files)
-                .done(hd => this.loadHeaderAsync(hd));
+                .done(hd => this.loadHeaderAsync(hd, null));
             return;
         }
 
@@ -822,7 +823,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd))
+        }, files).then(hd => this.loadHeaderAsync(hd, options.filters))
     }
 
     switchTypeScript() {
@@ -1326,7 +1327,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.loadHeaderAsync(workspace.getHeaders()[0]);
+                    this.loadHeaderAsync(workspace.getHeaders()[0], null);
                 } else {
                     this.newProject();
                 }
@@ -1829,9 +1830,9 @@ function loadHeaderBySharedId(id: string) {
         .filter(h => h.pubCurrent && h.pubId == id)[0]
     core.showLoading(lf("loading project..."));
     (existing
-        ? theEditor.loadHeaderAsync(existing)
+        ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
-            .then(hd => theEditor.loadHeaderAsync(hd)))
+            .then(hd => theEditor.loadHeaderAsync(hd, null)))
         .finally(() => core.hideLoading());
 }
 
@@ -1913,7 +1914,7 @@ $(document).ready(() => {
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
             let hd = workspace.getHeaders()[0]
             if (ent) hd = workspace.getHeader(ent.id)
-            if (hd) return theEditor.loadHeaderAsync(hd)
+            if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();
         }).then(() => workspace.importLegacyScriptsAsync())

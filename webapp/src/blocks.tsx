@@ -26,9 +26,9 @@ export class Editor extends srceditor.Editor {
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
-    blockSubset: { [index: string]: number };
     showToolboxCategories: boolean = true;
     cachedToolbox: string;
+    filters: pxt.editor.ProjectFilters;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -77,7 +77,7 @@ export class Editor extends srceditor.Editor {
                     let showCategories = this.showToolboxCategories;
                     let showSearch = true;
                     let toolbox = this.getDefaultToolbox(showCategories);
-                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.blockSubset);
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.filters);
                     this.updateToolbox(tb, showCategories);
                     if (showCategories && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
@@ -480,6 +480,11 @@ export class Editor extends srceditor.Editor {
         if (this.currFile && this.currFile != file) {
             this.filterToolbox(null);
         }
+        if (this.parent.state.filters) {
+            this.filterToolbox(this.parent.state.filters);
+        } else {
+            this.filters = null;
+        }
         this.currFile = file;
         return Promise.resolve();
     }
@@ -567,8 +572,8 @@ export class Editor extends srceditor.Editor {
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
 
-    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true): Element {
-        this.blockSubset = blockSubset;
+    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories: boolean = true): Element {
+        this.filters = filters;
         this.showToolboxCategories = showCategories;
         return this.refreshToolbox();
     }
@@ -577,7 +582,7 @@ export class Editor extends srceditor.Editor {
         if (!this.blockInfo) return undefined;
 
         let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
-        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.blockSubset);
+        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
         this.updateToolbox(tb, this.showToolboxCategories);
 
         pxt.blocks.cachedSearchTb = tb;
