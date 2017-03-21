@@ -31,11 +31,7 @@ Here's how to define a variable in the Block Editor:
 
 3. Drag a block type on the right-side of the [assignment operator](/blocks/variables/assign) and click the down arrow to change the variable name.
 
-A variable is created for the number returned by the [brightness](/reference/led/brightness) function.
-
-```block
-let b = led.brightness();
-```
+### #letexample
 
 ### Using variables
 
