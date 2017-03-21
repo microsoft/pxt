@@ -33,44 +33,26 @@ Here's how to define a variable in the Block Editor:
 
 ### #letexample
 
-### Using variables
+### Reading variable values
 
-Once you've defined a variable, just use the variable's name whenever you need what's stored in the variable. For example, the following code shows the value stored in `counter` on the LED screen:
+Once you've defined a variable, just use the variable's name whenever you need what's stored in the variable. 
 
-```blocks
-let counter = 1;
-basic.showNumber(counter);
-```
+#### #readvariableexample
 
-To change the contents of a variable use the assignment operator. The following code sets `counter` to 1 and then increments `counter` by 10:
+### Updating variable values
 
-```block
-let counter = 1;
-counter = counter + 10;
-basic.showNumber(counter);
-```
+To change the contents of a variable use the assignment operator. 
+
+#### #updatevariableexample
 
 ### Why use variables?
 
 If you want to remember and modify data, you'll need a variable. 
-A counter is a great example:
 
-```block
-let counter = 0;
-input.onButtonPressed(Button.A, () => { 
-  counter = counter + 1;
-  basic.showNumber(counter);
-});
-```
+#### #whyusevariablesexample
 
 ### Local variables
 
-Local variables exist only within the function or block of code where they're defined. For example:
+Local variables exist only within the function or block of code where they're defined.
 
-```block
-// x does NOT exist here.
-if (led.brightness() > 128) {
-  // x exists here
-  let x = 0;
-}
-```
+#### #localvariableexample
