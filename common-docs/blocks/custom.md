@@ -12,9 +12,12 @@ In a nutshell, any exported JavaScript function can be turned into a block by ad
 
 ```typescript
 namespace fun {
+    /**
+    * Computes the famous Fibonacci number sequence!
+    */
     //% block
-    exported function fib(value: number): number {
-        return value <= 1 ? value : fib(value - 1) : fib(value - 2);
+    export function fib(value: number): number {
+        return value <= 1 ? value : fib(value - 1) + fib(value - 2);
     }
 }
 ```
