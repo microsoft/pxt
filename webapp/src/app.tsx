@@ -718,6 +718,11 @@ export class ProjectView
         } else core.warningNotification(lf("Oops, don't know how to load this file!"));
     }
 
+    importProjectAsync(project: pxt.workspace.Project): Promise<void> {
+        return workspace.installAsync(project.header, project.text)
+            .then(hd => this.loadHeaderAsync(hd));
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && isHexFile(file.name) || isBlocksFile(file.name),

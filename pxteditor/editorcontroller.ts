@@ -37,6 +37,7 @@ namespace pxt.editor {
         | "hidesimulator"
         | "showsimulator"
         | "newproject"
+        | "importproject"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
@@ -90,6 +91,12 @@ namespace pxt.editor {
         /*
         * Modified project
         */
+        project: pxt.workspace.Project;
+    }
+
+    export interface EditorMessageImportProjectRequest extends EditorMessageRequest {
+        action: "importproject";
+        // project to load
         project: pxt.workspace.Project;
     }
 
@@ -147,6 +154,10 @@ namespace pxt.editor {
                     case "newproject": {
                         const create = data as EditorMessageNewProjectRequest;
                         p = p.then(() => projectView.newProject(create.options)); break;
+                    }
+                    case "importproject": {
+                        const load = data as EditorMessageImportProjectRequest;
+                        p = p.then(() => projectView.importProjectAsync(load.project));
                     }
                     case "proxytosim": {
                         const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
