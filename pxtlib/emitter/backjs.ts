@@ -198,11 +198,12 @@ switch (step) {
         function emitExprInto(e: ir.Expr): string {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
-                    if (e.data === true) return "1"
-                    else if (e.data === false) return "0"
-                    else if (e.data === null) return "0"
+                    if (e.data === true) return "true"
+                    else if (e.data === false) return "false"
+                    else if (e.data === null) return "null"
+                    else if (e.data === undefined) return "undefined"
                     else if (typeof e.data == "number") return e.data + ""
-                    else throw oops();
+                    else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
                     return e.jsInfo;
                 case EK.SharedRef:

@@ -229,7 +229,7 @@ namespace ts.pxtc {
 
     // TODO should be internal
     export namespace hex {
-        let funcInfo: Map<FuncInfo>;
+        let funcInfo: Map<FuncInfo> = {};
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;

@@ -22,7 +22,7 @@ namespace ts.pxtc {
     function taggedSpecialValue(n: number) { return (n << 2) | 2 }
     export const taggedUndefined = taggedSpecialValue(1)
     export const taggedFalse = taggedSpecialValue(2)
-    export const taggedTrue = taggedSpecialValue(3)
+    export const taggedTrue = taggedSpecialValue(16)
     function fitsTaggedInt(vn: number) {
         return (vn | 0) == vn && -1073741824 <= vn && vn <= 1073741823
     }
@@ -421,7 +421,7 @@ namespace ts.pxtc {
 
     let lf = assembler.lf;
     let checker: TypeChecker;
-    let target: CompileTarget;
+    export let target: CompileTarget;
     let lastSecondaryError: string
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
@@ -2514,7 +2514,7 @@ ${lbl}: .short 0xffff
                     else if (b == "eq_bool")
                         return "Number_::eq"
                     else
-                        return "Number_::" + b
+                        return "Number_::" + b.replace(/eqq/, "eq")
                 }
                 switch (n) {
                     case "langsupp::ptreq":
@@ -2553,6 +2553,10 @@ ${lbl}: .short 0xffff
                     throw U.oops("bad literal: " + v)
                 }
             } else {
+                if (!opts.target.floatingPoint) {
+                    if (v === false || v === null || v === undefined) v = 0
+                    if (v === true) v = 1
+                }
                 return ir.numlit(v)
             }
         }
@@ -2823,7 +2827,7 @@ ${lbl}: .short 0xffff
                     case SK.ExclamationEqualsEqualsToken:
                     case SK.ExclamationEqualsToken:
                         return ir.rtcall(
-                            simpleInstruction(node.operatorToken.kind),
+                            mapIntOpName(simpleInstruction(node.operatorToken.kind)),
                             [fromInt(shim("String_::compare")), emitLit(0)])
                     default:
                         unhandled(node.operatorToken, lf("unknown string operator"), 9251)
@@ -2850,8 +2854,13 @@ ${lbl}: .short 0xffff
             if (isStringLiteral(e))
                 return r;
             let tp = typeOf(e)
-            if (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean))
+
+            if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean)))
                 return ir.rtcall(mapIntOpName("numops::toString"), [r])
+            else if (tp.flags & TypeFlags.NumberLike)
+                return ir.rtcall("Number_::toString", [r])
+            else if (tp.flags & TypeFlags.Boolean)
+                return ir.rtcall("Boolean_::toString", [r])
             else if (tp.flags & TypeFlags.String)
                 return r // OK
             else {
