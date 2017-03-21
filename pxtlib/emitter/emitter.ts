@@ -541,10 +541,11 @@ namespace ts.pxtc {
         return null;
     }
 
-    function deconstructFunctionType(t: Type) {
+    function isFunctionType(t: Type) {
         let sigs = checker.getSignaturesOfType(t, SignatureKind.Call)
         if (sigs && sigs.length == 1)
             return sigs[0]
+        // TODO: error message for overloaded function signatures?
         return null
     }
 
@@ -562,7 +563,7 @@ namespace ts.pxtc {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
             if (isInterfaceType(t)) return t;
-            if (deconstructFunctionType(t)) return t;
+            if (isFunctionType(t)) return t;
             if (lookupTypeParameter(t)) return t;
 
             let g = genericRoot(t)
@@ -579,8 +580,11 @@ namespace ts.pxtc {
 
     function typeOf(node: Node) {
         let r: Type;
+        // TODO: where does typeOverride come from?
         if ((node as any).typeOverride)
             return (node as any).typeOverride as Type
+        if ((node as any).type)
+            return (node as any).type as Type
         if (isExpression(node))
             r = checker.getContextualType(<Expression>node)
         if (!r) {
@@ -592,6 +596,34 @@ namespace ts.pxtc {
             }
         }
         return checkType(r)
+    }
+
+    function checkAssignmentTypes(trg: Node|Type, src: Node) {
+        // more restrictive checks of STS (trg <- src)
+        // 1. Class <- Class: nominal checking
+        // 2. Class <- Interface: not allowed
+        // 3. Interface <- Class: as usual
+        // 4. Interface <- Interface: as usual
+        let trgType = (trg as Type          ).flags ? (trg as Type) : typeOf(trg as Node)
+        let srcType = typeOf(src)
+        if (!trgType || !srcType)
+            return;
+        if (isClassType(trgType)) {
+           if (isClassType(srcType)) {
+                // possibilities
+                // - upcast (OK)
+                // - downcast (NOK)
+                // - unrelated cast (NOK)
+                let tgtDecl = <ClassDeclaration>trgType.symbol.valueDeclaration
+                let srcDecl = <ClassDeclaration>srcType.symbol.valueDeclaration
+           } else if (isInterfaceType(srcType)) {
+                userError(9203, lf("Cast from interface type to class type unsupported."))
+           }
+        } else if (isFunctionType(trgType)) {
+            if (isFunctionType(srcType)) {
+                // true function subtyping
+            }
+        }
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
@@ -1139,6 +1171,7 @@ namespace ts.pxtc {
                         emitSynthetic(fld.irSetter, (proc) => {
                             // decrs work out
                             let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
+                            // TODO: type check assignment 
                             proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].loadCore()]))
                         })
                     }
@@ -1685,7 +1718,7 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function addDefaultParameters(sig: Signature, args: Expression[], attrs: CommentAttrs) {
+        function addDefaultParametersAndTypeCheck(sig: Signature, args: Expression[], attrs: CommentAttrs) {
             if (!sig) return;
             let parms = sig.getParameters();
             if (parms.length > args.length) {
@@ -1707,7 +1740,14 @@ ${lbl}: .short 0xffff
                     }
                 })
             }
+            
+            // add extra type checking for assignment of actual to formal
+            for(let i=0; i<args.length; i++) {
+                // TODO: get actual type (prm.type is TypeNode)
+                checkAssignmentTypes(checker.getDeclaredTypeOfSymbol(parms[i]), args[i])
+            }
 
+            // TODO: this is micro:bit specific and should be lifted out
             if (attrs.imageLiteral) {
                 if (!isStringLiteral(args[0])) {
                     userError(9214, lf("Only image literals (string literals) supported here; {0}", stringKind(args[0])))
@@ -1796,7 +1836,7 @@ ${lbl}: .short 0xffff
                 return mkProcCall(decl, args.map(emitExpr), bindings)
             }
 
-            addDefaultParameters(sig, args, attrs);
+            addDefaultParametersAndTypeCheck(sig, args, attrs);
 
             if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
@@ -2017,7 +2057,7 @@ ${lbl}: .short 0xffff
                     markUsed(ctor)
                     let args = node.arguments.slice(0)
                     let ctorAttrs = parseComments(ctor)
-                    addDefaultParameters(checker.getResolvedSignature(node), args, ctorAttrs)
+                    addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map(emitExpr)
                     if (ctorAttrs.shim)
                         // we drop 'obj' variable
@@ -2401,7 +2441,10 @@ ${lbl}: .short 0xffff
             return field;
         }
 
-        function emitStore(trg: Expression, src: Expression) {
+        function emitStore(trg: Expression, src: Expression, checkAssign:boolean = false) {
+            if (checkAssign) {
+                checkAssignmentTypes(trg,src)
+            }
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
             if (trg.kind == SK.Identifier || isGlobal) {
@@ -2434,7 +2477,7 @@ ${lbl}: .short 0xffff
 
         function handleAssignment(node: BinaryExpression) {
             let cleanup = prepForAssignment(node.left, node.right)
-            emitStore(node.left, node.right)
+            emitStore(node.left, node.right, true)
             let res = emitExpr(node.right)
             cleanup()
             return res
@@ -3049,17 +3092,20 @@ ${lbl}: .short 0xffff
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
+                // TODO: type check assignment 
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuffix(), [])))
             }
 
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
+                // TODO: type check assignment 
                 proc.emitExpr(loc.storeByRef(bindingElementAccessExpression(node as BindingElement)[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
-                // TODO make sure we don't emit code for top-level globals being initialized to zero
+                // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
+                // TODO: type check assignment 
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
