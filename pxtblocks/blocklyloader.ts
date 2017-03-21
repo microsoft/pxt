@@ -1,6 +1,5 @@
 /// <reference path="../localtypings/blockly.d.ts" />
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../built/pxteditor.d.ts" />
 import Util = pxt.Util;
 
 let lf = Util.lf;
@@ -627,7 +626,19 @@ namespace pxt.blocks {
             e.parentNode.removeChild(e);
     }
 
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: pxt.editor.ProjectFilters): Element {
+    export interface BlockFilters {
+        namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        defaultState?: FilterState; // hide, show or disable all by default
+    }
+
+    export enum FilterState {
+        Hidden = 0,
+        Visible = 1,
+        Disabled = 2
+    }
+
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: BlockFilters): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -769,11 +780,11 @@ namespace pxt.blocks {
                     let type = blk.getAttribute("type");
                     let blockState = filters.blocks && filters.blocks[type] != undefined ? filters.blocks[type] : (defaultState != undefined ? defaultState : filters.defaultState);
                     switch (blockState) {
-                        case pxt.editor.FilterState.Hidden:
+                        case FilterState.Hidden:
                             blk.parentNode.removeChild(blk); break;
-                        case pxt.editor.FilterState.Disabled:
+                        case FilterState.Disabled:
                             blk.setAttribute("disabled", "true");
-                        case pxt.editor.FilterState.Visible:
+                        case FilterState.Visible:
                             hasChild = true; break;
                     }
                 }
@@ -825,7 +836,7 @@ namespace pxt.blocks {
         return tb;
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: pxt.editor.ProjectFilters): Element {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: BlockFilters): Element {
         init();
         initTooltip(blockInfo);
 
