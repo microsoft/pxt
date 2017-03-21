@@ -4360,7 +4360,8 @@ function loadPkgAsync() {
 
 function errorHandler(reason: any) {
     if (reason.isUserError) {
-        console.error("ERROR:", reason.message)
+        console.error(reason.stack)
+        console.error("USER ERROR:", reason.message)
         process.exit(1)
     }
 

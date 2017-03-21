@@ -15,9 +15,14 @@ namespace pxsim {
     let stringLiterals: any;
     let stringRefCounts: any = {};
     let refCounting = true;
+    let floatingPoint = false;
 
     export function noRefCounting() {
         refCounting = false;
+    }
+
+    export function enableFloatingPoint() {
+        floatingPoint = true
     }
 
     export class RefObject {
@@ -197,7 +202,7 @@ namespace pxsim {
 
 
     function num(v: any) {
-        if (v === undefined) return 0;
+        if (!floatingPoint && v === undefined) return 0;
         return v;
     }
 
@@ -223,10 +228,10 @@ namespace pxsim {
             // OK (null)
         } else if (typeof v == "function") {
             // OK (function literal)
-        } else if (typeof v == "number") {
+        } else if (typeof v == "number" || v === true) {
             // OK (number)
         } else {
-            throw new Error("bad decr")
+            throw new Error("bad decr: " + typeof v)
         }
     }
 
@@ -239,6 +244,8 @@ namespace pxsim {
         strings[""] = 1
         strings["true"] = 1
         strings["false"] = 1
+        strings["null"] = 1
+        strings["undefined"] = 1
 
         // comment out next line to disable string ref counting
         stringLiterals = strings
@@ -290,7 +297,7 @@ namespace pxsim {
         export function toString(v: any) {
             if (v === null) return "null"
             else if (v === undefined) return "undefined"
-            return v.toString()
+            return initString(v.toString())
         }
         export function toBoolDecr(v: any) {
             decr(v)
@@ -540,7 +547,7 @@ namespace pxsim {
             r.vtable = vtable
             let len = vtable.refmask.length
             for (let i = 0; i < len; ++i)
-                r.fields.push(0)
+                r.fields.push(floatingPoint ? undefined : 0)
             return r
         }
 

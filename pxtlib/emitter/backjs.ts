@@ -58,6 +58,8 @@ namespace ts.pxtc {
         let jssource = ""
         if (!bin.target.jsRefCounting)
             jssource += "pxsim.noRefCounting();\n"
+        if (bin.target.floatingPoint)
+            jssource += "pxsim.enableFloatingPoint();\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })

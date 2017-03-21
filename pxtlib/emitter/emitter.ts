@@ -2638,8 +2638,6 @@ ${lbl}: .short 0xffff
                 else
                     // make sure we have reference and the stack is cleared
                     proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
-                proc.emitJmp(lbl, emitExpr(node.right))
-                proc.emitLbl(lbl)
 
             } else {
                 if (node.operatorToken.kind == SK.BarBarToken) {

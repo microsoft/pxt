@@ -30,6 +30,10 @@ console.log("Starting...")
 
 basic.showNumber(0);
 
+let hasFloat = true
+if ((1 / 10) == 0) {
+    hasFloat = false
+}
 
 
 function defaultArgs(x: number, y = 3, z = 7) {
@@ -99,8 +103,10 @@ function testNums(): void {
     control.assert((10 << 2) == 40, "<<+")
     control.assert((10 >> 2) == 2, ">>+")
     control.assert((10 >>> 2) == 2, ">>>+")
-    control.assert(1000000 * 1000000 == -727379968, "*")
-    control.assert(100000001 * 100000001 == 2074919425, "*2")
+    if (!hasFloat) {
+        control.assert(1000000 * 1000000 == -727379968, "*")
+        control.assert(100000001 * 100000001 == 2074919425, "*2")
+    }
 
     control.assert(105 % 100 == 5, "perc")
 
@@ -416,6 +422,7 @@ function testActionSave(): void {
 }
 
 function testLazyOps(): void {
+    msg("testing lazy")
     lazyAcc = 0;
     if (incrLazyAcc(10, false) && incrLazyAcc(1, true)) {
         control.assert(false, "");
@@ -470,6 +477,8 @@ function testLazyOps(): void {
     control.assert(lazyAcc == 1, "?:0");
     control.assert((false ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 36, "?:1")
     control.assert(lazyAcc == 11, "?:2");
+
+    msg("testing lazy done")
 }
 
 function incrLazyAcc(delta: number, res: boolean): boolean {
@@ -535,6 +544,7 @@ function testByRefParams(): void {
     byRefParam_2(10);
     basic.pause(30);
     control.assert(sum == 18, "by ref");
+    msg("byref done")
 }
 
 function refparamWrite(s: string): void {
@@ -544,7 +554,10 @@ function refparamWrite(s: string): void {
 
 function refparamWrite2(testrec: Testrec): void {
     testrec = new Testrec();
-    control.assert(testrec.bool == false, "");
+    if (hasFloat)
+        control.assert(testrec.bool === undefined, "rw2f");
+    else
+        control.assert(testrec.bool == false, "rw2");
 }
 
 function refparamWrite3(testrecX: Testrec): void {
@@ -1108,11 +1121,11 @@ namespace ClassTest {
     }
 
     class E {
-        foo() {}
+        foo() { }
     }
 
     class F extends E {
-        foo() {}
+        foo() { }
     }
 
     function testACall(a: A, v0: number, v1: number) {
