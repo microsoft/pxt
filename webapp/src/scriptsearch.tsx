@@ -72,11 +72,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     fetchBundled(): pxt.PackageConfig[] {
-        if (!!this.state.searchFor) return [];
-
+        const query = this.state.searchFor;
         const bundled = pxt.appTarget.bundledpkgs;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
-            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig);
+            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
+            .filter(pkg => !query || pkg.name.toLowerCase().indexOf(query.toLowerCase()) > -1);
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
