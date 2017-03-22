@@ -175,7 +175,8 @@ namespace pxt.github {
     }
 
     function isOrgBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
-        if (!repo || !config || !repo.owner) return true;
+        if (!config) return false; // don't know
+        if (!repo || !repo.owner) return true;
         if (config.bannedOrgs
             && config.bannedOrgs.some(org => org.toLowerCase() == repo.owner.toLowerCase()))
             return true;
@@ -185,7 +186,8 @@ namespace pxt.github {
     function isRepoBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
         if (isOrgBanned(repo, config))
             return true;
-        if (!repo || !config || !repo.fullName) return true;
+        if (!config) return false; // don't know
+        if (!repo || !repo.fullName) return true;
         if (config.bannedRepos
             && config.bannedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
             return true;
