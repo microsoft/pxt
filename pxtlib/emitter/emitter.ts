@@ -596,13 +596,34 @@ namespace ts.pxtc {
     }
 
     function checkAssignmentTypes(trg: Node, src: Node) {
+        // TODO: need to better understand contextual vs synthesized type
+        function assignedTypeOf(node: Node) {
+            let r: Type;
+            if ((node as any).typeOverride)
+                return (node as any).typeOverride as Type
+            try {
+                r = checker.getTypeAtLocation(node);
+            }
+            catch (e) {
+                if (isExpression(node))
+                    r = checker.getContextualType(<Expression>node)
+                if (!r) {
+                    userError(9203, lf("Unknown type for expression"))
+                }
+            }
+            return checkType(r)
+        }
+
         // more restrictive checks of STS (trg <- src)
         // 1. Class <- Class: nominal checking
         // 2. Class <- Interface: not allowed
         // 3. Interface <- Class: as usual
         // 4. Interface <- Interface: as usual
-        let trgType = typeOf(trg)
-        let srcType = typeOf(src)
+
+        // TODO: what if we have a type parameter (typeOf???)
+        let trgType = assignedTypeOf(trg)
+        let srcType = assignedTypeOf(src)
+
         if (!trgType || !srcType)
             return;
         if (isClassType(trgType)) {
@@ -614,7 +635,7 @@ namespace ts.pxtc {
                 let tgtDecl = <ClassDeclaration>trgType.symbol.valueDeclaration
                 let srcDecl = <ClassDeclaration>srcType.symbol.valueDeclaration
            } else if (isInterfaceType(srcType)) {
-                userError(9203, lf("Cast from interface type to class type unsupported."))
+                userError(9203, lf("Cast from interface to class unsupported."))
            }
         } else if (isFunctionType(trgType)) {
             if (isFunctionType(srcType)) {
@@ -1097,9 +1118,6 @@ namespace ts.pxtc {
                         let key = classFunctionKey(m)
                         let done = false
                         let proc = lookupProc(m, inf.bindings)
-                        // BUG: proc may be undefined because of tree shaking
-                        // BUG: which can lead to tbl[i] being undefined later
-                        // BUG: resulting in exception on tbl[i].action
                         for (let i = 0; i < tbl.length; ++i) {
                             if (classFunctionKey(tbl[i].action) == key) {
                                 tbl[i] = proc
@@ -1742,7 +1760,9 @@ ${lbl}: .short 0xffff
             // add extra type checking for assignment of actual to formal,
             // not needed for default params (for now)
             for (let i = 0; i < goodToGoLength; i++) {
-                checkAssignmentTypes(parms[i].valueDeclaration, args[i])
+                let p = parms[i]
+                // if (p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
+                    // checkAssignmentTypes(p.valueDeclaration, args[i])
             }
 
             // TODO: this is micro:bit specific and should be lifted out

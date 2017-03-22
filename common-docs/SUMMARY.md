@@ -19,8 +19,8 @@
         * [assign](/blocks/variables/assign)
         * [change var](/blocks/variables/change-var)
         * [var](/blocks/variables/var)
-    * [JavaScript blocks](/javascript-blocks)
-    * [Custom blocks](/custom)
+    * [JavaScript blocks](/blocks/javascript-blocks)
+    * [Custom blocks](/blocks/custom)
 
 ## JavaScript #javaScript
 

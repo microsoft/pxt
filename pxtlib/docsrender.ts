@@ -60,13 +60,13 @@ namespace pxt.docs {
 
     //The extra YouTube macros are in case there is a timestamp on the YouTube URL.
     //TODO: Add equivalent support for youtu.be links
-    let links: CmdLink[] = [
+    const links: CmdLink[] = [
         {
-            rx: /^vimeo\.com\/(\d+)/,
+            rx: /^vimeo\.com\/(\d+)/i,
             cmd: "### @vimeo $1"
         },
         {
-            rx: /^(www\.youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/,
+            rx: /^(www\.youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/i,
             cmd: "### @youtube $2"
         }
     ]
@@ -117,7 +117,7 @@ namespace pxt.docs {
         return attrs
     }
 
-    let error = (s: string) =>
+    const error = (s: string) =>
         `<div class='ui negative message'>${htmlQuote(s)}</div>`
 
     export function prepTemplate(d: RenderData) {
@@ -188,7 +188,7 @@ namespace pxt.docs {
                     return true
                 }
             }
-            if (d.filepath && d.filepath.indexOf(m.path) >= 0) {
+            if (d.filepath && d.filepath.indexOf(m.path) == 0) {
                 tocPath.push(m)
                 return true
             }
