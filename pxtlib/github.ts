@@ -244,7 +244,7 @@ namespace pxt.github {
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
-                .then(rs => rs.filter(r => r.status == GitRepoStatus.Approved));
+                .then(rs => rs.filter(r => r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
         query += ` in:name,description,readme "for PXT/${appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))

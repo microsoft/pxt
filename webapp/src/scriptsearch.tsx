@@ -62,8 +62,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
-        let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let res: pxt.github.GitRepo[] =
+        const searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
+        const res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
                 ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
                 : null
