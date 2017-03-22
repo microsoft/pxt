@@ -582,13 +582,15 @@ namespace ts.pxtc {
         let r: Type;
         if ((node as any).typeOverride)
             return (node as any).typeOverride as Type
-        if (isExpression(node))
-            r = checker.getContextualType(<Expression>node)
-        if (!r) {
-            try {
-                r = checker.getTypeAtLocation(node);
-            }
-            catch (e) {
+        try {
+             // first look for synthesized type
+             r = checker.getTypeAtLocation(node);
+        }
+        catch (e) {
+            // then try inherited type
+            if (isExpression(node))
+                r = checker.getContextualType(<Expression>node)
+            if (!r) {
                 userError(9203, lf("Unknown type for expression"))
             }
         }
