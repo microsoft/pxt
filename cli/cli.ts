@@ -4115,7 +4115,8 @@ function initCommands() {
                 aliases: ["no-browser"]
             },
             noSerial: {
-                description: "do not monitor serial devices"
+                description: "do not monitor serial devices",
+                aliases: ["no-serial", "nos"]
             },
             sourceMaps: {
                 description: "include souorce maps when building ts files",
