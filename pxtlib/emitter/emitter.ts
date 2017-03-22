@@ -529,6 +529,14 @@ namespace ts.pxtc {
         return !!(t.flags & TypeFlags.Class) || !!(t.flags & TypeFlags.ThisType)
     }
 
+    function isStructureType(t: Type) {
+        return isClassType(t) || isInterfaceType(t) || !!(t.flags & TypeFlags.ObjectLiteral)
+    }
+
+    function castableToStructureType(t: Type) {
+        return isClassType(t) || isInterfaceType(t) || !!(t.flags & (TypeFlags.Null | TypeFlags.Undefined))
+    }
+
     function isPossiblyGenericClassType(t: Type) {
         let g = genericRoot(t)
         if (g) return isClassType(g)
@@ -554,6 +562,11 @@ namespace ts.pxtc {
         for (let i = typeBindings.length - 1; i >= 0; --i)
             if (typeBindings[i].tp == t) return typeBindings[i]
         return null
+    }
+
+    function isBuiltinType(t: Type) {
+        let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Enum
+        return t.flags & ok   
     }
 
     function checkType(t: Type) {
@@ -595,37 +608,39 @@ namespace ts.pxtc {
         return checkType(r)
     }
 
-    function checkAssignmentTypes(trg: Node, src: Node) {
-        // TODO: need to better understand contextual vs synthesized type
-        function assignedTypeOf(node: Node) {
-            let r: Type;
-            if ((node as any).typeOverride)
-                return (node as any).typeOverride as Type
-            try {
-                r = checker.getTypeAtLocation(node);
-            }
-            catch (e) {
-                if (isExpression(node))
-                    r = checker.getContextualType(<Expression>node)
-                if (!r) {
-                    userError(9203, lf("Unknown type for expression"))
-                }
-            }
-            return checkType(r)
-        }
+    // more restrictive checks of STS (trg <- src)
+    // 1. Class <- Class: nominal checking
+    // 2. Class <- Interface: not allowed
+    // 3. Interface <- Class: as usual
+    // 4. Interface <- Interface: as usual
+    function checkAssignmentTypes(trg: Node, src: Node|Type) {
+        
+        // get the direct types
+        let trgTypeLoc = checker.getTypeAtLocation(trg);
+        let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type
 
-        // more restrictive checks of STS (trg <- src)
-        // 1. Class <- Class: nominal checking
-        // 2. Class <- Interface: not allowed
-        // 3. Interface <- Class: as usual
-        // 4. Interface <- Interface: as usual
-
-        // TODO: what if we have a type parameter (typeOf???)
-        let trgType = assignedTypeOf(trg)
-        let srcType = assignedTypeOf(src)
+        // get the contextual types, if possible
+        let trgType = isExpression(trg) ? checker.getContextualType(<Expression>trg) : trgTypeLoc
+        let srcType = (src as any).kind 
+            ? (isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc) 
+            : src as Type
 
         if (!trgType || !srcType)
             return;
+
+        // case analysis based on direct/contextual types
+        // 1. trgType == srcType != srcTypeLoc
+        //    - we should check trgType against srcTypeLoc
+        //    - example: let z : Foo = new Baz()
+
+        if (trgType == srcType && srcType != srcTypeLoc)
+            srcType = srcTypeLoc
+
+        // outlaw all things that can't be cast to class/interface
+        if (isStructureType(trgType) && !castableToStructureType(srcType)) {
+            userError(9203, lf("Cast to class/interface unsupported."))
+        }
+
         if (isClassType(trgType)) {
            if (isClassType(srcType)) {
                 // possibilities
@@ -634,8 +649,8 @@ namespace ts.pxtc {
                 // - unrelated cast (NOK)
                 let tgtDecl = <ClassDeclaration>trgType.symbol.valueDeclaration
                 let srcDecl = <ClassDeclaration>srcType.symbol.valueDeclaration
-           } else if (isInterfaceType(srcType)) {
-                userError(9203, lf("Cast from interface to class unsupported."))
+           } else if (isInterfaceType(srcType) || isBuiltinType(srcType)) {
+                userError(9203, lf("Cast to class unsupported."))
            }
         } else if (isFunctionType(trgType)) {
             if (isFunctionType(srcType)) {
@@ -1761,6 +1776,8 @@ ${lbl}: .short 0xffff
             // not needed for default params (for now)
             for (let i = 0; i < goodToGoLength; i++) {
                 let p = parms[i]
+                // TODO: bringing back this code introduces a problem with 
+                // TODO: a lookup of type parameter T
                 // if (p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
                     // checkAssignmentTypes(p.valueDeclaration, args[i])
             }
@@ -3110,20 +3127,20 @@ ${lbl}: .short 0xffff
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
-                // TODO: type check assignment 
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuffix(), [])))
             }
 
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
-                // TODO: type check assignment 
-                proc.emitExpr(loc.storeByRef(bindingElementAccessExpression(node as BindingElement)[0]))
+                let rhs = bindingElementAccessExpression(node as BindingElement)
+                checkAssignmentTypes(node,rhs[1])
+                proc.emitExpr(loc.storeByRef(rhs[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
                 // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
-                // TODO: type check assignment 
+                checkAssignmentTypes(node,node.initializer)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
