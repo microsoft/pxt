@@ -2022,14 +2022,18 @@ test:
 `,
 
     "README.md": `# @NAME@
+
 @DESCRIPTION@
 
 ## License
+
 @LICENSE@
 
 ## Supported targets
+
 * for PXT/@TARGET@
 (The metadata above is needed for package search.)
+
 `,
 
     ".gitignore":
@@ -2219,16 +2223,17 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
 
     return initPromise
         .then(() => {
-            let files: Map<string> = {};
-            for (let f in defaultFiles)
+            const files: Map<string> = {};
+            for (const f in defaultFiles)
                 files[f] = defaultFiles[f];
-            for (let f in prj.files)
-                files[f] = prj.files[f];
+            for (const f in prj.files)
+                if (f != "README.md") // this one we need to keep
+                    files[f] = prj.files[f];
 
-            let pkgFiles = Object.keys(files).filter(s =>
+            const pkgFiles = Object.keys(files).filter(s =>
                 /\.(md|ts|asm|cpp|h)$/.test(s))
 
-            let fieldsOrder = [
+            const fieldsOrder = [
                 "name",
                 "version",
                 "description",
@@ -2243,12 +2248,12 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
             config.testFiles = pkgFiles.filter(s => /test/.test(s));
 
             // make it look nice
-            let newCfg: any = {}
-            for (let f of fieldsOrder) {
+            const newCfg: any = {}
+            for (const f of fieldsOrder) {
                 if (configMap.hasOwnProperty(f))
                     newCfg[f] = configMap[f]
             }
-            for (let f of Object.keys(configMap)) {
+            for (const f of Object.keys(configMap)) {
                 if (!newCfg.hasOwnProperty(f))
                     newCfg[f] = configMap[f]
             }
@@ -2263,11 +2268,12 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
                 nodeutil.mkdirP(path.dirname(k))
                 fs.writeFileSync(k, v)
             })
-
-            console.log("Package initialized.")
-            console.log("Try 'pxt add' to add optional features.")
         })
         .then(() => installAsync())
+        .then(() => {
+            pxt.log("Package initialized.")
+            pxt.log("Try 'pxt add' to add optional features.")
+        })
 }
 
 enum BuildOption {
