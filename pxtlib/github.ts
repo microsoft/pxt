@@ -61,9 +61,9 @@ namespace pxt.github {
             return Promise.resolve<CachedPackage>(undefined);
         }
 
-        if (!isRepoApproved(p, config)) {
-            pxt.tickEvent("github.download.unauthorized");
-            pxt.log('Github repo not approved');
+        if (isRepoBanned(p, config)) {
+            pxt.tickEvent("github.download.banned");
+            pxt.log('Github repo is banned');
             return Promise.resolve<CachedPackage>(undefined);
         }
 
@@ -329,11 +329,12 @@ namespace pxt.github {
             method = 'POST';
         }
         return U.requestAsync({
-                url: url,
-                allowHttpErrors: true,
-                headers: headers,
-                method: method,
-                data: data || {} })
+            url: url,
+            allowHttpErrors: true,
+            headers: headers,
+            method: method,
+            data: data || {}
+        })
             .then((resp) => {
                 if ((resp.statusCode == 200 || resp.statusCode == 201) && resp.json.id) {
                     return Promise.resolve<string>(resp.json.id);
