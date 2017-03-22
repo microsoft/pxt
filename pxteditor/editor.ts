@@ -29,6 +29,7 @@ namespace pxt.editor {
     export interface IAppState {
         active?: boolean; // is this tab visible at all
         header?: pxt.workspace.Header;
+        filters?: pxt.editor.ProjectFilters;
         currFile?: IFile;
         fileState?: string;
         showFiles?: boolean;
@@ -61,7 +62,21 @@ namespace pxt.editor {
         name?: string;
         documentation?: string;
         filesOverride?: pxt.Map<string>;
+        filters?: ProjectFilters;
         temporary?: boolean;
+    }
+
+    export interface ProjectFilters {
+        namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        fns?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        defaultState?: FilterState; // hide, show or disable all by default
+    }
+
+    export enum FilterState {
+        Hidden = 0,
+        Visible = 1,
+        Disabled = 2
     }
 
     export interface IProjectView {
@@ -80,6 +95,7 @@ namespace pxt.editor {
         saveFileAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
+        importProjectAsync(prj: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void>;
 
         exportAsync(): Promise<string>;
 
