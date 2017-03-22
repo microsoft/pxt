@@ -601,6 +601,7 @@ namespace ts.pxtc {
         // 2. Class <- Interface: not allowed
         // 3. Interface <- Class: as usual
         // 4. Interface <- Interface: as usual
+        // TODO: what if we have a type parameter (typeOf???)
         let trgType = typeOf(trg)
         let srcType = typeOf(src)
         if (!trgType || !srcType)
@@ -1097,9 +1098,6 @@ namespace ts.pxtc {
                         let key = classFunctionKey(m)
                         let done = false
                         let proc = lookupProc(m, inf.bindings)
-                        // BUG: proc may be undefined because of tree shaking
-                        // BUG: which can lead to tbl[i] being undefined later
-                        // BUG: resulting in exception on tbl[i].action
                         for (let i = 0; i < tbl.length; ++i) {
                             if (classFunctionKey(tbl[i].action) == key) {
                                 tbl[i] = proc
@@ -1742,7 +1740,9 @@ ${lbl}: .short 0xffff
             // add extra type checking for assignment of actual to formal,
             // not needed for default params (for now)
             for (let i = 0; i < goodToGoLength; i++) {
-                checkAssignmentTypes(parms[i].valueDeclaration, args[i])
+                let p = parms[i]
+                // if (p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
+                    // checkAssignmentTypes(p.valueDeclaration, args[i])
             }
 
             // TODO: this is micro:bit specific and should be lifted out
