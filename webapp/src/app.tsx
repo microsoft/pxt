@@ -586,10 +586,10 @@ export class ProjectView
                     })
                     .done()
 
-                let readme = main.lookupFile("this/README.md");
+                const readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
-                else if (pkg.mainPkg.config.documentation)
+                else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation);
             })
     }
