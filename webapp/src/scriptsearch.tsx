@@ -76,7 +76,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const bundled = pxt.appTarget.bundledpkgs;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
-            .filter(pkg => !query || pkg.name.toLowerCase().indexOf(query.toLowerCase()) > -1);
+            .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
+            .filter(pk => !pkg.mainPkg.deps[pk.name]); // don't show package already referenced
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
