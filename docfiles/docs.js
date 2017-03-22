@@ -43,9 +43,8 @@ function dirAuto($el) {
     return $el;
 }
 
-function searchSubmit(formName) {
-    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", {'source': formName})
-    document.getElementById(formName).submit();
+function searchSubmit(form) {
+    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", {'source': form.id})
 }
 
 function setupSidebar() {
