@@ -582,15 +582,13 @@ namespace ts.pxtc {
         let r: Type;
         if ((node as any).typeOverride)
             return (node as any).typeOverride as Type
-        try {
-             // first look for synthesized type
-             r = checker.getTypeAtLocation(node);
-        }
-        catch (e) {
-            // then try inherited type
-            if (isExpression(node))
-                r = checker.getContextualType(<Expression>node)
-            if (!r) {
+        if (isExpression(node))
+            r = checker.getContextualType(<Expression>node)
+        if (!r) {
+            try {
+                r = checker.getTypeAtLocation(node);
+            }
+            catch (e) {
                 userError(9203, lf("Unknown type for expression"))
             }
         }
@@ -598,14 +596,32 @@ namespace ts.pxtc {
     }
 
     function checkAssignmentTypes(trg: Node, src: Node) {
+        // TODO: need to better understand contextual vs synthesized type
+        function assignedTypeOf(node: Node) {
+            let r: Type;
+            if ((node as any).typeOverride)
+                return (node as any).typeOverride as Type
+            try {
+                r = checker.getTypeAtLocation(node);
+            }
+            catch (e) {
+                if (isExpression(node))
+                    r = checker.getContextualType(<Expression>node)
+                if (!r) {
+                    userError(9203, lf("Unknown type for expression"))
+                }
+            }
+            return checkType(r)
+        }
+
         // more restrictive checks of STS (trg <- src)
         // 1. Class <- Class: nominal checking
         // 2. Class <- Interface: not allowed
         // 3. Interface <- Class: as usual
         // 4. Interface <- Interface: as usual
         // TODO: what if we have a type parameter (typeOf???)
-        let trgType = typeOf(trg)
-        let srcType = typeOf(src)
+        let trgType = assignedTypeOf(trg)
+        let srcType = assignedTypeOf(src)
         if (!trgType || !srcType)
             return;
         if (isClassType(trgType)) {
