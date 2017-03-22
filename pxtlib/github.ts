@@ -248,7 +248,8 @@ namespace pxt.github {
 
         query += ` in:name,description,readme "for PXT/${appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
-            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item, config)).filter(r => r.status == GitRepoStatus.Approved));
+            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item, config)).filter(r => r.status == GitRepoStatus.Approved))
+            .catch(err => []); // offline
     }
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
