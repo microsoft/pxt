@@ -1718,6 +1718,7 @@ ${lbl}: .short 0xffff
         function addDefaultParametersAndTypeCheck(sig: Signature, args: Expression[], attrs: CommentAttrs) {
             if (!sig) return;
             let parms = sig.getParameters();
+            let goodToGoLength = args.length
             if (parms.length > args.length) {
                 parms.slice(args.length).forEach(p => {
                     if (p.valueDeclaration &&
@@ -1738,9 +1739,9 @@ ${lbl}: .short 0xffff
                 })
             }
 
-            // add extra type checking for assignment of actual to formal
-            for(let i = 0; i < args.length; i++) {
-                // TODO: get actual type (prm.type is TypeNode)
+            // add extra type checking for assignment of actual to formal,
+            // not needed for default params (for now)
+            for (let i = 0; i < goodToGoLength; i++) {
                 checkAssignmentTypes(parms[i].valueDeclaration, args[i])
             }
 
