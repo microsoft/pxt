@@ -617,7 +617,7 @@ namespace ts.pxtc {
                 let tgtDecl = <ClassDeclaration>trgType.symbol.valueDeclaration
                 let srcDecl = <ClassDeclaration>srcType.symbol.valueDeclaration
            } else if (isInterfaceType(srcType)) {
-                userError(9203, lf("Cast from interface type to class type unsupported."))
+                userError(9203, lf("Cast from interface to class unsupported."))
            }
         } else if (isFunctionType(trgType)) {
             if (isFunctionType(srcType)) {
