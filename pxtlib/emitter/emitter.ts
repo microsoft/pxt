@@ -619,9 +619,11 @@ namespace ts.pxtc {
         // 2. Class <- Interface: not allowed
         // 3. Interface <- Class: as usual
         // 4. Interface <- Interface: as usual
+
         // TODO: what if we have a type parameter (typeOf???)
         let trgType = assignedTypeOf(trg)
         let srcType = assignedTypeOf(src)
+
         if (!trgType || !srcType)
             return;
         if (isClassType(trgType)) {
