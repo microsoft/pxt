@@ -14,7 +14,7 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" StartPage="http://localhost:3232/uwp">
+    <Application Id="App" StartPage="https://makecode.com/">
       <uap:ApplicationContentUriRules>
         <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://pxt.microbit.org" Type="include" WindowsRuntimeAccess="all" />
@@ -32,6 +32,8 @@
             <uap:DisplayName>pxt binary file</uap:DisplayName>
             <uap:SupportedFileTypes>
               <uap:FileType ContentType="application/x-microbit-hex">.hex</uap:FileType>
+              <uap:FileType ContentType="application/x-makecode-uf2">.uf2</uap:FileType>
+              <uap:FileType ContentType="application/x-makecode-pxt">.pxt</uap:FileType>
             </uap:SupportedFileTypes>
           </uap:FileTypeAssociation>
         </uap:Extension>
