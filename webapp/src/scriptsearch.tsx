@@ -62,8 +62,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
-        let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let res: pxt.github.GitRepo[] =
+        const searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
+        const res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
                 ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
                 : null
@@ -72,11 +72,12 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     fetchBundled(): pxt.PackageConfig[] {
-        if (!!this.state.searchFor) return [];
-
+        const query = this.state.searchFor;
         const bundled = pxt.appTarget.bundledpkgs;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
-            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig);
+            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
+            .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
+            .filter(pk => !pkg.mainPkg.deps[pk.name]); // don't show package already referenced
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
@@ -188,6 +189,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" size="large"
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
+                helpUrl="/packages"
                 closeOnDimmerClick>
                 <div className="ui vertical segment">
                     <div className="ui search">
