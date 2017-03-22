@@ -580,11 +580,8 @@ namespace ts.pxtc {
 
     function typeOf(node: Node) {
         let r: Type;
-        // TODO: where does typeOverride come from?
         if ((node as any).typeOverride)
             return (node as any).typeOverride as Type
-        if ((node as any).type)
-            return (node as any).type as Type
         if (isExpression(node))
             r = checker.getContextualType(<Expression>node)
         if (!r) {
@@ -598,13 +595,13 @@ namespace ts.pxtc {
         return checkType(r)
     }
 
-    function checkAssignmentTypes(trg: Node|Type, src: Node) {
+    function checkAssignmentTypes(trg: Node, src: Node) {
         // more restrictive checks of STS (trg <- src)
         // 1. Class <- Class: nominal checking
         // 2. Class <- Interface: not allowed
         // 3. Interface <- Class: as usual
         // 4. Interface <- Interface: as usual
-        let trgType = (trg as Type          ).flags ? (trg as Type) : typeOf(trg as Node)
+        let trgType = typeOf(trg)
         let srcType = typeOf(src)
         if (!trgType || !srcType)
             return;
@@ -1721,6 +1718,7 @@ ${lbl}: .short 0xffff
         function addDefaultParametersAndTypeCheck(sig: Signature, args: Expression[], attrs: CommentAttrs) {
             if (!sig) return;
             let parms = sig.getParameters();
+            let goodToGoLength = args.length
             if (parms.length > args.length) {
                 parms.slice(args.length).forEach(p => {
                     if (p.valueDeclaration &&
@@ -1740,11 +1738,11 @@ ${lbl}: .short 0xffff
                     }
                 })
             }
-            
-            // add extra type checking for assignment of actual to formal
-            for(let i=0; i<args.length; i++) {
-                // TODO: get actual type (prm.type is TypeNode)
-                checkAssignmentTypes(checker.getDeclaredTypeOfSymbol(parms[i]), args[i])
+
+            // add extra type checking for assignment of actual to formal,
+            // not needed for default params (for now)
+            for (let i = 0; i < goodToGoLength; i++) {
+                checkAssignmentTypes(parms[i].valueDeclaration, args[i])
             }
 
             // TODO: this is micro:bit specific and should be lifted out
@@ -2441,7 +2439,7 @@ ${lbl}: .short 0xffff
             return field;
         }
 
-        function emitStore(trg: Expression, src: Expression, checkAssign:boolean = false) {
+        function emitStore(trg: Expression, src: Expression, checkAssign: boolean = false) {
             if (checkAssign) {
                 checkAssignmentTypes(trg,src)
             }
