@@ -403,6 +403,28 @@ function importLegacyScriptsAsync(): Promise<void> {
             frame = undefined;
         }
     }
+
+    function pushProject(dbdata: {
+                header: pxt.workspace.Header[];
+                text: pxt.workspace.ScriptText[];
+            }) {
+        if (!dbdata.header.length) {
+            pxt.log('done importing scripts');
+            pxt.storage.setLocal(key, '1');
+            clean();
+            return;
+        }
+        const hd = dbdata.header.pop();
+        const td = dbdata.text.pop();
+        delete (hd as any)._id;
+        delete (hd as any)._rev;
+        delete (hd as any).id;
+        pxt.debug(`importing ${hd.name}`)
+        installAsync(hd, td)
+            .done(() => pushProject(dbdata));
+    }
+
+
     function receiveMessage(ev: MessageEvent) {
         if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'export' && ev.data.data) {
             const dbdata: {
@@ -411,27 +433,7 @@ function importLegacyScriptsAsync(): Promise<void> {
             } = ev.data.data;
 
             pxt.debug(`received ${dbdata.header.length} projects`);
-            let i = 0;
-            function pushOne() {
-                if (i >= dbdata.header.length) {
-                    pxt.log('done importing scripts');
-                    pxt.storage.setLocal(key, '1');
-                    clean();
-                    return;
-                }
-
-                const hd = dbdata.header[i];
-                const td = dbdata.text[i];
-                delete (hd as any)._id;
-                delete (hd as any)._rev;
-                delete (hd as any).id;
-                pxt.debug(`importing ${hd.name}`)
-                i++;
-                installAsync(hd, td)
-                    .then(pushOne);
-            }
-
-            pushOne();
+            pushProject(dbdata);
         }
     }
     window.addEventListener('message', receiveMessage, false)

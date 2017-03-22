@@ -641,6 +641,20 @@ export class Editor extends srceditor.Editor {
         fns?: pxt.Map<pxt.vs.MethodDef>,
         onClick?: () => void,
         category?: string) {
+        // Filter the toolbox
+        let filters = this.parent.state.filters;
+        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+        let hasChild = false;
+        if (filters) {
+            Object.keys(fns).forEach((fn) => {
+                const fnState = filters.fns && filters.fns[fn] != undefined ? filters.fns[fn] : (categoryState != undefined ? categoryState : filters.defaultState);
+                if (fnState == pxt.editor.FilterState.Disabled || fnState == pxt.editor.FilterState.Visible) hasChild = true;
+            })
+        } else {
+            hasChild = true;
+        }
+        if (!hasChild) return;
+
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
         // Create a tree item
@@ -702,13 +716,20 @@ export class Editor extends srceditor.Editor {
                     + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
                     return w2 - w1;
                 }).forEach((fn) => {
+                    let monacoBlockDisabled = false;
+                    const fnState = filters ? (filters.fns && filters.fns[fn] != undefined ? filters.fns[fn] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
+                    monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+                    if (fnState == pxt.editor.FilterState.Hidden) return;
+
+                    let monacoBlockArea = document.createElement('div');
                     let monacoBlock = document.createElement('div');
                     monacoBlock.className = 'monacoDraggableBlock';
 
                     monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
-                    monacoBlock.style.backgroundColor = `${color}`;
+                    monacoBlock.style.backgroundColor = monacoBlockDisabled ?
+                            `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                            `${color}`;
                     monacoBlock.style.borderColor = `${color}`;
-                    monacoBlock.draggable = true;
 
                     const elem = fns[fn];
                     const snippet = elem.snippet;
@@ -727,61 +748,66 @@ export class Editor extends srceditor.Editor {
 
                     monacoBlock.title = comment;
 
-                    monacoBlock.onclick = (ev2: MouseEvent) => {
-                        pxt.tickEvent("monaco.toolbox.itemclick");
+                    if (!monacoBlockDisabled) {
+                        monacoBlock.draggable = true;
+                        monacoBlock.onclick = (ev2: MouseEvent) => {
+                            pxt.tickEvent("monaco.toolbox.itemclick");
 
-                        monacoEditor.resetFlyout(true);
+                            monacoEditor.resetFlyout(true);
 
-                        let model = monacoEditor.editor.getModel();
-                        let currPos = monacoEditor.editor.getPosition();
-                        let cursor = model.getOffsetAt(currPos)
-                        let insertText = ns ? `${ns}.${snippet}` : snippet;
-                        insertText = (currPos.column > 1) ? '\n' + insertText :
-                            model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                                insertText + '\n' : insertText;
+                            let model = monacoEditor.editor.getModel();
+                            let currPos = monacoEditor.editor.getPosition();
+                            let cursor = model.getOffsetAt(currPos)
+                            let insertText = ns ? `${ns}.${snippet}` : snippet;
+                            insertText = (currPos.column > 1) ? '\n' + insertText :
+                                model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
+                                    insertText + '\n' : insertText;
 
-                        if (insertText.indexOf('{{}}') > -1) {
-                            cursor += (insertText.indexOf('{{}}'));
-                            insertText = insertText.replace('{{}}', '');
-                        } else
-                            cursor += (insertText.length);
+                            if (insertText.indexOf('{{}}') > -1) {
+                                cursor += (insertText.indexOf('{{}}'));
+                                insertText = insertText.replace('{{}}', '');
+                            } else
+                                cursor += (insertText.length);
 
-                        insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
-                        monacoEditor.editor.pushUndoStop();
-                        monacoEditor.editor.executeEdits("", [
-                            {
-                                identifier: { major: 0, minor: 0 },
-                                range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
-                                text: insertText,
-                                forceMoveMarkers: false
-                            }
-                        ]);
-                        monacoEditor.beforeCompile();
-                        monacoEditor.editor.pushUndoStop();
-                        let endPos = model.getPositionAt(cursor);
-                        monacoEditor.editor.setPosition(endPos);
-                        monacoEditor.editor.focus();
-                        //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
-                    };
-                    monacoBlock.ondragstart = (ev2: DragEvent) => {
-                        pxt.tickEvent("monaco.toolbox.itemdrag");
-                        let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
+                            insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
+                            monacoEditor.editor.pushUndoStop();
+                            monacoEditor.editor.executeEdits("", [
+                                {
+                                    identifier: { major: 0, minor: 0 },
+                                    range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
+                                    text: insertText,
+                                    forceMoveMarkers: false
+                                }
+                            ]);
+                            monacoEditor.beforeCompile();
+                            monacoEditor.editor.pushUndoStop();
+                            let endPos = model.getPositionAt(cursor);
+                            monacoEditor.editor.setPosition(endPos);
+                            monacoEditor.editor.focus();
+                            //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+                        };
+                        monacoBlock.ondragstart = (ev2: DragEvent) => {
+                            pxt.tickEvent("monaco.toolbox.itemdrag");
+                            let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
 
-                        setTimeout(function () {
-                            monacoFlyout.style.transform = "translateX(-9999px)";
-                        });
+                            setTimeout(function () {
+                                monacoFlyout.style.transform = "translateX(-9999px)";
+                            });
 
-                        let insertText = ns ? `${ns}.${snippet}` : snippet;
-                        ev2.dataTransfer.setData('text', insertText); // IE11 only supports text
-                    }
-                    monacoBlock.ondragend = (ev2: DragEvent) => {
-                        monacoFlyout.style.transform = "none";
-                        monacoEditor.resetFlyout(true);
+                            let insertText = ns ? `${ns}.${snippet}` : snippet;
+                            ev2.dataTransfer.setData('text', insertText); // IE11 only supports text
+                        }
+                        monacoBlock.ondragend = (ev2: DragEvent) => {
+                            monacoFlyout.style.transform = "none";
+                            monacoEditor.resetFlyout(true);
+                        }
                     }
 
                     monacoBlock.appendChild(methodToken);
                     monacoBlock.appendChild(sigToken);
-                    monacoFlyout.appendChild(monacoBlock);
+                    monacoBlockArea.appendChild(monacoBlock);
+
+                    monacoFlyout.appendChild(monacoBlockArea);
                 })
             }
         };

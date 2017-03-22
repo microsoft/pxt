@@ -111,7 +111,7 @@ export class Item extends data.Component<ItemProps, {}> {
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
-                title={this.props.title}
+                title={this.props.title || this.props.text}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}>
@@ -133,6 +133,7 @@ export class Button extends UiElement<ButtonProps> {
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.title}
+                aria-label={this.props.title || this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}
@@ -596,7 +597,15 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     setPosition = () => {
         if (this.ref) {
             const mountNode = this.getMountNode();
-            const { height } = this.ref.getBoundingClientRect();
+            let height: number;
+
+            // Check to make sure the ref is actually in the DOM or else IE11 throws an exception
+            if (this.ref.parentElement) {
+                height = this.ref.getBoundingClientRect().height;
+            }
+            else {
+                height = 0;
+            }
 
             const marginTop = -Math.round(height / 2);
             const scrolling = height >= window.innerHeight;

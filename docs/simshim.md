@@ -63,7 +63,7 @@ You need to include the ``//% async`` annotation in that case.
 
 ## Simulator implementations
 
-If you're adding your own C++ or assembly functions [in packages](/packages)
+If you're adding your own C++ or assembly functions in packages
 and you either cannot or don't want to add a corresponding function to the simulator,
 you can provide a simulator-only implementation. For example:
 

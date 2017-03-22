@@ -26,9 +26,9 @@ export class Editor extends srceditor.Editor {
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
-    blockSubset: { [index: string]: number };
     showToolboxCategories: boolean = true;
     cachedToolbox: string;
+    filters: pxt.editor.ProjectFilters;
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -54,6 +54,11 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    updateBlocksInfo(bi: pxtc.BlocksInfo) {
+        this.blockInfo = bi;
+        this.refreshToolbox();
+    }
+
     domUpdate() {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
@@ -72,7 +77,7 @@ export class Editor extends srceditor.Editor {
                     let showCategories = this.showToolboxCategories;
                     let showSearch = true;
                     let toolbox = this.getDefaultToolbox(showCategories);
-                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.blockSubset);
+                    let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, showCategories, this.filters);
                     this.updateToolbox(tb, showCategories);
                     if (showCategories && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
@@ -475,6 +480,11 @@ export class Editor extends srceditor.Editor {
         if (this.currFile && this.currFile != file) {
             this.filterToolbox(null);
         }
+        if (this.parent.state.filters) {
+            this.filterToolbox(this.parent.state.filters);
+        } else {
+            this.filters = null;
+        }
         this.currFile = file;
         return Promise.resolve();
     }
@@ -535,7 +545,7 @@ export class Editor extends srceditor.Editor {
         const blocklyOptions: Blockly.ExtendedOptions = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
-            media: pxt.webConfig.pxtCdnUrl + "blockly/media/",
+            media: pxt.webConfig.commitCdnUrl + "blockly/media/",
             sound: true,
             trashcan: false,
             collapse: false,
@@ -562,19 +572,24 @@ export class Editor extends srceditor.Editor {
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
 
-    filterToolbox(blockSubset?: { [index: string]: number }, showCategories: boolean = true): Element {
-        this.blockSubset = blockSubset;
+    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories: boolean = true): Element {
+        this.filters = filters;
         this.showToolboxCategories = showCategories;
-        let toolbox = this.getDefaultToolbox(showCategories);
-        if (!this.blockInfo) return;
-        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, showCategories, blockSubset);
-        this.updateToolbox(tb, showCategories);
+        return this.refreshToolbox();
+    }
+
+    private refreshToolbox() {
+        if (!this.blockInfo) return undefined;
+
+        let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
+        let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
+        this.updateToolbox(tb, this.showToolboxCategories);
 
         pxt.blocks.cachedSearchTb = tb;
         return tb;
     }
 
-    private updateToolbox(tb: Element, showCategories: boolean = true) {
+    private updateToolbox(tb: Element, showCategories: boolean) {
         // no toolbox when readonly
         if (pxt.shell.isReadOnly()) return;
 

@@ -143,7 +143,7 @@ namespace pxt.blocks {
             'variables_change': {
                 name: Util.lf("update the value of a number variable"),
                 tooltip: Util.lf("Changes the value of the variable by this amount"),
-                url: '/blocks/variables/change-var',
+                url: '/blocks/variables/change',
                 category: 'variables'
             },
             'controls_repeat_ext': {
@@ -195,19 +195,19 @@ namespace pxt.blocks {
             'text': {
                 name: Util.lf("a piece of text"),
                 tooltip: Util.lf("A letter, word, or line of text."),
-                url: 'reference/types/string',
+                url: 'types/string',
                 category: 'text'
             },
             'text_length': {
                 name: Util.lf("number of characters in the string"),
                 tooltip: Util.lf("Returns the number of letters (including spaces) in the provided text."),
-                url: 'reference/types/string-functions',
+                url: 'types/string/length',
                 category: 'text'
             },
             'text_join': {
                 name: Util.lf("join items to create text"),
                 tooltip: Util.lf("Create a piece of text by joining together any number of items."),
-                url: 'reference/types/string-functions',
+                url: 'types/string/join',
                 category: 'text'
             }
         };

@@ -157,12 +157,12 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
-        layoutOptions?: LayoutOptions;
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
@@ -174,10 +174,9 @@ declare namespace pxt {
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
         blocksOnly?: boolean; // blocks only workspace
-    }
-
-    interface LayoutOptions {
+        hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
+        hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
     }
 
     interface DocMenuEntry {
@@ -245,7 +244,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type: string;
+        type : "api" | "blockId" | "missingPackage" | "package";
         map?: pxt.Map<string>;
     }
 
