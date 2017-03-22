@@ -81,7 +81,7 @@ export class TutorialContent extends data.Component<ISettingsProps, {}> {
         const docsUrl = state.tutorialUrl;
         if (!docsUrl) return null;
 
-        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh() } src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups" />
+        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh() } src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
     }
 }
 
