@@ -660,9 +660,9 @@ namespace ts.pxtc {
             srcType = srcTypeLoc
 
         // outlaw all things that can't be cast to class/interface
-        //if (isStructureType(trgType) && ) {
-        //    userError(9203, lf("Cast to class/interface unsupported."))
-        //}
+        if (isStructureType(trgType) && !castableToStructureType(srcType)) {
+            userError(9203, lf("Cast to class/interface unsupported."))
+        }
 
         if (isClassType(trgType)) {
            if (isClassType(srcType)) {
