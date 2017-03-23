@@ -770,6 +770,14 @@ Avatar
     background-image: @avatarUrl;
 }
 
+@media print {
+    .avatar .avatar-image {
+        display: list-item;
+        list-style-image: @avatarUrl;
+        list-style-position: inside;
+    }
+}
+
 .avatar .message:after {
     top: 1.1em;
     left: -1em;

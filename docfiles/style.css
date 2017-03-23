@@ -306,3 +306,51 @@ svg {
         padding-right: 6rem;
     }
 }
+
+/**
+print only stuff
+**/
+.showprint {
+    display:none !important;
+}
+
+@media print {
+    .showprint {
+        display:block !important;
+    }
+    .hideprint,
+    .ui.embed > .icon,
+    .ui.docbutton {
+        display:none !important;
+    }
+    /* bigger fonts */
+    body {
+        color: #000; /* explicit colors */
+        background: #fff;
+        font: 12pt Georgia, "Times New Roman", Times, serif;
+        line-height: 1.3;
+    }    
+    /* page margins */
+    @page {
+        margin-top: 2cm;
+        margin-left: 2.5cm;
+        margin-right: 1cm;
+        margin-bottom: 2cm;
+    }
+    /* links */
+    a:link, a:visited {
+        color: #000;
+        font-weight: bolder;
+        text-decoration: none;
+    }    
+    a:after {
+        content:" (" attr(href) ") ";
+        font-size:0.8em;
+        font-weight:normal;
+    }
+    /* page breaks */
+    ul, ol, img {
+        page-break-inside: avoid;
+    }
+    /* headers, footers */ 
+}
