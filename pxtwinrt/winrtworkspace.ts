@@ -99,13 +99,13 @@ namespace pxt.winrt.workspace {
 
     function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
         pxt.debug(`winrt: fetch ${e.id}`)
-        return readPkgAsync(e.id)
+        return readPkgAsync(e.id, true)
             .then((resp: pxt.FsPkg) => {
                 if (!e.text) {
                     // otherwise we were beaten to it
                     e.text = {};
                     e.mtime = 0
-                    for (let f of resp.files) {
+                    for (const f of resp.files) {
                         e.text[f.name] = f.content
                         e.mtime = Math.max(e.mtime, f.mtime)
                     }
@@ -270,7 +270,7 @@ namespace pxt.winrt.workspace {
             .then(() => readPkgAsync(logicalDirname, false));
     }
 
-    function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
+    function readPkgAsync(logicalDirname: string, fileContents: boolean): Promise<FsPkg> {
         pxt.debug(`winrt: reading package under ${logicalDirname}`);
         return readFileAsync(pathjoin(logicalDirname, pxt.CONFIG_NAME))
             .then(text => {
@@ -305,7 +305,7 @@ namespace pxt.winrt.workspace {
 
     function syncAsync(): Promise<void> {
         return promisify(folder.getFoldersAsync())
-            .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.name))))
+            .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.name, false))))
             .then(hs => hs.forEach(mergeFsPkg));
     }
 
