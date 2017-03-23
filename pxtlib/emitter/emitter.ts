@@ -612,7 +612,7 @@ namespace ts.pxtc {
         return checkType(r)
     }
 
-    function inheritsFrom(src: ClassDeclaration, tgt:ClassDeclaration): boolean {
+    function inheritsFrom(src: ClassDeclaration, tgt: ClassDeclaration): boolean {
         if (src == tgt)
             return true;
         if (src.heritageClauses)
@@ -644,7 +644,7 @@ namespace ts.pxtc {
         let trgType = (trg as any).kind
             ? (isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc)
             : trg as Type
-        let srcType = (src as any).kind 
+        let srcType = (src as any).kind
             ? (isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc)
             : src as Type
 
