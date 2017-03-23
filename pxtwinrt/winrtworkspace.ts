@@ -1,6 +1,6 @@
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxteditor.d.ts"/>
-namespace pxt.winrt {
+namespace pxt.winrt.workspace {
 
     type Header = pxt.workspace.Header;
     type ScriptText = pxt.workspace.ScriptText;
@@ -82,13 +82,13 @@ namespace pxt.winrt {
         }
     }
 
-    function initAsync(target: string) {
+    function initAsync(target: string): Promise<void> {
         allScripts = [];
         currentTarget = target;
 
         const applicationData = Windows.Storage.ApplicationData.current;
         const localFolder = applicationData.localFolder;
-        return localFolder.createFolderAsync(currentTarget, Windows.Storage.CreationCollisionOption.openIfExists)
+        return promisify(localFolder.createFolderAsync(currentTarget, Windows.Storage.CreationCollisionOption.openIfExists))
             .then(fd => {
                 folder = fd;
                 return syncAsync();
@@ -155,7 +155,7 @@ namespace pxt.winrt {
             }
             let savedText = U.flatClone(e.text)
             if (pkg.files.length == 0) return Promise.resolve()
-            return apiAsync("pkg/" + h.id, pkg)
+            return writePkgAsync(h.id, pkg)
                 .then((pkg: pxt.FsPkg) => {
                     e.fsText = savedText
                     mergeFsPkg(pkg)
@@ -170,11 +170,11 @@ namespace pxt.winrt {
         })
     }
 
-    function saveAsync(h: Header, text: ScriptText) {
+    function saveAsync(h: Header, text: ScriptText): Promise<void> {
         return saveCoreAsync(h, text)
     }
 
-    function installAsync(h0: InstallHeader, text: ScriptText) {
+    function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
         const h = <Header>h0
         let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
         if (lookup(path)) {
@@ -207,9 +207,16 @@ namespace pxt.winrt {
         return parts.join('/');
     }
 
-    function readFileAsync(path: string) {
+    function readFileAsync(path: string): Promise<string> {
         return promisify(Windows.Storage.StorageFile.getFileFromPathAsync(pathjoin(folder.path, path))
             .then(file => Windows.Storage.FileIO.readTextAsync(file)));
+    }
+
+    function writeFileAsync(dir: string, name: string, content: string): Promise<void> {
+        return promisify(Windows.Storage.StorageFolder.getFolderFromPathAsync(dir))
+            .then(dir => dir.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting))
+            .then(f => Windows.Storage.FileIO.writeTextAsync(f, content))
+            .then(() => {})
     }
 
     function statOptAsync(path: string) {
@@ -224,38 +231,39 @@ namespace pxt.winrt {
             ));
     }
 
-    function writePkgAsync(logicalDirname: string, data: FsPkg) {
-        const dirname = path.join(userProjectsDir, logicalDirname)
+    function throwError(code: number, msg: string = null) {
+        let err = new Error(msg || "Error " + code);
+        (err as any).statusCode = code
+        throw err
+    }
 
-        nodeutil.mkdirP(dirname)
-
-        return Promise.map(data.files, f =>
-            readFileAsync(path.join(dirname, f.name))
-                .then(buf => {
+    function writePkgAsync(logicalDirname: string, data: FsPkg): Promise<FsPkg> {
+        return promisify(folder.createFolderAsync(logicalDirname, Windows.Storage.CreationCollisionOption.openIfExists))
+            .then(() => Promise.map(data.files, f => readFileAsync(pathjoin(logicalDirname, f.name))
+                .then(text => {
                     if (f.name == pxt.CONFIG_NAME) {
                         try {
                             let cfg: pxt.PackageConfig = JSON.parse(f.content)
                             if (!cfg.name) {
-                                console.log("Trying to save invalid JSON config")
+                                pxt.log("Trying to save invalid JSON config")
                                 throwError(410)
                             }
                         } catch (e) {
-                            console.log("Trying to save invalid format JSON config")
+                            pxt.log("Trying to save invalid format JSON config")
                             throwError(410)
                         }
                     }
-                    if (buf.toString("utf8") !== f.prevContent) {
-                        console.log(`merge error for ${f.name}: previous content changed...`);
+                    if (text !== f.prevContent) {
+                        pxt.log(`merge error for ${f.name}: previous content changed...`);
                         throwError(409)
                     }
-                }, err => { }))
+                }, err => { })))
             // no conflict, proceed with writing
-            .then(() => Promise.map(data.files, f =>
-                writeFileAsync(path.join(dirname, f.name), f.content)))
-            .then(() => readPkgAsync(logicalDirname, false))
+            .then(() => Promise.map(data.files, f => writeFileAsync(logicalDirname, f.name, f.content)))
+            .then(() => readPkgAsync(logicalDirname, false));
     }
 
-    function readPkgAsync(logicalDirname: string, fileContents = false) {
+    function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
         return readFileAsync(pathjoin(logicalDirname, pxt.CONFIG_NAME))
             .then(text => {
                 const cfg: pxt.PackageConfig = JSON.parse(text)
@@ -277,7 +285,7 @@ namespace pxt.winrt {
                                     })
                         }))
                     .then(files => {
-                        const rs = {
+                        const rs = <FsPkg>{
                             path: logicalDirname,
                             config: cfg,
                             files: files
@@ -287,23 +295,23 @@ namespace pxt.winrt {
             })
     }
 
-    function syncAsync() {
+    function syncAsync(): Promise<void> {
         return promisify(folder.getFoldersAsync())
             .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.path))))
             .then(hs => hs.forEach(h => h.pkgs.forEach(mergeFsPkg)));
         // TODO invalidate data
     }
 
-    function resetAsync() {
-        return folder.deleteAsync()
+    function resetAsync(): Promise<void> {
+        return promisify(folder.deleteAsync(Windows.Storage.StorageDeleteOption.default)
             .then(() => {
                 folder = undefined;
                 allScripts = [];
                 pxt.storage.clearLocal();
-            })
+            }));
     }
 
-    export const provider: WorkspaceProvider = {
+    export const provider: pxt.workspace.WorkspaceProvider = {
         getHeaders,
         getHeader,
         getTextAsync,
