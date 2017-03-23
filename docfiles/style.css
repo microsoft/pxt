@@ -314,7 +314,7 @@ print only stuff
     display:none !important;
 }
 
-@media print {
+@media only print {
     .showprint {
         display:block !important;
     }
