@@ -260,12 +260,25 @@ namespace pxt.blocks {
     export function appendToolboxIconCss(className: string, i: string): void {
         if (toolboxStyleBuffer.indexOf(className) > -1) return;
 
-        const icon = Util.unicodeToChar(i);
-        toolboxStyleBuffer += `
-            .blocklyTreeIcon.${className}::before {
-                content: "${icon}";
-            }
-        `;
+        if (i.length === 1) {
+            const icon = Util.unicodeToChar(i);
+            toolboxStyleBuffer += `
+                .blocklyTreeIcon.${className}::before {
+                    content: "${icon}";
+                }
+            `;
+        }
+        else {
+            toolboxStyleBuffer += `
+                .blocklyTreeIcon.${className} {
+                    display: inline-block !important;
+                    background-image: url("${encodeURI(i)}")!important;
+                    width: 1em;
+                    height: 1em;
+                    background-size: 1em!important;
+                }
+            `;
+        }
     }
 
     export function injectToolboxIconCss(): void {
@@ -288,15 +301,20 @@ namespace pxt.blocks {
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let url = iconCanvasCache[c];
         if (!url) {
-            let canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
-            let ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'white';
-            ctx.font = "56px Icons";
-            ctx.textAlign = "center";
-            ctx.fillText(c, canvas.width / 2, 56);
-            url = iconCanvasCache[c] = canvas.toDataURL();
+            if (c.length === 1) {
+                let canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 64;
+                let ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.font = "56px Icons";
+                ctx.textAlign = "center";
+                ctx.fillText(c, canvas.width / 2, 56);
+                url = iconCanvasCache[c] = canvas.toDataURL();
+            }
+            else {
+                url = encodeURI(c);
+            }
         }
         return new Blockly.FieldImage(url, 16, 16, '');
     }
