@@ -40,6 +40,19 @@ div.listing A:hover
     text-decoration: underline; 
 }
 
+#docs ul {
+    padding: 0rem;
+}
+
+#docs ul li {
+    list-style-type: none;
+}
+
+#docs ul li:before {
+  content: "\2B1C";
+  margin: 0 0.5em; 
+}
+
 .prodname {
     font-weight: normal;
     font-size: 1.8em;
@@ -337,6 +350,7 @@ print only stuff
         margin-right: 1cm;
         margin-bottom: 2cm;
     }
+    /* lists */
     /* links */
     a:link, a:visited {
         color: #000;
