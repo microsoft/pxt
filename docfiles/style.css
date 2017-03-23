@@ -50,7 +50,7 @@ div.listing A:hover
 
 #docs ul li:before {
   content: "\2B1C";
-  margin: 0 0.5em; 
+  margin: 0 1em; 
 }
 
 .prodname {
@@ -340,14 +340,14 @@ print only stuff
     body {
         color: #000; /* explicit colors */
         background: #fff;
-        font: 12pt Georgia, "Times New Roman", Times, serif;
+        font-size: 12pt;
         line-height: 1.3;
     }    
     /* page margins */
     @page {
         margin-top: 2cm;
         margin-left: 2.5cm;
-        margin-right: 1cm;
+        margin-right: 2.5cm;
         margin-bottom: 2cm;
     }
     /* lists */
@@ -363,7 +363,7 @@ print only stuff
         font-weight:normal;
     }
     /* page breaks */
-    ul, ol, img {
+    ul, ol, img, h2, h3 {
         page-break-inside: avoid;
     }
     /* headers, footers */ 
