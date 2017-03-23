@@ -760,14 +760,16 @@ Avatar
     margin-bottom: 1em;
 }
 
-.avatar .avatar-image {
-    position: absolute;
-    left: 0;
-    top: 1em;
-    width: 3em;
-    height: 3em;
-    background-size: contain;
-    background-image: @avatarUrl;
+@media screen {
+    .avatar .avatar-image {
+        position: absolute;
+        left: 0;
+        top: 1em;
+        width: 3em;
+        height: 3em;
+        background-size: contain;
+        background-image: @avatarUrl;
+    }
 }
 
 @media print {
