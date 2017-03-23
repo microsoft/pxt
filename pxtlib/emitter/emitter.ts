@@ -641,12 +641,12 @@ namespace ts.pxtc {
         let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
 
         // get the contextual types, if possible
-        let trgType = (trg as any).kind
-            ? (isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc)
-            : trg as Type
-        let srcType = (src as any).kind
-            ? (isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc)
-            : src as Type
+        let trgType = isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc
+        if (!trgType)
+            trgType = trgTypeLoc
+        let srcType = isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc
+        if (!srcType)
+            srcType = srcTypeLoc
 
         if (!trgType || !srcType)
             return;

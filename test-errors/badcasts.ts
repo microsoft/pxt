@@ -12,3 +12,5 @@ let x: Foo = { a: 1, b: 2 }
 
 // Static TypeScript doesn't allow cast of Interface to Class
 let y: Baz = x // TS9203
+
+y = x  // TS9203
