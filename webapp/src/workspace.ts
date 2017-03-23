@@ -1,5 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
+/// <reference path="../../built/pxtwinrt.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";
@@ -38,6 +39,9 @@ export function setupWorkspace(id: string) {
             break;
         case "iframe":
             impl = iframeworkspace.provider;
+            break;
+        case "uwp":
+            impl = data.wrapWorkspace(pxt.winrt.workspace.provider);
             break;
         case "cloud":
         default:

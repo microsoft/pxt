@@ -1392,7 +1392,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             hideMenuBar,
             hideEditorToolbar} = targetTheme;
         const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
@@ -1873,9 +1873,20 @@ $(document).ready(() => {
     pkg.setupAppTarget((window as any).pxtTargetBundle)
 
     enableAnalytics()
+
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+        pxt.tickEvent("unsupported");
+        const redirect = pxt.BrowserUtils.suggestedBrowserPath();
+        if (redirect) {
+            window.location.href = redirect;
+        }
+    }
+
     appcache.init();
     initLogin();
 
+    pxt.docs.requireMarked = () => require("marked");
+    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const hash = parseHash();
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
@@ -1885,19 +1896,8 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1]);
     else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
+    else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
-
-    pxt.docs.requireMarked = () => require("marked");
-
-    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
-
-    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
-        pxt.tickEvent("unsupported");
-        let redirect = pxt.BrowserUtils.suggestedBrowserPath();
-        if (redirect) {
-            window.location.href = redirect;
-        }
-    }
 
     Promise.resolve()
         .then(() => {
@@ -1920,7 +1920,8 @@ $(document).ready(() => {
             initSerial();
             initScreenshots();
             initHashchange();
-        }).then(() => pxt.winrt.initAsync(ih))
+        })
+        .then(() => pxt.winrt.initAsync(ih))
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))
