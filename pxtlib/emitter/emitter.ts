@@ -507,14 +507,6 @@ namespace ts.pxtc {
         return (node.name as Identifier).text
     }
 
-    function isArrayType(t: Type) {
-        return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
-    }
-
-    function isInterfaceType(t: Type) {
-        return t.flags & TypeFlags.Interface;
-    }
-
     function genericRoot(t: Type) {
         if (t.flags & TypeFlags.Reference) {
             let r = t as TypeReference
@@ -524,17 +516,29 @@ namespace ts.pxtc {
         return null
     }
 
+    function isArrayType(t: Type) {
+        return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
+    }
+
+    function isInterfaceType(t: Type) {
+        return t.flags & TypeFlags.Interface;
+    }
+    
     function isClassType(t: Type) {
         // check if we like the class?
         return !!(t.flags & TypeFlags.Class) || !!(t.flags & TypeFlags.ThisType)
     }
 
+    function isObjectLiteral(t: Type) {
+        return t.symbol && (t.symbol.flags & (SymbolFlags.ObjectLiteral | SymbolFlags.TypeLiteral)) !== 0;
+    }
+
     function isStructureType(t: Type) {
-        return isClassType(t) || isInterfaceType(t) || !!(t.flags & TypeFlags.ObjectLiteral)
+        return isClassType(t) || isInterfaceType(t) || isObjectLiteral(t)
     }
 
     function castableToStructureType(t: Type) {
-        return isClassType(t) || isInterfaceType(t) || !!(t.flags & (TypeFlags.Null | TypeFlags.Undefined))
+        return isStructureType(t) || (t.flags & (TypeFlags.Null | TypeFlags.Undefined))
     }
 
     function isPossiblyGenericClassType(t: Type) {
