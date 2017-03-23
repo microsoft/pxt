@@ -67,7 +67,7 @@ function resetAsync(): Promise<void> {
         })).then(() => {})
 }
 
-export var provider: WorkspaceProvider = {
+export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,
