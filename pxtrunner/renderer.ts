@@ -60,7 +60,7 @@ namespace pxt.runner {
 
         let cdn = pxt.webConfig.commitCdnUrl
         let images = cdn + "images"
-        let $h = $('<div class="ui bottom attached tabular icon small compact menu">'
+        let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
         let $c = $('<div class="ui top attached segment"></div>');
         let $menu = $h.find('.right.menu');
