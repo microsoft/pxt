@@ -90,7 +90,7 @@ function resetAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-export var provider: WorkspaceProvider = {
+export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,

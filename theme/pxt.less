@@ -760,14 +760,24 @@ Avatar
     margin-bottom: 1em;
 }
 
-.avatar .avatar-image {
-    position: absolute;
-    left: 0;
-    top: 1em;
-    width: 3em;
-    height: 3em;
-    background-size: contain;
-    background-image: @avatarUrl;
+@media only screen {
+    .avatar .avatar-image {
+        position: absolute;
+        left: 0;
+        top: 1em;
+        width: 3em;
+        height: 3em;
+        background-size: contain;
+        background-image: @avatarUrl;
+    }
+}
+
+@media only print {
+    .avatar .avatar-image {
+        display: list-item;
+        list-style-image: @avatarUrl;
+        list-style-position: inside;
+    }
 }
 
 .avatar .message:after {
