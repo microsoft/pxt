@@ -42,6 +42,7 @@ export function setupWorkspace(id: string) {
             break;
         case "uwp":
             impl = data.wrapWorkspace(pxt.winrt.workspace.provider);
+            break;
         case "cloud":
         default:
             impl = cloudworkspace.provider

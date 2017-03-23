@@ -88,14 +88,17 @@ namespace pxt.winrt.workspace {
 
         const applicationData = Windows.Storage.ApplicationData.current;
         const localFolder = applicationData.localFolder;
+        pxt.debug(`winrt: initializing workspace`)
         return promisify(localFolder.createFolderAsync(currentTarget, Windows.Storage.CreationCollisionOption.openIfExists))
             .then(fd => {
                 folder = fd;
+                pxt.debug(`winrt: initialized workspace at ${folder.path}`)
                 return syncAsync();
             });
     }
 
     function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
+        pxt.debug(`winrt: fetch ${e.id}`)
         return readPkgAsync(e.id)
             .then((resp: pxt.FsPkg) => {
                 if (!e.text) {
@@ -115,6 +118,7 @@ namespace pxt.winrt.workspace {
     const headerQ = new U.PromiseQueue();
 
     function getTextAsync(id: string): Promise<ScriptText> {
+        pxt.debug(`winrt: get text ${id}`)
         let e = lookup(id)
         if (!e)
             return Promise.resolve(null as ScriptText)
@@ -159,14 +163,10 @@ namespace pxt.winrt.workspace {
                 .then((pkg: pxt.FsPkg) => {
                     e.fsText = savedText
                     mergeFsPkg(pkg)
-                    //  data.invalidate("header:" + h.id)
-                    //   data.invalidate("header:*")
                     if (text) {
-                        //         data.invalidate("text:" + h.id)
                         h.saveId = null
                     }
                 })
-            //   .catch(e => core.errorNotification(lf("Save failed!")))
         })
     }
 
@@ -204,23 +204,29 @@ namespace pxt.winrt.workspace {
     }
 
     function pathjoin(...parts: string[]): string {
-        return parts.join('/');
+        return parts.join('\\');
     }
 
     function readFileAsync(path: string): Promise<string> {
-        return promisify(Windows.Storage.StorageFile.getFileFromPathAsync(pathjoin(folder.path, path))
+        const fp = pathjoin(folder.path, path);
+        pxt.debug(`winrt: reading ${fp}`);
+        return promisify(Windows.Storage.StorageFile.getFileFromPathAsync(fp)
             .then(file => Windows.Storage.FileIO.readTextAsync(file)));
     }
 
     function writeFileAsync(dir: string, name: string, content: string): Promise<void> {
-        return promisify(Windows.Storage.StorageFolder.getFolderFromPathAsync(dir))
-            .then(dir => dir.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting))
+        const fd = pathjoin(folder.path, dir);
+        pxt.debug(`winrt: writing ${pathjoin(fd, name)}`);
+        return promisify(Windows.Storage.StorageFolder.getFolderFromPathAsync(fd))
+            .then(dk => dk.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting))
             .then(f => Windows.Storage.FileIO.writeTextAsync(f, content))
             .then(() => {})
     }
 
     function statOptAsync(path: string) {
-        return promisify(Windows.Storage.StorageFile.getFileFromPathAsync(pathjoin(folder.path, path))
+        const fn = pathjoin(folder.path, path);
+        pxt.debug(`winrt: ${fn}`)
+        return promisify(Windows.Storage.StorageFile.getFileFromPathAsync(fn)
             .then(file => file.getBasicPropertiesAsync()
                 .then(props => {
                     return {
@@ -238,6 +244,7 @@ namespace pxt.winrt.workspace {
     }
 
     function writePkgAsync(logicalDirname: string, data: FsPkg): Promise<FsPkg> {
+        pxt.debug(`winrt: writing package at ${logicalDirname}`);
         return promisify(folder.createFolderAsync(logicalDirname, Windows.Storage.CreationCollisionOption.openIfExists))
             .then(() => Promise.map(data.files, f => readFileAsync(pathjoin(logicalDirname, f.name))
                 .then(text => {
@@ -264,6 +271,7 @@ namespace pxt.winrt.workspace {
     }
 
     function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
+        pxt.debug(`winrt: reading package under ${logicalDirname}`);
         return readFileAsync(pathjoin(logicalDirname, pxt.CONFIG_NAME))
             .then(text => {
                 const cfg: pxt.PackageConfig = JSON.parse(text)

@@ -16,7 +16,7 @@
     <PackageRegistrationPath>
     </PackageRegistrationPath>
     <RemoveNonLayoutFiles>true</RemoveNonLayoutFiles>
-    <RegisteredManifestChecksum>6C19FE48ABA868B1B31E2C6C8E9134E2474DE17547CD595E5E95C4708190775D</RegisteredManifestChecksum>
+    <RegisteredManifestChecksum>AF4C47D5F8E780FFD2BE34680C56B3C0386325AC2153BB4A0B22F5EC2CF5A580</RegisteredManifestChecksum>
     <RegisteredPackageMoniker>d6f74a43-358f-4081-88bc-7b2242586346_1.0.0.0_neutral__xnsf0qvfx7rsy</RegisteredPackageMoniker>
     <RegisteredUserModeAppID>d6f74a43-358f-4081-88bc-7b2242586346_xnsf0qvfx7rsy!App</RegisteredUserModeAppID>
     <RegisteredPackageID>d6f74a43-358f-4081-88bc-7b2242586346</RegisteredPackageID>
@@ -28,7 +28,7 @@
     <AppXManifest Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-03-23T15:17:55.233</Modified>
+      <Modified>2017-03-23T16:42:14.436</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
@@ -81,7 +81,7 @@
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\ReverseMap\resources.pri">
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-03-23T15:17:54.728</Modified>
+      <Modified>2017-03-23T16:42:14.198</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
