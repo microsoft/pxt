@@ -523,7 +523,7 @@ namespace ts.pxtc {
     function isInterfaceType(t: Type) {
         return t.flags & TypeFlags.Interface;
     }
-    
+
     function isClassType(t: Type) {
         // check if we like the class?
         return !!(t.flags & TypeFlags.Class) || !!(t.flags & TypeFlags.ThisType)
@@ -612,19 +612,38 @@ namespace ts.pxtc {
         return checkType(r)
     }
 
+    function inheritsFrom(src: ClassDeclaration, tgt:ClassDeclaration) : boolean {
+        if (src == tgt)
+            return true;
+        if (src.heritageClauses)
+            for (let h of src.heritageClauses) {
+                switch (h.token) {
+                    case SK.ExtendsKeyword:
+                        let tp = typeOf(h.types[0])
+                        if (isClassType(tp)) {
+                            let parent = <ClassDeclaration>tp.symbol.valueDeclaration
+                            return inheritsFrom(parent,tgt)
+                        }
+                }
+            }
+        return false;
+    }
+
     // more restrictive checks of STS (trg <- src)
     // 1. Class <- Class: nominal checking
     // 2. Class <- Interface: not allowed
     // 3. Interface <- Class: as usual
     // 4. Interface <- Interface: as usual
-    function checkAssignmentTypes(trg: Node, src: Node|Type) {
+    function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
         
         // get the direct types
-        let trgTypeLoc = checker.getTypeAtLocation(trg);
-        let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type
+        let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
+        let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
 
         // get the contextual types, if possible
-        let trgType = isExpression(trg) ? checker.getContextualType(<Expression>trg) : trgTypeLoc
+        let trgType = (trg as any).kind 
+            ? (isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc) 
+            : trg as Type
         let srcType = (src as any).kind 
             ? (isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc) 
             : src as Type
@@ -641,24 +660,37 @@ namespace ts.pxtc {
             srcType = srcTypeLoc
 
         // outlaw all things that can't be cast to class/interface
-        if (isStructureType(trgType) && !castableToStructureType(srcType)) {
-            userError(9203, lf("Cast to class/interface unsupported."))
-        }
+        //if (isStructureType(trgType) && ) {
+        //    userError(9203, lf("Cast to class/interface unsupported."))
+        //}
 
         if (isClassType(trgType)) {
            if (isClassType(srcType)) {
-                // possibilities
-                // - upcast (OK)
-                // - downcast (NOK)
-                // - unrelated cast (NOK)
                 let tgtDecl = <ClassDeclaration>trgType.symbol.valueDeclaration
                 let srcDecl = <ClassDeclaration>srcType.symbol.valueDeclaration
-           } else if (isInterfaceType(srcType) || isBuiltinType(srcType)) {
-                userError(9203, lf("Cast to class unsupported."))
+                // only allow upcast (src -> ... -> tgt) in inheritance chain
+                if (!inheritsFrom(srcDecl,tgtDecl)) {
+                    if (inheritsFrom(tgtDecl,srcDecl))
+                       userError(9203, lf("Downcasts not supported."))
+                    else
+                       userError(9203, lf("Casts between unrelated classes unsupported."))
+                }
+           } else {
+                if (!(srcType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
+                    userError(9203, lf("Cast to class unsupported."))
+                }
            }
         } else if (isFunctionType(trgType)) {
             if (isFunctionType(srcType)) {
-                // true function subtyping
+                // TODO: true function subtyping
+            } else {
+                // TODO
+            }
+        } else if (isInterfaceType(trgType)) {
+            if (isInterfaceType(srcType)) {
+                // TODO: need to redefine structural subtyping (based on this function)
+            } else {
+                // TODO
             }
         }
     }
