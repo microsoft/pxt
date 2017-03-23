@@ -570,7 +570,7 @@ namespace ts.pxtc {
 
     function isBuiltinType(t: Type) {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Enum
-        return t.flags & ok   
+        return t.flags & ok
     }
 
     function checkType(t: Type) {
@@ -612,7 +612,7 @@ namespace ts.pxtc {
         return checkType(r)
     }
 
-    function inheritsFrom(src: ClassDeclaration, tgt:ClassDeclaration) : boolean {
+    function inheritsFrom(src: ClassDeclaration, tgt:ClassDeclaration): boolean {
         if (src == tgt)
             return true;
         if (src.heritageClauses)
@@ -635,17 +635,17 @@ namespace ts.pxtc {
     // 3. Interface <- Class: as usual
     // 4. Interface <- Interface: as usual
     function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
-        
+
         // get the direct types
         let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
         let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
 
         // get the contextual types, if possible
-        let trgType = (trg as any).kind 
-            ? (isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc) 
+        let trgType = (trg as any).kind
+            ? (isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc)
             : trg as Type
         let srcType = (src as any).kind 
-            ? (isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc) 
+            ? (isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc)
             : src as Type
 
         if (!trgType || !srcType)
