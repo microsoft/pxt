@@ -305,9 +305,8 @@ namespace pxt.winrt.workspace {
 
     function syncAsync(): Promise<void> {
         return promisify(folder.getFoldersAsync())
-            .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.path))))
-            .then(hs => hs.forEach(h => h.pkgs.forEach(mergeFsPkg)));
-        // TODO invalidate data
+            .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.name))))
+            .then(hs => hs.forEach(mergeFsPkg));
     }
 
     function resetAsync(): Promise<void> {
