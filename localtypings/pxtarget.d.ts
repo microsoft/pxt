@@ -222,6 +222,7 @@ declare namespace ts.pxtc {
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
         flashChecksumAddr?: number;
+        onStartText?: boolean;
     }
 
     interface CompileOptions {

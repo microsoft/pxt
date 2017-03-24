@@ -7,6 +7,7 @@ namespace ts.pxtc {
     export import U = pxtc.Util;
 
     export const ON_START_TYPE = "pxt-on-start";
+    export const ON_START_COMMENT = U.lf("On Start");
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
