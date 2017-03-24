@@ -168,12 +168,12 @@ namespace pxt.BrowserUtils {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
         }
         const versionString = browserVersion();
-        const v = parseInt(versionString)
+        const v = parseInt(versionString || "0")
 
         const isRecentChrome = isChrome() && v >= 38
         const isRecentFirefox = isFirefox() && v >= 31
         const isRecentEdge = isEdge()
-        const isRecentSafari = isSafari() && v >= 9
+        const isRecentSafari = isSafari() && (!v || v >= 9)
         const isRecentOpera = (isOpera() && isChrome()) && v >= 21
         const isRecentIE = isIE() && v >= 11
         const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
