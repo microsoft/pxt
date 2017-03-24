@@ -1301,6 +1301,11 @@ ${output}</xml>`;
                 const match = regex.exec(line)
                 if (match) {
                     const matched = match[1].trim()
+
+                    if (matched === ON_START_COMMENT) {
+                        return;
+                    }
+
                     if (matched) {
                         currentLine += currentLine ? " " + matched : matched
                     } else {
@@ -1529,11 +1534,9 @@ ${output}</xml>`;
                     if (instance && i === 0) {
                         return;
                     }
-                    const aName = argNames[i];
                     const paramInfo = api.parameters[instance ? i - 1 : i];
                     if (paramInfo.isEnum) {
                         if (e.kind === SK.PropertyAccessExpression) {
-                            // fail
                             const enumName = (e as PropertyAccessExpression).expression as Identifier;
                             if (enumName.kind === SK.Identifier && enumName.text === paramInfo.type) {
                                 return;
