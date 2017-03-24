@@ -317,6 +317,7 @@ namespace ts.pxtc {
 
         mutate?: string;
         mutateText?: string;
+        mutatePrefix?: string;
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
 
@@ -1946,7 +1947,7 @@ ${lbl}: .short 0xffff
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
                 // if we call a method and it overrides then
-                // mark the virtual root class and all its overrides as used, 
+                // mark the virtual root class and all its overrides as used,
                 // if their classes are used
                 if (info.virtualParent) info = info.virtualParent
                 if (!info.isUsed) {

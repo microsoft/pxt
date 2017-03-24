@@ -40,6 +40,19 @@ div.listing A:hover
     text-decoration: underline; 
 }
 
+#docs ul {
+    padding: 0rem;
+}
+
+#docs ul li {
+    list-style-type: none;
+}
+
+#docs ul li:before {
+  content: "\2B1C";
+  margin: 0 1em; 
+}
+
 .prodname {
     font-weight: normal;
     font-size: 1.8em;
@@ -305,4 +318,53 @@ svg {
         padding-left: 6rem;
         padding-right: 6rem;
     }
+}
+
+/**
+print only stuff
+**/
+.showprint {
+    display:none !important;
+}
+
+@media only print {
+    .showprint {
+        display:block !important;
+    }
+    .hideprint,
+    .ui.embed > .icon,
+    .ui.docbutton {
+        display:none !important;
+    }
+    /* bigger fonts */
+    body {
+        color: #000; /* explicit colors */
+        background: #fff;
+        font-size: 12pt;
+        line-height: 1.3;
+    }    
+    /* page margins */
+    @page {
+        margin-top: 2cm;
+        margin-left: 2.5cm;
+        margin-right: 2.5cm;
+        margin-bottom: 2cm;
+    }
+    /* lists */
+    /* links */
+    a:link, a:visited {
+        color: #000;
+        font-weight: bolder;
+        text-decoration: none;
+    }    
+    a:after {
+        content:" (" attr(href) ") ";
+        font-size:0.8em;
+        font-weight:normal;
+    }
+    /* page breaks */
+    ul, ol, img, h2, h3 {
+        page-break-inside: avoid;
+    }
+    /* headers, footers */ 
 }
