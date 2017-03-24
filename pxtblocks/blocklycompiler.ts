@@ -1068,7 +1068,7 @@ namespace pxt.blocks {
         const body = compileStatements(e, bBody);
 
         if (pxt.appTarget.compile && pxt.appTarget.compile.onStartText && body && body.children) {
-            body.children.unshift(mkStmt(mkText(`// ${pxtc.ON_START_COMMENT}`)))
+            body.children.unshift(mkStmt(mkText(`// ${pxtc.ON_START_COMMENT}\n`)))
         }
 
         return body;
