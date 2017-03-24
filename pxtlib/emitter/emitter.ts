@@ -534,7 +534,7 @@ namespace ts.pxtc {
     }
 
     function isStructureType(t: Type) {
-        return isClassType(t) || isInterfaceType(t) || isObjectLiteral(t)
+        return !isFunctionType(t) && (isClassType(t) || isInterfaceType(t) || isObjectLiteral(t))
     }
 
     function castableToStructureType(t: Type) {
@@ -629,11 +629,6 @@ namespace ts.pxtc {
         return false;
     }
 
-    // more restrictive checks of STS (trg <- src)
-    // 1. Class <- Class: nominal checking
-    // 2. Class <- Interface: not allowed
-    // 3. Interface <- Class: as usual
-    // 4. Interface <- Interface: as usual
     function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
 
         // get the direct types
@@ -651,17 +646,20 @@ namespace ts.pxtc {
         if (!trgType || !srcType)
             return;
 
-        // case analysis based on direct/contextual types
-        // 1. trgType == srcType != srcTypeLoc
-        //    - we should check trgType against srcTypeLoc
-        //    - example: let z : Foo = new Baz()
-
+        // src may get its typee from trg
         if (trgType == srcType && srcType != srcTypeLoc)
             srcType = srcTypeLoc
 
+        let [ok, message] = checkSubtype(trgType, srcType)
+        if (!ok) {
+            userError(9203, lf(message))
+        }
+    }
+
+    function checkSubtype(trgType: Type, srcType: Type): [boolean, string] {
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(trgType) && !castableToStructureType(srcType)) {
-            userError(9203, lf("Cast to class/interface unsupported."))
+            return [false, "Cast to class/interface unsupported."]
         }
 
         if (isClassType(trgType)) {
@@ -671,13 +669,13 @@ namespace ts.pxtc {
                 // only allow upcast (src -> ... -> tgt) in inheritance chain
                 if (!inheritsFrom(srcDecl,tgtDecl)) {
                     if (inheritsFrom(tgtDecl,srcDecl))
-                       userError(9203, lf("Downcasts not supported."))
+                       return [false, "Downcasts not supported."]
                     else
-                       userError(9203, lf("Casts between unrelated classes unsupported."))
+                       return [false, "Casts between unrelated classes unsupported."]
                 }
            } else {
                 if (!(srcType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    userError(9203, lf("Cast to class unsupported."))
+                    return [false, "Cast to class unsupported."]
                 }
            }
         } else if (isFunctionType(trgType)) {
@@ -693,6 +691,7 @@ namespace ts.pxtc {
                 // TODO
             }
         }
+        return [true,""]
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
