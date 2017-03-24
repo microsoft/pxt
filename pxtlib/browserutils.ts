@@ -142,6 +142,10 @@ namespace pxt.BrowserUtils {
         }
         else if (isSafari()) {
             matches = /Version\/([0-9\.]+)/i.exec(navigator.userAgent);
+            // pinned web site have a different user agent
+            // Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27
+            if (!matches)
+                matches = /(iPod|iPhone|iPad) OS (\d+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -170,12 +174,12 @@ namespace pxt.BrowserUtils {
         const versionString = browserVersion();
         const v = parseInt(versionString || "0")
 
-        const isRecentChrome = isChrome() && v >= 38
-        const isRecentFirefox = isFirefox() && v >= 31
-        const isRecentEdge = isEdge()
-        const isRecentSafari = isSafari() && (!v || v >= 9)
-        const isRecentOpera = (isOpera() && isChrome()) && v >= 21
-        const isRecentIE = isIE() && v >= 11
+        const isRecentChrome = isChrome() && v >= 38;
+        const isRecentFirefox = isFirefox() && v >= 31;
+        const isRecentEdge = isEdge();
+        const isRecentSafari = isSafari() && v >= 9;
+        const isRecentOpera = (isOpera() && isChrome()) && v >= 21;
+        const isRecentIE = isIE() && v >= 11;
         const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
 
         //In the future this should check for the availability of features, such
