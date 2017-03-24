@@ -107,6 +107,10 @@ namespace pxt.BrowserUtils {
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
+    export function hasSaveAs(): boolean {
+        return isEdge() || isIE() || isFirefox();
+    }
+
     export function os(): string {
         if (isWindows()) return "windows";
         else if (isMac()) return "mac";
