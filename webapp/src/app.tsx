@@ -91,6 +91,7 @@ export class ProjectView
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
+    prevEditorId: string;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -184,12 +185,12 @@ export class ProjectView
     }
 
     private isBlocksActive(): boolean {
-        return this.editor == this.blocksEditor
+        return !this.state.embedSimView && this.editor == this.blocksEditor
             && this.editorFile && this.editorFile.name == "main.blocks";
     }
 
     private isJavaScriptActive(): boolean {
-        return this.editor == this.textEditor
+        return !this.state.embedSimView && this.editor == this.textEditor
             && this.editorFile && this.editorFile.name == "main.ts";
     }
 
@@ -200,28 +201,42 @@ export class ProjectView
 
     openJavaScript() {
         pxt.tickEvent("menu.javascript");
-        if (this.isJavaScriptActive()) return;
+        if (this.isJavaScriptActive()) {
+            if (this.state.embedSimView) this.setState({ embedSimView: false });
+            return;
+        }
         if (this.isBlocksActive()) this.blocksEditor.openTypeScript();
         else this.setFile(pkg.mainEditorPkg().files["main.ts"])
     }
 
     openBlocks() {
         pxt.tickEvent("menu.blocks");
-        if (this.isBlocksActive()) return;
+        if (this.isBlocksActive()) {
+            if (this.state.embedSimView) this.setState({ embedSimView: false });
+            return;
+        }
         if (this.isJavaScriptActive()) this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
-          this.saveFileAsync()
-            .then(() => {
-                compiler.newProject();
-                return compiler.getBlocksAsync()
-            })
-            .done((bi: pxtc.BlocksInfo) => {
-                pxt.blocks.initBlocks(bi);
-                this.blocksEditor.updateBlocksInfo(bi);
-                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
-            });
+            this.saveFileAsync()
+                .then(() => {
+                    compiler.newProject();
+                    return compiler.getBlocksAsync()
+                })
+                .done((bi: pxtc.BlocksInfo) => {
+                    pxt.blocks.initBlocks(bi);
+                    this.blocksEditor.updateBlocksInfo(bi);
+                    this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+                });
         } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
+    }
+
+    openPreviousEditor() {
+        if (this.prevEditorId == "monacoEditor") {
+            this.openJavaScript();
+        } else {
+            this.openBlocks();
+        }
     }
 
     openTypeScriptAsync(): Promise<void> {
@@ -233,6 +248,16 @@ export class ProjectView
                     header.pubCurrent = false
                 }
             });
+    }
+
+    openSimView() {
+        pxt.tickActivity("menu.simView");
+        if (this.state.embedSimView) {
+            this.startStopSimulator();
+        } else {
+            this.setState({ embedSimView: true });
+            this.startSimulator();
+        }
     }
 
     public typecheckNow() {
@@ -348,6 +373,7 @@ export class ProjectView
             .then(() => {
                 this.editorFile = this.state.currFile as pkg.File; // TODO
                 let previousEditor = this.editor;
+                this.prevEditorId = previousEditor.getId();
                 this.editor = editorOverride || this.pickEditorFor(this.editorFile)
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
@@ -378,7 +404,8 @@ export class ProjectView
 
         this.setState({
             currFile: fn,
-            showBlocks: false
+            showBlocks: false,
+            embedSimView: false
         })
         //this.fireResize();
     }
@@ -475,7 +502,7 @@ export class ProjectView
                     case 'steploaded':
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
                         let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
-                        this.editor.filterToolbox(tt.data, showCategories, false);
+                        this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Hidden }, showCategories);
                         this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
                         tutorial.TutorialContent.refresh();
                         core.hideLoading();
@@ -486,10 +513,10 @@ export class ProjectView
     }
 
     reloadHeaderAsync() {
-        return this.loadHeaderAsync(this.state.header)
+        return this.loadHeaderAsync(this.state.header, this.state.filters)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, filters?: pxt.editor.ProjectFilters): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -498,7 +525,8 @@ export class ProjectView
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         this.setState({
-            showFiles: false
+            showFiles: false,
+            filters: filters
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -526,7 +554,7 @@ export class ProjectView
                     sideDocsLoadUrl: ''
                 })
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
-                    this.loadHeaderAsync(h).done()
+                    this.loadHeaderAsync(h, this.state.filters).done()
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
@@ -558,10 +586,10 @@ export class ProjectView
                     })
                     .done()
 
-                let readme = main.lookupFile("this/README.md");
+                const readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
-                else if (pkg.mainPkg.config.documentation)
+                else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation);
             })
     }
@@ -657,7 +685,7 @@ export class ProjectView
             const files = JSON.parse(data.source) as pxt.Map<string>;
             // we cannot load the workspace until we've loaded the project
             workspace.installAsync(h, files)
-                .done(hd => this.loadHeaderAsync(hd));
+                .done(hd => this.loadHeaderAsync(hd, null));
             return;
         }
 
@@ -689,6 +717,22 @@ export class ProjectView
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
         } else core.warningNotification(lf("Oops, don't know how to load this file!"));
+    }
+
+    importProjectAsync(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void> {
+        let h: pxt.workspace.InstallHeader = project.header;
+        if (!h) {
+            h = {
+                target: pxt.appTarget.id,
+                editor: pxt.BLOCKS_PROJECT_NAME,
+                name: lf("Untitled"),
+                meta: {},
+                pubId: "",
+                pubCurrent: false
+            }
+        }
+        return workspace.installAsync(h, project.text)
+            .then(hd => this.loadHeaderAsync(hd, filters));
     }
 
     initDragAndDrop() {
@@ -795,7 +839,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd))
+        }, files).then(hd => this.loadHeaderAsync(hd, options.filters))
     }
 
     switchTypeScript() {
@@ -1299,7 +1343,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.loadHeaderAsync(workspace.getHeaders()[0]);
+                    this.loadHeaderAsync(workspace.getHeaders()[0], null);
                 } else {
                     this.newProject();
                 }
@@ -1344,9 +1388,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const fullscreen = run && !simOpts.hideFullscreen;
-        const showMenuBar = !targetTheme.hideMenuBar;
+        const {
+            hideMenuBar,
+            hideEditorToolbar} = targetTheme;
         const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
+        const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
 
@@ -1367,27 +1414,34 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             inTutorial ? 'tutorial' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
-            showMenuBar ? '' : 'hideMenuBar',
+            hideMenuBar ? 'hideMenuBar' : '',
+            hideEditorToolbar ? 'hideEditorToolbar' : '',
+            sandbox && simActive ? 'simView' : '',
             'full-abs'
         ]);
 
         return (
             <div id='root' className={rootClasses}>
-                {showMenuBar ?
+                {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } /></a>
+                                        ? <a className="ui image" target="_blank" href={targetTheme.logoUrl}><img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
                                         : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } /></a>) : null}
+                                    {targetTheme.portraitLogo ? (<a className="ui" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
                                 </span>
                                 {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialName} /> : null}
-                            </div> : undefined }
+                            </div> : <div className="left menu">
+                                    <span id="logo" className="ui item logo">
+                                        <img className="ui mini image" src={Util.toDataUri(rightLogo) } onClick={() => this.launchFullEditor() } alt={`${targetTheme.boardName} Logo`}/>
+                                    </span>
+                                </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
+                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
                                 <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
                                 <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
@@ -1400,10 +1454,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
                                         <div className="ui divider"></div>
-                                        <a className="ui item thin only" href="/docs" role="menuitem" target="_blank">
-                                            <i className="help icon"></i>
-                                            {lf("Help") }
-                                        </a>
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
                                         }
@@ -1417,21 +1467,20 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
 
-                                {sandbox ? <sui.Item role="menuitem" icon="external" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
-                                {sandbox ? <span className="ui item logo"><img className="ui mini image" src={Util.toDataUri(rightLogo) } /></span> : undefined}
+                                {sandbox ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
                                 {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
 
                                 {inTutorial ? <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() } /> : undefined}
 
                                 {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } />
+                                        ? <img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
                                         : <span className="name">{targetTheme.organization}</span>}
-                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } />) : null}
+                                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
                             </div>
                         </div>
-                    </div> : undefined}
+                    </div> }
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
@@ -1466,20 +1515,21 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
-                <div id="editortools" role="complementary">
+                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary">
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div>
+                </div> }
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{lf("Powered by {0}", targetTheme.organization) }</a> : undefined}
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
+                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
-                    <button arial-label={lf("Ok") } className="ui right floated icon button" onClick={consentCookie}>
+                    <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
                     {lf("By using this site you agree to the use of cookies for analytics.") }
@@ -1796,9 +1846,9 @@ function loadHeaderBySharedId(id: string) {
         .filter(h => h.pubCurrent && h.pubId == id)[0]
     core.showLoading(lf("loading project..."));
     (existing
-        ? theEditor.loadHeaderAsync(existing)
+        ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
-            .then(hd => theEditor.loadHeaderAsync(hd)))
+            .then(hd => theEditor.loadHeaderAsync(hd, null)))
         .finally(() => core.hideLoading());
 }
 
@@ -1813,20 +1863,30 @@ $(document).ready(() => {
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
-
     const wsPortMatch = /ws=(\d+)/i.exec(window.location.href);
-
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
         window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
     } else {
         pxt.options.wsPort = 3233;
     }
+    pkg.setupAppTarget((window as any).pxtTargetBundle)
 
     enableAnalytics()
+
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+        pxt.tickEvent("unsupported");
+        const redirect = pxt.BrowserUtils.suggestedBrowserPath();
+        if (redirect) {
+            window.location.href = redirect;
+        }
+    }
+
     appcache.init();
     initLogin();
 
+    pxt.docs.requireMarked = () => require("marked");
+    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const hash = parseHash();
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
@@ -1834,23 +1894,10 @@ $(document).ready(() => {
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     if (ws) workspace.setupWorkspace(ws[1]);
+    else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
+    else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
-
-    pxt.docs.requireMarked = () => require("marked");
-
-    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
-    const cfg = pxt.webConfig;
-
-    pkg.setupAppTarget((window as any).pxtTargetBundle)
-
-    if (!pxt.BrowserUtils.isBrowserSupported()) {
-        pxt.tickEvent("unsupported");
-        let redirect = pxt.BrowserUtils.suggestedBrowserPath();
-        if (redirect) {
-            window.location.href = redirect;
-        }
-    }
 
     Promise.resolve()
         .then(() => {
@@ -1858,7 +1905,7 @@ $(document).ready(() => {
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = mlang && !!mlang[1];
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
@@ -1873,7 +1920,8 @@ $(document).ready(() => {
             initSerial();
             initScreenshots();
             initHashchange();
-        }).then(() => pxt.winrt.initAsync(ih))
+        })
+        .then(() => pxt.winrt.initAsync(ih))
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))
@@ -1883,7 +1931,7 @@ $(document).ready(() => {
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
             let hd = workspace.getHeaders()[0]
             if (ent) hd = workspace.getHeader(ent.id)
-            if (hd) return theEditor.loadHeaderAsync(hd)
+            if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();
         }).then(() => workspace.importLegacyScriptsAsync())

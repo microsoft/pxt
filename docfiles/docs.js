@@ -43,6 +43,10 @@ function dirAuto($el) {
     return $el;
 }
 
+function searchSubmit(form) {
+    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", {'source': form.id})
+}
+
 function setupSidebar() {
     $('.ui.sidebar')
         .sidebar({ dimPage: false })

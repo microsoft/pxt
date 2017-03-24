@@ -218,24 +218,24 @@ function pkginfoAsync(repopath: string) {
     }
 
     const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
-        console.log(`name: ${cfg.name}`)
-        console.log(`description: ${cfg.description}`)
+        pxt.log(`name: ${cfg.name}`)
+        pxt.log(`description: ${cfg.description}`)
         if (pxt.appTarget.appTheme)
-            console.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
+            pxt.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
     return pxt.packagesConfigAsync()
         .then(config => {
             const status = pxt.github.repoStatus(parsed, config);
-            console.log(`github org: ${parsed.owner}`);
-            if (parsed.tag) console.log(`github tag: ${parsed.tag}`);
-            console.log(`package status: ${status == pxt.github.GitRepoStatus.Approved ? "approved" : status == pxt.github.GitRepoStatus.Banned ? "banned" : "neutral"}`)
+            pxt.log(`github org: ${parsed.owner}`);
+            if (parsed.tag) pxt.log(`github tag: ${parsed.tag}`);
+            pxt.log(`package status: ${status == pxt.github.GitRepoStatus.Approved ? "approved" : status == pxt.github.GitRepoStatus.Banned ? "banned" : "neutral"}`)
             if (parsed.tag)
                 return pxt.github.downloadPackageAsync(repopath, config)
                     .then(pkg => {
                         let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
                         pkgInfo(cfg, parsed.tag)
-                        console.log(`size: ${JSON.stringify(pkg.files).length}`)
+                        pxt.debug(`size: ${JSON.stringify(pkg.files).length}`)
                     })
 
             return pxt.github.pkgConfigAsync(parsed.fullName)
@@ -243,11 +243,11 @@ function pkginfoAsync(repopath: string) {
                     pkgInfo(cfg)
                     return pxt.github.listRefsAsync(repopath)
                         .then(tags => {
-                            console.log("tags: " + tags.join(", "))
+                            pxt.log("tags: " + tags.join(", "))
                             return pxt.github.listRefsAsync(repopath, "heads")
                         })
                         .then(heads => {
-                            console.log("branches: " + heads.join(", "))
+                            pxt.log("branches: " + heads.join(", "))
                         })
                 })
         })
@@ -2022,14 +2022,18 @@ test:
 `,
 
     "README.md": `# @NAME@
+
 @DESCRIPTION@
 
 ## License
+
 @LICENSE@
 
 ## Supported targets
+
 * for PXT/@TARGET@
 (The metadata above is needed for package search.)
+
 `,
 
     ".gitignore":
@@ -2219,16 +2223,17 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
 
     return initPromise
         .then(() => {
-            let files: Map<string> = {};
-            for (let f in defaultFiles)
+            const files: Map<string> = {};
+            for (const f in defaultFiles)
                 files[f] = defaultFiles[f];
-            for (let f in prj.files)
-                files[f] = prj.files[f];
+            for (const f in prj.files)
+                if (f != "README.md") // this one we need to keep
+                    files[f] = prj.files[f];
 
-            let pkgFiles = Object.keys(files).filter(s =>
+            const pkgFiles = Object.keys(files).filter(s =>
                 /\.(md|ts|asm|cpp|h)$/.test(s))
 
-            let fieldsOrder = [
+            const fieldsOrder = [
                 "name",
                 "version",
                 "description",
@@ -2243,12 +2248,12 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
             config.testFiles = pkgFiles.filter(s => /test/.test(s));
 
             // make it look nice
-            let newCfg: any = {}
-            for (let f of fieldsOrder) {
+            const newCfg: any = {}
+            for (const f of fieldsOrder) {
                 if (configMap.hasOwnProperty(f))
                     newCfg[f] = configMap[f]
             }
-            for (let f of Object.keys(configMap)) {
+            for (const f of Object.keys(configMap)) {
                 if (!newCfg.hasOwnProperty(f))
                     newCfg[f] = configMap[f]
             }
@@ -2263,11 +2268,12 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
                 nodeutil.mkdirP(path.dirname(k))
                 fs.writeFileSync(k, v)
             })
-
-            console.log("Package initialized.")
-            console.log("Try 'pxt add' to add optional features.")
         })
         .then(() => installAsync())
+        .then(() => {
+            pxt.log("Package initialized.")
+            pxt.log("Try 'pxt add' to add optional features.")
+        })
 }
 
 enum BuildOption {
@@ -4109,7 +4115,8 @@ function initCommands() {
                 aliases: ["no-browser"]
             },
             noSerial: {
-                description: "do not monitor serial devices"
+                description: "do not monitor serial devices",
+                aliases: ["no-serial", "nos"]
             },
             sourceMaps: {
                 description: "include souorce maps when building ts files",

@@ -260,12 +260,25 @@ namespace pxt.blocks {
     export function appendToolboxIconCss(className: string, i: string): void {
         if (toolboxStyleBuffer.indexOf(className) > -1) return;
 
-        const icon = Util.unicodeToChar(i);
-        toolboxStyleBuffer += `
-            .blocklyTreeIcon.${className}::before {
-                content: "${icon}";
-            }
-        `;
+        if (i.length === 1) {
+            const icon = Util.unicodeToChar(i);
+            toolboxStyleBuffer += `
+                .blocklyTreeIcon.${className}::before {
+                    content: "${icon}";
+                }
+            `;
+        }
+        else {
+            toolboxStyleBuffer += `
+                .blocklyTreeIcon.${className} {
+                    display: inline-block !important;
+                    background-image: url("${encodeURI(i)}")!important;
+                    width: 1em;
+                    height: 1em;
+                    background-size: 1em!important;
+                }
+            `;
+        }
     }
 
     export function injectToolboxIconCss(): void {
@@ -288,15 +301,20 @@ namespace pxt.blocks {
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let url = iconCanvasCache[c];
         if (!url) {
-            let canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
-            let ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'white';
-            ctx.font = "56px Icons";
-            ctx.textAlign = "center";
-            ctx.fillText(c, canvas.width / 2, 56);
-            url = iconCanvasCache[c] = canvas.toDataURL();
+            if (c.length === 1) {
+                let canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 64;
+                let ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.font = "56px Icons";
+                ctx.textAlign = "center";
+                ctx.fillText(c, canvas.width / 2, 56);
+                url = iconCanvasCache[c] = canvas.toDataURL();
+            }
+            else {
+                url = encodeURI(c);
+            }
         }
         return new Blockly.FieldImage(url, 16, 16, '');
     }
@@ -626,7 +644,19 @@ namespace pxt.blocks {
             e.parentNode.removeChild(e);
     }
 
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+    export interface BlockFilters {
+        namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        defaultState?: FilterState; // hide, show or disable all by default
+    }
+
+    export enum FilterState {
+        Hidden = 0,
+        Visible = 1,
+        Disabled = 2
+    }
+
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: BlockFilters): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -760,30 +790,51 @@ namespace pxt.blocks {
         }
 
         // Filter the blocks
-        if (blockSubset) {
-            let keepcategories: { [index: string]: number } = {};
-            let categories = tb.querySelectorAll("category");
-            let blocks = tb.querySelectorAll("block");
-            for (let bi = 0; bi < blocks.length; ++bi) {
-                let blk = blocks.item(bi);
-                let type = blk.getAttribute("type");
-                let catName = (blk.parentNode as Element).getAttribute("name");
-                let sticky = blk.getAttribute("sticky");
-                if (!blockSubset[type] && !sticky) {
-                    blk.parentNode.removeChild(blk);
-                } else {
-                    keepcategories[catName] = 1;
-                    if (type.indexOf("variables") == 0) {
-                        keepcategories["Variables"] = 1;
+        if (filters) {
+            function filterBlocks(blocks: any, defaultState?: number) {
+                let hasChild: boolean = false;
+                for (let bi = 0; bi < blocks.length; ++bi) {
+                    let blk = blocks.item(bi);
+                    let type = blk.getAttribute("type");
+                    let blockState = filters.blocks && filters.blocks[type] != undefined ? filters.blocks[type] : (defaultState != undefined ? defaultState : filters.defaultState);
+                    switch (blockState) {
+                        case FilterState.Hidden:
+                            blk.parentNode.removeChild(blk); break;
+                        case FilterState.Disabled:
+                            blk.setAttribute("disabled", "true");
+                        case FilterState.Visible:
+                            hasChild = true; break;
                     }
                 }
+                return hasChild;
             }
+
             if (showCategories) {
+                // Go through namespaces and keep the ones with an override
+                let categories = tb.querySelectorAll("xml > category");
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
-                    let catName = cat.getAttribute("name");
-                    if (!keepcategories[catName] && catName != Util.lf("{id:category}Advanced")) {
+                    let catName = cat.getAttribute("nameid");
+                    let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
+                    let blocks = cat.querySelectorAll(`block`);
+                    // Hide the category entirely if there are no blocks shown
+                    if (!filterBlocks(blocks, categoryState)) {
                         cat.parentNode.removeChild(cat);
+                    }
+                }
+            } else {
+                let blocks = tb.querySelectorAll(`block`);
+                filterBlocks(blocks);
+            }
+
+            if (showCategories) {
+                // Go through all categories, hide the ones that have no blocks inside
+                let categories = tb.querySelectorAll("category");
+                for (let ci = 0; ci < categories.length; ++ci) {
+                    let cat = categories.item(ci);
+                    let blockCount = cat.querySelectorAll(`block`);
+                    if (blockCount.length == 0) {
+                        if (cat.parentNode) cat.parentNode.removeChild(cat);
                     }
                 }
             }
@@ -803,11 +854,11 @@ namespace pxt.blocks {
         return tb;
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, filters?: BlockFilters): Element {
         init();
         initTooltip(blockInfo);
 
-        let tb = createToolbox(blockInfo, toolbox, showCategories, blockSubset);
+        let tb = createToolbox(blockInfo, toolbox, showCategories, filters);
 
         // add trash icon to toolbox
         if (!$('#blocklyTrashIcon').length) {
@@ -1897,6 +1948,8 @@ namespace pxt.blocks {
     function initTooltip(blockInfo: pxtc.BlocksInfo) {
 
         const renderTip = (el: any) => {
+            if (el.disabled)
+                return lf("This block is disabled and will not run. Attach this block to an event to enable it.")
             let tip = el.tooltip;
             while (goog.isFunction(tip)) {
                 tip = tip(el);
@@ -1920,7 +1973,7 @@ namespace pxt.blocks {
             if (card) {
                 const cardEl = pxt.docs.codeCard.render({
                     header: renderTip(Blockly.Tooltip.element_),
-                    typeScript: pxt.appTarget.appTheme.hideBlocklyJavascriptHint
+                    typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
                         ? undefined
                         : pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
                 })

@@ -27,6 +27,7 @@ export class File implements pxt.editor.IFile {
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     virtualSource: File;
+    filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }

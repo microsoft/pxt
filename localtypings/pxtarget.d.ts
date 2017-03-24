@@ -175,6 +175,7 @@ declare namespace pxt {
         blocksOnly?: boolean; // blocks only workspace
         hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
+        hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
     }
 
     interface DocMenuEntry {
