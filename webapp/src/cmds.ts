@@ -65,7 +65,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     const saveAs = pxt.BrowserUtils.hasSaveAs();
     const body = saveAs
-        ? lf("Click 'Save As' in the bottom bar and save the {0} file to the {1} drive to transfer the code into your {2}.",
+        ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
             pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
             boardDriveName, boardName)
         : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
