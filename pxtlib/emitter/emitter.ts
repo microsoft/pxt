@@ -522,7 +522,7 @@ namespace ts.pxtc {
     }
 
     function isInterfaceType(t: Type) {
-        return t.flags & TypeFlags.Interface;
+        return !!(t.flags & TypeFlags.Interface);
     }
 
     function isClassType(t: Type) {
@@ -535,7 +535,7 @@ namespace ts.pxtc {
     }
 
     function isStructureType(t: Type) {
-        return !isFunctionType(t) && (isClassType(t) || isInterfaceType(t) || isObjectLiteral(t))
+        return (isFunctionType(t) == null) && (isClassType(t) || isInterfaceType(t) || isObjectLiteral(t))
     }
 
     function castableToStructureType(t: Type) {
@@ -631,7 +631,6 @@ namespace ts.pxtc {
     }
 
     function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
-
         // get the direct types
         let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
         let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
@@ -647,7 +646,8 @@ namespace ts.pxtc {
         if (!trgType || !srcType)
             return;
 
-        // src may get its typee from trg
+        // src may get its type from trg via context, in which case
+        // we want to use the direct type of src
         if (trgType == srcType && srcType != srcTypeLoc)
             srcType = srcTypeLoc
 
@@ -657,10 +657,26 @@ namespace ts.pxtc {
         }
     }
 
+    let cacheSubtypeQueries : Map<[boolean,string]> = {}
+    function insertSubtype(key: string, val: [boolean,string]) {
+        cacheSubtypeQueries[key] = val
+        return val
+    }
+    // this function works assuming that the program has passed the 
+    // TypeScript type checker. We are going to simply rule out some
+    // cases that pass the TS checker. We only compare type
+    // pairs that the TS checker compared. 
     function checkSubtype(trgType: Type, srcType: Type): [boolean, string] {
+        let srcId = (srcType as any).id
+        let trgId = (trgType as any).id
+        let key = srcId < trgId ? srcId + "," + trgId : trgId + "," + srcId
+        // TODO: check the cache
+        if (cacheSubtypeQueries[key])
+            return cacheSubtypeQueries[key];
+
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(trgType) && !castableToStructureType(srcType)) {
-            return [false, "Cast to class/interface unsupported."]
+            return insertSubtype(key,[false, "Cast to class/interface unsupported."])
         }
 
         if (isClassType(trgType)) {
@@ -670,29 +686,58 @@ namespace ts.pxtc {
                 // only allow upcast (src -> ... -> tgt) in inheritance chain
                 if (!inheritsFrom(srcDecl,tgtDecl)) {
                     if (inheritsFrom(tgtDecl,srcDecl))
-                       return [false, "Downcasts not supported."]
+                       return insertSubtype(key, [false, "Downcasts not supported."])
                     else
-                       return [false, "Casts between unrelated classes unsupported."]
+                       return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
                 }
            } else {
                 if (!(srcType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    return [false, "Cast to class unsupported."]
+                    return insertSubtype(key,[false, "Cast to class unsupported."])
                 }
            }
         } else if (isFunctionType(trgType)) {
+            // implement standard function subtyping (no bivariance)
+            let trgFun = isFunctionType(trgType)
             if (isFunctionType(srcType)) {
-                // TODO: true function subtyping
+                let srcFun = isFunctionType(srcType)
+                let [ret,msg] = [true,""]
+                for(let i = 0; i < trgFun.parameters.length; i++) {
+                    let trgParamType = checker.getDeclaredTypeOfSymbol(trgFun.parameters[i])
+                    let srcParamType = checker.getDeclaredTypeOfSymbol(srcFun.parameters[i])
+                    // Check parameter types (contra-variant)
+                    let [retSub,msgSub] = checkSubtype(srcParamType, trgParamType)
+                    if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
+                }
+                // check return type (co-variant)
+                let trgRetType = trgFun.getReturnType()
+                let srcRetType = trgFun.getReturnType()
+                let [retSub,msgSub] = checkSubtype(trgRetType, srcRetType)
+                if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
+                return insertSubtype(key,[ret,msg])
             } else {
                 // TODO
             }
         } else if (isInterfaceType(trgType)) {
-            if (isInterfaceType(srcType)) {
-                // TODO: need to redefine structural subtyping (based on this function)
-            } else {
-                // TODO
-            }
+            U.assert(isStructureType(srcType))
+            let trgProps = checker.getPropertiesOfType(trgType) 
+            let srcProps = checker.getPropertiesOfType(srcType)
+            let [ret,msg] = [true,""]
+            trgProps.forEach(trgProp => {
+                let trgPropType = checker.getDeclaredTypeOfSymbol(trgProp)
+                let find = srcProps.filter(sp => sp.name == trgProp.name)
+                U.assert(find.length == 1)
+                let srcPropType = checker.getDeclaredTypeOfSymbol(find[0])
+                // TODO: record the property on which we have a mismatch
+                let [retSub,msgSub] = checkSubtype(trgPropType,srcPropType)
+                if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
+             })
+             return insertSubtype(key,[ret,msg])
+        } else if (isArrayType(trgType)) {
+            // TODO
+        } else if (lookupTypeParameter(trgType)) {
+            // TODO
         }
-        return [true,""]
+        return insertSubtype(key,[true,""])
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
@@ -837,6 +882,7 @@ namespace ts.pxtc {
         let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
 
+        cacheSubtypeQueries = {}
         lastNodeId = 0
         currNodeWave++
 
