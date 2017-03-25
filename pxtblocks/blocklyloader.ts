@@ -809,11 +809,9 @@ namespace pxt.blocks {
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
 
-            if (showCategories === ShowCategoryMode.All) {
+            if (showCategories === ShowCategoryMode.All && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
                 // Add the "Add package" category
-                if (tb && showCategories !== ShowCategoryMode.None && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-                    getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
-                }
+                getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
             }
         }
 
