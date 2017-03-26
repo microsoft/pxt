@@ -36,3 +36,15 @@ let z2 : UnrelatedToBaz = v // TS9203
 
 let z3 : Object = 3 // TS9203
 
+interface Foo2 {
+    b: Baz;
+}
+
+interface Foo3 {
+    b: UnrelatedToBaz;
+}
+
+let x2 : Foo2 = null
+let x3 : Foo3 = null
+
+x3 = x2 // TS9203

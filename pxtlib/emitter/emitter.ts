@@ -651,17 +651,21 @@ namespace ts.pxtc {
         if (trgType == srcType && srcType != srcTypeLoc)
             srcType = srcTypeLoc
 
+        occursCheck = []
         let [ok, message] = checkSubtype(trgType, srcType)
         if (!ok) {
             userError(9203, lf(message))
         }
     }
 
-    let cacheSubtypeQueries : Map<[boolean,string]> = {}
+    let occursCheck: string[] = []
+    let cachedSubtypeQueries : Map<[boolean,string]> = {}
     function insertSubtype(key: string, val: [boolean,string]) {
-        cacheSubtypeQueries[key] = val
+        cachedSubtypeQueries[key] = val
+        occursCheck.pop()
         return val
     }
+
     // this function works assuming that the program has passed the 
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
@@ -669,10 +673,15 @@ namespace ts.pxtc {
     function checkSubtype(trgType: Type, srcType: Type): [boolean, string] {
         let srcId = (srcType as any).id
         let trgId = (trgType as any).id
-        let key = srcId < trgId ? srcId + "," + trgId : trgId + "," + srcId
-        // TODO: check the cache
-        if (cacheSubtypeQueries[key])
-            return cacheSubtypeQueries[key];
+        let key = trgId + "," + srcId
+
+        if (cachedSubtypeQueries[key])
+            return cachedSubtypeQueries[key];
+
+        // check to see if query already on the stack
+        if (occursCheck.indexOf(key) != -1)
+            return [true,""]
+        occursCheck.push(key)
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(trgType) && !castableToStructureType(srcType)) {
@@ -718,20 +727,21 @@ namespace ts.pxtc {
                 // TODO
             }
         } else if (isInterfaceType(trgType)) {
-            U.assert(isStructureType(srcType))
-            let trgProps = checker.getPropertiesOfType(trgType) 
-            let srcProps = checker.getPropertiesOfType(srcType)
-            let [ret,msg] = [true,""]
-            trgProps.forEach(trgProp => {
-                let trgPropType = checker.getDeclaredTypeOfSymbol(trgProp)
-                let find = srcProps.filter(sp => sp.name == trgProp.name)
-                U.assert(find.length == 1)
-                let srcPropType = checker.getDeclaredTypeOfSymbol(find[0])
-                // TODO: record the property on which we have a mismatch
-                let [retSub,msgSub] = checkSubtype(trgPropType,srcPropType)
-                if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
-             })
-             return insertSubtype(key,[ret,msg])
+            if (isStructureType(srcType)) {
+                let trgProps = checker.getPropertiesOfType(trgType) 
+                let srcProps = checker.getPropertiesOfType(srcType)
+                let [ret,msg] = [true,""]
+                trgProps.forEach(trgProp => {
+                    let trgPropDecl = <PropertyDeclaration>trgProp.valueDeclaration
+                    let find = srcProps.filter(sp => sp.name == trgProp.name)
+                    U.assert(find.length == 1, "find.length = "+find.length.toString())
+                    let srcPropDecl = <PropertyDeclaration>find[0].valueDeclaration
+                    // TODO: record the property on which we have a mismatch
+                    let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(trgPropDecl),checker.getTypeAtLocation(srcPropDecl))
+                    if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
+                })
+                return insertSubtype(key,[ret,msg])
+            }
         } else if (isArrayType(trgType)) {
             // TODO
         } else if (lookupTypeParameter(trgType)) {
@@ -882,7 +892,7 @@ namespace ts.pxtc {
         let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
 
-        cacheSubtypeQueries = {}
+        cachedSubtypeQueries = {}
         lastNodeId = 0
         currNodeWave++
 
