@@ -659,7 +659,7 @@ namespace ts.pxtc {
     }
 
     let occursCheck: string[] = []
-    let cachedSubtypeQueries : Map<[boolean,string]> = {}
+    let cachedSubtypeQueries: Map<[boolean,string]> = {}
     function insertSubtype(key: string, val: [boolean,string]) {
         cachedSubtypeQueries[key] = val
         occursCheck.pop()
@@ -710,40 +710,42 @@ namespace ts.pxtc {
             if (isFunctionType(srcType)) {
                 let srcFun = isFunctionType(srcType)
                 let [ret,msg] = [true,""]
-                for(let i = 0; i < trgFun.parameters.length; i++) {
+                for (let i = 0; i < trgFun.parameters.length; i++) {
                     let trgParamType = checker.getDeclaredTypeOfSymbol(trgFun.parameters[i])
                     let srcParamType = checker.getDeclaredTypeOfSymbol(srcFun.parameters[i])
                     // Check parameter types (contra-variant)
                     let [retSub,msgSub] = checkSubtype(srcParamType, trgParamType)
-                    if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
+                    if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 }
                 // check return type (co-variant)
                 let trgRetType = trgFun.getReturnType()
                 let srcRetType = trgFun.getReturnType()
                 let [retSub,msgSub] = checkSubtype(trgRetType, srcRetType)
-                if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
+                if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 return insertSubtype(key,[ret,msg])
             } else {
                 // TODO
             }
         } else if (isInterfaceType(trgType)) {
             if (isStructureType(srcType)) {
-                let trgProps = checker.getPropertiesOfType(trgType) 
+                let trgProps = checker.getPropertiesOfType(trgType)
                 let srcProps = checker.getPropertiesOfType(srcType)
                 let [ret,msg] = [true,""]
                 trgProps.forEach(trgProp => {
                     let trgPropDecl = <PropertyDeclaration>trgProp.valueDeclaration
                     let find = srcProps.filter(sp => sp.name == trgProp.name)
-                    U.assert(find.length == 1, "find.length = "+find.length.toString())
+                    U.assert(find.length == 1, "find.length = " + find.length.toString())
                     let srcPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                     // TODO: record the property on which we have a mismatch
                     let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(trgPropDecl),checker.getTypeAtLocation(srcPropDecl))
-                    if (ret && !retSub) [ret,msg] = [retSub,msgSub] 
+                    if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 })
                 return insertSubtype(key,[ret,msg])
             }
         } else if (isArrayType(trgType)) {
-            // TODO
+            if (isArrayType(srcType)) {
+                // standard co-variant checking
+            }
         } else if (lookupTypeParameter(trgType)) {
             // TODO
         }
