@@ -734,11 +734,13 @@ namespace ts.pxtc {
                 trgProps.forEach(trgProp => {
                     let trgPropDecl = <PropertyDeclaration>trgProp.valueDeclaration
                     let find = srcProps.filter(sp => sp.name == trgProp.name)
-                    U.assert(find.length == 1, "find.length = " + find.length.toString())
-                    let srcPropDecl = <PropertyDeclaration>find[0].valueDeclaration
-                    // TODO: record the property on which we have a mismatch
-                    let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(trgPropDecl),checker.getTypeAtLocation(srcPropDecl))
-                    if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                    U.assert(find.length == 1 || (find.length == 0) && !!(trgProp.flags & SymbolFlags.Optional))
+                    if (find.length == 1) {
+                        let srcPropDecl = <PropertyDeclaration>find[0].valueDeclaration
+                        // TODO: record the property on which we have a mismatch
+                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(trgPropDecl),checker.getTypeAtLocation(srcPropDecl))
+                        if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                    }
                 })
                 return insertSubtype(key,[ret,msg])
             }
