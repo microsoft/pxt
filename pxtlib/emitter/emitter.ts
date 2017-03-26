@@ -613,6 +613,7 @@ namespace ts.pxtc {
         return checkType(r)
     }
 
+    // does src inherit from tgt via heritage clauses?
     function inheritsFrom(src: ClassDeclaration, tgt: ClassDeclaration): boolean {
         if (src == tgt)
             return true;
@@ -724,7 +725,7 @@ namespace ts.pxtc {
                 if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 return insertSubtype(key,[ret,msg])
             } else {
-                // TODO
+                // TODO???
             }
         } else if (isInterfaceType(trgType)) {
             if (isStructureType(srcType)) {
@@ -746,7 +747,11 @@ namespace ts.pxtc {
             }
         } else if (isArrayType(trgType)) {
             if (isArrayType(srcType)) {
-                // standard co-variant checking
+                let trgElemType = arrayElementType(trgType)
+                let srcElemType = arrayElementType(srcType)
+                return checkSubtype(trgElemType,srcElemType)
+            } else {
+                // TODO???
             }
         } else if (lookupTypeParameter(trgType)) {
             // TODO
