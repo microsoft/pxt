@@ -47,6 +47,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import CategoryMode = pxt.blocks.CategoryMode;
 const lf = Util.lf
 
 pxsim.util.injectPolyphils();
@@ -501,7 +502,7 @@ export class ProjectView
                 switch (t.subtype) {
                     case 'steploaded':
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
-                        let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
+                        let showCategories = (tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7) ? CategoryMode.Basic : CategoryMode.None;
                         this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Hidden }, showCategories);
                         this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
                         tutorial.TutorialContent.refresh();
