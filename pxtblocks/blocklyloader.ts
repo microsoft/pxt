@@ -15,7 +15,7 @@ namespace pxt.blocks {
         lists: '#D83B01'
     }
 
-    export enum ShowCategoryMode {
+    export enum CategoryMode {
         All,
         None,
         Basic
@@ -164,7 +164,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = ShowCategoryMode.Basic) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -175,7 +175,7 @@ namespace pxt.blocks {
             let nsn = info.apis.byQName[ns];
             let isAdvanced = nsn && nsn.attributes.advanced;
 
-            if (showCategories !== ShowCategoryMode.All && isAdvanced) {
+            if (showCategories !== CategoryMode.All && isAdvanced) {
                 return;
             }
 
@@ -183,7 +183,7 @@ namespace pxt.blocks {
             let catName = ts.pxtc.blocksCategory(fn);
             let category = categoryElement(tb, catName);
 
-            if (showCategories !== ShowCategoryMode.None) {
+            if (showCategories !== CategoryMode.None) {
                 if (!category) {
                     let categories = getChildCategories(tb)
                     let parentCategoryList = tb;
@@ -234,7 +234,7 @@ namespace pxt.blocks {
                 mutationValues.forEach(mutation => {
                     const mutatedBlock = block.cloneNode(true);
                     mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
-                    if (showCategories !== ShowCategoryMode.None) {
+                    if (showCategories !== CategoryMode.None) {
                         category.appendChild(mutatedBlock);
                     } else {
                         tb.appendChild(mutatedBlock);
@@ -242,7 +242,7 @@ namespace pxt.blocks {
                 });
             }
             else {
-                if (showCategories !== ShowCategoryMode.None) {
+                if (showCategories !== CategoryMode.None) {
                     category.appendChild(block);
                     injectToolboxIconCss();
                 } else {
@@ -684,7 +684,7 @@ namespace pxt.blocks {
         Disabled = 2
     }
 
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = ShowCategoryMode.Basic, filters?: BlockFilters): Element {
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -751,7 +751,7 @@ namespace pxt.blocks {
                         el.appendChild(fe);
                     }
                 }
-                if (showCategories !== ShowCategoryMode.None) {
+                if (showCategories !== CategoryMode.None) {
                     let cat = categoryElement(tb, eb.namespace);
                     if (cat) {
                         cat.appendChild(el);
@@ -764,12 +764,12 @@ namespace pxt.blocks {
             })
         }
 
-        if (tb && showCategories !== ShowCategoryMode.None) {
+        if (tb && showCategories !== CategoryMode.None) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
             if (!config.mathBlocks) removeCategory(tb, "Math");
-            if (!config.textBlocks || showCategories === ShowCategoryMode.Basic) removeCategory(tb, "Text");
-            if (!config.listsBlocks || showCategories === ShowCategoryMode.Basic) removeCategory(tb, "Lists");
+            if (!config.textBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Text");
+            if (!config.listsBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Lists");
             if (!config.variablesBlocks) removeCategory(tb, "Variables");
             if (!config.logicBlocks) removeCategory(tb, "Logic");
             if (!config.loopsBlocks) removeCategory(tb, "Loops");
@@ -804,12 +804,12 @@ namespace pxt.blocks {
         }
 
         // Add the "Advanced" category
-        if (tb && showCategories !== ShowCategoryMode.None) {
-            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", showCategories === ShowCategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+        if (tb && showCategories !== CategoryMode.None) {
+            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
 
-            if (showCategories === ShowCategoryMode.All && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+            if (showCategories === CategoryMode.All && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
                 // Add the "Add package" category
                 getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
             }
@@ -836,7 +836,7 @@ namespace pxt.blocks {
                 return hasChild;
             }
 
-            if (showCategories !== ShowCategoryMode.None) {
+            if (showCategories !== CategoryMode.None) {
                 // Go through namespaces and keep the ones with an override
                 let categories = tb.querySelectorAll("xml > category");
                 for (let ci = 0; ci < categories.length; ++ci) {
@@ -854,7 +854,7 @@ namespace pxt.blocks {
                 filterBlocks(blocks);
             }
 
-            if (showCategories !== ShowCategoryMode.None) {
+            if (showCategories !== CategoryMode.None) {
                 // Go through all categories, hide the ones that have no blocks inside
                 let categories = tb.querySelectorAll("category");
                 for (let ci = 0; ci < categories.length; ++ci) {
@@ -881,7 +881,7 @@ namespace pxt.blocks {
         return tb;
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = ShowCategoryMode.Basic, filters?: BlockFilters): Element {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
         init();
         initTooltip(blockInfo);
 

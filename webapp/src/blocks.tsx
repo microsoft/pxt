@@ -10,7 +10,7 @@ import * as sui from "./sui";
 import * as data from "./data";
 import defaultToolbox from "./toolbox"
 
-import ShowCategoryMode = pxt.blocks.ShowCategoryMode;
+import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
 let lf = Util.lf
 
@@ -27,7 +27,7 @@ export class Editor extends srceditor.Editor {
     currentCommentOrWarning: B.Comment | B.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
-    showToolboxCategories: ShowCategoryMode = ShowCategoryMode.Basic;
+    showToolboxCategories: CategoryMode = CategoryMode.Basic;
     cachedToolbox: string;
     filters: pxt.editor.ProjectFilters;
 
@@ -79,7 +79,7 @@ export class Editor extends srceditor.Editor {
                     let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
                     let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
                     this.updateToolbox(tb, this.showToolboxCategories);
-                    if (this.showToolboxCategories !== ShowCategoryMode.None && showSearch) {
+                    if (this.showToolboxCategories !== CategoryMode.None && showSearch) {
                         pxt.blocks.initSearch(this.editor, tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
@@ -363,11 +363,11 @@ export class Editor extends srceditor.Editor {
                         this.parent.addPackage();
                     }
                     else if (ev.newValue == lf("{id:category}Advanced")) {
-                        if (this.showToolboxCategories === ShowCategoryMode.All) {
-                            this.showToolboxCategories = ShowCategoryMode.Basic;
+                        if (this.showToolboxCategories === CategoryMode.All) {
+                            this.showToolboxCategories = CategoryMode.Basic;
                         }
-                        else if (this.showToolboxCategories === ShowCategoryMode.Basic) {
-                            this.showToolboxCategories = ShowCategoryMode.All;
+                        else if (this.showToolboxCategories === CategoryMode.Basic) {
+                            this.showToolboxCategories = CategoryMode.All;
                         }
                         this.refreshToolbox();
                     }
@@ -548,7 +548,7 @@ export class Editor extends srceditor.Editor {
 
     private getBlocklyOptions(showCategories = this.showToolboxCategories) {
         const readOnly = pxt.shell.isReadOnly();
-        const toolbox = showCategories !== ShowCategoryMode.None ?
+        const toolbox = showCategories !== CategoryMode.None ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
         const blocklyOptions: Blockly.ExtendedOptions = {
@@ -576,7 +576,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
-        return showCategories !== ShowCategoryMode.None ?
+        return showCategories !== CategoryMode.None ?
             defaultToolbox.documentElement
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
@@ -604,7 +604,7 @@ export class Editor extends srceditor.Editor {
 
         pxt.debug('updating toolbox');
         const editor_ = (this.editor as any);
-        if ((editor_.toolbox_ && showCategories !== ShowCategoryMode.None) || (editor_.flyout_ && showCategories === ShowCategoryMode.None)) {
+        if ((editor_.toolbox_ && showCategories !== CategoryMode.None) || (editor_.flyout_ && showCategories === CategoryMode.None)) {
             // Toolbox is consistent with current mode, safe to update
             let tbString = new XMLSerializer().serializeToString(tb);
             if (tbString == this.cachedToolbox) return;
