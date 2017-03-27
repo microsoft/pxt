@@ -482,11 +482,11 @@ function bumpPxtCoreDepAsync(): Promise<void> {
     ["pxt-core", "pxt-common-packages"].forEach(knownPackage => {
         const modulePath = path.join("node_modules", knownPackage)
         if (fs.existsSync(path.join(modulePath, ".git"))) {
-            gitPull = nodeutil.spawnAsync({
+            gitPull = gitPull.then(() => nodeutil.spawnAsync({
                 cmd: "git",
                 args: ["pull"],
                 cwd: modulePath
-            })
+            }))
         }
 
         // not referenced
