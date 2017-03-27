@@ -269,7 +269,7 @@ namespace pxt.blocks {
             toolboxStyleBuffer += `
                 .blocklyTreeIcon.${className} {
                     display: inline-block !important;
-                    background-image: url("${encodeURI(i)}")!important;
+                    background-image: url("${pxt.webConfig.commitCdnUrl + encodeURI(i)}")!important;
                     width: 1em;
                     height: 1em;
                     background-size: 1em!important;
@@ -310,7 +310,7 @@ namespace pxt.blocks {
                 url = iconCanvasCache[c] = canvas.toDataURL();
             }
             else {
-                url = encodeURI(c);
+                url = pxt.webConfig.commitCdnUrl + encodeURI(c);
             }
         }
         return new Blockly.FieldImage(url, 16, 16, '');
