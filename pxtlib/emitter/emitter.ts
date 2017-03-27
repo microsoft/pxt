@@ -637,7 +637,7 @@ namespace ts.pxtc {
                 switch (h.token) {
                     case SK.ExtendsKeyword:
                         let tp = typeOf(h.types[0])
-                        if (isClassType(tp)){
+                        if (isClassType(tp)) {
                             userError(9203, lf("Extending a class by an interface not supported."))
                         }
                 }
