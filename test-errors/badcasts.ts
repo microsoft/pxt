@@ -15,6 +15,11 @@ interface Foo {
     b?: number
 }
 
+// this is not legal in STS
+interface Foo2 extends Baz {    // TS9203
+    c: string;
+}
+
 let v = new BazParent()
 let z: Baz = new Baz()
 let x: Foo = { a: 1, b: 2 }
@@ -48,3 +53,12 @@ let x2 : Foo2 = null
 let x3 : Foo3 = null
 
 x3 = x2 // TS9203
+
+interface Opt {
+    a: number;
+    b?: string
+}
+
+let o1: Opt = { a: 42}
+
+

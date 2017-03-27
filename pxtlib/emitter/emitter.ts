@@ -631,25 +631,17 @@ namespace ts.pxtc {
         return false;
     }
 
-    function getAllPropertiesOfInterface(src: Type): Symbol[] {
-        let res = checker.getPropertiesOfType(src)
-        /* TS already flattens for us!
-        let srcDecl = <InterfaceDeclaration>src.symbol.declarations[0]
-        if (srcDecl.heritageClauses)
-            for (let h of srcDecl.heritageClauses) {
+    function checkInterfaceDeclaration(decl: InterfaceDeclaration) {
+        if (decl.heritageClauses)
+            for (let h of decl.heritageClauses) {
                 switch (h.token) {
                     case SK.ExtendsKeyword:
                         let tp = typeOf(h.types[0])
-                        if (isInterfaceType(tp)) {
-                            res.concat(getAllPropertiesOfInterface(tp))
-                        } else if (isClassType(tp)){
-                            // TODO: raise error - STS doesn't permit Interfaces to 
-                            // TODO: extend Classes
+                        if (isClassType(tp)){
+                            userError(9203, lf("Extending a class by an interface not supported."))
                         }
                 }
             }
-        */
-        return res
     }
 
     function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
@@ -692,8 +684,10 @@ namespace ts.pxtc {
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
     // pairs that the TS checker compared. 
-    // NOTE: we need to redo a subtype check for any place TS would have done one
-    // NOTE: we should create a nested message structure for errors, like TS does
+
+    // we are checking that srcType is a subType of tgtType, so that
+    // an assignment of the form trg <- src is safe, where trgType is the
+    // type of trg and srcType is the type of src
     function checkSubtype(trgType: Type, srcType: Type): [boolean, string] {
         let srcId = (srcType as any).id
         let trgId = (trgType as any).id
@@ -753,8 +747,8 @@ namespace ts.pxtc {
             }
         } else if (isInterfaceType(trgType)) {
             if (isStructureType(srcType)) {
-                let trgProps = getAllPropertiesOfInterface(trgType)
-                let srcProps = getAllPropertiesOfInterface(srcType)
+                let trgProps = checker.getPropertiesOfType(trgType)
+                let srcProps = checker.getPropertiesOfType(srcType)
                 let [ret,msg] = [true,""]
                 trgProps.forEach(trgProp => {
                     let trgPropDecl = <PropertyDeclaration>trgProp.valueDeclaration
@@ -769,10 +763,12 @@ namespace ts.pxtc {
                             // we have a cast to an interface with more properties (unsound)
                             [ret,msg] = [false,"Property " + trgProp.name + " not present in " + srcType.getSymbol().name]
                         } else {
-                            // TODO:???
+                            // we will reach this case for something like
+                            // let x: Foo = { a:42 }
+                            // where x has some optional allfields
                         }
                     } else {
-                        U.assert(false,"subsetCheck: unreachable")
+                        U.assert(false,"subsetCheck: unreachable (1)")
                     }
                 })
                 return insertSubtype(key,[ret,msg])
@@ -783,7 +779,7 @@ namespace ts.pxtc {
                 let srcElemType = arrayElementType(srcType)
                 return checkSubtype(trgElemType,srcElemType)
             } else {
-                // TODO???
+                U.assert(false,"subsetCheck: unreachable (2)")
             }
         } else if (lookupTypeParameter(trgType)) {
             // TODO
@@ -3318,6 +3314,7 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
+            checkInterfaceDeclaration(node)
             let attrs = parseComments(node)
             if (attrs.autoCreate)
                 autoCreateFunctions[attrs.autoCreate] = true

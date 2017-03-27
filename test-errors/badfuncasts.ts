@@ -1,26 +1,4 @@
 namespace SomeBadFun {
-    
-    /*
-    class Foo {
-        a: number;
-    }
-
-    class Bar extends Foo {
-        b: string;
-    }
-
-    function foo(f: Foo) {
-        return new Bar()
-    }
-
-    type funFooBar = (x: Bar) => Bar
-
-    g((y: Bar) => y)
-
-    function g(h: funFooBar) {
-        h(new Bar())
-    }
-*/
 
     enum EventType { Mouse, Keyboard }
 
@@ -31,6 +9,7 @@ namespace SomeBadFun {
         /* ... */
     }
 
-    // Unsound, but useful and common
+    // Unsound, ruled out in Static TypeScript 
+    // MouseEvent is a subtype of Event (should be a supertype)
     listenEvent(EventType.Mouse, (e: MouseEvent) => {}); // TS9203
 }
