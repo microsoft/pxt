@@ -47,6 +47,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import CategoryMode = pxt.blocks.CategoryMode;
 const lf = Util.lf
 
 pxsim.util.injectPolyphils();
@@ -104,7 +105,7 @@ export class ProjectView
         this.state = {
             showFiles: false,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless
+            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -501,7 +502,7 @@ export class ProjectView
                 switch (t.subtype) {
                     case 'steploaded':
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
-                        let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
+                        let showCategories = (tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7) ? CategoryMode.Basic : CategoryMode.None;
                         this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Hidden }, showCategories);
                         this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
                         tutorial.TutorialContent.refresh();
@@ -754,20 +755,7 @@ export class ProjectView
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
         const mpkg = pkg.mainPkg;
-        return this.saveFileAsync()
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                const project: pxt.cpp.HexFile = {
-                    meta: {
-                        cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
-                        targetVersions: pxt.appTarget.versions,
-                        editor: this.getPreferredEditor(),
-                        name: mpkg.config.name
-                    },
-                    source: JSON.stringify(files, null, 2)
-                }
-                return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
-            });
+        return mpkg.compressToFileAsync(this.getPreferredEditor())
     }
 
     getPreferredEditor(): string {

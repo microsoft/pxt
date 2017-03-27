@@ -26,7 +26,6 @@ function describetime(now, other) {
     else
         return " " + describePlural(Math.floor(seconds / 60 / 60 / 24 / 365), "year") + " ago"
 }
-
 function isIE() {
     return /trident/i.test(navigator.userAgent);
 }
@@ -44,7 +43,7 @@ function dirAuto($el) {
 }
 
 function searchSubmit(form) {
-    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", {'source': form.id})
+    if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id })
 }
 
 function setupSidebar() {
@@ -127,6 +126,9 @@ function setupSemantic() {
             scrolling: 'no'
         }).appendTo(outer);
     });
+
+    if (/browsers$/i.test(window.location.href))
+        $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
 
 function renderSnippets() {

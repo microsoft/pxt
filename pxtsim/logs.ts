@@ -1,6 +1,7 @@
 namespace pxsim.logs {
     export interface ILogProps {
         maxEntries?: number;
+        maxLineLength?: number;
         maxAccValues?: number;
         onClick?: (entries: ILogEntry[]) => void;
         onTrendChartChanged?: () => void;
@@ -201,6 +202,10 @@ namespace pxsim.logs {
                                     break;
                                 default:
                                     buffer += value[i];
+                                    if (buffer.length > (this.props.maxLineLength || 255)) {
+                                        this.appendEntry(source, buffer, theme);
+                                        buffer = ''
+                                    }
                                     break;
                             }
                         }
