@@ -69,7 +69,7 @@ namespace pxt.runner {
 
         if (options.showEdit) { // edit button
             const $editBtn = $('<a class="item"><i aria-label="edit" class="edit icon"></i></a>').click(() => {
-                decompileResult.package.compressToFileAsync(pxt.BLOCKS_PROJECT_NAME)
+                decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
             })
             $menu.append($editBtn);
