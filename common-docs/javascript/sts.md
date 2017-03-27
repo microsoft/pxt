@@ -56,6 +56,7 @@ STS contains a lot of the good parts of TypeScript, including
 * top-level code in a file; The “hello world” program really is just one line - `console.log("Hello world")`
 * lexically-scoped variable declarations via `let` and `const`
 * classes with static and instance fields, methods and constructors; method-like properties (get/set accessors); `new` keyword;
+* interfaces for describing the shape of (record-based) data
 * nested function definitions (with lexical scoping and recursion) and arrow functions
 * generic classes, methods, and functions for code reuse (see below for limitations)
 * namespaces (a form of modules) 
@@ -145,7 +146,16 @@ associated with the class.  This also means that
 
 ## Optional properties
 
-Interfaces support optional properties.
+Interfaces support optional properties. The following is legal TypeScript
+```
+interface Foo {
+   a: number;
+   b?: string;
+}
+
+let f: Foo = { a:42 }
+```
+In TypeScript/JavaScript, there is no property named `b` in the object referenced by f.
 
 ### ~ hint
 TODO
