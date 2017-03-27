@@ -129,10 +129,10 @@ In STS, classes, records (described by interfaces), arrays, tuples, and function
 are *separate types*, with the following type relationships:
 * classes and records are related by structural subtyping, as in TypeScript, with the 
   following additional restrictions:
-  * classes can be treated as records (via a cast from class to interface), but not vice versa  
-    (casts from interfaces to classes are not permitted);
-  * class-to-class casts can only be from subclass to superclass, as defined by the 
-    (transitive close of) the *extends* clause;
+  * classes can be treated as records (via a cast from class to interface)
+  * records cannot be treated as classes (casts from interfaces to classes are not permitted);
+* class-to-class casts can only be from subclass to superclass, as defined by the 
+   (transitive closure of) the *extends* clause - nominal typing for classes;
 * functions are related by classical function subtyping (no bivariance, as in TypeScript); 
 * function/method overloading is not permitted.
 
@@ -140,7 +140,12 @@ STS' treatment of classes follows a nominal typing discipline, where one expects
 an object of class type to have the implementation associated with that class.
 In a pure structural subtyping discipline, one can define an object and then cast it to a
 class type, but that object's implementation can be completely unrelated to the implementation
-associated with the class.
+associated with the class.  This also means that 
+* interfaces cannot extend classes, as permitted in TypeScript
+
+## Optional properties
+
+Interfaces support optional properties.
 
 ### ~ hint
 TODO
