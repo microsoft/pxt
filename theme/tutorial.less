@@ -1,0 +1,204 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*******************************
+             Layout
+*******************************/
+
+.tutorial #maineditor .full-abs {
+    top: 5.5rem;
+}
+/* Tutorial Mode */
+.tutorial-menuitem > .selected {
+    background-color: @tutorialSelectedMenuColor !important;
+    padding: 1.0rem !important;
+    padding-left: 1.3rem !important;
+    padding-right: 1.3rem !important;
+}
+
+#tutorialcard {
+    position: relative;
+    z-index: 0;
+    height: 6rem;
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+#root.dimmable.dimmed #tutorialcard.tutorialReady {
+    z-index: 1001;
+}
+
+#tutorialhint {
+    height: 100%;
+}
+
+#tutorialhint #tutorialcontent {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border:none;
+}
+
+body#docs.tutorial {
+    overflow-y: hidden;
+}
+#docs.tutorial .ui.segment {
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+}
+#docs.tutorial #content{
+    margin-bottom: 0.5rem !important;
+}
+
+/******************************
+    Tutorial Avatar
+******************************/
+
+#tutorialcard .ui.message {
+    width: 100%;
+    position: relative;
+    padding: 0;
+}
+
+#tutorialcard .ui.message .avatar-image {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.7rem;
+    width: 3rem;
+    height: 3rem;
+    background-size: contain;
+    background-image: @avatarUrl;
+    cursor:pointer;
+}
+
+#tutorialcard {
+    padding: 0.5rem;
+}
+
+#tutorialcard .ui.buttons {
+    width: 100%;
+    height: 4.5rem;
+}
+
+#tutorialcard .ui.message {
+    width: 100%;
+}
+
+#tutorialcard .tutorialmessage .content {
+    width: 100%;
+    font-size: 1.2rem;
+    line-height: 1.5rem;
+    height: 3.5rem;
+    margin-bottom: 1rem;
+    overflow: auto;
+    cursor:pointer;
+}
+
+#tutorialcard .tutorialmessage {
+    width: 100%;
+    padding: 0.5rem;
+    padding-left: 5rem;
+    height: 4.5rem;
+    margin-bottom: 1rem;
+}
+
+#root.dimmable.dimmed #tutorialcard .tutorialmessage {
+    border: solid white 2px;
+}
+
+/* Show / Hide in dimmer */
+.ui.showlightbox {
+    display: none;
+}
+
+#root.dimmable.dimmed #tutorialcard.tutorialReady .ui.showlightbox {
+    display: block;
+}
+
+#root.dimmable.dimmed #tutorialcard.tutorialReady .ui.hidelightbox {
+    display: none;
+}
+
+#tutorialcard .ui.button.hintbutton {
+    position: absolute;
+    bottom: 0.4rem; 
+    right: 0.4rem;
+
+    font-size: 0.78rem;
+    border-radius: 0.28571429rem;
+}
+
+#tutorialcard .ui.button.okbutton {
+    border-radius: 0.28571429rem;
+}
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Large Monitor */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+
+}
+
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+
+}
+
+/* Tablet */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    #tutorialcard {
+        
+    }
+    #tutorialcard .ui.message .avatar-image {
+        display: none;
+    }
+    #tutorialcard .ui.button.hintbutton {
+        display: none;
+    }
+    #tutorialcard .ui.button.prevbutton {
+        display: none;
+    }
+    #tutorialcard .tutorialmessage {
+        padding-left: 0.5rem;
+    }
+}
+
+/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
+@media only screen and (min-width: @computerBreakpoint) {
+    .tutorial #maineditor .full-abs {
+        bottom: 0rem;
+    }
+    /* Hide the editor toolbar */
+    .tutorial #editortools {
+        background: transparent !important;
+    }
+}
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+
+}
