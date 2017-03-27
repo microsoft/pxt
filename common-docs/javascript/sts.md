@@ -117,9 +117,7 @@ where null and undefined is coerced to the number 0. This is OK for number, but 
 
 ## Undefined, null, and default values
 
-### ~ hint
-[do we unify treatment of undefined and null?; allow null only for references?]
-### ~
+Static TypeScript provides default values for XYZ.  Undefined/null are treated the same. 
 
 ## Object types
 
@@ -156,12 +154,6 @@ interface Foo {
 let f: Foo = { a:42 }
 ```
 In TypeScript/JavaScript, there is no property named `b` in the object referenced by f.
-
-### ~ hint
-TODO
-* implement more restrictive type checks outlined above
-* implement tuples
-### ~
 
 ## Generics
 
