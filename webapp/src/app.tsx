@@ -754,20 +754,7 @@ export class ProjectView
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
         const mpkg = pkg.mainPkg;
-        return this.saveFileAsync()
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                const project: pxt.cpp.HexFile = {
-                    meta: {
-                        cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
-                        targetVersions: pxt.appTarget.versions,
-                        editor: this.getPreferredEditor(),
-                        name: mpkg.config.name
-                    },
-                    source: JSON.stringify(files, null, 2)
-                }
-                return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
-            });
+        return mpkg.compressToFileAsync(this.getPreferredEditor())
     }
 
     getPreferredEditor(): string {
