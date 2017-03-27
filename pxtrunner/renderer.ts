@@ -26,6 +26,7 @@ namespace pxt.runner {
     }
 
     export interface WidgetOptions {
+        showEdit?: boolean;
         showJs?: boolean;
         hideGutter?: boolean;
         run?: boolean;
@@ -67,7 +68,7 @@ namespace pxt.runner {
         let $c = $('<div class="ui top attached segment"></div>');
         let $menu = $h.find('.right.menu');
 
-        if (options.showEdit) { // edit button
+        if (woptions.showEdit) { // edit button
             const $editBtn = $('<a class="item"><i aria-label="edit" class="edit icon"></i></a>').click(() => {
                 decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
@@ -218,6 +219,7 @@ namespace pxt.runner {
                 ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
             const hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
             fillWithWidget(options, c, js, s, r, {
+                showEdit: options.showEdit,
                 run: options.simulator && compiled,
                 hexname: hexname,
                 hex: hex,
