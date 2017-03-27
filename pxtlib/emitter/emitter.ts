@@ -631,6 +631,27 @@ namespace ts.pxtc {
         return false;
     }
 
+    function getAllPropertiesOfInterface(src: Type): Symbol[] {
+        let res = checker.getPropertiesOfType(src)
+        /* TS already flattens for us!
+        let srcDecl = <InterfaceDeclaration>src.symbol.declarations[0]
+        if (srcDecl.heritageClauses)
+            for (let h of srcDecl.heritageClauses) {
+                switch (h.token) {
+                    case SK.ExtendsKeyword:
+                        let tp = typeOf(h.types[0])
+                        if (isInterfaceType(tp)) {
+                            res.concat(getAllPropertiesOfInterface(tp))
+                        } else if (isClassType(tp)){
+                            // TODO: raise error - STS doesn't permit Interfaces to 
+                            // TODO: extend Classes
+                        }
+                }
+            }
+        */
+        return res
+    }
+
     function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
         // get the direct types
         let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
@@ -671,6 +692,8 @@ namespace ts.pxtc {
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
     // pairs that the TS checker compared. 
+    // NOTE: we need to redo a subtype check for any place TS would have done one
+    // NOTE: we should create a nested message structure for errors, like TS does
     function checkSubtype(trgType: Type, srcType: Type): [boolean, string] {
         let srcId = (srcType as any).id
         let trgId = (trgType as any).id
@@ -710,10 +733,11 @@ namespace ts.pxtc {
             let trgFun = isFunctionType(trgType)
             if (isFunctionType(srcType)) {
                 let srcFun = isFunctionType(srcType)
+                U.assert(trgFun.parameters.length >= srcFun.parameters.length, "trg should have at least params of src")
                 let [ret,msg] = [true,""]
-                for (let i = 0; i < trgFun.parameters.length; i++) {
-                    let trgParamType = checker.getDeclaredTypeOfSymbol(trgFun.parameters[i])
-                    let srcParamType = checker.getDeclaredTypeOfSymbol(srcFun.parameters[i])
+                for (let i = 0; i < srcFun.parameters.length; i++) {
+                    let trgParamType = checker.getTypeAtLocation(trgFun.parameters[i].valueDeclaration)
+                    let srcParamType = checker.getTypeAtLocation(srcFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
                     let [retSub,msgSub] = checkSubtype(srcParamType, trgParamType)
                     if (ret && !retSub) [ret,msg] = [retSub,msgSub]
@@ -729,18 +753,26 @@ namespace ts.pxtc {
             }
         } else if (isInterfaceType(trgType)) {
             if (isStructureType(srcType)) {
-                let trgProps = checker.getPropertiesOfType(trgType)
-                let srcProps = checker.getPropertiesOfType(srcType)
+                let trgProps = getAllPropertiesOfInterface(trgType)
+                let srcProps = getAllPropertiesOfInterface(srcType)
                 let [ret,msg] = [true,""]
                 trgProps.forEach(trgProp => {
                     let trgPropDecl = <PropertyDeclaration>trgProp.valueDeclaration
                     let find = srcProps.filter(sp => sp.name == trgProp.name)
-                    U.assert(find.length == 1 || (find.length == 0) && !!(trgProp.flags & SymbolFlags.Optional))
                     if (find.length == 1) {
                         let srcPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                         // TODO: record the property on which we have a mismatch
                         let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(trgPropDecl),checker.getTypeAtLocation(srcPropDecl))
                         if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                    } else if (find.length == 0) {
+                        if (!(trgProp.flags & SymbolFlags.Optional)) {
+                            // we have a cast to an interface with more properties (unsound)
+                            [ret,msg] = [false,"Property "+trgProp.name+" not present in"+srcType.getSymbol().name]
+                        } else {
+                            // TODO:???
+                        }
+                    } else {
+                        U.assert(false,"subsetCheck: unreachable")
                     }
                 })
                 return insertSubtype(key,[ret,msg])
@@ -1852,6 +1884,7 @@ ${lbl}: .short 0xffff
         function addDefaultParametersAndTypeCheck(sig: Signature, args: Expression[], attrs: CommentAttrs) {
             if (!sig) return;
             let parms = sig.getParameters();
+            // remember the number of arguments passed explicitly
             let goodToGoLength = args.length
             if (parms.length > args.length) {
                 parms.slice(args.length).forEach(p => {
@@ -1873,14 +1906,12 @@ ${lbl}: .short 0xffff
                 })
             }
 
-            // add extra type checking for assignment of actual to formal,
-            // not needed for default params (for now)
+            // type check for assignment of actual to formal,
             for (let i = 0; i < goodToGoLength; i++) {
                 let p = parms[i]
-                // TODO: bringing back this code introduces a problem with 
-                // TODO: a lookup of type parameter T
-                // if (p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
-                    // checkAssignmentTypes(p.valueDeclaration, args[i])
+                // there may be more arguments than parameters
+                if (p && p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
+                    checkAssignmentTypes(p.valueDeclaration, args[i])
             }
 
             // TODO: this is micro:bit specific and should be lifted out
@@ -2598,8 +2629,10 @@ ${lbl}: .short 0xffff
                     if (!decl) {
                         unhandled(trg, lf("setter not available"), 9253)
                     }
+                    // TODO: don't need an assign check below
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else if (decl && decl.kind == SK.PropertySignature) {
+                    // TODO: don't need an assign check below
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
