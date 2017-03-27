@@ -20,11 +20,13 @@ namespace pxt.runner {
         pxtUrl?: string;
         packageClass?: string;
         package?: string;
+        showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         downloadScreenshots?: boolean
     }
 
     export interface WidgetOptions {
+        showEdit?: boolean;
         showJs?: boolean;
         hideGutter?: boolean;
         run?: boolean;
@@ -49,6 +51,7 @@ namespace pxt.runner {
         $container: JQuery,
         $js: JQuery,
         $svg: JQuery,
+        decompileResult: DecompileResult,
         woptions: WidgetOptions = {}
     ) {
         if (!$svg || !$svg[0]) {
@@ -64,6 +67,14 @@ namespace pxt.runner {
             + ' <div class="right icon menu"></div></div>');
         let $c = $('<div class="ui top attached segment"></div>');
         let $menu = $h.find('.right.menu');
+
+        if (woptions.showEdit) { // edit button
+            const $editBtn = $('<a class="item"><i aria-label="edit" class="edit icon"></i></a>').click(() => {
+                decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
+                    .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
+            })
+            $menu.append($editBtn);
+        }
 
         if (options.showJavaScript) {
             // blocks
@@ -200,14 +211,15 @@ namespace pxt.runner {
 
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
-            let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
-            let js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
+            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
-            let compiled = r.compileJS && r.compileJS.success;
-            let hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
+            const compiled = r.compileJS && r.compileJS.success;
+            const hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
                 ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
-            let hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
-            fillWithWidget(options, c, js, s, {
+            const hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
+            fillWithWidget(options, c, js, s, r, {
+                showEdit: options.showEdit,
                 run: options.simulator && compiled,
                 hexname: hexname,
                 hex: hex,
@@ -242,7 +254,7 @@ namespace pxt.runner {
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
+            fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
         }, { package: options.package, snippetMode: true });
     }
 
@@ -478,8 +490,13 @@ namespace pxt.runner {
             .then(() => Promise.delay(1, renderNextCodeCardAsync(cls, options)));
     }
 
-    function getRunUrl(options: ClientRenderOptions) {
+    function getRunUrl(options: ClientRenderOptions): string {
         return options.pxtUrl ? options.pxtUrl + '/--run' : pxt.webConfig && pxt.webConfig.runUrl ? pxt.webConfig.runUrl : '/--run';
+    }
+
+    function getEditUrl(options: ClientRenderOptions): string {
+        const url = options.pxtUrl || pxt.appTarget.appTheme.homeUrl;
+        return (url || "").replace(/\/$/, '');
     }
 
     function mergeConfig(options: ClientRenderOptions) {
@@ -496,8 +513,8 @@ namespace pxt.runner {
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
-
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
+        options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
         if (options.simulatorClass) {
