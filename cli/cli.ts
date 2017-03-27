@@ -513,14 +513,12 @@ function bumpPxtCoreDepAsync(): Promise<void> {
                 }
                 pkg["dependencies"][knownPackage] = newVer
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-                commitMsg += `Bump ${knownPackage} to ${newVer}
-`;
+                commitMsg += `bump ${knownPackage} to ${newVer}, `;
             })
     })
 
-    if (commitMsg)
-        gitPull = gitPull
-            .then(() => nodeutil.runGitAsync("commit", "-m", commitMsg, "--", "package.json"));
+    gitPull = gitPull
+            .then(() => commitMsg ? nodeutil.runGitAsync("commit", "-m", commitMsg, "--", "package.json") : Promise.resolve());
 
     return gitPull;
 }
