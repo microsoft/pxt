@@ -9,7 +9,6 @@ import * as data from "./data";
 import * as sui from "./sui";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
-type TutorialOptions = pxt.editor.TutorialOptions;
 
 export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
@@ -17,39 +16,36 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     openTutorialStep(step: number) {
-        let options = this.props.parent.state.tutorialOptions;
-        options.tutorialStep = step;
-        options.tutorialReady = false;
-        pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step });
-        this.props.parent.setState({ tutorialOptions: options })
+        pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorial, step: step });
+        this.props.parent.setState({ tutorialStep: step, tutorialReady: false })
         this.props.parent.setTutorialStep(step);
     }
 
     render() {
-        const { tutorialReady, tutorialSteps, tutorialStep, tutorialName } = this.props.parent.state.tutorialOptions;
         const state = this.props.parent.state;
+        const tutorialReady = state.tutorialReady;
         const targetTheme = pxt.appTarget.appTheme;
-        const currentStep = tutorialStep;
+        const tutorialSteps = state.tutorialSteps;
+        const currentStep = state.tutorialStep;
+        const tutorialName = state.tutorialName;
 
         return <div className="ui item">
             <div className="ui item tutorial-menuitem">
                 {tutorialSteps.map((step, index) =>
-                    (index == currentStep) ?
-                        <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={`${index + 1}`} onClick={() => this.openTutorialStep(index) }/> :
-                        <button key={'tutorialStep' + index} className={`ui button icon circular inverted ${!tutorialReady ? 'disabled' : ''} clear`} data-tooltip={`${index + 1}`} data-position="bottom right" data-variation="inverted" onClick={() => this.openTutorialStep(index) }>
-                            <i className="icon circle thin" />
-                        </button>
+                    <sui.Button key={'tutorialStep' + index} class={`icon circular ${currentStep == index ? 'red selected' : 'inverted'} ${!tutorialReady ? 'disabled' : ''}`} text={` ${index + 1} `} onClick={() => this.openTutorialStep(index) }/>
                 ) }
             </div>
         </div>;
     }
 }
 
-export interface TutorialContentState {
-    tutorialUrl: string;
+interface TutorialOptions {
+    tutorialId: string;
+    tutorialName: string;
+    showCategories?: boolean;
 }
 
-export class TutorialContent extends data.Component<ISettingsProps, TutorialContentState> {
+export class TutorialContent extends data.Component<ISettingsProps, {}> {
     public static notify(message: pxsim.SimulatorMessage) {
         let tc = document.getElementById("tutorialcontent") as HTMLIFrameElement;
         if (tc && tc.contentWindow) tc.contentWindow.postMessage(message, "*");
@@ -69,55 +65,23 @@ export class TutorialContent extends data.Component<ISettingsProps, TutorialCont
     private setUrl(url: string) {
         let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
         if (el) el.src = url;
-        else this.setState({ tutorialUrl: url });
-    }
-
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: TutorialContentState, nextContext: any): boolean {
-        return this.state.tutorialUrl != nextState.tutorialUrl;
+        else this.props.parent.setState({ tutorialUrl: url });
     }
 
     public static refresh() {
-        // Show light box
-        $('#root')
-            .dimmer({'closable': true})
-            .dimmer('show');
+        let el = document.getElementById("tutorialcontent") as HTMLIFrameElement;
+        if (el && el.contentWindow) {
+            el.parentElement.style.height = "";
+            el.parentElement.style.height = el.contentWindow.document.body.scrollHeight + "px";
+        }
     }
 
     renderCore() {
-        const { tutorialUrl } = this.state;
-        if (!tutorialUrl) return null;
+        const state = this.props.parent.state;
+        const docsUrl = state.tutorialUrl;
+        if (!docsUrl) return null;
 
-        return <iframe id="tutorialcontent" style={{"display":"none"}} onLoad={() => TutorialContent.refresh()} src={tutorialUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
-    }
-}
-
-export interface TutorialHintState {
-    visible: boolean;
-}
-
-export class TutorialHint extends data.Component<ISettingsProps, TutorialHintState> {
-
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    showHint() {
-        this.setState({ visible: true })
-    }
-
-    renderCore() {
-        const {visible} = this.state;
-        const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialHint } = options;
-        if (!tutorialHint) return <div />;
-
-        return <sui.Modal open={visible} className="hintdialog" size="large" header={lf("Hint") } closeIcon={true}
-                onClose={() => this.setState({ visible: false })} dimmer={true}
-                closeOnDimmerClick closeOnDocumentClick>
-                    <div className="content">
-                        <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
-                    </div>
-            </sui.Modal>;
+        return <iframe id="tutorialcontent" onLoad={() => TutorialContent.refresh() } src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
     }
 }
 
@@ -127,28 +91,20 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
     }
 
     previousTutorialStep() {
-        let options = this.props.parent.state.tutorialOptions;
-        const currentStep = options.tutorialStep;
+        const currentStep = this.props.parent.state.tutorialStep;
         const previousStep = currentStep - 1;
 
-        options.tutorialStep = previousStep;
-        options.tutorialReady = false;
-
-        pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep });
-        this.props.parent.setState({ tutorialOptions: options })
+        pxt.tickEvent(`tutorial.previous`, { tutorial: this.props.parent.state.tutorial, step: previousStep });
+        this.props.parent.setState({ tutorialStep: previousStep, tutorialReady: false })
         this.props.parent.setTutorialStep(previousStep);
     }
 
     nextTutorialStep() {
-        let options = this.props.parent.state.tutorialOptions;
-        const currentStep = options.tutorialStep;
+        const currentStep = this.props.parent.state.tutorialStep;
         const nextStep = currentStep + 1;
 
-        options.tutorialStep = nextStep;
-        options.tutorialReady = false;
-
-        pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep });
-        this.props.parent.setState({ tutorialOptions: options })
+        pxt.tickEvent(`tutorial.next`, { tutorial: this.props.parent.state.tutorial, step: nextStep });
+        this.props.parent.setState({ tutorialStep: nextStep, tutorialReady: false })
         this.props.parent.setTutorialStep(nextStep);
     }
 
@@ -156,53 +112,34 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         this.props.parent.exitTutorial();
     }
 
-    closeLightbox() {
-        // Hide light box
-        $('#root')
-            .dimmer('hide');
-    }
-
-    componentWillUpdate() {
-        $('#tutorialhint')
-         .modal('attach events', '#tutorialcard .ui.button.hintbutton', 'show');
-        ;
-    }
-
-    showHint() {
-        const options = this.props.parent.state.tutorialOptions;
-        pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
-        this.closeLightbox();
-        this.props.parent.showTutorialHint();
+    setPath(path: string) {
+        let tc = this.refs["tutorialcontent"] as TutorialContent;
+        if (!tc) return;
+        tc.setPath(path);
     }
 
     render() {
-        const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialHeaderContent, tutorialStep, tutorialSteps } = options;
-        if (!tutorialReady) return <div />
-
-        const currentStep = tutorialStep;
-        const maxSteps = tutorialSteps.length;
-        const hasPrevious = tutorialReady && currentStep != 0;
-        const hasNext = tutorialReady && currentStep != maxSteps - 1;
+        const state = this.props.parent.state;
+        const tutorialReady = state.tutorialReady;
+        const currentStep = state.tutorialStep;
+        const cardLocation = state.tutorialCardLocation || 'bottom';
+        const maxSteps = state.tutorialSteps.length;
+        const hasPrevious = currentStep != 0;
+        const hasNext = currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
 
-        return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
-            <div className='ui buttons'>
-                <button className={`ui left attached button prevbutton icon grey ${!hasPrevious ? 'disabled' : ''}`} title={lf("Back") } onClick={() => this.previousTutorialStep()}>
-                    <i className="left chevron icon"></i>
-                </button>
-                <div className="ui segment attached message">
-                    <div className='avatar-image' onClick={() => this.showHint()}></div>
-                    <div className='tutorialmessage' onClick={() => this.showHint()}>
-                        <div className="content" dangerouslySetInnerHTML={{__html: tutorialHeaderContent}} />
-                    </div>
-                    <sui.Button class="large green okbutton showlightbox" text={lf("Ok") } onClick={() => this.closeLightbox() } />
-                    <sui.Button class="mini blue hintbutton hidelightbox" text={lf("Hint") } onClick={() => this.showHint()} />
+        return <div id="tutorialcard" className={`ui ${pxt.options.light ? "" : "transition fly in"} ${cardLocation} visible active`}>
+            <div className="ui raised fluid card">
+                <div className="ui">
+                    <TutorialContent ref="tutorialcontent" parent={this.props.parent} />
                 </div>
-                <button className={`ui right icon button nextbutton right attached grey ${!hasNext ? 'disabled' : ''}`} title={lf("Next") } onClick={() => this.nextTutorialStep()}>
-                    <i className="right chevron icon"></i>
-                </button>
-                {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
+                <div className="extra content">
+                    <div className="ui two buttons">
+                        {hasPrevious ? <sui.Button icon="left chevron" class={`ui icon red button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Back") } onClick={() => this.previousTutorialStep() } /> : undefined }
+                        {hasNext ? <sui.Button icon="right chevron" class={`ui icon green button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Next") } onClick={() => this.nextTutorialStep() } /> : undefined }
+                        {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
+                    </div>
+                </div>
             </div>
         </div>;
     }

@@ -815,16 +815,6 @@ namespace pxt.blocks {
             }
         }
 
-        if (tb) {
-            usedBlocks = {};
-            const blocks = tb.querySelectorAll("block");
-
-            for (let i = 0; i < blocks.length; i++) {
-                usedBlocks[blocks.item(i).getAttribute("type")] = true;
-            }
-
-            updateUsedBlocks = true;
-        }
 
         // Filter the blocks
         if (filters) {
@@ -838,7 +828,7 @@ namespace pxt.blocks {
                         case FilterState.Hidden:
                             blk.parentNode.removeChild(blk); break;
                         case FilterState.Disabled:
-                            blk.setAttribute("disabled", "true"); break;
+                            blk.setAttribute("disabled", "true");
                         case FilterState.Visible:
                             hasChild = true; break;
                     }
@@ -848,27 +838,15 @@ namespace pxt.blocks {
 
             if (showCategories !== CategoryMode.None) {
                 // Go through namespaces and keep the ones with an override
-                let categories = tb.querySelectorAll(`category:not([nameid="more"]):not([nameid="advanced"])`);
+                let categories = tb.querySelectorAll("xml > category");
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
                     let catName = cat.getAttribute("nameid");
                     let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
                     let blocks = cat.querySelectorAll(`block`);
-
-                    let hasVisibleChildren = filterBlocks(blocks, categoryState);
-                    switch (categoryState) {
-                        case FilterState.Disabled:
-                            if (!hasVisibleChildren) {
-                                cat.setAttribute("disabled", "true");
-                                // disable sub categories
-                                let subcategories = cat.querySelectorAll(`category`);
-                                for (let si = 0; si < subcategories.length; ++si) {
-                                    subcategories.item(si).setAttribute("disabled", "true");
-                                }
-                            } break;
-                        case FilterState.Visible:
-                        case FilterState.Hidden:
-                            if (!hasVisibleChildren) cat.parentNode.removeChild(cat); break;
+                    // Hide the category entirely if there are no blocks shown
+                    if (!filterBlocks(blocks, categoryState)) {
+                        cat.parentNode.removeChild(cat);
                     }
                 }
             } else {
@@ -878,7 +856,7 @@ namespace pxt.blocks {
 
             if (showCategories !== CategoryMode.None) {
                 // Go through all categories, hide the ones that have no blocks inside
-                let categories = tb.querySelectorAll(`category:not([nameid="advanced"])`);
+                let categories = tb.querySelectorAll("category");
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
                     let blockCount = cat.querySelectorAll(`block`);
@@ -887,6 +865,17 @@ namespace pxt.blocks {
                     }
                 }
             }
+        }
+
+        if (tb) {
+            usedBlocks = {};
+            const blocks = tb.querySelectorAll("block");
+
+            for (let i = 0; i < blocks.length; i++) {
+                usedBlocks[blocks.item(i).getAttribute("type")] = true;
+            }
+
+            updateUsedBlocks = true;
         }
 
         return tb;

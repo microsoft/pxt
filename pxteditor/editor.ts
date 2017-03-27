@@ -37,8 +37,13 @@ namespace pxt.editor {
         sideDocsCollapsed?: boolean;
         projectName?: string;
 
-        tutorialOptions?: TutorialOptions;
-        hintShown?: boolean;
+        tutorial?: string; // tutorial
+        tutorialName?: string; // tutorial title
+        tutorialSteps?: string[]; // tutorial steps
+        tutorialStep?: number; // current tutorial page
+        tutorialReady?: boolean; // current tutorial page
+        tutorialUrl?: string; // current tutorial url
+        tutorialCardLocation?: string; // current card location
 
         running?: boolean;
         compiling?: boolean;
@@ -72,16 +77,6 @@ namespace pxt.editor {
         Hidden = 0,
         Visible = 1,
         Disabled = 2
-    }
-
-    export interface TutorialOptions {
-        tutorial?: string; // tutorial
-        tutorialName?: string; // tutorial title
-        tutorialSteps?: string[]; // tutorial steps
-        tutorialStep?: number; // current tutorial page
-        tutorialReady?: boolean; // current tutorial page
-        tutorialHeaderContent?: string; // current tutorial header content
-        tutorialHint?: string; // current tutorial content, shown in hints
     }
 
     export interface IProjectView {
@@ -124,7 +119,6 @@ namespace pxt.editor {
 
         setTutorialStep(step: number): void;
         exitTutorial(): void;
-        showTutorialHint(): void;
 
         anonymousPublishAsync(): Promise<string>;
 

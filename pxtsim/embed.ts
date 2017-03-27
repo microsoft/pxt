@@ -100,8 +100,7 @@ namespace pxsim {
         subtype: "steploaded";
         data: {[index: string]: number };
         showCategories?: boolean;
-        headercontent: string;
-        content: string;
+        location?: string;
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
