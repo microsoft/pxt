@@ -160,6 +160,11 @@ namespace ts.pxtc {
         return ir.rtcall("langsupp::fromFloat", [e])
     }
 
+    function fromDouble(e: ir.Expr): ir.Expr {
+        if (!target.taggedInts) return e
+        return ir.rtcall("langsupp::fromDouble", [e])
+    }
+
     function getBitSize(decl: TypedDecl) {
         if (!decl || !decl.type) return BitSize.None
         if (!(typeOf(decl).flags & TypeFlags.Number)) return BitSize.None
@@ -2587,10 +2592,10 @@ ${lbl}: .short 0xffff
                         ir.CallingConvention.Plain, [r])
                 } else if (f == "B") {
                     return emitCondition(a, r)
-                } else if (f == "F") {
+                } else if (f == "F" || f == "D") {
                     if (!isNumber)
-                        U.userError("argsFmt=...F... but argument not a number in " + name)
-                    return ir.rtcallMask("langsupp::toFloat", getMask([a]),
+                        U.userError("argsFmt=...F/D... but argument not a number in " + name)
+                    return ir.rtcallMask(f == "D" ? "langsupp::toDouble" : "langsupp::toFloat", getMask([a]),
                         ir.CallingConvention.Plain, [r])
                 } else {
                     throw U.oops("invalid format specifier: " + f)
@@ -2605,6 +2610,8 @@ ${lbl}: .short 0xffff
                     r = fromBool(r)
                 else if (fmt.charAt(0) == "F")
                     r = fromFloat(r)
+                else if (fmt.charAt(0) == "D")
+                    r = fromDouble(r)
             }
             return r
         }

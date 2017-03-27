@@ -161,6 +161,36 @@ namespace ts.pxtc {
             return res
         }
 
+        export function readBytesFromFile(f: BlockFile, addr: number, length: number): Uint8Array {
+            let needAddr = addr >> 8
+            let bl: Uint8Array
+            if (needAddr == f.currPtr)
+                bl = f.currBlock
+            else {
+                for (let i = 0; i < f.ptrs.length; ++i) {
+                    if (f.ptrs[i] == needAddr) {
+                        bl = f.blocks[i]
+                        break
+                    }
+                }
+                if (bl) {
+                    f.currPtr = needAddr
+                    f.currBlock = bl
+                }
+            }
+            if (!bl)
+                return null
+            let res = new Uint8Array(length)
+            let toRead = Math.min(length, 256 - (addr & 0xff))
+            U.memcpy(res, 0, bl, (addr & 0xff) + 32, toRead)
+            let leftOver = length - toRead
+            if (leftOver > 0) {
+                let le = readBytesFromFile(f, addr + toRead, leftOver)
+                U.memcpy(res, toRead, le)
+            }
+            return res
+        }
+
         export function writeBytes(f: BlockFile, addr: number, bytes: number[]) {
             let currBlock = f.currBlock
             let needAddr = addr >> 8
@@ -173,6 +203,8 @@ namespace ts.pxtc {
                 writeBytes(f, addr + firstChunk, bytes.slice(firstChunk))
                 return
             }
+
+            console.log("patch file: @" + addr + ": " + U.toHex(bytes))
 
             if (needAddr != f.currPtr) {
                 let i = 0;
@@ -368,6 +400,11 @@ namespace ts.pxtc {
         }
 
         let currentSetup: string = null;
+        interface HexPatch {
+            addr: number;
+            bytes: number[];
+        }
+        let pendingPatches: HexPatch[] = []
         export let currentHexInfo: pxtc.HexInfo;
 
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
@@ -476,6 +513,8 @@ namespace ts.pxtc {
 
             funcInfo = {};
             let funs: FuncInfo[] = extInfo.functions;
+            let patchMode = opts.taggedInts ? true : false
+            let patchVT: number = null
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
                 let m = /^:10(....)00(.{16})/.exec(hex[i])
@@ -485,16 +524,35 @@ namespace ts.pxtc {
                 let s = hex[i].slice(9)
                 let step = opts.shortPointers ? 4 : 8
                 while (s.length >= step) {
-                    let inf = funs.shift()
-                    if (!inf) return;
-                    funcInfo[inf.name] = inf;
                     let hexb = s.slice(0, step)
-                    //console.log(inf.name, hexb)
-                    inf.value = parseInt(swapBytes(hexb), 16)
-                    if (!inf.value) {
-                        U.oops("No value for " + inf.name + " / " + hexb)
-                    }
+                    let value = parseInt(swapBytes(hexb), 16)
                     s = s.slice(step)
+
+                    if (patchMode) {
+                        if (!value)
+                            patchMode = false
+                        else if (patchVT == null)
+                            patchVT = value
+                        else {
+                            let vv = patchVT >> vtableShift
+                            assert(vv < 0xffff)
+                            assert(vv << vtableShift == patchVT)
+                            patchVT = null
+                            pendingPatches.push({
+                                addr: value + 2,
+                                bytes: [vv & 0xff, vv >> 8]
+                            })
+                            console.log(pendingPatches)
+                        }
+                    } else {
+                        let inf = funs.shift()
+                        if (!inf) return;
+                        funcInfo[inf.name] = inf;
+                        if (!value) {
+                            U.oops("No value for " + inf.name + " / " + hexb)
+                        }
+                        inf.value = value
+                    }
                 }
             }
 
@@ -564,6 +622,39 @@ namespace ts.pxtc {
             return r.toUpperCase();
         }
 
+        function applyPatches(f: UF2.BlockFile) {
+            for (let p of pendingPatches)
+                UF2.writeBytes(f, p.addr, p.bytes)
+            // constant strings in the binary are 4-byte aligned, and marked 
+            // with "@PXT@:" at the beginning - this 6 byte string needs to be
+            // replaced with proper reference count (0xffff to indicate read-only
+            // flash location), string virtual table, and the length of the string
+            let stringVT = [0xff, 0xff].concat(pendingPatches[0].bytes)
+            assert(stringVT.length == 4)
+            for (let bidx = 0; bidx < f.blocks.length; ++bidx) {
+                let b = f.blocks[bidx]
+                let upper = f.ptrs[bidx] << 8
+                for (let i = 32; i < 32 + 256; i += 4) {
+                    // @PXT
+                    if (b[i] == 0x40 && b[i + 1] == 0x50 && b[i + 2] == 0x58 && b[i + 3] == 0x54) {
+                        let addr = upper + i - 32
+                        let bytes = UF2.readBytesFromFile(f, addr, 200)
+                        // @:
+                        if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
+                            let len = 0
+                            while (6 + len < bytes.length) {
+                                if (bytes[6 + len] == 0)
+                                    break
+                            }
+                            if (6 + len >= bytes.length)
+                                U.oops("constant string too long!")
+                            UF2.writeBytes(f, addr, stringVT.concat([len & 0xff, len >> 8]))
+                        }
+                    }
+                }
+            }
+        }
+
         export function patchHex(bin: Binary, buf: number[], shortForm: boolean, useuf2: boolean) {
             let myhex = hex.slice(0, bytecodeStartIdx)
 
@@ -599,6 +690,7 @@ namespace ts.pxtc {
 
             if (uf2) {
                 UF2.writeHex(uf2, myhex)
+                applyPatches(uf2)
                 UF2.writeBytes(uf2, jmpStartAddr, nextLine(hd, jmpStartIdx).slice(4))
                 if (bin.checksumBlock) {
                     let bytes: number[] = []

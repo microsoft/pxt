@@ -212,6 +212,7 @@ namespace pxt.cpp {
                 switch (tp.replace(/\s+/g, "")) {
                     case "void": return "void";
                     // TODO: need int16_t
+                    case "TNumber":
                     case "int32_t":
                     case "uint32_t":
                     case "unsigned":
@@ -232,6 +233,8 @@ namespace pxt.cpp {
                     case "StringData*": return "string";
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
+
+                    case "TValue": return "any";
                     default:
                         return toJs(tp);
                     //err("Don't know how to map type: " + tp)
@@ -257,11 +260,9 @@ namespace pxt.cpp {
                     case "void": return "V";
                     case "float": return "F";
                     case "TNumber": return "T";
+                    case "TValue": return "T";
                     case "bool": return "B";
-
-                    case "double":
-                        U.userError("double not supported yet")
-                        return "D"
+                    case "double": return "D"
 
                     default:
                         return "_";
