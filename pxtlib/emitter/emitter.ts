@@ -767,7 +767,7 @@ namespace ts.pxtc {
                     } else if (find.length == 0) {
                         if (!(trgProp.flags & SymbolFlags.Optional)) {
                             // we have a cast to an interface with more properties (unsound)
-                            [ret,msg] = [false,"Property "+trgProp.name+" not present in"+srcType.getSymbol().name]
+                            [ret,msg] = [false,"Property " + trgProp.name + " not present in " + srcType.getSymbol().name]
                         } else {
                             // TODO:???
                         }
