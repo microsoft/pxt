@@ -24,6 +24,7 @@ export const loops: pxt.vs.NameDefiniton = {
         color: pxt.blocks.blockColors["loops"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         icon: "loops",
+        weight: 50.09,
         paramDefl: {}
     }
 };
@@ -66,6 +67,7 @@ export const logic: pxt.vs.NameDefiniton = {
     metaData: {
         color: pxt.blocks.blockColors["logic"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        weight: 50.08,
         icon: "logic",
         paramDefl: {}
     }
@@ -108,6 +110,7 @@ export const variables: pxt.vs.NameDefiniton = {
     metaData: {
         color: pxt.blocks.blockColors["variables"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        weight: 50.07,
         icon: "variables",
         paramDefl: {}
     }
@@ -215,6 +218,7 @@ export const maths: pxt.vs.NameDefiniton = {
     metaData: {
         color: pxt.blocks.blockColors["math"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        weight: 50.06,
         icon: "math",
         paramDefl: {}
     }
