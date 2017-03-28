@@ -488,7 +488,7 @@ export class ProjectView
         if (step > -1) {
             tutorial.TutorialContent.notify({
                 type: "tutorial",
-                tutorial: this.state.tutorial,
+                tutorial: this.state.tutorialOptions.tutorial,
                 subtype: "stepchange",
                 step: step
             } as pxsim.TutorialStepChangeMessage)
@@ -502,9 +502,13 @@ export class ProjectView
                 switch (t.subtype) {
                     case 'steploaded':
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
-                        let showCategories = (tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7) ? CategoryMode.Basic : CategoryMode.None;
-                        this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Hidden }, showCategories);
-                        this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
+                        let showCategories = CategoryMode.Basic;
+                        this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Disabled }, showCategories);
+                        let tutorialOptions = this.state.tutorialOptions;
+                        tutorialOptions.tutorialReady = true;
+                        tutorialOptions.tutorialHeaderContent = tt.headercontent;
+                        tutorialOptions.tutorialHint = tt.content;
+                        this.setState({ tutorialOptions: tutorialOptions });
                         tutorial.TutorialContent.refresh();
                         core.hideLoading();
                         break;
@@ -1293,15 +1297,22 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 if (!titleRegex || titleRegex.length < 1) return;
                 title = titleRegex[1];
 
-                let steps = md.split('###');
+                let steps = md.split(/^###[^#].*$/gmi);
                 for (let step = 1; step < steps.length; step++) {
                     let stepmd = `###${steps[step]}`;
                     result.push(stepmd);
                 }
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
-                this.setState({ tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result })
-                let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+                let tutorialOptions: pxt.editor.TutorialOptions = {
+                    tutorial: tutorialId,
+                    tutorialName: title,
+                    tutorialStep: 0,
+                    tutorialSteps: result
+                };
+                this.setState({ tutorialOptions: tutorialOptions })
+
+                let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
@@ -1336,8 +1347,15 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     this.newProject();
                 }
             }).finally(() => {
-                this.setState({ active: true, tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
+                this.setState({ active: true, tutorialOptions: null });
             });
+    }
+
+    showTutorialHint() {
+        let th = this.refs["tutorialhint"] as tutorial.TutorialHint;
+        th.showHint();
+        const options = this.state.tutorialOptions;
+        pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
     renderCore() {
@@ -1368,14 +1386,15 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const inTutorial = !!this.state.tutorial;
-        const tutorialName = this.state.tutorialName;
+        const tutorialOptions = this.state.tutorialOptions;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const gettingStarted = !sandbox && !inTutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
-        const fullscreen = run && !simOpts.hideFullscreen;
+        const fullscreen = run && !tutorial && !simOpts.hideFullscreen
+        const audio = run && !tutorial && targetTheme.hasAudio;
         const {
             hideMenuBar,
             hideEditorToolbar} = targetTheme;
@@ -1422,7 +1441,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </span>
                                 {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
-                                {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialName} /> : null}
+                                {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
                                     <span id="logo" className="ui item logo">
                                         <img className="ui mini image" src={Util.toDataUri(rightLogo) } onClick={() => this.launchFullEditor() } alt={`${targetTheme.boardName} Logo`}/>
@@ -1485,7 +1504,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
+                                {audio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
                         </div>
@@ -1503,6 +1522,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
+                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
+                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
                 {hideEditorToolbar ? undefined : <div id="editortools" role="complementary">
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> }
