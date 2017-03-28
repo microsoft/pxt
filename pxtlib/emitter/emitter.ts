@@ -2927,11 +2927,7 @@ ${lbl}: .short 0xffff
                 inner = emitExpr(expr)
             // in all cases decr is internal, so no mask
             if (opts.target.floatingPoint) {
-                if (typeOf(expr).flags & TypeFlags.String) {
-                    return ir.rtcall("langsupp::stringToBoolDecr", [inner])
-                } else {
-                    return ir.rtcall("numops::toBoolDecr", [inner])
-                }
+                return ir.rtcall("numops::toBoolDecr", [inner])
             } else {
                 if (typeOf(expr).flags & TypeFlags.String) {
                     return ir.rtcall("pxtrt::stringToBool", [inner])

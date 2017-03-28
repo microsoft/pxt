@@ -162,6 +162,7 @@ namespace ts.pxtc {
         }
 
         export function readBytesFromFile(f: BlockFile, addr: number, length: number): Uint8Array {
+            //console.log(`read @${addr} len=${length}`)
             let needAddr = addr >> 8
             let bl: Uint8Array
             if (needAddr == f.currPtr)
@@ -203,8 +204,6 @@ namespace ts.pxtc {
                 writeBytes(f, addr + firstChunk, bytes.slice(firstChunk))
                 return
             }
-
-            console.log("patch file: @" + addr + ": " + U.toHex(bytes))
 
             if (needAddr != f.currPtr) {
                 let i = 0;
@@ -626,6 +625,7 @@ namespace ts.pxtc {
         function applyPatches(f: UF2.BlockFile) {
             for (let p of pendingPatches)
                 UF2.writeBytes(f, p.addr, p.bytes)
+
             // constant strings in the binary are 4-byte aligned, and marked 
             // with "@PXT@:" at the beginning - this 6 byte string needs to be
             // replaced with proper reference count (0xffff to indicate read-only
@@ -646,10 +646,13 @@ namespace ts.pxtc {
                             while (6 + len < bytes.length) {
                                 if (bytes[6 + len] == 0)
                                     break
+                                len++
                             }
                             if (6 + len >= bytes.length)
                                 U.oops("constant string too long!")
-                            UF2.writeBytes(f, addr, stringVT.concat([len & 0xff, len >> 8]))
+                            let patchV = stringVT.concat([len & 0xff, len >> 8])
+                            //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
+                            UF2.writeBytes(f, addr, patchV)
                         }
                     }
                 }
