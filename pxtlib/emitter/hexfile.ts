@@ -404,6 +404,7 @@ namespace ts.pxtc {
             bytes: number[];
         }
         let pendingPatches: HexPatch[] = []
+        export let compiledVTs: string[] = []
         export let currentHexInfo: pxtc.HexInfo;
 
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
@@ -423,6 +424,13 @@ namespace ts.pxtc {
                     hex[i] = hexBytes([0x02, 0x00, 0x00, 0x04, 0x00, upaddr >> 16])
                 }
             }
+        }
+
+        export function encodeVTPtr(ptr: number) {
+            let vv = ptr >> vtableShift
+            assert(vv < 0xffff)
+            assert(vv << vtableShift == ptr)
+            return vv
         }
 
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
@@ -513,6 +521,7 @@ namespace ts.pxtc {
             funcInfo = {};
             let funs: FuncInfo[] = extInfo.functions;
             let patchMode = opts.taggedInts ? true : false
+            let vtlistMode = opts.taggedInts ? true : false
             let patchVT: number = null
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
@@ -533,15 +542,18 @@ namespace ts.pxtc {
                         else if (patchVT == null)
                             patchVT = value
                         else {
-                            let vv = patchVT >> vtableShift
-                            assert(vv < 0xffff)
-                            assert(vv << vtableShift == patchVT)
+                            let vv = encodeVTPtr(patchVT)
                             patchVT = null
                             pendingPatches.push({
                                 addr: value + 2,
                                 bytes: [vv & 0xff, vv >> 8]
                             })
                         }
+                    } else if (vtlistMode) {
+                        if (!value)
+                            vtlistMode = false
+                        else
+                            compiledVTs.push(assembler.tohex(encodeVTPtr(value)))
                     } else {
                         let inf = funs.shift()
                         if (!inf) return;
@@ -775,17 +787,16 @@ namespace ts.pxtc {
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
-${lbl}meta: .short 0xffff, ${s.length}
+${lbl}meta: .short 0xffff, ${hex.compiledVTs[0]}, ${s.length}
 ${lbl}: .string ${stringLiteral(s)}
 `)
         }
 
         for (let data of Object.keys(bin.doubles)) {
             let lbl = bin.doubles[data]
-            // TODO add double vtable
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short 0xffff, 0x0000
+${lbl}: .short 0xffff, ${hex.compiledVTs[1]}
         .hex ${data}
 `)
         }
