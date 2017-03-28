@@ -153,6 +153,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
     }
 
     finishTutorial() {
+        this.closeLightbox();
         this.props.parent.exitTutorial();
     }
 
