@@ -1393,8 +1393,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
-        const fullscreen = run && !tutorial && !simOpts.hideFullscreen
-        const audio = run && !tutorial && targetTheme.hasAudio;
+        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
+        const audio = run && !inTutorial && targetTheme.hasAudio;
         const {
             hideMenuBar,
             hideEditorToolbar} = targetTheme;
