@@ -522,7 +522,7 @@ ${files["main.ts"]}
         tutorialid = tutorialid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
-                let steps = tutorialmd.split(/\###.*(?!$)/i);
+                let steps = tutorialmd.split(/^###[^#].*$/gmi);
                 if (steps.length < 1) return;
                 let options = steps[0];
                 steps = steps.slice(1, steps.length);
@@ -530,6 +530,8 @@ ${files["main.ts"]}
                 // Extract toolbox block ids
                 let uptoSteps = steps.slice(0, step + 1).join();
                 uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
+
+                let header = steps[step].split('###')[0];
 
                 let regex = /```(sim|block|blocks|shuffle)\n([\s\S]*?)\n```/gmi;
                 let match: RegExpExecArray;
@@ -563,7 +565,8 @@ ${files["main.ts"]}
                                     tutorial: tutorialid,
                                     subtype: "steploaded",
                                     data: toolboxSubset,
-                                    location: "bottom"
+                                    headercontent: content.firstElementChild.firstElementChild.innerHTML,
+                                    content: content.innerHTML
                                 }, "*");
                             }
                         })
