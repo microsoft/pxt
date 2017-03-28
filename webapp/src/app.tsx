@@ -1354,6 +1354,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     showTutorialHint() {
         let th = this.refs["tutorialhint"] as tutorial.TutorialHint;
         th.showHint();
+        const options = this.state.tutorialOptions;
+        pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
     renderCore() {

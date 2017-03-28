@@ -169,8 +169,6 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
     }
 
     showHint() {
-        const options = this.props.parent.state.tutorialOptions;
-        pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
         this.closeLightbox();
         this.props.parent.showTutorialHint();
     }
