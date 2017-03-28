@@ -486,9 +486,9 @@ namespace pxt.docs {
         }
 
         // try getting a better custom image for twitter
-        let imgM = /https:\/\/(.+?)\.(png|jpeg|jpg|gif)/i.exec(html);
+        let imgM = /<img class="ui image" src="(https:\/\/(.+?)\.(png|jpeg|jpg|gif))"[^>]*\/?>/i.exec(html);
         if (imgM)
-            pubinfo["cardLogo"] = html2Quote(imgM[0]);
+            pubinfo["cardLogo"] = html2Quote(imgM[1]);
 
         pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
 
