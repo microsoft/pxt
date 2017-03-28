@@ -542,7 +542,6 @@ namespace ts.pxtc {
                                 addr: value + 2,
                                 bytes: [vv & 0xff, vv >> 8]
                             })
-                            console.log(pendingPatches)
                         }
                     } else {
                         let inf = funs.shift()
@@ -579,11 +578,13 @@ namespace ts.pxtc {
                     let spec = inf.argsFmt[i + 1]
                     if (!spec)
                         U.userError("excessive parameters passed to " + nm)
-                    let needNum = spec == "I" || spec == "T" || spec == "F"
-                    if (needNum && !argIsNumber[i])
+                    let needNum = spec == "I" || spec == "N" || spec == "F"
+                    if (spec == "T") {
+                        // OK, both number and non-number allowed
+                    } else if (needNum && !argIsNumber[i])
                         U.userError("expecting number at parameter " + (i + 1) + " of " + nm)
                     else if (!needNum && argIsNumber[i])
-                        U.userError("expecting non-number at parameter " + (i + 1) + " of " + nm)
+                        U.userError("expecting non-number at parameter " + (i + 1) + " of " + nm + " / " + inf.argsFmt)
                 }
                 if (argIsNumber.length != inf.argsFmt.length - 1)
                     U.userError("not enough arguments for " + nm)

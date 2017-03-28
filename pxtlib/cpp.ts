@@ -155,6 +155,7 @@ namespace pxt.cpp {
         let shimsDTS = nsWriter("declare namespace")
         let enumsDTS = nsWriter("declare namespace")
         let allErrors = ""
+        let knownEnums: Map<boolean> = {}
 
         let compileService = appTarget.compileService;
         if (!compileService)
@@ -243,7 +244,8 @@ namespace pxt.cpp {
             }
 
             function mapRunTimeType(tp: string) {
-                switch (tp.replace(/\s+/g, "")) {
+                tp = tp.replace(/\s+/g, "")
+                switch (tp) {
                     case "int32_t":
                     case "uint32_t":
                     case "unsigned":
@@ -259,12 +261,14 @@ namespace pxt.cpp {
 
                     case "void": return "V";
                     case "float": return "F";
-                    case "TNumber": return "T";
+                    case "TNumber": return "N";
                     case "TValue": return "T";
                     case "bool": return "B";
                     case "double": return "D"
 
                     default:
+                        if (U.lookup(knownEnums, tp))
+                            return "I"
                         return "_";
                 }
             }
@@ -330,6 +334,8 @@ namespace pxt.cpp {
                         protos.setNs(currNs)
                         protos.write(`enum ${enM[2]} : int;`)
                     }
+
+                    knownEnums[enM[2]] = true
                 }
 
                 if (inEnum) {
@@ -450,6 +456,7 @@ namespace pxt.cpp {
                         argsFmt,
                         value: null
                     }
+                    //console.log(`${ln.trim()} : ${argsFmt}`)
                     if (currDocComment) {
                         shimsDTS.setNs(toJs(currNs))
                         shimsDTS.write("")

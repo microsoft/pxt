@@ -147,22 +147,22 @@ namespace ts.pxtc {
 
     function fromInt(e: ir.Expr): ir.Expr {
         if (!target.taggedInts) return e
-        return ir.rtcall("langsupp::fromInt", [e])
+        return ir.rtcall("pxt::fromInt", [e])
     }
 
     function fromBool(e: ir.Expr): ir.Expr {
         if (!target.taggedInts) return e
-        return ir.rtcall("langsupp::fromBool", [e])
+        return ir.rtcall("pxt::fromBool", [e])
     }
 
     function fromFloat(e: ir.Expr): ir.Expr {
         if (!target.taggedInts) return e
-        return ir.rtcall("langsupp::fromFloat", [e])
+        return ir.rtcall("pxt::fromFloat", [e])
     }
 
     function fromDouble(e: ir.Expr): ir.Expr {
         if (!target.taggedInts) return e
-        return ir.rtcall("langsupp::fromDouble", [e])
+        return ir.rtcall("pxt::fromDouble", [e])
     }
 
     function getBitSize(decl: TypedDecl) {
@@ -2583,19 +2583,19 @@ ${lbl}: .short 0xffff
                 let isNumber = isNumberLike(a)
                 if (!f) {
                     throw U.userError("not enough args for " + name)
-                } else if (f == "_" || f == "T") {
+                } else if (f == "_" || f == "T" || f == "N") {
                     return r
                 } else if (f == "I") {
                     if (!isNumber)
                         U.userError("argsFmt=...I... but argument not a number in " + name)
-                    return ir.rtcallMask("langsupp::toInt", getMask([a]),
+                    return ir.rtcallMask("pxt::toInt", getMask([a]),
                         ir.CallingConvention.Plain, [r])
                 } else if (f == "B") {
                     return emitCondition(a, r)
                 } else if (f == "F" || f == "D") {
                     if (!isNumber)
                         U.userError("argsFmt=...F/D... but argument not a number in " + name)
-                    return ir.rtcallMask(f == "D" ? "langsupp::toDouble" : "langsupp::toFloat", getMask([a]),
+                    return ir.rtcallMask(f == "D" ? "pxt::toDouble" : "pxt::toFloat", getMask([a]),
                         ir.CallingConvention.Plain, [r])
                 } else {
                     throw U.oops("invalid format specifier: " + f)
