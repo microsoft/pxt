@@ -482,11 +482,11 @@ function bumpPxtCoreDepAsync(): Promise<void> {
     ["pxt-core", "pxt-common-packages"].forEach(knownPackage => {
         const modulePath = path.join("node_modules", knownPackage)
         if (fs.existsSync(path.join(modulePath, ".git"))) {
-            gitPull = nodeutil.spawnAsync({
+            gitPull = gitPull.then(() => nodeutil.spawnAsync({
                 cmd: "git",
                 args: ["pull"],
                 cwd: modulePath
-            })
+            }))
         }
 
         // not referenced
@@ -1476,6 +1476,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 }
 
 function updateTOC(cfg: pxt.TargetBundle) {
+    if (!cfg.appTheme) return; // no theme to update
+
     // Update Table of Contents from SUMMARY.md file
     const summaryMD = nodeutil.resolveMd(nodeutil.targetDir, "SUMMARY");
     if (!summaryMD) {

@@ -484,6 +484,12 @@ namespace pxt.docs {
             if (descM)
                 pubinfo["description"] = html2Quote(descM[1])
         }
+
+        // try getting a better custom image for twitter
+        let imgM = /<img class="ui image" src="(https:\/\/(.+?)\.(png|jpeg|jpg|gif))"[^>]*\/?>/i.exec(html);
+        if (imgM)
+            pubinfo["cardLogo"] = html2Quote(imgM[1]);
+
         pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}
