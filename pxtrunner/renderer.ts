@@ -292,9 +292,9 @@ namespace pxt.runner {
             const text = $el.text();
             const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
             if (mbtn) {
-                const lev = mbtn[1].length == 1 ? "primary" : "";
+                const lev = mbtn[1].length == 1 ? "docs inlinebutton" : "docs inlineblock";
                 const txt = mbtn[2];
-                $el.replaceWith($(`<button class="ui button ${lev}"/>`).text(U.rlf(txt)));
+                $el.replaceWith($(`<span class="${lev}"/>`).text(U.rlf(txt)));
                 return renderNextAsync();
             }
 
