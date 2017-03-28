@@ -686,13 +686,13 @@ namespace ts.pxtc {
     // cases that pass the TS checker. We only compare type
     // pairs that the TS checker compared. 
 
-    // we are checking that srcType is a subType of tgtType, so that
-    // an assignment of the form trg <- src is safe, where trgType is the
-    // type of trg and srcType is the type of src
-    function checkSubtype(trgType: Type, srcType: Type): [boolean, string] {
-        let srcId = (srcType as any).id
-        let trgId = (trgType as any).id
-        let key = trgId + "," + srcId
+    // we are checking that subType is a subtype of supType, so that
+    // an assignment of the form trg <- src is safe, where supType is the
+    // type of trg and subType is the type of src
+    function checkSubtype(supType: Type, subType: Type): [boolean, string] {
+        let subId = (subType as any).id
+        let supId = (supType as any).id
+        let key = supId + "," + subId
 
         if (cachedSubtypeQueries[key])
             return cachedSubtypeQueries[key];
@@ -703,70 +703,70 @@ namespace ts.pxtc {
         occursCheck.push(key)
 
         // outlaw all things that can't be cast to class/interface
-        if (isStructureType(trgType) && !castableToStructureType(srcType)) {
+        if (isStructureType(supType) && !castableToStructureType(subType)) {
             return insertSubtype(key,[false, "Cast to class/interface unsupported."])
         }
 
-        if (isClassType(trgType)) {
-           if (isClassType(srcType)) {
-                let tgtDecl = <ClassDeclaration>trgType.symbol.valueDeclaration
-                let srcDecl = <ClassDeclaration>srcType.symbol.valueDeclaration
-                // only allow upcast (src -> ... -> tgt) in inheritance chain
-                if (!inheritsFrom(srcDecl,tgtDecl)) {
-                    if (inheritsFrom(tgtDecl,srcDecl))
+        if (isClassType(supType)) {
+           if (isClassType(subType)) {
+                let supDecl = <ClassDeclaration>supType.symbol.valueDeclaration
+                let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
+                // only allow upcast (sub -> ... -> sup) in inheritance chain
+                if (!inheritsFrom(subDecl,supDecl)) {
+                    if (inheritsFrom(supDecl,subDecl))
                        return insertSubtype(key, [false, "Downcasts not supported."])
                     else
                        return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
                 }
            } else {
-                if (!(srcType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
+                if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
                     return insertSubtype(key,[false, "Cast to class unsupported."])
                 }
            }
-        } else if (isFunctionType(trgType)) {
+        } else if (isFunctionType(supType)) {
             // implement standard function subtyping (no bivariance)
-            let trgFun = isFunctionType(trgType)
-            if (isFunctionType(srcType)) {
-                let srcFun = isFunctionType(srcType)
-                U.assert(trgFun.parameters.length >= srcFun.parameters.length, "trg should have at least params of src")
+            let supFun = isFunctionType(supType)
+            if (isFunctionType(subType)) {
+                let subFun = isFunctionType(subType)
+                U.assert(supFun.parameters.length >= subFun.parameters.length, "sup should have at least params of sub")
                 let [ret,msg] = [true,""]
-                for (let i = 0; i < srcFun.parameters.length; i++) {
-                    let trgParamType = checker.getTypeAtLocation(trgFun.parameters[i].valueDeclaration)
-                    let srcParamType = checker.getTypeAtLocation(srcFun.parameters[i].valueDeclaration)
+                for (let i = 0; i < subFun.parameters.length; i++) {
+                    let supParamType = checker.getTypeAtLocation(supFun.parameters[i].valueDeclaration)
+                    let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
-                    let [retSub,msgSub] = checkSubtype(srcParamType, trgParamType)
+                    let [retSub,msgSub] = checkSubtype(subParamType, supParamType)
                     if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 }
                 // check return type (co-variant)
-                let trgRetType = trgFun.getReturnType()
-                let srcRetType = trgFun.getReturnType()
-                let [retSub,msgSub] = checkSubtype(trgRetType, srcRetType)
+                let supRetType = supFun.getReturnType()
+                let subRetType = supFun.getReturnType()
+                let [retSub,msgSub] = checkSubtype(supRetType, subRetType)
                 if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 return insertSubtype(key,[ret,msg])
             } else {
                 // TODO???
             }
-        } else if (isInterfaceType(trgType)) {
-            if (isStructureType(srcType)) {
-                let trgProps = checker.getPropertiesOfType(trgType)
-                let srcProps = checker.getPropertiesOfType(srcType)
+        } else if (isInterfaceType(supType)) {
+            if (isStructureType(subType)) {
+                let supProps = checker.getPropertiesOfType(supType)
+                let subProps = checker.getPropertiesOfType(subType)
                 let [ret,msg] = [true,""]
-                trgProps.forEach(trgProp => {
-                    let trgPropDecl = <PropertyDeclaration>trgProp.valueDeclaration
-                    let find = srcProps.filter(sp => sp.name == trgProp.name)
+                supProps.forEach(supProp => {
+                    let supPropDecl = <PropertyDeclaration>supProp.valueDeclaration
+                    let find = subProps.filter(sp => sp.name == supProp.name)
                     if (find.length == 1) {
-                        let srcPropDecl = <PropertyDeclaration>find[0].valueDeclaration
+                        let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                         // TODO: record the property on which we have a mismatch
-                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(trgPropDecl),checker.getTypeAtLocation(srcPropDecl))
+                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(supPropDecl),checker.getTypeAtLocation(subPropDecl))
                         if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                     } else if (find.length == 0) {
-                        if (!(trgProp.flags & SymbolFlags.Optional)) {
+                        if (!(supProp.flags & SymbolFlags.Optional)) {
                             // we have a cast to an interface with more properties (unsound)
-                            [ret,msg] = [false,"Property " + trgProp.name + " not present in " + srcType.getSymbol().name]
+                            [ret,msg] = [false,"Property " + supProp.name + " not present in " + subType.getSymbol().name]
                         } else {
                             // we will reach this case for something like
                             // let x: Foo = { a:42 }
-                            // where x has some optional allfields
+                            // where x has some optional properties, in addition to "a"
                         }
                     } else {
                         U.assert(false,"subsetCheck: unreachable (1)")
@@ -774,15 +774,15 @@ namespace ts.pxtc {
                 })
                 return insertSubtype(key,[ret,msg])
             }
-        } else if (isArrayType(trgType)) {
-            if (isArrayType(srcType)) {
-                let trgElemType = arrayElementType(trgType)
-                let srcElemType = arrayElementType(srcType)
-                return checkSubtype(trgElemType,srcElemType)
+        } else if (isArrayType(supType)) {
+            if (isArrayType(subType)) {
+                let supElemType = arrayElementType(supType)
+                let subElemType = arrayElementType(subType)
+                return checkSubtype(supElemType,subElemType)
             } else {
                 U.assert(false,"subsetCheck: unreachable (2)")
             }
-        } else if (lookupTypeParameter(trgType)) {
+        } else if (lookupTypeParameter(supType)) {
             // TODO
         }
         return insertSubtype(key,[true,""])
@@ -1904,6 +1904,7 @@ ${lbl}: .short 0xffff
             }
 
             // type check for assignment of actual to formal,
+            // TODO: checks for the rest needed
             for (let i = 0; i < goodToGoLength; i++) {
                 let p = parms[i]
                 // there may be more arguments than parameters
