@@ -1,10 +1,12 @@
-# Programming Experience Toolkit - pxt.io
+# Microsoft MakeCode
 
-* [Try it live!](https://pxt.io)
+* [Try it live!](https://makecode.com)
 
 [![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt)
 
-Programming Experience Toolkit (PXT) is a framework for creating special-purpose programming experiences for
+Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
+
+PXT is a framework for creating special-purpose programming experiences for
 beginners, especially focused on computer science education. PXT's underlying
 programming language is a subset of TypeScript (leaving out JavaScript dynamic
 features).
@@ -17,17 +19,22 @@ The main features of PXT are:
 * a command-line package manager
 
 More info:
-* [About PXT](https://www.pxt.io/about)
-* [Documentation](https://www.pxt.io/docs)
+* [About](https://makecode.com/about)
+* [Documentation](https://makecode.com/docs)
 
 Examples of Editors built with PXT:
 
 * https://pxt.microbit.org
-* https://adafruit.pxt.io
+* https://makecode.adafruit.com
+
+## Branches
+
+* ``master`` is the active development branch, currently ``v1.*`` builds
+* ``v0`` is the servicing branch for ``v0.*`` builds
 
 ## Running a target from localhost
 
-Please follow the [instructions here](https://www.pxt.io/cli).
+Please follow the [instructions here](https://makecode.com/cli).
 
 ## Linking a target to PXT
 
@@ -39,7 +46,7 @@ npm link ../pxt
 
 ## Build
 
-First, install (Node)[http://nodejs.org/]: minimum version 5.7. Then install the following:
+First, install [Node](https://nodejs.org/en/): minimum version 5.7. Then install the following:
 ```
 npm install -g jake
 npm install -g typings
@@ -67,7 +74,6 @@ of an app target (e.g. pxt-microbit). PXT will open the editor in your default w
 Alternatively, if you clone your pxt and pxt-microbit directories next to each
 other, you can serve your local pxt-microbit repo from within the pxt repo by
 running `jake serve`.
-
 
 ### Icons
 

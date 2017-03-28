@@ -27,6 +27,7 @@ export class File implements pxt.editor.IFile {
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     virtualSource: File;
+    filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
@@ -304,7 +305,10 @@ class Host
         return hostCache.forceSetAsync({
             id: id,
             val: val
-        }).then(() => { })
+        }).then(() => { }, e => {
+            pxt.tickEvent('cache.store.failed', { error: e.name });
+            pxt.log(`cache store failed for ${id}: ${e.name}`)
+        })
     }
 
     cacheGetAsync(id: string): Promise<string> {
@@ -367,7 +371,7 @@ export function mainEditorPkg() {
 
 export function genFileName(extension: string): string {
     const sanitizedName = mainEditorPkg().header.name.replace(/[\\\/.?*^:<>|"\x00-\x1F ]/g, "-")
-    const fn = `${pxt.appTarget.nickname || pxt.appTarget.forkof || pxt.appTarget.id}-${sanitizedName}${extension}`;
+    const fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${sanitizedName}${extension}`;
     return fn;
 }
 

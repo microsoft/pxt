@@ -5,28 +5,13 @@
 <link rel="stylesheet" href="/docfiles/style.css" />
 <link rel="stylesheet" href="/docfiles/vs.css" />
 <link rel="stylesheet" href="/docfiles/target.css" />
-<link rel="stylesheet" href="/docfiles/fork.css" />
 
 <script src="/doccdn/jquery.js"></script>
-<script src="/doccdn/semantic.js"></script>
-<script src="/doccdn/lzma/lzma_worker-min.js"></script>
 
 <script src="/--embed" type="text/javascript"></script>
 <script src="/docfiles/docs.js" type="text/javascript"></script>
 <script src="/docfiles/target.js" type="text/javascript"></script>
-<script src="/docfiles/fork.js" type="text/javascript"></script>
 
 <style>
     @targetstyle@
 </style>
-
-
-<script>
-    $(document).ready(function() {
-        // patch youtube in semantic
-        if ($ && $.fn && $.fn.embed && $.fn.embed.settings && $.fn.embed.settings.sources && $.fn.embed.settings.sources.youtube) {
-            $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
-        }
-        $('.ui.embed').embed();        
-    })
-</script>

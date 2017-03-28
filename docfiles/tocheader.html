@@ -1,0 +1,41 @@
+<div class="ui vertical accent inverted sidebar menu left hideprint">
+    <a href="/" class="header item">
+        @targetlogo@
+        &nbsp; &nbsp;
+        Documentation
+    </a>
+    <div class="item">
+        <form id="tocsearch1" method="get" action="https://www.bing.com/search" onsubmit="searchSubmit(this)">
+            <div class="ui small fluid action input">
+                <input type="hidden" name="q1" value="site:@homeurl@" />
+                <input type="search" name="q" placeholder="Search...">
+                <button type="submit" class="ui icon button">
+                    <i class="search icon"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+    <!-- TOC Menu -->
+    @TOC@
+    <a href="/" class="header item">
+        Published by Microsoft
+    </a>
+</div>
+
+<div class="ui fixed accent borderless inverted main menu hideprint">
+  <div class="ui container">
+    <a id="togglesidebar" class="launch icon item">
+      <i class="content icon"></i>
+    </a>
+
+    <div class="item">
+        @breadcrumb@
+    </div>
+    
+    <div class="right menu">
+        <a href="/" class="header item">
+            @targetlogo@
+        </a>
+    </div>
+  </div>
+</div>

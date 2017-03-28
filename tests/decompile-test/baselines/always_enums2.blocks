@@ -1,0 +1,10 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.enumArgument&#40;testNamespace.numberArgumentOutput&#40;0&#41;&#41;&#59;" />
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

@@ -93,6 +93,16 @@ declare namespace Blockly {
         constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]));
     }
 
+    class FieldNumber extends FieldTextInput {
+        constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: any);
+    }
+    class FieldNote extends FieldNumber{
+        constructor(note: string, colour: string | number, opt_validator?: any); 
+    }
+    class FieldGridPicker extends FieldDropdown {
+        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> ); 
+    }
+    
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;
 
@@ -361,6 +371,10 @@ declare namespace Blockly {
         rtl?: boolean;
     }
 
+    interface ExtendedOptions extends Options {
+        toolboxType?: string;
+    }
+
     // tslint:disable-next-line
     interface callbackHandler { }
 
@@ -446,4 +460,8 @@ declare namespace Blockly {
     }
 
     var Tooltip: any;
+
+    class PXTUtils {
+        static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
+    }
 }

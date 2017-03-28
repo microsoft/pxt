@@ -5,7 +5,7 @@
 @primaryColor: @pink;
 @secondaryColor: @grey;
 
-@red:#E81123;
+@red:#A80000;
 @orange:#D83B01;
 @yellow:#FFB900;
 @green:#107C10;
@@ -42,6 +42,7 @@
 */
 
 @tallEditorBreakpoint: 44rem;
+@thinEditorBreakpoint: 24rem;
 
 /*******************************
      PXT Variables
@@ -53,11 +54,13 @@
    Menu
 --------------------*/
 
+@mainMenuBackground: @white;
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
 
-@mainMenuHeight: 5.0rem;
+@mainMenuHeight: 4.5rem;
 @mobileMenuHeight: 3.5rem;
+@sandboxMobileMenuHeight: 2.5rem;
 
 @mainMenuBlocksJsToggleColor: @primaryColor;
 

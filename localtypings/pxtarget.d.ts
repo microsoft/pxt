@@ -17,8 +17,7 @@ declare namespace pxt {
 
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
-        forkof?: string; // id of a target we're based on
-        nickname?: string; // friendly id used when generating files, folders, etc... forkof or id is used instead if missing
+        nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
         name: string;
         description?: string;
         corepkg: string;
@@ -79,13 +78,14 @@ declare namespace pxt {
         packages?: boolean;
         publishing?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
+        importing?: boolean; // import url dialog
         embedding?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages
     }
 
     interface AppSimulator {
-        autoRun?: boolean;        
+        autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
         hideFullscreen?: boolean;
@@ -95,12 +95,14 @@ declare namespace pxt {
         parts?: boolean; // parts enabled?
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
+        headless?: boolean; // whether simulator should still run while collapsed
     }
 
     interface TargetCompileService {
         yottaTarget?: string; // bbc-microbit-classic-gcc
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
+        yottaConfig?: any; // additional config
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         platformioIni?: string[];
         gittag: string;
@@ -133,11 +135,15 @@ declare namespace pxt {
         organizationWideLogo?: string;
         homeUrl?: string;
         embedUrl?: string;
+        legacyDomain?: string;
         docMenu?: DocMenuEntry[];
+        TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
         sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
+        feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
+        driveDisplayName?: string; // name of the drive as it shows in the explorer
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
@@ -151,32 +157,46 @@ declare namespace pxt {
         usbDocs?: string;
         exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
-        layoutOptions?: LayoutOptions;
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         projectGallery?: string;
         exampleGallery?: string;
         crowdinProject?: string;
+        crowdinBranch?: string; // optional branch specification
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
-    }
-
-    interface LayoutOptions {
+        blocksOnly?: boolean; // blocks only workspace
+        hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
+        hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
     }
 
     interface DocMenuEntry {
         name: string;
-        // needs to have one of `path` or `subitems` 
+        // needs to have one of `path` or `subitems`
         path?: string;
+        tutorial?: boolean;
         subitems?: DocMenuEntry[];
+    }
+
+    interface TOCMenuEntry {
+        name: string;
+        path?: string;
+        subitems?: TOCMenuEntry[];
+
+        prevName?: string;
+        prevPath?: string;
+
+        nextName?: string;
+        nextPath?: string;
     }
 
     interface TargetBundle extends AppTarget {
@@ -203,6 +223,7 @@ declare namespace ts.pxtc {
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
         flashChecksumAddr?: number;
+        onStartText?: boolean;
     }
 
     interface CompileOptions {
@@ -224,7 +245,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type: string;
+        type : "api" | "blockId" | "missingPackage" | "package";
         map?: pxt.Map<string>;
     }
 

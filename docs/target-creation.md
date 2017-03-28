@@ -3,6 +3,12 @@
 PXT is built to allow targeting different coding environment, called **targets**. 
 In this page, we'll go through the steps necessary to get your target with your own blocks and runtime.
 
+Examples of targets are:
+
+* https://pxt.microbit.org
+* https://pxt.adafruit.com
+* http://microsoft.github.io/pxt-sample/
+
 Since this is a rather technical topic, we assume that the reader is familiar with Node.JS, NPM
 and JavaScript and/or C++.
 
@@ -89,4 +95,31 @@ simulator files.
 Read more about [how to annotate your APIS](/defining-blocks)
 to expose them as blocks in PXT.
 
+## Path rewriting
 
+When uploading to PXT cloud URLs of various files are rewritten to ones pointing to the CDN.
+There are three kinds of URLs on the CDN:
+
+* `/blob/<blob_hash>/some/path/filename.ext` - where the path and file name can be arbitrary
+* `/commit/<commit_hash>/path/in/that/commit/filename.ext` - where the path actually comes from the commit
+* `/tree/<tree_hash>/path/in/that/tree/filename.ext` - where the path actually comes from the tree
+
+Whenever possible, `/blob/` URLs should be used, since they only change when the file changes.
+This allows for faster app updates.
+
+For an example, compare https://pxt.microbit.org/---manifest
+and https://github.com/Microsoft/pxt/blob/master/webapp/public/release.manifest
+
+Generally, PXT will rewrite URLs starting with `/cdn/` to `/commit/...` and ones starting
+with `/blb/` to `/blob/...`. This happens in manifest and HTML files, as well as some JavaScript
+files (web worker sources and `embed.js`). Part of that rewriting happens client-side when uploading
+(strings like `@commitCdnUrl@` and `@blobCdnUrl@` are introduced), and part happens in the cloud.
+
+Currently, in simulator files only, all of `/cdn/`, `/sim/` and `/blb/` are rewritten
+to `/blob/...`. Going forward however, simulator files should use `/blb/` explicitly
+to make the intent clear.
+
+The main reason to use `/cdn/` instead of `/blb/` is when resources require relative paths.
+This is for example the case for Blockly media files.
+
+The `/tree/...` URLs are not yet supported in rewriting.

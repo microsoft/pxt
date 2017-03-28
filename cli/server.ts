@@ -19,31 +19,12 @@ const userProjectsDirName = "projects";
 
 let root = ""
 let dirs = [""]
-let simdirs = [""]
 let docfilesdirs = [""]
 let userProjectsDir = path.join(process.cwd(), userProjectsDirName);
 let docsDir = ""
 let packagedDir = ""
 let localHexDir = path.join("built", "hexcache");
 let electronHandlers: pxt.Map<ElectronHandler> = {};
-
-export function forkPref() {
-    if (pxt.appTarget.forkof)
-        return "node_modules/pxt-" + pxt.appTarget.forkof + "/"
-    else
-        return ""
-}
-function forkDirs(lst: string[]) {
-    if (pxt.appTarget.id == "core") {
-        lst = lst.map(s => s.replace(/node_modules\/pxt-core\//, ""))
-    }
-    let res = lst.map(p => path.join(root, p))
-    let fp = forkPref()
-    if (fp) {
-        U.pushRange(res, lst.map(p => path.join(root, fp + p)))
-    }
-    return res
-}
 
 function setupDocfilesdirs() {
     docfilesdirs = [
@@ -58,10 +39,11 @@ function setupRootDir() {
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
     dirs = [
         "built/web",
+        path.join(nodeutil.targetDir, "built"),
+        path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public")
     ]
-    simdirs = [path.join(nodeutil.targetDir, "built"), path.join(nodeutil.targetDir, "sim/public")]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
     setupDocfilesdirs()
@@ -325,34 +307,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        const fmd = path.join(docsDir, innerPath.slice(pxt.appTarget.id.length + 1) + ".md");
-        return existsAsync(fmd)
-            .then(e => {
-                if (!e) throw throwError(404);
-                return readFileAsync(fmd).then(buffer => buffer.toString("utf8"));
-            });
+        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
     }
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
-}
-
-function directoryExistsSync(p: string): boolean {
-    try {
-        let stats = fs.lstatSync(p);
-        return stats && stats.isDirectory();
-    }
-    catch (e) {
-        return false;
-    }
-}
-
-function fileExistsSync(p: string): boolean {
-    try {
-        let stats = fs.lstatSync(p);
-        return stats && stats.isFile();
-    }
-    catch (e) {
-        return false;
-    }
 }
 
 export function lookupDocFile(name: string) {
@@ -650,81 +607,6 @@ function initSerialMonitor() {
     })
 }
 
-function openUrl(startUrl: string, browser: string) {
-    if (!/^[a-z0-9A-Z#=\.\-\\\/%:\?_&]+$/.test(startUrl)) {
-        console.error("invalid URL to open: " + startUrl)
-        return
-    }
-    let cmds: pxt.Map<string> = {
-        darwin: "open",
-        win32: "start",
-        linux: "xdg-open"
-    }
-    if (/^win/.test(os.platform()) && !/^[a-z0-9]+:\/\//i.test(startUrl))
-        startUrl = startUrl.replace('/', '\\');
-    else
-        startUrl = startUrl.replace('\\', '/');
-
-    console.log(`opening ${startUrl}`)
-
-    if (browser) {
-        child_process.spawn(getBrowserLocation(browser), [startUrl]);
-    }
-    else {
-        child_process.exec(`${cmds[process.platform]} ${startUrl}`);
-    }
-}
-
-function getBrowserLocation(browser: string) {
-    let browserPath: string;
-
-    const normalizedBrowser = browser.toLowerCase();
-
-    if (normalizedBrowser === "chrome") {
-        switch (os.platform()) {
-            case "win32":
-            case "win64":
-                browserPath = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe";
-                break;
-            case "darwin":
-                browserPath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-                break;
-            case "linux":
-                browserPath = "/opt/google/chrome/chrome";
-                break;
-            default:
-                break;
-        }
-    }
-    else if (normalizedBrowser === "firefox") {
-        browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
-        switch (os.platform()) {
-            case "win32":
-            case "win64":
-                browserPath = "C:/Program Files (x86)/Mozilla Firefox/firefox.exe";
-                break;
-            case "darwin":
-                browserPath = "/Applications/Firefox.app";
-                break;
-            case "linux":
-            default:
-                break;
-        }
-    }
-    else if (normalizedBrowser === "ie") {
-        browserPath = "C:/Program Files/Internet Explorer/iexplore.exe";
-    }
-    else if (normalizedBrowser === "safari") {
-        browserPath = "/Applications/Safari.app/Contents/MacOS/Safari";
-    }
-
-    if (browserPath && fs.existsSync(browserPath)) {
-        return browserPath;
-    }
-
-    return browser;
-}
-
 export interface ElectronMessage {
     type: string;
     args?: any
@@ -756,8 +638,13 @@ export function sendElectronMessage(message: ElectronMessage) {
 function streamPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: pxt.streams.JsonStream) => {
-            let templ = expandDocFileTemplate("stream.html")
-            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, info as any, null, "/" + id)
+            let html = pxt.docs.renderMarkdown({
+                template: expandDocFileTemplate("stream.html"),
+                markdown: "",
+                theme: pxt.appTarget.appTheme,
+                pubinfo: info as any,
+                filepath: "/" + id
+            })
             return html
         })
 }
@@ -766,12 +653,22 @@ function streamPageTestAsync(id: string) {
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
-            let vars: pxt.Map<string> = info as any
-            let templ = expandDocFileTemplate("script.html")
-            let html = pxt.docs.renderMarkdown(templ, "", pxt.appTarget.appTheme, vars, null, "/" + id)
+            let html = pxt.docs.renderMarkdown({
+                template: expandDocFileTemplate("script.html"),
+                markdown: "",
+                theme: pxt.appTarget.appTheme,
+                pubinfo: info as any,
+                filepath: "/" + id
+            })
             return html
         })
 
+}
+
+function readMd(pathname: string): string {
+    const content = nodeutil.resolveMd(root, pathname);
+    if (content) return content;
+    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).map(s => "* ``" + s + "``\n").join("")
 }
 
 let serveOptions: ServeOptions;
@@ -794,12 +691,17 @@ export function serveAsync(options: ServeOptions) {
         }
 
         const sendJson = (v: any) => {
-            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
-            res.end(JSON.stringify(v))
+            if (typeof v == "string") {
+                res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf8' })
+                res.end(v)
+            } else {
+                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf8' })
+                res.end(JSON.stringify(v))
+            }
         }
 
-        const sendHtml = (s: string) => {
-            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf8' })
+        const sendHtml = (s: string, code = 200) => {
+            res.writeHead(code, { 'Content-Type': 'text/html; charset=utf8' })
             res.end(s)
         }
 
@@ -865,7 +767,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (options.packaged) {
             let filename = path.resolve(path.join(packagedDir, pathname))
-            if (fileExistsSync(filename)) {
+            if (nodeutil.fileExistsSync(filename)) {
                 return sendFile(filename)
             } else {
                 return error(404, "Packaged file not found")
@@ -907,72 +809,60 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (!/\.js\.map$/.test(pathname) || pathname == "/cdn/target.js") {
-            let dd = dirs
-            if (pathname == "/cdn/target.js") {
-                pathname = pathname.slice(4)
-                dd = simdirs
-            } else if (U.startsWith(pathname, "/sim/")) {
-                pathname = pathname.slice(4)
-                dd = simdirs
-            } else if (U.startsWith(pathname, "/parts/")) {
-                dd = simdirs
-            } else if (U.startsWith(pathname, "/cdn/")) {
-                pathname = pathname.slice(4)
-                dd = dirs
-            } else if (U.startsWith(pathname, "/doccdn/")) {
-                pathname = pathname.slice(7)
-                dd = dirs
-            } else if (U.startsWith(pathname, "/docfiles/")) {
-                pathname = pathname.slice(10)
-                dd = docfilesdirs
-            }
-            for (let dir of dd) {
-                let filename = path.resolve(path.join(dir, pathname))
-                if (fileExistsSync(filename)) {
-                    sendFile(filename)
-                    return;
-                }
+        if (/\.js\.map$/.test(pathname)) {
+            error(404, "map files disabled")
+        }
+
+        let dd = dirs
+        let mm = /^\/(cdn|parts|sim|doccdn|blb)(\/.*)/.exec(pathname)
+        if (mm) {
+            pathname = mm[2]
+        } else if (U.startsWith(pathname, "/docfiles/")) {
+            pathname = pathname.slice(10)
+            dd = docfilesdirs
+        }
+        for (let dir of dd) {
+            let filename = path.resolve(path.join(dir, pathname))
+            if (nodeutil.fileExistsSync(filename)) {
+                sendFile(filename)
+                return;
             }
         }
 
         let webFile = path.join(docsDir, pathname)
-        if (!fileExistsSync(webFile)) {
-            if (fileExistsSync(webFile + ".html")) {
+        if (!nodeutil.fileExistsSync(webFile)) {
+            if (nodeutil.fileExistsSync(webFile + ".html")) {
                 webFile += ".html"
                 pathname += ".html"
-            } else if (fileExistsSync(webFile + ".md")) {
-                webFile += ".md"
-                pathname += ".md"
+            } else {
+                webFile = ""
             }
         }
 
-        if (fileExistsSync(webFile)) {
-            if (/\.md$/.test(webFile)) {
-                let bc = elts.map((e, i) => {
-                    return {
-                        href: "/" + elts.slice(0, i + 1).join("/"),
-                        name: e
-                    }
-                })
-                let templ = expandDocFileTemplate("docs.html")
-                let html = pxt.docs.renderMarkdown(templ, fs.readFileSync(webFile, "utf8"), pxt.appTarget.appTheme, null, bc, pathname)
-                sendHtml(html)
-            } else if (/\.html$/.test(webFile)) {
+        if (webFile) {
+            if (/\.html$/.test(webFile)) {
                 let html = expandHtml(fs.readFileSync(webFile, "utf8"))
                 sendHtml(html)
             } else {
                 sendFile(webFile)
             }
-            return
+        } else {
+            let md = readMd(pathname)
+            let html = pxt.docs.renderMarkdown({
+                template: expandDocFileTemplate("docs.html"),
+                markdown: md,
+                theme: pxt.appTarget.appTheme,
+                filepath: pathname
+            })
+            sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
         }
 
-        return error(404, "Not found :(\n")
+        return
     });
 
     // if user has a server.js file, require it
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
-    if (fileExistsSync(serverjs)) {
+    if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
         require(serverjs);
     }
@@ -993,7 +883,7 @@ export function serveAsync(options: ServeOptions) {
             console.log(`---------------------------------------------`);
 
             if (options.autoStart) {
-                openUrl(start, options.browser);
+                nodeutil.openUrl(start, options.browser);
             }
         });
 }

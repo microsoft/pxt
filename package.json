@@ -1,19 +1,23 @@
 {
   "name": "pxt-core",
-  "version": "0.11.36",
-  "description": "Programming Experience Toolkit provides Blocks / JavaScript tools and editors",
+  "version": "1.1.18",
+  "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
     "JavaScript",
     "Blockly",
     "education",
-    "microbit"
+    "microbit",
+    "Adafruit",
+    "pxt",
+    "Microsoft",
+    "Microsoft MakeCode"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Microsoft/pxt.git"
   },
-  "author": "",
+  "author": "Microsoft Corporation",
   "license": "MIT",
   "homepage": "https://github.com/Microsoft/pxt#readme",
   "files": [
@@ -35,6 +39,7 @@
     "built/pxtsim.d.ts",
     "built/pxtblocks.d.ts",
     "built/pxtrunner.d.ts",
+    "built/pxteditor.d.ts",
     "built/typescriptServices.d.ts",
     "built/nodeutil.js",
     "built/server.js",
@@ -66,7 +71,8 @@
     "lzma": "^2.3.2",
     "marked": "^0.3.5",
     "fuse.js": "2.6.1",
-    "rimraf": "2.5.4"
+    "rimraf": "2.5.4",
+    "request": "^2.79.0"
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",
@@ -75,7 +81,7 @@
   },
   "devDependencies": {
     "monaco-editor": "0.8.1",
-    "pxt-monaco-typescript": "2.1.1",
+    "pxt-monaco-typescript": "2.1.4",
     "browserify": "^13.0.0",
     "jake": "^8.0.12",
     "jquery": "^2.2.0",

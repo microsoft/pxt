@@ -13,6 +13,7 @@ type IProjectView = pxt.editor.IProjectView;
 export enum ShareMode {
     Screenshot,
     Url,
+    Editor,
     Simulator,
     Cli
 }
@@ -56,7 +57,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     }
 
     renderCore() {
-        if (!this.state.visible) return null;
+        const { visible } = this.state;
 
         const cloud = pxt.appTarget.cloud || {};
         const embedding = !!cloud.embedding;
@@ -83,8 +84,12 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 let editUrl = `${rootUrl}#pub:${currentPubId}`;
                 switch (mode) {
                     case ShareMode.Cli:
-                        embed = `pxt extract ${header.pubId}`;
+                        embed = `pxt target ${pxt.appTarget.id}
+pxt extract ${url}`;
                         help = lf("Run this command from a shell.");
+                        break;
+                    case ShareMode.Editor:
+                        embed = pxt.docs.embedUrl(rootUrl, "pub", header.pubId);
                         break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
@@ -119,7 +124,10 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                                 file = main.lookupFile("this/" + file.getVirtualFileName()) || file
                             if (pkg.File.tsFileNameRx.test(file.getName())) {
                                 let fileContents = file.content;
-                                let mdContent = pxt.docs.renderMarkdown(`@body@`, `\`\`\`javascript\n${fileContents}\n\`\`\``);
+                                let mdContent = pxt.docs.renderMarkdown({
+                                    template: `@body@`,
+                                    markdown: `\`\`\`javascript\n${fileContents}\n\`\`\``
+                                });
                                 embed = `<a style="text-decoration: none;" href="${editUrl}">${mdContent}</a>`;
                             }
                         }
@@ -136,52 +144,49 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             this.forceUpdate();
         }
 
-        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") }];
-        formats.push({ mode: ShareMode.Simulator, label: lf("Simulator") });
-        formats.push({ mode: ShareMode.Cli, label: lf("Command line") });
+        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") },
+            { mode: ShareMode.Editor, label: lf("Editor") },
+            { mode: ShareMode.Simulator, label: lf("Simulator") },
+            { mode: ShareMode.Cli, label: lf("Command line") }
+        ];
 
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing;
 
-        return <sui.Modal visible={this.state.visible} addClass="searchdialog" header={lf("Share Project") }
-            onHide={() => this.setState({ visible: false }) }
-            action={action}
-            actionClick={publish}
-            actionLoading={actionLoading}
-            hideClose={true}
-            >
-            <div className={`ui form`}>
-                { action ?
-                    <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
-                        lf("You acknowledge having consent to publish this project.") }</p>
-                    : undefined }
-                { url && ready ? <div>
-                    <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
-                    <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} />
-                </div>
-                    : undefined }
-                { ready ? <div>
-                    <div className="ui divider"></div>
-                    <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
-                    { advancedMenu ?
-                        <div className="ui form">
-                            <div className="inline fields">
+        return (
+            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
+                onClose={() => this.setState({ visible: false }) } dimmer={true}
+                action={action}
+                actionClick={publish}
+                actionLoading={actionLoading}
+                closeIcon={true}
+                closeOnDimmerClick closeOnDocumentClick
+                >
+                <div className={`ui form`}>
+                    { action ?
+                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                            lf("You acknowledge having consent to publish this project.") }</p>
+                        : undefined }
+                    { url && ready ? <div>
+                        <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
+                        <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} />
+                    </div>
+                        : undefined }
+                    { ready ? <div>
+                        <div className="ui divider"></div>
+                        <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                        { advancedMenu ?
+                            <sui.Menu pointing secondary>
                                 {formats.map(f =>
-                                    <div key={f.mode.toString() } className="field">
-                                        <div className="ui radio checkbox">
-                                            <input type="radio" checked={mode == f.mode} onChange={() => this.setState({ mode: f.mode }) }/>
-                                            <label>{f.label}</label>
-                                        </div>
-                                    </div>
-                                ) }
-                            </div>
-                        </div> : undefined }
-                    { advancedMenu ?
-                        <sui.Field>
-                            <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
-                        </sui.Field> : null }
-                </div> : undefined }
-            </div>
-        </sui.Modal>
+                                    <sui.MenuItem key={`tab${f.label}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
+                            </sui.Menu> : undefined }
+                        { advancedMenu ?
+                            <sui.Field>
+                                <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
+                            </sui.Field> : null }
+                    </div> : undefined }
+                </div>
+            </sui.Modal>
+        )
     }
 }

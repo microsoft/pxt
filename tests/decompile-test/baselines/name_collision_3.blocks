@@ -10,10 +10,12 @@
 </value>
 <next>
 <block type="controls_if">
-<mutation elseif="0" else="0"></mutation>
+<mutation elseif="0" else="0" />
 <value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
 <block type="logic_negate">
 <value name="BOOL">
 <shadow type="logic_boolean">
@@ -36,15 +38,11 @@
 <block type="variables_set">
 <field name="VAR">b</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">b</field>
 </block>
@@ -64,15 +62,11 @@
 <block type="variables_set">
 <field name="VAR">a</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">a</field>
 </block>
@@ -96,15 +90,11 @@
 <block type="variables_set">
 <field name="VAR">c</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
 <field name="OP">ADD</field>
 <value name="A">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
 <field name="VAR">c</field>
 </block>

@@ -36,18 +36,27 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             })
         },
         removeElement: (el, completeHandler) => {
-            ($(el) as any).transition({
-                animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
-                duration: '0.5s',
-                onComplete: function () {
+            if (pxt.appTarget.simulator.headless) {
+                $(el).addClass('simHeadless');
+                completeHandler();
+            }
+            else {
+                ($(el) as any).transition({
+                    animation: pxt.appTarget.appTheme.simAnimationExit || 'fly right out',
+                    duration: '0.5s',
+                    onComplete: function () {
+                        if (completeHandler) completeHandler();
+                        $(el).remove();
+                    }
+                }).error(() => {
+                    // Problem with animation, still complete
                     if (completeHandler) completeHandler();
                     $(el).remove();
-                }
-            }).error(() => {
-                // Problem with animation, still complete
-                if (completeHandler) completeHandler();
-                $(el).remove();
-            })
+                })
+            }
+        },
+        unhideElement: (el) => {
+            $(el).removeClass("simHeadless");
         },
         onDebuggerBreakpoint: function (brk) {
             updateDebuggerButtons(brk)
@@ -150,8 +159,21 @@ export function stop(unload?: boolean) {
 }
 
 export function hide(completeHandler?: () => void) {
-    pxsim.U.addClass(driver.container, "sepia");
+    if (!pxt.appTarget.simulator.headless) {
+        pxsim.U.addClass(driver.container, "sepia");
+    }
     driver.hide(completeHandler);
+    $debugger.empty();
+}
+
+export function unhide() {
+    driver.unhide();
+}
+
+export function proxy(message: pxsim.SimulatorCustomMessage) {
+    if (!driver) return;
+
+    driver.postMessage(message);
     $debugger.empty();
 }
 

@@ -141,4 +141,38 @@ declare namespace basic {
     //% block="show leds" icon="\uf00a"
     //% parts="ledmatrix" interval.defl=400 shim=basic::showLeds
     export function showLeds(leds: string, interval?: number): void;
+
+    /**
+     * Scroll a number on the screen. If the number fits on the screen (i.e. is a single digit), do not scroll.
+     * @param interval speed of scroll; eg: 150, 100, 200, -100
+     */
+    //% help=basic/show-number
+    //% weight=96
+    //% blockId=device_show_number block="show|number %number" blockGap=8
+    //% async
+    //% parts="ledmatrix" interval.defl=150 shim=basic::showNumber
+    export function showNumber(value: number, interval?: number): void;
+}
+
+enum Melodies {
+    //% block="dadadum" blockIdentity=music.builtInMelody
+    Dadadadum = 0,
+    //% block="blues" blockIdentity=music.builtInMelody
+    Blues,
+}
+
+ /**
+ * Generation of music tones through pin ``P0``.
+ */
+//% color=#D83B01 weight=98 icon="\uf025"
+namespace music {
+    /**
+     * Gets the melody array of a built-in melody.
+     * @param name the note name, eg: Note.C
+     */
+    //% weight=50 help=music/builtin-melody
+    //% blockId=device_builtin_melody block="%melody"
+    //% blockHidden=true
+    export function builtInMelody(melody: Melodies): number { return 0 };
+
 }

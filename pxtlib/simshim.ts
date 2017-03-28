@@ -142,7 +142,7 @@ namespace pxt {
             } else if (asyncName) {
                 U.userError(`${currNs}::${fnname} doesn't return a promise`)
             }
-            let args = fn.parameters.map(p => p.name.getText() + ": " + mapType(typeOf(p)))
+            let args = fn.parameters.map(p => `${p.name.getText()}${p.questionToken ? "?" : ""}: ${mapType(typeOf(p))}`)
             let localname = fnname.replace(/Async$/, "")
             let defkw = isMethod ? "public" : "function"
 

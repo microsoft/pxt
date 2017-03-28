@@ -1,4 +1,8 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_optional_argument_2">
+<statement name="HANDLER">
+</statement>
+</block>
 <block type="pxt-on-start">
 <statement name="HANDLER">
 <block type="test_single_default_argument">
@@ -22,10 +26,6 @@
 </next>
 <comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
-</statement>
-</block>
-<block type="test_optional_argument_2">
-<statement name="HANDLER">
 </statement>
 </block>
 </xml>

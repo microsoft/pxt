@@ -52,6 +52,7 @@ namespace pxsim {
     export interface StackFrame {
         fn: LabelFn;
         pc: number;
+        overwrittenPC?: boolean;
         depth: number;
         r0?: any;
         parent: StackFrame;
@@ -74,6 +75,7 @@ namespace pxsim {
     export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
+    const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
         public runOptions: SimulatorRunMessage;
 
@@ -89,21 +91,15 @@ namespace pxsim {
         public writeSerial(s: string) {
             if (!s) return
 
-            for (let i = 0; i < s.length; ++i) {
-                let c = s[i];
-                switch (c) {
-                    case '\n':
-                        Runtime.postMessage(<SimulatorSerialMessage>{
-                            type: 'serial',
-                            data: this.serialOutBuffer + '\n',
-                            id: runtime.id,
-                            sim: true
-                        })
-                        this.serialOutBuffer = ''
-                        break;
-                    case '\r': continue;
-                    default: this.serialOutBuffer += c;
-                }
+            this.serialOutBuffer += s;
+            if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
+                Runtime.postMessage(<SimulatorSerialMessage>{
+                    type: 'serial',
+                    data: this.serialOutBuffer,
+                    id: runtime.id,
+                    sim: true
+                })
+                this.serialOutBuffer = '';
             }
         }
     }
@@ -215,6 +211,7 @@ namespace pxsim {
 
     // overriden at loadtime by specific implementation
     export let initCurrentRuntime: () => void = undefined;
+    export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
     export class Runtime {
         public board: BaseBoard;
@@ -432,8 +429,11 @@ namespace pxsim {
                     runtime = __this
                     while (!!p) {
                         __this.currFrame = p;
+                        __this.currFrame.overwrittenPC = false;
                         p = p.fn(p)
                         __this.maybeUpdateDisplay()
+                        if (__this.currFrame.overwrittenPC)
+                            p = __this.currFrame
                     }
                 } catch (e) {
                     if (__this.errorHandler)
@@ -550,7 +550,12 @@ namespace pxsim {
             this.setupTop = setupTop
             this.handleDebuggerMsg = handleDebuggerMsg
             this.entry = entryPoint
-            this.overwriteResume = (retPC: number) => { currResume = null; setupResume(this.currFrame, retPC) }
+            this.overwriteResume = (retPC: number) => {
+                currResume = null;
+                if (retPC >= 0)
+                    this.currFrame.pc = retPC;
+                this.currFrame.overwrittenPC = true;
+            }
             runtime = this;
 
             initCurrentRuntime();

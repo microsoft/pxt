@@ -43,9 +43,8 @@ and use the CLI to build and deploy it.
 * start with `pxt install`, which will install all required PXT packages
 * use `pxt deploy` (or just `pxt`) to build and deploy the package to the device
 
-You can edit the package using [VSCode](https://code.visualstudio.com/).
-
-You can also [publish your own packages on GitHub](/packages).
+You can edit the package using [VSCode](https://code.visualstudio.com/)
+and publish it on GitHub.
 
 ### Creating a new project
 
@@ -74,6 +73,12 @@ where ``EMBEDURL`` is the published project URL.
 
 ## Commands
 
+Run ``pxt help`` for the list of all commands. The following list of links contains more info on specific commands.
+
 * [build](/cli/build), builds the current project
 * [deploy](/cli/deploy), builds and deploys the current project
 * [login](/cli/login), store a GitHub token
+* [bump](/cli/bump), increment the version number
+* [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
+* [staticpkg](/cli/staticpkg), compiles editor into flat file system
+* [cherrypick](/cli/cherrypick), recursive cherry picking

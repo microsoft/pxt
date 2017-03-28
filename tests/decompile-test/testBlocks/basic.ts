@@ -109,6 +109,10 @@ namespace testNamespace {
         //% blockId=test_class_method
         //% block="Some method|on %testClass|with number %x"
         public testMethod(a: number) {}
+
+        //% blockId=test_class_method2
+        //% block="Some method|on %testClass|with enum %a"
+        public testMethodWithEnum(a: TestEnum) {}
     }
 
     /**
