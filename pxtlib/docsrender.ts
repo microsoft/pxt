@@ -228,6 +228,9 @@ namespace pxt.docs {
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
 
+        if (theme.appStoreID)
+            params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
+
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
@@ -299,7 +302,8 @@ namespace pxt.docs {
             "breadcrumb",
             "targetlogo",
             "github",
-            "JSON"
+            "JSON",
+            "appstoremeta"
         ])
     }
 
@@ -342,9 +346,6 @@ namespace pxt.docs {
         if (hasPubInfo) {
             pubinfo["JSON"] = JSON.stringify(pubinfo, null, 4).replace(/</g, "\\u003c")
         }
-
-        if (opts.theme.appStoreID)
-            pubinfo["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${html2Quote(opts.theme.appStoreID)}"/>`
 
         let template = opts.template
         template = template
