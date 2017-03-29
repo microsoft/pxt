@@ -566,8 +566,6 @@ namespace ts.pxtc {
     function lookupTypeParameter(t: Type) {
         if (!(t.flags & TypeFlags.TypeParameter)) return null
         for (let i = typeBindings.length - 1; i >= 0; --i)
-            // TODO: I am not sure this lookup is correct for type parameters
-            // TODO: it appears TypeScript doesn't guarantee Type uniqueness for them?
             if (typeBindings[i].tp == t) return typeBindings[i]
         return null
     }
@@ -826,7 +824,7 @@ namespace ts.pxtc {
     function getTypeBindings(t: Type) {
         let g = genericRoot(t)
         if (!g) return []
-        return getTypeBindingsCore(g.typeParameters, (t as TypeReference).typeArguments)
+        return getTypeBindingsCore(g.typeParameters, (t as ).typeArguments)
     }
 
     function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
@@ -1976,8 +1974,11 @@ ${lbl}: .short 0xffff
             let bindings: TypeBinding[] = []
 
             if (sig) {
+                // NOTE: we are playing with TypeScript internals here
                 let trg: Signature = (sig as any).target
                 let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
+                // NOTE: mapper also a TypeScript internal
+                // TODO: mapping should be done lazily, not eagerly
                 bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
             }
             let isSelfGeneric = bindings.length > 0
@@ -2629,10 +2630,8 @@ ${lbl}: .short 0xffff
                     if (!decl) {
                         unhandled(trg, lf("setter not available"), 9253)
                     }
-                    // TODO: don't need an assign check below
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else if (decl && decl.kind == SK.PropertySignature) {
-                    // TODO: don't need an assign check below
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
