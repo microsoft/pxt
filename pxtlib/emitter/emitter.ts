@@ -566,6 +566,8 @@ namespace ts.pxtc {
     function lookupTypeParameter(t: Type) {
         if (!(t.flags & TypeFlags.TypeParameter)) return null
         for (let i = typeBindings.length - 1; i >= 0; --i)
+            // TODO: I am not sure this lookup is correct for type parameters
+            // TODO: it appears TypeScript doesn't guarantee Type uniqueness for them?
             if (typeBindings[i].tp == t) return typeBindings[i]
         return null
     }
@@ -667,7 +669,7 @@ namespace ts.pxtc {
             srcType = srcTypeLoc
 
         occursCheck = []
-        let [ok, message] = checkSubtype(srcType, trgType)
+        let [ok, message] = checkSubtype(trgType, srcType)
         if (!ok) {
             userError(9203, lf(message))
         }
@@ -684,13 +686,12 @@ namespace ts.pxtc {
     // this function works assuming that the program has passed the 
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
-    // pairs that the TS checker compared. We take no action on
-    // pairs that we generate "true" for.
+    // pairs that the TS checker compared. 
 
     // we are checking that subType is a subtype of supType, so that
     // an assignment of the form trg <- src is safe, where supType is the
     // type of trg and subType is the type of src
-    function checkSubtype(subType: Type, supType: Type): [boolean, string] {
+    function checkSubtype(supType: Type, subType: Type): [boolean, string] {
         let subId = (subType as any).id
         let supId = (supType as any).id
         let key = supId + "," + subId
@@ -735,13 +736,13 @@ namespace ts.pxtc {
                     let supParamType = checker.getTypeAtLocation(supFun.parameters[i].valueDeclaration)
                     let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
-                    let [retSub,msgSub] = checkSubtype(supParamType, subParamType)
+                    let [retSub,msgSub] = checkSubtype(subParamType, supParamType)
                     if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 }
                 // check return type (co-variant)
                 let supRetType = supFun.getReturnType()
                 let subRetType = supFun.getReturnType()
-                let [retSub,msgSub] = checkSubtype(subRetType, supRetType)
+                let [retSub,msgSub] = checkSubtype(supRetType, subRetType)
                 if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 return insertSubtype(key,[ret,msg])
             } else {
@@ -758,7 +759,7 @@ namespace ts.pxtc {
                     if (find.length == 1) {
                         let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                         // TODO: record the property on which we have a mismatch
-                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl),checker.getTypeAtLocation(supPropDecl))
+                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(supPropDecl),checker.getTypeAtLocation(subPropDecl))
                         if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                     } else if (find.length == 0) {
                         if (!(supProp.flags & SymbolFlags.Optional)) {
@@ -783,13 +784,9 @@ namespace ts.pxtc {
             } else {
                 U.assert(false,"subsetCheck: unreachable (2)")
             }
-        }  else if (lookupTypeParameter(supType)) {
+        } else if (lookupTypeParameter(supType)) {
             // TODO
         }
-        // TODO: generics
-        // NOTE: returning true for everything else is OK here
-        // NOTE: the only point of this function is to raise additional errors
-        // NOTE: if we can't find an error, then check must have passed by TS
         return insertSubtype(key,[true,""])
     }
 
