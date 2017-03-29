@@ -1,3 +1,5 @@
+![Picture of the micro:bit](/static/images/blogbanner.jpg)
+
 # Hello Microsoft MakeCode!
 
 **Posted on March 14th, 2017**
