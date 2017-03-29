@@ -5,33 +5,39 @@ import * as data from "./data";
 import * as ws from "./workspace";
 
 type Header = pxt.workspace.Header;
+type Project = pxt.workspace.Project;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-/*
-    interface WorkspaceProvider {
-        getHeaders(): Header[];
-        getHeader(id: string): Header;
-        getTextAsync(id: string): Promise<ScriptText>;
-        initAsync(target: string): Promise<void>;
-        saveAsync(h: Header, text?: ScriptText): Promise<void>;
-        installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
-        saveToCloudAsync(h: Header): Promise<void>;
-        syncAsync(): Promise<void>;
-        resetAsync(): Promise<void>;
-    }
-*/
-
-interface Project {
-    header: Header;
-    text?: ScriptText;
-}
-
-let projects: pxt.Map<Project> = {};
+export let projects: pxt.Map<Project> = {};
 let target = "";
+
+export function merge(prj: Project) {
+    let h: Header = prj.header;
+    if (!h) {
+        prj.header = h = {
+            id: U.guidGen(),
+            recentUse: U.nowSeconds(),
+            modificationTime: U.nowSeconds(),
+            target: target,
+            _rev: undefined,
+            blobId: undefined,
+            blobCurrent: undefined,
+            isDeleted: false,
+            name: lf("Untitled"),
+            meta: {
+
+            },
+            editor: pxt.BLOCKS_PROJECT_NAME,
+            pubId: undefined,
+            pubCurrent: undefined
+        }
+    }
+    projects[prj.header.id] = prj;
+}
 
 function getHeaders(): Header[] {
     return Util.values(projects).map(p => p.header);
@@ -48,7 +54,7 @@ function getTextAsync(id: string): Promise<ScriptText> {
 }
 
 function initAsync(trg: string): Promise<void> {
-    target = target;
+    target = trg;
     return Promise.resolve();
 }
 
@@ -84,7 +90,7 @@ function resetAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-export var provider: WorkspaceProvider = {
+export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,

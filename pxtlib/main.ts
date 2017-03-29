@@ -810,6 +810,21 @@ namespace pxt {
                 })
         }
 
+        compressToFileAsync(editor?: string): Promise<Uint8Array> {
+            return this.filesToBePublishedAsync(true)
+                .then(files => {
+                    const project: pxt.cpp.HexFile = {
+                        meta: {
+                            cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
+                            targetVersions: pxt.appTarget.versions,
+                            editor: editor || pxt.BLOCKS_PROJECT_NAME,
+                            name: this.config.name
+                        },
+                        source: JSON.stringify(files, null, 2)
+                    }
+                    return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
+                });
+        }
 
         computePartDefinitions(parts: string[]): pxt.Map<pxsim.PartDefinition> {
             if (!parts || !parts.length) return {};
@@ -843,9 +858,13 @@ namespace pxt {
 
     let _targetConfig: pxt.TargetConfig = undefined;
     export function targetConfigAsync(): Promise<pxt.TargetConfig> {
+        if (!_targetConfig && !Cloud.isOnline()) // offline
+            return Promise.resolve(undefined);
         return _targetConfig ? Promise.resolve(_targetConfig)
             : Cloud.privateGetAsync(`config/${pxt.appTarget.id}/targetconfig`)
-                .then(js => { _targetConfig = js; return _targetConfig; });
+                .then(
+                js => { _targetConfig = js; return _targetConfig; },
+                err => { _targetConfig = undefined; return undefined; });
     }
     export function packagesConfigAsync(): Promise<pxt.PackagesConfig> {
         return targetConfigAsync().then(config => config ? config.packages : undefined);

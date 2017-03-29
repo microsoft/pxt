@@ -23,6 +23,13 @@
         height: @mobileMenuHeight !important;
         min-height: @mobileMenuHeight !important;
     }
+    .sandbox #menubar .ui.menu {
+        height: @sandboxMobileMenuHeight !important;
+        min-height: @sandboxMobileMenuHeight !important;
+    }
+    .ui.menu .item > i.icon {
+        margin: 0;
+    }
 }
 
 .ui.inverted.menu .active.item {

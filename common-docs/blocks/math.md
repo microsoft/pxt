@@ -1,6 +1,6 @@
 # Math
 
-### [Numeric](/reference/types/number) values: 0, 1, 2, ...
+### [Numeric](/types/number) values: 0, 1, 2, ...
 
 ```block
 0;

@@ -9,6 +9,7 @@ namespace ts.pxtc {
         defaults?: string[];
         properties?: PropertyDesc[];
         options?: Map<PropertyOption>;
+        isEnum?: boolean;
     }
 
     export interface PropertyDesc {
@@ -283,6 +284,8 @@ namespace ts.pxtc {
                         });
                     }
                     let options: Map<PropertyOption> = {};
+                    const paramType = typechecker.getTypeAtLocation(p);
+                    let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
                     if (minVal) options['min'] = {value: minVal};
                     if (maxVal) options['max'] = {value: maxVal};
                     return {
@@ -292,7 +295,8 @@ namespace ts.pxtc {
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
                         properties: props,
-                        options: options
+                        options: options,
+                        isEnum
                     }
                 })
             }
@@ -855,7 +859,7 @@ namespace ts.pxtc.service {
                 return weight;
             }
 
-            if (!lastFuse) {
+            if (!lastFuse || search.subset) {
                 const blockInfo = blocksInfoOp(); // cache
                 const weights: pxt.Map<number> = {};
                 let builtinSearchSet: SearchInfo[];

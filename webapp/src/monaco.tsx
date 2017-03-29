@@ -11,7 +11,7 @@ import * as sui from "./sui";
 import * as data from "./data";
 import * as codecard from "./codecard";
 import * as blocks from "./blocks"
-
+import * as snippets from "./monacoSnippets"
 
 import Util = pxt.Util;
 const lf = Util.lf
@@ -32,6 +32,7 @@ export class Editor extends srceditor.Editor {
     extraLibs: pxt.Map<monaco.IDisposable>;
     definitions: pxt.Map<pxt.vs.NameDefiniton>;
     loadingMonaco: boolean;
+    showAdvanced: boolean;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -535,105 +536,89 @@ export class Editor extends srceditor.Editor {
         root.appendChild(group);
 
         let fnDef = this.definitions;
-        Object.keys(fnDef).sort((f1, f2) => {
-            // sort by fn weight
-            const fn1 = fnDef[f1];
-            const fn2 = fnDef[f2];
-            const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
-                + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
-            + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
-            const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
-                + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
-            + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
-            return w2 - w1;
-        }).filter(ns => fnDef[ns].metaData != null && fnDef[ns].metaData.color != null).forEach(function (ns) {
-            let metaElement = fnDef[ns];
-            let fnElement = fnDef[ns];
 
-            monacoEditor.addToolboxCategory(group, ns, metaElement.metaData.color, metaElement.metaData.icon, true, fnElement.fns);
-        })
+        // Add the builtin categories
+        Editor.injectBuiltinCategories(fnDef);
 
-        Editor.addBuiltinCategories(group, monacoEditor);
+        // Non-advanced categories
+        appendCategories(group, Object.keys(fnDef).filter(ns => !(fnDef[ns].metaData && fnDef[ns].metaData.advanced)));
 
-        // Add the toolbox buttons
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            this.addToolboxCategory(group, "", "#717171", "addpackage", false, null, () => {
-                this.resetFlyout();
-                this.parent.addPackage();
-            }, lf("{id:category}Add Package"))
+        // Advanced seperator
+        group.appendChild(Editor.createTreeSeperator());
+
+        // Advanced toggle
+        group.appendChild(this.createCategoryElement("", "#3c3c3c", this.showAdvanced ? 'advancedexpanded' : 'advancedcollapsed',
+         false, null, () => {
+             this.showAdvanced = !this.showAdvanced;
+             this.updateToolbox();
+         }, lf("{id:category}Advanced")))
+
+        if (this.showAdvanced) {
+            appendCategories(group, Object.keys(fnDef).filter(ns => fnDef[ns].metaData && fnDef[ns].metaData.advanced));
+
+            // Add package button
+            if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+                group.appendChild(this.createCategoryElement("", "#717171", "addpackage", false, null, () => {
+                    this.resetFlyout();
+                    this.parent.addPackage();
+                }, lf("{id:category}Add Package")));
+            }
         }
 
         // Inject toolbox icon css
         pxt.blocks.injectToolboxIconCss();
+
+        function appendCategories(group: Element, names: string[]) {
+            return names.filter(ns => !!(fnDef[ns].metaData && fnDef[ns].metaData.color))
+            .sort((f1, f2) => {
+                // sort by fn weight
+                const fn1 = fnDef[f1];
+                const fn2 = fnDef[f2];
+                const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50);
+                const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50);
+                return w2 - w1;
+            }).forEach(ns => {
+                const fnElement = fnDef[ns];
+                const md = fnElement.metaData;
+
+                let el: Element;
+
+                if (fnElement.builtin) {
+                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, fnElement.fns, null, ns);
+                }
+                else {
+                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, fnElement.fns);
+                }
+
+                group.appendChild(el);
+            });
+        }
     }
 
-    static addBuiltinCategories(group: HTMLDivElement, monacoEditor: Editor) {
-        monacoEditor.addToolboxCategory(group, "", pxt.blocks.blockColors["logic"].toString(), "logic", false, {
-            "if": {
-                sig: ``,
-                snippet: `if (true) {
-
-}`,
-                comment: lf("Runs code if the condition is true"),
-                metaData: {
-                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                    paramDefl: {}
-                }
-            }, "if ": {
-                sig: ``,
-                snippet: `if (true) {
-
-} else {
-
-}`,
-                comment: lf("Runs code if the condition is true; else run other code"),
-                metaData: {
-                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                    paramDefl: {}
-                }
-            },"switch": {
-                sig: ``,
-                snippet: `switch(item) {
-    case 0:
-        break;
-    case 1:
-        break;
-}`,
-                comment: lf("Runs different code based on a value"),
-                metaData: {
-                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                    paramDefl: {}
-                }
-            }
-        }, null, lf("{id:category}Logic"));
-        monacoEditor.addToolboxCategory(group, "", pxt.blocks.blockColors["loops"].toString(), "loops", false, {
-            "while": {
-                sig: `while(...)`,
-                snippet: `while(true) {
-
-}`,
-                comment: lf("Repeat code while condition is true"),
-                metaData: {
-                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                    paramDefl: {}
-                }
-            },
-            "for": {
-                sig: ``,
-                snippet: `for(let i = 0; i < 5; i++) {
-
-}`,
-                comment: lf("Repeat code a number of times in a loop"),
-                metaData: {
-                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                    paramDefl: {}
-                }
-            }
-        }, null, lf("{id:category}Loops"));
+    static injectBuiltinCategories(defs: pxt.Map<pxt.vs.NameDefiniton>) {
+        let config = pxt.appTarget.runtime || {};
+        if (config.loopsBlocks) defs[lf("{id:category}Loops")] = snippets.loops;
+        if (config.logicBlocks) defs[lf("{id:category}Logic")] = snippets.logic;
+        if (config.variablesBlocks) defs[lf("{id:category}Variables")] = snippets.variables;
+        if (config.mathBlocks) defs[lf("{id:category}Math")] = snippets.maths;
+        if (config.textBlocks) defs[lf("{id:category}Text")] = snippets.text;
     }
 
-    private addToolboxCategory(
-        group: HTMLDivElement,
+    static createTreeSeperator() {
+        const treeitem = Editor.createTreeItem();
+        const treeSeperator = document.createElement("div");
+        treeSeperator.setAttribute("class", "blocklyTreeSeparator");
+        treeitem.appendChild(treeSeperator);
+        return treeitem;
+    }
+
+    static createTreeItem() {
+        const treeitem = document.createElement('div');
+        treeitem.setAttribute('role', 'treeitem');
+        return treeitem;
+    }
+
+    private createCategoryElement(
         ns: string,
         metaColor: string,
         icon: string,
@@ -641,12 +626,25 @@ export class Editor extends srceditor.Editor {
         fns?: pxt.Map<pxt.vs.MethodDef>,
         onClick?: () => void,
         category?: string) {
+        // Filter the toolbox
+        let filters = this.parent.state.filters;
+        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
+        let hasChild = false;
+        if (filters) {
+            Object.keys(fns).forEach((fn) => {
+                const fnState = filters.fns && filters.fns[fn] != undefined ? filters.fns[fn] : (categoryState != undefined ? categoryState : filters.defaultState);
+                if (fnState == pxt.editor.FilterState.Disabled || fnState == pxt.editor.FilterState.Visible) hasChild = true;
+            })
+        } else {
+            hasChild = true;
+        }
+        if (!hasChild) return;
+
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
         // Create a tree item
-        let treeitem = document.createElement('div');
+        let treeitem = Editor.createTreeItem();
         let treerow = document.createElement('div');
-        treeitem.setAttribute('role', 'treeitem');
         let color = pxt.blocks.convertColour(metaColor);
         treeitem.onclick = (ev: MouseEvent) => {
             pxt.tickEvent("monaco.toolbox.click");
@@ -702,22 +700,30 @@ export class Editor extends srceditor.Editor {
                     + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
                     return w2 - w1;
                 }).forEach((fn) => {
+                    let monacoBlockDisabled = false;
+                    const fnState = filters ? (filters.fns && filters.fns[fn] != undefined ? filters.fns[fn] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
+                    monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+                    if (fnState == pxt.editor.FilterState.Hidden) return;
+
+                    let monacoBlockArea = document.createElement('div');
                     let monacoBlock = document.createElement('div');
                     monacoBlock.className = 'monacoDraggableBlock';
 
                     monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
-                    monacoBlock.style.backgroundColor = `${color}`;
+                    monacoBlock.style.backgroundColor = monacoBlockDisabled ?
+                            `${Blockly.PXTUtils.fadeColour(color || '#ddd', 0.8, false)}` :
+                            `${color}`;
                     monacoBlock.style.borderColor = `${color}`;
-                    monacoBlock.draggable = true;
 
                     const elem = fns[fn];
                     const snippet = elem.snippet;
                     const comment = elem.comment;
                     const metaData = elem.metaData;
 
-                    let methodToken = document.createElement('span');
-                    methodToken.innerText = fn;
-                    let sigToken = document.createElement('span'); sigToken.className = 'sig';
+                    let sigToken = document.createElement('span');
+                    if (!elem.snippetOnly) {
+                        sigToken.className = 'sig';
+                    }
                     // completion is a bit busted but looks better
                     sigToken.innerText = snippet
                         .replace(/^[^(]*\(/, '(')
@@ -727,65 +733,73 @@ export class Editor extends srceditor.Editor {
 
                     monacoBlock.title = comment;
 
-                    monacoBlock.onclick = (ev2: MouseEvent) => {
-                        pxt.tickEvent("monaco.toolbox.itemclick");
+                    if (!monacoBlockDisabled) {
+                        monacoBlock.draggable = true;
+                        monacoBlock.onclick = (ev2: MouseEvent) => {
+                            pxt.tickEvent("monaco.toolbox.itemclick");
 
-                        monacoEditor.resetFlyout(true);
+                            monacoEditor.resetFlyout(true);
 
-                        let model = monacoEditor.editor.getModel();
-                        let currPos = monacoEditor.editor.getPosition();
-                        let cursor = model.getOffsetAt(currPos)
-                        let insertText = ns ? `${ns}.${snippet}` : snippet;
-                        insertText = (currPos.column > 1) ? '\n' + insertText :
-                            model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                                insertText + '\n' : insertText;
+                            let model = monacoEditor.editor.getModel();
+                            let currPos = monacoEditor.editor.getPosition();
+                            let cursor = model.getOffsetAt(currPos)
+                            let insertText = ns ? `${ns}.${snippet}` : snippet;
+                            insertText = (currPos.column > 1) ? '\n' + insertText :
+                                model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
+                                    insertText + '\n' : insertText;
 
-                        if (insertText.indexOf('{{}}') > -1) {
-                            cursor += (insertText.indexOf('{{}}'));
-                            insertText = insertText.replace('{{}}', '');
-                        } else
-                            cursor += (insertText.length);
+                            if (insertText.indexOf('{{}}') > -1) {
+                                cursor += (insertText.indexOf('{{}}'));
+                                insertText = insertText.replace('{{}}', '');
+                            } else
+                                cursor += (insertText.length);
 
-                        insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
-                        monacoEditor.editor.pushUndoStop();
-                        monacoEditor.editor.executeEdits("", [
-                            {
-                                identifier: { major: 0, minor: 0 },
-                                range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
-                                text: insertText,
-                                forceMoveMarkers: false
-                            }
-                        ]);
-                        monacoEditor.beforeCompile();
-                        monacoEditor.editor.pushUndoStop();
-                        let endPos = model.getPositionAt(cursor);
-                        monacoEditor.editor.setPosition(endPos);
-                        monacoEditor.editor.focus();
-                        //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
-                    };
-                    monacoBlock.ondragstart = (ev2: DragEvent) => {
-                        pxt.tickEvent("monaco.toolbox.itemdrag");
-                        let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
+                            insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
+                            monacoEditor.editor.pushUndoStop();
+                            monacoEditor.editor.executeEdits("", [
+                                {
+                                    identifier: { major: 0, minor: 0 },
+                                    range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
+                                    text: insertText,
+                                    forceMoveMarkers: false
+                                }
+                            ]);
+                            monacoEditor.beforeCompile();
+                            monacoEditor.editor.pushUndoStop();
+                            let endPos = model.getPositionAt(cursor);
+                            monacoEditor.editor.setPosition(endPos);
+                            monacoEditor.editor.focus();
+                            //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+                        };
+                        monacoBlock.ondragstart = (ev2: DragEvent) => {
+                            pxt.tickEvent("monaco.toolbox.itemdrag");
+                            let clone = monacoBlock.cloneNode(true) as HTMLDivElement;
 
-                        setTimeout(function () {
-                            monacoFlyout.style.transform = "translateX(-9999px)";
-                        });
+                            setTimeout(function () {
+                                monacoFlyout.style.transform = "translateX(-9999px)";
+                            });
 
-                        let insertText = ns ? `${ns}.${snippet}` : snippet;
-                        ev2.dataTransfer.setData('text', insertText); // IE11 only supports text
+                            let insertText = ns ? `${ns}.${snippet}` : snippet;
+                            ev2.dataTransfer.setData('text', insertText); // IE11 only supports text
+                        }
+                        monacoBlock.ondragend = (ev2: DragEvent) => {
+                            monacoFlyout.style.transform = "none";
+                            monacoEditor.resetFlyout(true);
+                        }
                     }
-                    monacoBlock.ondragend = (ev2: DragEvent) => {
-                        monacoFlyout.style.transform = "none";
-                        monacoEditor.resetFlyout(true);
-                    }
 
-                    monacoBlock.appendChild(methodToken);
+                    if (!elem.snippetOnly) {
+                        let methodToken = document.createElement('span');
+                        methodToken.innerText = fn;
+                        monacoBlock.appendChild(methodToken);
+                    }
                     monacoBlock.appendChild(sigToken);
-                    monacoFlyout.appendChild(monacoBlock);
+                    monacoBlockArea.appendChild(monacoBlock);
+
+                    monacoFlyout.appendChild(monacoBlockArea);
                 })
             }
         };
-        group.appendChild(treeitem);
         treerow.className = 'blocklyTreeRow';
         treeitem.appendChild(treerow);
         let iconBlank = document.createElement('span');
@@ -831,6 +845,8 @@ export class Editor extends srceditor.Editor {
         }
         treerow.style.paddingLeft = '0px';
         label.innerText = `${Util.capitalize(category || ns)}`;
+
+        return treeitem;
     }
 
     getId() {

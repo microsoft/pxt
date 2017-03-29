@@ -241,14 +241,23 @@ namespace pxt.blocks {
     class DestructuringMutator extends MutatorHelper {
         public static propertiesAttributeName = "callbackproperties";
         public static renameAttributeName = "renamemap";
+
+        // Avoid clashes by starting labels with a number
+        private static prefixLabel = "0prefix_label_";
+
         private currentlyVisible: string[] = [];
         private parameters: string[];
-        private parameterTypes: {[index: string]: string};
-        private parameterRenames: {[index: string]: string} = {};
+        private parameterTypes: Map<string>;
+        private parameterRenames: Map<string> = {};
         private paramIndex: number;
+
+        private prefix: string;
 
         constructor(b: Blockly.Block, info: pxtc.SymbolInfo) {
             super(b, info);
+
+            this.prefix = this.info.attributes.mutatePrefix;
+
             this.block.appendDummyInput(MutatorHelper.mutatedVariableInputName);
             this.block.appendStatementInput("HANDLER")
                 .setCheck("null");
@@ -411,8 +420,12 @@ namespace pxt.blocks {
             if (Util.listsEqual(this.currentlyVisible, this.parameters)) {
                 return;
             }
-
             const dummyInput = this.block.inputList.filter(i => i.name === MutatorHelper.mutatedVariableInputName)[0];
+
+            if (this.prefix && this.currentlyVisible.length === 0) {
+                dummyInput.appendField(this.prefix, DestructuringMutator.prefixLabel);
+            }
+
             this.currentlyVisible.forEach(param => {
                 if (this.parameters.indexOf(param) === -1) {
                     const name = this.block.getFieldValue(param);
@@ -432,6 +445,10 @@ namespace pxt.blocks {
                     dummyInput.appendField(new Blockly.FieldVariable(fieldValue), param);
                 }
             });
+
+            if (this.prefix && this.parameters.length === 0) {
+                dummyInput.removeField(DestructuringMutator.prefixLabel);
+            }
 
             this.currentlyVisible = this.parameters;
         }

@@ -4,6 +4,8 @@
 
 ## #projects
 
+## #examples
+
 ## #reference
 
 ## Blocks #blocks
@@ -19,8 +21,8 @@
         * [assign](/blocks/variables/assign)
         * [change var](/blocks/variables/change-var)
         * [var](/blocks/variables/var)
-    * [JavaScript blocks](/javascript-blocks)
-    * [Custom blocks](/custom)
+    * [JavaScript blocks](/blocks/javascript-blocks)
+    * [Custom blocks](/blocks/custom)
 
 ## JavaScript #javaScript
 
@@ -34,6 +36,13 @@
     * [Types](/javascript/types)
     * [Classes](/javascript/classes)
 
+## Types #types
+
+* [Types](/types)
+    * [Number](/types/number)
+    * [String](/types/string)
+    * [Boolean](/types/boolean)
+
 ## #other
 
 ## Miscellanous #misc
@@ -43,6 +52,7 @@
     * [Translate](/translate)
     * [Sharing projects](/share)
     * [Offline support](/offline)
+    * [Streaming](/streaming)
 
 ## Developers #devs
 

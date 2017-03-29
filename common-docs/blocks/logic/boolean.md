@@ -1,6 +1,6 @@
 # Boolean
 
-A Boolean has one of two possible values: `true`; `false`.  Boolean (logical) operators (*and*, *or*, *not*) take Boolean inputs and yields a Boolean value. Comparison operators on other types ([numbers](/reference/types/number), [strings](/reference/types/string) yields a Boolean value.
+A Boolean has one of two possible values: `true`; `false`.  Boolean (logical) operators (*and*, *or*, *not*) take Boolean inputs and yields a Boolean value. Comparison operators on other types ([numbers](/types/number), [strings](/types/string) yields a Boolean value.
 
 The following blocks represent the true and false Boolean values, which can be plugged in anywhere a Boolean value is expected:
 
@@ -17,7 +17,7 @@ true || false;
 !true;
 ```
 
-The next six blocks represent comparison operators that yield a Boolean value. Most comparisons you will do involve [numbers](/reference/types/number):
+The next six blocks represent comparison operators that yield a Boolean value. Most comparisons you will do involve [numbers](/types/number):
 
 ```block
 42 == 0;

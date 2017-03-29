@@ -1,6 +1,6 @@
 # Variables
 
-A variable is a place where you can store and retrieve data. Variables have a name, a [type](/reference/types), and value:
+A variable is a place where you can store and retrieve data. Variables have a name, a [type](/types), and value:
 
 * *name* is how you'll refer to the variable
 * *type* refers to the kind of data a variable can store
@@ -31,50 +31,28 @@ Here's how to define a variable in the Block Editor:
 
 3. Drag a block type on the right-side of the [assignment operator](/blocks/variables/assign) and click the down arrow to change the variable name.
 
-A variable is created for the number returned by the [brightness](/reference/led/brightness) function.
+### #letexample
 
-```block
-let b = led.brightness();
-```
+### Reading variable values
 
-### Using variables
+Once you've defined a variable, just use the variable's name whenever you need what's stored in the variable. 
 
-Once you've defined a variable, just use the variable's name whenever you need what's stored in the variable. For example, the following code shows the value stored in `counter` on the LED screen:
+#### #readvariableexample
 
-```blocks
-let counter = 1;
-basic.showNumber(counter);
-```
+### Updating variable values
 
-To change the contents of a variable use the assignment operator. The following code sets `counter` to 1 and then increments `counter` by 10:
+To change the contents of a variable use the assignment operator. 
 
-```block
-let counter = 1;
-counter = counter + 10;
-basic.showNumber(counter);
-```
+#### #updatevariableexample
 
 ### Why use variables?
 
 If you want to remember and modify data, you'll need a variable. 
-A counter is a great example:
 
-```block
-let counter = 0;
-input.onButtonPressed(Button.A, () => { 
-  counter = counter + 1;
-  basic.showNumber(counter);
-});
-```
+#### #whyusevariablesexample
 
 ### Local variables
 
-Local variables exist only within the function or block of code where they're defined. For example:
+Local variables exist only within the function or block of code where they're defined.
 
-```block
-// x does NOT exist here.
-if (led.brightness() > 128) {
-  // x exists here
-  let x = 0;
-}
-```
+#### #localvariableexample
