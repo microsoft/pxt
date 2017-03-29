@@ -824,7 +824,7 @@ namespace ts.pxtc {
     function getTypeBindings(t: Type) {
         let g = genericRoot(t)
         if (!g) return []
-        return getTypeBindingsCore(g.typeParameters, (t as ).typeArguments)
+        return getTypeBindingsCore(g.typeParameters, (t as TypeReference).typeArguments)
     }
 
     function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
