@@ -60,5 +60,3 @@ interface Opt {
 }
 
 let o1: Opt = { a: 42}
-
-

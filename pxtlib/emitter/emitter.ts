@@ -782,9 +782,13 @@ namespace ts.pxtc {
             } else {
                 U.assert(false,"subsetCheck: unreachable (2)")
             }
-        } else if (lookupTypeParameter(supType)) {
+        }  else if (lookupTypeParameter(supType)) {
             // TODO
         }
+        // TODO: generics
+        // NOTE: returning true for everything else is OK here
+        // NOTE: the only point of this function is to raise additional errors
+        // NOTE: if we can't find an error, then check must have passed by TS
         return insertSubtype(key,[true,""])
     }
 
