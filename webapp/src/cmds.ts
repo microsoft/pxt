@@ -10,6 +10,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
         text,
         name,
         contentType,
+        undefined,
         e => core.errorNotification(lf("saving file failed..."))
     );
 
@@ -27,6 +28,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             uf2,
             fn,
             "application/x-uf2",
+            resp.userContextWindow,
             e => core.errorNotification(lf("saving file failed..."))
         );
     } else {
@@ -37,6 +39,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             hex,
             fn,
             pxt.appTarget.compile.hexMimeType,
+            resp.userContextWindow,
             e => core.errorNotification(lf("saving file failed..."))
         );
     }
