@@ -3,7 +3,7 @@ window.localStorage = {}
 function require() { return null }
 
 importScripts(
-    "/cdn/tdast.js"
+    "/blb/tdast.js"
 )
 
 onmessage = function(ev) {

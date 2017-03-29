@@ -14,12 +14,14 @@ namespace pxt.vs {
         snippet: string;
         comment?: string;
         metaData?: pxtc.CommentAttrs;
+        snippetOnly?: boolean;
     }
 
     export interface NameDefiniton {
         fns: { [fn: string]: MethodDef };
         vars?: { [index: string]: string }
         metaData?: pxtc.CommentAttrs;
+        builtin?: boolean;
     }
 
     export type DefinitionMap = { [ns: string]: NameDefiniton };
@@ -29,7 +31,7 @@ namespace pxt.vs {
 
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
-        let toPopulate: {f: string, fp: string} [] = [];
+        let toPopulate: { f: string, fp: string }[] = [];
         let definitions: DefinitionMap = {}
 
         mainPkg.sortedDeps().forEach(pkg => {
@@ -44,7 +46,7 @@ namespace pxt.vs {
                     modelMap[fp] = "1";
 
                     // store which files we need to populate definitions for the monaco toolbox
-                    toPopulate.push({f: f, fp: fp});
+                    toPopulate.push({ f: f, fp: fp });
                 }
             });
         });
@@ -149,7 +151,7 @@ namespace pxt.vs {
                                 }
                             }
                         }
-                }));
+                    }));
 
                 // function promises
                 promises.push(monaco.Promise.join(parent.childItems
@@ -187,7 +189,7 @@ namespace pxt.vs {
                         return (client.getQuickInfoAtPosition(fp, v.spans[0].start) as monaco.Promise<ts.QuickInfo>)
                             .then(qInfo => {
                                 if (qInfo) {
-                                    const typePart = qInfo.displayParts.filter(part => part.kind === "interfaceName" ||  part.kind === "className")[0];
+                                    const typePart = qInfo.displayParts.filter(part => part.kind === "interfaceName" || part.kind === "className")[0];
 
                                     if (typePart && !definition.vars[typePart.text]) {
                                         definition.vars[typePart.text] = v.text;
@@ -218,19 +220,20 @@ namespace pxt.vs {
 
     export function initMonacoAsync(element: HTMLElement): Promise<monaco.editor.IStandaloneCodeEditor> {
         return new Promise<monaco.editor.IStandaloneCodeEditor>((resolve, reject) => {
-            if (typeof((window as any).monaco) === 'object') {
+            if (typeof ((window as any).monaco) === 'object') {
                 // monaco is already loaded
                 resolve(createEditor(element));
                 return;
             }
+            let monacoPaths: Map<string> = (window as any).MonacoPaths
 
             let onGotAmdLoader = () => {
-                (window as any).require.config({ paths: { 'vs': pxt.webConfig.pxtCdnUrl + 'vs' }});
+                let req = (window as any).require
+                req.config({ paths: monacoPaths });
 
                 // Load monaco
-                (window as any).require(['vs/editor/editor.main'], () => {
+                req(['vs/editor/editor.main'], () => {
                     setupMonaco();
-
                     resolve(createEditor(element));
                 });
             };
@@ -239,7 +242,7 @@ namespace pxt.vs {
             if (!(<any>window).require) {
                 let loaderScript = document.createElement('script');
                 loaderScript.type = 'text/javascript';
-                loaderScript.src = pxt.webConfig.pxtCdnUrl + 'vs/loader.js';
+                loaderScript.src = monacoPaths['vs/loader'];
                 loaderScript.addEventListener('load', onGotAmdLoader);
                 document.body.appendChild(loaderScript);
             } else {
@@ -255,8 +258,8 @@ namespace pxt.vs {
 
         // validation settings
         monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-            noSyntaxValidation: false,
-            noSemanticValidation: false
+            noSyntaxValidation: true,
+            noSemanticValidation: true
         });
 
         // compiler options
@@ -290,6 +293,7 @@ namespace pxt.vs {
             tabCompletion: true,
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
+            formatOnPaste: true,
             //automaticLayout: true,
             mouseWheelScrollSensitivity: 0.5,
             quickSuggestionsDelay: 200,

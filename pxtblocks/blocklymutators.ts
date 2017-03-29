@@ -66,9 +66,25 @@ namespace pxt.blocks {
 
         switch (mutationType) {
             case MutatorTypes.ObjectDestructuringMutator:
-                if (!info.parameters || info.parameters.length !== 1 || info.parameters[0].properties.length === 0) {
-                    console.error("Mutating blocks only supported for functions with one parameter that has multiple properties");
-                    return;
+                if (!info.parameters || info.parameters.length < 1) {
+                    console.error("Destructuring mutations require at least one parameter")
+                }
+                else {
+                    let found = false;
+                    for (const param of info.parameters) {
+                        if (param.type.indexOf("=>") !== -1) {
+                            if (!param.properties || param.properties.length === 0) {
+                                console.error("Destructuring mutations only supported for functions with an event parameter that has multiple properties");
+                                return;
+                            }
+                            found = true;
+                        }
+                    }
+
+                    if (!found) {
+                        console.error("Destructuring mutations must have an event parameter");
+                        return;
+                    }
                 }
                 m = new DestructuringMutator(b, info);
                 break;
@@ -225,13 +241,23 @@ namespace pxt.blocks {
     class DestructuringMutator extends MutatorHelper {
         public static propertiesAttributeName = "callbackproperties";
         public static renameAttributeName = "renamemap";
+
+        // Avoid clashes by starting labels with a number
+        private static prefixLabel = "0prefix_label_";
+
         private currentlyVisible: string[] = [];
         private parameters: string[];
-        private parameterTypes: {[index: string]: string};
-        private parameterRenames: {[index: string]: string} = {};
+        private parameterTypes: Map<string>;
+        private parameterRenames: Map<string> = {};
+        private paramIndex: number;
+
+        private prefix: string;
 
         constructor(b: Blockly.Block, info: pxtc.SymbolInfo) {
             super(b, info);
+
+            this.prefix = this.info.attributes.mutatePrefix;
+
             this.block.appendDummyInput(MutatorHelper.mutatedVariableInputName);
             this.block.appendStatementInput("HANDLER")
                 .setCheck("null");
@@ -242,7 +268,7 @@ namespace pxt.blocks {
         }
 
         public compileMutation(e: Environment, comments: string[]): JsNode {
-            if (!this.parameters.length) {
+            if (!this.info.attributes.mutatePropertyEnum && !this.parameters.length) {
                 return undefined;
             }
 
@@ -256,7 +282,14 @@ namespace pxt.blocks {
                 return escapedParam;
             }).join(", ");
 
-            return mkText(`({ ${declarationString} }) => `);
+            const lambdaString = ` ({ ${declarationString} }) => `;
+
+            if (this.info.attributes.mutatePropertyEnum) {
+                return mkText(` [${this.parameters.map(p => `${this.info.attributes.mutatePropertyEnum}.${p}`).join(", ")}],${lambdaString}`)
+            }
+            else {
+                return mkText(lambdaString);
+            }
         }
 
         public getDeclaredVariables(): pxt.Map<string> {
@@ -302,10 +335,15 @@ namespace pxt.blocks {
             if (savedParameters) {
                 const split = savedParameters.split(",");
                 const properties: NamedProperty[] = [];
+
+                if (this.paramIndex === undefined) {
+                    this.paramIndex = this.getParameterIndex();
+                }
+
                 split.forEach(saved => {
                     // Parse the old way of storing renames to maintain backwards compatibility
                     const parts = saved.split(":");
-                    if (this.info.parameters[0].properties.some(p => p.name === parts[0])) {
+                    if (this.info.parameters[this.paramIndex].properties.some(p => p.name === parts[0])) {
                         properties.push({
                             property: parts[0],
                             newName: parts[1]
@@ -359,7 +397,11 @@ namespace pxt.blocks {
             this.parameters = [];
             this.parameterTypes = {};
 
-            return this.info.parameters[0].properties.map(property => {
+            if (this.paramIndex === undefined) {
+                this.paramIndex = this.getParameterIndex();
+            }
+
+            return this.info.parameters[this.paramIndex].properties.map(property => {
                 // Used when compiling the destructured arguments
                 this.parameterTypes[property.name] = property.type;
 
@@ -378,8 +420,12 @@ namespace pxt.blocks {
             if (Util.listsEqual(this.currentlyVisible, this.parameters)) {
                 return;
             }
-
             const dummyInput = this.block.inputList.filter(i => i.name === MutatorHelper.mutatedVariableInputName)[0];
+
+            if (this.prefix && this.currentlyVisible.length === 0) {
+                dummyInput.appendField(this.prefix, DestructuringMutator.prefixLabel);
+            }
+
             this.currentlyVisible.forEach(param => {
                 if (this.parameters.indexOf(param) === -1) {
                     const name = this.block.getFieldValue(param);
@@ -400,11 +446,24 @@ namespace pxt.blocks {
                 }
             });
 
+            if (this.prefix && this.parameters.length === 0) {
+                dummyInput.removeField(DestructuringMutator.prefixLabel);
+            }
+
             this.currentlyVisible = this.parameters;
         }
 
         private propertyId(property: string) {
             return this.block.type + "_" + property;
+        }
+
+        private getParameterIndex() {
+            for (let i = 0; i < this.info.parameters.length; i++) {
+                if (this.info.parameters[i].type.indexOf("=>") !== -1) {
+                    return i;
+                }
+            }
+            return undefined;
         }
     }
 

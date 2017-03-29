@@ -75,6 +75,7 @@ namespace pxsim {
     export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
+    const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
         public runOptions: SimulatorRunMessage;
 
@@ -90,21 +91,15 @@ namespace pxsim {
         public writeSerial(s: string) {
             if (!s) return
 
-            for (let i = 0; i < s.length; ++i) {
-                let c = s[i];
-                switch (c) {
-                    case '\n':
-                        Runtime.postMessage(<SimulatorSerialMessage>{
-                            type: 'serial',
-                            data: this.serialOutBuffer + '\n',
-                            id: runtime.id,
-                            sim: true
-                        })
-                        this.serialOutBuffer = ''
-                        break;
-                    case '\r': continue;
-                    default: this.serialOutBuffer += c;
-                }
+            this.serialOutBuffer += s;
+            if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
+                Runtime.postMessage(<SimulatorSerialMessage>{
+                    type: 'serial',
+                    data: this.serialOutBuffer,
+                    id: runtime.id,
+                    sim: true
+                })
+                this.serialOutBuffer = '';
             }
         }
     }

@@ -1,55 +1,55 @@
 CACHE MANIFEST
 
 CACHE:
-/cdn/semantic.js
-/cdn/main.js
-/cdn/typescript.js
-/cdn/marked/marked.min.js
-/cdn/highlight.js/highlight.pack.js
-/cdn/lzma/lzma_worker-min.js
-/cdn/jquery.js
-/cdn/pxtlib.js
-/cdn/pxtblocks.js
-/cdn/pxtwinrt.js
-/cdn/pxteditor.js
-/cdn/pxtsim.js
-/cdn/semantic.css
-/cdn/custom.css
-/cdn/icons.css
-/cdn/fonts/icons.woff2
+/blb/semantic.js
+/blb/main.js
+/blb/typescript.js
+/blb/marked/marked.min.js
+/blb/highlight.js/highlight.pack.js
+/blb/lzma/lzma_worker-min.js
+/blb/fuse.min.js
+/blb/jquery.js
+/blb/pxtlib.js
+/blb/pxtblocks.js
+/blb/pxtwinrt.js
+/blb/pxteditor.js
+/blb/pxtsim.js
+/blb/semantic.css
+/blb/custom.css
+/blb/icons.css
 @defaultLocaleStrings@
 @cachedHexFiles@
 
 # blockly
-/cdn/blockly/blockly_compressed.js
-/cdn/blockly/blocks_compressed.js
-/cdn/blockly/msg/js/en.js
+/blb/blockly/blockly_compressed.js
+/blb/blockly/blocks_compressed.js
+/blb/blockly/msg/js/en.js
 /cdn/blockly/media/sprites.png
 /cdn/blockly/media/click.mp3
 /cdn/blockly/media/disconnect.wav
 /cdn/blockly/media/delete.mp3
 
-# monaco
-/cdn/vs/loader.js
-/cdn/vs/base/worker/workerMain.js
-/cdn/vs/basic-languages/src/bat.js
-/cdn/vs/basic-languages/src/cpp.js
-/cdn/vs/editor/editor.main.css
-/cdn/vs/editor/editor.main.js
-/cdn/vs/editor/editor.main.nls.js
-/cdn/vs/language/json/jsonMode.js
-/cdn/vs/language/json/jsonWorker.js
-/cdn/vs/language/typescript/lib/typescriptServices.js
-/cdn/vs/language/typescript/src/mode.js
-/cdn/vs/language/typescript/src/worker.js
-/cdn/monacoworker.js
+# monaco; keep in sync with webapp/public/index.html
+/blb/vs/loader.js
+/blb/vs/base/worker/workerMain.js
+/blb/vs/basic-languages/src/bat.js
+/blb/vs/basic-languages/src/cpp.js
+/blb/vs/editor/editor.main.css
+/blb/vs/editor/editor.main.js
+/blb/vs/editor/editor.main.nls.js
+/blb/vs/language/json/jsonMode.js
+/blb/vs/language/json/jsonWorker.js
+/blb/vs/language/typescript/lib/typescriptServices.js
+/blb/vs/language/typescript/src/mode.js
+/blb/vs/language/typescript/src/worker.js
 
 # ai
 https://az416426.vo.msecnd.net/scripts/a/ai.0.js
 
 @workerjs@
+@monacoworkerjs@
 
-/sim/target.js
+/blb/target.js
   
 NETWORK:
 *

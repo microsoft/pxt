@@ -45,7 +45,7 @@ namespace pxt.blocks {
             const nodeType = node.getAttribute("type");
             if (!node.getAttribute("disabled") && !node.querySelector("statement")
                 && (pxt.blocks.buildinBlockStatements[nodeType] ||
-                (blocks[nodeType] && blocks[nodeType].retType == "void" && !hasArrowFunction(blocks[nodeType])))
+                    (blocks[nodeType] && blocks[nodeType].retType == "void" && !hasArrowFunction(blocks[nodeType])))
             ) {
                 // old block, needs to be wrapped in onstart
                 if (!insertNode) {
@@ -83,17 +83,31 @@ namespace pxt.blocks {
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, "application/xml");
 
-            // patch block types
-            const upgrades = (pxt.appTarget.compile && pxt.appTarget.compile.upgrades)
-                ? pxt.appTarget.compile.upgrades.filter(up => up.type == "blockId")
-                : [];
-            upgrades.forEach(up => Object.keys(up.map).forEach(type => {
-                Util.toArray(doc.querySelectorAll(`block[type=${type}]`))
-                    .forEach(blockNode => {
-                        blockNode.setAttribute("type", up.map[type]);
-                        pxt.debug(`patched block ${type} -> ${up.map[type]}`);
-                    });
-            }))
+            if (pxt.appTarget.compile) {
+                const upgrades = pxt.appTarget.compile.upgrades || [];
+                // patch block types
+                upgrades.filter(up => up.type == "blockId")
+                    .forEach(up => Object.keys(up.map).forEach(type => {
+                        Util.toArray(doc.querySelectorAll(`block[type=${type}]`))
+                            .forEach(blockNode => {
+                                blockNode.setAttribute("type", up.map[type]);
+                                pxt.debug(`patched block ${type} -> ${up.map[type]}`);
+                            });
+                    }))
+
+                // patch block value
+                upgrades.filter(up => up.type == "blockValue")
+                    .forEach(up => Object.keys(up.map).forEach(k => {
+                        const m = k.split('.');
+                        const type = m[0];
+                        const name = m[1];
+                        Util.toArray(doc.querySelectorAll(`block[type=${type}]>value[name=${name}]`))
+                            .forEach(blockNode => {
+                                blockNode.setAttribute("name", up.map[k]);
+                                pxt.debug(`patched block value ${k} -> ${up.map[k]}`);
+                            });
+                    }))
+            }
 
             // build upgrade map
             const enums: Map<string> = {};

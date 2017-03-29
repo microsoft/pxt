@@ -1,5 +1,5 @@
 <aside id=button class=box>
-   <a class="ui primary button" href="@ARGS@">@BODY@</a>
+   <a class="ui primary button docbutton" href="@ARGS@">@BODY@</a>
 </aside>   
 
 <aside id=vimeo>
@@ -93,3 +93,33 @@
     </div>
 </aside>
 
+
+<!-- TOC in the sidebar -->
+<aside id=item class=toc>
+    <a class="item @ACTIVE@" href="@LINK@">@NAME@</a>
+</aside>
+
+<aside id=divider class=toc>
+    <div class="divider"></div>
+</aside>
+
+<aside id=top-dropdown class=toc>
+    <div class="item" title="@TITLE@">
+        <a class="header @ACTIVE@" href="@LINK@">@NAME@</a>
+        <div class="menu">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=inner-dropdown class=toc>
+    <div class="ui inverted accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="dropdown icon"></i>
+            <a class="header" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>

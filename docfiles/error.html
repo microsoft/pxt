@@ -3,9 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Programming Experience Toolkit</title>
-  <meta name="Description" content="Programming Experiences in Blocks and JavaScript for beginners." />
-
+  <title>Microsoft MakeCode</title>
+  <meta name="Description" content="A JavaScript Blocks Editor" />
 
   <!-- @include head.html -->
 
@@ -40,10 +39,14 @@
         margin-bottom: 8em;
       }
     }
-
+    
     .message {
       opacity: 0.5;
       font-size: 0.8em;
+    }
+    
+    .message a {
+      color: #000;
     }
   </style>
 
@@ -55,15 +58,34 @@
 
       <h1 dir="auto">Sorry, the page is missing</h1>
 
-      <p dir="auto" class='message'>@-body-@</p>
-  
       <p dir="auto" class='lead'>
         You can go back to <a href="/">home page</a> or <a href="/contact">contact us</a>.
+      </p>
+
+      <p dir="auto" class="message">
+        <a href="#" id="more">More info</a>
+        <span id="msg" style="display:none">
+          @-body-@
+        </span>
       </p>
 
     </div>
 
   </div>
+
+  <script>
+    window.addEventListener("load", function () {
+      var more = document.getElementById("more");
+      var msg = document.getElementById("msg");
+      function show() {
+        msg.style.display = "block";
+        more.style.display = "none";
+      }
+      //if (msg.textContent && msg.textContent.length < 100)
+      //  show()
+      more.addEventListener("click", show);
+    });
+  </script>
 
   <!-- @include macros.html -->
   <!-- @include tracking.html -->

@@ -51,12 +51,12 @@ namespace ts.pxtc.decompiler {
      */
     const multiLineCommentRegex = /^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*(.*?)(?:\*?\*\/)?$/
 
-    const builtinBlocks: pxt.Map<{ block: string; blockId: string; fields?: string }> = {
+    const builtinBlocks: pxt.Map<{ block: string; blockId: string; }> = {
         "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
         "Math.min": { blockId: "math_op2", block: "of %x|and %y" },
-        "Math.max": { blockId: "math_op2", block: "of %x|and %y", fields: `<field name="op">max</field>` }
-    }
+        "Math.max": { blockId: "math_op2", block: "of %x|and %y" }
+     }
 
     interface BlocklyNode {
         kind: string;
@@ -212,12 +212,12 @@ namespace ts.pxtc.decompiler {
 
             function checkChildren(n: Node): void {
                 ts.forEachChild(n, (child) => {
-                    if (isDeclaration(child) && isVariableLike(child) && child.name.kind === SK.Identifier) {
-                        const name = child.name.getText();
+                    if (child.kind === SK.VariableDeclaration && (child as ts.VariableDeclaration).name.kind === SK.Identifier) {
+                        const name = (child as ts.VariableDeclaration).name.getText();
 
                         if (takenNames[name]) {
                             const newName = getNewName(name);
-                            const renames = service.findRenameLocations(s.fileName, child.name.pos + 1, false, false);
+                            const renames = service.findRenameLocations(s.fileName, (child as ts.VariableDeclaration).name.pos + 1, false, false);
                             if (renames) {
                                 renames.forEach(r => {
                                     allRenames.push({
@@ -472,7 +472,7 @@ ${output}</xml>`;
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
-            if (checkExpression(n)) {
+            if (checkExpression(n, blocksInfo)) {
                 return getTypeScriptExpressionBlock(n);
             }
             else {
@@ -699,8 +699,8 @@ ${output}</xml>`;
             }
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
-            if (callInfo.attrs.blockIdentity) {
-                const parentCallInfo = n.parent && (n.parent as any).callInfo;
+            const parentCallInfo: pxtc.CallInfo = n.parent && (n.parent as any).callInfo;
+            if (callInfo.attrs.blockIdentity && !(parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity)) {
                 if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
                     value = callInfo.attrs.enumval;
                 }
@@ -730,7 +730,7 @@ ${output}</xml>`;
             const node = n as ts.Node;
             let stmt: StatementNode;
 
-            if (checkStatement(node)) {
+            if (checkStatement(node, blocksInfo)) {
                 stmt = getTypeScriptStatementBlock(node);
             }
             else {
@@ -1057,6 +1057,15 @@ ${output}</xml>`;
                 type: info.attrs.blockId
             }
 
+            if (info.qName == "Math.max") {
+                (r.fields || (r.fields = [])).push({
+                    kind: "field",
+                    name: "op",
+                    value: "max"
+                });
+            }
+
+
             info.args.forEach((e, i) => {
                 if (i === 0 && info.attrs.defaultInstance) {
                     if (e.getText() === info.attrs.defaultInstance) {
@@ -1065,6 +1074,11 @@ ${output}</xml>`;
                     else {
                         r.mutation = { "showing": "true" };
                     }
+                }
+
+                if (info.attrs.mutatePropertyEnum && i === info.args.length - 2) {
+                    // Implicit in the blocks
+                    return;
                 }
 
                 switch (e.kind) {
@@ -1080,7 +1094,7 @@ ${output}</xml>`;
                         const shadow = callInfo && !!callInfo.attrs.blockIdentity
                         const aName = U.htmlEscape(argNames[i]);
 
-                        if (shadow) {
+                        if (shadow && callInfo.attrs.blockIdentity !== info.qName) {
                             (r.inputs || (r.inputs = [])).push(getValue(aName, e));
                         }
                         else {
@@ -1129,41 +1143,15 @@ ${output}</xml>`;
         // }
 
         function getDestructuringMutation(callback: ts.ArrowFunction): Map<string> {
-            if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
-                const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
-
-                const renames: { [index: string]: string } = {};
-
-                const properties = elements.map(e => {
-                    if (checkName(e.propertyName) && checkName(e.name)) {
-                        const name = (e.name as Identifier).text;
-                        if (e.propertyName) {
-                            const propName = (e.propertyName as Identifier).text;
-                            renames[propName] = name;
-                            return propName;
-                        }
-                        return name;
-                    }
-                    else {
-                        return "";
-                    }
-                });
-
+            const bindings = getObjectBindingProperties(callback);
+            if (bindings) {
                 return {
-                    "callbackproperties": properties.join(","),
-                    "renamemap": Util.htmlEscape(JSON.stringify(renames))
+                    "callbackproperties": bindings[0].join(","),
+                    "renamemap": Util.htmlEscape(JSON.stringify(bindings[1]))
                 };
             }
 
             return undefined;
-
-            function checkName(name: Node) {
-                if (name && name.kind !== SK.Identifier) {
-                    error(name, Util.lf("Only identifiers may be used for variable names in object destructuring patterns"));
-                    return false;
-                }
-                return true;
-            }
         }
 
         function getMathRandomArgumentExpresion(e: ts.Expression): OutputNode {
@@ -1219,7 +1207,7 @@ ${output}</xml>`;
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
             statements.reverse().forEach(statement => {
-                if (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement) && !checkStatement(statement)) {
+                if (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement) && !checkStatement(statement, blocksInfo)) {
                     eventStatements.unshift(statement)
                 }
                 else {
@@ -1313,6 +1301,11 @@ ${output}</xml>`;
                 const match = regex.exec(line)
                 if (match) {
                     const matched = match[1].trim()
+
+                    if (matched === ON_START_COMMENT) {
+                        return;
+                    }
+
                     if (matched) {
                         currentLine += currentLine ? " " + matched : matched
                     } else {
@@ -1350,27 +1343,27 @@ ${output}</xml>`;
         }
     }
 
-    function checkStatement(node: ts.Node): string {
+    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo): string {
         switch (node.kind) {
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
                 return undefined;
             case SK.ExpressionStatement:
-                return checkStatement((node as ts.ExpressionStatement).expression);
+                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo);
             case SK.VariableStatement:
-                return checkVariableStatement(node as ts.VariableStatement);
+                return checkVariableStatement(node as ts.VariableStatement, blocksInfo);
             case SK.CallExpression:
-                return checkCall(node as ts.CallExpression);
+                return checkCall(node as ts.CallExpression, blocksInfo);
             case SK.VariableDeclaration:
-                return checkVariableDeclaration(node as ts.VariableDeclaration);
+                return checkVariableDeclaration(node as ts.VariableDeclaration, blocksInfo);
             case SK.PostfixUnaryExpression:
             case SK.PrefixUnaryExpression:
                 return checkIncrementorExpression(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
             case SK.ArrowFunction:
                 return checkArrowFunction(node as ts.ArrowFunction);
             case SK.BinaryExpression:
-                return checkBinaryExpression(node as ts.BinaryExpression);
+                return checkBinaryExpression(node as ts.BinaryExpression, blocksInfo);
             case SK.ForStatement:
                 return checkForStatement(node as ts.ForStatement);
         }
@@ -1426,14 +1419,14 @@ ${output}</xml>`;
             }
         }
 
-        function checkBinaryExpression(n: ts.BinaryExpression) {
+        function checkBinaryExpression(n: ts.BinaryExpression, blocksInfo: BlocksInfo) {
             if (n.left.kind !== SK.Identifier) {
                 return Util.lf("Only variable names may be assigned to")
             }
 
             switch (n.operatorToken.kind) {
                 case SK.EqualsToken:
-                    return checkExpression(n.right);
+                    return checkExpression(n.right, blocksInfo);
                 case SK.PlusEqualsToken:
                 case SK.MinusEqualsToken:
                     return undefined;
@@ -1461,7 +1454,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkVariableDeclaration(n: ts.VariableDeclaration) {
+        function checkVariableDeclaration(n: ts.VariableDeclaration, blocksInfo: BlocksInfo) {
             let check: string;
 
             if (n.name.kind !== SK.Identifier) {
@@ -1471,7 +1464,7 @@ ${output}</xml>`;
                 check = Util.lf("Variable declarations must have an initializer");
             }
             else if (!isAutoDeclaration(n)) {
-                check = checkExpression(n.initializer);
+                check = checkExpression(n.initializer, blocksInfo);
             }
 
             if (check) {
@@ -1480,9 +1473,9 @@ ${output}</xml>`;
             return check;
         }
 
-        function checkVariableStatement(n: ts.VariableStatement) {
+        function checkVariableStatement(n: ts.VariableStatement, blocksInfo: BlocksInfo) {
             for (const declaration of n.declarationList.declarations) {
-                const res = checkVariableDeclaration(declaration);
+                const res = checkVariableDeclaration(declaration, blocksInfo);
                 if (res) {
                     return res;
                 }
@@ -1490,7 +1483,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkCall(n: ts.CallExpression) {
+        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo) {
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
@@ -1525,14 +1518,76 @@ ${output}</xml>`;
             });
 
             const argumentDifference = info.args.length - argNames.length;
-            if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1)) {
+            if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1) && !checkForDestructuringMutation()) {
+
                 const hasCallback = hasArrowFunction(info);
                 if (argumentDifference > 1 || !hasCallback) {
                     return Util.lf("Function call has more arguments than are supported by its block");
                 }
             }
 
+            const api = blocksInfo.apis.byQName[info.qName];
+            if (api && api.parameters && api.parameters.length) {
+                let fail = false;
+                const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
+                info.args.forEach((e, i) => {
+                    if (instance && i === 0) {
+                        return;
+                    }
+                    const paramInfo = api.parameters[instance ? i - 1 : i];
+                    if (paramInfo.isEnum) {
+                        if (e.kind === SK.PropertyAccessExpression) {
+                            const enumName = (e as PropertyAccessExpression).expression as Identifier;
+                            if (enumName.kind === SK.Identifier && enumName.text === paramInfo.type) {
+                                return;
+                            }
+                        }
+                        fail = true;
+                        return;
+                    }
+                });
+
+                if (fail) {
+                    return Util.lf("Enum arguments may only be literal property access expressions");
+                }
+            }
+
+
+
             return undefined;
+
+            function checkForDestructuringMutation() {
+                // If the mutatePropertyEnum is set, the array literal and the destructured
+                // properties must have matching names
+                if (info.attrs.mutatePropertyEnum && argumentDifference === 2 && info.args.length >= 2) {
+                    const arrayArg = info.args[info.args.length - 2] as ArrayLiteralExpression;
+                    const callbackArg = info.args[info.args.length - 1] as ArrowFunction;
+
+                    if (arrayArg.kind === SK.ArrayLiteralExpression && callbackArg.kind === SK.ArrowFunction) {
+                        const propNames: string[] = [];
+
+                        // Make sure that all elements in the array literal are enum values
+                        const allLiterals = !arrayArg.elements.some((e: PropertyAccessExpression) => {
+                            if (e.kind === SK.PropertyAccessExpression && e.expression.kind === SK.Identifier) {
+                                propNames.push(e.name.text);
+                                return (e.expression as ts.Identifier).text !== info.attrs.mutatePropertyEnum;
+                            }
+                            return true;
+                        });
+
+                        if (allLiterals) {
+                            // Also need to check that the array literal's values and the destructured values match
+                            const bindings = getObjectBindingProperties(callbackArg);
+
+                            if (bindings) {
+                                const names = bindings[0];
+                                return names.length === propNames.length && !propNames.some(p => names.indexOf(p) === -1);
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
         }
     }
 
@@ -1568,7 +1623,42 @@ ${output}</xml>`;
         return undefined;
     }
 
-    function checkExpression(n: ts.Node): string {
+    function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], Map<string>] {
+        if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
+            const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
+
+            const renames: { [index: string]: string } = {};
+
+            const properties = elements.map(e => {
+                if (checkName(e.propertyName) && checkName(e.name)) {
+                    const name = (e.name as Identifier).text;
+                    if (e.propertyName) {
+                        const propName = (e.propertyName as Identifier).text;
+                        renames[propName] = name;
+                        return propName;
+                    }
+                    return name;
+                }
+                else {
+                    return "";
+                }
+            });
+
+            return [properties, renames];
+        }
+
+        return undefined;
+
+        function checkName(name: Node) {
+            if (name && name.kind !== SK.Identifier) {
+                // error(name, Util.lf("Only identifiers may be used for variable names in object destructuring patterns"));
+                return false;
+            }
+            return true;
+        }
+    }
+
+    function checkExpression(n: ts.Node, blocksInfo: BlocksInfo): string {
         switch (n.kind) {
             case SK.StringLiteral:
             case SK.FirstTemplateToken:
@@ -1579,7 +1669,7 @@ ${output}</xml>`;
             case SK.ExpressionStatement:
                 return undefined;
             case SK.ParenthesizedExpression:
-                return checkExpression((n as ts.ParenthesizedExpression).expression);
+                return checkExpression((n as ts.ParenthesizedExpression).expression, blocksInfo);
             case SK.Identifier:
                 return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
             case SK.BinaryExpression:
@@ -1592,7 +1682,7 @@ ${output}</xml>`;
             case SK.PropertyAccessExpression:
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression);
             case SK.CallExpression:
-                return checkStatement(n);
+                return checkStatement(n, blocksInfo);
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
 

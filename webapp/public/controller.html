@@ -3,39 +3,82 @@
 
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 </head>
 <style type="text/css">
-    @import "/cdn/semantic.css";
+    @import "/blb/semantic.css";
 </style>
 <style>    
     #logs {
         position: absolute;
         left: 0;
-        top: 1rem;
+        top: 2rem;
         width: 100%;
-        height: 6rem;
+        height: 10rem;
         border: 0;
+        font-size: 0.6rem;
     }
     
     #iframe {
         position: absolute;
         left: 0;
-        top: 7rem;
+        top: 10.5rem;
         width: 100%;
-        height: calc(100% - 7rem);
+        height: calc(100% - 10.5rem);
         border: 0;
     }
 </style>
 <script>
+    let projects = [
+{
+  "text": {
+    "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"dash_wheel_speed\" id=\"Z.~x[F0kmYKbiA{3yiK|\" disabled=\"true\" x=\"203\" y=\"113\">\n    <value name=\"left\">\n      <shadow type=\"math_number\" id=\"ST8}MLcWWE/DrA/gXR`r\">\n        <field name=\"NUM\">0</field>\n      </shadow>\n    </value>\n    <value name=\"right\">\n      <shadow type=\"math_number\" id=\"%%5=q4?dlI1*zD*lE=zH\">\n        <field name=\"NUM\">0</field>\n      </shadow>\n    </value>\n  </block>\n</xml>",
+    "main.ts": "\n",
+    "README.md": " ",
+    "pxt.json": "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
+  }
+}];
+    let lastSaved;
+    
     function sendMessage(action) {
+        console.log('send ' + action)
         var logs = document.getElementById("logs");
-        logs.innerText += action + "\n";
-        document.getElementById("iframe").contentWindow.postMessage({
+        logs.innerText += "> " + action + "\n";
+        let editor = document.getElementById("iframe").contentWindow;
+        let msg = {
             type: "pxteditor",
             id: "xxxxxxxxx",
             action: action
-        }, "*")
+        };
+        if(action == 'importproject') {
+            let prj = JSON.parse(JSON.stringify(projects[0]));
+            msg.project = prj;
+            msg.response = true;
+        }
+        editor.postMessage(msg, "*")
     }
+
+    function receiveMessage(ev) {
+        let editor = document.getElementById("iframe").contentWindow;
+        let msg = ev.data;
+        console.log('received...')
+        console.log(msg)
+        var logs = document.getElementById("logs");
+        logs.innerText += "< " + msg.type +(msg.action ? " " + msg.action : "" ) + "\n";
+        if (msg.type == "pxthost") {
+            if (msg.action == "workspacesync") {
+                // no project
+                msg.projects = projects;
+                editor.postMessage(msg, "*")
+                return;
+            } else if (msg.action == "workspacesave") {
+                console.log(JSON.stringify(msg.project, null, 2))
+                lastSaved = msg.project;
+            }
+        }
+    }
+
+    window.addEventListener("message", receiveMessage, false);
 
 </script>
 <body>
@@ -46,9 +89,12 @@
         <button class="ui button" onclick="sendMessage('restartsimulator')">reset sim</button>
         <button class="ui button" onclick="sendMessage('stopsimulator')">stop sim</button>
         <button class="ui button" onclick="sendMessage('newproject')">newproject</button>
+        <button class="ui button" onclick="sendMessage('importproject')">importproject</button>
+        <button class="ui button" onclick="sendMessage('undo')">undo</button>
+        <button class="ui button" onclick="sendMessage('redo')">redo</button>
     </div>
     <pre id="logs" class="ui"></pre>
-    <iframe id="iframe" src="http://localhost:3232/index.html?editorlayout=ide" />
+    <iframe id="iframe" src="http://localhost:3232/index.html?dbg=1&editorlayout=ide" />
 </body>
 
 <script>

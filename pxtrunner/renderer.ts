@@ -20,11 +20,13 @@ namespace pxt.runner {
         pxtUrl?: string;
         packageClass?: string;
         package?: string;
+        showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         downloadScreenshots?: boolean
     }
 
     export interface WidgetOptions {
+        showEdit?: boolean;
         showJs?: boolean;
         hideGutter?: boolean;
         run?: boolean;
@@ -49,6 +51,7 @@ namespace pxt.runner {
         $container: JQuery,
         $js: JQuery,
         $svg: JQuery,
+        decompileResult: DecompileResult,
         woptions: WidgetOptions = {}
     ) {
         if (!$svg || !$svg[0]) {
@@ -58,12 +61,20 @@ namespace pxt.runner {
             return;
         }
 
-        let cdn = pxt.webConfig.pxtCdnUrl
+        let cdn = pxt.webConfig.commitCdnUrl
         let images = cdn + "images"
-        let $h = $('<div class="ui bottom attached tabular icon small compact menu">'
+        let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
         let $c = $('<div class="ui top attached segment"></div>');
         let $menu = $h.find('.right.menu');
+
+        if (woptions.showEdit) { // edit button
+            const $editBtn = $('<a class="item"><i aria-label="edit" class="edit icon"></i></a>').click(() => {
+                decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
+                    .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
+            })
+            $menu.append($editBtn);
+        }
 
         if (options.showJavaScript) {
             // blocks
@@ -109,7 +120,7 @@ namespace pxt.runner {
                 else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($js.text())}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -200,14 +211,15 @@ namespace pxt.runner {
 
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
-            let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
-            let js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
+            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             if (options.snippetReplaceParent) c = c.parent();
-            let compiled = r.compileJS && r.compileJS.success;
-            let hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
+            const compiled = r.compileJS && r.compileJS.success;
+            const hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
                 ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
-            let hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
-            fillWithWidget(options, c, js, s, {
+            const hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
+            fillWithWidget(options, c, js, s, r, {
+                showEdit: options.showEdit,
                 run: options.simulator && compiled,
                 hexname: hexname,
                 hex: hex,
@@ -242,7 +254,7 @@ namespace pxt.runner {
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(options, c, js, s, { showJs: true, hideGutter: true });
+            fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
         }, { package: options.package, snippetMode: true });
     }
 
@@ -280,9 +292,9 @@ namespace pxt.runner {
             const text = $el.text();
             const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
             if (mbtn) {
-                const lev = mbtn[1].length == 1 ? "primary" : "";
+                const lev = mbtn[1].length == 1 ? "docs inlinebutton" : "docs inlineblock";
                 const txt = mbtn[2];
-                $el.replaceWith($(`<button class="ui button ${lev}"/>`).text(U.rlf(txt)));
+                $el.replaceWith($(`<span class="${lev}"/>`).text(U.rlf(txt)));
                 return renderNextAsync();
             }
 
@@ -478,8 +490,13 @@ namespace pxt.runner {
             .then(() => Promise.delay(1, renderNextCodeCardAsync(cls, options)));
     }
 
-    function getRunUrl(options: ClientRenderOptions) {
+    function getRunUrl(options: ClientRenderOptions): string {
         return options.pxtUrl ? options.pxtUrl + '/--run' : pxt.webConfig && pxt.webConfig.runUrl ? pxt.webConfig.runUrl : '/--run';
+    }
+
+    function getEditUrl(options: ClientRenderOptions): string {
+        const url = options.pxtUrl || pxt.appTarget.appTheme.homeUrl;
+        return (url || "").replace(/\/$/, '');
     }
 
     function mergeConfig(options: ClientRenderOptions) {
@@ -496,8 +513,8 @@ namespace pxt.runner {
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
-
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
+        options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
         if (options.simulatorClass) {
@@ -508,7 +525,7 @@ namespace pxt.runner {
                 if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                 let $sim = $(`<div class="ui centered card"><div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe>
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
                     </div>
                     </div></div>`)
                 $sim.find("iframe").attr("src", getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($c.text().trim()));

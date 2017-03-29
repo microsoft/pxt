@@ -52,16 +52,6 @@ body {
     right: 8px;
 }
 
-#content .ui.button > .icon-and-text {
-    margin-right: 4px;
-    margin-left: -2px;
-}
-
-.rtl #content .ui.button > .icon-and-text {
-    margin-left: 4px;
-    margin-right: -2px;
-}
-
 .ui.button.icon.clear {
     background: transparent;
     padding: 0;
@@ -276,6 +266,7 @@ text.blocklyCheckbox {
     font-size: 17pt !important;
 }
 
+/*
 .blocklyPreview {
     position: absolute;
     top: 50%;
@@ -285,7 +276,7 @@ text.blocklyCheckbox {
     transform: translate(-50%,-50%);
     width: calc(100% - 1em);
     max-height: calc(100% - 1em);
-}
+}*/
 
 body.blocklyMinimalBody {
     min-width: initial;
@@ -336,7 +327,7 @@ div.blocklyWidgetDiv {
 }
 
 .monacoToolboxDiv {
-    position: relative;
+    position: absolute;
     display: inline-block;
     overflow-x: visible;
     overflow-y: auto;
@@ -352,4 +343,5 @@ div.blocklyWidgetDiv {
 #monacoEditorInner {
     position: relative !important;
     display: inline-block;
+    float: right;
 }

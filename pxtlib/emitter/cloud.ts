@@ -65,9 +65,9 @@ namespace pxt.Cloud {
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         docid = docid.replace(/^\//, "");
-        let url = `md/${pxt.appTarget.id}/${docid}`;
+        let url = `md/${pxt.appTarget.id}/${docid}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
         if (locale != "en") {
-            url += `?lang=${encodeURIComponent(Util.userLanguage())}`
+            url += `&lang=${encodeURIComponent(Util.userLanguage())}`
             if (live) url += "&live=1"
         }
         if (Cloud.isLocalHost() && !live)
@@ -79,7 +79,7 @@ namespace pxt.Cloud {
             }).then(resp => {
                 if (resp.statusCode == 404)
                     return privateGetTextAsync(url);
-                else return resp.json as string;
+                else return resp.text
             });
         else return privateGetTextAsync(url);
     }
@@ -109,9 +109,9 @@ namespace pxt.Cloud {
         const target = pxt.appTarget;
         if (!uri || !target.appTheme || !target.appTheme.embedUrl) return undefined;
 
-        let embedUrl = Util.escapeForRegex(Util.stripUrlProtocol(target.appTheme.embedUrl));
-        let m = new RegExp(`^((https:\/\/)?${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|(.+))$`, 'i').exec(uri.trim());
-        let scriptid = m && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
+        const embedUrl = Util.escapeForRegex(Util.stripUrlProtocol(target.appTheme.embedUrl));
+        const m = new RegExp(`^((https:\/\/)?${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-]+))$`, 'i').exec(uri.trim());
+        const scriptid = m && (!m[1] || m[1] == "https://" + Util.stripUrlProtocol(target.appTheme.embedUrl)) && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
         return scriptid;
     }
 

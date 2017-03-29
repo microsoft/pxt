@@ -32,15 +32,32 @@ This directory is cleaned before starting the process.
 
 ### ~
 
-## Local testing
 
-After running the command, mount a web server from serves ``/<div>`` to the ``built/package/<dir>`` folder. You can use [http-server](https://www.npmjs.com/package/http-server) for easy testing.
+## Deploying PXT with static files
+
+Running ``pxt staticpkg`` will create a number of files under ``built/packaged``.
+You can use ``pxt serve -pkg`` or any other any web server. For example, you can use [http-server](https://www.npmjs.com/package/http-server) for easy testing.
 
 ```
 npm install -g http-server
 http-server -c-1 built/packaged
 ```
 
-## See Also
+You can also run ``pxt staticpkg --route foo``, which will create files under ``built/packaged/foo``
+that assume they sit under `/foo/` on the web server. If you do not specify anything,
+the files assume they sit right under `/`. To test it, run `pxt serve -pkg` and head to
+`http://localhost:3232/foo/index.html`.
 
-[pxt](/cli) tool
+## [GitHub Pages](https://pages.github.com/) support
+
+GitHub provides you with free hosting for your project files.
+
+If you wish to publish your web site to GitHub pages, simply add ``--githubpages`` to the command.
+
+This will:
+* create a fresh checkout in `built/gh-pages` if needed
+* implicityly run `pxt staticpkg --route repo-name`
+* copy files from `built/packaged/repo-name` to `built/gh-pages`
+* add files to git, commit, and push
+
+You can then head to `https://your-username.github.io/repo-name/`.

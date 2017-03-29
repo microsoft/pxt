@@ -16,7 +16,7 @@ PXT programs are executed in at least three different environments:
 * server-side JavaScript engines (node.js, etc)
 
 We refer to the browser execution environment as the "simulator" (of the
-microcontroller), even though for most targets it's the only environment.
+microcontroller), even though for some targets it's the only environment.
 
 The node.js execution is currently only used for automated testing, but one
 can easily imagine a programming experience for scripts running on headless
@@ -30,11 +30,10 @@ which is then deployed to the microcontroller.
 For browsers and node.js, PXT programs are compiled to 
 [continuation-passing style](https://en.wikipedia.org/wiki/Continuation-passing_style)
 JavaScript. This utilizes the TypeScript abstract syntax tree as input, but
-does not utilize TypeScript JavaScript emitter.
+does not use TypeScript JavaScript emitter.
 On the plus side, this allows for [handling of async calls](/async), even if the browser
 doesn't support `yield` statement, as well as cross-browser and remote
 debugging. On the other hand, the generated code is not really human readable.
-See also [issue #51](https://github.com/Microsoft/pxt/issues/51).
 
 ## Supported language features
 
@@ -78,6 +77,9 @@ Things you may miss and we may implement:
 * class inheritance for generic classes and methods
 * initializers for class fields
 * `public`/`private` annotations on constructor arguments (syntactic sugar to make them into fields)
+* binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
+* `delete` statement (on object literals)
+* spread and reset operators (statically typed)
 
 For JS-only targets we may implement the following:
 
@@ -88,19 +90,16 @@ or other constraints (note that if you don't know what a given feature is, you'r
 unlikely to miss it):
 
 * file-based modules (`import * from ...`, `module.exports` etc); we do support namespaces
-* spread operator
 * `yield` expression and ``function*``
 * `await` expression and `async function`
 * `typeof` expression
 * tagged templates ``tag `text ${expression} more text` ``; regular templates are supported
-* binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * `with` statement
 * `eval`
-* `delete` statement
 * `for ... in` statements (`for ... of` is supported)
-* JSX (HTML as part of JavaScript)
 * prototype-based inheritance; `this` pointer outside classes
 * `arguments` keyword; `.apply` method
+* JSX (HTML fragments as part of JavaScript)
 
 Note, that you can use all of these while implementing your runtime environment
 (simulator), they just cannot be used in user's programs.
@@ -117,6 +116,48 @@ This causes some semantic differences:
   (which are two different values, distinct from `0` or `false`); 
   in PXT `0`, `false`, `null`, and `undefined` all have the same underlying
   representation (32 zero bits) and thus will test as equal
+
+## Static compilation vs a dynamic VM
+
+PXT programs are compiled to native code. The native targets include ARM Thumb,
+and an unfinished AVR port.
+
+The execution strategy is more similar to C# or Java, rather than typical JavaScript engines,
+i.e., much closer to the metal.
+* integers, (upcoming) single precision floating point numbers, and booleans are all passed 
+  around unboxed
+* objects use reference counting
+* classes are laid out using static type information (like in C), so there is little memory overhead
+
+PXT also supports dynamic objects (also reference counted), which are essentially string-to-value
+mappings - these have much higher memory overhead, and would be typically the only thing available
+in a dynamic language.
+
+All of this lends itself to significant performance improvements over typical dynamic VM implementations:
+* user programs are compiled directly to machine code, and are
+  never in any byte-code form that needs to be interpreted; this results in execution
+  10-20x faster than a typical JS interpreter
+* there is no RAM overhead for user-code - all code sits in flash; in a dynamic VM
+  there are usually some data-structures representing code
+* due to lack of boxing and static class layout the memory consumption for objects
+  is around half the one you get in a dynamic VM (not counting
+  the user-code structures mentioned above)
+* while there is some runtime support code in PXT, it's typically around 100KB smaller than
+  a dynamic VM, bringing down flash consumption and leaving more space for user code
+
+The execution time, RAM and flash consumption of PXT code is as a rule of thumb 2x of
+compiled C code, making it competitive to write drivers and other user-space libraries.
+
+Interfacing C++ from PXT is easier than interfacing typical dynamic VMs,
+in particular for simple functions with numbers on input and output - there is
+no need for unboxing, checking types, or memory management.
+
+The main disadvantage of using static compilation is lack of dynamic features
+in the language, as explained above.
+
+While it is possible to run a dynamic VM even on an nRF51-class device
+(256KB of flash, 16KB of RAM), it leaves little space for innovative features
+on the software side, or more complex user programs and user-space (not C++) drivers.
 
 ## Smaller int types
 

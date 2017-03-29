@@ -15,6 +15,12 @@ namespace pxt.blocks {
         lists: '#D83B01'
     }
 
+    export enum CategoryMode {
+        All,
+        None,
+        Basic
+    }
+
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
             field: "TEXT",
@@ -158,7 +164,7 @@ namespace pxt.blocks {
         return result;
     }
 
-    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories: boolean) {
+    function injectToolbox(tb: Element, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, block: HTMLElement, showCategories = CategoryMode.Basic) {
         // identity function are just a trick to get an enum drop down in the block
         // while allowing the parameter to be a number
         if (fn.attributes.blockHidden)
@@ -167,11 +173,17 @@ namespace pxt.blocks {
         if (!fn.attributes.deprecated) {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
             let nsn = info.apis.byQName[ns];
+            let isAdvanced = nsn && nsn.attributes.advanced;
+
+            if (showCategories !== CategoryMode.All && isAdvanced) {
+                return;
+            }
+
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
             let category = categoryElement(tb, catName);
 
-            if (showCategories) {
+            if (showCategories !== CategoryMode.None) {
                 if (!category) {
                     let categories = getChildCategories(tb)
                     let parentCategoryList = tb;
@@ -198,25 +210,23 @@ namespace pxt.blocks {
                         category.setAttribute("expandedclass", `blocklyTreeIconDefault`);
                     }
 
-                    if (nsn && nsn.attributes.advanced) {
-                        parentCategoryList = getOrAddSubcategory(tb, Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", 'blocklyTreeIconadvanced')
-                        categories = getChildCategories(parentCategoryList)
-                    }
-
-                    // Insert the category based on weight
-                    let ci = 0;
-                    for (ci = 0; ci < categories.length; ++ci) {
-                        let cat = categories[ci];
-                        if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
-                            parentCategoryList.insertBefore(category, cat);
-                            break;
-                        }
-                    }
-                    if (ci == categories.length)
-                        parentCategoryList.appendChild(category);
+                    insertTopLevelCategory(category, tb, nsWeight, isAdvanced);
                 }
                 if (fn.attributes.advanced) {
-                    category = getOrAddSubcategory(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    category = getOrAddSubcategoryByWeight(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                }
+                else if (fn.attributes.subcategory) {
+                    const sub = fn.attributes.subcategory;
+                    const all = nsn.attributes.subcategories;
+                    if (all && all.indexOf(sub) !== -1) {
+                        // Respect the weights given by the package
+                        const weight = 10000 - all.indexOf(sub);
+                        category = getOrAddSubcategoryByWeight(category, sub, sub, weight, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    }
+                    else {
+                        // If no weight is specified, insert alphabetically after the weighted subcategories but above "More"
+                        category = getOrAddSubcategoryByName(category, sub, sub, category.getAttribute("colour"), 'blocklyTreeIconmore')
+                    }
                 }
             }
             if (fn.attributes.mutateDefaults) {
@@ -224,7 +234,7 @@ namespace pxt.blocks {
                 mutationValues.forEach(mutation => {
                     const mutatedBlock = block.cloneNode(true);
                     mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
-                    if (showCategories) {
+                    if (showCategories !== CategoryMode.None) {
                         category.appendChild(mutatedBlock);
                     } else {
                         tb.appendChild(mutatedBlock);
@@ -232,7 +242,7 @@ namespace pxt.blocks {
                 });
             }
             else {
-                if (showCategories) {
+                if (showCategories !== CategoryMode.None) {
                     category.appendChild(block);
                     injectToolboxIconCss();
                 } else {
@@ -247,12 +257,25 @@ namespace pxt.blocks {
     export function appendToolboxIconCss(className: string, i: string): void {
         if (toolboxStyleBuffer.indexOf(className) > -1) return;
 
-        const icon = Util.unicodeToChar(i);
-        toolboxStyleBuffer += `
-            .blocklyTreeIcon.${className}::before {
-                content: "${icon}";
-            }
-        `;
+        if (i.length === 1) {
+            const icon = Util.unicodeToChar(i);
+            toolboxStyleBuffer += `
+                .blocklyTreeIcon.${className}::before {
+                    content: "${icon}";
+                }
+            `;
+        }
+        else {
+            toolboxStyleBuffer += `
+                .blocklyTreeIcon.${className} {
+                    display: inline-block !important;
+                    background-image: url("${pxt.webConfig.commitCdnUrl + encodeURI(i)}")!important;
+                    width: 1em;
+                    height: 1em;
+                    background-size: 1em!important;
+                }
+            `;
+        }
     }
 
     export function injectToolboxIconCss(): void {
@@ -275,15 +298,20 @@ namespace pxt.blocks {
     function iconToFieldImage(c: string): Blockly.FieldImage {
         let url = iconCanvasCache[c];
         if (!url) {
-            let canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
-            let ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'white';
-            ctx.font = "56px Icons";
-            ctx.textAlign = "center";
-            ctx.fillText(c, canvas.width / 2, 56);
-            url = iconCanvasCache[c] = canvas.toDataURL();
+            if (c.length === 1) {
+                let canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 64;
+                let ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.font = "56px Icons";
+                ctx.textAlign = "center";
+                ctx.fillText(c, canvas.width / 2, 56);
+                url = iconCanvasCache[c] = canvas.toDataURL();
+            }
+            else {
+                url = pxt.webConfig.commitCdnUrl + encodeURI(c);
+            }
         }
         return new Blockly.FieldImage(url, 16, 16, '');
     }
@@ -301,14 +329,109 @@ namespace pxt.blocks {
         return result;
     }
 
-    function getOrAddSubcategory(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
+    function insertTopLevelCategory(category: Element, tb: Element, nsWeight: number, isAdvanced: boolean) {
+        let categories = getChildCategories(tb);
+        if (isAdvanced) {
+            category.setAttribute("advanced", "true");
+        }
+
+        // Insert the category based on weight
+        let ci = 0;
+        for (ci = 0; ci < categories.length; ++ci) {
+            let cat = categories[ci];
+
+            // Advanced categories always come last
+            if (isAdvanced) {
+                if (!cat.hasAttribute("advanced")) {
+                    continue;
+                }
+            }
+            else if (cat.hasAttribute("advanced")) {
+                tb.insertBefore(category, cat);
+                break;
+            }
+
+            if (parseInt(cat.getAttribute("weight") || "50") < nsWeight) {
+                tb.insertBefore(category, cat);
+                break;
+            }
+        }
+        if (ci == categories.length)
+            tb.appendChild(category);
+    }
+
+    function getOrAddSubcategoryByWeight(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
         const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
         if (existing) {
             return existing;
         }
 
         const newCategory = createCategoryElement(name, nameid, weight, colour, iconClass);
-        parent.appendChild(newCategory)
+        const siblings = parent.querySelectorAll("category");
+
+        let ci = 0;
+        for (ci = 0; ci < siblings.length; ++ci) {
+            let cat = siblings[ci];
+            if (parseInt(cat.getAttribute("weight") || "50") < weight) {
+                parent.insertBefore(newCategory, cat);
+                break;
+            }
+        }
+        if (ci == siblings.length)
+            parent.appendChild(newCategory);
+
+        return newCategory;
+    }
+
+    function getOrAddSubcategoryByName(parent: Element, name: string, nameid: string, colour?: string, iconClass?: string) {
+        const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
+        if (existing) {
+            return existing;
+        }
+
+        const newCategory = createCategoryElement(name, nameid, 100, colour, iconClass);
+
+        const siblings = parent.querySelectorAll("category");
+        const filtered: Element[] = [];
+
+        let ci = 0;
+        let inserted = false;
+        let last: Element = undefined;
+        for (ci = 0; ci < siblings.length; ++ci) {
+            let cat = siblings[ci];
+            const sibWeight = parseInt(cat.getAttribute("weight") || "50")
+
+            if (sibWeight >= 1000) {
+                continue;
+            }
+            else if (sibWeight === 1) {
+                last = cat;
+                break;
+            }
+
+            filtered.push(cat);
+
+            if (!inserted && cat.getAttribute("name").localeCompare(name) >= 0) {
+                parent.insertBefore(newCategory, cat);
+                filtered.splice(filtered.length - 1, 0, newCategory);
+                inserted = true;
+            }
+        }
+
+        if (!inserted) {
+            filtered.push(newCategory);
+
+            if (last) {
+                parent.insertBefore(newCategory, last);
+            }
+            else {
+                parent.appendChild(newCategory);
+            }
+        }
+
+        filtered.forEach((e, i) => {
+            e.setAttribute("weight", (200 - i).toString());
+        });
 
         return newCategory;
     }
@@ -434,7 +557,7 @@ namespace pxt.blocks {
                         const k = v.attributes.block || v.attributes.blockId || v.name;
                         return [
                             v.attributes.blockImage ? {
-                                src: pxt.webConfig.targetCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
+                                src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
                                 width: 32,
                                 height: 32
@@ -549,7 +672,19 @@ namespace pxt.blocks {
             e.parentNode.removeChild(e);
     }
 
-    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+    export interface BlockFilters {
+        namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
+        defaultState?: FilterState; // hide, show or disable all by default
+    }
+
+    export enum FilterState {
+        Hidden = 0,
+        Visible = 1,
+        Disabled = 2
+    }
+
+    export function createToolbox(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
         init();
 
         // create new toolbox and update block definitions
@@ -616,7 +751,7 @@ namespace pxt.blocks {
                         el.appendChild(fe);
                     }
                 }
-                if (showCategories) {
+                if (showCategories !== CategoryMode.None) {
                     let cat = categoryElement(tb, eb.namespace);
                     if (cat) {
                         cat.appendChild(el);
@@ -629,12 +764,12 @@ namespace pxt.blocks {
             })
         }
 
-        if (tb && showCategories) {
+        if (tb && showCategories !== CategoryMode.None) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
             if (!config.mathBlocks) removeCategory(tb, "Math");
-            if (!config.textBlocks) removeCategory(tb, "Text");
-            if (!config.listsBlocks) removeCategory(tb, "Lists");
+            if (!config.textBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Text");
+            if (!config.listsBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Lists");
             if (!config.variablesBlocks) removeCategory(tb, "Variables");
             if (!config.logicBlocks) removeCategory(tb, "Logic");
             if (!config.loopsBlocks) removeCategory(tb, "Loops");
@@ -643,17 +778,8 @@ namespace pxt.blocks {
             let cats = tb.querySelectorAll('category');
             let removeAdvanced = false;
             for (let i = 0; i < cats.length; i++) {
-                if (cats[i].getAttribute('name') === "Advanced" && cats[i].childElementCount === 0) {
-                    removeAdvanced = true;
-                }
-                else {
-                    cats[i].setAttribute('name',
-                        Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
-                }
-            }
-
-            if (removeAdvanced) {
-                removeCategory(tb, "Advanced");
+                cats[i].setAttribute('name',
+                    Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
             }
         }
 
@@ -677,38 +803,15 @@ namespace pxt.blocks {
             })
         }
 
-        // Add the "Add package" category
-        if (tb && showCategories && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            getOrAddSubcategory(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
-        }
+        // Add the "Advanced" category
+        if (tb && showCategories !== CategoryMode.None) {
+            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
+            insertTopLevelCategory(cat, tb, 1, false);
 
-        // Filter the blocks
-        if (blockSubset) {
-            let keepcategories: { [index: string]: number } = {};
-            let categories = tb.querySelectorAll("category");
-            let blocks = tb.querySelectorAll("block");
-            for (let bi = 0; bi < blocks.length; ++bi) {
-                let blk = blocks.item(bi);
-                let type = blk.getAttribute("type");
-                let catName = (blk.parentNode as Element).getAttribute("name");
-                let sticky = blk.getAttribute("sticky");
-                if (!blockSubset[type] && !sticky) {
-                    blk.parentNode.removeChild(blk);
-                } else {
-                    keepcategories[catName] = 1;
-                    if (type.indexOf("variables") == 0) {
-                        keepcategories["Variables"] = 1;
-                    }
-                }
-            }
-            if (showCategories) {
-                for (let ci = 0; ci < categories.length; ++ci) {
-                    let cat = categories.item(ci);
-                    let catName = cat.getAttribute("name");
-                    if (!keepcategories[catName] && catName != Util.lf("{id:category}Advanced")) {
-                        cat.parentNode.removeChild(cat);
-                    }
-                }
+            if (showCategories === CategoryMode.All && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+                // Add the "Add package" category
+                getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
             }
         }
 
@@ -723,14 +826,77 @@ namespace pxt.blocks {
             updateUsedBlocks = true;
         }
 
+        // Filter the blocks
+        if (filters) {
+            function filterBlocks(blocks: any, defaultState?: number) {
+                let hasChild: boolean = false;
+                for (let bi = 0; bi < blocks.length; ++bi) {
+                    let blk = blocks.item(bi);
+                    let type = blk.getAttribute("type");
+                    let blockState = filters.blocks && filters.blocks[type] != undefined ? filters.blocks[type] : (defaultState != undefined ? defaultState : filters.defaultState);
+                    switch (blockState) {
+                        case FilterState.Hidden:
+                            blk.parentNode.removeChild(blk); break;
+                        case FilterState.Disabled:
+                            blk.setAttribute("disabled", "true"); break;
+                        case FilterState.Visible:
+                            hasChild = true; break;
+                    }
+                }
+                return hasChild;
+            }
+
+            if (showCategories !== CategoryMode.None) {
+                // Go through namespaces and keep the ones with an override
+                let categories = tb.querySelectorAll(`category:not([nameid="more"]):not([nameid="advanced"])`);
+                for (let ci = 0; ci < categories.length; ++ci) {
+                    let cat = categories.item(ci);
+                    let catName = cat.getAttribute("nameid");
+                    let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
+                    let blocks = cat.querySelectorAll(`block`);
+
+                    let hasVisibleChildren = filterBlocks(blocks, categoryState);
+                    switch (categoryState) {
+                        case FilterState.Disabled:
+                            if (!hasVisibleChildren) {
+                                cat.setAttribute("disabled", "true");
+                                // disable sub categories
+                                let subcategories = cat.querySelectorAll(`category`);
+                                for (let si = 0; si < subcategories.length; ++si) {
+                                    subcategories.item(si).setAttribute("disabled", "true");
+                                }
+                            } break;
+                        case FilterState.Visible:
+                        case FilterState.Hidden:
+                            if (!hasVisibleChildren) cat.parentNode.removeChild(cat); break;
+                    }
+                }
+            } else {
+                let blocks = tb.querySelectorAll(`block`);
+                filterBlocks(blocks);
+            }
+
+            if (showCategories !== CategoryMode.None) {
+                // Go through all categories, hide the ones that have no blocks inside
+                let categories = tb.querySelectorAll(`category:not([nameid="advanced"])`);
+                for (let ci = 0; ci < categories.length; ++ci) {
+                    let cat = categories.item(ci);
+                    let blockCount = cat.querySelectorAll(`block`);
+                    if (blockCount.length == 0) {
+                        if (cat.parentNode) cat.parentNode.removeChild(cat);
+                    }
+                }
+            }
+        }
+
         return tb;
     }
 
-    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories: boolean = true, blockSubset?: { [index: string]: number }): Element {
+    export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
         init();
         initTooltip(blockInfo);
 
-        let tb = createToolbox(blockInfo, toolbox, showCategories, blockSubset);
+        let tb = createToolbox(blockInfo, toolbox, showCategories, filters);
 
         // add trash icon to toolbox
         if (!$('#blocklyTrashIcon').length) {
@@ -788,7 +954,7 @@ namespace pxt.blocks {
 
             if (searchFor != '') {
                 pxt.tickEvent("blocks.search");
-                let searchTb = tb ? <Element>tb.cloneNode(true) : undefined;
+                let searchTb = pxt.blocks.cachedSearchTb ? <Element>pxt.blocks.cachedSearchTb.cloneNode(true) : undefined;
 
                 let catName = 'Search';
                 let category = categoryElement(searchTb, catName);
@@ -1296,29 +1462,16 @@ namespace pxt.blocks {
 
             if (!that.isSelected()) {
                 // Collapse the currently selected node and its parent nodes
-                collapseMoreCategory(that.getTree().getSelectedItem(), that);
+                collapseSubcategories(that.getTree().getSelectedItem(), that);
             }
 
             if (that.hasChildren() && that.isUserCollapsible_) {
-                // If this is a category of categories, we want to toggle when clicked
-                if (that.getChildCount() > 1) {
-                    that.toggle();
-                    if (that.isSelected()) {
-                        that.getTree().setSelectedItem(null);
-                    }
-                    else {
-                        that.select();
-                    }
-                }
-                else {
-                    // If this category has 1 or less children, don't bother toggling; we always want "More..." to show
-                    if (that.isSelected()) {
-                        collapseMoreCategory(that.getTree().getSelectedItem(), that);
-                        that.getTree().setSelectedItem(null);
-                    } else {
-                        that.setExpanded(true);
-                        that.select();
-                    }
+                if (that.isSelected()) {
+                    collapseSubcategories(that.getTree().getSelectedItem(), that);
+                    that.getTree().setSelectedItem(null);
+                } else {
+                    that.setExpanded(true);
+                    that.select();
                 }
             } else if (that.isSelected()) {
                 that.getTree().setSelectedItem(null);
@@ -1340,7 +1493,7 @@ namespace pxt.blocks {
             }
 
             if (a === null) {
-                collapseMoreCategory(that.selectedItem_);
+                collapseSubcategories(that.selectedItem_);
                 editor.lastInvertedCategory = that.selectedItem_;
             }
 
@@ -1369,10 +1522,9 @@ namespace pxt.blocks {
         };
     }
 
-    function collapseMoreCategory(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
+    function collapseSubcategories(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
         while (cat) {
-            // Only collapse categories that have a single child (e.g. "More...")
-            if (cat.getChildCount() === 1 && cat.isUserCollapsible_ && cat != child && (!child || !isChild(child, cat))) {
+            if (cat.isUserCollapsible_ && cat != child && (!child || !isChild(child, cat))) {
                 cat.setExpanded(false);
                 cat.updateRow();
             }
@@ -1820,6 +1972,8 @@ namespace pxt.blocks {
     function initTooltip(blockInfo: pxtc.BlocksInfo) {
 
         const renderTip = (el: any) => {
+            if (el.disabled)
+                return lf("This block is disabled and will not run. Attach this block to an event to enable it.")
             let tip = el.tooltip;
             while (goog.isFunction(tip)) {
                 tip = tip(el);
@@ -1843,7 +1997,9 @@ namespace pxt.blocks {
             if (card) {
                 const cardEl = pxt.docs.codeCard.render({
                     header: renderTip(Blockly.Tooltip.element_),
-                    typeScript: pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
+                    typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
+                        ? undefined
+                        : pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
                 })
                 Blockly.Tooltip.DIV.appendChild(cardEl);
             } else {

@@ -112,7 +112,6 @@ export function runNpmAsync(...args: string[]) {
 }
 
 export function runNpmAsyncWithCwd(cwd: string, ...args: string[]) {
-    console.log("npm", args);
     return spawnAsync({
         cmd: addCmd("npm"),
         args: args,
@@ -403,6 +402,59 @@ function getBrowserLocation(browser: string) {
     }
 
     return browser;
+}
+
+export function directoryExistsSync(p: string): boolean {
+    try {
+        let stats = fs.lstatSync(p);
+        return stats && stats.isDirectory();
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+export function fileExistsSync(p: string): boolean {
+    try {
+        let stats = fs.lstatSync(p);
+        return stats && stats.isFile();
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+// returns undefined if not found
+export function resolveMd(root: string, pathname: string): string {
+
+    const docs = path.join(root, "docs");
+
+    let tryRead = (fn: string) => {
+        if (fileExistsSync(fn + ".md"))
+            return fs.readFileSync(fn + ".md", "utf8")
+        if (fileExistsSync(fn + "/index.md"))
+            return fs.readFileSync(fn + "/index.md", "utf8")
+        return null
+    }
+
+    let targetMd = tryRead(path.join(docs, pathname))
+    if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
+        return targetMd
+
+    let dirs = [
+        path.join(root, "/node_modules/pxt-core/common-docs/"),
+    ]
+    for (let pkg of pxt.appTarget.bundleddirs) {
+        let d = path.join(pkg, "docs");
+        if (!path.isAbsolute(d)) d = path.join(root, d);
+        dirs.push(d)
+    }
+    for (let d of dirs) {
+        let template = tryRead(d + pathname)
+        if (template)
+            return pxt.docs.augmentDocs(template, targetMd)
+    }
+    return undefined;
 }
 
 init();

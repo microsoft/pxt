@@ -16,6 +16,7 @@ interface FileListState {
     expands: pxt.Map<boolean>;
 }
 
+const customFile = "custom.ts";
 export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     constructor(props: ISettingsProps) {
@@ -75,7 +76,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private packageOf(p: pkg.EditorPackage) {
         const expands = this.state.expands;
-        let del = p.getPkgId() != pxt.appTarget.id && p.getPkgId() != "built";
+        let del = p.getPkgId() != pxt.appTarget.id
+            && p.getPkgId() != "built"
+            && p.getPkgId() != pxt.appTarget.corepkg;
         let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => this.togglePkg(p) }>
             <i className={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`}></i>
@@ -100,13 +103,68 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
     }
 
+    private addCustomBlocksFile() {
+        core.confirmAsync({
+            header: lf("Add custom blocks?"),
+            body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
+        }).then(v => {
+            if (!v) return;
+            const p = pkg.mainEditorPkg();
+            p.setFile(customFile, `
+/**
+ * ${lf("Use this file to define custom functions and blocks.")}
+ * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'blocks/custom' )}
+ */
+
+enum MyEnum {
+    //% block="one"
+    One,
+    //% block="two"
+    Two
+}
+
+/**
+ * ${lf("Custom blocks")}
+ */
+//% weight=100 color=#0fbc11 icon="\uf0c3"
+namespace custom {
+    /**
+     * TODO: ${lf("describe your function here")}
+     * @param n ${lf("describe parameter here")}, eg: 5
+     * @param s ${lf("describe parameter here")}, eg: "Hello"
+     * @param e ${lf("describe parameter here")}
+     */    
+    //% block
+    export function foo(n: number, s: string, e: MyEnum): void {
+        // Add code here
+    }
+
+    /**
+     * TODO: ${lf("describe your function here")}
+     * @param value ${lf("describe value here")}, eg: 5
+     */    
+    //% block
+    export function fib(value: number): number {
+        return value <= 1 ? value : fib(value -1) + fib(value - 2);
+    }
+}
+`);
+            return p.updateConfigAsync(cfg => cfg.files.push(customFile))
+                .then(() => this.props.parent.setFile(p.lookupFile("this/" + customFile)))
+                .then(() => p.savePkgAsync())
+                .then(() => this.props.parent.reloadHeaderAsync())
+        });
+    }
+
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
+        const plus = show && !pkg.mainEditorPkg().files[customFile]
         return <div className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
             <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
+                {plus ? <sui.Button class="primary label" icon="plus" onClick={(e) => this.addCustomBlocksFile() } /> : undefined }
             </div>
             {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
         </div>;

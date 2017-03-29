@@ -178,7 +178,7 @@
   "arithmetic operation": "laskutoimitus",
   "assign the value of a variable": "määritä muuttujan arvo",
   "boolean operation": "totuusarvo-operaatio",
-  "change %1 by %2": "muuta %1 kohteeksi %2",
+  "change %1 by %2": "muuta muuttujan %1 arvoa %2",
   "comparing two numbers": "vertaamalla kahta numeroa",
   "conflict on yotta setting {0} between packages {1} and {2}": "ristiriita yotta-asetuksessa {0} pakettien {1} ja {2} välillä",
   "creating new project...": "luodaan uusi projekti...",

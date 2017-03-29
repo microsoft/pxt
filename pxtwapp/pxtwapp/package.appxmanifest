@@ -14,11 +14,15 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1">
+    <Application Id="App" StartPage="https://makecode.com/uwp">
       <uap:ApplicationContentUriRules>
         <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="https://pxt.microbit.org" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="https://makecode.adafruit.com" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="https://mini.pxt.io" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="https://makecode.com/" Type="include" WindowsRuntimeAccess="allowForWebOnly" />
       </uap:ApplicationContentUriRules>
-      <uap:VisualElements DisplayName="PXT Local Test App" Description="Test Application for PXT targets" BackgroundColor="transparent" Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
+      <uap:VisualElements DisplayName="Microsoft MakeCode" Description="Microsoft MakeCode Editors" BackgroundColor="transparent" Square150x150Logo="images\Square150x150Logo.png" Square44x44Logo="images\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="images\Wide310x150Logo.png">
         </uap:DefaultTile>
         <uap:SplashScreen Image="images\splashscreen.png" />
@@ -29,6 +33,8 @@
             <uap:DisplayName>pxt binary file</uap:DisplayName>
             <uap:SupportedFileTypes>
               <uap:FileType ContentType="application/x-microbit-hex">.hex</uap:FileType>
+              <uap:FileType ContentType="application/x-makecode-uf2">.uf2</uap:FileType>
+              <uap:FileType ContentType="application/x-makecode-pxt">.pxt</uap:FileType>
             </uap:SupportedFileTypes>
           </uap:FileTypeAssociation>
         </uap:Extension>

@@ -107,6 +107,11 @@ export class CommandParser {
                 const flagName = command._aliasMap[match[2]];
 
                 if (!flagName) {
+                    if (match[2] == "debug" || match[2] == "d") {
+                        pxt.options.debug = true;
+                        pxt.debug = console.debug || console.log;
+                        continue;
+                    }
                     throw new Error(`Unrecognized flag '${match[2]}' for command '${command.name}'`)
                 }
 
@@ -249,7 +254,7 @@ export class CommandParser {
         }
 
         if (c.onlineHelp)
-            print(`More information at ${"https://pxt.io/cli/" + c.name} .`);
+            print(`More information at ${"https://makecode.com/cli/" + c.name} .`);
     }
 
     private printTopLevelHelp(advanced: boolean, print: (s: string) => void) {
