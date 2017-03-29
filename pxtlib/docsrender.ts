@@ -344,7 +344,7 @@ namespace pxt.docs {
         }
 
         if (opts.theme.appStoreID)
-            pubinfo["appStoreMeta"] = `<meta name="apple-itunes-app" content="app-id=${html2Quote(opts.theme.appStoreID)}}"/>`
+            pubinfo["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${html2Quote(opts.theme.appStoreID)}"/>`
 
         let template = opts.template
         template = template
