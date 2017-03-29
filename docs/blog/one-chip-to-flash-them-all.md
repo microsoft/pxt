@@ -1,3 +1,5 @@
+![Picture of the UF2 devices](/static/images/uf2-devices.jpg)
+
 # One chip to flash them all
 
 **Posted on March 28, 2017 by [mmoskal](https://github.com/mmoskal)**
@@ -232,7 +234,7 @@ The problem was that compiling just the ASF version of MSC and CDC together resu
 way over the 8KB limit.
 Thus, I needed to simplify and cut down the code to size, reimplementing a few things on the way.
 
-The result is the [UF2-SAMD21 bootloader](https://github.com/Microsoft/uf2-samd21), 
+The result is the [UF2-SAMD21 bootloader](https://github.com/Microsoft/uf2-samd21) (to be made available shortly), 
 supporting a number of SAMD21 boards including
 Arduino Zero and MKR1000, as well as Adafruit Metro M0, Feather M0 and Circuit Playground Express.
 The boards are supported with essentially the same code base, except that for some of the boards
