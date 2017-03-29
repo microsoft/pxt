@@ -3528,9 +3528,10 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
     else return build();
 }
 
-export function deployAsync() {
+export function deployAsync(parsed?: commandParser.ParsedCommand) {
+    const serial = parsed && !!parsed.flags["serial"];
     return buildCoreAsync({ mode: BuildOption.Deploy })
-        .then((compileOpts) => { });
+        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve() )
 }
 
 export function runAsync() {
@@ -4027,7 +4028,14 @@ function initCommands() {
         return Promise.resolve();
     }, "[all|command]");
 
-    simpleCmd("deploy", "build and deploy current package", deployAsync, undefined, true);
+    p.defineCommand({
+        name: "deploy",
+        help: "build and deploy current package",
+        flags: {
+            "serial": { description: "start serial monitor after deployment" }
+        },
+        onlineHelp: true
+    }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
