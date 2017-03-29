@@ -27,6 +27,10 @@
             {
                 "name": "Docs",
                 "path": "/docs"
+            },
+            {
+                "name": "Blog",
+                "path": "/blog"
             }
         ]
     }
