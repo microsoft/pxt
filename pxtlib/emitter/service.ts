@@ -859,7 +859,7 @@ namespace ts.pxtc.service {
                 return weight;
             }
 
-            if (!lastFuse) {
+            if (!lastFuse || search.subset) {
                 const blockInfo = blocksInfoOp(); // cache
                 const weights: pxt.Map<number> = {};
                 let builtinSearchSet: SearchInfo[];

@@ -336,16 +336,16 @@ namespace pxt.blocks {
             throw new Error("cannot mix " + t1 + " with " + t2);
     }
 
-    function mkPlaceholderBlock(e: Environment): B.Block {
+    function mkPlaceholderBlock(e: Environment, type?: string): B.Block {
         // XXX define a proper placeholder block type
         return <any>{
             type: "placeholder",
-            p: mkPoint(null),
+            p: mkPoint(type || null),
             workspace: e.workspace,
         };
     }
 
-    function attachPlaceholderIf(e: Environment, b: B.Block, n: string) {
+    function attachPlaceholderIf(e: Environment, b: B.Block, n: string, type?: string) {
         // Ugly hack to keep track of the type we want there.
         const target = b.getInputTargetBlock(n);
         if (!target) {
@@ -353,7 +353,7 @@ namespace pxt.blocks {
                 placeholders[b.id] = {};
             }
 
-            placeholders[b.id][n] = mkPlaceholderBlock(e);
+            placeholders[b.id][n] = mkPlaceholderBlock(e, type);
         }
         else if (target.type === pxtc.TS_OUTPUT_TYPE && !((target as any).p)) {
             (target as any).p = mkPoint(null);
@@ -407,8 +407,8 @@ namespace pxt.blocks {
                                 unionParam(e, b, "B", ground(pNumber.type));
                                 break;
                             case "AND": case "OR":
-                                unionParam(e, b, "A", ground(pBoolean.type));
-                                unionParam(e, b, "B", ground(pBoolean.type));
+                                attachPlaceholderIf(e, b, "A", pBoolean.type);
+                                attachPlaceholderIf(e, b, "B", pBoolean.type);
                                 break;
                             case "EQ": case "NEQ":
                                 attachPlaceholderIf(e, b, "A");
@@ -428,17 +428,17 @@ namespace pxt.blocks {
                         break;
 
                     case "logic_operation":
-                        unionParam(e, b, "A", ground(pBoolean.type));
-                        unionParam(e, b, "B", ground(pBoolean.type));
+                        attachPlaceholderIf(e, b, "A", pBoolean.type);
+                        attachPlaceholderIf(e, b, "B", pBoolean.type);
                         break;
 
                     case "logic_negate":
-                        unionParam(e, b, "BOOL", ground(pBoolean.type));
+                        attachPlaceholderIf(e, b, "BOOL", pBoolean.type);
                         break;
 
                     case "controls_if":
                         for (let i = 0; i <= (<B.IfBlock>b).elseifCount_; ++i)
-                            unionParam(e, b, "IF" + i, ground(pBoolean.type));
+                        attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
                         break;
 
                     case "controls_simple_for":
@@ -464,7 +464,7 @@ namespace pxt.blocks {
                         break;
 
                     case "device_while":
-                        unionParam(e, b, "COND", ground(pBoolean.type));
+                        attachPlaceholderIf(e, b, "COND", pBoolean.type);
                         break;
 
                     default:
@@ -1066,6 +1066,11 @@ namespace pxt.blocks {
     function compileStartEvent(e: Environment, b: B.Block): JsNode {
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.onStartText && body && body.children) {
+            body.children.unshift(mkStmt(mkText(`// ${pxtc.ON_START_COMMENT}\n`)))
+        }
+
         return body;
     }
 

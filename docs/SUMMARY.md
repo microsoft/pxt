@@ -3,6 +3,7 @@
 ## Docs #docs
 
 * [About MakeCode](/about)
+* [Blog](/blog)
 * [Contact Us](/contact)
 * [Technical Docs](/docs)
     * [JS Editor Features](/js/editor)

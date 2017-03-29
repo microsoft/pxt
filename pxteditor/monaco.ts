@@ -14,12 +14,14 @@ namespace pxt.vs {
         snippet: string;
         comment?: string;
         metaData?: pxtc.CommentAttrs;
+        snippetOnly?: boolean;
     }
 
     export interface NameDefiniton {
         fns: { [fn: string]: MethodDef };
         vars?: { [index: string]: string }
         metaData?: pxtc.CommentAttrs;
+        builtin?: boolean;
     }
 
     export type DefinitionMap = { [ns: string]: NameDefiniton };

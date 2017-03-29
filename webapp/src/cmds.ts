@@ -10,6 +10,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
         text,
         name,
         contentType,
+        undefined,
         e => core.errorNotification(lf("saving file failed..."))
     );
 
@@ -27,6 +28,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             uf2,
             fn,
             "application/x-uf2",
+            resp.userContextWindow,
             e => core.errorNotification(lf("saving file failed..."))
         );
     } else {
@@ -37,6 +39,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             hex,
             fn,
             pxt.appTarget.compile.hexMimeType,
+            resp.userContextWindow,
             e => core.errorNotification(lf("saving file failed..."))
         );
     }
@@ -56,28 +59,37 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
 
 function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const boardName = pxt.appTarget.appTheme.boardName || "???";
-    const boardDriveName = pxt.appTarget.compile.driveName || "???";
+    const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
 
+    // https://msdn.microsoft.com/en-us/library/cc848897.aspx
+    // "For security reasons, data URIs are restricted to downloaded resources. 
+    // Data URIs cannot be used for navigation, for scripting, or to populate frame or iframe elements"
+    const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
     const docUrl = pxt.appTarget.appTheme.usbDocs;
+    const saveAs = pxt.BrowserUtils.hasSaveAs();
+    const body = saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
+            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+            boardDriveName, boardName)
+        : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
+            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+            boardDriveName, boardName)
     return core.confirmAsync({
         header: lf("Download completed..."),
-        body: lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
-            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
-            boardDriveName, boardName),
+        body,
         hideCancel: true,
         agreeLbl: lf("Done!"),
-        buttons: [{
-            label: lf("Download again"),
+        buttons: [downloadAgain ? {
+            label: fn,
             icon: "download",
             class: "lightgrey",
             url,
             fileName: fn
-        }, !docUrl ? undefined : {
+        } : undefined, docUrl ? {
             label: lf("Help"),
             icon: "help",
             class: "lightgrey",
             url: docUrl
-        }],
+        } : undefined],
         timeout: 7000
     }).then(() => { });
 }

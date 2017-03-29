@@ -37,6 +37,7 @@ namespace pxt.editor {
         | "hidesimulator"
         | "showsimulator"
         | "newproject"
+        | "importproject"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
@@ -93,6 +94,14 @@ namespace pxt.editor {
         project: pxt.workspace.Project;
     }
 
+    export interface EditorMessageImportProjectRequest extends EditorMessageRequest {
+        action: "importproject";
+        // project to load
+        project: pxt.workspace.Project;
+        // (optional) filtering argument
+        filters?: pxt.editor.ProjectFilters;
+    }
+
     const pendingRequests: pxt.Map<{
         resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
         reject: (err: any) => void;
@@ -117,12 +126,13 @@ namespace pxt.editor {
             if (data.type == "pxthost") { // response from the host
                 const req = pendingRequests[data.id];
                 if (!req) {
-                    pxt.debug(`unknown host request ${data.id}`);
+                    pxt.debug(`pxthost: unknown request ${data.id}`);
                 } else {
                     p = p.then(() => req.resolve(data as EditorMessageResponse));
                 }
             } else { // request from the host
                 const req = data as EditorMessageRequest;
+                pxt.debug(`pxteditor: ${req.action}`);
                 switch (req.action.toLowerCase()) {
                     case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
                     case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
@@ -147,6 +157,10 @@ namespace pxt.editor {
                     case "newproject": {
                         const create = data as EditorMessageNewProjectRequest;
                         p = p.then(() => projectView.newProject(create.options)); break;
+                    }
+                    case "importproject": {
+                        const load = data as EditorMessageImportProjectRequest;
+                        p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
                     }
                     case "proxytosim": {
                         const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
@@ -176,12 +190,14 @@ namespace pxt.editor {
      * Posts a message from the editor to the host
      */
     export function postHostMessageAsync(msg: EditorMessageRequest): Promise<EditorMessageResponse> {
-        console.debug(`sending to host: `, msg)
         return new Promise<EditorMessageResponse>((resolve, reject) => {
             const env = Util.clone(msg);
             env.id = Util.guidGen();
-            pendingRequests[env.id] = { resolve, reject };
+            if (msg.response)
+                pendingRequests[env.id] = { resolve, reject };
             window.parent.postMessage(env, "*");
+            if (!msg.response)
+                resolve(undefined)
         })
     }
 }

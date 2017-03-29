@@ -12,9 +12,12 @@ In a nutshell, any exported JavaScript function can be turned into a block by ad
 
 ```typescript
 namespace fun {
+    /**
+    * Computes the famous Fibonacci number sequence!
+    */
     //% block
-    exported function fib(value: number): number {
-        return value <= 1 ? value : fib(value - 1) : fib(value - 2);
+    export function fib(value: number): number {
+        return value <= 1 ? value : fib(value - 1) + fib(value - 2);
     }
 }
 ```
@@ -36,6 +39,11 @@ In order to add ``custom.ts`` to your project,
 * accept the dialog to add a ``custom.ts`` file in your project.
 
 If you already have added this file to your project, simply navigate to it using the **Explorer** view.
+
+## Using a shared project in **Add Packages...**
+
+You can add a share project as a dependent package... and re-use all the blocks from that project. Simply click on the **Add Package...**
+button, paste the shared project url and search.
 
 ## Development cycle
 

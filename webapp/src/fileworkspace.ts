@@ -6,7 +6,7 @@ import * as ws from "./workspace"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-let lf = U.lf
+const lf = U.lf
 let allScripts: HeaderWithScript[] = [];
 let currentTarget: string;
 
@@ -230,7 +230,7 @@ function resetAsync() {
         })
 }
 
-export var provider: WorkspaceProvider = {
+export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,

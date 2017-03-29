@@ -89,7 +89,7 @@ package.
 **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise
 the package will not show up in search.**
 
-Read more an [defining-blocks](/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
+Read more an [defining-blocks](https://makecode.com/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
 
 ## Versioning
 
