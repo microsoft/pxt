@@ -178,6 +178,7 @@ declare namespace pxt {
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
+        mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
     }
 
     interface DocMenuEntry {
