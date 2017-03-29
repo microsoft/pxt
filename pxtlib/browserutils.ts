@@ -293,7 +293,8 @@ namespace pxt.BrowserUtils {
     export function browserDownloadDataUri(uri: string, name: string, userContextWindow?: Window) {
         const windowOpen = isBrowserDownloadInSameWindow();
         if (windowOpen) {
-            (userContextWindow || window).open(uri, "_self");
+            if (userContextWindow) userContextWindow.location.href = uri;
+            else window.open(uri, "_self");
         } else if (pxt.BrowserUtils.isSafari()) {
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database
