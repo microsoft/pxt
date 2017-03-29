@@ -1721,7 +1721,7 @@ ${lbl}: .short 0xffff
 
             if (nm == "TD_NOOP") {
                 assert(!hasRet)
-                return emitLit(null)
+                return emitLit(undefined)
             }
 
             if (nm == "TD_ID") {
@@ -1758,7 +1758,14 @@ ${lbl}: .short 0xffff
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
                             let defl = attrs.paramDefl[getName(prm)]
-                            args.push(irToNode(defl ? emitLit(parseInt(defl)) : null))
+                            let expr = defl ? emitLit(parseInt(defl)) : null
+                            if (expr == null) {
+                                if (typeOf(prm).flags & TypeFlags.NumberLike)
+                                    expr = emitLit(0)
+                                else
+                                    expr = emitLit(undefined)
+                            }
+                            args.push(irToNode(expr))
                         } else {
                             if (!isNumericLiteral(prm.initializer)) {
                                 userError(9212, lf("only numbers, null, true and false supported as default arguments"))
@@ -2567,6 +2574,17 @@ ${lbl}: .short 0xffff
         }
 
         function isNumberLike(e: Expression) {
+            if (e.kind == SK.NullKeyword) {
+                let vo: ir.Expr = (e as any).valueOverride
+                if (vo !== undefined) {
+                    if (vo.exprKind == EK.NumberLiteral) {
+                        if (opts.target.taggedInts)
+                            return !!((vo.data as number) & 1)
+                        return true
+                    } else
+                        return false
+                }
+            }
             return !!(typeOf(e).flags & TypeFlags.NumberLike)
         }
 
@@ -3105,7 +3123,7 @@ ${lbl}: .short 0xffff
             proc.emitJmp(l.fortop);
             proc.emitLblDirect(l.brk);
 
-            proc.emitExpr(collectionVar.storeByRef(emitLit(null))) // clear it, so it gets GCed
+            proc.emitExpr(collectionVar.storeByRef(emitLit(undefined))) // clear it, so it gets GCed
         }
 
         function emitForInOrForOfStatement(node: ForInStatement) { }

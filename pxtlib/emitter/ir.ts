@@ -508,6 +508,8 @@ namespace ts.pxtc.ir {
             let jmp = stmt(SK.Jmp, expr)
 
             jmp.jmpMode = mode;
+            if (terminate && terminate.exprKind == EK.NumberLiteral)
+                terminate = null
             jmp.terminateExpr = terminate
 
             if (typeof trg == "string")
