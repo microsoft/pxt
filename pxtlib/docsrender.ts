@@ -343,6 +343,9 @@ namespace pxt.docs {
             pubinfo["JSON"] = JSON.stringify(pubinfo, null, 4).replace(/</g, "\\u003c")
         }
 
+        if (opts.theme.appStoreID)
+            pubinfo["appStoreMeta"] = `<meta name="apple-itunes-app" content="app-id=${html2Quote(opts.theme.appStoreID)}}"/>`
+
         let template = opts.template
         template = template
             .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
