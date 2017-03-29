@@ -286,7 +286,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function isBrowserDownloadInSameWindow(): boolean {
-        const windowOpen = /downloadWindowOpen=1/i.test(window.location.href);
+        const windowOpen = isMobile() && isSafari() && !/downloadWindowOpen=0/i.test(window.location.href);
         return windowOpen;
     }
 
@@ -342,9 +342,11 @@ namespace pxt.BrowserUtils {
         const isMobileBrowser = pxt.BrowserUtils.isMobile();
         const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
         let protocol = "data";
+        if (isMobile() && isSafari() && pxt.appTarget.appTheme.mobileSafariDownloadProtocol)
+            protocol = pxt.appTarget.appTheme.mobileSafariDownloadProtocol;
+
         const m = /downloadProtocol=([a-z0-9:/?]+)/i.exec(window.location.href);
         if (m) protocol = m[1];
-
         const dataurl = protocol + ":" + contentType + ";base64," + b64
         try {
             if (saveBlob) {
