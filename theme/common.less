@@ -453,13 +453,18 @@ span.docs.inlineblock {
              Blockly
 *******************************/
 
-/* Lower Z index for BLocklyWidgetDiv and grid picker tooltips */
+/* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
 .blocklyWidgetDiv {
     z-index: 9;
 }
 
 .blocklyGridPickerTooltip {
     z-index: 10;
+}
+
+/* Set Z index of the Blockly scrollbars to be beneath the BlocklyWidgetDiv */
+.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {
+    z-index: 8;
 }
 
 .blocklyTooltipDiv {
