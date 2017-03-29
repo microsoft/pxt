@@ -486,7 +486,8 @@ namespace pxt.docs {
         }
 
         // try getting a better custom image for twitter
-        let imgM = /<img class="ui image" src="(https:\/\/(.+?)\.(png|jpeg|jpg|gif))"[^>]*\/?>/i.exec(html);
+        const imgM = /<div class="ui embed mdvid"[^<>]+?data-placeholder="([^"]+)"[^>]*\/?>/i.exec(html)
+            || /<img class="ui image" src="([^"]+)"[^>]*\/?>/i.exec(html);
         if (imgM)
             pubinfo["cardLogo"] = html2Quote(imgM[1]);
 
