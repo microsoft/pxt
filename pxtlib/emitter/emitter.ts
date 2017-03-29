@@ -303,7 +303,7 @@ namespace ts.pxtc {
             isClassFunction(decl)
     }
 
-    function isSideEffectfulInitializer(init: Expression) {
+    function isSideEffectfulInitializer(init: Expression): boolean {
         if (!init) return false;
         if (isStringLiteral(init)) return false;
         switch (init.kind) {
@@ -312,6 +312,8 @@ namespace ts.pxtc {
             case SK.TrueKeyword:
             case SK.FalseKeyword:
                 return false;
+            case SK.ArrayLiteralExpression:
+                return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
             default:
                 return true;
         }
@@ -2647,8 +2649,7 @@ ${lbl}: .short 0xffff
 
             if (opts.target.floatingPoint) {
                 left = ir.shared(left)
-                let convCall = isString ? "langsupp::stringToBool" : "numops::toBool"
-                let cond = ir.rtcall(convCall, [left])
+                let cond = ir.rtcall("numops::toBool", [left])
                 let lblSkip = proc.mkLabel("lazySkip")
                 let mode: ir.JmpMode =
                     node.operatorToken.kind == SK.BarBarToken ? ir.JmpMode.IfZero :

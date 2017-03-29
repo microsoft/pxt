@@ -311,13 +311,6 @@ namespace pxsim {
     export namespace langsupp {
         export function toInt(v: number) { return (v | 0) } // TODO
         export function toFloat(v: number) { return v }
-        export function stringToBoolDecr(v: string) {
-            decr(v)
-            return !!v
-        }
-        export function stringToBool(v: string) {
-            return !!v
-        }
 
         export function ignore(v: any) { return v; }
     }
