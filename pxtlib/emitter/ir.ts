@@ -27,6 +27,7 @@ namespace ts.pxtc.ir {
     }
 
     export class Node {
+        _id: number;
         isExpr(): this is Expr { return false }
         isStmt(): this is Stmt { return false }
     }
@@ -83,52 +84,7 @@ namespace ts.pxtc.ir {
         }
 
         toString(): string {
-            switch (this.exprKind) {
-                case EK.NumberLiteral:
-                    return this.data + ""
-                case EK.PointerLiteral:
-                    return this.data + ""
-                case EK.CellRef:
-                    return (this.data as Cell).toString()
-                case EK.JmpValue:
-                    return "JMPVALUE"
-                case EK.Nop:
-                    return "NOP"
-
-                case EK.SharedRef:
-                    return `SHARED_REF(${this.args[0].toString()})`
-
-                case EK.SharedDef:
-                    return `SHARED_DEF(${this.args[0].toString()})`
-
-                case EK.Incr:
-                    return `INCR(${this.args[0].toString()})`
-
-                case EK.Decr:
-                    return `DECR(${this.args[0].toString()})`
-
-                case EK.FieldAccess:
-                    return `${this.args[0].toString()}.${(this.data as FieldAccessInfo).name}`
-
-                case EK.RuntimeCall:
-                    return this.data + "(" + this.args.map(a => a.toString()).join(", ") + ")"
-
-                case EK.ProcCall:
-                    let procid = this.data as ProcId
-                    let name = ""
-                    if (procid.ifaceIndex != null) name = `IFACE@${procid.ifaceIndex}`
-                    else if (procid.virtualIndex != null) name = `VTABLE@${procid.virtualIndex}`
-                    else name = getDeclName(procid.proc.action)
-                    return name + "(" + this.args.map(a => a.toString()).join(", ") + ")"
-
-                case EK.Sequence:
-                    return "(" + this.args.map(a => a.toString()).join("; ") + ")"
-
-                case EK.Store:
-                    return `{ ${this.args[0].toString()} := ${this.args[1].toString()} }`
-
-                default: throw oops();
-            }
+            return nodeToString(this)
         }
 
         canUpdateCells(): boolean {
@@ -198,32 +154,99 @@ namespace ts.pxtc.ir {
         isStmt() { return true }
 
         toString(): string {
-            let inner = this.expr ? this.expr.toString() : "{null}"
-            switch (this.stmtKind) {
-                case ir.SK.Expr:
-                    return "    " + inner + "\n"
-                case ir.SK.Jmp:
-                    let fin = `goto ${this.lblName}\n`
-                    switch (this.jmpMode) {
-                        case JmpMode.Always:
-                            if (this.expr)
-                                return `    { JMPVALUE := ${inner} } ${fin}`
-                            else return "    " + fin
-                        case JmpMode.IfZero:
-                            return `    if (! ${inner}) ${fin}`
-                        case JmpMode.IfNotZero:
-                            return `    if (${inner}) ${fin}`
-                        case JmpMode.IfJmpValEq:
-                            return `    if (r0 == ${inner}) ${fin}`
-                        default: throw oops();
-                    }
-                case ir.SK.StackEmpty:
-                    return "    ;\n"
-                case ir.SK.Breakpoint:
-                    return "    // brk " + (this.breakpointInfo.id) + "\n"
-                case ir.SK.Label:
-                    return this.lblName + ":\n"
-                default: throw oops();
+            return nodeToString(this)
+        }
+    }
+
+    let currExprId = 0
+    function nodeToString(n: Node) {
+        return str(n)
+        function addId(n: Node) {
+            if (!n._id) n._id = ++currExprId
+        }
+        function str(n: Node): string {
+            addId(n)
+            if (n.isExpr()) {
+                let e = n as Expr
+                let a0 = e.args ? e.args[0] : null
+                switch (e.exprKind) {
+                    case EK.NumberLiteral:
+                        return e.data + ""
+                    case EK.PointerLiteral:
+                        return e.data + ""
+                    case EK.CellRef:
+                        return (e.data as Cell).toString()
+                    case EK.JmpValue:
+                        return "JMPVALUE"
+                    case EK.Nop:
+                        return "NOP"
+
+                    case EK.SharedRef:
+                        addId(a0)
+                        return `SHARED_REF(#${a0._id})`
+
+                    case EK.SharedDef:
+                        addId(a0)
+                        return `SHARED_DEF(#${a0._id}: ${str(a0)})`
+
+                    case EK.Incr:
+                        return `INCR(${str(a0)})`
+
+                    case EK.Decr:
+                        return `DECR(${str(a0)})`
+
+                    case EK.FieldAccess:
+                        return `${str(a0)}.${(e.data as FieldAccessInfo).name}`
+
+                    case EK.RuntimeCall:
+                        return e.data + "(" + e.args.map(str).join(", ") + ")"
+
+                    case EK.ProcCall:
+                        let procid = e.data as ProcId
+                        let name = ""
+                        if (procid.ifaceIndex != null) name = `IFACE@${procid.ifaceIndex}`
+                        else if (procid.virtualIndex != null) name = `VTABLE@${procid.virtualIndex}`
+                        else name = getDeclName(procid.proc.action)
+                        return name + "(" + e.args.map(str).join(", ") + ")"
+
+                    case EK.Sequence:
+                        return "(" + e.args.map(str).join("; ") + ")"
+
+                    case EK.Store:
+                        return `{ ${str(e.args[0])} := ${str(e.args[1])} }`
+
+                    default: throw oops();
+                }
+            } else {
+                let stmt = n as Stmt
+                let inner = stmt.expr ? str(stmt.expr) : "{null}"
+                switch (stmt.stmtKind) {
+                    case ir.SK.Expr:
+                        return "    " + inner + "\n"
+                    case ir.SK.Jmp:
+                        let fin = `goto ${stmt.lblName}\n`
+                        switch (stmt.jmpMode) {
+                            case JmpMode.Always:
+                                if (stmt.expr)
+                                    return `    { JMPVALUE := ${inner} } ${fin}`
+                                else return "    " + fin
+                            case JmpMode.IfZero:
+                                return `    if (! ${inner}) ${fin}`
+                            case JmpMode.IfNotZero:
+                                return `    if (${inner}) ${fin}`
+                            case JmpMode.IfJmpValEq:
+                                return `    if (r0 == ${inner}) ${fin}`
+                            default: throw oops();
+                        }
+                    case ir.SK.StackEmpty:
+                        return "    ;\n"
+                    case ir.SK.Breakpoint:
+                        return "    // brk " + (stmt.breakpointInfo.id) + "\n"
+                    case ir.SK.Label:
+                        return stmt.lblName + ":\n"
+                    default: throw oops();
+                }
+
             }
         }
     }
