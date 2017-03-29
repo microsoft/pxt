@@ -667,7 +667,7 @@ namespace ts.pxtc {
             srcType = srcTypeLoc
 
         occursCheck = []
-        let [ok, message] = checkSubtype(trgType, srcType)
+        let [ok, message] = checkSubtype(srcType, trgType)
         if (!ok) {
             userError(9203, lf(message))
         }
@@ -684,12 +684,13 @@ namespace ts.pxtc {
     // this function works assuming that the program has passed the 
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
-    // pairs that the TS checker compared. 
+    // pairs that the TS checker compared. We take no action on
+    // pairs that we generate "true" for.
 
     // we are checking that subType is a subtype of supType, so that
     // an assignment of the form trg <- src is safe, where supType is the
     // type of trg and subType is the type of src
-    function checkSubtype(supType: Type, subType: Type): [boolean, string] {
+    function checkSubtype(subType: Type, supType: Type): [boolean, string] {
         let subId = (subType as any).id
         let supId = (supType as any).id
         let key = supId + "," + subId
@@ -734,13 +735,13 @@ namespace ts.pxtc {
                     let supParamType = checker.getTypeAtLocation(supFun.parameters[i].valueDeclaration)
                     let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
-                    let [retSub,msgSub] = checkSubtype(subParamType, supParamType)
+                    let [retSub,msgSub] = checkSubtype(supParamType, subParamType)
                     if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 }
                 // check return type (co-variant)
                 let supRetType = supFun.getReturnType()
                 let subRetType = supFun.getReturnType()
-                let [retSub,msgSub] = checkSubtype(supRetType, subRetType)
+                let [retSub,msgSub] = checkSubtype(subRetType, supRetType)
                 if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 return insertSubtype(key,[ret,msg])
             } else {
@@ -757,7 +758,7 @@ namespace ts.pxtc {
                     if (find.length == 1) {
                         let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                         // TODO: record the property on which we have a mismatch
-                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(supPropDecl),checker.getTypeAtLocation(subPropDecl))
+                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl),checker.getTypeAtLocation(supPropDecl))
                         if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                     } else if (find.length == 0) {
                         if (!(supProp.flags & SymbolFlags.Optional)) {
