@@ -2,7 +2,7 @@
 
 
 ## [Hello World](/blog/hello-world)
-March 14th, 2017
+March 29th, 2017
 
 ![Picture of the micro:bit](/static/images/blogbanner.jpg)
 
