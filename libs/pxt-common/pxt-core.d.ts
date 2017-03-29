@@ -246,7 +246,7 @@ declare interface Number {
     /**
      * Returns a string representation of a number.
      */
-    //% shim=numops::toString
+    //% shim=Number_::toString
     toString(): string;
 }
 

@@ -1708,6 +1708,14 @@ ${lbl}: .short 0xffff
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
 
+            if (opts.target.taggedInts)
+                switch (nm) {
+                    case "Number_::toString":
+                    case "Boolean_::toString":
+                        nm = "numops::toString"
+                        break;
+                }
+
             if (nm.indexOf('(') >= 0) {
                 let parse = /(.*)\((\d+)\)$/.exec(nm)
                 if (parse) {
