@@ -72,8 +72,6 @@ namespace ts.pxtc {
 
     function isRefType(t: Type) {
         checkType(t);
-        if (t.flags & TypeFlags.ThisType)
-            return true
         if (t.flags & TypeFlags.Null)
             return false
         if (t.flags & TypeFlags.Undefined)

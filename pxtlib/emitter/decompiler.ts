@@ -84,7 +84,7 @@ namespace ts.pxtc.decompiler {
         type: string;
         inputs?: ValueNode[];
         fields?: FieldNode[]
-        mutation?: Map<string>;
+        mutation?: MapLike<string>;
     }
 
     interface ExpressionNode extends BlockNode {
@@ -206,7 +206,7 @@ namespace ts.pxtc.decompiler {
         return undefined;
 
         function collectNameCollisions(): void {
-            const takenNames: Map<boolean> = {};
+            const takenNames: MapLike<boolean> = {};
 
             checkChildren(s);
 
@@ -578,7 +578,7 @@ ${output}</xml>`;
 
             return result;
 
-            function isTextJoin(n: ts.Node): n is ts.BinaryExpression {
+            function isTextJoin(n: ts.Node) {
                 if (n.kind === SK.BinaryExpression) {
                     const b = n as ts.BinaryExpression;
                     if (b.operatorToken.getText() === "+") {
@@ -695,7 +695,7 @@ ${output}</xml>`;
             let callInfo = (n as any).callInfo as pxtc.CallInfo;
             if (!callInfo) {
                 error(n);
-                return;
+                return undefined;
             }
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
@@ -781,7 +781,7 @@ ${output}</xml>`;
                         else {
                             error(node, Util.lf("Statement kind unsupported in blocks: {0}", SK[node.kind]))
                         }
-                        return;
+                        return undefined;
                 }
             }
 
@@ -852,7 +852,7 @@ ${output}</xml>`;
             let arg = node.arguments[0];
             if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                 error(node)
-                return;
+                return undefined;
             }
 
             const res: StatementNode = {
@@ -865,7 +865,7 @@ ${output}</xml>`;
             const nc = info.attrs.imageLiteral * 5;
             if (nc * 5 != leds.length) {
                 error(node, Util.lf("Invalid image pattern"));
-                return;
+                return undefined;
             }
             for (let r = 0; r < 5; ++r) {
                 for (let c = 0; c < nc; ++c) {
@@ -879,7 +879,7 @@ ${output}</xml>`;
         function getBinaryExpressionStatement(n: ts.BinaryExpression): StatementNode {
             if (n.left.kind !== SK.Identifier) {
                 error(n, Util.lf("Only variable names may be assigned to"));
-                return;
+                return undefined;
             }
 
             const name = (n.left as ts.Identifier).text;
@@ -903,7 +903,7 @@ ${output}</xml>`;
                     };
                 default:
                     error(n, Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]));
-                    return;
+                    return undefined;
             }
         }
 
@@ -1007,7 +1007,7 @@ ${output}</xml>`;
 
             if (!isPlusPlus && node.operator !== SK.MinusMinusToken) {
                 error(node);
-                return;
+                return undefined;
             }
 
             return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
@@ -1017,14 +1017,14 @@ ${output}</xml>`;
             const info: pxtc.CallInfo = (node as any).callInfo
             if (!info) {
                 error(node);
-                return;
+                return undefined;
             }
 
             if (!info.attrs.blockId || !info.attrs.block) {
                 const builtin = builtinBlocks[info.qName];
                 if (!builtin) {
                     error(node)
-                    return;
+                    return undefined;
                 }
                 info.attrs.block = builtin.block;
                 info.attrs.blockId = builtin.blockId;
@@ -1142,7 +1142,7 @@ ${output}</xml>`;
         //     });
         // }
 
-        function getDestructuringMutation(callback: ts.ArrowFunction): Map<string> {
+        function getDestructuringMutation(callback: ts.ArrowFunction): MapLike<string> {
             const bindings = getObjectBindingProperties(callback);
             if (bindings) {
                 return {
@@ -1173,7 +1173,7 @@ ${output}</xml>`;
         function getArrowFunctionStatement(n: ts.ArrowFunction, next: ts.Node[]) {
             if (n.parameters.length > 0 && !(n.parameters.length === 1 && n.parameters[0].name.kind === SK.ObjectBindingPattern)) {
                 error(n);
-                return;
+                return undefined;
             }
 
             return getStatementBlock(n.body, next)
@@ -1623,7 +1623,7 @@ ${output}</xml>`;
         return undefined;
     }
 
-    function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], Map<string>] {
+    function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], MapLike<string>] {
         if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
             const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
 
