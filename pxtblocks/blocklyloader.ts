@@ -173,7 +173,7 @@ namespace pxt.blocks {
         if (!fn.attributes.deprecated) {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
             let nsn = info.apis.byQName[ns];
-            let isAdvanced = nsn && nsn.attributes.advanced == 'true';
+            let isAdvanced = nsn && nsn.attributes.advanced;
 
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
@@ -208,7 +208,7 @@ namespace pxt.blocks {
 
                     insertTopLevelCategory(category, tb, nsWeight, isAdvanced);
                 }
-                if (fn.attributes.advanced == 'true') {
+                if (fn.attributes.advanced) {
                     category = getOrAddSubcategoryByWeight(category, lf("More"), "More", 1, category.getAttribute("colour"), 'blocklyTreeIconmore')
                 }
                 else if (fn.attributes.subcategory) {

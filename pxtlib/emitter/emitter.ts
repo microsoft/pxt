@@ -304,7 +304,7 @@ namespace ts.pxtc {
         weight?: number;
         parts?: string;
         trackArgs?: number[];
-        advanced?: string;
+        advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         // On block
@@ -336,6 +336,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
+    const booleanAttributes = ["advanced"]
 
     export interface CallInfo {
         decl: Declaration;
@@ -434,6 +435,11 @@ namespace ts.pxtc {
         for (let n of numberAttributes) {
             if (typeof (res as any)[n] == "string")
                 (res as any)[n] = parseInt((res as any)[n])
+        }
+
+        for (let n of booleanAttributes) {
+            if (typeof (res as any)[n] == "string")
+                (res as any)[n] = (res as any)[n] == 'true' ? true : false;
         }
 
         if (res.trackArgs) {
