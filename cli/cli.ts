@@ -477,7 +477,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
     if (pkg["name"] == "pxt-core") return Promise.resolve(pkg)
 
     let gitPull = Promise.resolve();
-    let commitMsg: string = undefined;
+    let commitMsg: string = "";
 
     ["pxt-core", "pxt-common-packages"].forEach(knownPackage => {
         const modulePath = path.join("node_modules", knownPackage)
@@ -518,7 +518,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
     })
 
     gitPull = gitPull
-            .then(() => commitMsg ? nodeutil.runGitAsync("commit", "-m", commitMsg, "--", "package.json") : Promise.resolve());
+        .then(() => commitMsg ? nodeutil.runGitAsync("commit", "-m", commitMsg, "--", "package.json") : Promise.resolve());
 
     return gitPull;
 }
@@ -1078,8 +1078,29 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
     }
 
     return Promise.mapSeries(folders, (dirname) => {
-        process.chdir(path.join(nodeutil.targetDir, dirname))
-        mainPkg = new pxt.MainPackage(new Host())
+        const host = new Host();
+        const pkgPath = path.join(nodeutil.targetDir, dirname);
+        pxt.debug(`building bundled package at ${pkgPath}`)
+
+        // if the package is under node_modules/ , slurp any existing files
+        const m = /node_modules[\\\/][^\\\/]*[\\\/]libs[\\\/](\w+)$/i.exec(pkgPath);
+        if (m) {
+            const bdir = m[1];
+            const overridePath = path.join("libs", bdir);
+            pxt.debug(`override with files from ${overridePath}`)
+            if (nodeutil.existsDirSync(overridePath)) {
+                host.fileOverrides = {};
+                nodeutil.allFiles(overridePath)
+                    .filter(f => fs.existsSync(f))
+                    .forEach(f => host.fileOverrides[path.relative(overridePath, f)] = fs.readFileSync(f, "utf8"));
+
+                if (pxt.options.debug && host.fileOverrides)
+                    pxt.debug(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
+            }
+        }
+
+        process.chdir(pkgPath);
+        mainPkg = new pxt.MainPackage(host)
         return f(mainPkg, dirname);
     })
         .finally(() => process.chdir(prev))
@@ -1759,7 +1780,6 @@ const statAsync = Promise.promisify(fs.stat)
 const rimrafAsync = Promise.promisify(rimraf);
 
 let commonfiles: Map<string> = {}
-let fileoverrides: Map<string> = {}
 
 class SnippetHost implements pxt.Host {
     //Global cache of module files
@@ -1868,7 +1888,10 @@ class SnippetHost implements pxt.Host {
 
 class Host
     implements pxt.Host {
+    fileOverrides: Map<string> = {}
+
     resolve(module: pxt.Package, filename: string) {
+        pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
@@ -1882,12 +1905,15 @@ class Host
         let commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
-        let overFile = U.lookup(fileoverrides, filename)
-        if (module.level == 0 && overFile != null)
+        let overFile = U.lookup(this.fileOverrides, filename)
+        if (module.level == 0 && overFile != null) {
+            pxt.debug(`found override for ${filename}`)
             return overFile
+        }
 
         let resolved = this.resolve(module, filename)
         try {
+            pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (module.config) {
@@ -2258,7 +2284,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
                     newCfg[f] = configMap[f]
             }
 
-            files["pxt.json"] = JSON.stringify(newCfg, null, 4) + "\n"
+            files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
 
             configMap = U.clone(configMap)
             configMap["target"] = pxt.appTarget.id
@@ -2418,7 +2444,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
 }
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
-    if (!nodeutil.existDirSync("sim")) return;
+    if (!nodeutil.existsDirSync("sim")) return;
 
     let decls: Map<ts.Symbol> = {}
 
@@ -2520,7 +2546,7 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
 
 function simshimAsync() {
     console.log("Looking for shim annotations in the simulator.")
-    if (!nodeutil.existDirSync("sim")) {
+    if (!nodeutil.existsDirSync("sim")) {
         console.log("no sim folder, skipping.")
         return Promise.resolve();
     }
@@ -2728,8 +2754,9 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 files[idx] = fn
                 mainPkg.config.name = fn.replace(/\.ts$/, "")
                 mainPkg.config.description = `Generated from ${ti.base} with ${fn}`
-                fileoverrides = {}
-                fileoverrides[fn] = ti.text
+                const host = mainPkg.host() as Host;
+                host.fileOverrides = {}
+                host.fileOverrides[fn] = ti.text
                 return prepBuildOptionsAsync(BuildOption.Test, true)
                     .then(opts => {
                         let res = pxtc.compile(opts)
@@ -3531,7 +3558,7 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
     const serial = parsed && !!parsed.flags["serial"];
     return buildCoreAsync({ mode: BuildOption.Deploy })
-        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve() )
+        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve())
 }
 
 export function runAsync() {
@@ -3600,7 +3627,7 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
 }
 
 function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<void> {
-    if (filename && nodeutil.existDirSync(filename)) {
+    if (filename && nodeutil.existsDirSync(filename)) {
         pxt.log(`extracting folder ${filename}`);
         return Promise.all(fs.readdirSync(filename)
             .filter(f => /\.(hex|uf2)/.test(f))
@@ -3790,7 +3817,7 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
 }
 
 function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise<void> {
-    if (!nodeutil.existDirSync("docs"))
+    if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
     const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
