@@ -1869,6 +1869,7 @@ class SnippetHost implements pxt.Host {
 class Host
     implements pxt.Host {
     resolve(module: pxt.Package, filename: string) {
+        pxt.debug(`resolving ${module.level}:${module.id} -- ${filename}`)
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
