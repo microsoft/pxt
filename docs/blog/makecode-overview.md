@@ -2,7 +2,7 @@
 
 # Introducing MakeCode
 
-**Posted on April 1, 2017 by [tballmsft](https://github.com/tballmsft)**
+**Posted on March 30, 2017 by [tballmsft](https://github.com/tballmsft)**
 
 [Microsoft MakeCode](http://www.makecode.com) is a web-based environment for learning to code with physical computing devices such as the [micro:bit](http://www.microbit.org). It has a handful of novel features all packed into a single web application (web app). No software installation is required: Microsoft MakeCode runs in any modern web browser on most any operating system. Once the web app has been loaded from the Internet, all its features will continue to work, even if you disconnect from the Internet. If you later return to the web app when your computer is offline, it still works!
 
