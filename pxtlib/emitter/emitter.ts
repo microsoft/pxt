@@ -667,7 +667,7 @@ namespace ts.pxtc {
             srcType = srcTypeLoc
 
         occursCheck = []
-        let [ok, message] = checkSubtype(trgType, srcType)
+        let [ok, message] = checkSubtype(srcType, trgType)
         if (!ok) {
             userError(9203, lf(message))
         }
@@ -689,10 +689,10 @@ namespace ts.pxtc {
     // we are checking that subType is a subtype of supType, so that
     // an assignment of the form trg <- src is safe, where supType is the
     // type of trg and subType is the type of src
-    function checkSubtype(supType: Type, subType: Type): [boolean, string] {
+    function checkSubtype(subType: Type, superType: Type): [boolean, string] {
         let subId = (subType as any).id
-        let supId = (supType as any).id
-        let key = supId + "," + subId
+        let superId = (superType as any).id
+        let key = subId + "," + superId
 
         if (cachedSubtypeQueries[key])
             return cachedSubtypeQueries[key];
@@ -703,17 +703,17 @@ namespace ts.pxtc {
         occursCheck.push(key)
 
         // outlaw all things that can't be cast to class/interface
-        if (isStructureType(supType) && !castableToStructureType(subType)) {
+        if (isStructureType(superType) && !castableToStructureType(subType)) {
             return insertSubtype(key,[false, "Cast to class/interface unsupported."])
         }
 
-        if (isClassType(supType)) {
+        if (isClassType(superType)) {
            if (isClassType(subType)) {
-                let supDecl = <ClassDeclaration>supType.symbol.valueDeclaration
+                let superDecl = <ClassDeclaration>superType.symbol.valueDeclaration
                 let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
                 // only allow upcast (sub -> ... -> sup) in inheritance chain
-                if (!inheritsFrom(subDecl,supDecl)) {
-                    if (inheritsFrom(supDecl,subDecl))
+                if (!inheritsFrom(subDecl,superDecl)) {
+                    if (inheritsFrom(superDecl,subDecl))
                        return insertSubtype(key, [false, "Downcasts not supported."])
                     else
                        return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
@@ -723,46 +723,46 @@ namespace ts.pxtc {
                     return insertSubtype(key,[false, "Cast to class unsupported."])
                 }
            }
-        } else if (isFunctionType(supType)) {
+        } else if (isFunctionType(superType)) {
             // implement standard function subtyping (no bivariance)
-            let supFun = isFunctionType(supType)
+            let superFun = isFunctionType(superType)
             if (isFunctionType(subType)) {
                 let subFun = isFunctionType(subType)
-                U.assert(supFun.parameters.length >= subFun.parameters.length, "sup should have at least params of sub")
+                U.assert(superFun.parameters.length >= subFun.parameters.length, "sup should have at least params of sub")
                 let [ret,msg] = [true,""]
                 for (let i = 0; i < subFun.parameters.length; i++) {
-                    let supParamType = checker.getTypeAtLocation(supFun.parameters[i].valueDeclaration)
+                    let superParamType = checker.getTypeAtLocation(superFun.parameters[i].valueDeclaration)
                     let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
-                    let [retSub,msgSub] = checkSubtype(subParamType, supParamType)
+                    let [retSub,msgSub] = checkSubtype(superParamType, subParamType)
                     if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 }
                 // check return type (co-variant)
-                let supRetType = supFun.getReturnType()
-                let subRetType = supFun.getReturnType()
-                let [retSub,msgSub] = checkSubtype(supRetType, subRetType)
+                let superRetType = superFun.getReturnType()
+                let subRetType = superFun.getReturnType()
+                let [retSub,msgSub] = checkSubtype(subRetType, superRetType)
                 if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 return insertSubtype(key,[ret,msg])
             } else {
                 // TODO???
             }
-        } else if (isInterfaceType(supType)) {
+        } else if (isInterfaceType(superType)) {
             if (isStructureType(subType)) {
-                let supProps = checker.getPropertiesOfType(supType)
+                let superProps = checker.getPropertiesOfType(superType)
                 let subProps = checker.getPropertiesOfType(subType)
                 let [ret,msg] = [true,""]
-                supProps.forEach(supProp => {
-                    let supPropDecl = <PropertyDeclaration>supProp.valueDeclaration
-                    let find = subProps.filter(sp => sp.name == supProp.name)
+                superProps.forEach(superProp => {
+                    let superPropDecl = <PropertyDeclaration>superProp.valueDeclaration
+                    let find = subProps.filter(sp => sp.name == superProp.name)
                     if (find.length == 1) {
                         let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                         // TODO: record the property on which we have a mismatch
-                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(supPropDecl),checker.getTypeAtLocation(subPropDecl))
+                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl),checker.getTypeAtLocation(superPropDecl))
                         if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                     } else if (find.length == 0) {
-                        if (!(supProp.flags & SymbolFlags.Optional)) {
+                        if (!(superProp.flags & SymbolFlags.Optional)) {
                             // we have a cast to an interface with more properties (unsound)
-                            [ret,msg] = [false,"Property " + supProp.name + " not present in " + subType.getSymbol().name]
+                            [ret,msg] = [false,"Property " + superProp.name + " not present in " + subType.getSymbol().name]
                         } else {
                             // we will reach this case for something like
                             // let x: Foo = { a:42 }
@@ -774,15 +774,15 @@ namespace ts.pxtc {
                 })
                 return insertSubtype(key,[ret,msg])
             }
-        } else if (isArrayType(supType)) {
+        } else if (isArrayType(superType)) {
             if (isArrayType(subType)) {
-                let supElemType = arrayElementType(supType)
+                let superElemType = arrayElementType(superType)
                 let subElemType = arrayElementType(subType)
-                return checkSubtype(supElemType,subElemType)
+                return checkSubtype(subElemType,superElemType)
             } else {
                 U.assert(false,"subsetCheck: unreachable (2)")
             }
-        } else if (lookupTypeParameter(supType)) {
+        } else if (lookupTypeParameter(superType)) {
             // TODO
         }
         return insertSubtype(key,[true,""])
