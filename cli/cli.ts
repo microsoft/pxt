@@ -1088,7 +1088,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
             const bdir = m[1];
             const overridePath = path.join("libs", bdir);
             pxt.debug(`override with files from ${overridePath}`)
-            if (nodeutil.existDirSync(overridePath)) {
+            if (nodeutil.existsDirSync(overridePath)) {
                 host.fileoverrides = {};
                 nodeutil.allFiles(overridePath)
                     .filter(f => fs.existsSync(f))
@@ -2442,7 +2442,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
 }
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
-    if (!nodeutil.existDirSync("sim")) return;
+    if (!nodeutil.existsDirSync("sim")) return;
 
     let decls: Map<ts.Symbol> = {}
 
@@ -2544,7 +2544,7 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
 
 function simshimAsync() {
     console.log("Looking for shim annotations in the simulator.")
-    if (!nodeutil.existDirSync("sim")) {
+    if (!nodeutil.existsDirSync("sim")) {
         console.log("no sim folder, skipping.")
         return Promise.resolve();
     }
@@ -3625,7 +3625,7 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
 }
 
 function extractAsyncInternal(filename: string, out: string, vscode: boolean): Promise<void> {
-    if (filename && nodeutil.existDirSync(filename)) {
+    if (filename && nodeutil.existsDirSync(filename)) {
         pxt.log(`extracting folder ${filename}`);
         return Promise.all(fs.readdirSync(filename)
             .filter(f => /\.(hex|uf2)/.test(f))
@@ -3815,7 +3815,7 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
 }
 
 function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise<void> {
-    if (!nodeutil.existDirSync("docs"))
+    if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
     const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
