@@ -540,29 +540,38 @@ export class Editor extends srceditor.Editor {
         // Add the builtin categories
         Editor.injectBuiltinCategories(fnDef);
 
+        const hasAdvanced = Object.keys(fnDef).some(ns => fnDef[ns].metaData && fnDef[ns].metaData.advanced);
+
         // Non-advanced categories
         appendCategories(group, Object.keys(fnDef).filter(ns => !(fnDef[ns].metaData && fnDef[ns].metaData.advanced)));
 
-        // Advanced seperator
-        group.appendChild(Editor.createTreeSeperator());
+        if (hasAdvanced) {
+            // Advanced seperator
+            group.appendChild(Editor.createTreeSeperator());
 
-        // Advanced toggle
-        group.appendChild(this.createCategoryElement("", "#3c3c3c", this.showAdvanced ? 'advancedexpanded' : 'advancedcollapsed',
-         false, null, () => {
-             this.showAdvanced = !this.showAdvanced;
-             this.updateToolbox();
-         }, lf("{id:category}Advanced")))
+            // Advanced toggle
+            group.appendChild(this.createCategoryElement("", "#3c3c3c", this.showAdvanced ? 'advancedexpanded' : 'advancedcollapsed',
+            false, null, () => {
+                this.showAdvanced = !this.showAdvanced;
+                this.updateToolbox();
+            }, lf("{id:category}Advanced")))
+        }
 
         if (this.showAdvanced) {
             appendCategories(group, Object.keys(fnDef).filter(ns => fnDef[ns].metaData && fnDef[ns].metaData.advanced));
+        }
+
+        if ((!hasAdvanced || this.showAdvanced) && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+            if (!hasAdvanced) {
+                // Add a seperator
+                group.appendChild(Editor.createTreeSeperator());
+            }
 
             // Add package button
-            if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-                group.appendChild(this.createCategoryElement("", "#717171", "addpackage", false, null, () => {
-                    this.resetFlyout();
-                    this.parent.addPackage();
-                }, lf("{id:category}Add Package")));
-            }
+            group.appendChild(this.createCategoryElement("", "#717171", "addpackage", false, null, () => {
+                this.resetFlyout();
+                this.parent.addPackage();
+            }, lf("{id:category}Add Package")));
         }
 
         // Inject toolbox icon css
