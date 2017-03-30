@@ -1413,7 +1413,7 @@ namespace ts.pxtc {
                 bindings = t
                     ? getTypeBindings(t)
                     : decl.typeParameters
-                        ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
+                        ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p), arg: checker.getTypeAtLocation(p) }))
                         : []
             let id = "C" + getNodeId(decl) + refMask(bindings)
             let info: ClassInfo = classInfos[id]
@@ -1978,8 +1978,8 @@ ${lbl}: .short 0xffff
                 let trg: Signature = (sig as any).target
                 let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
                 // NOTE: mapper also a TypeScript internal
-                // TODO: mapping should be done lazily, not eagerly
-                bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+                let args = typeParams.map(x => (sig as any).mapper(x))
+                bindings = getTypeBindingsCore(typeParams, args)
             }
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
@@ -2004,7 +2004,10 @@ ${lbl}: .short 0xffff
                 return mkProcCall(decl, args.map(emitExpr), bindings)
             }
 
-            addDefaultParametersAndTypeCheck(sig, args, attrs);
+            scope(() => {
+                U.pushRange(typeBindings, bindings)
+                addDefaultParametersAndTypeCheck(sig, args, attrs);
+            })
 
             if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
@@ -2464,6 +2467,7 @@ ${lbl}: .short 0xffff
                     assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass)
                     // test mode - make fake binding
                     let bindings = getTypeParameters(node).map(t => ({
+                        arg: checker.getTypeAtLocation(t),
                         tp: checker.getTypeAtLocation(t),
                         isRef: true
                     }))
