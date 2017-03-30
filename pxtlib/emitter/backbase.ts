@@ -446,6 +446,7 @@ ${baseLabel}:
 
         private emitProcCall(topExpr: ir.Expr) {
             let stackBottom = 0
+            let needsRePush = false
             //console.log("PROCCALL", topExpr.toString())
             let argStmts = topExpr.args.map((a, i) => {
                 this.emitExpr(a)
@@ -454,9 +455,20 @@ ${baseLabel}:
                 a.currUses = 0
                 this.exprStack.unshift(a)
                 if (i == 0) stackBottom = this.exprStack.length
-                U.assert(this.exprStack.length - stackBottom == i)
+                if (this.exprStack.length - stackBottom != i)
+                    needsRePush = true
                 return a
             })
+
+            if (needsRePush) {
+                for (let a of argStmts) {
+                    let idx = this.exprStack.indexOf(a)
+                    assert(idx >= 0)
+                    this.write(this.t.load_reg_src_off("r0", "sp", idx.toString(), true) + ` ; repush`)
+                    this.write(this.t.push_local("r0") + " ; repush")
+                    this.exprStack.unshift(a)
+                }
+            }
 
             let lbl = this.mkLbl("proccall")
             let afterall = this.mkLbl("afterall")
