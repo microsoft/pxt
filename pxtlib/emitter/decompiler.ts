@@ -1233,14 +1233,16 @@ ${output}</xml>`;
                         current = v;
                     });
 
-                    return {
-                        kind: "statement",
-                        type: ts.pxtc.ON_START_TYPE,
-                        handlers: [{
-                            name: "HANDLER",
-                            statement: current
-                        }]
-                    } as StatementNode;
+                    if (current) {
+                        return {
+                            kind: "statement",
+                            type: ts.pxtc.ON_START_TYPE,
+                            handlers: [{
+                                name: "HANDLER",
+                                statement: current
+                            }]
+                        } as StatementNode;
+                    }
                 }
                 return stmt;
             }
