@@ -1089,13 +1089,13 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
             const overridePath = path.join("libs", bdir);
             pxt.debug(`override with files from ${overridePath}`)
             if (nodeutil.existsDirSync(overridePath)) {
-                host.fileoverrides = {};
+                host.fileOverrides = {};
                 nodeutil.allFiles(overridePath)
                     .filter(f => fs.existsSync(f))
-                    .forEach(f => host.fileoverrides[f] = fs.readFileSync(f, "utf8"));
+                    .forEach(f => host.fileOverrides[path.relative(overridePath, f)] = fs.readFileSync(f, "utf8"));
 
-                if (pxt.options.debug && host.fileoverrides)
-                    pxt.debug(`file overrides: ${JSON.stringify(host.fileoverrides, null, 2)}`)
+                if (pxt.options.debug && host.fileOverrides)
+                    pxt.debug(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
             }
         }
 
@@ -1888,7 +1888,7 @@ class SnippetHost implements pxt.Host {
 
 class Host
     implements pxt.Host {
-    fileoverrides: Map<string> = {}
+    fileOverrides: Map<string> = {}
 
     resolve(module: pxt.Package, filename: string) {
         pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
@@ -1905,9 +1905,11 @@ class Host
         let commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
-        let overFile = U.lookup(this.fileoverrides, filename)
-        if (module.level == 0 && overFile != null)
+        let overFile = U.lookup(this.fileOverrides, filename)
+        if (module.level == 0 && overFile != null) {
+            pxt.debug(`found override for ${filename}`)
             return overFile
+        }
 
         let resolved = this.resolve(module, filename)
         try {
@@ -2753,8 +2755,8 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 mainPkg.config.name = fn.replace(/\.ts$/, "")
                 mainPkg.config.description = `Generated from ${ti.base} with ${fn}`
                 const host = mainPkg.host() as Host;
-                host.fileoverrides = {}
-                host.fileoverrides[fn] = ti.text
+                host.fileOverrides = {}
+                host.fileOverrides[fn] = ti.text
                 return prepBuildOptionsAsync(BuildOption.Test, true)
                     .then(opts => {
                         let res = pxtc.compile(opts)
