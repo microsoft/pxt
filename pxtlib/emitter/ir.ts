@@ -307,6 +307,10 @@ namespace ts.pxtc.ir {
         load() {
             let r = this.loadCore()
 
+            if (target.taggedInts && this.bitSize != BitSize.None) {
+                return rtcall("pxt::fromInt", [r])
+            }
+
             if (this.isByRefLocal())
                 return rtcall("pxtrt::ldloc" + this.refSuffix(), [r])
 
@@ -332,6 +336,16 @@ namespace ts.pxtc.ir {
             if (this.isByRefLocal()) {
                 return rtcall("pxtrt::stloc" + this.refSuffix(), [this.loadCore(), src])
             } else {
+                if (target.taggedInts && this.bitSize != BitSize.None) {
+                    src = shared(src)
+                    let iv = shared(rtcall("pxt::toInt", [src]))
+                    return op(EK.Sequence, [
+                        iv,
+                        op(EK.Decr, [src]),
+                        this.storeDirect(iv)
+                    ])
+                }
+
                 if (this.refCountingHandledHere()) {
                     let tmp = shared(src)
                     return op(EK.Sequence, [
