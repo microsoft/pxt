@@ -336,6 +336,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
+    const booleanAttributes = ["advanced"]
 
     export interface CallInfo {
         decl: Declaration;
@@ -434,6 +435,11 @@ namespace ts.pxtc {
         for (let n of numberAttributes) {
             if (typeof (res as any)[n] == "string")
                 (res as any)[n] = parseInt((res as any)[n])
+        }
+
+        for (let n of booleanAttributes) {
+            if (typeof (res as any)[n] == "string")
+                (res as any)[n] = (res as any)[n] == 'true' || (res as any)[n] == '1' ? true : false;
         }
 
         if (res.trackArgs) {
