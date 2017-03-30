@@ -122,25 +122,37 @@ Static TypeScript provides default values for XYZ.  Undefined/null are treated t
 ## Object types
 
 In TypeScript, class and interface type references, array types, tuple types, and function types are all 
-classified as object types, which are related by structural subtyping. 
+classified as *object types*, which are related by structural subtyping. 
 
 In STS, classes, records (described by interfaces), arrays, tuples, and functions
-are *separate types*, with the following type relationships:
-* classes and records are related by structural subtyping, as in TypeScript, with the 
-  following additional restrictions:
-  * classes can be treated as records (via a cast from class to interface)
-  * records cannot be treated as classes (casts from interfaces to classes are not permitted);
+are *separate types*, with the following type relationships, which are a strict 
+subset of the type relationships in TypeScript.
+
+### Classes
+
+In STS, classes and records are related by structural subtyping, as in TypeScript, with the 
+following additional restrictions:
+* classes can be treated as records (via a cast from class to interface);
+* records cannot be treated as classes (casts from interfaces to classes are not permitted);
 * class-to-class casts can only be from subclass to superclass, as defined by the 
    (transitive closure of) the *extends* clause - nominal typing for classes;
-* functions are related by classical function subtyping (no bivariance, as in TypeScript); 
-* function/method overloading is not permitted.
+* interfaces cannot extend classes
 
 STS' treatment of classes follows a nominal typing discipline, where one expects
 an object of class type to have the implementation associated with that class.
 In a pure structural subtyping discipline, one can define an object and then cast it to a
 class type, but that object's implementation can be completely unrelated to the implementation
-associated with the class.  This also means that 
-* interfaces cannot extend classes, as permitted in TypeScript
+associated with the class.
+
+### Functions
+
+In STS, functions and methods are related by classical function subtyping (no parameter 
+bivariance, as in TypeScript). Furthemore:
+* function/method overloading is not permitted;
+* a function can only be cast to an interface J which has a single call signature 
+  matching the function's type; the interface J can have no other properties
+
+### Arrays
 
 ## Optional properties
 
