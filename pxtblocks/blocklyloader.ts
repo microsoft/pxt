@@ -175,15 +175,11 @@ namespace pxt.blocks {
             let nsn = info.apis.byQName[ns];
             let isAdvanced = nsn && nsn.attributes.advanced;
 
-            if (showCategories !== CategoryMode.All && isAdvanced) {
-                return;
-            }
-
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
             let category = categoryElement(tb, catName);
 
-            if (showCategories !== CategoryMode.None) {
+            if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
                 if (!category) {
                     let categories = getChildCategories(tb)
                     let parentCategoryList = tb;
@@ -229,6 +225,12 @@ namespace pxt.blocks {
                     }
                 }
             }
+
+            if (showCategories === CategoryMode.Basic && isAdvanced) {
+                const type = block.getAttribute("type");
+                usedBlocks[type] = true;
+            }
+
             if (fn.attributes.mutateDefaults) {
                 const mutationValues = fn.attributes.mutateDefaults.split(";");
                 mutationValues.forEach(mutation => {
@@ -242,10 +244,10 @@ namespace pxt.blocks {
                 });
             }
             else {
-                if (showCategories !== CategoryMode.None) {
+                if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
                     category.appendChild(block);
                     injectToolboxIconCss();
-                } else {
+                } else if (showCategories === CategoryMode.None) {
                     tb.appendChild(block);
                 }
             }
@@ -705,6 +707,7 @@ namespace pxt.blocks {
         })
 
         searchElementCache = {};
+        usedBlocks = {};
         let currentBlocks: Map<number> = {};
         const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
@@ -768,11 +771,44 @@ namespace pxt.blocks {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
             if (!config.mathBlocks) removeCategory(tb, "Math");
-            if (!config.textBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Text");
-            if (!config.listsBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Lists");
             if (!config.variablesBlocks) removeCategory(tb, "Variables");
             if (!config.logicBlocks) removeCategory(tb, "Logic");
             if (!config.loopsBlocks) removeCategory(tb, "Loops");
+
+            // Advanced builtin categories
+            if (!config.textBlocks) {
+                removeCategory(tb, "Text");
+            }
+            else {
+                const cat = categoryElement(tb, "Text");
+                if (cat) {
+                    const blockElements = cat.querySelectorAll("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+                }
+                if (showCategories === CategoryMode.Basic) {
+                    removeCategory(tb, "Text");
+                }
+            }
+
+            if (!config.listsBlocks) {
+                removeCategory(tb, "Lists");
+            }
+            else {
+                const cat = categoryElement(tb, "Lists");
+                if (cat) {
+                    const blockElements = cat.querySelectorAll("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+                }
+                if (showCategories === CategoryMode.Basic) {
+                    removeCategory(tb, "Lists");
+                }
+            }
 
             // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
@@ -816,7 +852,6 @@ namespace pxt.blocks {
         }
 
         if (tb) {
-            usedBlocks = {};
             const blocks = tb.querySelectorAll("block");
 
             for (let i = 0; i < blocks.length; i++) {
@@ -999,7 +1034,11 @@ namespace pxt.blocks {
 
                             let block = searchElementCache[type];
                             if (!block) {
-                                block = (searchElementCache[type] = tb.querySelector(`block[type="${type}"]`).cloneNode(true))
+                                // Catches built-in blocks that aren't loaded dynamically
+                                const existing = tb.querySelector(`block[type="${type}"]`);
+                                if (existing) {
+                                    block = (searchElementCache[type] = existing.cloneNode(true));
+                                }
                             }
 
                             if (block) {
