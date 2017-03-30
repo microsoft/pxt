@@ -787,6 +787,10 @@ namespace ts.pxtc.Util {
         return n ? (n[0].toLocaleUpperCase() + n.slice(1)) : n;
     }
 
+    export function uncapitalize(n: string): string {
+        return (n || "").split(/(?=[A-Z])/g).join(" ").toLowerCase();
+    }
+
     export function range(len: number) {
         let r: number[] = []
         for (let i = 0; i < len; ++i) r.push(i)
