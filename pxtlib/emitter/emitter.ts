@@ -556,6 +556,11 @@ namespace ts.pxtc {
     }
 
     function isFunctionType(t: Type) {
+        let props = t.getApparentProperties()
+        // if an object type represents a function (via 1 signature) then it
+        // can't have any other properties
+        if (props.length > 0)
+            return null;
         let sigs = checker.getSignaturesOfType(t, SignatureKind.Call)
         if (sigs && sigs.length == 1)
             return sigs[0]
@@ -743,9 +748,7 @@ namespace ts.pxtc {
                 let [retSub,msgSub] = checkSubtype(subRetType, superRetType)
                 if (ret && !retSub) [ret,msg] = [retSub,msgSub]
                 return insertSubtype(key,[ret,msg])
-            } else {
-                // TODO???
-            }
+            } 
         } else if (isInterfaceType(superType)) {
             if (isStructureType(subType)) {
                 let superProps = checker.getPropertiesOfType(superType)

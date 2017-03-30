@@ -11,5 +11,16 @@ namespace SomeBadFun {
 
     // Unsound, ruled out in Static TypeScript 
     // MouseEvent is a subtype of Event (should be a supertype)
+    // no function parameter bivariance
     listenEvent(EventType.Mouse, (e: MouseEvent) => {}); // TS9203
+
+    interface FunWithField {
+        (x:number, y:number): number;
+        a? : string
+    }
+    // functions can't be cast to interfaces in STS
+    let add  = function (x:number,y:number) { return x + y }  
+    let addWithExtra : FunWithField = add   // TS9203
+    addWithExtra.a = "hi"
+
 }

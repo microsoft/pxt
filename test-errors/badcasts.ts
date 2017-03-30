@@ -15,7 +15,7 @@ interface Foo {
     b?: number
 }
 
-// this is not legal in STS
+// an interface can't extend a class in STS
 interface Foo2 extends Baz {    // TS9203
     c: string;
 }
@@ -54,8 +54,7 @@ let x3 : Foo3 = null
 
 x3 = x2 // TS9203
 
-interface Opt {
-    a: number;
+interface Opt extends Baz{ // TS9203
     b?: string
 }
 
