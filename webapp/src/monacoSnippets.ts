@@ -285,7 +285,7 @@ export const text: pxt.vs.NameDefiniton = {
         }
     },
     metaData: {
-        advanced: 'true',
+        advanced: true,
         color: pxt.blocks.blockColors["text"].toString(),
         icon: "text",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
