@@ -304,7 +304,7 @@ namespace ts.pxtc {
         weight?: number;
         parts?: string;
         trackArgs?: number[];
-        advanced?: boolean;
+        advanced?: string;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         // On block

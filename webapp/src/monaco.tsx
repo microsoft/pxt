@@ -541,7 +541,7 @@ export class Editor extends srceditor.Editor {
         Editor.injectBuiltinCategories(fnDef);
 
         // Non-advanced categories
-        appendCategories(group, Object.keys(fnDef).filter(ns => !(fnDef[ns].metaData && fnDef[ns].metaData.advanced)));
+        appendCategories(group, Object.keys(fnDef).filter(ns => !(fnDef[ns].metaData && fnDef[ns].metaData.advanced == 'true')));
 
         // Advanced seperator
         group.appendChild(Editor.createTreeSeperator());
@@ -554,7 +554,7 @@ export class Editor extends srceditor.Editor {
          }, lf("{id:category}Advanced")))
 
         if (this.showAdvanced) {
-            appendCategories(group, Object.keys(fnDef).filter(ns => fnDef[ns].metaData && fnDef[ns].metaData.advanced));
+            appendCategories(group, Object.keys(fnDef).filter(ns => fnDef[ns].metaData && fnDef[ns].metaData.advanced == 'true'));
 
             // Add package button
             if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
@@ -693,10 +693,10 @@ export class Editor extends srceditor.Editor {
                     const fn1 = fns[f1];
                     const fn2 = fns[f2];
                     const w2 = (fn2.metaData ? fn2.metaData.weight || 50 : 50)
-                        + (fn2.metaData && fn2.metaData.advanced ? 0 : 1000);
+                        + (fn2.metaData && fn2.metaData.advanced == 'true' ? 0 : 1000);
                     + (fn2.metaData && fn2.metaData.blockId ? 10000 : 0)
                     const w1 = (fn1.metaData ? fn1.metaData.weight || 50 : 50)
-                        + (fn1.metaData && fn1.metaData.advanced ? 0 : 1000);
+                        + (fn1.metaData && fn1.metaData.advanced == 'true' ? 0 : 1000);
                     + (fn1.metaData && fn1.metaData.blockId ? 10000 : 0)
                     return w2 - w1;
                 }).forEach((fn) => {
