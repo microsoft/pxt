@@ -283,7 +283,7 @@ namespace ts.pxtc {
                             return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
                         });
                     }
-                    let options: Map<PropertyOption> = {};
+                    let options: MapLike<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
                     let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
                     if (minVal) options['min'] = {value: minVal};

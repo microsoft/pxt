@@ -592,8 +592,8 @@ ${output}</xml>`;
 
             function collectTextJoinArgs(n: ts.Node, result: ts.Node[]) {
                 if (isTextJoin(n)) {
-                    collectTextJoinArgs(n.left, result);
-                    collectTextJoinArgs(n.right, result)
+                    collectTextJoinArgs((<ts.BinaryExpression>n).left, result);
+                    collectTextJoinArgs((<ts.BinaryExpression>n).right, result)
                 }
                 else {
                     result.push(n);
