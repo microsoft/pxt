@@ -518,7 +518,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
     })
 
     gitPull = gitPull
-            .then(() => commitMsg ? nodeutil.runGitAsync("commit", "-m", commitMsg, "--", "package.json") : Promise.resolve());
+        .then(() => commitMsg ? nodeutil.runGitAsync("commit", "-m", commitMsg, "--", "package.json") : Promise.resolve());
 
     return gitPull;
 }
@@ -1759,7 +1759,6 @@ const statAsync = Promise.promisify(fs.stat)
 const rimrafAsync = Promise.promisify(rimraf);
 
 let commonfiles: Map<string> = {}
-let fileoverrides: Map<string> = {}
 
 class SnippetHost implements pxt.Host {
     //Global cache of module files
@@ -1868,8 +1867,10 @@ class SnippetHost implements pxt.Host {
 
 class Host
     implements pxt.Host {
+    fileoverrides: Map<string> = {}
+
     resolve(module: pxt.Package, filename: string) {
-        pxt.debug(`resolving ${module.level}:${module.id} -- ${filename}`)
+        pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
         if (module.level == 0) {
             return "./" + filename
         } else if (module.verProtocol() == "file") {
@@ -1883,12 +1884,13 @@ class Host
         let commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
-        let overFile = U.lookup(fileoverrides, filename)
+        let overFile = U.lookup(this.fileoverrides, filename)
         if (module.level == 0 && overFile != null)
             return overFile
 
         let resolved = this.resolve(module, filename)
         try {
+            pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (module.config) {
@@ -2729,8 +2731,9 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 files[idx] = fn
                 mainPkg.config.name = fn.replace(/\.ts$/, "")
                 mainPkg.config.description = `Generated from ${ti.base} with ${fn}`
-                fileoverrides = {}
-                fileoverrides[fn] = ti.text
+                const host = mainPkg.host() as Host;
+                host.fileoverrides = {}
+                host.fileoverrides[fn] = ti.text
                 return prepBuildOptionsAsync(BuildOption.Test, true)
                     .then(opts => {
                         let res = pxtc.compile(opts)
@@ -3532,7 +3535,7 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
     const serial = parsed && !!parsed.flags["serial"];
     return buildCoreAsync({ mode: BuildOption.Deploy })
-        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve() )
+        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve())
 }
 
 export function runAsync() {
