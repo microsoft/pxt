@@ -137,6 +137,7 @@ following additional restrictions:
 * class-to-class casts can only be from subclass to superclass, as defined by the 
    (transitive closure of) the *extends* clause - nominal typing for classes;
 * interfaces cannot extend classes
+* an interface cannot have the same name as a class
 
 STS' treatment of classes follows a nominal typing discipline, where one expects
 an object of class type to have the implementation associated with that class.
@@ -153,6 +154,9 @@ bivariance, as in TypeScript). Furthemore:
   matching the function's type; the interface J can have no other properties
 
 ### Arrays
+
+As with functions, arrays can only be cast to an interface J with has a single index
+singature matching the array's type; the interface J can have no other properties.
 
 ## Optional properties
 

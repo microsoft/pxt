@@ -636,7 +636,11 @@ namespace ts.pxtc {
         return false;
     }
 
-    function checkInterfaceDeclaration(decl: InterfaceDeclaration) {
+    function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
+        for (let cl in classes) {
+            if (classes[cl].decl.name.text == decl.name.text)
+                 userError(9203, lf("Interface with same name as a class not supported."))
+        }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
                 switch (h.token) {
@@ -3323,7 +3327,7 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            checkInterfaceDeclaration(node)
+            checkInterfaceDeclaration(node,classInfos)
             let attrs = parseComments(node)
             if (attrs.autoCreate)
                 autoCreateFunctions[attrs.autoCreate] = true
