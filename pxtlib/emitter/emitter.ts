@@ -3203,7 +3203,15 @@ ${lbl}: .short 0xffff
                 if (cl.kind == SK.CaseClause) {
                     let cc = cl as CaseClause
                     let cmpExpr = emitExpr(cc.expression)
-                    if (switchType.flags & TypeFlags.String) {
+                    if (opts.target.taggedInts) {
+                        // we assume the value we're switching over will stay alive
+                        // so, the mask only applies to the case expression if needed
+                        let cmpCall = ir.rtcallMask(mapIntOpName("langsupp::eq_bool"),
+                            isRefCountedExpr(cc.expression) ? 1 : 0,
+                            ir.CallingConvention.Plain, [cmpExpr, expr])
+                        quickCmpMode = false
+                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
+                    } else if (switchType.flags & TypeFlags.String) {
                         let cmpCall = ir.rtcallMask("String_::compare",
                             isRefCountedExpr(cc.expression) ? 3 : 2,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
