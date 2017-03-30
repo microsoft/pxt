@@ -23,4 +23,12 @@ namespace SomeBadFun {
     let addWithExtra : FunWithField = add   // TS9203
     addWithExtra.a = "hi"
 
+    interface ArrWithField {
+        [x:number]: number;
+        a? : string
+    }
+    let arr = [ 1, 2 ,3]
+    // can't do with arrays either
+    let arrWithExtra: ArrWithField = arr // TS9203
+ 
 }
