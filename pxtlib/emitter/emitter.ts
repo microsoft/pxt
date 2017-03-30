@@ -3116,11 +3116,18 @@ ${lbl}: .short 0xffff
             // we use loadCore() on collection variable so that it doesn't get incr()ed
             // we could have used load() and rtcallMask to be more regular
             let len = ir.rtcall(length, [collectionVar.loadCore()])
-            let cmp = emitIntOp("numops::lt_bool", intVarIter.load(), len)
+            let cmp = emitIntOp("numops::lt_bool", intVarIter.load(), fromInt(len))
             proc.emitJmpZ(l.brk, cmp)
 
+            // TODO this should be changed to use standard indexer lookup and int handling
+            let toInt = (e:ir.Expr) => {
+                if (opts.target.taggedInts)
+                    return ir.rtcall("pxt::toInt", [e])
+                else return e
+            }
+
             // c = a[i]
-            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), intVarIter.load()])))
+            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.load())])))
 
             emit(node.statement);
             proc.emitLblDirect(l.cont);
