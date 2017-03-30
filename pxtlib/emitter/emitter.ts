@@ -439,7 +439,7 @@ namespace ts.pxtc {
 
         for (let n of booleanAttributes) {
             if (typeof (res as any)[n] == "string")
-                (res as any)[n] = (res as any)[n] == 'true' ? true : false;
+                (res as any)[n] = (res as any)[n] == 'true' || (res as any)[n] == '1' ? true : false;
         }
 
         if (res.trackArgs) {
