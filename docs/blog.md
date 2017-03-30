@@ -1,7 +1,7 @@
 # Microsoft MakeCode Blog
 
 ## [Microsoft MakeCode Overview](/blog/makecode-overview)
-April 1, 2017 by [tballmsft](https://github.com/tballmsft)
+March 30, 2017 by [tballmsft](https://github.com/tballmsft)
 Overview of the main features of the Microsoft MakeCode web app...
 [Read more](/blog/makecode-overview)
 
