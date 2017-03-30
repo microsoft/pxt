@@ -477,7 +477,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
     if (pkg["name"] == "pxt-core") return Promise.resolve(pkg)
 
     let gitPull = Promise.resolve();
-    let commitMsg: string = undefined;
+    let commitMsg: string = "";
 
     ["pxt-core", "pxt-common-packages"].forEach(knownPackage => {
         const modulePath = path.join("node_modules", knownPackage)
@@ -2258,7 +2258,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
                     newCfg[f] = configMap[f]
             }
 
-            files["pxt.json"] = JSON.stringify(newCfg, null, 4) + "\n"
+            files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
 
             configMap = U.clone(configMap)
             configMap["target"] = pxt.appTarget.id
