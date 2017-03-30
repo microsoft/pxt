@@ -709,6 +709,7 @@ namespace pxt.blocks {
         searchElementCache = {};
         usedBlocks = {};
         let currentBlocks: Map<number> = {};
+        let showAdvanced = false;
         const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
         blockInfo.blocks
@@ -724,9 +725,14 @@ namespace pxt.blocks {
                         if (tb && (!fn.attributes.debug || dbg))
                             injectToolbox(tb, blockInfo, fn, block, showCategories);
                         currentBlocks[fn.attributes.blockId] = 1;
+                        if (!showAdvanced && !fn.attributes.blockHidden && !fn.attributes.deprecated) {
+                            let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                            let nsn = blockInfo.apis.byQName[ns];
+                            showAdvanced = showAdvanced || (nsn && nsn.attributes.advanced);
+                        }
                     }
                 }
-            })
+            });
 
         // remove unused blocks
         Object
@@ -780,6 +786,7 @@ namespace pxt.blocks {
                 removeCategory(tb, "Text");
             }
             else {
+                showAdvanced = true;
                 const cat = categoryElement(tb, "Text");
                 if (cat) {
                     const blockElements = cat.querySelectorAll("block");
@@ -797,6 +804,7 @@ namespace pxt.blocks {
                 removeCategory(tb, "Lists");
             }
             else {
+                showAdvanced = true;
                 const cat = categoryElement(tb, "Lists");
                 if (cat) {
                     const blockElements = cat.querySelectorAll("block");
@@ -812,7 +820,6 @@ namespace pxt.blocks {
 
             // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
-            let removeAdvanced = false;
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
@@ -840,15 +847,18 @@ namespace pxt.blocks {
         }
 
         // Add the "Advanced" category
-        if (tb && showCategories !== CategoryMode.None) {
+        if (showAdvanced && tb && showCategories !== CategoryMode.None) {
             const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
+        }
 
-            if (showCategories === CategoryMode.All && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-                // Add the "Add package" category
-                getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+        if (tb && (!showAdvanced || showCategories === CategoryMode.All) && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+            if (!showAdvanced) {
+                insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
+            // Add the "Add package" category
+            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {
