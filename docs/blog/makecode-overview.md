@@ -1,6 +1,6 @@
 ![Picture of guitar project](/static/blog/makecode-overview/guitar.jpg)
 
-# Introducing MakeCode
+# Introducing Microsoft MakeCode
 
 **Posted on March 30, 2017 by [tballmsft](https://github.com/tballmsft)**
 

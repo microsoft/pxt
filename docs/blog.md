@@ -1,8 +1,8 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode Overview](/blog/makecode-overview)
+## [Microsoft MakeCode Overview](/blog/makecode-overview)
 April 1, 2017 by [tballmsft](https://github.com/tballmsft)
-Overview of the main features of the MakeCode web app...
+Overview of the main features of the Microsoft MakeCode web app...
 [Read more](/blog/makecode-overview)
 
 ## [One chip to flash them all](/blog/one-chip-to-flash-them-all)
