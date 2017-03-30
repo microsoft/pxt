@@ -1078,8 +1078,29 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
     }
 
     return Promise.mapSeries(folders, (dirname) => {
-        process.chdir(path.join(nodeutil.targetDir, dirname))
-        mainPkg = new pxt.MainPackage(new Host())
+        const host = new Host();
+        const pkgPath = path.join(nodeutil.targetDir, dirname);
+        pxt.debug(`building bundled package at ${pkgPath}`)
+
+        // if the package is under node_modules/ , slurp any existing files
+        const m = /node_modules[\\\/][^\\\/]*[\\\/]libs[\\\/](\w+)$/i.exec(pkgPath);
+        if (m) {
+            const bdir = m[1];
+            const overridePath = path.join("libs", bdir);
+            pxt.debug(`override with files from ${overridePath}`)
+            if (nodeutil.existDirSync(overridePath)) {
+                host.fileoverrides = {};
+                nodeutil.allFiles(overridePath)
+                    .filter(f => fs.existsSync(f))
+                    .forEach(f => host.fileoverrides[f] = fs.readFileSync(f, "utf8"));
+
+                if (pxt.options.debug && host.fileoverrides)
+                    pxt.debug(`file overrides: ${JSON.stringify(host.fileoverrides, null, 2)}`)
+            }
+        }
+
+        process.chdir(pkgPath);
+        mainPkg = new pxt.MainPackage(host)
         return f(mainPkg, dirname);
     })
         .finally(() => process.chdir(prev))
