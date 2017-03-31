@@ -159,7 +159,7 @@ namespace pxsim {
     }
     export function readPin(arg: string): MicrobitPin {
         U.assert(!!arg, "Invalid pin: " + arg);
-        const pin = /^([A-Z]\w+)Pin\.(P\d+)$/.exec(arg);
+        const pin = /^(\w+)\.((P|A|D)\d+)$/.exec(arg);
         return pin ? <MicrobitPin>pin[2] : undefined;
     }
     function mkReverseMap(map: { [key: string]: string }) {
@@ -247,13 +247,15 @@ namespace pxsim {
                 partIRs.push(mkIR(def, name));
             } else if (def.instantiation.kind === "function") {
                 let fnAlloc = def.instantiation as PartFunctionDefinition;
-                let fnNm = fnAlloc.fullyQualifiedName;
-                let callsitesTrackedArgs = <string[]>this.opts.fnArgs[fnNm];
-                U.assert(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length, "Failed to read pin(s) from callsite for: " + fnNm);
+                let fnNms = fnAlloc.fullyQualifiedName.split(',');
+                let callsitesTrackedArgsHash: {[index: string]: number} = {};
+                fnNms.forEach(fnNm => { if (this.opts.fnArgs[fnNm]) this.opts.fnArgs[fnNm].forEach((targetArg: string) => {callsitesTrackedArgsHash[targetArg] = 1}); });
+                let callsitesTrackedArgs: string[] = Object.keys(callsitesTrackedArgsHash);
+                U.assert(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length, "Failed to read pin(s) from callsite for: " + fnNms);
                 callsitesTrackedArgs.forEach(fnArgsStr => {
                     let fnArgsSplit = fnArgsStr.split(",");
                     U.assert(fnArgsSplit.length === fnAlloc.argumentRoles.length,
-                        `Mismatch between number of arguments at callsite (function name: ${fnNm}) vs number of argument roles in part definition (part: ${name}).`);
+                        `Mismatch between number of arguments at callsite (function name: ${fnNms}) vs number of argument roles in part definition (part: ${name}).`);
                     let instPins: PinTarget[] = [];
                     let paramArgs: Map<string> = {};
                     fnArgsSplit.forEach((arg, idx) => {

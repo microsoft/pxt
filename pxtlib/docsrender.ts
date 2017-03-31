@@ -228,6 +228,9 @@ namespace pxt.docs {
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
 
+        if (theme.appStoreID)
+            params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
+
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
@@ -299,7 +302,8 @@ namespace pxt.docs {
             "breadcrumb",
             "targetlogo",
             "github",
-            "JSON"
+            "JSON",
+            "appstoremeta"
         ])
     }
 
@@ -484,6 +488,13 @@ namespace pxt.docs {
             if (descM)
                 pubinfo["description"] = html2Quote(descM[1])
         }
+
+        // try getting a better custom image for twitter
+        const imgM = /<div class="ui embed mdvid"[^<>]+?data-placeholder="([^"]+)"[^>]*\/?>/i.exec(html)
+            || /<img class="ui image" src="([^"]+)"[^>]*\/?>/i.exec(html);
+        if (imgM)
+            pubinfo["cardLogo"] = html2Quote(imgM[1]);
+
         pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}

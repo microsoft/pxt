@@ -910,6 +910,9 @@ export class ProjectView
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
+        let userContextWindow: Window = undefined;
+        if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
+            userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
@@ -933,14 +936,19 @@ export class ProjectView
                     return Promise.resolve()
                 }
                 resp.saveOnly = saveOnly
+                resp.userContextWindow = userContextWindow;
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
+                        if (userContextWindow)
+                            try { userContextWindow.close() } catch(e) {}
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
+                if (userContextWindow)
+                    try { userContextWindow.close() } catch(e) {}
             }).finally(() => {
                 this.setState({ compiling: false });
                 if (simRestart) this.runSimulator();
@@ -1342,12 +1350,14 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.loadHeaderAsync(workspace.getHeaders()[0], null);
+                    return this.loadHeaderAsync(workspace.getHeaders()[0], null);
                 } else {
-                    this.newProject();
+                    return this.newProject();
                 }
-            }).finally(() => {
-                this.setState({ active: true, tutorialOptions: null });
+            })
+            .finally(() => {
+                core.hideLoading()
+                this.setState({ active: true, tutorialOptions: undefined });
             });
     }
 
@@ -1519,7 +1529,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }

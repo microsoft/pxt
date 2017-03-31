@@ -336,6 +336,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
+    const booleanAttributes = ["advanced"]
 
     export interface CallInfo {
         decl: Declaration;
@@ -436,6 +437,11 @@ namespace ts.pxtc {
                 (res as any)[n] = parseInt((res as any)[n])
         }
 
+        for (let n of booleanAttributes) {
+            if (typeof (res as any)[n] == "string")
+                (res as any)[n] = (res as any)[n] == 'true' || (res as any)[n] == '1' ? true : false;
+        }
+
         if (res.trackArgs) {
             res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
         }
@@ -494,9 +500,9 @@ namespace ts.pxtc {
             const fn = node0 as ts.FunctionDeclaration;
             if ((fn.symbol as any).parent) {
                 res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
-                res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
+                res.block = `${U.uncapitalize(node.symbol.name)}${fn.parameters.length ? '|' + fn.parameters
                     .filter(p => !p.questionToken)
-                    .map(p => `${(p.name as ts.Identifier).text} %${(p.name as Identifier).text}`).join('|') : ''}`;
+                    .map(p => `${U.uncapitalize((p.name as ts.Identifier).text)} %${(p.name as Identifier).text}`).join('|') : ''}`;
             }
         }
         node.pxtCommentAttrs = res
@@ -1974,6 +1980,9 @@ ${lbl}: .short 0xffff
             };
             (node as any).callInfo = callInfo
 
+            if (isMethod && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
+                recv = (<PropertyAccessExpression>funcExpr).expression
+
             if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
                 callInfo.isAutoCreate = true
 
@@ -1991,9 +2000,10 @@ ${lbl}: .short 0xffff
             addEnclosingTypeBindings(bindings, decl)
 
             if (res.usedArguments && attrs.trackArgs) {
-                let tracked = attrs.trackArgs.map(n => args[n]).map(e => {
+                let targs = recv ? [recv].concat(args) : args
+                let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
                     let d = getDecl(e)
-                    if (d && d.kind == SK.EnumMember)
+                    if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
                         return getFullName(checker, d.symbol)
                     else return "*"
                 }).join(",")
