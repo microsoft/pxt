@@ -16,7 +16,7 @@ namespace pxsim {
     }
     export interface PartInst {
         name: string,
-        simulationBehavior?: string,
+        simulationBehavior?: any,
         visual: PartVisualDefinition,
         bbFit: PartBBFit,
         startColumnIdx: number,
