@@ -505,9 +505,8 @@ namespace pxt {
 
             let initPromise = Promise.resolve()
 
-            this.isLoaded = true
+            this.isLoaded = true;
             const str = this.readFile(pxt.CONFIG_NAME);
-            const mainTs = this.readFile("main.ts");
             if (str == null) {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
@@ -541,7 +540,10 @@ namespace pxt {
                 .then(() => {
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const missingPackages = this.getMissingPackages(<PackageConfig>JSON.parse(str), mainTs);
+                        const mainTs = this.readFile("main.ts");
+                        if (!mainTs) return Promise.resolve(null);
+
+                        const missingPackages = this.getMissingPackages(this.config, mainTs);
                         let didAddPackages = false;
                         let addPackagesPromise = Promise.resolve();
                         Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {

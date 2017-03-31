@@ -1350,12 +1350,14 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.loadHeaderAsync(workspace.getHeaders()[0], null);
+                    return this.loadHeaderAsync(workspace.getHeaders()[0], null);
                 } else {
-                    this.newProject();
+                    return this.newProject();
                 }
-            }).finally(() => {
-                this.setState({ active: true, tutorialOptions: null });
+            })
+            .finally(() => {
+                core.hideLoading()
+                this.setState({ active: true, tutorialOptions: undefined });
             });
     }
 
@@ -1527,7 +1529,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
