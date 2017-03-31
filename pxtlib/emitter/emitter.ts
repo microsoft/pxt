@@ -1980,6 +1980,9 @@ ${lbl}: .short 0xffff
             };
             (node as any).callInfo = callInfo
 
+            if (isMethod && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
+                recv = (<PropertyAccessExpression>funcExpr).expression
+
             if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
                 callInfo.isAutoCreate = true
 
@@ -1997,9 +2000,10 @@ ${lbl}: .short 0xffff
             addEnclosingTypeBindings(bindings, decl)
 
             if (res.usedArguments && attrs.trackArgs) {
-                let tracked = attrs.trackArgs.map(n => args[n]).map(e => {
+                let targs = recv ? [recv].concat(args) : args
+                let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
                     let d = getDecl(e)
-                    if (d && d.kind == SK.EnumMember)
+                    if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
                         return getFullName(checker, d.symbol)
                     else return "*"
                 }).join(",")
