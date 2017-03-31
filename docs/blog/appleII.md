@@ -12,14 +12,15 @@ To reach even more users, we've gone the extra mile to bring the
 micro:bit programming experience to older computers. In particular,
 we felt it was important to make the micro:bit work with Apple computers
 from the time of the [BBC Micro](https://en.wikipedia.org/wiki/BBC_Micro), 
-the intellectual forebear of the micro:bit. The Apple II series was the
-natural choice. 
+the early 1980's intellectual forebear of the micro:bit. 
+The Apple II series was the natural choice, as one of our team members
+still has one, which he brought into the office this past week. 
 
 The Apple II already comes with a great beginners programming 
 language built in: BASIC! As a result, we didn't need to port the 
 Microsoft MakeCode Blocks or JavaScript experience to the Apple II (thank
-goodness). Here's a picture of a simple micro:bit program to display 
-a smiley face, written in BASIC:
+goodness). Here's a picture of a simple BASIC program to display 
+a smiley face on the micro:bit:
 
 ![BASIC program](/static/blog/appleII/program.jpg)
 
@@ -43,6 +44,6 @@ slots:
 ![flashing the micro:bit](/static/blog/appleII/flash.jpg)
 
 Unfortunately, flashing multiple micro:bits in this way caused
-a massive eletric surge, completely destroying the Apple II and
-all the code we created over the past week, so we won't be
-able to make it available. What fools!
+a massive eletric surge, completely destroying our team member's 
+Apple II and all the code we created over the past week, so we 
+won't be able to make it available. What fools!
