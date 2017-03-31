@@ -71,6 +71,8 @@ ${lbl}:`
         call_reg(reg: string) {
             return "blx " + reg;
         }
+        // NOTE: 43 (in cmp instruction below) is magic number to distinguish
+        // NOTE: Map from RefRecord
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return `
     ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
