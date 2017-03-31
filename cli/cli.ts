@@ -1080,7 +1080,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
     return Promise.mapSeries(folders, (dirname) => {
         const host = new Host();
         const pkgPath = path.join(nodeutil.targetDir, dirname);
-        pxt.debug(`building bundled package at ${pkgPath}`)
+        pxt.log(`building bundled package at ${pkgPath}`)
 
         // if the package is under node_modules/ , slurp any existing files
         const m = /node_modules[\\\/][^\\\/]*[\\\/]libs[\\\/](\w+)$/i.exec(pkgPath);
@@ -1096,6 +1096,8 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
 
                 if (pxt.options.debug && host.fileOverrides)
                     pxt.debug(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
+            } else {
+                pxt.log(`override folder ${overridePath} not present`);
             }
         }
 
@@ -3941,16 +3943,16 @@ function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
             filesMap['pxt.json'] = {
                 "content": JSON.stringify(pxtConfig, null, 4)
             }
-            console.log("Uploading....")
+            pxt.log("Uploading....")
             return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
         })
         .then((published_id) => {
-            console.log(`Success, view your gist at`);
-            console.log(``)
-            console.log(`    https://gist.github.com/${published_id}`);
-            console.log(``)
-            console.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
-            if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
+            pxt.log(`Success, view your gist at`);
+            pxt.log(``)
+            pxt.log(`    https://gist.github.com/${published_id}`);
+            pxt.log(``)
+            pxt.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
+            if (!token) pxt.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
 
             // Save gist id to pxt.json
             if (token) mainPkg.config.gistId = published_id;
