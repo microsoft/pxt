@@ -1080,7 +1080,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
     return Promise.mapSeries(folders, (dirname) => {
         const host = new Host();
         const pkgPath = path.join(nodeutil.targetDir, dirname);
-        pxt.log(`building bundled package at ${pkgPath}`)
+        pxt.debug(`building bundled package at ${pkgPath}`)
 
         // if the package is under node_modules/ , slurp any existing files
         const m = /node_modules[\\\/][^\\\/]*[\\\/]libs[\\\/](\w+)$/i.exec(pkgPath);
@@ -1096,7 +1096,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
 
                 pxt.log(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
             } else {
-                pxt.log(`override folder ${overridePath} not present`);
+                pxt.debug(`override folder ${overridePath} not present`);
             }
         }
 
@@ -1219,7 +1219,7 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
         U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
 
-    console.log(`building ${p}...`)
+    pxt.log(`building ${p}...`)
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -1326,7 +1326,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
         .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
         .forEach(k => {
             let fn = path.join('./docs', logos[k]);
-            console.log(`importing ${fn}`)
+            pxt.debug(`importing ${fn}`)
             logos[k + "CDN"] = uploadArtFile(logos[k])
             let b = fs.readFileSync(fn)
             let mimeType = '';
@@ -1537,7 +1537,7 @@ function buildTargetCoreAsync() {
 
     console.log(`building target.json in ${process.cwd()}...`)
     return forEachBundledPkgAsync((pkg, dirname) => {
-        pxt.log(`building in ${dirname}`);
+        pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
 
         if (isPrj) {
@@ -1565,10 +1565,10 @@ function buildTargetCoreAsync() {
                     let hexFile = path.join(hexCachePath, sha + ".hex");
 
                     if (fs.existsSync(hexFile)) {
-                        pxt.log(`HEX image already in offline cache for project ${dirname}`);
+                        pxt.debug(`.hex image already in offline cache for project ${dirname}`);
                     } else {
                         fs.writeFileSync(hexFile, hex.join(os.EOL));
-                        pxt.log(`Created HEX image in offline cache for project ${dirname}: ${hexFile}`);
+                        pxt.debug(`created .hex image in offline cache for project ${dirname}: ${hexFile}`);
                     }
                 }
             })
@@ -1908,7 +1908,7 @@ class Host
 
         const overFile = U.lookup(this.fileOverrides, filename)
         if (module.level == 0 && overFile != null) {
-            pxt.log(`found override for ${filename}`)
+            pxt.debug(`found override for ${filename}`)
             return overFile;
         }
 
@@ -2546,15 +2546,15 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
 }
 
 function simshimAsync() {
-    console.log("Looking for shim annotations in the simulator.")
+    pxt.debug("looking for shim annotations in the simulator.")
     if (!nodeutil.existsDirSync("sim")) {
-        console.log("no sim folder, skipping.")
+        pxt.debug("no sim folder, skipping.")
         return Promise.resolve();
     }
     let prog = pxtc.plainTsc("sim")
     let shims = pxt.simshim(prog)
     let filename = "sims.d.ts"
-    for (let s of Object.keys(shims)) {
+    for (const s of Object.keys(shims)) {
         let cont = shims[s]
         if (!cont.trim()) continue
         cont = "// Auto-generated from simulator. Do not edit.\n" + cont +
@@ -2565,7 +2565,7 @@ function simshimAsync() {
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
         let fn = "libs/" + s + "/" + filename
         if (fs.readFileSync(fn, "utf8") != cont) {
-            console.log(`updating ${fn}`)
+            pxt.debug(`updating ${fn}`)
             fs.writeFileSync(fn, cont)
         }
     }
