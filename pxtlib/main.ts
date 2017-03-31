@@ -692,7 +692,7 @@ namespace pxt {
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    pxt.debug(`updating ${fn} (size=${cont.length})...`)
+                    pxt.log(`updating ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, cont)
                 }
             }
@@ -701,7 +701,7 @@ namespace pxt {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
                     // save file (force write)
-                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
+                    pxt.log(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
                 return updatedCont;
