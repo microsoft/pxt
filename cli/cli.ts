@@ -1094,8 +1094,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
                     .filter(f => fs.existsSync(f))
                     .forEach(f => host.fileOverrides[path.relative(overridePath, f)] = fs.readFileSync(f, "utf8"));
 
-                if (pxt.options.debug && host.fileOverrides)
-                    pxt.debug(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
+                pxt.log(`file overrides: ${Object.keys(host.fileOverrides).join(', \n')}`)
             } else {
                 pxt.log(`override folder ${overridePath} not present`);
             }
