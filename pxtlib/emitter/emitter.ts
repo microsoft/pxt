@@ -500,9 +500,9 @@ namespace ts.pxtc {
             const fn = node0 as ts.FunctionDeclaration;
             if ((fn.symbol as any).parent) {
                 res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
-                res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
+                res.block = `${U.uncapitalize(node.symbol.name)}${fn.parameters.length ? '|' + fn.parameters
                     .filter(p => !p.questionToken)
-                    .map(p => `${(p.name as ts.Identifier).text} %${(p.name as Identifier).text}`).join('|') : ''}`;
+                    .map(p => `${U.uncapitalize((p.name as ts.Identifier).text)} %${(p.name as Identifier).text}`).join('|') : ''}`;
             }
         }
         node.pxtCommentAttrs = res
