@@ -1094,7 +1094,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
                     .filter(f => fs.existsSync(f))
                     .forEach(f => host.fileOverrides[path.relative(overridePath, f)] = fs.readFileSync(f, "utf8"));
 
-                pxt.log(`file overrides: ${Object.keys(host.fileOverrides).join(', \n')}`)
+                pxt.log(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
             } else {
                 pxt.log(`override folder ${overridePath} not present`);
             }
@@ -1903,16 +1903,16 @@ class Host
     }
 
     readFile(module: pxt.Package, filename: string): string {
-        let commonFile = U.lookup(commonfiles, filename)
+        const commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
-        let overFile = U.lookup(this.fileOverrides, filename)
+        const overFile = U.lookup(this.fileOverrides, filename)
         if (module.level == 0 && overFile != null) {
-            pxt.debug(`found override for ${filename}`)
-            return overFile
+            pxt.log(`found override for ${filename}`)
+            return overFile;
         }
 
-        let resolved = this.resolve(module, filename)
+        const resolved = this.resolve(module, filename)
         try {
             pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
