@@ -11,7 +11,7 @@ namespace pxt {
             for (let stmt of src.statements) {
                 let mod = stmt as ts.ModuleDeclaration
                 if (stmt.kind == SK.ModuleDeclaration && mod.name.text == "pxsim") {
-                    doStmt(mod.body)
+                    doStmt(<ts.ModuleBlock | ts.NamespaceDeclaration>mod.body)
                 }
             }
         }
@@ -41,7 +41,7 @@ namespace pxt {
             let prevNs = currNs
             if (currNs) currNs += "."
             currNs += mod.name.text
-            doStmt(mod.body)
+            doStmt(<ts.ModuleBlock | ts.NamespaceDeclaration>mod.body)
             currNs = prevNs
         }
 
