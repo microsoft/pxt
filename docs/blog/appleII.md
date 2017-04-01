@@ -2,11 +2,12 @@
 
 # Programming the micro:bit on the Apple II
 
-**Posted on April 1st, 2017**
+**Posted on April 1st, 2017 by [tballmsft](https://github.com/tballmsft)**
 
 The Microsoft MakeCode team has worked hard to bring a beginning programming experience
 for the micro:bit to everyone via the [Microsoft MakeCode web app](/blog/makecode-overview),
-which is available via any modern web browser.
+which is available via any modern web browser. We've also created [UF2](/blog/one-chip-to-flash-them-all), 
+a new file format for flashing devices robustly across many different operating systems.
 
 To reach even more users, we've gone the extra mile to bring the 
 micro:bit programming experience to older computers. In particular,
