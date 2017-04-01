@@ -1,9 +1,9 @@
 # Microsoft MakeCode Blog
 
-## [Microbit Editor v0.9.66](/blog/microbit-0-9-66)
-March 30th, 2017 by [pelikhan](https://github.com/pelikhan)
+## [Microbit Editor v0.9.77](/blog/microbit/v0.9.77)
+March 30th, 2017
 Release notes for the micro:bit editor...
-[Read more](/blog/microbit-0-9-66)
+[Read more](/blog/microbit/v0.9.66)
 
 ## [Microsoft MakeCode Overview](/blog/makecode-overview)
 March 30, 2017 by [tballmsft](https://github.com/tballmsft)
