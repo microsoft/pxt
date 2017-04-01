@@ -33,6 +33,13 @@ automatically gets loaded as blocks in the editor:
 
 TODO: @sam
 
+## Improved iPhone and iPad support!
+
+The iOS [micro:bit app](https://itunes.apple.com/us/app/micro-bit/id1092687276) got recently updated by ScienceScope. Fixes in this release, 
+improve the coding and flashing experience of the micro:bit on iPhone and iPads.
+
+TODO: screenshot
+
 ## Nicer embeddings
 
 Shared project can be embedded in web pages and blogs. When this happens, the size of the editor is usually much small than the regular full screen when editing. We've worked on this experience so that your shared project look great... even when browsed from a mobile phone.
