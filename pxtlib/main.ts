@@ -9,10 +9,10 @@ namespace pxt {
     export import Util = pxtc.Util;
     const lf = U.lf;
 
-    export var appTarget: TargetBundle;
+    export let appTarget: TargetBundle;
 
     export function setAppTarget(trg: TargetBundle) {
-        appTarget = trg
+        appTarget = trg || <TargetBundle>{};
 
         // patch-up the target
         let comp = appTarget.compile
@@ -26,9 +26,9 @@ namespace pxt {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
-        if (!trg.appTheme) trg.appTheme = {}
-        if (!trg.appTheme.embedUrl)
-            trg.appTheme.embedUrl = trg.appTheme.homeUrl
+        if (!appTarget.appTheme) appTarget.appTheme = {}
+        if (!appTarget.appTheme.embedUrl)
+            appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
         let cs = appTarget.compileService
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
