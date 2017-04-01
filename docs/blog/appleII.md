@@ -44,6 +44,6 @@ slots:
 ![flashing the micro:bit](/static/blog/appleII/flash.jpg)
 
 Unfortunately, flashing multiple micro:bits in this way caused
-a massive eletric surge, completely destroying our team member's 
+a massive electrical surge, completely destroying our team member's 
 Apple II and all the code we created over the past week, so we 
 won't be able to make it available. What fools!
