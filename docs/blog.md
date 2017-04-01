@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Programming the micro:bit on the Apple II](/blog/appleII)
+April 1, 2017 by [tballmsft](https://github.com/tballmsft)
+The Microsoft MakeCode team has worked hard to bring a beginning programming experience
+for the micro:bit to everyone...
+[Read more](/blog/appleII)
+
 ## [Microsoft MakeCode Overview](/blog/makecode-overview)
 March 30, 2017 by [tballmsft](https://github.com/tballmsft)
 Overview of the main features of the Microsoft MakeCode web app...
