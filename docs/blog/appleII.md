@@ -14,10 +14,12 @@ micro:bit programming experience to older computers. In particular,
 we felt it was important to make the micro:bit work with Apple computers
 from the time of the [BBC Micro](https://en.wikipedia.org/wiki/BBC_Micro), 
 the early 1980's intellectual forebear of the micro:bit. 
-The Apple II series was the natural choice, as one of our team members
-still has one, which he brought into the office this past week. 
+The [Apple II](https://en.wikipedia.org/wiki/Apple_II) series was the 
+natural choice, being from the same era as the BBC Micro. (Also, 
+one of our team members  has one, which he brought into the 
+office this past week.)
 
-The Apple II already comes with a great beginners programming 
+The Apple II already comes with a great beginning programming 
 language built in: BASIC! As a result, we didn't need to port the 
 Microsoft MakeCode Blocks or JavaScript experience to the Apple II (thank
 goodness). Here's a picture of a simple BASIC program to display 
