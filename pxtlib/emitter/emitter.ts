@@ -621,6 +621,8 @@ namespace ts.pxtc {
                 userError(9203, lf("Unknown type for expression"))
             }
         }
+        if (!r)
+            return r 
         return checkType(r)
     }
 
@@ -1245,7 +1247,7 @@ namespace ts.pxtc {
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
                             let tp = typeOf(h.types[0])
-                            if (isClassType(tp)) {
+                            if (tp && isClassType(tp)) {
                                 return getClassInfo(tp)
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
