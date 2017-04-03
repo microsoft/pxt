@@ -9,7 +9,10 @@ function loadSoundAsync(id: string): Promise<AudioBuffer> {
 
     const url = pxt.webConfig.commitCdnUrl + "sounds/" + id + ".m4a";
     return Util.requestAsync({
-        url
+        url,
+        headers: {
+            "Accept": "audio/m4a"
+        },
     }).then(resp => audio.loadAsync(resp.buffer))
         .then(buffer => sounds[id] = buffer)
 }
