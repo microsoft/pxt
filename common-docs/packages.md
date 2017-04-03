@@ -91,6 +91,12 @@ the package will not show up in search.**
 
 Read more an [defining-blocks](https://makecode.com/defining-blocks) to learn how to surface your APIs into blocks and JavaScript.
 
+## Icon
+
+The editor will automatically use any ``icon.png`` file when displaying the package in the editor. **This feature only works for approved packages.**
+
+The icon should be sized with a 16:9 ratio and of at least ``184`` pixel wide.
+
 ## Versioning
 
 When someone references your package from the web UI they will get

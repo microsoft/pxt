@@ -3614,7 +3614,8 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
     }
 
     if (/^https?:/.test(filename)) {
-        pxt.log(`Fetching ${filename}...`)
+        pxt.log(`fetching ${filename}...`)
+        pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
         return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
             .then(resp => {
                 if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
