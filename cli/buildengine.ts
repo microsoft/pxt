@@ -109,11 +109,11 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     }
 
     if (buildCache.sha == extInfo.sha) {
-        pxt.log("Skipping build.")
+        pxt.debug("skipping build")
         return tasks
     }
 
-    pxt.log("Writing build files to " + buildEngine.buildPath)
+    pxt.debug("writing build files to " + buildEngine.buildPath)
 
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
@@ -142,7 +142,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 buildDalConst(buildEngine, mainPkg, true);
             })
     } else {
-        pxt.log("Skipping build update.")
+        pxt.debug("skipping build update")
     }
 
     tasks = tasks

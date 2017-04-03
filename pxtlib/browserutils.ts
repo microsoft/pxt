@@ -107,6 +107,10 @@ namespace pxt.BrowserUtils {
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
+    export function hasSaveAs(): boolean {
+        return isEdge() || isIE() || isFirefox();
+    }
+
     export function os(): string {
         if (isWindows()) return "windows";
         else if (isMac()) return "mac";
@@ -142,6 +146,10 @@ namespace pxt.BrowserUtils {
         }
         else if (isSafari()) {
             matches = /Version\/([0-9\.]+)/i.exec(navigator.userAgent);
+            // pinned web site have a different user agent
+            // Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27
+            if (!matches)
+                matches = /(iPod|iPhone|iPad) OS (\d+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -168,14 +176,14 @@ namespace pxt.BrowserUtils {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
         }
         const versionString = browserVersion();
-        const v = parseInt(versionString)
+        const v = parseInt(versionString || "0")
 
-        const isRecentChrome = isChrome() && v >= 38
-        const isRecentFirefox = isFirefox() && v >= 31
-        const isRecentEdge = isEdge()
-        const isRecentSafari = isSafari() && v >= 9
-        const isRecentOpera = (isOpera() && isChrome()) && v >= 21
-        const isRecentIE = isIE() && v >= 11
+        const isRecentChrome = isChrome() && v >= 38;
+        const isRecentFirefox = isFirefox() && v >= 31;
+        const isRecentEdge = isEdge();
+        const isRecentSafari = isSafari() && v >= 9;
+        const isRecentOpera = (isOpera() && isChrome()) && v >= 21;
+        const isRecentIE = isIE() && v >= 11;
         const isModernBrowser = isRecentChrome || isRecentFirefox || isRecentEdge || isRecentSafari || isRecentOpera || isRecentIE
 
         //In the future this should check for the availability of features, such
@@ -269,23 +277,24 @@ namespace pxt.BrowserUtils {
         return 1;
     }
 
-    export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(text), name, contentType, onError)
+    export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
+        return browserDownloadBase64(btoa(text), name, contentType, userContextWindow, onError)
     }
 
-    export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(Util.toUTF8(text)), name, contentType, onError)
+    export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
+        return browserDownloadBase64(btoa(Util.toUTF8(text)), name, contentType, userContextWindow, onError)
     }
 
     export function isBrowserDownloadInSameWindow(): boolean {
-        const windowOpen = /downloadWindowOpen=1/i.test(window.location.href);
+        const windowOpen = isMobile() && isSafari() && !/downloadWindowOpen=0/i.test(window.location.href);
         return windowOpen;
     }
 
-    export function browserDownloadDataUri(uri: string, name: string) {
+    export function browserDownloadDataUri(uri: string, name: string, userContextWindow?: Window) {
         const windowOpen = isBrowserDownloadInSameWindow();
         if (windowOpen) {
-            window.open(uri, "_self");
+            if (userContextWindow) userContextWindow.location.href = uri;
+            else window.open(uri, "_self");
         } else if (pxt.BrowserUtils.isSafari()) {
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database
@@ -323,25 +332,27 @@ namespace pxt.BrowserUtils {
         }
     }
 
-    export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
-        return browserDownloadBase64(btoa(Util.uint8ArrayToString(buf)), name, contentType, onError)
+    export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
+        return browserDownloadBase64(btoa(Util.uint8ArrayToString(buf)), name, contentType, userContextWindow, onError)
     }
 
-    export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", onError?: (err: any) => void): string {
+    export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
         pxt.debug('trigger download')
 
-        const isMobileBrowser = /mobi/i.test(navigator.userAgent);
-        const isDesktopIE = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
+        const isMobileBrowser = pxt.BrowserUtils.isMobile();
+        const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !isMobileBrowser;
         let protocol = "data";
+        if (isMobile() && isSafari() && pxt.appTarget.appTheme.mobileSafariDownloadProtocol)
+            protocol = pxt.appTarget.appTheme.mobileSafariDownloadProtocol;
+
         const m = /downloadProtocol=([a-z0-9:/?]+)/i.exec(window.location.href);
         if (m) protocol = m[1];
-
         const dataurl = protocol + ":" + contentType + ";base64," + b64
         try {
-            if (isDesktopIE) {
-                let b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
-                let result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
-            } else browserDownloadDataUri(dataurl, name);
+            if (saveBlob) {
+                const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
+                const result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
+            } else browserDownloadDataUri(dataurl, name, userContextWindow);
         } catch (e) {
             if (onError) onError(e);
             pxt.debug("saving failed")

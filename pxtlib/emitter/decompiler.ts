@@ -1233,14 +1233,16 @@ ${output}</xml>`;
                         current = v;
                     });
 
-                    return {
-                        kind: "statement",
-                        type: ts.pxtc.ON_START_TYPE,
-                        handlers: [{
-                            name: "HANDLER",
-                            statement: current
-                        }]
-                    } as StatementNode;
+                    if (current) {
+                        return {
+                            kind: "statement",
+                            type: ts.pxtc.ON_START_TYPE,
+                            handlers: [{
+                                name: "HANDLER",
+                                statement: current
+                            }]
+                        } as StatementNode;
+                    }
                 }
                 return stmt;
             }
@@ -1301,6 +1303,11 @@ ${output}</xml>`;
                 const match = regex.exec(line)
                 if (match) {
                     const matched = match[1].trim()
+
+                    if (matched === ON_START_COMMENT) {
+                        return;
+                    }
+
                     if (matched) {
                         currentLine += currentLine ? " " + matched : matched
                     } else {
@@ -1529,11 +1536,9 @@ ${output}</xml>`;
                     if (instance && i === 0) {
                         return;
                     }
-                    const aName = argNames[i];
                     const paramInfo = api.parameters[instance ? i - 1 : i];
                     if (paramInfo.isEnum) {
                         if (e.kind === SK.PropertyAccessExpression) {
-                            // fail
                             const enumName = (e as PropertyAccessExpression).expression as Identifier;
                             if (enumName.kind === SK.Identifier && enumName.text === paramInfo.type) {
                                 return;
@@ -1549,7 +1554,15 @@ ${output}</xml>`;
                 }
             }
 
-
+            if (api) {
+                const ns = blocksInfo.apis.byQName[api.namespace];
+                if (ns && ns.attributes.fixedInstances && info.args.length) {
+                    const callInfo: pxtc.CallInfo = (info.args[0] as any).callInfo;
+                    if (!callInfo || !callInfo.attrs.fixedInstance) {
+                        return Util.lf("Fixed instance APIs can only be called directly from the fixed instance");
+                    }
+                }
+            }
 
             return undefined;
 
@@ -1686,8 +1699,17 @@ ${output}</xml>`;
 
         function checkPropertyAccessExpression(n: ts.PropertyAccessExpression) {
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
-            if (callInfo && (callInfo.attrs.blockIdentity || callInfo.decl.kind === SK.EnumMember)) {
-                return undefined;
+            if (callInfo) {
+                if (callInfo.attrs.blockIdentity || callInfo.decl.kind === SK.EnumMember) {
+                    return undefined;
+                }
+                else if (callInfo.attrs.fixedInstance && n.parent && n.parent.parent &&
+                    n.parent.kind === SK.PropertyAccessExpression && n.parent.parent.kind === SK.CallExpression) {
+                    const call = n.parent.parent as CallExpression;
+                    if (call.expression === n.parent) {
+                        return undefined;
+                    }
+                }
             }
             return Util.lf("No call info found");
         }

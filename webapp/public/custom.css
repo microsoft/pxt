@@ -270,6 +270,7 @@ text.blocklyCheckbox {
     font-size: 17pt !important;
 }
 
+/*
 .blocklyPreview {
     position: absolute;
     top: 50%;
@@ -279,7 +280,7 @@ text.blocklyCheckbox {
     transform: translate(-50%,-50%);
     width: calc(100% - 1em);
     max-height: calc(100% - 1em);
-}
+}*/
 
 body.blocklyMinimalBody {
     min-width: initial;

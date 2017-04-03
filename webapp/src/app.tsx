@@ -47,6 +47,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import CategoryMode = pxt.blocks.CategoryMode;
 const lf = Util.lf
 
 pxsim.util.injectPolyphils();
@@ -104,7 +105,7 @@ export class ProjectView
         this.state = {
             showFiles: false,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless
+            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -501,7 +502,7 @@ export class ProjectView
         if (step > -1) {
             tutorial.TutorialContent.notify({
                 type: "tutorial",
-                tutorial: this.state.tutorial,
+                tutorial: this.state.tutorialOptions.tutorial,
                 subtype: "stepchange",
                 step: step
             } as pxsim.TutorialStepChangeMessage)
@@ -515,9 +516,13 @@ export class ProjectView
                 switch (t.subtype) {
                     case 'steploaded':
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
-                        let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
-                        this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Hidden }, showCategories);
-                        this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
+                        let showCategories = CategoryMode.Basic;
+                        this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Disabled }, showCategories);
+                        let tutorialOptions = this.state.tutorialOptions;
+                        tutorialOptions.tutorialReady = true;
+                        tutorialOptions.tutorialHeaderContent = tt.headercontent;
+                        tutorialOptions.tutorialHint = tt.content;
+                        this.setState({ tutorialOptions: tutorialOptions });
                         tutorial.TutorialContent.refresh();
                         core.hideLoading();
                         break;
@@ -600,10 +605,10 @@ export class ProjectView
                     })
                     .done()
 
-                let readme = main.lookupFile("this/README.md");
+                const readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
-                else if (pkg.mainPkg.config.documentation)
+                else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation);
             })
     }
@@ -768,20 +773,7 @@ export class ProjectView
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
         const mpkg = pkg.mainPkg;
-        return this.saveFileAsync()
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                const project: pxt.cpp.HexFile = {
-                    meta: {
-                        cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
-                        targetVersions: pxt.appTarget.versions,
-                        editor: this.getPreferredEditor(),
-                        name: mpkg.config.name
-                    },
-                    source: JSON.stringify(files, null, 2)
-                }
-                return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
-            });
+        return mpkg.compressToFileAsync(this.getPreferredEditor())
     }
 
     getPreferredEditor(): string {
@@ -932,6 +924,9 @@ export class ProjectView
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
+        let userContextWindow: Window = undefined;
+        if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
+            userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
@@ -955,14 +950,19 @@ export class ProjectView
                     return Promise.resolve()
                 }
                 resp.saveOnly = saveOnly
+                resp.userContextWindow = userContextWindow;
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
+                        if (userContextWindow)
+                            try { userContextWindow.close() } catch(e) {}
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
+                if (userContextWindow)
+                    try { userContextWindow.close() } catch(e) {}
             }).finally(() => {
                 this.setState({ compiling: false });
                 if (simRestart) this.runSimulator();
@@ -1341,15 +1341,22 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 if (!titleRegex || titleRegex.length < 1) return;
                 title = titleRegex[1];
 
-                let steps = md.split('###');
+                let steps = md.split(/^###[^#].*$/gmi);
                 for (let step = 1; step < steps.length; step++) {
                     let stepmd = `###${steps[step]}`;
                     result.push(stepmd);
                 }
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
-                this.setState({ tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result })
-                let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+                let tutorialOptions: pxt.editor.TutorialOptions = {
+                    tutorial: tutorialId,
+                    tutorialName: title,
+                    tutorialStep: 0,
+                    tutorialSteps: result
+                };
+                this.setState({ tutorialOptions: tutorialOptions })
+
+                let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
@@ -1379,13 +1386,22 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return workspace.saveAsync(curr, {})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.loadHeaderAsync(workspace.getHeaders()[0], null);
+                    return this.loadHeaderAsync(workspace.getHeaders()[0], null);
                 } else {
-                    this.newProject();
+                    return this.newProject();
                 }
-            }).finally(() => {
-                this.setState({ active: true, tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
+            })
+            .finally(() => {
+                core.hideLoading()
+                this.setState({ active: true, tutorialOptions: undefined });
             });
+    }
+
+    showTutorialHint() {
+        let th = this.refs["tutorialhint"] as tutorial.TutorialHint;
+        th.showHint();
+        const options = this.state.tutorialOptions;
+        pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
     renderCore() {
@@ -1416,21 +1432,22 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const inTutorial = !!this.state.tutorial;
-        const tutorialName = this.state.tutorialName;
+        const tutorialOptions = this.state.tutorialOptions;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const gettingStarted = !sandbox && !inTutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
-        const fullscreen = run && !simOpts.hideFullscreen;
+        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
+        const audio = run && !inTutorial && targetTheme.hasAudio;
         const recorder = run && this.state.fullscreen && !pxt.options.light && !simOpts.hideRecorder;
         const recording = recorder && !!this.state.recording;
         const {
             hideMenuBar,
             hideEditorToolbar} = targetTheme;
         const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
@@ -1472,7 +1489,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </span>
                                 {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
-                                {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialName} /> : null}
+                                {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
                                     <span id="logo" className="ui item logo">
                                         <img className="ui mini image" src={Util.toDataUri(rightLogo) } onClick={() => this.launchFullEditor() } alt={`${targetTheme.boardName} Logo`}/>
@@ -1535,7 +1552,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
+                                {audio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                                 {recorder ? <sui.Button key='recorderbtn' class={`recorder-button`} icon={recording ? 'square' : 'circle'} title={lf("Record animated gif") } onClick={() => this.toggleRecording() } /> : undefined }
                             </div>
@@ -1551,9 +1568,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
+                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
+                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
                 {hideEditorToolbar ? undefined : <div id="editortools" role="complementary">
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> }
@@ -1912,9 +1931,20 @@ $(document).ready(() => {
     pkg.setupAppTarget((window as any).pxtTargetBundle)
 
     enableAnalytics()
+
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+        pxt.tickEvent("unsupported");
+        const redirect = pxt.BrowserUtils.suggestedBrowserPath();
+        if (redirect) {
+            window.location.href = redirect;
+        }
+    }
+
     appcache.init();
     initLogin();
 
+    pxt.docs.requireMarked = () => require("marked");
+    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const hash = parseHash();
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
@@ -1924,19 +1954,8 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1]);
     else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
+    else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
-
-    pxt.docs.requireMarked = () => require("marked");
-
-    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
-
-    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
-        pxt.tickEvent("unsupported");
-        let redirect = pxt.BrowserUtils.suggestedBrowserPath();
-        if (redirect) {
-            window.location.href = redirect;
-        }
-    }
 
     Promise.resolve()
         .then(() => {
@@ -1959,7 +1978,8 @@ $(document).ready(() => {
             initSerial();
             initScreenshots();
             initHashchange();
-        }).then(() => pxt.winrt.initAsync(ih))
+        })
+        .then(() => pxt.winrt.initAsync(ih))
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))

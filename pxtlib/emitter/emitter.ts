@@ -7,6 +7,7 @@ namespace ts.pxtc {
     export import U = pxtc.Util;
 
     export const ON_START_TYPE = "pxt-on-start";
+    export const ON_START_COMMENT = U.lf("on start");
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
@@ -317,6 +318,7 @@ namespace ts.pxtc {
 
         mutate?: string;
         mutateText?: string;
+        mutatePrefix?: string;
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
 
@@ -334,6 +336,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
+    const booleanAttributes = ["advanced"]
 
     export interface CallInfo {
         decl: Declaration;
@@ -434,6 +437,11 @@ namespace ts.pxtc {
                 (res as any)[n] = parseInt((res as any)[n])
         }
 
+        for (let n of booleanAttributes) {
+            if (typeof (res as any)[n] == "string")
+                (res as any)[n] = (res as any)[n] == 'true' || (res as any)[n] == '1' ? true : false;
+        }
+
         if (res.trackArgs) {
             res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
         }
@@ -492,9 +500,9 @@ namespace ts.pxtc {
             const fn = node0 as ts.FunctionDeclaration;
             if ((fn.symbol as any).parent) {
                 res.blockId = `${(fn.symbol as any).parent.name}_${getDeclName(fn)}`;
-                res.block = `${node.symbol.name}${fn.parameters.length ? '|' + fn.parameters
+                res.block = `${U.uncapitalize(node.symbol.name)}${fn.parameters.length ? '|' + fn.parameters
                     .filter(p => !p.questionToken)
-                    .map(p => `${(p.name as ts.Identifier).text} %${(p.name as Identifier).text}`).join('|') : ''}`;
+                    .map(p => `${U.uncapitalize((p.name as ts.Identifier).text)} %${(p.name as Identifier).text}`).join('|') : ''}`;
             }
         }
         node.pxtCommentAttrs = res
@@ -507,14 +515,6 @@ namespace ts.pxtc {
         return (node.name as Identifier).text
     }
 
-    function isArrayType(t: Type) {
-        return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
-    }
-
-    function isInterfaceType(t: Type) {
-        return t.flags & TypeFlags.Interface;
-    }
-
     function genericRoot(t: Type) {
         if (t.flags & TypeFlags.Reference) {
             let r = t as TypeReference
@@ -524,9 +524,29 @@ namespace ts.pxtc {
         return null
     }
 
+    function isArrayType(t: Type) {
+        return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
+    }
+
+    function isInterfaceType(t: Type) {
+        return !!(t.flags & TypeFlags.Interface);
+    }
+
     function isClassType(t: Type) {
         // check if we like the class?
         return !!(t.flags & TypeFlags.Class) || !!(t.flags & TypeFlags.ThisType)
+    }
+
+    function isObjectLiteral(t: Type) {
+        return t.symbol && (t.symbol.flags & (SymbolFlags.ObjectLiteral | SymbolFlags.TypeLiteral)) !== 0;
+    }
+
+    function isStructureType(t: Type) {
+        return (isFunctionType(t) == null) && (isClassType(t) || isInterfaceType(t) || isObjectLiteral(t))
+    }
+
+    function castableToStructureType(t: Type) {
+        return isStructureType(t) || (t.flags & (TypeFlags.Null | TypeFlags.Undefined))
     }
 
     function isPossiblyGenericClassType(t: Type) {
@@ -541,10 +561,15 @@ namespace ts.pxtc {
         return null;
     }
 
-    function deconstructFunctionType(t: Type) {
+    function isFunctionType(t: Type) {
+        // if an object type represents a function (via 1 signature) then it
+        // can't have any other properties or constructor signatures
+        if (t.getApparentProperties().length > 0 || t.getConstructSignatures().length > 0)
+            return null;
         let sigs = checker.getSignaturesOfType(t, SignatureKind.Call)
         if (sigs && sigs.length == 1)
             return sigs[0]
+        // TODO: error message for overloaded function signatures?
         return null
     }
 
@@ -555,6 +580,11 @@ namespace ts.pxtc {
         return null
     }
 
+    function isBuiltinType(t: Type) {
+        let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean | TypeFlags.Enum
+        return t.flags & ok
+    }
+
     function checkType(t: Type) {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.Void | TypeFlags.Enum | TypeFlags.Null | TypeFlags.Undefined
@@ -562,7 +592,7 @@ namespace ts.pxtc {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
             if (isInterfaceType(t)) return t;
-            if (deconstructFunctionType(t)) return t;
+            if (isFunctionType(t)) return t;
             if (lookupTypeParameter(t)) return t;
 
             let g = genericRoot(t)
@@ -592,6 +622,182 @@ namespace ts.pxtc {
             }
         }
         return checkType(r)
+    }
+
+    // does src inherit from tgt via heritage clauses?
+    function inheritsFrom(src: ClassDeclaration, tgt: ClassDeclaration): boolean {
+        if (src == tgt)
+            return true;
+        if (src.heritageClauses)
+            for (let h of src.heritageClauses) {
+                switch (h.token) {
+                    case SK.ExtendsKeyword:
+                        let tp = typeOf(h.types[0])
+                        if (isClassType(tp)) {
+                            let parent = <ClassDeclaration>tp.symbol.valueDeclaration
+                            return inheritsFrom(parent,tgt)
+                        }
+                }
+            }
+        return false;
+    }
+
+    function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
+        for (let cl in classes) {
+            if (classes[cl].decl.name.text == decl.name.text)
+                 userError(9203, lf("Interface with same name as a class not supported."))
+        }
+        if (decl.heritageClauses)
+            for (let h of decl.heritageClauses) {
+                switch (h.token) {
+                    case SK.ExtendsKeyword:
+                        let tp = typeOf(h.types[0])
+                        if (isClassType(tp)) {
+                            userError(9203, lf("Extending a class by an interface not supported."))
+                        }
+                }
+            }
+    }
+
+    function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
+        // get the direct types
+        let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
+        let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
+
+        // get the contextual types, if possible
+        let trgType = isExpression(trg as Node) ? checker.getContextualType(<Expression>(trg as Node)) : trgTypeLoc
+        if (!trgType)
+            trgType = trgTypeLoc
+        let srcType = isExpression(src as Node) ? checker.getContextualType(<Expression>(src as Node)) : srcTypeLoc
+        if (!srcType)
+            srcType = srcTypeLoc
+
+        if (!trgType || !srcType)
+            return;
+
+        // src may get its type from trg via context, in which case
+        // we want to use the direct type of src
+        if (trgType == srcType && srcType != srcTypeLoc)
+            srcType = srcTypeLoc
+
+        occursCheck = []
+        let [ok, message] = checkSubtype(srcType, trgType)
+        if (!ok) {
+            userError(9203, lf(message))
+        }
+    }
+
+    let occursCheck: string[] = []
+    let cachedSubtypeQueries: Map<[boolean,string]> = {}
+    function insertSubtype(key: string, val: [boolean,string]) {
+        cachedSubtypeQueries[key] = val
+        occursCheck.pop()
+        return val
+    }
+
+    // this function works assuming that the program has passed the 
+    // TypeScript type checker. We are going to simply rule out some
+    // cases that pass the TS checker. We only compare type
+    // pairs that the TS checker compared. 
+
+    // we are checking that subType is a subtype of supType, so that
+    // an assignment of the form trg <- src is safe, where supType is the
+    // type of trg and subType is the type of src
+    function checkSubtype(subType: Type, superType: Type): [boolean, string] {
+        let subId = (subType as any).id
+        let superId = (superType as any).id
+        let key = subId + "," + superId
+
+        if (cachedSubtypeQueries[key])
+            return cachedSubtypeQueries[key];
+
+        // check to see if query already on the stack
+        if (occursCheck.indexOf(key) != -1)
+            return [true,""]
+        occursCheck.push(key)
+
+        // outlaw all things that can't be cast to class/interface
+        if (isStructureType(superType) && !castableToStructureType(subType)) {
+            return insertSubtype(key,[false, "Cast to class/interface unsupported."])
+        }
+
+        if (isClassType(superType)) {
+           if (isClassType(subType)) {
+                let superDecl = <ClassDeclaration>superType.symbol.valueDeclaration
+                let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
+                // only allow upcast (sub -> ... -> sup) in inheritance chain
+                if (!inheritsFrom(subDecl,superDecl)) {
+                    if (inheritsFrom(superDecl,subDecl))
+                       return insertSubtype(key, [false, "Downcasts not supported."])
+                    else
+                       return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
+                }
+           } else {
+                if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
+                    return insertSubtype(key,[false, "Cast to class unsupported."])
+                }
+           }
+        } else if (isFunctionType(superType)) {
+            // implement standard function subtyping (no bivariance)
+            let superFun = isFunctionType(superType)
+            if (isFunctionType(subType)) {
+                let subFun = isFunctionType(subType)
+                U.assert(superFun.parameters.length >= subFun.parameters.length, "sup should have at least params of sub")
+                let [ret,msg] = [true,""]
+                for (let i = 0; i < subFun.parameters.length; i++) {
+                    let superParamType = checker.getTypeAtLocation(superFun.parameters[i].valueDeclaration)
+                    let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
+                    // Check parameter types (contra-variant)
+                    let [retSub,msgSub] = checkSubtype(superParamType, subParamType)
+                    if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                }
+                // check return type (co-variant)
+                let superRetType = superFun.getReturnType()
+                let subRetType = superFun.getReturnType()
+                let [retSub,msgSub] = checkSubtype(subRetType, superRetType)
+                if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                return insertSubtype(key,[ret,msg])
+            }
+        } else if (isInterfaceType(superType)) {
+            if (isStructureType(subType)) {
+                let superProps = checker.getPropertiesOfType(superType)
+                let subProps = checker.getPropertiesOfType(subType)
+                let [ret,msg] = [true,""]
+                superProps.forEach(superProp => {
+                    let superPropDecl = <PropertyDeclaration>superProp.valueDeclaration
+                    let find = subProps.filter(sp => sp.name == superProp.name)
+                    if (find.length == 1) {
+                        let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
+                        // TODO: record the property on which we have a mismatch
+                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl),checker.getTypeAtLocation(superPropDecl))
+                        if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                    } else if (find.length == 0) {
+                        if (!(superProp.flags & SymbolFlags.Optional)) {
+                            // we have a cast to an interface with more properties (unsound)
+                            [ret,msg] = [false,"Property " + superProp.name + " not present in " + subType.getSymbol().name]
+                        } else {
+                            // we will reach this case for something like
+                            // let x: Foo = { a:42 }
+                            // where x has some optional properties, in addition to "a"
+                        }
+                    } else {
+                        U.assert(false,"subsetCheck: unreachable (1)")
+                    }
+                })
+                return insertSubtype(key,[ret,msg])
+            }
+        } else if (isArrayType(superType)) {
+            if (isArrayType(subType)) {
+                let superElemType = arrayElementType(superType)
+                let subElemType = arrayElementType(subType)
+                return checkSubtype(subElemType,superElemType)
+            } else {
+                U.assert(false,"subsetCheck: unreachable (2)")
+            }
+        } else if (lookupTypeParameter(superType)) {
+            // TODO
+        }
+        return insertSubtype(key,[true,""])
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
@@ -736,6 +942,7 @@ namespace ts.pxtc {
         let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
 
+        cachedSubtypeQueries = {}
         lastNodeId = 0
         currNodeWave++
 
@@ -1136,6 +1343,7 @@ namespace ts.pxtc {
                         emitSynthetic(fld.irSetter, (proc) => {
                             // decrs work out
                             let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
+                            // TODO: type check assignment 
                             proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].loadCore()]))
                         })
                     }
@@ -1217,7 +1425,7 @@ namespace ts.pxtc {
                 bindings = t
                     ? getTypeBindings(t)
                     : decl.typeParameters
-                        ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p) }))
+                        ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p), arg: checker.getTypeAtLocation(p) }))
                         : []
             let id = "C" + getNodeId(decl) + refMask(bindings)
             let info: ClassInfo = classInfos[id]
@@ -1682,9 +1890,11 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function addDefaultParameters(sig: Signature, args: Expression[], attrs: CommentAttrs) {
+        function addDefaultParametersAndTypeCheck(sig: Signature, args: Expression[], attrs: CommentAttrs) {
             if (!sig) return;
             let parms = sig.getParameters();
+            // remember the number of arguments passed explicitly
+            let goodToGoLength = args.length
             if (parms.length > args.length) {
                 parms.slice(args.length).forEach(p => {
                     if (p.valueDeclaration &&
@@ -1705,6 +1915,16 @@ ${lbl}: .short 0xffff
                 })
             }
 
+            // type check for assignment of actual to formal,
+            // TODO: checks for the rest needed
+            for (let i = 0; i < goodToGoLength; i++) {
+                let p = parms[i]
+                // there may be more arguments than parameters
+                if (p && p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
+                    checkAssignmentTypes(p.valueDeclaration, args[i])
+            }
+
+            // TODO: this is micro:bit specific and should be lifted out
             if (attrs.imageLiteral) {
                 if (!isStringLiteral(args[0])) {
                     userError(9214, lf("Only image literals (string literals) supported here; {0}", stringKind(args[0])))
@@ -1760,23 +1980,30 @@ ${lbl}: .short 0xffff
             };
             (node as any).callInfo = callInfo
 
+            if (isMethod && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
+                recv = (<PropertyAccessExpression>funcExpr).expression
+
             if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
                 callInfo.isAutoCreate = true
 
             let bindings: TypeBinding[] = []
 
             if (sig) {
+                // NOTE: we are playing with TypeScript internals here
                 let trg: Signature = (sig as any).target
                 let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
-                bindings = getTypeBindingsCore(typeParams, typeParams.map(x => (sig as any).mapper(x)))
+                // NOTE: mapper also a TypeScript internal
+                let args = typeParams.map(x => (sig as any).mapper(x))
+                bindings = getTypeBindingsCore(typeParams, args)
             }
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
 
             if (res.usedArguments && attrs.trackArgs) {
-                let tracked = attrs.trackArgs.map(n => args[n]).map(e => {
+                let targs = recv ? [recv].concat(args) : args
+                let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
                     let d = getDecl(e)
-                    if (d && d.kind == SK.EnumMember)
+                    if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
                         return getFullName(checker, d.symbol)
                     else return "*"
                 }).join(",")
@@ -1793,7 +2020,10 @@ ${lbl}: .short 0xffff
                 return mkProcCall(decl, args.map(emitExpr), bindings)
             }
 
-            addDefaultParameters(sig, args, attrs);
+            scope(() => {
+                U.pushRange(typeBindings, bindings)
+                addDefaultParametersAndTypeCheck(sig, args, attrs);
+            })
 
             if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
@@ -1833,7 +2063,7 @@ ${lbl}: .short 0xffff
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
                 // if we call a method and it overrides then
-                // mark the virtual root class and all its overrides as used, 
+                // mark the virtual root class and all its overrides as used,
                 // if their classes are used
                 if (info.virtualParent) info = info.virtualParent
                 if (!info.isUsed) {
@@ -2014,7 +2244,7 @@ ${lbl}: .short 0xffff
                     markUsed(ctor)
                     let args = node.arguments.slice(0)
                     let ctorAttrs = parseComments(ctor)
-                    addDefaultParameters(checker.getResolvedSignature(node), args, ctorAttrs)
+                    addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map(emitExpr)
                     if (ctorAttrs.shim)
                         // we drop 'obj' variable
@@ -2253,6 +2483,7 @@ ${lbl}: .short 0xffff
                     assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass)
                     // test mode - make fake binding
                     let bindings = getTypeParameters(node).map(t => ({
+                        arg: checker.getTypeAtLocation(t),
                         tp: checker.getTypeAtLocation(t),
                         isRef: true
                     }))
@@ -2398,7 +2629,10 @@ ${lbl}: .short 0xffff
             return field;
         }
 
-        function emitStore(trg: Expression, src: Expression) {
+        function emitStore(trg: Expression, src: Expression, checkAssign: boolean = false) {
+            if (checkAssign) {
+                checkAssignmentTypes(trg,src)
+            }
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
             if (trg.kind == SK.Identifier || isGlobal) {
@@ -2431,7 +2665,7 @@ ${lbl}: .short 0xffff
 
         function handleAssignment(node: BinaryExpression) {
             let cleanup = prepForAssignment(node.left, node.right)
-            emitStore(node.left, node.right)
+            emitStore(node.left, node.right, true)
             let res = emitExpr(node.right)
             cleanup()
             return res
@@ -3051,12 +3285,15 @@ ${lbl}: .short 0xffff
 
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
-                proc.emitExpr(loc.storeByRef(bindingElementAccessExpression(node as BindingElement)[0]))
+                let rhs = bindingElementAccessExpression(node as BindingElement)
+                checkAssignmentTypes(node,rhs[1])
+                proc.emitExpr(loc.storeByRef(rhs[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
-                // TODO make sure we don't emit code for top-level globals being initialized to zero
+                // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
+                checkAssignmentTypes(node,node.initializer)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
@@ -3100,6 +3337,7 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
+            checkInterfaceDeclaration(node,classInfos)
             let attrs = parseComments(node)
             if (attrs.autoCreate)
                 autoCreateFunctions[attrs.autoCreate] = true

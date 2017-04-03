@@ -4,20 +4,21 @@
 namespace pxt.winrt {
     export function deployCoreAsync(res: pxtc.CompileResult): Promise<void> {
 
-        let drives = pxt.appTarget.compile.deployDrives;
+        const drives = pxt.appTarget.compile.deployDrives;
         pxt.Util.assert(!!drives);
-        pxt.log(`deploying to drives ${drives}`)
+        pxt.debug(`deploying to drives ${drives}`)
 
-        let drx = new RegExp(drives);
-        let r = res.outfiles[pxtc.BINARY_HEX];
+        const drx = new RegExp(drives);
+        const firmware = pxt.appTarget.compile.useUF2 ? pxtc.BINARY_UF2 : pxtc.BINARY_HEX;
+        const r = res.outfiles[firmware];
 
         function writeAsync(folder: Windows.Storage.StorageFolder): Promise<void> {
-            pxt.log(`writing .hex to ${folder.displayName}`)
+            pxt.debug(`writing ${firmware} to ${folder.displayName}`)
             return pxt.winrt.promisify(
-                folder.createFileAsync("firmware.hex", Windows.Storage.CreationCollisionOption.replaceExisting)
+                folder.createFileAsync(firmware, Windows.Storage.CreationCollisionOption.replaceExisting)
                     .then(file => Windows.Storage.FileIO.writeTextAsync(file, r))
             ).then(r => { }).catch(e => {
-                pxt.log(`failed to write to ${folder.displayName} - ${e}`)
+                pxt.debug(`failed to write ${firmware} to ${folder.displayName} - ${e}`)
             })
         }
 

@@ -152,6 +152,14 @@ declare namespace basic {
     //% async
     //% parts="ledmatrix" interval.defl=150 shim=basic::showNumber
     export function showNumber(value: number, interval?: number): void;
+
+    /**
+     * Repeats the code forever in the background. On each iteration, allows other codes to run.
+     * @param body code to execute
+     */
+    //% help=basic/forever weight=55 blockGap=8 blockAllowMultiple=1
+    //% blockId=device_forever block="forever" icon="\uf01e" shim=basic::forever
+    export function forever(a: () => void): void;
 }
 
 enum Melodies {

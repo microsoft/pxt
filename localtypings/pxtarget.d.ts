@@ -144,6 +144,7 @@ declare namespace pxt {
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
+        driveDisplayName?: string; // name of the drive as it shows in the explorer
         privacyUrl?: string;
         termsOfUseUrl?: string;
         contactUrl?: string;
@@ -177,6 +178,8 @@ declare namespace pxt {
         hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
+        appStoreID?: string; // Apple iTune Store ID if any
+        mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
     }
 
     interface DocMenuEntry {
@@ -223,6 +226,7 @@ declare namespace ts.pxtc {
         upgrades?: UpgradePolicy[];
         openocdScript?: string;
         flashChecksumAddr?: number;
+        onStartText?: boolean;
     }
 
     interface CompileOptions {
