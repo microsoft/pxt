@@ -95,7 +95,7 @@ Read more an [defining-blocks](https://makecode.com/defining-blocks) to learn ho
 
 The editor will automatically use any ``icon.png`` file when displaying the package in the editor. **This feature only works for approved packages.**
 
-The icon should be sized of size ``384 x 384``.
+The icon should be sized with a 16:9 ratio and of at least ``184`` pixel wide.
 
 ## Versioning
 
