@@ -225,18 +225,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 name={scr.name.replace(/^pxt-/, "") }
                                 header={scr.fullName}
                                 description={scr.description}
-                                key={'gh' + scr.fullName}
+                                key={'gha' + scr.fullName}
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}
                                 color="blue"
+                                imageUrl={pxt.github.repoIconUrl(scr)}
                                 />
                         ) }
                         {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
                             <codecard.CodeCardView
                                 name={scr.name.replace(/^pxt-/, "") }
                                 header={scr.fullName}
-                                description={scr.description}
-                                key={'gh' + scr.fullName}
+                                description={lf("User provided package, not endorsed by Microsoft.") + (scr.description || "")}
+                                key={'ghd' + scr.fullName}
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}
                                 color="red"

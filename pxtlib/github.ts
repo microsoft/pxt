@@ -154,6 +154,12 @@ namespace pxt.github {
         status?: GitRepoStatus;
     }
 
+    export function repoIconUrl(repo: GitRepo): string {
+        if (repo.status != GitRepoStatus.Approved) return undefined;
+
+        return Cloud.apiRoot + `gh/${repo.owner}/${repo.name}/icon`;
+    }
+
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
         if (!r) return undefined;
         const rr: GitRepo = {
