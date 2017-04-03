@@ -27,6 +27,7 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as sounds from "./sounds";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -942,13 +943,13 @@ export class ProjectView
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
                         if (userContextWindow)
-                            try { userContextWindow.close() } catch(e) {}
+                            try { userContextWindow.close() } catch (e) { }
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
                 if (userContextWindow)
-                    try { userContextWindow.close() } catch(e) {}
+                    try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
                 this.setState({ compiling: false });
                 if (simRestart) this.runSimulator();
@@ -1299,6 +1300,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         let title = tutorialId;
         let result: string[] = [];
 
+        sounds.initTutorial(); // pre load sounds
         return pxt.Cloud.downloadMarkdownAsync(tutorialId)
             .then(md => {
                 let titleRegex = /^#(.*)/g.exec(md);

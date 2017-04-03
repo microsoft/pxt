@@ -7,6 +7,7 @@ import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as sounds from "./sounds";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type TutorialOptions = pxt.editor.TutorialOptions;
@@ -103,6 +104,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
     showHint() {
         this.setState({ visible: true })
+        sounds.tutorialStart();
     }
 
     renderCore() {

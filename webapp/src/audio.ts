@@ -18,16 +18,18 @@ function freshContext(): AudioContext {
 }
 
 export function play(buffer: AudioBuffer, volume: number = 1) {
+    if (!buffer) return;
+
     const ctx = context();
-    if (ctx) {
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        const gain = ctx.createGain();
-        gain.gain.value = volume;
-        source.connect(gain);
-        gain.connect(ctx.destination);
-        source.start(0);
-    }
+    if (!ctx) return;
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.value = volume;
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(0);
 }
 
 export function loadAsync(buffer: ArrayBuffer): Promise<AudioBuffer> {
