@@ -164,7 +164,7 @@ namespace pxt.runner {
 }`;
             let svgElement = $svg.get(0) as any;
             let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height)
+            pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height, 4)
                 .done(uri => {
                     if (uri)
                         BrowserUtils.browserDownloadDataUri(

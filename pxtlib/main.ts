@@ -9,10 +9,10 @@ namespace pxt {
     export import Util = pxtc.Util;
     const lf = U.lf;
 
-    export var appTarget: TargetBundle;
+    export let appTarget: TargetBundle;
 
     export function setAppTarget(trg: TargetBundle) {
-        appTarget = trg
+        appTarget = trg || <TargetBundle>{};
 
         // patch-up the target
         let comp = appTarget.compile
@@ -26,9 +26,9 @@ namespace pxt {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
-        if (!trg.appTheme) trg.appTheme = {}
-        if (!trg.appTheme.embedUrl)
-            trg.appTheme.embedUrl = trg.appTheme.homeUrl
+        if (!appTarget.appTheme) appTarget.appTheme = {}
+        if (!appTarget.appTheme.embedUrl)
+            appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
         let cs = appTarget.compileService
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
@@ -692,7 +692,7 @@ namespace pxt {
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    pxt.debug(`updating ${fn} (size=${cont.length})...`)
+                    pxt.log(`updating ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, cont)
                 }
             }
@@ -701,7 +701,7 @@ namespace pxt {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
                     // save file (force write)
-                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
+                    pxt.log(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
                 return updatedCont;

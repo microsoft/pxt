@@ -378,6 +378,11 @@ namespace pxt.docs {
                 out += this.options.xhtml ? '/>' : '>';
                 return out;
             }
+            renderer.listitem = function (text: string): string {
+                const m = /^\s*\[( |x)\]/i.exec(text);
+                if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked' }">` + text.slice(m[0].length) + '</li>\n'
+                return '<li>' + text + '</li>\n';
+            }
             renderer.heading = function (text: string, level: number, raw: string) {
                 let m = /(.*)#([\w\-]+)\s*$/.exec(text)
                 let id = ""

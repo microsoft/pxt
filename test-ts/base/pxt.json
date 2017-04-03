@@ -1,0 +1,12 @@
+{
+    "name": "base-test",
+    "description": "Base package for tests",
+    "files": [
+        "main.ts"
+    ],
+    "public": true,
+    "dependencies": {
+        "bare": "file:../../libs/bare"
+    },
+    "installedVersion": "file:."
+}

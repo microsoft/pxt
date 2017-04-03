@@ -24,32 +24,40 @@ samples.
 /**
  * Provides access to basic micro:bit functionality.
  */
-//% color=190 weight=100
+//% color=190 weight=100 icon="\uf1ec"
 namespace basic {
 ````
 
-Special attribute annotation like `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
+* `icon` icon character from the icon font to display. You can browse the full list of icons at https://semantic-ui.com/elements/icon.html
+* `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
+
 To have a category appear under the "Advanced" section of the Block Editor toolbox, add the annotation `advanced=true`.
 
 ## Blocks
 
-All **exported** functions with a `blockId` and `block` attribute
-will be available in the Block Editor.
+All **exported** functions with a `block` attribute will be available in the Block Editor.
 
 ```
-//% blockId=device_show_number
-//% block="show|number %v"
-//% icon="\uf1ec"
+//% block
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
 
+
+If you need more control over the appearance of the block,
+you can specify the `blockId` and `block` parameters.
+
+```
+//% blockId=device_show_number
+//% block="show|number %v"
+export function showNumber(v: number, interval: number = 150): void
+{ }
+```
 * `blockId` is a constant, unique id for the block. This id is serialized in block code so changing it will break your users.
 * `block` contains the syntax to build the block structure (more below).
 
 Other optional attributes can also be used:
 * `blockExternalInputs=` forces `External Inputs` rendering
-* `icon` icon character from the icon font to display
 * `advanced=true` causes this block to be placed under the parent category's "More..." subcategory. Useful for hiding advanced or rarely-used blocks by default
 
 ## Block syntax

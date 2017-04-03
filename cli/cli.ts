@@ -1094,8 +1094,9 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
                     .filter(f => fs.existsSync(f))
                     .forEach(f => host.fileOverrides[path.relative(overridePath, f)] = fs.readFileSync(f, "utf8"));
 
-                if (pxt.options.debug && host.fileOverrides)
-                    pxt.debug(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
+                pxt.log(`file overrides: ${Object.keys(host.fileOverrides).join(', ')}`)
+            } else {
+                pxt.debug(`override folder ${overridePath} not present`);
             }
         }
 
@@ -1218,7 +1219,7 @@ function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
         U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
 
-    console.log(`building ${p}...`)
+    pxt.log(`building ${p}...`)
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -1325,7 +1326,7 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
         .filter(k => /logo$/i.test(k) && /^\.\//.test(logos[k]))
         .forEach(k => {
             let fn = path.join('./docs', logos[k]);
-            console.log(`importing ${fn}`)
+            pxt.debug(`importing ${fn}`)
             logos[k + "CDN"] = uploadArtFile(logos[k])
             let b = fs.readFileSync(fn)
             let mimeType = '';
@@ -1536,7 +1537,7 @@ function buildTargetCoreAsync() {
 
     console.log(`building target.json in ${process.cwd()}...`)
     return forEachBundledPkgAsync((pkg, dirname) => {
-        pxt.log(`building in ${dirname}`);
+        pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
 
         if (isPrj) {
@@ -1564,10 +1565,10 @@ function buildTargetCoreAsync() {
                     let hexFile = path.join(hexCachePath, sha + ".hex");
 
                     if (fs.existsSync(hexFile)) {
-                        pxt.log(`HEX image already in offline cache for project ${dirname}`);
+                        pxt.debug(`.hex image already in offline cache for project ${dirname}`);
                     } else {
                         fs.writeFileSync(hexFile, hex.join(os.EOL));
-                        pxt.log(`Created HEX image in offline cache for project ${dirname}: ${hexFile}`);
+                        pxt.debug(`created .hex image in offline cache for project ${dirname}: ${hexFile}`);
                     }
                 }
             })
@@ -1902,16 +1903,16 @@ class Host
     }
 
     readFile(module: pxt.Package, filename: string): string {
-        let commonFile = U.lookup(commonfiles, filename)
+        const commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
-        let overFile = U.lookup(this.fileOverrides, filename)
+        const overFile = U.lookup(this.fileOverrides, filename)
         if (module.level == 0 && overFile != null) {
             pxt.debug(`found override for ${filename}`)
-            return overFile
+            return overFile;
         }
 
-        let resolved = this.resolve(module, filename)
+        const resolved = this.resolve(module, filename)
         try {
             pxt.debug(`reading ${path.resolve(resolved)}`)
             return fs.readFileSync(resolved, "utf8")
@@ -2545,15 +2546,15 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
 }
 
 function simshimAsync() {
-    console.log("Looking for shim annotations in the simulator.")
+    pxt.debug("looking for shim annotations in the simulator.")
     if (!nodeutil.existsDirSync("sim")) {
-        console.log("no sim folder, skipping.")
+        pxt.debug("no sim folder, skipping.")
         return Promise.resolve();
     }
     let prog = pxtc.plainTsc("sim")
     let shims = pxt.simshim(prog)
     let filename = "sims.d.ts"
-    for (let s of Object.keys(shims)) {
+    for (const s of Object.keys(shims)) {
         let cont = shims[s]
         if (!cont.trim()) continue
         cont = "// Auto-generated from simulator. Do not edit.\n" + cont +
@@ -2564,7 +2565,7 @@ function simshimAsync() {
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
         let fn = "libs/" + s + "/" + filename
         if (fs.readFileSync(fn, "utf8") != cont) {
-            console.log(`updating ${fn}`)
+            pxt.debug(`updating ${fn}`)
             fs.writeFileSync(fn, cont)
         }
     }
@@ -3613,7 +3614,8 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
     }
 
     if (/^https?:/.test(filename)) {
-        pxt.log(`Fetching ${filename}...`)
+        pxt.log(`fetching ${filename}...`)
+        pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
         return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
             .then(resp => {
                 if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
@@ -3941,16 +3943,16 @@ function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
             filesMap['pxt.json'] = {
                 "content": JSON.stringify(pxtConfig, null, 4)
             }
-            console.log("Uploading....")
+            pxt.log("Uploading....")
             return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
         })
         .then((published_id) => {
-            console.log(`Success, view your gist at`);
-            console.log(``)
-            console.log(`    https://gist.github.com/${published_id}`);
-            console.log(``)
-            console.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
-            if (!token) console.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
+            pxt.log(`Success, view your gist at`);
+            pxt.log(``)
+            pxt.log(`    https://gist.github.com/${published_id}`);
+            pxt.log(``)
+            pxt.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
+            if (!token) pxt.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
 
             // Save gist id to pxt.json
             if (token) mainPkg.config.gistId = published_id;
