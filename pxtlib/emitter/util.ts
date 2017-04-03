@@ -379,6 +379,7 @@ namespace ts.pxtc.Util {
         headers?: pxt.Map<string>;
         allowHttpErrors?: boolean; // don't treat non-200 responses as errors
         allowGzipPost?: boolean;
+        responseArrayBuffer?: boolean;
     }
 
     export interface HttpResponse {
@@ -605,6 +606,7 @@ namespace ts.pxtc.Util {
                 case "woff2": return "application/font-woff2";
                 case "md": return "text/markdown";
                 case "xml": return "application/xml";
+                case "m4a": return "audio/m4a";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";
@@ -872,7 +874,8 @@ namespace ts.pxtc.BrowserImpl {
             let headers = Util.clone(options.headers) || {}
 
             client = new XMLHttpRequest();
-
+            if (options.responseArrayBuffer)
+            client.responseType = "arraybuffer";
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 
@@ -881,7 +884,7 @@ namespace ts.pxtc.BrowserImpl {
                     let res: Util.HttpResponse = {
                         statusCode: client.status,
                         headers: {},
-                        buffer: client.responseBody,
+                        buffer: client.responseBody || client.response,
                         text: client.responseText,
                     }
                     client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {

@@ -13,6 +13,7 @@ function loadSoundAsync(id: string): Promise<AudioBuffer> {
         headers: {
             "Accept": "audio/m4a"
         },
+        responseArrayBuffer: true
     }).then(resp => audio.loadAsync(resp.buffer))
         .then(buffer => sounds[id] = buffer)
 }
