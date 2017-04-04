@@ -788,7 +788,7 @@ export class ProjectView
         const mpkg = pkg.mainPkg
         this.exportProjectToFileAsync()
             .done((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".pxt");
+                const fn = pkg.genFileName(".mkcd");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
     }
@@ -1129,7 +1129,7 @@ export class ProjectView
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a .hex file to open.")}</label>
+    <label>${lf("Select a .hex or .mkcd file to open.")}</label>
     <input type="file" class="ui button blue fluid"></input>
   </div>
 </div>`,
@@ -1581,7 +1581,7 @@ function isTypescriptFile(filename: string): boolean {
 }
 
 function isProjectFile(filename: string): boolean {
-    return /\.pxt$/i.test(filename)
+    return /\.(pxt|mkcd)$/i.test(filename)
 }
 
 function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
