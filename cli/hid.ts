@@ -38,6 +38,16 @@ export function serialAsync() {
         })
 }
 
+export function dmesgAsync() {
+    return hf2DeviceAsync()
+        .then(d => d.talkAsync(0x0010)
+            .then(resp => {
+                console.log(U.fromUTF8(U.uint8ArrayToString(resp)))
+                return d.talkAsync(0x0003) // reset into app; otherwise cannot disconnect
+                    .then(() => { })
+            }))
+}
+
 function hex(n: number) {
     return ("000" + n.toString(16)).slice(-4)
 }
