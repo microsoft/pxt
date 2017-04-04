@@ -942,13 +942,13 @@ export class ProjectView
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
                         if (userContextWindow)
-                            try { userContextWindow.close() } catch(e) {}
+                            try { userContextWindow.close() } catch (e) { }
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
                 if (userContextWindow)
-                    try { userContextWindow.close() } catch(e) {}
+                    try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
                 this.setState({ compiling: false });
                 if (simRestart) this.runSimulator();
@@ -1122,14 +1122,15 @@ export class ProjectView
 
     importFileDialog() {
         let input: HTMLInputElement;
+        const ext = pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? ".hex" : ".mkcd";
         core.confirmAsync({
-            header: lf("Open .hex file"),
+            header: lf("Open {0} file", ext),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a .hex or .mkcd file to open.")}</label>
+    <label>${lf("Select a {0} file to open.", ext)}</label>
     <input type="file" class="ui button blue fluid"></input>
   </div>
 </div>`,
