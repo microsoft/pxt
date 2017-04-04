@@ -1581,7 +1581,7 @@ function isTypescriptFile(filename: string): boolean {
 }
 
 function isProjectFile(filename: string): boolean {
-    return /\.pxt$/i.test(filename)
+    return /\.(pxt|mkcd)$/i.test(filename)
 }
 
 function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
