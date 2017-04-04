@@ -788,7 +788,7 @@ export class ProjectView
         const mpkg = pkg.mainPkg
         this.exportProjectToFileAsync()
             .done((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".pxt");
+                const fn = pkg.genFileName(".mkcd");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
     }
