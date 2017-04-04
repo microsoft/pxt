@@ -144,6 +144,7 @@ namespace pxt.cpp {
         if (isPlatformio)
             sourcePath = "/src/"
 
+        let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
@@ -664,7 +665,13 @@ namespace pxt.cpp {
             res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         }
 
+        if (pxt.appTarget.compile && pxt.appTarget.compile.boxDebug) {
+            pxtConfig += "#define PXT_BOX_DEBUG 1\n"
+            pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
+        }
+
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
+        res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
         res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"

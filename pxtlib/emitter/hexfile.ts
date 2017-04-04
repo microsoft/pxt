@@ -674,7 +674,7 @@ namespace ts.pxtc {
         export function patchHex(bin: Binary, buf: number[], shortForm: boolean, useuf2: boolean) {
             let myhex = hex.slice(0, bytecodeStartIdx)
 
-            assert(buf.length < 32000)
+            assert(buf.length < 64000, "program too large, words: " + buf.length)
 
             // store the size of the program (in 16 bit words)
             buf[17] = buf.length

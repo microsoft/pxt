@@ -24,6 +24,7 @@ namespace ts.pxtc {
     export const taggedFalse = taggedSpecialValue(2)
     export const taggedTrue = taggedSpecialValue(16)
     function fitsTaggedInt(vn: number) {
+        if (target.boxDebug) return false
         return (vn | 0) == vn && -1073741824 <= vn && vn <= 1073741823
     }
 
@@ -2591,6 +2592,11 @@ ${lbl}: .short 0xffff
                         if (opts.target.taggedInts)
                             return !!((vo.data as number) & 1)
                         return true
+                    } else if (vo.exprKind == EK.RuntimeCall && vo.data == "pxt::ptrOfLiteral") {
+                        if (vo.args[0].exprKind == EK.PointerLiteral &&
+                            !isNaN(parseFloat(vo.args[0].jsInfo)))
+                            return true
+                        return false
                     } else
                         return false
                 }
@@ -3120,7 +3126,7 @@ ${lbl}: .short 0xffff
             proc.emitJmpZ(l.brk, cmp)
 
             // TODO this should be changed to use standard indexer lookup and int handling
-            let toInt = (e:ir.Expr) => {
+            let toInt = (e: ir.Expr) => {
                 if (opts.target.taggedInts)
                     return ir.rtcall("pxt::toInt", [e])
                 else return e
