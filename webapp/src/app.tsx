@@ -1129,7 +1129,7 @@ export class ProjectView
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a .hex file to open.")}</label>
+    <label>${lf("Select a .hex or .mkcd file to open.")}</label>
     <input type="file" class="ui button blue fluid"></input>
   </div>
 </div>`,
