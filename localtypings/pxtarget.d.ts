@@ -217,7 +217,6 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
-        useModulator?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;

@@ -910,13 +910,6 @@ export class ProjectView
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
-        // if the audio modulator is used, play silence first
-        if (pxt.appTarget.compile.useModulator) {
-            // Play silence, in order to unblock audio.
-            let audioTag = document.getElementById("audio_output") as HTMLAudioElement;
-            audioTag.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
-            audioTag.play();
-        }
         let userContextWindow: Window = undefined;
         if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
             userContextWindow = window.open("");
@@ -1413,7 +1406,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const restart = run && !simOpts.hideRestart;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
-        const useModulator = pxt.appTarget.compile.useModulator;
         const {
             hideMenuBar,
             hideEditorToolbar} = targetTheme;
@@ -1536,11 +1528,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </div>
-                    {useModulator ?
-                        <div id="modulator" className="ui items">
-                            <audio id="audio_output" controls></audio>
-                            <canvas id="wavStrip"></canvas>
-                        </div> : undefined }
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
