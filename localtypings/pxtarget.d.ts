@@ -13,10 +13,12 @@ declare namespace pxt {
         approvedRepos?: string[];
         bannedOrgs?: string[];
         bannedRepos?: string[];
+        allowUnapproved?: boolean;
     }
 
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
+        platformid?: string; // eg "codal"; used when search for gh packages ("for PXT/codal"); defaults to id
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
         name: string;
         description?: string;
@@ -174,6 +176,8 @@ declare namespace pxt {
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
         blocksOnly?: boolean; // blocks only workspace
+        hideDocsSimulator?: boolean; // do not show simulator button in docs
+        hideDocsEdit?: boolean; // do not show edit button in docs
         hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
@@ -247,7 +251,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type : "api" | "blockId" | "missingPackage" | "package";
+        type: "api" | "blockId" | "missingPackage" | "package";
         map?: pxt.Map<string>;
     }
 

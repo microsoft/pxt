@@ -52,6 +52,7 @@ html, body {
 }
 
 /* Editor tools */
+@editorToolsCollapsedHeight: 4.7rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -59,12 +60,12 @@ html, body {
     left: 0;
     right: 0;
     z-index: 3;
-    height: 5rem;
+    height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
 }
 
 #blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
-    bottom: 5rem;
+    bottom: @editorToolsCollapsedHeight;
 }
 
 .hideEditorToolbar #blocksArea,
@@ -277,6 +278,15 @@ div.simframe > iframe {
 .rtl #helpcard {
     left:7rem;
     right:auto;
+}
+
+/* Project code cards */
+.ui.cardimage {
+    background-color: @secondaryColor;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 12rem;
 }
 
 /* Logo */
@@ -1093,13 +1103,13 @@ Avatar
         bottom: 11rem;
     }
     .hideEditorFloats #editortools {
-        height: 5rem;
+        height: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #tutorialcard.bottom {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
     /* Simulator */
     div.simframe {
@@ -1196,10 +1206,10 @@ Avatar
         display: none !important;
     }
     .hideEditorFloats #editortools {
-        height: 5rem;
+        height: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
 }
 
