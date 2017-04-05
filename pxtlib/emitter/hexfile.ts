@@ -478,7 +478,18 @@ namespace ts.pxtc {
             let funs: FuncInfo[] = extInfo.functions;
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
-                let m = /^:10(....)00(.{16})/.exec(hex[i])
+                let m = /^:10(....)00(.{16})/.exec(hex[i]);
+                if (!m) {
+                    m = /^:0C(....)00(.{12})/.exec(hex[i]);
+                    if (!m) {
+                        m = /^:08(....)00(.{8})/.exec(hex[i]);
+                        if (!m) {
+                            m = /^:04(....)00(.{4})/.exec(hex[i]);
+                            if (!m)
+                                continue;
+                        }
+                    }
+                }
 
                 if (!m) continue;
 
@@ -498,7 +509,7 @@ namespace ts.pxtc {
                 }
             }
 
-            oops();
+            return; //oops();
         }
 
         export function validateShim(funname: string, shimName: string, hasRet: boolean, numArgs: number) {
