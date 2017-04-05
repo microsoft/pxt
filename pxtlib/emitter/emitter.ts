@@ -1248,11 +1248,6 @@ namespace ts.pxtc {
                                 throw userError(9228, lf("invalid extends clause"))
                             let tp = typeOf(h.types[0])
                             if (tp && isClassType(tp)) {
-                                // check if user defined
-                                let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
-                                if (program.getRootFileNames().indexOf(filename) == -1) {
-                                    throw userError(9228, lf("cannot inherit from built-in type."))
-                                }
                                 return getClassInfo(tp)
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
