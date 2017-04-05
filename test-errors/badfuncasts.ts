@@ -12,7 +12,7 @@ namespace SomeBadFun {
     // Unsound, ruled out in Static TypeScript 
     // MouseEvent is a subtype of Event (should be a supertype)
     // no function parameter bivariance
-    listenEvent(EventType.Mouse, (e: MouseEvent) => {}); // TS9203
+    listenEvent(EventType.Mouse, (e: MouseEvent) => {}); // TS9263
 
     interface FunWithField {
         (x:number, y:number): number;
@@ -20,7 +20,7 @@ namespace SomeBadFun {
     }
     // functions can't be cast to interfaces in STS
     let add  = function (x:number,y:number) { return x + y }  
-    let addWithExtra : FunWithField = add   // TS9203
+    let addWithExtra : FunWithField = add   // TS9263
     addWithExtra.a = "hi"
 
     interface ArrWithField {
@@ -29,6 +29,6 @@ namespace SomeBadFun {
     }
     let arr = [ 1, 2 ,3]
     // can't do with arrays either
-    let arrWithExtra: ArrWithField = arr // TS9203
+    let arrWithExtra: ArrWithField = arr // TS9263
  
 }
