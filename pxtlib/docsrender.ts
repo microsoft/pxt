@@ -315,6 +315,7 @@ namespace pxt.docs {
         filepath?: string;
         locale?: Map<string>;
         ghEditURLs?: string[];
+        repo?: { name: string; fullName: string; tag?: string };
     }
 
     export function renderMarkdown(opts: RenderOptions): string {
@@ -426,6 +427,14 @@ namespace pxt.docs {
         };
 
         let markdown = opts.markdown
+
+        // append repo info if any
+        if (opts.repo)
+            markdown += `
+\`\`\`package
+${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.tag || "master"}
+\`\`\`
+`;
 
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
         markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
