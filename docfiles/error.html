@@ -7,7 +7,7 @@
 
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
-  
+
   <style>
     @targetstyle@
   </style>
@@ -51,12 +51,12 @@
     .message a {
       color: #000;
     }
-
+    
     body {
       font-family: 'Segoe UI', "Helvetica Neue", Helvetica, Tahoma, Geneva, Verdana, sans-serif;
       font-size: 16px;
     }
-
+    
     .main {
       max-width: 700px;
       margin: 4em auto;
@@ -77,9 +77,10 @@
 
       <p dir="auto" class="message">
         <a href="#" id="more">More info</a>
-        <span id="msg" style="display:none">
-          @-body-@
-        </span>
+      </p>
+
+      <p dir="auto" id="msg" style="clear:both; display:none" class="message">
+        @-body-@
       </p>
 
     </div>
@@ -93,6 +94,9 @@
       function show() {
         msg.style.display = "block";
         more.style.display = "none";
+        if (msg.textContent && msg.textContent.length < 200) {
+          msg.style.clear = "none";
+        }
       }
       //if (msg.textContent && msg.textContent.length < 100)
       //  show()
