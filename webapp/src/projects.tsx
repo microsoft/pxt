@@ -115,7 +115,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr); break;
-                case "tutorial": this.props.parent.startTutorial(scr.url);
+                case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
                     if (m) this.props.parent.startTutorial(m[1]);
