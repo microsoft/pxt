@@ -18,7 +18,7 @@ export type Component<S, T> = data.Component<S, T>;
 let dimmerInitialized = false;
 
 export function isLoading() {
-    return !!$('.ui.page.dimmer .loadingcontent')[0];    
+    return !!$('.ui.page.dimmer .loadingcontent')[0];
 }
 
 export function hideLoading() {
