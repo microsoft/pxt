@@ -680,12 +680,13 @@ function pkgPageTestAsync(id: string) {
                         info["official"] = "yes"
                     else
                         info["official"] = ""
-                    let html = pxt.docs.renderMarkdown({
+                    const html = pxt.docs.renderMarkdown({
                         template: expandDocFileTemplate("package.html"),
                         markdown: files["README.md"] || "No `README.md`",
                         theme: pxt.appTarget.appTheme,
                         pubinfo: info,
-                        filepath: "/pkg/" + id
+                        filepath: "/pkg/" + id,
+                        repo: { name: repo.name, fullName: repo.fullName, tag: "v" + info.version }
                     })
                     return html
                 })
