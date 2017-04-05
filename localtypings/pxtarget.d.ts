@@ -13,6 +13,7 @@ declare namespace pxt {
         approvedRepos?: string[];
         bannedOrgs?: string[];
         bannedRepos?: string[];
+        allowUnapproved?: boolean;
     }
 
     interface AppTarget {
