@@ -55,7 +55,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9261
+    // next free error 9264
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -621,6 +621,8 @@ namespace ts.pxtc {
                 userError(9203, lf("Unknown type for expression"))
             }
         }
+        if (!r)
+            return r
         return checkType(r)
     }
 
@@ -644,8 +646,9 @@ namespace ts.pxtc {
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
+            // TODO: namespace??? correct name checking??
             if (classes[cl].decl.name.text == decl.name.text)
-                 userError(9203, lf("Interface with same name as a class not supported."))
+                 userError(9261, lf("Interface with same name as a class not supported."))
         }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
@@ -653,13 +656,13 @@ namespace ts.pxtc {
                     case SK.ExtendsKeyword:
                         let tp = typeOf(h.types[0])
                         if (isClassType(tp)) {
-                            userError(9203, lf("Extending a class by an interface not supported."))
+                            userError(9262, lf("Extending a class by an interface not supported."))
                         }
                 }
             }
     }
 
-    function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
+    function typeCheckSrcFlowstoTrg(src: Node|Type, trg: Node|Type) {
         // get the direct types
         let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
         let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
@@ -683,7 +686,7 @@ namespace ts.pxtc {
         occursCheck = []
         let [ok, message] = checkSubtype(srcType, trgType)
         if (!ok) {
-            userError(9203, lf(message))
+            userError(9263, lf(message))
         }
     }
 
@@ -704,6 +707,7 @@ namespace ts.pxtc {
     // an assignment of the form trg <- src is safe, where supType is the
     // type of trg and subType is the type of src
     function checkSubtype(subType: Type, superType: Type): [boolean, string] {
+
         let subId = (subType as any).id
         let superId = (superType as any).id
         let key = subId + "," + superId
@@ -715,6 +719,10 @@ namespace ts.pxtc {
         if (occursCheck.indexOf(key) != -1)
             return [true,""]
         occursCheck.push(key)
+
+        // we don't allow Any!
+        if (superType.flags & TypeFlags.Any)
+            return insertSubtype(key,[false, "Unsupported type: any."])
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
@@ -1245,7 +1253,12 @@ namespace ts.pxtc {
                             if (!h.types || h.types.length != 1)
                                 throw userError(9228, lf("invalid extends clause"))
                             let tp = typeOf(h.types[0])
-                            if (isClassType(tp)) {
+                            if (tp && isClassType(tp)) {
+                                // check if user defined
+                                // let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
+                                // if (program.getRootFileNames().indexOf(filename) == -1) {
+                                //    throw userError(9228, lf("cannot inherit from built-in type."))
+                                // }
                                 return getClassInfo(tp)
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
@@ -1343,7 +1356,6 @@ namespace ts.pxtc {
                         emitSynthetic(fld.irSetter, (proc) => {
                             // decrs work out
                             let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
-                            // TODO: type check assignment 
                             proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].loadCore()]))
                         })
                     }
@@ -1698,6 +1710,12 @@ ${lbl}: .short 0xffff
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
+            // we need to type check node.expression before committing code gen
+            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
+                emitExpr(node.expression,false)
+                if (!decl)
+                    return ir.numlit(0)
+            }
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
             }
@@ -1921,7 +1939,7 @@ ${lbl}: .short 0xffff
                 let p = parms[i]
                 // there may be more arguments than parameters
                 if (p && p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
-                    checkAssignmentTypes(p.valueDeclaration, args[i])
+                    typeCheckSrcFlowstoTrg(args[i], p.valueDeclaration)
             }
 
             // TODO: this is micro:bit specific and should be lifted out
@@ -2017,7 +2035,7 @@ ${lbl}: .short 0xffff
             }
 
             function emitPlain() {
-                return mkProcCall(decl, args.map(emitExpr), bindings)
+                return mkProcCall(decl, args.map((x) => emitExpr(x)), bindings)
             }
 
             scope(() => {
@@ -2041,7 +2059,7 @@ ${lbl}: .short 0xffff
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
                 assert(!bin.finalPass || !!baseCtor)
-                let ctorArgs = args.map(emitExpr)
+                let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
             }
@@ -2075,7 +2093,7 @@ ${lbl}: .short 0xffff
                 }
                 if (info.virtualParent && !isSuper) {
                     assert(!bin.finalPass || info.virtualIndex != null)
-                    return mkProcCallCore(null, info.virtualIndex, args.map(emitExpr))
+                    return mkProcCallCore(null, info.virtualIndex, args.map((x) => emitExpr(x)))
                 }
                 if (attrs.shim && !hasShimDummy(decl)) {
                     return emitShim(decl, node, args);
@@ -2099,7 +2117,7 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
                     let name = getName(decl)
-                    let res = mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
+                    let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
                     if (decl.kind == SK.PropertySignature) {
                         let pid = res.data as ir.ProcId
                         pid.mapIdx = pid.ifaceIndex
@@ -2143,7 +2161,8 @@ ${lbl}: .short 0xffff
             callInfo.args.unshift(funcExpr)
 
             // lambdas do not decr() arguments themselves; do it normally with getMask()
-            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async, args.map(emitExpr))
+            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async,
+                args.map((x) => emitExpr(x)))
         }
 
         function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[], ifaceIdx: number = null) {
@@ -2245,7 +2264,7 @@ ${lbl}: .short 0xffff
                     let args = node.arguments.slice(0)
                     let ctorAttrs = parseComments(ctor)
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
-                    let compiled = args.map(emitExpr)
+                    let compiled = args.map((x) => emitExpr(x))
                     if (ctorAttrs.shim)
                         // we drop 'obj' variable
                         return ir.rtcall(ctorAttrs.shim, compiled)
@@ -2263,9 +2282,11 @@ ${lbl}: .short 0xffff
         }
         function emitTaggedTemplateExpression(node: TaggedTemplateExpression) { }
         function emitTypeAssertion(node: TypeAssertion) {
+            typeCheckSrcFlowstoTrg(node.expression, node)
             return emitExpr(node.expression)
         }
         function emitAsExpression(node: AsExpression) {
+            typeCheckSrcFlowstoTrg(node.expression, node)
             return emitExpr(node.expression)
         }
         function emitParenExpression(node: ParenthesizedExpression) {
@@ -2631,7 +2652,7 @@ ${lbl}: .short 0xffff
 
         function emitStore(trg: Expression, src: Expression, checkAssign: boolean = false) {
             if (checkAssign) {
-                checkAssignmentTypes(trg,src)
+                typeCheckSrcFlowstoTrg(src, trg)
             }
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
@@ -2672,7 +2693,7 @@ ${lbl}: .short 0xffff
         }
 
         function rtcallMask(name: string, args: Expression[], callingConv = ir.CallingConvention.Plain, append: ir.Expr[] = null) {
-            let args2 = args.map(emitExpr)
+            let args2 = args.map((x) => emitExpr(x))
             if (append) args2 = args2.concat(append)
             return ir.rtcallMask(name, getMask(args), callingConv, args2)
         }
@@ -3286,14 +3307,14 @@ ${lbl}: .short 0xffff
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
                 let rhs = bindingElementAccessExpression(node as BindingElement)
-                checkAssignmentTypes(node,rhs[1])
+                typeCheckSrcFlowstoTrg(rhs[1],node)
                 proc.emitExpr(loc.storeByRef(rhs[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
                 // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
-                checkAssignmentTypes(node,node.initializer)
+                typeCheckSrcFlowstoTrg(node.initializer,node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
@@ -3381,15 +3402,15 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitExpr(node0: Node): ir.Expr {
+        function emitExpr(node0: Node, useCache: boolean = true): ir.Expr {
             let node = node0 as NodeWithCache
-            if (node.cachedIR) {
+            if (useCache && node.cachedIR) {
                 if (isRefCountedExpr(node0 as Expression))
                     return ir.op(EK.Incr, [node.cachedIR])
                 return node.cachedIR
             }
             let res = catchErrors(node, emitExprInner) || ir.numlit(0)
-            if (node.needsIRCache) {
+            if (useCache && node.needsIRCache) {
                 node.cachedIR = ir.shared(res)
                 return node.cachedIR
             }
