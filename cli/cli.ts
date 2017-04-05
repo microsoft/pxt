@@ -2288,7 +2288,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
             files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
 
             configMap = U.clone(configMap)
-            configMap["target"] = pxt.appTarget.id
+            configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
 
             U.iterMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
@@ -3614,7 +3614,8 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
     }
 
     if (/^https?:/.test(filename)) {
-        pxt.log(`Fetching ${filename}...`)
+        pxt.log(`fetching ${filename}...`)
+        pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
         return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
             .then(resp => {
                 if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
