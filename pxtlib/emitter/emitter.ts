@@ -55,7 +55,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9261
+    // next free error 9264
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -646,8 +646,9 @@ namespace ts.pxtc {
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
+            // TODO: namespace??? correct name checking??
             if (classes[cl].decl.name.text == decl.name.text)
-                 userError(9203, lf("Interface with same name as a class not supported."))
+                 userError(9261, lf("Interface with same name as a class not supported."))
         }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
@@ -655,7 +656,7 @@ namespace ts.pxtc {
                     case SK.ExtendsKeyword:
                         let tp = typeOf(h.types[0])
                         if (isClassType(tp)) {
-                            userError(9203, lf("Extending a class by an interface not supported."))
+                            userError(9262, lf("Extending a class by an interface not supported."))
                         }
                 }
             }
@@ -685,7 +686,7 @@ namespace ts.pxtc {
         occursCheck = []
         let [ok, message] = checkSubtype(srcType, trgType)
         if (!ok) {
-            userError(9203, lf(message))
+            userError(9263, lf(message))
         }
     }
 
@@ -721,7 +722,7 @@ namespace ts.pxtc {
 
         // we don't allow Any!
         if (superType.flags & TypeFlags.Any)
-            return insertSubtype(key,[false, "Cast to Any type unsupported."])
+            return insertSubtype(key,[false, "Unsupported type: any."])
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
@@ -1709,7 +1710,12 @@ ${lbl}: .short 0xffff
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
-            U.assert(!!decl, "emitPropertyAccess (decl is null) : "+node.getText())
+            // we need to type check node.expression before committing code gen
+            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
+                emitExpr(node.expression)
+                if (!decl)
+                    return ir.numlit(0)
+            }
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
             }
@@ -2275,6 +2281,7 @@ ${lbl}: .short 0xffff
         }
         function emitTaggedTemplateExpression(node: TaggedTemplateExpression) { }
         function emitTypeAssertion(node: TypeAssertion) {
+            typeCheckSrcFlowstoTrg(node.expression, node)
             return emitExpr(node.expression)
         }
         function emitAsExpression(node: AsExpression) {
