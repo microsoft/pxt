@@ -25,10 +25,27 @@
 
         @breadcrumb@
 
+        <!-- @ifndef official -->
         <!-- @include abuse.html -->
+        <!-- @endif -->
+
+        <!-- @ifdef official -->
+        <div class="ui icon green message" style='margin: 3em 0'>
+            <i class="check icon"></i>
+            <div class="content">
+                <h3 class="header">
+                    Approved content
+                </h3>
+                <p>
+                    The content below is provided by partner.
+                </p>
+            </div>
+        </div>
+        <!-- @endif -->
+
         <h1 class="ui header">
             <div class="ui content">
-                @title@ @version@ (@slug@) 
+                @title@ @version@ (@slug@)
                 <a href="/@versionsuff@#pub:@id@" class="ui button">Edit</a>
                 <a href="https://github.com/@slug@" class="ui primary button">Fork me</a>
             </div>
@@ -42,10 +59,10 @@
     </div>
 
 
-<script>
-const pkgJson = @JSON@;
+    <script>
+        const pkgJson = @JSON@;
 // do something with it
-</script>
+    </script>
 
     <!-- @include footer.html -->
     <!-- Do not add analytics!!!! -->
