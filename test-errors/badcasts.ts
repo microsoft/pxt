@@ -54,10 +54,8 @@ let x3 : Foo3 = null
 
 x3 = x2 // TS9203
 
-interface Opt extends Baz { // TS9203
+interface Opt extends Baz{ // TS9203
     b?: string
 }
 
-class DerivesFromNull extends null { // TS9228 
-
-}
+let o1: Opt = { a: 42}
