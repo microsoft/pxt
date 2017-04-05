@@ -122,7 +122,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const chgMake = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.gallery", { name: scr.name });
             this.hide();
-            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+            const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
+            if (m) this.props.parent.startTutorial(m[1]);
+            else this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
         }
         const chgCode = (scr: pxt.CodeCard) => {
             pxt.tickEvent("projects.example", { name: scr.name });
