@@ -12,7 +12,7 @@ import defaultToolbox from "./toolbox"
 
 import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
-let lf = Util.lf
+const lf = Util.lf
 
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
@@ -324,9 +324,42 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
-        this.prepareBlockly();
-
         this.isReady = true
+    }
+
+    loadBlocklyScripts(): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            if (typeof ((window as any).Blockly) === 'object') {
+                // blockly is already loaded
+                resolve();
+                return;
+            }
+
+            let blocklyPromises: Promise<void>[] = [];
+            if (/newblocks=1/i.test(window.location.href)) {
+                return pxt.BrowserUtils.loadScript('/blb/newblockly/blockly_compressed.js').then(() => {
+                    return pxt.BrowserUtils.loadScript('/blb/newblockly/blocks_compressed.js').then(() => {
+                        return pxt.BrowserUtils.loadScript('/blb/newblockly/msg/js/en.js').then(() => {
+                            return pxt.BrowserUtils.loadScript('/blb/pxtblocks.js').then(() => {
+                                resolve();
+                            });
+                        })
+                    })
+                })
+            } else {
+                return pxt.BrowserUtils.loadScript('/blb/blockly/blockly_compressed.js').then(() => {
+                    return pxt.BrowserUtils.loadScript('/blb/blockly/blocks_compressed.js').then(() => {
+                        return pxt.BrowserUtils.loadScript('/blb/blockly/msg/js/en.js').then(() => {
+                            return pxt.BrowserUtils.loadScript('/blb/pxtblocks.js').then(() => {
+                                resolve();
+                            });
+                        })
+                    })
+                })
+            }
+        }).then(() => {
+            this.prepareBlockly();
+        })
     }
 
     private prepareBlockly(showCategories = this.showToolboxCategories) {
@@ -482,20 +515,22 @@ export class Editor extends srceditor.Editor {
     loadFileAsync(file: pkg.File): Promise<void> {
         this.currSource = file.content;
         this.typeScriptSaveable = false;
-        this.setDiagnostics(file)
-        this.delayLoadXml = file.content;
-        this.editor.clearUndo();
+        return this.loadBlocklyScripts().then(() => {
 
-        if (this.currFile && this.currFile != file) {
-            this.filterToolbox(null);
-        }
-        if (this.parent.state.filters) {
-            this.filterToolbox(this.parent.state.filters);
-        } else {
-            this.filters = null;
-        }
-        this.currFile = file;
-        return Promise.resolve();
+            this.setDiagnostics(file)
+            this.delayLoadXml = file.content;
+            this.editor.clearUndo();
+
+            if (this.currFile && this.currFile != file) {
+                this.filterToolbox(null);
+            }
+            if (this.parent.state.filters) {
+                this.filterToolbox(this.parent.state.filters);
+            } else {
+                this.filters = null;
+            }
+            this.currFile = file;
+        })
     }
 
     public switchToTypeScript() {

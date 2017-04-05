@@ -10,6 +10,9 @@ type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
+import Util = pxt.Util;
+const lf = Util.lf;
+
 export enum ShareMode {
     Screenshot,
     Url,

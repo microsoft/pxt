@@ -12,6 +12,9 @@ import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+import Util = pxt.Util;
+const lf = Util.lf;
+
 interface FileListState {
     expands: pxt.Map<boolean>;
 }

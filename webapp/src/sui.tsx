@@ -2,6 +2,9 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as data from "./data";
 
+import Util = pxt.Util;
+let lf = Util.lf;
+
 export interface UiProps {
     icon?: string;
     iconClass?: string;

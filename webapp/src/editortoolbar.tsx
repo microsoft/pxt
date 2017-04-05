@@ -9,6 +9,9 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as simulator from "./simulator";
 
+import Util = pxt.Util;
+const lf = Util.lf;
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export class EditorToolbar extends data.Component<ISettingsProps, {}> {

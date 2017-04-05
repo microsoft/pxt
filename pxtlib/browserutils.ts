@@ -360,4 +360,17 @@ namespace pxt.BrowserUtils {
         return dataurl;
     }
 
+    export function loadScript(scriptPath: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            let onScriptLoaded = () => {
+                // script loaded
+                resolve();
+            };
+            let script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = scriptPath;
+            script.addEventListener('load', onScriptLoaded);
+            document.body.appendChild(script);
+        })
+    }
 }

@@ -31,6 +31,7 @@ import * as projects from "./projects";
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
 import * as blocks from "./blocks"
+import * as newblocks from "./newblocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
@@ -86,7 +87,7 @@ export class ProjectView
     editorFile: pkg.File;
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
-    blocksEditor: blocks.Editor;
+    blocksEditor: blocks.Editor | newblocks.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -317,7 +318,11 @@ export class ProjectView
     private initEditors() {
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
-        this.blocksEditor = new blocks.Editor(this);
+        if (/newblocks=1/i.test(window.location.href)) {
+            this.blocksEditor = new newblocks.Editor(this);
+        } else {
+            this.blocksEditor = new blocks.Editor(this);
+        }
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -526,7 +531,7 @@ export class ProjectView
             return Promise.resolve()
 
         this.stopSimulator(true);
-        pxt.blocks.cleanBlocks();
+        if (pxt.blocks.cleanBlocks) pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         this.setState({

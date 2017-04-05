@@ -5,21 +5,8 @@ import Util = pxt.Util;
 let lf = Util.lf;
 
 namespace pxt.blocks {
-    export const blockColors: Map<number | string> = {
-        loops: '#107c10',
-        logic: '#006970',
-        math: '#712672',
-        images: '#5C2D91',
-        variables: '#A80000',
-        text: '#996600',
-        lists: '#D83B01'
-    }
 
-    export enum CategoryMode {
-        All,
-        None,
-        Basic
-    }
+    let newBlocks = /newblocks=1/i.test(window.location.href);
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -480,7 +467,7 @@ namespace pxt.blocks {
         if (pre)
             i.appendField(pre);
         if (right)
-            i.setAlign(Blockly.ALIGN_RIGHT)
+            i.setAlign(Blockly.ALIGN_LEFT)
         // ignore generic types
         if (type && type != "T")
             i.setCheck(type);
@@ -524,8 +511,10 @@ namespace pxt.blocks {
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
 
         block.setTooltip(fn.attributes.jsDoc);
-        block.setColour(color);
-
+        if (newBlocks)
+            block.setColour(color, Blockly.PXTUtils.fadeColour(color as string, 0.5, true), Blockly.PXTUtils.fadeColour(color as string, 0.5, false));
+        else
+            block.setColour(color);
         parseFields(fn.attributes.block).map(field => {
             let i: any;
             if (!field.p) {
@@ -562,7 +551,8 @@ namespace pxt.blocks {
                                 src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
                                 width: 32,
-                                height: 32
+                                height: 32,
+                                value: v.name
                             } : k,
                             v.namespace + "." + v.name
                         ];
@@ -589,7 +579,10 @@ namespace pxt.blocks {
 
                     if (fn.attributes.blockFieldEditor == "note_editor")
                         i.appendField(new Blockly.FieldNote("262", color, noteValidator), attrNames[n].name);
-                    else if (fn.attributes.blockFieldEditor == "FieldGridPicker") {
+                    else if (fn.attributes.blockFieldEditor == "FieldIconDropdown") {
+                        const params = fn.attributes.blockFieldEditorParams;
+                        i.appendField(new Blockly.FieldIconDropdown(dd, params), attrNames[n].name);
+                    } else if (fn.attributes.blockFieldEditor == "FieldGridPicker") {
                         const params = fn.attributes.blockFieldEditorParams;
                         i.appendField(new Blockly.FieldGridPicker(dd, color, params), attrNames[n].name);
                     }
@@ -1791,7 +1784,7 @@ namespace pxt.blocks {
             mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url,
-            String(blockColors[mInfo.category])
+            newBlocks ? (Blockly as any).Colours.textField : String(blockColors[mInfo.category])
         );
 
         // builtin math_number_minmax
@@ -1802,7 +1795,7 @@ namespace pxt.blocks {
             mMInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mMInfo.url,
-            String(blockColors[mMInfo.category])
+            newBlocks ? (Blockly as any).Colours.textField : String(blockColors[mMInfo.category])
         );
 
         // builtin math_arithmetic

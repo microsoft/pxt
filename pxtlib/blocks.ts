@@ -1,6 +1,23 @@
 /// <reference path="main.ts"/>
 
 namespace pxt.blocks {
+
+    export const blockColors: Map<number | string> = {
+        loops: '#107c10',
+        logic: '#006970',
+        math: '#712672',
+        images: '#5C2D91',
+        variables: '#A80000',
+        text: '#996600',
+        lists: '#D83B01'
+    }
+
+    export enum CategoryMode {
+        All,
+        None,
+        Basic
+    }
+
     export interface BlockParameter {
         name: string;
         type?: string;

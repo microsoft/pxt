@@ -1,3 +1,8 @@
+
+import Util = pxt.Util;
+
+const lf = Util.lf;
+
 export const loops: pxt.vs.NameDefiniton = {
     builtin: true,
     fns: {
