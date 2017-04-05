@@ -1712,7 +1712,7 @@ ${lbl}: .short 0xffff
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
             if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
-                emitExpr(node.expression)
+                emitExpr(node.expression,false)
                 if (!decl)
                     return ir.numlit(0)
             }
@@ -2035,7 +2035,7 @@ ${lbl}: .short 0xffff
             }
 
             function emitPlain() {
-                return mkProcCall(decl, args.map(emitExpr), bindings)
+                return mkProcCall(decl, args.map((x) => emitExpr(x)), bindings)
             }
 
             scope(() => {
@@ -2059,7 +2059,7 @@ ${lbl}: .short 0xffff
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
                 assert(!bin.finalPass || !!baseCtor)
-                let ctorArgs = args.map(emitExpr)
+                let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
             }
@@ -2093,7 +2093,7 @@ ${lbl}: .short 0xffff
                 }
                 if (info.virtualParent && !isSuper) {
                     assert(!bin.finalPass || info.virtualIndex != null)
-                    return mkProcCallCore(null, info.virtualIndex, args.map(emitExpr))
+                    return mkProcCallCore(null, info.virtualIndex, args.map((x) => emitExpr(x)))
                 }
                 if (attrs.shim && !hasShimDummy(decl)) {
                     return emitShim(decl, node, args);
@@ -2117,7 +2117,7 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
                     let name = getName(decl)
-                    let res = mkProcCallCore(null, null, args.map(emitExpr), getIfaceMemberId(name))
+                    let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
                     if (decl.kind == SK.PropertySignature) {
                         let pid = res.data as ir.ProcId
                         pid.mapIdx = pid.ifaceIndex
@@ -2161,7 +2161,8 @@ ${lbl}: .short 0xffff
             callInfo.args.unshift(funcExpr)
 
             // lambdas do not decr() arguments themselves; do it normally with getMask()
-            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async, args.map(emitExpr))
+            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async, 
+                args.map((x) => emitExpr(x)))
         }
 
         function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[], ifaceIdx: number = null) {
@@ -2263,7 +2264,7 @@ ${lbl}: .short 0xffff
                     let args = node.arguments.slice(0)
                     let ctorAttrs = parseComments(ctor)
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
-                    let compiled = args.map(emitExpr)
+                    let compiled = args.map((x) => emitExpr(x))
                     if (ctorAttrs.shim)
                         // we drop 'obj' variable
                         return ir.rtcall(ctorAttrs.shim, compiled)
@@ -2692,7 +2693,7 @@ ${lbl}: .short 0xffff
         }
 
         function rtcallMask(name: string, args: Expression[], callingConv = ir.CallingConvention.Plain, append: ir.Expr[] = null) {
-            let args2 = args.map(emitExpr)
+            let args2 = args.map((x)=>emitExpr(x))
             if (append) args2 = args2.concat(append)
             return ir.rtcallMask(name, getMask(args), callingConv, args2)
         }
@@ -3401,15 +3402,15 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitExpr(node0: Node): ir.Expr {
+        function emitExpr(node0: Node, useCache: boolean = true): ir.Expr {
             let node = node0 as NodeWithCache
-            if (node.cachedIR) {
+            if (useCache && node.cachedIR) {
                 if (isRefCountedExpr(node0 as Expression))
                     return ir.op(EK.Incr, [node.cachedIR])
                 return node.cachedIR
             }
             let res = catchErrors(node, emitExprInner) || ir.numlit(0)
-            if (node.needsIRCache) {
+            if (useCache && node.needsIRCache) {
                 node.cachedIR = ir.shared(res)
                 return node.cachedIR
             }
