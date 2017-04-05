@@ -661,7 +661,7 @@ namespace ts.pxtc {
             }
     }
 
-    function checkAssignmentTypes(trg: Node|Type, src: Node|Type) {
+    function typeCheckSrcFlowstoTrg(src: Node|Type, trg: Node|Type) {
         // get the direct types
         let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
         let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
@@ -706,6 +706,7 @@ namespace ts.pxtc {
     // an assignment of the form trg <- src is safe, where supType is the
     // type of trg and subType is the type of src
     function checkSubtype(subType: Type, superType: Type): [boolean, string] {
+
         let subId = (subType as any).id
         let superId = (superType as any).id
         let key = subId + "," + superId
@@ -717,6 +718,10 @@ namespace ts.pxtc {
         if (occursCheck.indexOf(key) != -1)
             return [true,""]
         occursCheck.push(key)
+
+        // we don't allow Any!
+        if (superType.flags & TypeFlags.Any)
+            return insertSubtype(key,[false, "Cast to Any type unsupported."])
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
@@ -1249,10 +1254,10 @@ namespace ts.pxtc {
                             let tp = typeOf(h.types[0])
                             if (tp && isClassType(tp)) {
                                 // check if user defined
-                                let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
-                                if (program.getRootFileNames().indexOf(filename) == -1) {
-                                    throw userError(9228, lf("cannot inherit from built-in type."))
-                                }
+                                // let filename = getSourceFileOfNode(tp.symbol.valueDeclaration).fileName
+                                // if (program.getRootFileNames().indexOf(filename) == -1) {
+                                //    throw userError(9228, lf("cannot inherit from built-in type."))
+                                // }
                                 return getClassInfo(tp)
                             } else {
                                 throw userError(9228, lf("cannot inherit from this type"))
@@ -1350,7 +1355,6 @@ namespace ts.pxtc {
                         emitSynthetic(fld.irSetter, (proc) => {
                             // decrs work out
                             let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
-                            // TODO: type check assignment 
                             proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].loadCore()]))
                         })
                     }
@@ -1705,6 +1709,7 @@ ${lbl}: .short 0xffff
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
+            U.assert(!!decl, "emitPropertyAccess (decl is null) : "+node.getText())
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
             }
@@ -1928,7 +1933,7 @@ ${lbl}: .short 0xffff
                 let p = parms[i]
                 // there may be more arguments than parameters
                 if (p && p.valueDeclaration && p.valueDeclaration.kind == SK.Parameter)
-                    checkAssignmentTypes(p.valueDeclaration, args[i])
+                    typeCheckSrcFlowstoTrg(args[i], p.valueDeclaration)
             }
 
             // TODO: this is micro:bit specific and should be lifted out
@@ -2273,6 +2278,7 @@ ${lbl}: .short 0xffff
             return emitExpr(node.expression)
         }
         function emitAsExpression(node: AsExpression) {
+            typeCheckSrcFlowstoTrg(node.expression, node)
             return emitExpr(node.expression)
         }
         function emitParenExpression(node: ParenthesizedExpression) {
@@ -2638,7 +2644,7 @@ ${lbl}: .short 0xffff
 
         function emitStore(trg: Expression, src: Expression, checkAssign: boolean = false) {
             if (checkAssign) {
-                checkAssignmentTypes(trg,src)
+                typeCheckSrcFlowstoTrg(src, trg)
             }
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
@@ -3293,14 +3299,14 @@ ${lbl}: .short 0xffff
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
                 let rhs = bindingElementAccessExpression(node as BindingElement)
-                checkAssignmentTypes(node,rhs[1])
+                typeCheckSrcFlowstoTrg(rhs[1],node)
                 proc.emitExpr(loc.storeByRef(rhs[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
                 // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
-                checkAssignmentTypes(node,node.initializer)
+                typeCheckSrcFlowstoTrg(node.initializer,node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
