@@ -18,6 +18,7 @@ declare namespace pxt {
 
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
+        platformid?: string; // eg "codal"; used when search for gh packages ("for PXT/codal"); defaults to id
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
         name: string;
         description?: string;
@@ -250,7 +251,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type : "api" | "blockId" | "missingPackage" | "package";
+        type: "api" | "blockId" | "missingPackage" | "package";
         map?: pxt.Map<string>;
     }
 
