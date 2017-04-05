@@ -622,7 +622,7 @@ namespace ts.pxtc {
             }
         }
         if (!r)
-            return r 
+            return r
         return checkType(r)
     }
 
