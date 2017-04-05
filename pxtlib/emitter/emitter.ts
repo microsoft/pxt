@@ -2161,7 +2161,7 @@ ${lbl}: .short 0xffff
             callInfo.args.unshift(funcExpr)
 
             // lambdas do not decr() arguments themselves; do it normally with getMask()
-            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async, 
+            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async,
                 args.map((x) => emitExpr(x)))
         }
 
@@ -2693,7 +2693,7 @@ ${lbl}: .short 0xffff
         }
 
         function rtcallMask(name: string, args: Expression[], callingConv = ir.CallingConvention.Plain, append: ir.Expr[] = null) {
-            let args2 = args.map((x)=>emitExpr(x))
+            let args2 = args.map((x) => emitExpr(x))
             if (append) args2 = args2.concat(append)
             return ir.rtcallMask(name, getMask(args), callingConv, args2)
         }
