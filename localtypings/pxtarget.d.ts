@@ -157,7 +157,6 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
-        exportVsCode?: boolean;
         browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
@@ -174,6 +173,7 @@ declare namespace pxt {
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
+        hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
         hideDocsSimulator?: boolean; // do not show simulator button in docs
         hideDocsEdit?: boolean; // do not show edit button in docs
