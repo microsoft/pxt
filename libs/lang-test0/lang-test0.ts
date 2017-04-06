@@ -1428,7 +1428,7 @@ namespace Generics {
     function sortHelper<T>(arr: T[], callbackfn ?: (value1: T, value2: T) => number) : T[] {
         if (arr.length <= 0 || !callbackfn) {
             return arr;
-        }        
+        }
         let len = arr.length; 
         // simple selection sort.     
         for (let i = 0; i < len - 1; ++i) {
@@ -1452,8 +1452,21 @@ function testGenerics() {
     let inArray = [4,3,4593,23,43,-1]
     Generics.arraySort(inArray, (x: number, y: number) => { return x - y })
     let expectedArray = [-1,3,4,23,43,4593]
-    for(let i=0 ; i<expectedArray.length; i++) {
+    for(let i = 0 ; i < expectedArray.length; i++) {
         control.assert(inArray[i] == expectedArray[i])
+    }
+}
+
+namespace AnonymousTypes {
+
+    function foo(f: { a: number }) {
+       return f.a + 1
+    }
+
+    export function test() {
+        msg("AnonymousTypes")
+        let x = { a: 2, b: "" }
+        control.assert(foo(x) == 3)
     }
 }
 
@@ -1508,7 +1521,7 @@ ObjLit.run()
 testBitSize()
 ObjectDestructuring.run();
 testGenerics()
-
+AnonymousTypes.test()
 
 msg("test top level code")
 let xsum = 0;
