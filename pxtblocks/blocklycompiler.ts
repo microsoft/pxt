@@ -6,8 +6,6 @@
 //                A compiler from Blocky to TouchDevelop                     //
 ///////////////////////////////////////////////////////////////////////////////
 
-import B = Blockly;
-
 namespace pxt.blocks {
 
     export enum NT {
@@ -218,7 +216,7 @@ namespace pxt.blocks {
             throw new Error("Assertion failure");
     }
 
-    function throwBlockError(msg: string, block: B.Block) {
+    function throwBlockError(msg: string, block: Blockly.Block) {
         let e = new Error(msg);
         (<any>e).block = block;
         throw e;
@@ -307,7 +305,7 @@ namespace pxt.blocks {
     // Infers the expected type of an expression by looking at the untranslated
     // block and figuring out, from the look of it, what type of expression it
     // holds.
-    function returnType(e: Environment, b: B.Block): Point {
+    function returnType(e: Environment, b: Blockly.Block): Point {
         assert(b != null);
 
         if (b.type == "placeholder" || b.type === pxtc.TS_OUTPUT_TYPE)
@@ -336,7 +334,7 @@ namespace pxt.blocks {
             throw new Error("cannot mix " + t1 + " with " + t2);
     }
 
-    function mkPlaceholderBlock(e: Environment, type?: string): B.Block {
+    function mkPlaceholderBlock(e: Environment, type?: string): Blockly.Block {
         // XXX define a proper placeholder block type
         return <any>{
             type: "placeholder",
@@ -345,7 +343,7 @@ namespace pxt.blocks {
         };
     }
 
-    function attachPlaceholderIf(e: Environment, b: B.Block, n: string, type?: string) {
+    function attachPlaceholderIf(e: Environment, b: Blockly.Block, n: string, type?: string) {
         // Ugly hack to keep track of the type we want there.
         const target = b.getInputTargetBlock(n);
         if (!target) {
@@ -360,7 +358,7 @@ namespace pxt.blocks {
         }
     }
 
-    function getInputTargetBlock(b: B.Block, n: string) {
+    function getInputTargetBlock(b: Blockly.Block, n: string) {
         const res = b.getInputTargetBlock(n);
 
         if (!res) {
@@ -376,7 +374,7 @@ namespace pxt.blocks {
     }
 
     // Unify the *return* type of the parameter [n] of block [b] with point [p].
-    function unionParam(e: Environment, b: B.Block, n: string, p: Point) {
+    function unionParam(e: Environment, b: Blockly.Block, n: string, p: Point) {
         try {
             attachPlaceholderIf(e, b, n);
             union(returnType(e, getInputTargetBlock(b, n)), p);
@@ -385,8 +383,8 @@ namespace pxt.blocks {
         }
     }
 
-    function infer(e: Environment, w: B.Workspace) {
-        w.getAllBlocks().filter(b => !b.disabled).forEach((b: B.Block) => {
+    function infer(e: Environment, w: Blockly.Workspace) {
+        w.getAllBlocks().filter(b => !b.disabled).forEach((b: Blockly.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -437,7 +435,7 @@ namespace pxt.blocks {
                         break;
 
                     case "controls_if":
-                        for (let i = 0; i <= (<B.IfBlock>b).elseifCount_; ++i)
+                        for (let i = 0; i <= (<Blockly.IfBlock>b).elseifCount_; ++i)
                         attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
                         break;
 
@@ -471,7 +469,7 @@ namespace pxt.blocks {
                         if (b.type in e.stdCallTable) {
                             e.stdCallTable[b.type].args.forEach((p: StdArg) => {
                                 if (p.field && !b.getFieldValue(p.field)) {
-                                    let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
+                                    let i = b.inputList.filter((i: Blockly.Input) => i.name == p.field)[0];
                                     // This will throw if someone modified blocks-custom.js and forgot to add
                                     // [setCheck]s in the block definition. This is intentional and MUST be
                                     // fixed.
@@ -482,7 +480,7 @@ namespace pxt.blocks {
                         }
                 }
             } catch (err) {
-                const be = ((<any>err).block as B.Block) || b;
+                const be = ((<any>err).block as Blockly.Block) || b;
                 be.setWarningText(err + "");
                 e.errors.push(be);
             }
@@ -503,7 +501,7 @@ namespace pxt.blocks {
     // each property ref, the right value for its [parent] property.
     ///////////////////////////////////////////////////////////////////////////////
 
-    function extractNumber(b: B.Block): number {
+    function extractNumber(b: Blockly.Block): number {
         let v = b.getFieldValue("NUM");
         const parsed = parseFloat(v);
         checkNumber(parsed);
@@ -516,11 +514,11 @@ namespace pxt.blocks {
         }
     }
 
-    function extractTsExpression(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function extractTsExpression(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         return mkText(b.getFieldValue("EXPRESSION"));
     }
 
-    function compileNumber(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileNumber(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         return H.mkNumberLiteral(extractNumber(b));
     }
 
@@ -541,7 +539,7 @@ namespace pxt.blocks {
         "NEQ": "!=",
     };
 
-    function compileArithmetic(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileArithmetic(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let bOp = b.getFieldValue("OP");
         let left = getInputTargetBlock(b, "A");
         let right = getInputTargetBlock(b, "B");
@@ -562,30 +560,30 @@ namespace pxt.blocks {
         }
     }
 
-    function compileModulo(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileModulo(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let left = getInputTargetBlock(b, "DIVIDEND");
         let right = getInputTargetBlock(b, "DIVISOR");
         let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
         return H.mkSimpleCall("%", args);
     }
 
-    function compileMathOp2(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileMathOp2(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let op = b.getFieldValue("op");
         let x = compileExpression(e, getInputTargetBlock(b, "x"), comments);
         let y = compileExpression(e, getInputTargetBlock(b, "y"), comments);
         return H.mathCall(op, [x, y])
     }
 
-    function compileMathOp3(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileMathOp3(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let x = compileExpression(e, getInputTargetBlock(b, "x"), comments);
         return H.mathCall("abs", [x]);
     }
 
-    function compileText(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileText(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         return H.mkStringLiteral(b.getFieldValue("TEXT"));
     }
 
-    function compileTextJoin(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileTextJoin(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let last: JsNode;
         let i = 0;
         while (true) {
@@ -624,11 +622,11 @@ namespace pxt.blocks {
         return last;
     }
 
-    function compileBoolean(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileBoolean(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         return H.mkBooleanLiteral(b.getFieldValue("BOOL") == "TRUE");
     }
 
-    function compileNot(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileNot(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let expr = compileExpression(e, getInputTargetBlock(b, "BOOL"), comments);
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
@@ -641,7 +639,7 @@ namespace pxt.blocks {
         return parsed;
     }
 
-    function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileRandom(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let expr = compileExpression(e, getInputTargetBlock(b, "limit"), comments);
         let v = extractNumberLit(expr)
         if (v != null)
@@ -650,7 +648,7 @@ namespace pxt.blocks {
             return H.mathCall("random", [H.mkSimpleCall(opToTok["ADD"], [expr, H.mkNumberLiteral(1)])])
     }
 
-    function compileCreateList(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileCreateList(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         // collect argument
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
             .filter(e => !!e);
@@ -683,7 +681,7 @@ namespace pxt.blocks {
     // [t] is the expected type; we assume that we never null block children
     // (because placeholder blocks have been inserted by the type-checking phase
     // whenever a block was actually missing).
-    export function compileExpression(e: Environment, b: B.Block, comments: string[]): JsNode {
+    export function compileExpression(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         assert(b != null);
         maybeAddComment(b, comments);
         let expr: JsNode;
@@ -750,7 +748,7 @@ namespace pxt.blocks {
         workspace: Blockly.Workspace;
         bindings: Binding[];
         stdCallTable: pxt.Map<StdFunc>;
-        errors: B.Block[];
+        errors: Blockly.Block[];
         renames: RenameMap;
     }
 
@@ -820,7 +818,7 @@ namespace pxt.blocks {
     // Statements
     ///////////////////////////////////////////////////////////////////////////////
 
-    function compileControlsIf(e: Environment, b: B.IfBlock, comments: string[]): JsNode[] {
+    function compileControlsIf(e: Environment, b: Blockly.IfBlock, comments: string[]): JsNode[] {
         let stmts: JsNode[] = [];
         // Notice the <= (if there's no else-if, we still compile the primary if).
         for (let i = 0; i <= b.elseifCount_; ++i) {
@@ -849,7 +847,7 @@ namespace pxt.blocks {
         return stmts;
     }
 
-    function compileControlsFor(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+    function compileControlsFor(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let bVar = escapeVarName(b.getFieldValue("VAR"), e);
         let bTo = getInputTargetBlock(b, "TO");
         let bDo = getInputTargetBlock(b, "DO");
@@ -872,7 +870,7 @@ namespace pxt.blocks {
         ]
     }
 
-    function compileControlsRepeat(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+    function compileControlsRepeat(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let bound = compileExpression(e, getInputTargetBlock(b, "TIMES"), comments);
         let body = compileStatements(e, getInputTargetBlock(b, "DO"));
         let valid = (x: string) => !lookup(e, x)
@@ -887,7 +885,7 @@ namespace pxt.blocks {
         ]
     }
 
-    function compileWhile(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+    function compileWhile(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let cond = compileExpression(e, getInputTargetBlock(b, "COND"), comments);
         let body = compileStatements(e, getInputTargetBlock(b, "DO"));
         return [
@@ -898,7 +896,7 @@ namespace pxt.blocks {
         ]
     }
 
-    function compileForever(e: Environment, b: B.Block): JsNode {
+    function compileForever(e: Environment, b: Blockly.Block): JsNode {
         let bBody = getInputTargetBlock(b, "HANDLER");
         let body = compileStatements(e, bBody);
         return mkCallWithCallback(e, "basic", "forever", [], body);
@@ -935,7 +933,7 @@ namespace pxt.blocks {
         return n;
     }
 
-    function compileVariableGet(e: Environment, b: B.Block): JsNode {
+    function compileVariableGet(e: Environment, b: Blockly.Block): JsNode {
         let name = escapeVarName(b.getFieldValue("VAR"), e);
         let binding = lookup(e, name);
         if (!binding.assigned)
@@ -944,7 +942,7 @@ namespace pxt.blocks {
         return mkText(name);
     }
 
-    function compileSet(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileSet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let bVar = escapeVarName(b.getFieldValue("VAR"), e);
         let bExpr = getInputTargetBlock(b, "VALUE");
         let binding = lookup(e, bVar);
@@ -964,7 +962,7 @@ namespace pxt.blocks {
             expr)
     }
 
-    function compileChange(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileChange(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let bVar = escapeVarName(b.getFieldValue("VAR"), e);
         let bExpr = getInputTargetBlock(b, "VALUE");
         let binding = lookup(e, bVar);
@@ -979,7 +977,7 @@ namespace pxt.blocks {
         return call.args.map(ar => ar.field).filter(ar => !!ar);
     }
 
-    function compileCall(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
             return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, call.args.map(ar => compileArgument(e, b, ar, comments))))
@@ -989,7 +987,7 @@ namespace pxt.blocks {
             return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
     }
 
-    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[]): JsNode {
+    function compileArgument(e: Environment, b: Blockly.Block, p: StdArg, comments: string[]): JsNode {
         let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
@@ -1000,7 +998,7 @@ namespace pxt.blocks {
             return compileExpression(e, getInputTargetBlock(b, p.field), comments)
     }
 
-    function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): JsNode {
+    function compileStdCall(e: Environment, b: Blockly.Block, func: StdFunc, comments: string[]): JsNode {
         let args: JsNode[]
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.RestParameterMutator) {
             args = b.mutation.compileMutation(e, comments).children;
@@ -1036,7 +1034,7 @@ namespace pxt.blocks {
         }
     }
 
-    function compileStdBlock(e: Environment, b: B.Block, f: StdFunc, comments: string[]) {
+    function compileStdBlock(e: Environment, b: Blockly.Block, f: StdFunc, comments: string[]) {
         return mkStmt(compileStdCall(e, b, f, comments))
     }
 
@@ -1056,14 +1054,14 @@ namespace pxt.blocks {
             return mkStmt(H.namespaceCall(n, f, args.concat([callback]), false));
     }
 
-    function compileArg(e: Environment, b: B.Block, arg: string, comments: string[]): JsNode {
+    function compileArg(e: Environment, b: Blockly.Block, arg: string, comments: string[]): JsNode {
         // b.getFieldValue may be string, numbers
         const argb = getInputTargetBlock(b, arg);
         if (argb) return compileExpression(e, argb, comments);
         return mkText(b.getFieldValue(arg))
     }
 
-    function compileStartEvent(e: Environment, b: B.Block): JsNode {
+    function compileStartEvent(e: Environment, b: Blockly.Block): JsNode {
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
 
@@ -1074,7 +1072,7 @@ namespace pxt.blocks {
         return body;
     }
 
-    function compileEvent(e: Environment, b: B.Block, stdfun: StdFunc, args: string[], ns: string, comments: string[]): JsNode {
+    function compileEvent(e: Environment, b: Blockly.Block, stdfun: StdFunc, args: string[], ns: string, comments: string[]): JsNode {
         const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
@@ -1087,11 +1085,11 @@ namespace pxt.blocks {
         return mkCallWithCallback(e, ns, stdfun.f, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
     }
 
-    function isMutatingBlock(b: B.Block): b is MutatingBlock {
+    function isMutatingBlock(b: Blockly.Block): b is MutatingBlock {
         return !!(b as MutatingBlock).mutation;
     }
 
-    function compileImage(e: Environment, b: B.Block, frames: number, n: string, f: string, args?: JsNode[]): JsNode {
+    function compileImage(e: Environment, b: Blockly.Block, frames: number, n: string, f: string, args?: JsNode[]): JsNode {
         args = args === undefined ? [] : args;
         let state = "\n";
         let rows = 5;
@@ -1141,13 +1139,13 @@ namespace pxt.blocks {
         isIdentity?: boolean; // TD_ID shim
     }
 
-    function compileStatementBlock(e: Environment, b: B.Block): JsNode[] {
+    function compileStatementBlock(e: Environment, b: Blockly.Block): JsNode[] {
         let r: JsNode[];
         const comments: string[] = [];
         maybeAddComment(b, comments);
         switch (b.type) {
             case 'controls_if':
-                r = compileControlsIf(e, <B.IfBlock>b, comments);
+                r = compileControlsIf(e, <Blockly.IfBlock>b, comments);
                 break;
             case 'controls_for':
             case 'controls_simple_for':
@@ -1189,7 +1187,7 @@ namespace pxt.blocks {
         return r;
     }
 
-    function compileStatements(e: Environment, b: B.Block): JsNode {
+    function compileStatements(e: Environment, b: Blockly.Block): JsNode {
         let stmts: JsNode[] = [];
         while (b) {
             if (!b.disabled) append(stmts, compileStatementBlock(e, b));
@@ -1198,7 +1196,7 @@ namespace pxt.blocks {
         return mkBlock(stmts);
     }
 
-    function compileTypescriptBlock(e: Environment, b: B.Block) {
+    function compileTypescriptBlock(e: Environment, b: Blockly.Block) {
         let res: JsNode[] = [];
         let i = 0;
 
@@ -1243,7 +1241,7 @@ namespace pxt.blocks {
     // - All variables have been assigned an initial [Point] in the union-find.
     // - Variables have been marked to indicate if they are compatible with the
     //   TouchDevelop for-loop model.
-    export function mkEnv(w: B.Workspace, blockInfo?: pxtc.BlocksInfo, skipVariables?: boolean): Environment {
+    export function mkEnv(w: Blockly.Workspace, blockInfo?: pxtc.BlocksInfo, skipVariables?: boolean): Environment {
         // The to-be-returned environment.
         let e = emptyEnv(w);
 
@@ -1283,7 +1281,7 @@ namespace pxt.blocks {
 
         if (skipVariables) return e;
 
-        const variableIsScoped = (b: B.Block, name: string): boolean => {
+        const variableIsScoped = (b: Blockly.Block, name: string): boolean => {
             if (!b)
                 return false;
             else if ((b.type == "controls_for" || b.type == "controls_simple_for")
@@ -1341,7 +1339,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    export function compileBlock(b: B.Block, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+    export function compileBlock(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
         infer(e, w);
@@ -1350,7 +1348,7 @@ namespace pxt.blocks {
         return tdASTtoTS(compiled);
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
+    function compileWorkspace(w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
             const e = mkEnv(w, blockInfo);
             infer(e, w);
@@ -1401,7 +1399,7 @@ namespace pxt.blocks {
         return [] // unreachable
     }
 
-    export function callKey(e: Environment, b: B.Block): string {
+    export function callKey(e: Environment, b: Blockly.Block): string {
         if (b.type == ts.pxtc.ON_START_TYPE)
             return JSON.stringify({ name: ts.pxtc.ON_START_TYPE });
 
@@ -1417,14 +1415,14 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    function updateDisabledBlocks(e: Environment, allBlocks: B.Block[], topBlocks: B.Block[]) {
+    function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
         // unset disabled
         allBlocks.forEach(b => b.setDisabled(false));
 
         // update top blocks
-        const events: Map<B.Block> = {};
+        const events: Map<Blockly.Block> = {};
 
-        function flagDuplicate(key: string, block: B.Block) {
+        function flagDuplicate(key: string, block: Blockly.Block) {
             const otherEvent = events[key];
             if (otherEvent) {
                 // another block is already registered
@@ -1479,7 +1477,7 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+    export function compile(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
@@ -1666,13 +1664,13 @@ namespace pxt.blocks {
         }
     }
 
-    function maybeAddComment(b: B.Block, comments: string[]) {
+    function maybeAddComment(b: Blockly.Block, comments: string[]) {
         if (b.comment) {
             if ((typeof b.comment) === "string") {
                 comments.push(b.comment as string)
             }
             else {
-                comments.push((b.comment as B.Comment).getText())
+                comments.push((b.comment as Blockly.Comment).getText())
             }
         }
     }

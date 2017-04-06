@@ -24,7 +24,7 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
-    currentCommentOrWarning: B.Comment | B.Warning;
+    currentCommentOrWarning: Blockly.Comment | Blockly.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
@@ -340,9 +340,7 @@ export class Editor extends srceditor.Editor {
                 return pxt.BrowserUtils.loadScript('/blb/newblockly/blockly_compressed.js').then(() => {
                     return pxt.BrowserUtils.loadScript('/blb/newblockly/blocks_compressed.js').then(() => {
                         return pxt.BrowserUtils.loadScript('/blb/newblockly/msg/js/en.js').then(() => {
-                            return pxt.BrowserUtils.loadScript('/blb/pxtblocks.js').then(() => {
-                                resolve();
-                            });
+                            resolve();
                         })
                     })
                 })
@@ -350,9 +348,7 @@ export class Editor extends srceditor.Editor {
                 return pxt.BrowserUtils.loadScript('/blb/blockly/blockly_compressed.js').then(() => {
                     return pxt.BrowserUtils.loadScript('/blb/blockly/blocks_compressed.js').then(() => {
                         return pxt.BrowserUtils.loadScript('/blb/blockly/msg/js/en.js').then(() => {
-                            return pxt.BrowserUtils.loadScript('/blb/pxtblocks.js').then(() => {
-                                resolve();
-                            });
+                            resolve();
                         })
                     })
                 })

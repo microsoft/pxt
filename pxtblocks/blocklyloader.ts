@@ -31,11 +31,9 @@ namespace pxt.blocks {
 
     // list of built-in blocks, should be touched.
     const builtinBlocks: Map<{
-        block: B.BlockDefinition;
+        block: Blockly.BlockDefinition;
         symbol?: pxtc.SymbolInfo;
     }> = {};
-    Object.keys(Blockly.Blocks)
-        .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
     export const buildinBlockStatements: Map<boolean> = {
         "controls_if": true,
         "controls_for": true,
@@ -1090,6 +1088,9 @@ namespace pxt.blocks {
     function init() {
         if (blocklyInitialized) return;
         blocklyInitialized = true;
+
+        Object.keys(Blockly.Blocks)
+            .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
 
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');

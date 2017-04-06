@@ -24,7 +24,7 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
-    currentCommentOrWarning: B.Comment | B.Warning;
+    currentCommentOrWarning: Blockly.Comment | Blockly.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
     showToolboxCategories: CategoryMode = CategoryMode.Basic;

@@ -1,6 +1,6 @@
 
 namespace pxt.blocks.layout {
-    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
+    export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newXml: string): string {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
         // position blocks
         alignBlocks(blockInfo, oldWs, newWs);
@@ -8,7 +8,7 @@ namespace pxt.blocks.layout {
         return injectDisabledBlocks(oldWs, newWs);
     }
 
-    function injectDisabledBlocks(oldWs: B.Workspace, newWs: B.Workspace): string {
+    function injectDisabledBlocks(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): string {
         const oldDom = Blockly.Xml.workspaceToDom(oldWs);
         const newDom = Blockly.Xml.workspaceToDom(newWs);
         Util.toArray(oldDom.childNodes)
@@ -18,9 +18,9 @@ namespace pxt.blocks.layout {
         return updatedXml;
     }
 
-    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newWs: B.Workspace) {
+    function alignBlocks(blockInfo: ts.pxtc.BlocksInfo, oldWs: Blockly.Workspace, newWs: Blockly.Workspace) {
         let env: pxt.blocks.Environment;
-        let newBlocks: pxt.Map<B.Block[]>; // support for multiple events with similar name
+        let newBlocks: pxt.Map<Blockly.Block[]>; // support for multiple events with similar name
         oldWs.getTopBlocks(false).filter(ob => !ob.disabled)
             .forEach(ob => {
                 const otp = ob.xy_;
@@ -45,7 +45,7 @@ namespace pxt.blocks.layout {
 
     declare function unescape(escapeUri: string): string;
 
-    export function verticalAlign(ws: B.Workspace, emPixels: number) {
+    export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
         let blocks = ws.getTopBlocks(true);
         let y = 0
         blocks.forEach(block => {
@@ -55,7 +55,7 @@ namespace pxt.blocks.layout {
         })
     };
 
-    export function shuffle(ws: B.Workspace, ratio?: number) {
+    export function shuffle(ws: Blockly.Workspace, ratio?: number) {
         let blocks = ws.getAllBlocks().filter(b => !b.isShadow_);
         // unplug all blocks
         blocks.forEach(b => b.unplug());
@@ -66,15 +66,15 @@ namespace pxt.blocks.layout {
         flowBlocks(blocks, ratio);
     }
 
-    export function flow(ws: B.Workspace, ratio?: number) {
+    export function flow(ws: Blockly.Workspace, ratio?: number) {
         flowBlocks(ws.getTopBlocks(true), ratio);
     }
 
-    export function screenshotAsync(ws: B.Workspace): Promise<string> {
+    export function screenshotAsync(ws: Blockly.Workspace): Promise<string> {
         return toPngAsync(ws);
     }
 
-    export function toPngAsync(ws: B.Workspace): Promise<string> {
+    export function toPngAsync(ws: Blockly.Workspace): Promise<string> {
         let sg = toSvg(ws);
         if (!sg) return Promise.resolve<string>(undefined);
         return toPngAsyncInternal(sg.width, sg.height, 4, sg.xml);
@@ -107,7 +107,7 @@ namespace pxt.blocks.layout {
         })
     }
 
-    export function toSvg(ws: B.Workspace): {
+    export function toSvg(ws: Blockly.Workspace): {
         width: number; height: number; xml: string;
     } {
         if (!ws) return undefined;
