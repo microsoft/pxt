@@ -45,6 +45,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.header}
                 </div> : null }
             <div className={"ui image"}>
+                {card.cardType == "tutorial" ? <div className="ui green ribbon label">{lf("Tutorial") }</div> : undefined}
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
                 {card.imageUrl ? <div className="ui cardimage" style={ { backgroundImage: `url("${card.imageUrl}")` } } /> : null}
@@ -57,7 +58,7 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     {card.time ? <div className="meta tall">
                         {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
                     </div> : undefined}
-                    {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
+                    {card.description ? <div className="description tall">{renderMd(card.description) }</div> : null}
                 </div> : undefined }
         </div>;
 

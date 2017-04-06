@@ -46,6 +46,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.setState({ visible: true, tab: MYSTUFF })
     }
 
+    showOpenTutorials() {
+        const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
+        this.setState({ visible: true, tab: gals[0] || MYSTUFF})
+    }
+
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
         if (this.state.tab != tab) return [];
 
@@ -302,6 +307,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             description={scr.description}
                             url={scr.url}
                             imageUrl={scr.imageUrl}
+                            cardType={scr.cardType}
                             onClick={() => chgGallery(scr) }
                             />
                         ) }

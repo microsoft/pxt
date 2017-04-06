@@ -1285,15 +1285,15 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     gettingStarted() {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
-        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.sideDoc);
-        this.startTutorial(targetTheme.sideDoc);
+        Util.assert(!this.state.sideDocsLoadUrl && targetTheme && !!targetTheme.galleries);
+        this.projects.showOpenTutorials();
     }
 
     startTutorial(tutorialId: string) {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
         this.startTutorialAsync(tutorialId)
-            .then(() => Promise.delay(500));
+            .done(() => Promise.delay(500));
     }
 
     startTutorialAsync(tutorialId: string): Promise<void> {
@@ -1400,7 +1400,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
-        const gettingStarted = !sandbox && !inTutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
+        const gettingStarted = !sandbox && !inTutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.galleries && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
