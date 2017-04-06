@@ -8,6 +8,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as sounds from "./sounds";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type TutorialOptions = pxt.editor.TutorialOptions;
@@ -79,6 +80,7 @@ export class TutorialContent extends data.Component<ISettingsProps, TutorialCont
 
     public static refresh() {
         // Show light box
+        sounds.tutorialStepNew();
         $('#root')
             .dimmer({'closable': true})
             .dimmer('show');
@@ -88,7 +90,7 @@ export class TutorialContent extends data.Component<ISettingsProps, TutorialCont
         const { tutorialUrl } = this.state;
         if (!tutorialUrl) return null;
 
-        return <iframe id="tutorialcontent" style={{"width":"1px", "height": "1px"}} onLoad={() => TutorialContent.refresh()} src={tutorialUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
+        return <iframe id="tutorialcontent" style={{"width":"1px", "height": "1px"}} src={tutorialUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-popups allow-forms" />
     }
 }
 
@@ -104,7 +106,6 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
     showHint() {
         this.setState({ visible: true })
-        sounds.tutorialStart();
     }
 
     renderCore() {
@@ -161,6 +162,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     closeLightbox() {
         // Hide light box
+        sounds.tutorialStart();
         $('#root')
             .dimmer('hide');
     }

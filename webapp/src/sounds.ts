@@ -21,15 +21,17 @@ function loadSoundAsync(id: string): Promise<AudioBuffer> {
 function playSound(id: string) {
     if (pxt.options.light) return;
 
-    loadSoundAsync(id).then(buf => audio.play(buf));
+    loadSoundAsync(id).then(buf => audio.play(buf, volume));
 }
 
-export function tutorialStepNew() { playSound('jing'); }
-export function tutorialStepFinished() { playSound('jing'); }
-export function tutorialStart() { playSound('dong'); }
+export function tutorialStepNew() { playSound('tutorialnew'); }
+export function tutorialStart() { playSound('tutorialstart'); }
+export function pop() { playSound('pop'); }
 export function initTutorial() {
+    if (pxt.options.light || pxt.appTarget.appTheme.disableEditorSounds) return;
+
     Promise.all([
-        loadSoundAsync('jing'),
-        loadSoundAsync('dong')
+        loadSoundAsync('tutorialnew'),
+        loadSoundAsync('tutorialstart')
     ]).done();
 }
