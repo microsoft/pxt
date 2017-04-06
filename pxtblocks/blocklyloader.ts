@@ -6,7 +6,7 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
 
-    let newBlocks = /newblocks=1/i.test(window.location.href);
+    const newBlocks = /newblocks=1/i.test(window.location.href);
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -77,6 +77,7 @@ namespace pxt.blocks {
         const typeInfo = typeDefaults[type];
 
         shadow.setAttribute("type", shadowType || typeInfo && typeInfo.block || type);
+        if (newBlocks) shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
         if (typeInfo) {
             const field = document.createElement("field");
@@ -509,8 +510,15 @@ namespace pxt.blocks {
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
 
         block.setTooltip(fn.attributes.jsDoc);
-        if (newBlocks)
+        if (newBlocks) {
             block.setColour(color, Blockly.PXTUtils.fadeColour(color as string, 0.5, true), Blockly.PXTUtils.fadeColour(color as string, 0.5, false));
+            switch (fn.retType) {
+                case "number": block.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND); break;
+                case "boolean": block.setOutputShape(Blockly.OUTPUT_SHAPE_HEXAGONAL); break;
+                case "string": block.setOutputShape(Blockly.OUTPUT_SHAPE_SQUARE); break;
+                default: block.setOutputShape(Blockly.OUTPUT_SHAPE_ROUND);
+            }
+        }
         else
             block.setColour(color);
         parseFields(fn.attributes.block).map(field => {

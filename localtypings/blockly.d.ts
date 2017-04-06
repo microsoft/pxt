@@ -43,6 +43,10 @@ declare namespace Blockly {
 
     let ALIGN_LEFT: number;
     let ALIGN_RIGHT: number;
+    
+    const OUTPUT_SHAPE_HEXAGONAL: number;
+    const OUTPUT_SHAPE_ROUND: number;
+    const OUTPUT_SHAPE_SQUARE: number;
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
@@ -160,6 +164,7 @@ declare namespace Blockly {
         dispose(healGap: boolean): void;
         setCollapsed(collapsed: boolean): void;
         setColour(colour: number | string, secondaryColour?: string, tertiaryColour?: string): void;
+        setOutputShape(shape: number): void;
         setCommentText(text: string): void;
         setConnectionsHidden(hidden: boolean): void;
         setDisabled(disabled: boolean): void;
