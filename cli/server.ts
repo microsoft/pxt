@@ -662,7 +662,35 @@ function scriptPageTestAsync(id: string) {
             })
             return html
         })
+}
 
+// use http://localhost:3232/pkg/microsoft/pxt-neopixel for testing
+function pkgPageTestAsync(id: string) {
+    return pxt.packagesConfigAsync()
+        .then(config => pxt.github.repoAsync(id, config))
+        .then(repo => {
+            if (!repo)
+                return "Not found"
+            return Cloud.privateGetAsync("gh/" + id + "/text")
+                .then((files: pxt.Map<string>) => {
+                    let info = JSON.parse(files["pxt.json"])
+                    info["slug"] = id
+                    info["id"] = "gh/" + id
+                    if (repo.status == pxt.github.GitRepoStatus.Approved)
+                        info["official"] = "yes"
+                    else
+                        info["official"] = ""
+                    const html = pxt.docs.renderMarkdown({
+                        template: expandDocFileTemplate("package.html"),
+                        markdown: files["README.md"] || "No `README.md`",
+                        theme: pxt.appTarget.appTheme,
+                        pubinfo: info,
+                        filepath: "/pkg/" + id,
+                        repo: { name: repo.name, fullName: repo.fullName, tag: "v" + info.version }
+                    })
+                    return html
+                })
+        })
 }
 
 function readMd(pathname: string): string {
@@ -799,6 +827,12 @@ export function serveAsync(options: ServeOptions) {
 
         if (/^\/(\d\d\d\d[\d-]+)$/.test(pathname)) {
             scriptPageTestAsync(pathname.slice(1))
+                .then(sendHtml)
+            return
+        }
+
+        if (/^\/(pkg|package)\/.*$/.test(pathname)) {
+            pkgPageTestAsync(pathname.replace(/^\/[^\/]+\//, ""))
                 .then(sendHtml)
             return
         }

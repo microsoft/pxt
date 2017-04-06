@@ -13,10 +13,12 @@ declare namespace pxt {
         approvedRepos?: string[];
         bannedOrgs?: string[];
         bannedRepos?: string[];
+        allowUnapproved?: boolean;
     }
 
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
+        platformid?: string; // eg "codal"; used when search for gh packages ("for PXT/codal"); defaults to id
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
         name: string;
         description?: string;
@@ -166,14 +168,15 @@ declare namespace pxt {
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
-        projectGallery?: string;
-        exampleGallery?: string;
+        galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
         blocksOnly?: boolean; // blocks only workspace
+        hideDocsSimulator?: boolean; // do not show simulator button in docs
+        hideDocsEdit?: boolean; // do not show edit button in docs
         hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
@@ -247,7 +250,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type : "api" | "blockId" | "missingPackage" | "package";
+        type: "api" | "blockId" | "missingPackage" | "package";
         map?: pxt.Map<string>;
     }
 

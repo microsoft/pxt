@@ -1,2 +1,2 @@
 class C { foo: string; }
-interface C { bar: string; } // TS9203
+interface C { bar: string; } // TS9261

@@ -1161,10 +1161,12 @@ namespace Ctors {
         control.assert(a.v == 12, "A12")
         a = new B()
         control.assert(a.v == 12, "B12")
-        control.assert((a as B).q == 17, "B17")
+        // downcasts not allowed for now
+        // control.assert((a as B).q == 17, "B17")
         a = new C()
         control.assert(a.v == 12, "C12")
-        control.assert((a as B).q == 17, "C17")
+        // downcasts not allowed for now
+        // control.assert((a as B).q == 17, "C17")
         let d = new D(33)
         control.assert(d.v == 33, "D33")
         d = new D()

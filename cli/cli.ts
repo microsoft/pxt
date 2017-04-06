@@ -2288,7 +2288,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
             files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
 
             configMap = U.clone(configMap)
-            configMap["target"] = pxt.appTarget.id
+            configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
 
             U.iterMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
