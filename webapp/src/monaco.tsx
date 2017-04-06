@@ -904,7 +904,7 @@ export class Editor extends srceditor.Editor {
             pxt.blocks.appendToolboxIconCss(iconClass, icon);
         }
         treerow.style.paddingLeft = '0px';
-        label.innerText = `${category || ns}`;
+        label.innerText = `${Util.capitalize(category || ns)}`;
 
         return treeitem;
     }
