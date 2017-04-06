@@ -1459,6 +1459,16 @@ function testGenerics() {
 
 namespace AnonymousTypes {
 
+    class Foo {
+        a: number;
+        private b: number;
+        bar() { return this.b; }
+        constructor(inp: number){
+            this.a = inp
+            this.b = inp + 1
+        }
+    }
+
     function foo(f: { a: number }) {
        return f.a + 1
     }
@@ -1466,7 +1476,13 @@ namespace AnonymousTypes {
     export function test() {
         msg("AnonymousTypes")
         let x = { a: 2, b: "" }
+        let bar = new Foo(42)
+        let baz: {a: number} = bar
         control.assert(foo(x) == 3)
+        control.assert(foo(bar) == 43);
+        control.assert(bar.bar() == 43)
+        control.assert(foo(baz) == 43)
+        // HUH bar(40) - new (expects any)
     }
 }
 
