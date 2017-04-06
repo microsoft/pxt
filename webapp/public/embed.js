@@ -4,6 +4,8 @@
     // This line gets patched up by the cloud
     var pxtConfig = null;
 
+    var newblocks = /newblocks=1/i.test(window.location.href);
+
     var scripts = [
         "/blb/highlight.js/highlight.pack.js",
         "/blb/bluebird.min.js",
@@ -11,9 +13,9 @@
         "/blb/semantic.js",
         "/blb/marked/marked.min.js",
         "/blb/lzma/lzma_worker-min.js",
-        "/blb/blockly/blockly_compressed.js",
-        "/blb/blockly/blocks_compressed.js",
-        "/blb/blockly/msg/js/en.js",
+        newblocks ? "/blb/newblockly/blockly_compressed.js" : "/blb/blockly/blockly_compressed.js",
+        newblocks ? "/blb/newblockly/blocks_compressed.js" : "/blb/blockly/blocks_compressed.js",
+        newblocks ? "/blb/newblockly/msg/js/en.js" : "/blb/blockly/msg/js/en.js",
         "/blb/pxtlib.js",
         "/blb/pxtblocks.js",
         "/blb/pxteditor.js",
