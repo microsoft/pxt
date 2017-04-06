@@ -37,11 +37,10 @@
     height: 100%;
 }
 
-#tutorialhint #tutorialcontent {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border:none;
+#tutorialcontent {
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 body#docs.tutorial {
@@ -179,13 +178,6 @@ body#docs.tutorial {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .tutorial #maineditor .full-abs {
-        bottom: 0rem;
-    }
-    /* Hide the editor toolbar */
-    .tutorial #editortools {
-        background: transparent !important;
-    }
 }
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */

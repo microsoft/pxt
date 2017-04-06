@@ -8,6 +8,7 @@ namespace pxt.workspace {
         meta: pxt.Cloud.JsonScriptMeta;
         editor: string;
         temporary?: boolean; // don't serialize project
+        filters?: pxt.editor.ProjectFilters;
         // older script might miss this
         target: string;
         pubId: string; // for published scripts
