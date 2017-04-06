@@ -607,6 +607,7 @@ namespace ts.pxtc.Util {
                 case "md": return "text/markdown";
                 case "xml": return "application/xml";
                 case "m4a": return "audio/m4a";
+                case "mp3": return "audio/mp3";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";

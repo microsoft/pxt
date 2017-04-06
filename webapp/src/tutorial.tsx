@@ -80,7 +80,7 @@ export class TutorialContent extends data.Component<ISettingsProps, TutorialCont
 
     public static refresh() {
         // Show light box
-        sounds.tutorialStepNew();
+        sounds.tutorialStep();
         $('#root')
             .dimmer({'closable': true})
             .dimmer('show');
@@ -162,7 +162,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     closeLightbox() {
         // Hide light box
-        sounds.tutorialStart();
+        sounds.tutorialNext();
         $('#root')
             .dimmer('hide');
     }

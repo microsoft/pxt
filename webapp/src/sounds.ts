@@ -4,34 +4,40 @@ const sounds: pxt.Map<AudioBuffer> = {};
 const volume = 0.2;
 
 function loadSoundAsync(id: string): Promise<AudioBuffer> {
-    let buffer = sounds[id];
+
+    const path = (<any>(pxt.appTarget.appTheme.sounds) || {})[id] as string;
+    if (pxt.options.light || !path) return Promise.resolve<AudioBuffer>(undefined);
+
+    let buffer = sounds[path];
     if (buffer) return Promise.resolve(buffer);
 
-    const url = pxt.webConfig.commitCdnUrl + "sounds/" + id + ".m4a";
+    const url = pxt.webConfig.commitCdnUrl + "sounds/" + path;
     return Util.requestAsync({
         url,
         headers: {
-            "Accept": "audio/m4a"
+            "Accept": "audio/" + path.slice(-3)
         },
         responseArrayBuffer: true
     }).then(resp => audio.loadAsync(resp.buffer))
-        .then(buffer => sounds[id] = buffer)
+      .then(buffer => sounds[path] = buffer)
 }
 
 function playSound(id: string) {
     if (pxt.options.light) return;
 
-    loadSoundAsync(id).then(buf => audio.play(buf, volume));
+    loadSoundAsync(id)
+        .done(buf => buf ? audio.play(buf, volume) : undefined);
 }
 
-export function tutorialStepNew() { playSound('tutorialnew'); }
-export function tutorialStart() { playSound('tutorialstart'); }
-export function pop() { playSound('pop'); }
+export function tutorialStep() { playSound('tutorialStep'); }
+export function tutorialNext() { playSound('tutorialNext'); }
+export function click() { playSound('click'); }
 export function initTutorial() {
-    if (pxt.options.light || pxt.appTarget.appTheme.disableEditorSounds) return;
+    if (pxt.options.light) return;
 
     Promise.all([
-        loadSoundAsync('tutorialnew'),
-        loadSoundAsync('tutorialstart')
+        loadSoundAsync('tutorialStep'),
+        loadSoundAsync('tutorialNext'),
+        loadSoundAsync('click')
     ]).done();
 }
