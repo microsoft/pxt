@@ -182,6 +182,11 @@ declare namespace pxt {
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
         appStoreID?: string; // Apple iTune Store ID if any
         mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
+        sounds?: {
+            tutorialStep?: string;
+            tutorialNext?: string;
+            dialogClick?: string;            
+        }
     }
 
     interface DocMenuEntry {

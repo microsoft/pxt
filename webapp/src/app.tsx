@@ -27,6 +27,7 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as sounds from "./sounds";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1301,6 +1302,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         let title = tutorialId;
         let result: string[] = [];
 
+        sounds.initTutorial(); // pre load sounds
         return pxt.Cloud.downloadMarkdownAsync(tutorialId)
             .then(md => {
                 let titleRegex = /^#(.*)/g.exec(md);
