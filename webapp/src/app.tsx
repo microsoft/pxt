@@ -529,6 +529,7 @@ export class ProjectView
         pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
+        if (!filters) filters = h.filters;
         this.setState({
             showFiles: false,
             filters: filters
@@ -788,7 +789,7 @@ export class ProjectView
         const mpkg = pkg.mainPkg
         this.exportProjectToFileAsync()
             .done((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".pxt");
+                const fn = pkg.genFileName(".mkcd");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
     }
@@ -942,13 +943,13 @@ export class ProjectView
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
                         if (userContextWindow)
-                            try { userContextWindow.close() } catch(e) {}
+                            try { userContextWindow.close() } catch (e) { }
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
                 if (userContextWindow)
-                    try { userContextWindow.close() } catch(e) {}
+                    try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
                 this.setState({ compiling: false });
                 if (simRestart) this.runSimulator();
@@ -1122,14 +1123,15 @@ export class ProjectView
 
     importFileDialog() {
         let input: HTMLInputElement;
+        const ext = pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? ".hex" : ".mkcd";
         core.confirmAsync({
-            header: lf("Open .hex file"),
+            header: lf("Open {0} file", ext),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a .hex file to open.")}</label>
+    <label>${lf("Select a {0} file to open.", ext)}</label>
     <input type="file" class="ui button blue fluid"></input>
   </div>
 </div>`,
@@ -1491,7 +1493,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
                                 {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
+                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
@@ -1510,7 +1512,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                         <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
-                                {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
+                                {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
@@ -1581,7 +1583,7 @@ function isTypescriptFile(filename: string): boolean {
 }
 
 function isProjectFile(filename: string): boolean {
-    return /\.pxt$/i.test(filename)
+    return /\.(pxt|mkcd)$/i.test(filename)
 }
 
 function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer

@@ -1097,14 +1097,25 @@ export class Editor extends srceditor.Editor {
             let model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
                 let endPos = model.getPositionAt(d.start + d.length);
-                monacoErrors.push({
-                    severity: monaco.Severity.Error,
-                    message: String(d.messageText),
-                    startLineNumber: d.line,
-                    startColumn: d.column,
-                    endLineNumber: d.endLine || endPos.lineNumber,
-                    endColumn: d.endColumn || endPos.column
-                })
+                if (typeof d.messageText === 'string') {
+                    addErrorMessage(d.messageText as string);
+                } else {
+                    let curr = d.messageText as ts.DiagnosticMessageChain;
+                    while (curr.next != undefined) {
+                        addErrorMessage(curr.messageText);
+                        curr = curr.next;
+                    }
+                }
+                function addErrorMessage(message: string) {
+                    monacoErrors.push({
+                        severity: monaco.Severity.Error,
+                        message: message,
+                        startLineNumber: d.line,
+                        startColumn: d.column,
+                        endLineNumber: d.endLine || endPos.lineNumber,
+                        endColumn: d.endColumn || endPos.column
+                    })
+                }
             }
             monaco.editor.setModelMarkers(model, 'typescript', monacoErrors);
         }

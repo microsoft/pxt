@@ -73,6 +73,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
+        cardType?: "example" | "tutorial" | "project";
 
         header?: string;
         any?: number;

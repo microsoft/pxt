@@ -3,14 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>@name@</title>
+    <title>@title@ @version@ (@slug@)</title>
     <meta name="Description" content="@description@" />
 
     <!-- @include meta.html -->
     <!-- @include head.html -->
-
-    <link rel="alternate" type="application/json+oembed" href="@oembedurl@&format=json" />
-    <link rel="alternate" type="text/xml+oembed" href="@oembedurl@&format=xml" />
 </head>
 
 <body id='root' class='root'>
@@ -28,33 +25,43 @@
 
         @breadcrumb@
 
+        <!-- @ifndef official -->
         <!-- @include abuse.html -->
+        <!-- @endif -->
+
+        <!-- @ifdef official -->
+        <div class="ui icon green message" style='margin: 3em 0'>
+            <i class="check icon"></i>
+            <div class="content">
+                <h3 class="header">
+                    Approved content
+                </h3>
+                <p>
+                    The content below is provided by partner.
+                </p>
+            </div>
+        </div>
+        <!-- @endif -->
+
         <h1 class="ui header">
             <div class="ui content">
-                @title@ <a href="/@versionsuff@#pub:@id@" class="ui primary button">Edit</a>
-                <div class='sub header humantime' data-time="@time@">@humantime@</span>
+                @title@ @version@ (@slug@)
+                <a href="https://github.com/@slug@" class="ui primary button">Fork me</a>
             </div>
         </h1>
         <p class="ui content description">
             @description@
         </p>
 
-        <div class="ui container">
-            <div style="position:relative;height:0;padding-bottom:70%;overflow:hidden;">
-                <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="/@versionsuff@#sandbox:@id@" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"
-                    frameborder="0"></iframe>
-            </div>
-        </div>
-
         @body@
 
     </div>
 
 
-<script>
-const script = @JSON@;
+    <script>
+        const pkgJson = @JSON@;
 // do something with it
-</script>
+    </script>
 
     <!-- @include footer.html -->
     <!-- Do not add analytics!!!! -->
