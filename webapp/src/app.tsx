@@ -93,6 +93,7 @@ export class ProjectView
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
+    tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
 
     private lastChangeTime: number;
@@ -1291,6 +1292,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.startTutorial(targetTheme.sideDoc);
     }
 
+    openTutorials() {
+        pxt.tickEvent("menu.openTutorials");
+        this.projects.showOpenTutorials();
+    }
+
     startTutorial(tutorialId: string) {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
@@ -1328,30 +1334,32 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
-                    filesOverride: {
-                        "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${ts.pxtc.ON_START_TYPE}"></block></xml>`,
-                        "main.ts": "  "
-                    },
                     name: tutorialId,
                     temporary: true
                 });
             });
     }
 
-    exitTutorial() {
+    exitTutorial(keep?: boolean) {
         pxt.tickEvent("tutorial.exit");
         core.showLoading(lf("leaving tutorial..."));
-        this.exitTutorialAsync()
+        this.exitTutorialAsync(keep)
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading());
     }
 
-    exitTutorialAsync() {
+    exitTutorialAsync(keep?: boolean) {
         // tutorial project is temporary, no need to delete
-        let curr = pkg.mainEditorPkg().header
-        curr.isDeleted = true
-        this.setState({ active: false });
+        let curr = pkg.mainEditorPkg().header;
+        let files = pkg.mainEditorPkg().getAllFiles();
+        if (!keep) {
+            curr.isDeleted = true;
+        } else {
+            curr.temporary = false;
+        }
+        this.setState({ active: false, filters: undefined });
         return workspace.saveAsync(curr, {})
+            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null);})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
                     return this.loadHeaderAsync(workspace.getHeaders()[0], null);
@@ -1363,6 +1371,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 core.hideLoading()
                 this.setState({ active: true, tutorialOptions: undefined });
             });
+    }
+
+    completeTutorial() {
+        pxt.tickEvent("tutorial.complete");
+        this.tutorialComplete.show();
     }
 
     showTutorialHint() {
@@ -1545,6 +1558,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>

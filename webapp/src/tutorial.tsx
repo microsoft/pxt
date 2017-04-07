@@ -157,7 +157,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     finishTutorial() {
         this.closeLightbox();
-        this.props.parent.exitTutorial();
+        this.props.parent.completeTutorial();
     }
 
     closeLightbox() {
@@ -208,5 +208,86 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
                 {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
             </div>
         </div>;
+    }
+}
+
+export interface TutorialCompleteState {
+    visible?: boolean;
+}
+
+export class TutorialComplete extends data.Component<ISettingsProps, TutorialCompleteState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    moreTutorials() {
+        pxt.tickEvent(`tutorial.completed.more`);
+        this.props.parent.openTutorials();
+    }
+
+    continueEditing() {
+        pxt.tickEvent(`tutorial.completed.continue`);
+        this.props.parent.exitTutorial(true);
+    }
+
+    backToPrevious() {
+        pxt.tickEvent(`tutorial.completed.back`);
+        this.props.parent.exitTutorial();
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+
+        return (
+            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Congratulations! What's next?") } size="small"
+                onClose={() => this.setState({ visible: false }) } dimmer={true}
+                closeIcon={true}
+                closeOnDimmerClick closeOnDocumentClick
+                >
+                <div className="ui three stackable cards">
+                    <div className="ui grid centered link card" onClick={() => this.moreTutorials() }>
+                        <div className="ui inverted segment blue content">
+                            <i className="avatar-image icon inverted bordered huge blue" />
+                        </div>
+                        <div className="content">
+                            <div className="description">
+                                {lf("More tutorials")}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="ui grid centered link card" onClick={() => this.backToPrevious() }>
+                        <div className="ui inverted segment green content">
+                            <i className="reply layout icon inverted bordered huge green" />
+                        </div>
+                        <div className="content">
+                            <div className="description">
+                                {lf("Back to previous")}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="ui grid centered link card" onClick={() => this.continueEditing() }>
+                        <div className="ui inverted segment yellow content">
+                            <i className="share layout icon inverted bordered huge yellow" />
+                        </div>
+                        <div className="content">
+                            <div className="description">
+                                {lf("Keep coding")}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </sui.Modal>
+        )
     }
 }
