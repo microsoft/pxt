@@ -157,7 +157,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
 
     finishTutorial() {
         this.closeLightbox();
-        this.props.parent.exitTutorial();
+        this.props.parent.completeTutorial();
     }
 
     closeLightbox() {
@@ -208,5 +208,82 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
                 {hasFinish ? <sui.Button icon="left checkmark" class={`ui icon orange button ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish") } onClick={() => this.finishTutorial() } /> : undefined }
             </div>
         </div>;
+    }
+}
+
+export interface TutorialCompleteState {
+    visible?: boolean;
+}
+
+export class TutorialComplete extends data.Component<ISettingsProps, TutorialCompleteState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+
+    moreTutorials() {
+        
+    }
+
+    continueEditing() {
+        this.props.parent.exitTutorial(true);
+    }
+
+    backToPrevious() {
+        this.props.parent.exitTutorial();
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+
+        return (
+            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Horray") } size="small"
+                onClose={() => this.setState({ visible: false }) } dimmer={true}
+                closeIcon={true}
+                closeOnDimmerClick closeOnDocumentClick
+                >
+                <div className="ui three stackable cards">
+                    <div className="card" onClick={() => this.moreTutorials() }>
+                        <div className="image">
+                            <img src="/images/avatar2/large/elyse.png" />
+                        </div>
+                        <div className="content">
+                        <div className="header">Elyse</div>
+                        <div className="meta">
+                            <a>Coworker</a>
+                        </div>
+                        <div className="description">
+                            Elyse is a copywriter working in New York.
+                        </div>
+                        </div>
+                        <div className="extra content">
+                        <span className="right floated">
+                            Joined in 2014
+                        </span>
+                        <span>
+                            <i className="user icon"></i>
+                            151 Friends
+                        </span>
+                        </div>
+                    </div>
+                    <div className="card" onClick={() => this.continueEditing() }>
+
+                    </div>
+                    <div className="card" onClick={() => this.backToPrevious() }>
+                    </div>
+                </div>
+            </sui.Modal>
+        )
     }
 }

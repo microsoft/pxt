@@ -123,7 +123,8 @@ namespace pxt.editor {
         removeFile(fn: IFile, skipConfirm?: boolean): void;
 
         setTutorialStep(step: number): void;
-        exitTutorial(): void;
+        exitTutorial(keep?: boolean): void;
+        completeTutorial(): void;
         showTutorialHint(): void;
 
         anonymousPublishAsync(): Promise<string>;
