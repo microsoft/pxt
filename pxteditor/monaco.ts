@@ -26,13 +26,11 @@ namespace pxt.vs {
 
     export type DefinitionMap = { [ns: string]: NameDefiniton };
 
-    export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean): monaco.Promise<DefinitionMap> {
-        if (readOnly) return monaco.Promise.as(undefined);
+    export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean) {
+        if (readOnly) return;
 
         let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
         let modelMap: Map<string> = {}
-        let toPopulate: { f: string, fp: string }[] = [];
-        let definitions: DefinitionMap = {}
 
         mainPkg.sortedDeps().forEach(pkg => {
             pkg.getFiles().forEach(f => {
@@ -44,9 +42,6 @@ namespace pxt.vs {
                         libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
                     }
                     modelMap[fp] = "1";
-
-                    // store which files we need to populate definitions for the monaco toolbox
-                    toPopulate.push({ f: f, fp: fp });
                 }
             });
         });
@@ -57,164 +52,10 @@ namespace pxt.vs {
             .forEach(lib => {
                 libs[lib].dispose();
             });
-
-        // populate definitions for the monaco toolbox
-        const promises: monaco.Promise<any>[] = [];
-        toPopulate.forEach((populate) => {
-            let promise = populateDefinitions(populate.f, populate.fp, definitions);
-            promises.push(promise);
-        })
-
-        return monaco.Promise.join(promises)
-            .then(() => {
-                return definitions;
-            });
     }
 
     function displayPartsToParameterSignature(parts: ts.SymbolDisplayPart[]): string {
         return `(${parts.filter(part => part.kind == "parameterName").map(part => part.text).join(", ")})`;
-    }
-
-    function populateDefinitions(f: string, fp: string, definitions: DefinitionMap): monaco.Promise<any> {
-        const typeDefs: DefinitionMap = {};
-        return monaco.languages.typescript.getTypeScriptWorker().then((worker) => {
-            return worker(monaco.Uri.parse(fp))
-                .then((client: any) => {
-                    return client.getNavigationBarItems(fp).then((items: ts.NavigationBarItem[]) =>
-                        populateDefinitionsForKind(client, ts.ScriptElementKind.interfaceElement, items)
-                            .then(() => populateDefinitionsForKind(client, ts.ScriptElementKind.classElement, items))
-                            .then(() => populateDefinitionsForKind(client, ts.ScriptElementKind.moduleElement, items))
-                    );
-                })
-                .then(() => {
-                    Object.keys(definitions).forEach(name => {
-                        const moduleDef = definitions[name];
-                        if (moduleDef.vars) {
-                            Object.keys(moduleDef.vars).forEach(typeString => {
-                                const typeDef = typeDefs[typeString];
-                                if (typeDef) {
-                                    Object.keys(typeDef.fns).forEach(functionName => {
-                                        const qName = `${typeString}.${functionName}`;
-                                        if (moduleDef.fns[qName]) {
-                                            return;
-                                        }
-
-                                        const fn = typeDef.fns[functionName];
-                                        if (fn) {
-                                            fn.snippet = `${moduleDef.vars[typeString]}.${fn.snippet}`;
-                                            moduleDef.fns[qName] = fn;
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                });
-        });
-
-        function populateDefinitionsForKind(client: any, kind: string, items: ts.NavigationBarItem[]) {
-            return monaco.Promise.join(items.filter(item => item.kind == kind).map((item) => {
-                if (kind === ts.ScriptElementKind.moduleElement) {
-                    if (!definitions[item.text]) {
-                        definitions[item.text] = {
-                            fns: {}
-                        };
-                    }
-
-                    return populateNameDefinition(client, fp, item, definitions[item.text]);
-                }
-                else {
-                    if (!typeDefs[item.text]) {
-                        typeDefs[item.text] = {
-                            fns: {}
-                        };
-                    }
-
-                    return populateNameDefinition(client, fp, item, typeDefs[item.text]);
-                }
-            }));
-
-            function populateNameDefinition(client: any, fp: string, parent: ts.NavigationBarItem, definition: NameDefiniton) {
-                let promises: monaco.Promise<any>[] = [];
-
-                // metadata promise
-                promises.push(client.getLeadingComments(fp, parent.spans[0].start)
-                    .then((comments: string) => {
-                        if (comments) {
-                            const meta = pxtc.parseCommentString(comments);
-                            if (meta) {
-                                if (!definition.metaData) {
-                                    definition.metaData = meta
-                                }
-                                else {
-                                    Object.keys(meta).forEach(k => (definition.metaData as any)[k] = (meta as any)[k])
-                                }
-                            }
-                        }
-                    }));
-
-                // function promises
-                promises.push(monaco.Promise.join(parent.childItems
-                    .filter(item => (item.kind == ts.ScriptElementKind.functionElement ||
-                        item.kind === ts.ScriptElementKind.memberFunctionElement) && isExported(item))
-                    .map((fn) => {
-                        // exported function
-                        return client.getCompletionEntryDetailsAndSnippet(fp, fn.spans[0].start, fn.text, fn.text, parent.text)
-                            .then((details: [ts.CompletionEntryDetails, string]) => {
-                                if (!details) return;
-
-                                return client.getLeadingComments(fp, fn.spans[0].start)
-                                    .then((comments: string) => {
-                                        let meta: pxtc.CommentAttrs;
-                                        if (comments)
-                                            meta = pxtc.parseCommentString(comments);
-                                        let comment = meta ? meta.jsDoc : ts.displayPartsToString(details[0].documentation);
-                                        definition.fns[fn.text] = {
-                                            sig: displayPartsToParameterSignature(details[0].displayParts),
-                                            snippet: details[1],
-                                            comment: comment,
-                                            metaData: meta
-                                        }
-                                    });
-                            });
-                    })
-                ));
-
-                if (kind === ts.ScriptElementKind.moduleElement) {
-                    if (!definition.vars) {
-                        definition.vars = {};
-                    }
-
-                    promises.push(monaco.Promise.join(parent.childItems.filter(v => v.kind === ts.ScriptElementKind.constElement && isExported(v)).map(v => {
-                        return (client.getQuickInfoAtPosition(fp, v.spans[0].start) as monaco.Promise<ts.QuickInfo>)
-                            .then(qInfo => {
-                                if (qInfo) {
-                                    const typePart = qInfo.displayParts.filter(part => part.kind === "interfaceName" || part.kind === "className")[0];
-
-                                    if (typePart && !definition.vars[typePart.text]) {
-                                        definition.vars[typePart.text] = v.text;
-                                    }
-                                }
-                            })
-                    })));
-                }
-
-                return monaco.Promise.join(promises);
-
-                function isExported(item: ts.NavigationBarItem) {
-                    if (kind === ts.ScriptElementKind.interfaceElement) {
-                        return true;
-                    }
-
-                    if (item.kind === ts.ScriptElementKind.memberFunctionElement && !item.kindModifiers) {
-                        return true;
-                    }
-
-                    return item.kindModifiers.indexOf(ts.ScriptElementKindModifier.exportedModifier) !== -1 ||
-                        item.kindModifiers.indexOf(ts.ScriptElementKindModifier.ambientModifier) !== -1
-                }
-            }
-        }
     }
 
 

@@ -908,7 +908,8 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            let start = `http://localhost:${serveOptions.port}/#ws=${serveOptions.wsPort}&local_token=${options.localToken}`;
+
+            const start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

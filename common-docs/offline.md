@@ -11,8 +11,6 @@ For more experience users, you can download the entire toolchain and use the [co
 and deploy your scripts locally. PXT provides a great out-of-the-box experience using [Visual Studio Code](/code), 
 a lightweight cross-platform code editor.
 
-![](/static/mb/vscode.png)
-
 ## Native clients
 
 There are no native clients available yet.

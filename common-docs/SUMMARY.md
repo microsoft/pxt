@@ -60,6 +60,9 @@
 
 * Developers
     * [Packages](/packages)
+        * [Build your own](/build-your-own)
+        * [Approval](/approval)
+        * [Versioning](/versioning)
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Coding on Raspberry Pi](/raspberry-pi)
