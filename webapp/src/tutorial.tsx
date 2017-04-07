@@ -232,14 +232,17 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
     }
 
     moreTutorials() {
+        pxt.tickEvent(`tutorial.completed.more`);
         this.props.parent.openTutorials();
     }
 
     continueEditing() {
+        pxt.tickEvent(`tutorial.completed.continue`);
         this.props.parent.exitTutorial(true);
     }
 
     backToPrevious() {
+        pxt.tickEvent(`tutorial.completed.back`);
         this.props.parent.exitTutorial();
     }
 
