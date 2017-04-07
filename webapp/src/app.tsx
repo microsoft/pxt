@@ -1900,7 +1900,7 @@ $(document).ready(() => {
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
-    const wsPortMatch = /ws=(\d+)/i.exec(window.location.href);
+    const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
         window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
