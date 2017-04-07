@@ -258,7 +258,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                 <div className="ui three stackable cards">
                     <div className="ui grid centered link card" onClick={() => this.moreTutorials() }>
                         <div className="ui inverted segment blue content">
-                            <i className="block layout icon inverted bordered huge blue" />
+                            <i className="avatar-image icon inverted bordered huge blue" />
                         </div>
                         <div className="content">
                             <div className="description">
@@ -272,7 +272,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                         </div>
                         <div className="content">
                             <div className="description">
-                                {lf("Return to previous")}
+                                {lf("Back to previous")}
                             </div>
                         </div>
                     </div>
