@@ -1770,7 +1770,7 @@ function initTheme() {
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     // RTL languages
-    if (/^ar/i.test(Util.userLanguage())) {
+    if (Util.userLanguageRtl()) {
         pxt.debug("rtl layout");
         pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
