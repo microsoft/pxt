@@ -1,4 +1,4 @@
 /// <reference path="./testBlocks/core.ts" />
 
-let level = 10
-Math.max(0, level);
+let level = Math.max(0, 10);
+let level2 = Math.min(0, 10);
