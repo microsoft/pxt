@@ -1359,7 +1359,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         }
         this.setState({ active: false, filters: undefined });
         return workspace.saveAsync(curr, {})
-            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null);})
+            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
                     return this.loadHeaderAsync(workspace.getHeaders()[0], null);
@@ -1784,10 +1784,16 @@ function initTheme() {
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     // RTL languages
-    if (Util.userLanguageRtl()) {
+    if (Util.isUserLanguageRtl()) {
         pxt.debug("rtl layout");
         pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
+
+        // replace semantic.css with rtlsemantic.css
+        const semanticLink = document.head.querySelector('link[href$="semantic.css"]');
+        const semanticHref = semanticLink.getAttribute("href").replace(/\/semantic\.css$/, "/rtlsemantic.css");
+        pxt.debug(`swapping to ${semanticHref}`)
+        semanticLink.setAttribute("href", semanticHref);
     }
 
     function patchCdn(url: string): string {

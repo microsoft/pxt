@@ -641,7 +641,7 @@ namespace ts.pxtc.Util {
         return _localizeLang;
     }
 
-    export function userLanguageRtl(): boolean {
+    export function isUserLanguageRtl(): boolean {
         // ar: Arabic
         // dv: Divehi
         // fa: Farsi
