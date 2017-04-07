@@ -1292,6 +1292,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.startTutorial(targetTheme.sideDoc);
     }
 
+    openTutorials() {
+        pxt.tickEvent("menu.openTutorials");
+        this.projects.showOpenTutorials();
+    }
+
     startTutorial(tutorialId: string) {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
@@ -1329,10 +1334,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
-                    filesOverride: {
-                        "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${ts.pxtc.ON_START_TYPE}"></block></xml>`,
-                        "main.ts": "  "
-                    },
                     name: tutorialId,
                     temporary: true
                 });
@@ -1349,14 +1350,16 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
     exitTutorialAsync(keep?: boolean) {
         // tutorial project is temporary, no need to delete
-        let curr = pkg.mainEditorPkg().header
+        let curr = pkg.mainEditorPkg().header;
+        let files = pkg.mainEditorPkg().getAllFiles();
         if (!keep) {
             curr.isDeleted = true;
         } else {
             curr.temporary = false;
         }
-        this.setState({ active: false });
+        this.setState({ active: false, filters: undefined });
         return workspace.saveAsync(curr, {})
+            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null);})
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
                     return this.loadHeaderAsync(workspace.getHeaders()[0], null);

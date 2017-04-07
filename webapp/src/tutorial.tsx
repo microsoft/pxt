@@ -231,9 +231,8 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
         this.setState({ visible: true });
     }
 
-
     moreTutorials() {
-        
+        this.props.parent.openTutorials();
     }
 
     continueEditing() {
@@ -248,39 +247,41 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
         const { visible } = this.state;
 
         return (
-            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Horray") } size="small"
+            <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Congratulations! What's next?") } size="small"
                 onClose={() => this.setState({ visible: false }) } dimmer={true}
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className="ui three stackable cards">
-                    <div className="card" onClick={() => this.moreTutorials() }>
-                        <div className="image">
-                            <img src="/images/avatar2/large/elyse.png" />
+                    <div className="ui grid centered link card" onClick={() => this.moreTutorials() }>
+                        <div className="ui inverted segment blue content">
+                            <i className="block layout icon inverted bordered huge blue" />
                         </div>
                         <div className="content">
-                        <div className="header">Elyse</div>
-                        <div className="meta">
-                            <a>Coworker</a>
-                        </div>
-                        <div className="description">
-                            Elyse is a copywriter working in New York.
-                        </div>
-                        </div>
-                        <div className="extra content">
-                        <span className="right floated">
-                            Joined in 2014
-                        </span>
-                        <span>
-                            <i className="user icon"></i>
-                            151 Friends
-                        </span>
+                            <div className="description">
+                                {lf("More tutorials")}
+                            </div>
                         </div>
                     </div>
-                    <div className="card" onClick={() => this.continueEditing() }>
-
+                    <div className="ui grid centered link card" onClick={() => this.backToPrevious() }>
+                        <div className="ui inverted segment green content">
+                            <i className="reply layout icon inverted bordered huge green" />
+                        </div>
+                        <div className="content">
+                            <div className="description">
+                                {lf("Return to previous")}
+                            </div>
+                        </div>
                     </div>
-                    <div className="card" onClick={() => this.backToPrevious() }>
+                    <div className="ui grid centered link card" onClick={() => this.continueEditing() }>
+                        <div className="ui inverted segment yellow content">
+                            <i className="share layout icon inverted bordered huge yellow" />
+                        </div>
+                        <div className="content">
+                            <div className="description">
+                                {lf("Keep coding")}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </sui.Modal>
