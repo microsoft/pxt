@@ -1791,9 +1791,11 @@ function initTheme() {
 
         // replace semantic.css with rtlsemantic.css
         const semanticLink = document.head.querySelector('link[href$="semantic.css"]');
-        const semanticHref = semanticLink.getAttribute("href").replace(/\/semantic\.css$/, "/rtlsemantic.css");
-        pxt.debug(`swapping to ${semanticHref}`)
-        semanticLink.setAttribute("href", semanticHref);
+        const semanticHref = semanticLink.getAttribute("data-rtl");
+        if (semanticHref) {
+            pxt.debug(`swapping to ${semanticHref}`)
+            semanticLink.setAttribute("href", semanticHref);
+        }
     }
 
     function patchCdn(url: string): string {
