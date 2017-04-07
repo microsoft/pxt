@@ -204,9 +204,26 @@ namespace pxt {
                 } else {
                     // If it's not from GH, assume it's a bundled package
                     // TODO: Add logic for shared packages if we enable that
-                    return JSON.parse(pxt.appTarget.bundledpkgs[id][CONFIG_NAME]) as pxt.PackageConfig;
+                    return JSON.parse(pxt.appTarget.bundledpkgs[Package.upgradePackageReference(id, fullVers)][CONFIG_NAME]) as pxt.PackageConfig;
                 }
             });
+        }
+
+        static upgradePackageReference(pkg: string, val: string): string {
+            if (val != "*") return pkg;
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            let newPackage = pkg;
+            if (upgrades) {
+                upgrades.filter(rule => rule.type == "package")
+                    .forEach(rule => {
+                        for (let match in rule.map) {
+                            if (newPackage == match) {
+                                newPackage = rule.map[match];
+                            }
+                        }
+                    });
+            }
+            return newPackage;
         }
 
         public addedBy: Package[];
@@ -448,23 +465,6 @@ namespace pxt {
                 });
         }
 
-        upgradePackage(pkg: string, val: string): string {
-            if (val != "*") return pkg;
-            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
-            let newPackage = pkg;
-            if (upgrades) {
-                upgrades.filter(rule => rule.type == "package")
-                    .forEach(rule => {
-                        for (let match in rule.map) {
-                            if (newPackage == match) {
-                                newPackage = rule.map[match];
-                            }
-                        }
-                    });
-            }
-            return newPackage;
-        }
-
         upgradeAPI(fileContents: string): string {
             const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
             let updatedContents = fileContents;
@@ -486,7 +486,7 @@ namespace pxt {
 
             const currentConfig = JSON.stringify(this.config);
             for (const dep in this.config.dependencies) {
-                const value = this.upgradePackage(dep, this.config.dependencies[dep]);
+                const value = Package.upgradePackageReference(dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {

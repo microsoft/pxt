@@ -12,5 +12,4 @@ git integration (or source control of your choice), hundreds of extensions.
 
 **Follow [these instructions](https://makecode.com/cli)** to setup your machine and edit your programs in Visual Studio Code.
 
-![](/static/mb/vscode.png)
 

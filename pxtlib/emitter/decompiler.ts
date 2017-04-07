@@ -500,7 +500,7 @@ ${output}</xml>`;
                     case SK.PropertyAccessExpression:
                         return getPropertyAccessExpression(n as ts.PropertyAccessExpression);
                     case SK.CallExpression:
-                        return getStatementBlock(n) as any;
+                        return getStatementBlock(n, undefined, undefined, true) as any;
                     default:
                         error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
                         break;
@@ -726,11 +726,11 @@ ${output}</xml>`;
             }
         }
 
-        function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node): StatementNode {
+        function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false): StatementNode {
             const node = n as ts.Node;
             let stmt: StatementNode;
 
-            if (checkStatement(node, blocksInfo)) {
+            if (checkStatement(node, blocksInfo, asExpression)) {
                 stmt = getTypeScriptStatementBlock(node);
             }
             else {
@@ -738,7 +738,7 @@ ${output}</xml>`;
                     case SK.Block:
                         return codeBlock((node as ts.Block).statements, next);
                     case SK.ExpressionStatement:
-                        return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
+                        return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression);
                     case SK.VariableStatement:
                         return codeBlock((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
                     case SK.ArrowFunction:
@@ -1345,18 +1345,18 @@ ${output}</xml>`;
         }
     }
 
-    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo): string {
+    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo, asExpression = false): string {
         switch (node.kind) {
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
                 return undefined;
             case SK.ExpressionStatement:
-                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo);
+                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo, asExpression);
             case SK.VariableStatement:
                 return checkVariableStatement(node as ts.VariableStatement, blocksInfo);
             case SK.CallExpression:
-                return checkCall(node as ts.CallExpression, blocksInfo);
+                return checkCall(node as ts.CallExpression, blocksInfo, asExpression);
             case SK.VariableDeclaration:
                 return checkVariableDeclaration(node as ts.VariableDeclaration, blocksInfo);
             case SK.PostfixUnaryExpression:
@@ -1469,9 +1469,6 @@ ${output}</xml>`;
                 check = checkExpression(n.initializer, blocksInfo);
             }
 
-            if (check) {
-            }
-
             return check;
         }
 
@@ -1485,10 +1482,14 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo) {
+        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo, asExpression = false) {
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
+            }
+
+            if (!asExpression && info.isExpression) {
+                return Util.lf("No output expressions as statements");
             }
 
             if (!info.attrs.blockId || !info.attrs.block) {
@@ -1692,7 +1693,7 @@ ${output}</xml>`;
             case SK.PropertyAccessExpression:
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression);
             case SK.CallExpression:
-                return checkStatement(n, blocksInfo);
+                return checkStatement(n, blocksInfo, true);
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
 

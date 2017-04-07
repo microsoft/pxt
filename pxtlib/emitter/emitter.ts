@@ -529,7 +529,7 @@ namespace ts.pxtc {
     }
 
     function isInterfaceType(t: Type) {
-        return !!(t.flags & TypeFlags.Interface);
+        return !!(t.flags & TypeFlags.Interface) || !!(t.flags & TypeFlags.Anonymous)
     }
 
     function isClassType(t: Type) {

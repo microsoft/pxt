@@ -46,6 +46,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.setState({ visible: true, tab: MYSTUFF })
     }
 
+    showOpenTutorials() {
+        const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
+        this.setState({ visible: true, tab: gals[0] || MYSTUFF})
+    }
+
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
         if (this.state.tab != tab) return [];
 
@@ -115,7 +120,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr); break;
-                case "tutorial": this.props.parent.startTutorial(scr.url);
+                case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
                     if (m) this.props.parent.startTutorial(m[1]);
