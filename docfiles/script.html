@@ -31,7 +31,10 @@
         <!-- @include abuse.html -->
         <h1 class="ui header">
             <div class="ui content">
-                @title@ <a href="/@versionsuff@#pub:@id@" class="ui primary button">Edit</a>
+                @title@ 
+                <!-- @ifdef editbutton -->
+                <a href="/@versionsuff@#pub:@id@" class="ui primary button">Edit</a>
+                <!-- @endif -->
                 <div class='sub header humantime' data-time="@time@">@humantime@</span>
             </div>
         </h1>

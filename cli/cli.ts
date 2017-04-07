@@ -24,6 +24,8 @@ import * as serial from './serial';
 import * as gdb from './gdb';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
+const rtlcss = require('rtlcss');
+const autoprefixer = require('autoprefixer');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -1385,7 +1387,19 @@ function buildSemanticUIAsync() {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
-        fs.writeFileSync('built/web/semantic.css', semCss)
+        return semCss;
+    }).then((semCss) => {
+        // run autoprefixer
+        console.log("running autoprefixer");
+        return autoprefixer.process(semCss).then((result: any) => {
+            fs.writeFileSync('built/web/semantic.css', result.css);
+            return result.css;
+        });
+    }).then((semCss) => {
+        // convert to rtl
+        let rtlCss = rtlcss.process(semCss);
+        console.log("converting semantic css to rtl");
+        fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
 }
 
@@ -3899,7 +3913,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
-    fs.writeFileSync("built/noTOC.md", noTOCs.map(p => `[${p}](${p})`).join('\n'), "utf8");
+    fs.writeFileSync("built/noTOC.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
         return testSnippetsAsync(snippets, re);
     return Promise.resolve();
