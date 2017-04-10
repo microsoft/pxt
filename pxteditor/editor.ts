@@ -50,6 +50,7 @@ namespace pxt.editor {
         fullscreen?: boolean;
         mute?: boolean;
         embedSimView?: boolean;
+        tracing?: boolean;
     }
 
     export interface ProjectCreationOptions {

@@ -60,6 +60,7 @@ function catchUserErrorAndSetDiags(r: any) {
 }
 
 export interface CompileOptions {
+    trace?: boolean;
     native?: boolean;
     debug?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
@@ -76,6 +77,9 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             if (options.debug) {
                 opts.breakpoints = true
                 opts.justMyCode = true
+            }
+            if (options.trace) {
+                opts.trace = true;
             }
             opts.computeUsedSymbols = true
             if (options.forceEmit)

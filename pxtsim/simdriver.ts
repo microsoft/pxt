@@ -5,6 +5,7 @@ namespace pxsim {
         unhideElement?: (el: HTMLElement) => void;
         onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
+        onTraceMessage?: (msg: TraceMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
@@ -339,6 +340,10 @@ namespace pxsim {
             this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
         }
 
+        public setTraceInterval(intervalMs: number) {
+            this.postDebuggerMessage("traceConfig", { interval: intervalMs });
+        }
+
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
             if (this.options.onSimulatorCommand) this.options.onSimulatorCommand(msg);
         }
@@ -361,6 +366,11 @@ namespace pxsim {
                             this.options.onDebuggerBreakpoint(brk);
                     } else {
                         console.error("debugger: trying to pause from " + this.state);
+                    }
+                    break;
+                case "trace":
+                    if (this.options.onTraceMessage) {
+                        this.options.onTraceMessage(msg as pxsim.TraceMessage);
                     }
                     break;
             }
