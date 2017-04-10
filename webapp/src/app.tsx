@@ -1956,11 +1956,12 @@ $(document).ready(() => {
         .then(() => cmds.initCommandsAsync())
         .then(() => compiler.init())
         .then(() => workspace.initAsync())
-        .then(() => {
+        .then(state => {
             $("#loading").remove();
             render()
             return workspace.syncAsync();
         })
+        .then(state => state ? theEditor.setState(state) : undefined)
         .then(() => {
             initSerial();
             initScreenshots();
