@@ -605,7 +605,7 @@ export class Editor extends srceditor.Editor {
                 minScale: .2,
                 scaleSpeed: 1.05
             },
-            rtl: Util.userLanguageRtl()
+            rtl: Util.isUserLanguageRtl()
         };
         return blocklyOptions;
     }

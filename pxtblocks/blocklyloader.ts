@@ -925,6 +925,9 @@ namespace pxt.blocks {
                 let categories = tb.querySelectorAll(`category:not([nameid="advanced"])`);
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
+                    let catName = cat.getAttribute("nameid");
+                    // Don't do this for special blockly categories
+                    if (catName == "variables" || catName == "functions") continue;
                     let blockCount = cat.querySelectorAll(`block`);
                     if (blockCount.length == 0) {
                         if (cat.parentNode) cat.parentNode.removeChild(cat);

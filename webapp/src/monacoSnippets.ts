@@ -1,31 +1,27 @@
+import { BuiltinCategoryDefinition } from "./monaco";
 
 import Util = pxt.Util;
+let lf = Util.lf;
 
-const lf = Util.lf;
-
-export const loops: pxt.vs.NameDefiniton = {
-    builtin: true,
-    fns: {
-        "while": {
-            sig: `while(...)`,
+export const loops: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Loops"),
+    blocks: [
+        {
+            name: "while",
             snippet: `while(true) {\n\n}`,
-            comment: lf("Repeat code while condition is true"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Repeat code while condition is true")
             }
         },
-        "for": {
-            sig: ``,
+        {
+            name: "for",
             snippet: `for(let i = 0; i < 5; i++) {\n\n}`,
-            comment: lf("Repeat code a number of times in a loop"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Repeat code a number of times in a loop")
             }
-        }
-    },
-    metaData: {
+        },
+    ],
+    attributes: {
         color: pxt.blocks.blockColors["loops"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         icon: "loops",
@@ -34,27 +30,25 @@ export const loops: pxt.vs.NameDefiniton = {
     }
 };
 
-export const logic: pxt.vs.NameDefiniton = {
-    builtin: true,
-    fns: {
-        "if": {
-            sig: ``,
+export const logic: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Logic"),
+    blocks: [
+        {
+            name: "if",
             snippet: `if (true) {\n\n}`,
-            comment: lf("Runs code if the condition is true"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Runs code if the condition is true")
             }
-        }, "if ": {
-            sig: ``,
+        },
+        {
+            name: "if",
             snippet: `if (true) {\n\n} else {\n\n}`,
-            comment: lf("Runs code if the condition is true; else run other code"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Runs code if the condition is true; else run other code")
             }
-        },"switch": {
-            sig: ``,
+        },
+        {
+            name: "switch",
             snippet:
 `switch(item) {
     case 0:
@@ -62,14 +56,12 @@ export const logic: pxt.vs.NameDefiniton = {
     case 1:
         break;
 }`,
-            comment: lf("Runs different code based on a value"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Runs different code based on a value")
             }
-        }
-    },
-    metaData: {
+        },
+    ],
+    attributes: {
         color: pxt.blocks.blockColors["logic"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.08,
@@ -78,41 +70,35 @@ export const logic: pxt.vs.NameDefiniton = {
     }
 };
 
-export const variables: pxt.vs.NameDefiniton = {
-    builtin: true,
-    fns: {
-        "let": {
-            sig: ``,
+export const variables: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Variables"),
+    blocks: [
+        {
+            name: "let",
             snippet: `let item: number`,
             snippetOnly: true,
-            comment: lf("Declares a variable named 'item'"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Declares a variable named 'item'")
             }
         },
-        "equals": {
-            sig: ``,
+        {
+            name: "equals",
             snippet: `item = 0`,
             snippetOnly: true,
-            comment: lf("Assigns a value to a variable"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Assigns a value to a variable")
             }
         },
-        "change": {
-            sig: ``,
+        {
+            name: "change",
             snippet: `item += 1`,
             snippetOnly: true,
-            comment: lf("Changes the value of item by 1"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Changes the value of item by 1")
             }
-        }
-    },
-    metaData: {
+        },
+    ],
+    attributes: {
         color: pxt.blocks.blockColors["variables"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.07,
@@ -121,106 +107,86 @@ export const variables: pxt.vs.NameDefiniton = {
     }
 };
 
-export const maths: pxt.vs.NameDefiniton = {
-    builtin: true,
-    fns: {
-        "plus": {
-            sig: ``,
+export const maths: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Math"),
+    blocks: [
+        {
+            name: "plus",
             snippet: `1 + 1`,
             snippetOnly: true,
-            comment: lf("Adds two numbers together"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Adds two numbers together")
             }
         },
-        "minus": {
-            sig: ``,
+        {
+            name: "minus",
             snippet: `1 - 1`,
             snippetOnly: true,
-            comment: lf("Subtracts the value of one number from another"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Subtracts the value of one number from another")
             }
         },
-        "multiply": {
-            sig: ``,
+        {
+            name: "multiply",
             snippet: `1 * 1`,
             snippetOnly: true,
-            comment: lf("Multiplies two numbers together"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Multiplies two numbers together")
             }
         },
-        "divide": {
-            sig: ``,
+        {
+            name: "divide",
             snippet: `1 / 1`,
             snippetOnly: true,
-            comment: lf("Divides one number by another"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the remainder of one number divided by another")
             }
         },
-        "remainder": {
-            sig: ``,
-            snippet: `1 % 1`,
+        {
+            name: "remainder",
+            snippet: `1 % 2`,
             snippetOnly: true,
-            comment: lf("Returns the remainder of one number divided by another"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the remainder of one number divided by another")
             }
         },
-        "max": {
-            sig: ``,
+        {
+            name: "max",
             snippet: `Math.max(1, 2)`,
-            comment: lf("Returns the largest of two numbers"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the largest of two numbers")
             }
         },
-        "min": {
-            sig: ``,
+        {
+            name: "min",
             snippet: `Math.min(1, 2)`,
-            comment: lf("Returns the smallest of two numbers"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the smallest of two numbers")
             }
         },
-        "abs": {
-            sig: ``,
+        {
+            name: "abs",
             snippet: `Math.abs(-1)`,
-            comment: lf("Returns the absolute value of a number"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the absolute value of a number")
             }
         },
-        "random": {
-            sig: ``,
+        {
+            name: "random",
             snippet: `Math.random(4)`,
-            comment: lf("Returns a random number between 0 and an upper bound"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns a random number between 0 and an upper bound")
             }
         },
-        "randomBoolean": {
-            sig: ``,
+        {
+            name: "randomBoolean",
             snippet: `Math.randomBoolean()`,
-            comment: lf("Randomly returns either true or false"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Randomly returns either true or false")
             }
-        }
-    },
-    metaData: {
+        },
+    ],
+    attributes: {
         color: pxt.blocks.blockColors["math"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.06,
@@ -229,71 +195,82 @@ export const maths: pxt.vs.NameDefiniton = {
     }
 };
 
-export const text: pxt.vs.NameDefiniton = {
-    builtin: true,
-    fns: {
-        "length": {
-            sig: ``,
+export const text: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Text"),
+    blocks: [
+        {
+            name: "length",
             snippet: `"".length`,
             snippetOnly: true,
-            comment: lf("Returns the number of characters in a string"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the number of characters in a string")
             }
         },
-        "concat": {
-            sig: ``,
+        {
+            name: "concat",
             snippet: `"" + 5`,
             snippetOnly: true,
-            comment: lf("Combines a string with a number, boolean, string, or other object into one string"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
             }
         },
-        "compare": {
-            sig: ``,
+        {
+            name: "compare",
             snippet: `"".compare("")`,
-            comment: lf("Compares one string against another alphabetically and returns a number"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Compares one string against another alphabetically and returns a number")
             }
         },
-        "parseInt": {
-            sig: ``,
+        {
+            name: "parseInt",
             snippet: `parseInt("5")`,
-            comment: lf("Converts a number written as text into a number"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Converts a number written as text into a number")
             }
         },
-        "substr": {
-            sig: ``,
+        {
+            name: "substr",
             snippet: `"".substr(0, 0)`,
-            comment: lf("Returns the part of a string starting at a given index with the given length"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the part of a string starting at a given index with the given length")
             }
         },
-        "charAt": {
-            sig: ``,
+        {
+            name: "charAt",
             snippet: `"".charAt(0)`,
-            comment: lf("Returns the character at the given index"),
-            metaData: {
-                callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-                paramDefl: {}
+            attributes: {
+                jsDoc: lf("Returns the character at the given index")
             }
-        }
-    },
-    metaData: {
+        },
+    ],
+    attributes: {
         advanced: true,
         color: pxt.blocks.blockColors["text"].toString(),
         icon: "text",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}
     }
+}
+
+export function getBuiltinCategory(ns: string) {
+        switch (ns) {
+            case loops.name: return loops;
+            case logic.name: return logic;
+            case variables.name: return variables;
+            case maths.name: return maths;
+            case text.name: return text;
+        }
+    return undefined;
+}
+
+export function isBuiltin(ns: string) {
+    switch (ns) {
+        case loops.name:
+        case logic.name:
+        case variables.name:
+        case maths.name:
+        case text.name:
+            return true;
+    }
+    return false;
 }

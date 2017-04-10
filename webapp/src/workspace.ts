@@ -214,7 +214,7 @@ export function saveToCloudAsync(h: Header) {
     return impl.saveToCloudAsync(h)
 }
 
-export function syncAsync() {
+export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
     return impl.syncAsync();
 }

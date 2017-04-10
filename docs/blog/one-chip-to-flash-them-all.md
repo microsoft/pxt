@@ -236,7 +236,7 @@ Thus, I needed to simplify and cut down the code to size, reimplementing a few t
 
 The result is the [UF2-SAMD21 bootloader](https://github.com/Microsoft/uf2-samd21) (to be made available shortly), 
 supporting a number of SAMD21 boards including
-Arduino Zero and MKR1000, as well as Adafruit Metro M0, Feather M0 and Circuit Playground Express.
+Arduino Zero and MKR1000, as well as [Adafruit Feather M0 Express](https://www.adafruit.com/products/3403) and upcoming Metro M0 Express and Circuit Playground Express.
 The boards are supported with essentially the same code base, except that for some of the boards
 we have additional signaling using built-in color LEDs.
 

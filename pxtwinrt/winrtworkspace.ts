@@ -94,7 +94,7 @@ namespace pxt.winrt.workspace {
                 folder = fd;
                 pxt.debug(`winrt: initialized workspace at ${folder.path}`)
                 return syncAsync();
-            });
+            }).then(() => {})
     }
 
     function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
@@ -303,10 +303,13 @@ namespace pxt.winrt.workspace {
             })
     }
 
-    function syncAsync(): Promise<void> {
+    function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         return promisify(folder.getFoldersAsync())
             .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.name, false))))
-            .then(hs => hs.forEach(mergeFsPkg));
+            .then(hs => {
+                hs.forEach(mergeFsPkg);
+                return undefined;
+            });
     }
 
     function resetAsync(): Promise<void> {

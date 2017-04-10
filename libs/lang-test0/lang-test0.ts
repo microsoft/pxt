@@ -1161,10 +1161,12 @@ namespace Ctors {
         control.assert(a.v == 12, "A12")
         a = new B()
         control.assert(a.v == 12, "B12")
-        control.assert((a as B).q == 17, "B17")
+        // downcasts not allowed for now
+        // control.assert((a as B).q == 17, "B17")
         a = new C()
         control.assert(a.v == 12, "C12")
-        control.assert((a as B).q == 17, "C17")
+        // downcasts not allowed for now
+        // control.assert((a as B).q == 17, "C17")
         let d = new D(33)
         control.assert(d.v == 33, "D33")
         d = new D()
@@ -1426,7 +1428,7 @@ namespace Generics {
     function sortHelper<T>(arr: T[], callbackfn ?: (value1: T, value2: T) => number) : T[] {
         if (arr.length <= 0 || !callbackfn) {
             return arr;
-        }        
+        }
         let len = arr.length; 
         // simple selection sort.     
         for (let i = 0; i < len - 1; ++i) {
@@ -1450,8 +1452,37 @@ function testGenerics() {
     let inArray = [4,3,4593,23,43,-1]
     Generics.arraySort(inArray, (x: number, y: number) => { return x - y })
     let expectedArray = [-1,3,4,23,43,4593]
-    for(let i=0 ; i<expectedArray.length; i++) {
+    for(let i = 0 ; i < expectedArray.length; i++) {
         control.assert(inArray[i] == expectedArray[i])
+    }
+}
+
+namespace AnonymousTypes {
+
+    class Foo {
+        a: number;
+        private b: number;
+        bar() { return this.b; }
+        constructor(inp: number){
+            this.a = inp
+            this.b = inp + 1
+        }
+    }
+
+    function foo(f: { a: number }) {
+       return f.a + 1
+    }
+
+    export function test() {
+        msg("AnonymousTypes")
+        let x = { a: 2, b: "" }
+        let bar = new Foo(42)
+        let baz: {a: number} = bar
+        control.assert(foo(x) == 3)
+        control.assert(foo(bar) == 43);
+        control.assert(bar.bar() == 43)
+        control.assert(foo(baz) == 43)
+        // HUH bar(40) - new (expects any)
     }
 }
 
@@ -1506,7 +1537,7 @@ ObjLit.run()
 testBitSize()
 ObjectDestructuring.run();
 testGenerics()
-
+AnonymousTypes.test()
 
 msg("test top level code")
 let xsum = 0;

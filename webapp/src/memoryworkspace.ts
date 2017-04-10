@@ -80,8 +80,8 @@ function saveToCloudAsync(h: Header): Promise<void> {
     return Promise.resolve();
 }
 
-function syncAsync(): Promise<void> {
-    return Promise.resolve();
+function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    return Promise.resolve(undefined);
 }
 
 function resetAsync(): Promise<void> {
