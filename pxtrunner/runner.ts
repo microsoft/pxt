@@ -136,8 +136,7 @@ namespace pxt.runner {
 
         patchSemantic();
         const cfg = pxt.webConfig
-        const theme = pxt.appTarget.appTheme || {};
-        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, theme.crowdinBranch, live)
+        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -272,12 +271,11 @@ namespace pxt.runner {
         languageMode = mode;
         if (locale != editorLocale) {
             const localeLiveRx = /^live-/;
-            const theme = pxt.appTarget.appTheme || {};
             editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
-                theme.crowdinBranch,
+                pxt.appTarget.versions.pxtCrowdinBranch,
                 localeLiveRx.test(editorLocale)
             );
         }
