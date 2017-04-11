@@ -187,7 +187,8 @@ declare namespace pxt {
             tutorialStep?: string;
             tutorialNext?: string;
             dialogClick?: string;            
-        }
+        },
+        disableLiveTranslations?: boolean; // don't load translations from crowdin
     }
 
     interface DocMenuEntry {
