@@ -272,7 +272,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                         </div>
                         <div className="content">
                             <div className="description">
-                                {lf("Back to previous")}
+                                {lf("Exit")}
                             </div>
                         </div>
                     </div>

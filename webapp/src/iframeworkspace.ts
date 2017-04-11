@@ -45,17 +45,18 @@ function saveToCloudAsync(h: Header): Promise<void> {
     return mem.provider.saveToCloudAsync(h);
 }
 
-function syncAsync(): Promise<void> {
+function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
         type: "pxthost",
         action: "workspacesync",
         response: true
     }).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
         (msg.projects || []).forEach(mem.merge);
-    }).then(() => {
-            data.invalidate("header:")
-            data.invalidate("text:")
-        })
+        data.invalidate("header:");
+        data.invalidate("text:");
+
+        return msg.editor;
+    })
 }
 
 function resetAsync(): Promise<void> {
@@ -64,7 +65,7 @@ function resetAsync(): Promise<void> {
             type: "pxthost",
             action: "workspacereset",
             response: true
-        })).then(() => {})
+        })).then(() => { })
 }
 
 export const provider: WorkspaceProvider = {

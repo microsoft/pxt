@@ -601,7 +601,9 @@ namespace pxt {
             const targetId = pxt.appTarget.id;
             const filenames = [this.id + "-jsdoc", this.id];
             const r: Map<string> = {};
-            if (pxt.Util.localizeLive && this.id != "this") {
+
+            // live loc of bundled packages
+            if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.log(`loading live translations for ${this.id}`)
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(

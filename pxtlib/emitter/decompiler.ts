@@ -947,40 +947,59 @@ ${output}</xml>`;
             const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
             const condition = n.condition as ts.BinaryExpression
 
-            const r: StatementNode = {
-                kind: "statement",
-                type: "controls_simple_for",
-                fields: [getField("VAR", getVariableName(initializer.declarations[0].name as ts.Identifier))],
-                inputs: [],
-                handlers: []
-            };
+            const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
 
-            // FIXME: We never decompile repeat blocks correctly, they are always converted into a for-loop.
-            // To decompile repeat, we would need to check to make sure the initialized variable is
-            // never referenced in the loop body
+            let r: StatementNode;
 
-            if (condition.operatorToken.kind === SK.LessThanToken) {
-                r.inputs.push({
-                    kind: "value",
-                    name: "TO",
-                    shadowType: ShadowType.Number,
-                    value: {
-                        kind: "expr",
-                        type: "math_arithmetic",
-                        fields: [getField("OP", "MINUS")],
-                            inputs: [
-                                getValue("A", condition.right, ShadowType.Number),
-                                getValue("B", 1)
-                            ]
-                    }
-                });
+            if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
+                r = {
+                    kind: "statement",
+                    type: "controls_repeat_ext",
+                    fields: [],
+                    inputs: [getValue("TIMES", condition.right, ShadowType.Number)],
+                    handlers: []
+                };
             }
-            else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
-                r.inputs.push(getValue("TO", condition.right, ShadowType.Number));
+            else {
+                r = {
+                    kind: "statement",
+                    type: "controls_simple_for",
+                    fields: [getField("VAR", renamed)],
+                    inputs: [],
+                    handlers: []
+                };
+
+                if (condition.operatorToken.kind === SK.LessThanToken) {
+                    r.inputs.push({
+                        kind: "value",
+                        name: "TO",
+                        shadowType: ShadowType.Number,
+                        value: {
+                            kind: "expr",
+                            type: "math_arithmetic",
+                            fields: [getField("OP", "MINUS")],
+                                inputs: [
+                                    getValue("A", condition.right, ShadowType.Number),
+                                    getValue("B", 1)
+                                ]
+                        }
+                    });
+                }
+                else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
+                    r.inputs.push(getValue("TO", condition.right, ShadowType.Number));
+                }
             }
 
             r.handlers.push({ name: "DO", statement: getStatementBlock(n.statement) });
             return r;
+
+            function checkForVariableUsages(node: Node): boolean {
+                if (node.kind === SK.Identifier && getVariableName(node as ts.Identifier) === renamed) {
+                    return true;
+                }
+
+                return ts.forEachChild(node, checkForVariableUsages);
+            }
         }
 
         function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {

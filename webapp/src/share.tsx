@@ -71,6 +71,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         let help = lf("Copy this HTML to your website or blog.");
 
         if (header) {
+            let shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
+            if (!/\/$/.test(shareUrl)) shareUrl += '/';
             let rootUrl = pxt.appTarget.appTheme.embedUrl
             if (!/\/$/.test(rootUrl)) rootUrl += '/';
 
@@ -80,7 +82,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
             ready = (!!currentPubId && header.pubCurrent);
             if (ready) {
-                url = `${rootUrl}${header.pubId}`;
+                url = `${shareUrl}${currentPubId}`;
                 let editUrl = `${rootUrl}#pub:${currentPubId}`;
                 switch (mode) {
                     case ShareMode.Cli:
