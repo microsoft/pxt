@@ -977,7 +977,7 @@ export class ProjectView
 
     toggleTrace() {
         if (this.state.tracing) {
-            this.blocksEditor.highlightStatement(null);
+            this.editor.clearHighlightedStatements();
             simulator.setTraceInterval(0);
         }
         else {

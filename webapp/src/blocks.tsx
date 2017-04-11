@@ -538,10 +538,10 @@ export class Editor extends srceditor.Editor {
                 this.editor.highlightBlock(bid);
             }
         }
-        else {
-            // Unhiglight
-            this.editor.highlightBlock(null);
-        }
+    }
+
+    clearHighlightedStatements() {
+        this.editor.highlightBlock(null);
     }
 
     openTypeScript() {
