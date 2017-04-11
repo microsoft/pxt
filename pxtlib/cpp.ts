@@ -4,14 +4,20 @@
 namespace pxt {
     declare var require: any;
 
-    function getLzma() {
-        if (U.isNodeJS) return require("lzma");
-        else return (<any>window).LZMA;
+    function getLzmaAsync() {
+        if (U.isNodeJS) return Promise.resolve(require("lzma"));
+        else {
+            let lz = (<any>window).LZMA;
+            if (lz) return Promise.resolve(lz);
+            const monacoPaths: Map<string> = (window as any).MonacoPaths
+            return BrowserUtils.loadScriptAsync(monacoPaths['lzma/lzma_worker-min.js'])
+                .then(() => (<any>window).LZMA);
+        }
     }
 
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
-        let lzma = getLzma()
-        return new Promise<string>((resolve, reject) => {
+        return getLzmaAsync()
+            .then(lzma => new Promise<string>((resolve, reject) => {
             try {
                 lzma.decompress(buf, (res: string, error: any) => {
                     resolve(error ? undefined : res);
@@ -20,12 +26,12 @@ namespace pxt {
             catch (e) {
                 resolve(undefined);
             }
-        })
+        }));
     }
 
     export function lzmaCompressAsync(text: string): Promise<Uint8Array> {
-        let lzma = getLzma()
-        return new Promise<Uint8Array>((resolve, reject) => {
+        return getLzmaAsync()
+            .then(lzma => new Promise<Uint8Array>((resolve, reject) => {
             try {
                 lzma.compress(text, 7, (res: any, error: any) => {
                     resolve(error ? undefined : new Uint8Array(res));
@@ -34,7 +40,7 @@ namespace pxt {
             catch (e) {
                 resolve(undefined);
             }
-        })
+        }));
     }
 }
 

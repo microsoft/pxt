@@ -608,7 +608,7 @@ namespace pxt {
                 pxt.log(`loading live translations for ${this.id}`)
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinTargetBranch)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
                         .then(tr => Util.jsonMergeFrom(r, tr))
                         .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
                 ).then(() => r);

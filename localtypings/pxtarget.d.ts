@@ -171,7 +171,6 @@ declare namespace pxt {
         galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification for pxt
-        crowdinTargetBranch?: string; // optional branch specification for target translations
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
