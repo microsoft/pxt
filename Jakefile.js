@@ -361,6 +361,7 @@ file('built/web/fonts/icons.woff2', [], function () {
 })
 
 file('built/web/semantic.css', ['built/pxt.js',
+    'built/web/icons.css',
     "theme/style.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
 ], { async: true }, function () {
     cmdIn(this, ".", 'node built/pxt.js buildcss')
