@@ -307,6 +307,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             description={scr.description}
                             url={scr.url}
                             imageUrl={scr.imageUrl}
+                            cardType={scr.cardType}
                             onClick={() => chgGallery(scr) }
                             />
                         ) }

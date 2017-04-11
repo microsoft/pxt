@@ -142,7 +142,6 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        sideDoc?: string; // if set: show the getting started button, clicking on getting started button links to that page
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
         boardName?: string;
@@ -168,7 +167,8 @@ declare namespace pxt {
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
-        galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
+        galleries?: pxt.Map<string>; // list of galleries to display in projects dialog,
+        // if set: show the getting started button, clicking on getting started button links to that page
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
