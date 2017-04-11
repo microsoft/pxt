@@ -1556,14 +1556,14 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
                         </div>
-                        <div className="ui item grid centered portrait hide simtoolbar">
-                            { this.state.tracing ?
+                        { this.state.tracing ?
+                            <div className="ui item grid centered portrait hide simtoolbar">
                                 <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                     <sui.Button key="slow "icon="forward" title={slowTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL)}/>
                                     <sui.Button key="fast "icon="fast forward" title={fastTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.FAST_TRACE_INTERVAL)}/>
-                                </div> : undefined
-                            }
-                        </div>
+                                </div>
+                            </div>
+                        : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
