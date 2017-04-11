@@ -1473,7 +1473,7 @@ namespace pxt.blocks {
         if (!loc) return undefined;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end >= loc.start + loc.length)
+            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length)
                 return chunk.id;
         }
         return undefined;
@@ -1593,9 +1593,6 @@ namespace pxt.blocks {
         if (!output)
             output += "\n"
 
-        // outformat
-        output = pxtc.format(output, 1).formatted;
-
         return {
             source: output,
             sourceMap: sourceMap
@@ -1607,7 +1604,7 @@ namespace pxt.blocks {
                 output += " "
             }
 
-            let start = output.length
+            let start = getCurrentLine();
 
             switch (n.type) {
                 case NT.Infix:
@@ -1630,12 +1627,17 @@ namespace pxt.blocks {
                     break
             }
 
-            let end = output.length
+            let end = getCurrentLine();
 
             if (n.id && start != end) {
                 sourceMap.push({ id: n.id, start: start, end: end })
-
             }
+        }
+
+        function getCurrentLine() {
+            let i = 0;
+            output.replace(/\n/g, a => { i++; return a; })
+            return i;
         }
 
         function write(s: string) {

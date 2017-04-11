@@ -48,6 +48,7 @@ namespace pxsim {
         private frameCounter = 0;
         private currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
+        private traceInterval = 0;
         public runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
@@ -245,6 +246,7 @@ namespace pxsim {
             } else this.startFrame(frame);
 
             this.setState(SimulatorState.Running);
+            this.setTraceInterval(this.traceInterval);
         }
 
         private startFrame(frame: HTMLIFrameElement) {
@@ -341,6 +343,7 @@ namespace pxsim {
         }
 
         public setTraceInterval(intervalMs: number) {
+            this.traceInterval = intervalMs;
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
@@ -349,7 +352,9 @@ namespace pxsim {
         }
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
-            console.log("DBG-MSG", msg.subtype, msg)
+            if (msg.subtype !== "trace") {
+                console.log("DBG-MSG", msg.subtype, msg)
+            }
             switch (msg.subtype) {
                 case "warning":
                     if (this.options.onDebuggerWarning)

@@ -518,7 +518,7 @@ export class Editor extends srceditor.Editor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.filter(diag => diag.category == ts.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockId(sourceMap, diag);
+            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
@@ -532,8 +532,16 @@ export class Editor extends srceditor.Editor {
     highlightStatement(brk: pxtc.LocationInfo) {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
-        let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, brk);
-        this.editor.highlightBlock(bid);
+        if (brk) {
+            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: brk.line, length: brk.endLine - brk.line });
+            if (bid) {
+                this.editor.highlightBlock(bid);
+            }
+        }
+        else {
+            // Unhiglight
+            this.editor.highlightBlock(null);
+        }
     }
 
     openTypeScript() {

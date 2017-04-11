@@ -859,7 +859,7 @@ export class ProjectView
 
             if (!src) return Promise.resolve();
             // format before saving
-            //src = pxtc.format(src, 0).formatted;
+            if (open) src = pxtc.format(src, 0).formatted;
 
             let mainPkg = pkg.mainEditorPkg();
             let tsName = this.editorFile.getVirtualFileName();
@@ -976,6 +976,13 @@ export class ProjectView
     }
 
     toggleTrace() {
+        if (this.state.tracing) {
+            this.blocksEditor.highlightStatement(null);
+            simulator.setTraceInterval(0);
+        }
+        else {
+            simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL);
+        }
         this.setState({ tracing: !this.state.tracing })
         this.restartSimulator();
     }
@@ -1552,8 +1559,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                         <div className="ui item grid centered portrait hide simtoolbar">
                             { this.state.tracing ?
                                 <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                    <sui.Button key="slow "icon="forward" title={slowTraceTooltip} onClick={() => simulator.setTraceInterval(300)}/>
-                                    <sui.Button key="fast "icon="fast forward" title={fastTraceTooltip} onClick={() => simulator.setTraceInterval(0)}/>
+                                    <sui.Button key="slow "icon="forward" title={slowTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL)}/>
+                                    <sui.Button key="fast "icon="fast forward" title={fastTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.FAST_TRACE_INTERVAL)}/>
                                 </div> : undefined
                             }
                         </div>

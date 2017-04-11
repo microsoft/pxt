@@ -679,7 +679,7 @@ namespace ts.pxtc.service {
 
         getNewLine() { return "\n" }
         getCurrentDirectory(): string { return "." }
-        getDefaultLibFileName(options: CompilerOptions): string { return "no-default-lib.d.ts" }
+        getDefaultLibFileName(options: CompilerOptions): string { return null }
         log(s: string): void { console.log("LOG", s) }
         trace(s: string): void { console.log("TRACE", s) }
         error(s: string): void { console.error("ERROR", s) }
