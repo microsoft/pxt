@@ -2694,7 +2694,7 @@ function findTestFile() {
 
 function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
-        .then((opts : pxtc.CompileOptions) => {
+        .then((opts: pxtc.CompileOptions) => {
             let tsFile = findTestFile()
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
@@ -2973,7 +2973,7 @@ function testPkgConflictsAsync() {
 
         return mainPkg.installAllAsync()
             .then(() => mainPkg.findConflictsAsync(tc.pkgToAdd, "*"))
-            .then((conflicts : pxt.cpp.PkgConflictError[]) => {
+            .then((conflicts: pxt.cpp.PkgConflictError[]) => {
                 let conflictNames = conflicts.map((c) => c.pkg0.id).sort();
                 if (conflictNames.length !== tc.expectedConflicts.length || !conflictNames.every((cn, i) => conflictNames[i] === tc.expectedConflicts[i])) {
                     testFailed(`Mismatch on expected conflicts (found: [${conflictNames.join(", ")}], expected: [${tc.expectedConflicts.join(", ")}])`);
@@ -3246,7 +3246,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
                 target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
-        .then((opts : pxtc.CompileOptions) => {
+        .then((opts: pxtc.CompileOptions) => {
             if (mode == BuildOption.Test)
                 opts.testMode = true
             if (mode == BuildOption.GenDocs)
@@ -3663,7 +3663,7 @@ function extractAsyncInternal(filename: string, out: string, vscode: boolean): P
         .then(dirs => {
             if (dirs && vscode) {
                 pxt.debug('launching code...')
-                dirs.forEach((dir : any) => openVsCode(dir));
+                dirs.forEach((dir: any) => openVsCode(dir));
             }
         })
 }

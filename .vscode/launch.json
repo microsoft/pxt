@@ -8,7 +8,7 @@
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": ["build"],
-			"cwd": "${workspaceRoot}/../pxt-calliope/libs/core",
+			"cwd": "${workspaceRoot}/../pxt-microbit/libs/core",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
