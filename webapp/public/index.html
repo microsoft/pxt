@@ -8,7 +8,11 @@
 
     <!-- @include appmeta.html -->
 
-    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">    
+    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
+    <style type="text/css">
+        @import "/blb/custom.css";
+        @import "/blb/icons.css";
+    </style>
 </head>
 
 <body class="main">
@@ -32,7 +36,9 @@
     </script>
     <!-- @include apptracking.html -->
     <!-- patch to load JS in electron -->
-    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    <script>
+        if (typeof module === 'object') { window.module = module; module = undefined; }
+    </script>
     <script type="text/javascript" src="/blb/jquery.js"></script>
     <script type="text/javascript" src="/blb/typescript.js"></script>
     <script type="text/javascript" src="/blb/blockly/blockly_compressed.js"></script>
@@ -40,7 +46,9 @@
     <script type="text/javascript" src="/blb/blockly/msg/js/en.js"></script>
     <script type="text/javascript" src="/blb/semantic.js"></script>
     <!-- unpatch to load JS in electron -->
-    <script>if (window.module) module = window.module;</script>
+    <script>
+        if (window.module) module = window.module;
+    </script>
     <script type="text/javascript" src="/blb/pxtweb.js"></script>
     <script type="text/javascript" src="/blb/target.js"></script>
     <script id="mainscript" type="text/javascript" src="/blb/main.js"></script>
@@ -57,7 +65,7 @@
         // HTML5 does not (yet) allow cross-domain web workers, so we need to proxy the instantion of
         // a web worker through a same-domain script
         window.MonacoEnvironment = {
-            getWorkerUrl: function(workerId, label) {
+            getWorkerUrl: function (workerId, label) {
                 return pxt.webConfig.monacoworkerjs;
             }
         };
