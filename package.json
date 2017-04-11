@@ -53,6 +53,7 @@
     "built/web/vs/language/typescript/src/*.js",
     "libs/lang-test0/*.ts",
     "libs/lang-test0/pxt.json",
+    "pxtarget.json",
     "webapp/public",
     "typings/**",
     "localtypings/**",
