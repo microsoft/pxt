@@ -8,7 +8,7 @@ namespace ts.pxtc {
         initializer?: string;
         defaults?: string[];
         properties?: PropertyDesc[];
-        options?: Map<PropertyOption>;
+        options?: MapLike<PropertyOption>;
         isEnum?: boolean;
     }
 
@@ -268,7 +268,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters || []).map((p : any)  => {
+                parameters: (!hasParams || !decl.parameters) ? null : decl.parameters.map((p : any)  => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin ? attributes.paramMin[n] : undefined
@@ -693,7 +693,7 @@ namespace ts.pxtc.service {
     let lastBlocksInfo: BlocksInfo;
     let lastFuse: Fuse;
     let builtinItems: SearchInfo[];
-    let tbSubset: Map<boolean>;
+    let tbSubset: pxt.Map<boolean>;
 
     export interface OpArg {
         fileName?: string;
@@ -704,7 +704,7 @@ namespace ts.pxtc.service {
     }
 
     export interface SearchOptions {
-        subset?: Map<boolean>;
+        subset?: pxt.Map<boolean>;
         term: string;
     }
 

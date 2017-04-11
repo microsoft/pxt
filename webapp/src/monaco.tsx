@@ -50,7 +50,7 @@ export class Editor extends srceditor.Editor {
 
         let promise = Promise.resolve().then(() => {
             if (!this.hasBlocks())
-                return
+                return null;
 
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
@@ -638,7 +638,7 @@ export class Editor extends srceditor.Editor {
         } else {
             hasChild = true;
         }
-        if (!hasChild) return;
+        if (!hasChild) return null;
 
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;

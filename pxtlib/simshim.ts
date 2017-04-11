@@ -55,7 +55,9 @@ namespace pxt {
         }
 
         function promiseElementType(tp: ts.Type) {
-            if ((tp.flags & ts.TypeFlags.Reference) && tp.symbol.name == "Promise") {
+            if (tp.flags & ts.TypeFlags.Object
+            && (<ts.ObjectType>tp).objectFlags & ts.ObjectFlags.Reference
+            && tp.symbol.name == "Promise") {
                 return (tp as ts.TypeReference).typeArguments[0]
             }
             return null

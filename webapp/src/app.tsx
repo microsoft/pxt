@@ -1714,9 +1714,9 @@ function showIcons() {
 function assembleCurrent() {
     compiler.compileAsync({ native: true })
         .then(() => compiler.assembleAsync(getEditor().editorFile.content))
-        .then(v => {
+        .then((v) => {
             let nums = v.words
-            pxt.debug("[" + nums.map(n => "0x" + n.toString(16)).join(",") + "]")
+            pxt.debug("[" + nums.map((n : any) => "0x" + n.toString(16)).join(",") + "]")
         })
 }
 

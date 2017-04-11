@@ -547,7 +547,7 @@ namespace pxt {
                         Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
                                 .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
-                                .then((conflicts) => {
+                                .then((conflicts : cpp.PkgConflictError[]) => {
                                     if (conflicts.length) {
                                         const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
                                         const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");

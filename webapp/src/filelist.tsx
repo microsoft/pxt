@@ -108,7 +108,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             header: lf("Add custom blocks?"),
             body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
         }).then(v => {
-            if (!v) return;
+            if (!v) return null;
             const p = pkg.mainEditorPkg();
             p.setFile(customFile, `
 /**
