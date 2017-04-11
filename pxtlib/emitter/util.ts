@@ -379,6 +379,7 @@ namespace ts.pxtc.Util {
         headers?: pxt.Map<string>;
         allowHttpErrors?: boolean; // don't treat non-200 responses as errors
         allowGzipPost?: boolean;
+        responseArrayBuffer?: boolean;
     }
 
     export interface HttpResponse {
@@ -605,6 +606,8 @@ namespace ts.pxtc.Util {
                 case "woff2": return "application/font-woff2";
                 case "md": return "text/markdown";
                 case "xml": return "application/xml";
+                case "m4a": return "audio/m4a";
+                case "mp3": return "audio/mp3";
                 default: return "application/octet-stream";
             }
         else return "application/octet-stream";
@@ -638,32 +641,44 @@ namespace ts.pxtc.Util {
         return _localizeLang;
     }
 
-    export function userLanguageRtl(): boolean {
-        return /^ar|iw/i.test(_localizeLang);
+    export function isUserLanguageRtl(): boolean {
+        // ar: Arabic
+        // dv: Divehi
+        // fa: Farsi
+        // ha: Hausa
+        // he: Hebrew
+        // ks: Kashmiri
+        // ku: Kurdish
+        // ps: Pashto
+        // ur: Urdu
+        // yi: Yiddish
+        return /^ar|dv|fa|ha|he|ks|ku|ps|ur|yi/i.test(_localizeLang);
     }
 
     export function _localize(s: string) {
         return _localizeStrings[s] || s;
     }
 
-    export function downloadLiveTranslationsAsync(lang: string, filename: string) {
-        return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string): Promise<pxt.Map<string>> {
+        // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
+        let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+        if (branch) url += '&branch=' + encodeURIComponent(branch);
+        return Util.httpGetJsonAsync(url);
     }
 
-    export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
-        if (live) {
-            console.log(`loading live translations for ${code}`)
-            return downloadLiveTranslationsAsync(code, "strings.json")
+        if (_localizeLang != code && live) {
+            return downloadLiveTranslationsAsync(code, "strings.json", branch)
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
                     localizeLive = true;
                 }, e => {
-                    console.error('failed to load localizations')
+                    console.log('failed to load localizations')
                 })
         }
 
@@ -787,6 +802,10 @@ namespace ts.pxtc.Util {
         return n ? (n[0].toLocaleUpperCase() + n.slice(1)) : n;
     }
 
+    export function uncapitalize(n: string): string {
+        return (n || "").split(/(?=[A-Z])/g).join(" ").toLowerCase();
+    }
+
     export function range(len: number) {
         let r: number[] = []
         for (let i = 0; i < len; ++i) r.push(i)
@@ -868,7 +887,8 @@ namespace ts.pxtc.BrowserImpl {
             let headers = Util.clone(options.headers) || {}
 
             client = new XMLHttpRequest();
-
+            if (options.responseArrayBuffer)
+               client.responseType = "arraybuffer";
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 
@@ -877,8 +897,8 @@ namespace ts.pxtc.BrowserImpl {
                     let res: Util.HttpResponse = {
                         statusCode: client.status,
                         headers: {},
-                        buffer: client.response,
-                        text: client.responseText,
+                        buffer:  client.response,
+                        text: options.responseArrayBuffer ? undefined : client.responseText,
                     }
                     client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {
                         let m = /^\s*([^:]+): (.*)/.exec(l)

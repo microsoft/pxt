@@ -8,6 +8,7 @@ namespace pxt.workspace {
         meta: pxt.Cloud.JsonScriptMeta;
         editor: string;
         temporary?: boolean; // don't serialize project
+        filters?: pxt.editor.ProjectFilters;
         // older script might miss this
         target: string;
         pubId: string; // for published scripts
@@ -42,7 +43,7 @@ namespace pxt.workspace {
         saveAsync(h: Header, text?: ScriptText): Promise<void>;
         installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
         saveToCloudAsync(h: Header): Promise<void>;
-        syncAsync(): Promise<void>;
+        syncAsync(): Promise<pxt.editor.EditorSyncState>;
         resetAsync(): Promise<void>;
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;

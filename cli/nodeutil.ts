@@ -324,8 +324,14 @@ export function allFiles(top: string, maxDepth = 8, allowMissing = false, includ
     return res
 }
 
-export function existDirSync(name: string): boolean {
-    return fs.existsSync(name) && fs.statSync(name).isDirectory();
+export function existsDirSync(name: string): boolean {
+    try {
+        const stats = fs.lstatSync(name);
+        return stats && stats.isDirectory();
+    }
+    catch (e) {
+        return false;
+    }
 }
 
 export function openUrl(startUrl: string, browser: string) {
@@ -401,16 +407,6 @@ function getBrowserLocation(browser: string) {
     }
 
     return browser;
-}
-
-export function directoryExistsSync(p: string): boolean {
-    try {
-        let stats = fs.lstatSync(p);
-        return stats && stats.isDirectory();
-    }
-    catch (e) {
-        return false;
-    }
 }
 
 export function fileExistsSync(p: string): boolean {

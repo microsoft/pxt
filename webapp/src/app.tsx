@@ -27,6 +27,7 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as sounds from "./sounds";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -92,6 +93,7 @@ export class ProjectView
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
+    tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
 
     private lastChangeTime: number;
@@ -529,6 +531,7 @@ export class ProjectView
         pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
+        if (!filters) filters = h.filters;
         this.setState({
             showFiles: false,
             filters: filters
@@ -788,7 +791,7 @@ export class ProjectView
         const mpkg = pkg.mainPkg
         this.exportProjectToFileAsync()
             .done((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".pxt");
+                const fn = pkg.genFileName(".mkcd");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
     }
@@ -910,6 +913,9 @@ export class ProjectView
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
+        let userContextWindow: Window = undefined;
+        if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
+            userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
@@ -933,14 +939,19 @@ export class ProjectView
                     return Promise.resolve()
                 }
                 resp.saveOnly = saveOnly
+                resp.userContextWindow = userContextWindow;
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
+                        if (userContextWindow)
+                            try { userContextWindow.close() } catch (e) { }
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
+                if (userContextWindow)
+                    try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
                 this.setState({ compiling: false });
                 if (simRestart) this.runSimulator();
@@ -1114,14 +1125,15 @@ export class ProjectView
 
     importFileDialog() {
         let input: HTMLInputElement;
+        const ext = pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? ".hex" : ".mkcd";
         core.confirmAsync({
-            header: lf("Open .hex file"),
+            header: lf("Open {0} file", ext),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a .hex file to open.")}</label>
+    <label>${lf("Select a {0} file to open.", ext)}</label>
     <input type="file" class="ui button blue fluid"></input>
   </div>
 </div>`,
@@ -1280,6 +1292,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.startTutorial(targetTheme.sideDoc);
     }
 
+    openTutorials() {
+        pxt.tickEvent("menu.openTutorials");
+        this.projects.showOpenTutorials();
+    }
+
     startTutorial(tutorialId: string) {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
@@ -1291,6 +1308,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         let title = tutorialId;
         let result: string[] = [];
 
+        sounds.initTutorial(); // pre load sounds
         return pxt.Cloud.downloadMarkdownAsync(tutorialId)
             .then(md => {
                 let titleRegex = /^#(.*)/g.exec(md);
@@ -1316,39 +1334,48 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
-                    filesOverride: {
-                        "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${ts.pxtc.ON_START_TYPE}"></block></xml>`,
-                        "main.ts": "  "
-                    },
                     name: tutorialId,
                     temporary: true
                 });
             });
     }
 
-    exitTutorial() {
+    exitTutorial(keep?: boolean) {
         pxt.tickEvent("tutorial.exit");
         core.showLoading(lf("leaving tutorial..."));
-        this.exitTutorialAsync()
+        this.exitTutorialAsync(keep)
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading());
     }
 
-    exitTutorialAsync() {
+    exitTutorialAsync(keep?: boolean) {
         // tutorial project is temporary, no need to delete
-        let curr = pkg.mainEditorPkg().header
-        curr.isDeleted = true
-        this.setState({ active: false });
+        let curr = pkg.mainEditorPkg().header;
+        let files = pkg.mainEditorPkg().getAllFiles();
+        if (!keep) {
+            curr.isDeleted = true;
+        } else {
+            curr.temporary = false;
+        }
+        this.setState({ active: false, filters: undefined });
         return workspace.saveAsync(curr, {})
+            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.loadHeaderAsync(workspace.getHeaders()[0], null);
+                    return this.loadHeaderAsync(workspace.getHeaders()[0], null);
                 } else {
-                    this.newProject();
+                    return this.newProject();
                 }
-            }).finally(() => {
-                this.setState({ active: true, tutorialOptions: null });
+            })
+            .finally(() => {
+                core.hideLoading()
+                this.setState({ active: true, tutorialOptions: undefined });
             });
+    }
+
+    completeTutorial() {
+        pxt.tickEvent("tutorial.complete");
+        this.tutorialComplete.show();
     }
 
     showTutorialHint() {
@@ -1474,14 +1501,14 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
 
-                                {sandbox ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
+                                {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
                                 {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
 
                                 {inTutorial ? <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() } /> : undefined}
 
                                 {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
+                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
@@ -1500,7 +1527,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                         <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
-                                {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
+                                {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
@@ -1519,7 +1546,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
@@ -1531,6 +1558,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
@@ -1571,7 +1599,7 @@ function isTypescriptFile(filename: string): boolean {
 }
 
 function isProjectFile(filename: string): boolean {
-    return /\.pxt$/i.test(filename)
+    return /\.(pxt|mkcd)$/i.test(filename)
 }
 
 function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
@@ -1756,10 +1784,18 @@ function initTheme() {
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     // RTL languages
-    if (/^ar/i.test(Util.userLanguage())) {
+    if (Util.isUserLanguageRtl()) {
         pxt.debug("rtl layout");
         pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
+
+        // replace semantic.css with rtlsemantic.css
+        const semanticLink = document.head.querySelector('link[href$="semantic.css"]');
+        const semanticHref = semanticLink.getAttribute("data-rtl");
+        if (semanticHref) {
+            pxt.debug(`swapping to ${semanticHref}`)
+            semanticLink.setAttribute("href", semanticHref);
+        }
     }
 
     function patchCdn(url: string): string {
@@ -1872,7 +1908,7 @@ $(document).ready(() => {
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
-    const wsPortMatch = /ws=(\d+)/i.exec(window.location.href);
+    const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
         window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
@@ -1912,19 +1948,20 @@ $(document).ready(() => {
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.language);
-            const live = mlang && !!mlang[1];
+            const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => compiler.init())
         .then(() => workspace.initAsync())
-        .then(() => {
+        .then(state => {
             $("#loading").remove();
             render()
             return workspace.syncAsync();
         })
+        .then(state => state ? theEditor.setState(state) : undefined)
         .then(() => {
             initSerial();
             initScreenshots();

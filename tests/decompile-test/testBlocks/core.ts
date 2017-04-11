@@ -62,9 +62,16 @@ declare interface String {
 
 namespace Math {
     /**
-      * Returns the larger of two supplied numeric expressions. 
+      * Returns the larger of two supplied numeric expressions.
       */
     export function max(a: number, b: number): number {
+        return 0;
+    }
+
+    /**
+      * Returns the smaller of two supplied numeric expressions.
+      */
+    export function min(a: number, b: number): number {
         return 0;
     }
 }

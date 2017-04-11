@@ -5,8 +5,14 @@
 Builds and deploys the current project
 
 ```
-pxt deploy
+pxt deploy [--serial]
 ```
+
+## Options
+
+### --serial
+
+Launches the serial port monitor after deployment.
 
 ## Description
 

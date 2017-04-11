@@ -175,15 +175,11 @@ namespace pxt.blocks {
             let nsn = info.apis.byQName[ns];
             let isAdvanced = nsn && nsn.attributes.advanced;
 
-            if (showCategories !== CategoryMode.All && isAdvanced) {
-                return;
-            }
-
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
             let category = categoryElement(tb, catName);
 
-            if (showCategories !== CategoryMode.None) {
+            if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
                 if (!category) {
                     let categories = getChildCategories(tb)
                     let parentCategoryList = tb;
@@ -229,6 +225,12 @@ namespace pxt.blocks {
                     }
                 }
             }
+
+            if (showCategories === CategoryMode.Basic && isAdvanced) {
+                const type = block.getAttribute("type");
+                usedBlocks[type] = true;
+            }
+
             if (fn.attributes.mutateDefaults) {
                 const mutationValues = fn.attributes.mutateDefaults.split(";");
                 mutationValues.forEach(mutation => {
@@ -242,10 +244,10 @@ namespace pxt.blocks {
                 });
             }
             else {
-                if (showCategories !== CategoryMode.None) {
+                if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
                     category.appendChild(block);
                     injectToolboxIconCss();
-                } else {
+                } else if (showCategories === CategoryMode.None) {
                     tb.appendChild(block);
                 }
             }
@@ -705,7 +707,9 @@ namespace pxt.blocks {
         })
 
         searchElementCache = {};
+        usedBlocks = {};
         let currentBlocks: Map<number> = {};
+        let showAdvanced = false;
         const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
         blockInfo.blocks
@@ -721,9 +725,14 @@ namespace pxt.blocks {
                         if (tb && (!fn.attributes.debug || dbg))
                             injectToolbox(tb, blockInfo, fn, block, showCategories);
                         currentBlocks[fn.attributes.blockId] = 1;
+                        if (!showAdvanced && !fn.attributes.blockHidden && !fn.attributes.deprecated) {
+                            let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                            let nsn = blockInfo.apis.byQName[ns];
+                            showAdvanced = showAdvanced || (nsn && nsn.attributes.advanced);
+                        }
                     }
                 }
-            })
+            });
 
         // remove unused blocks
         Object
@@ -768,15 +777,49 @@ namespace pxt.blocks {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
             if (!config.mathBlocks) removeCategory(tb, "Math");
-            if (!config.textBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Text");
-            if (!config.listsBlocks || showCategories === CategoryMode.Basic) removeCategory(tb, "Lists");
             if (!config.variablesBlocks) removeCategory(tb, "Variables");
             if (!config.logicBlocks) removeCategory(tb, "Logic");
             if (!config.loopsBlocks) removeCategory(tb, "Loops");
 
+            // Advanced builtin categories
+            if (!config.textBlocks) {
+                removeCategory(tb, "Text");
+            }
+            else {
+                showAdvanced = true;
+                const cat = categoryElement(tb, "Text");
+                if (cat) {
+                    const blockElements = cat.querySelectorAll("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+                }
+                if (showCategories === CategoryMode.Basic) {
+                    removeCategory(tb, "Text");
+                }
+            }
+
+            if (!config.listsBlocks) {
+                removeCategory(tb, "Lists");
+            }
+            else {
+                showAdvanced = true;
+                const cat = categoryElement(tb, "Lists");
+                if (cat) {
+                    const blockElements = cat.querySelectorAll("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+                }
+                if (showCategories === CategoryMode.Basic) {
+                    removeCategory(tb, "Lists");
+                }
+            }
+
             // Load localized names for default categories
             let cats = tb.querySelectorAll('category');
-            let removeAdvanced = false;
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
@@ -804,19 +847,21 @@ namespace pxt.blocks {
         }
 
         // Add the "Advanced" category
-        if (tb && showCategories !== CategoryMode.None) {
+        if (showAdvanced && tb && showCategories !== CategoryMode.None) {
             const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
+        }
 
-            if (showCategories === CategoryMode.All && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-                // Add the "Add package" category
-                getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
+        if (tb && (!showAdvanced || showCategories === CategoryMode.All) && pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
+            if (!showAdvanced) {
+                insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             }
+            // Add the "Add package" category
+            getOrAddSubcategoryByWeight(tb, Util.lf("{id:category}Add Package"), "Add Package", 1, "#717171", 'blocklyTreeIconaddpackage')
         }
 
         if (tb) {
-            usedBlocks = {};
             const blocks = tb.querySelectorAll("block");
 
             for (let i = 0; i < blocks.length; i++) {
@@ -881,6 +926,9 @@ namespace pxt.blocks {
                 let categories = tb.querySelectorAll(`category:not([nameid="advanced"])`);
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
+                    let catName = cat.getAttribute("nameid");
+                    // Don't do this for special blockly categories
+                    if (catName == "variables" || catName == "functions") continue;
                     let blockCount = cat.querySelectorAll(`block`);
                     if (blockCount.length == 0) {
                         if (cat.parentNode) cat.parentNode.removeChild(cat);
@@ -999,7 +1047,11 @@ namespace pxt.blocks {
 
                             let block = searchElementCache[type];
                             if (!block) {
-                                block = (searchElementCache[type] = tb.querySelector(`block[type="${type}"]`).cloneNode(true))
+                                // Catches built-in blocks that aren't loaded dynamically
+                                const existing = tb.querySelector(`block[type="${type}"]`);
+                                if (existing) {
+                                    block = (searchElementCache[type] = existing.cloneNode(true));
+                                }
                             }
 
                             if (block) {

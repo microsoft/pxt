@@ -56,6 +56,7 @@ namespace ts.pxtc {
         usedArguments?: pxt.Map<string[]>;
         // client options
         saveOnly?: boolean;
+        userContextWindow?: Window;
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {

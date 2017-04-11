@@ -662,7 +662,35 @@ function scriptPageTestAsync(id: string) {
             })
             return html
         })
+}
 
+// use http://localhost:3232/pkg/microsoft/pxt-neopixel for testing
+function pkgPageTestAsync(id: string) {
+    return pxt.packagesConfigAsync()
+        .then(config => pxt.github.repoAsync(id, config))
+        .then(repo => {
+            if (!repo)
+                return "Not found"
+            return Cloud.privateGetAsync("gh/" + id + "/text")
+                .then((files: pxt.Map<string>) => {
+                    let info = JSON.parse(files["pxt.json"])
+                    info["slug"] = id
+                    info["id"] = "gh/" + id
+                    if (repo.status == pxt.github.GitRepoStatus.Approved)
+                        info["official"] = "yes"
+                    else
+                        info["official"] = ""
+                    const html = pxt.docs.renderMarkdown({
+                        template: expandDocFileTemplate("package.html"),
+                        markdown: files["README.md"] || "No `README.md`",
+                        theme: pxt.appTarget.appTheme,
+                        pubinfo: info,
+                        filepath: "/pkg/" + id,
+                        repo: { name: repo.name, fullName: repo.fullName, tag: "v" + info.version }
+                    })
+                    return html
+                })
+        })
 }
 
 function readMd(pathname: string): string {
@@ -803,6 +831,12 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (/^\/(pkg|package)\/.*$/.test(pathname)) {
+            pkgPageTestAsync(pathname.replace(/^\/[^\/]+\//, ""))
+                .then(sendHtml)
+            return
+        }
+
         if (elts[0] == "streams") {
             streamPageTestAsync(elts[0] + "/" + elts[1])
                 .then(sendHtml)
@@ -874,7 +908,8 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            let start = `http://localhost:${serveOptions.port}/#ws=${serveOptions.wsPort}&local_token=${options.localToken}`;
+
+            const start = `http://localhost:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

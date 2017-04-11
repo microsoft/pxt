@@ -9,10 +9,10 @@ namespace pxt {
     export import Util = pxtc.Util;
     const lf = U.lf;
 
-    export var appTarget: TargetBundle;
+    export let appTarget: TargetBundle;
 
     export function setAppTarget(trg: TargetBundle) {
-        appTarget = trg
+        appTarget = trg || <TargetBundle>{};
 
         // patch-up the target
         let comp = appTarget.compile
@@ -26,9 +26,9 @@ namespace pxt {
             comp.shortPointers = true
             comp.flashCodeAlign = 0x10
         }
-        if (!trg.appTheme) trg.appTheme = {}
-        if (!trg.appTheme.embedUrl)
-            trg.appTheme.embedUrl = trg.appTheme.homeUrl
+        if (!appTarget.appTheme) appTarget.appTheme = {}
+        if (!appTarget.appTheme.embedUrl)
+            appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
         let cs = appTarget.compileService
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
@@ -204,9 +204,26 @@ namespace pxt {
                 } else {
                     // If it's not from GH, assume it's a bundled package
                     // TODO: Add logic for shared packages if we enable that
-                    return JSON.parse(pxt.appTarget.bundledpkgs[id][CONFIG_NAME]) as pxt.PackageConfig;
+                    return JSON.parse(pxt.appTarget.bundledpkgs[Package.upgradePackageReference(id, fullVers)][CONFIG_NAME]) as pxt.PackageConfig;
                 }
             });
+        }
+
+        static upgradePackageReference(pkg: string, val: string): string {
+            if (val != "*") return pkg;
+            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
+            let newPackage = pkg;
+            if (upgrades) {
+                upgrades.filter(rule => rule.type == "package")
+                    .forEach(rule => {
+                        for (let match in rule.map) {
+                            if (newPackage == match) {
+                                newPackage = rule.map[match];
+                            }
+                        }
+                    });
+            }
+            return newPackage;
         }
 
         public addedBy: Package[];
@@ -448,23 +465,6 @@ namespace pxt {
                 });
         }
 
-        upgradePackage(pkg: string, val: string): string {
-            if (val != "*") return pkg;
-            const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
-            let newPackage = pkg;
-            if (upgrades) {
-                upgrades.filter(rule => rule.type == "package")
-                    .forEach(rule => {
-                        for (let match in rule.map) {
-                            if (newPackage == match) {
-                                newPackage = rule.map[match];
-                            }
-                        }
-                    });
-            }
-            return newPackage;
-        }
-
         upgradeAPI(fileContents: string): string {
             const upgrades = appTarget.compile ? appTarget.compile.upgrades : undefined;
             let updatedContents = fileContents;
@@ -486,7 +486,7 @@ namespace pxt {
 
             const currentConfig = JSON.stringify(this.config);
             for (const dep in this.config.dependencies) {
-                const value = this.upgradePackage(dep, this.config.dependencies[dep]);
+                const value = Package.upgradePackageReference(dep, this.config.dependencies[dep]);
                 if (value != dep) {
                     delete this.config.dependencies[dep];
                     if (value) {
@@ -505,9 +505,8 @@ namespace pxt {
 
             let initPromise = Promise.resolve()
 
-            this.isLoaded = true
+            this.isLoaded = true;
             const str = this.readFile(pxt.CONFIG_NAME);
-            const mainTs = this.readFile("main.ts");
             if (str == null) {
                 if (!isInstall)
                     U.userError("Package not installed: " + this.id)
@@ -541,7 +540,10 @@ namespace pxt {
                 .then(() => {
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const missingPackages = this.getMissingPackages(<PackageConfig>JSON.parse(str), mainTs);
+                        const mainTs = this.readFile("main.ts");
+                        if (!mainTs) return Promise.resolve(null);
+
+                        const missingPackages = this.getMissingPackages(this.config, mainTs);
                         let didAddPackages = false;
                         let addPackagesPromise = Promise.resolve();
                         Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
@@ -599,30 +601,34 @@ namespace pxt {
             const targetId = pxt.appTarget.id;
             const filenames = [this.id + "-jsdoc", this.id];
             const r: Map<string> = {};
-            if (pxt.Util.localizeLive && this.id != "this") {
+            const theme = pxt.appTarget.appTheme || {};
+
+            // live loc of bundled packages
+            if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.log(`loading live translations for ${this.id}`)
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
                         .then(tr => Util.jsonMergeFrom(r, tr))
                         .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
                 ).then(() => r);
             }
-
-            const files = this.config.files;
-            filenames.map(name => {
-                let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
-                if (files.indexOf(fn) > -1)
-                    return JSON.parse(this.readFile(fn)) as Map<string>;
-                if (lang.length > 2) {
-                    fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
+            else {
+                const files = this.config.files;
+                filenames.map(name => {
+                    let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
                     if (files.indexOf(fn) > -1)
                         return JSON.parse(this.readFile(fn)) as Map<string>;
-                }
-                return undefined;
-            }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
+                    if (lang.length > 2) {
+                        fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
+                        if (files.indexOf(fn) > -1)
+                            return JSON.parse(this.readFile(fn)) as Map<string>;
+                    }
+                    return undefined;
+                }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
 
-            return Promise.resolve(r);
+                return Promise.resolve(r);
+            }
         }
     }
 
@@ -690,7 +696,7 @@ namespace pxt {
                     U.userError(lf("please add '{0}' to \"files\" in {1}", fn, pxt.CONFIG_NAME))
                 cont = "// Auto-generated. Do not edit.\n" + cont + "\n// Auto-generated. Do not edit. Really.\n"
                 if (this.host().readFile(this, fn) !== cont) {
-                    pxt.debug(`updating ${fn} (size=${cont.length})...`)
+                    pxt.log(`updating ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, cont)
                 }
             }
@@ -699,7 +705,7 @@ namespace pxt {
                 let updatedCont = this.upgradeAPI(cont);
                 if (updatedCont != cont) {
                     // save file (force write)
-                    pxt.debug(`updating APIs in ${fn} (size=${cont.length})...`)
+                    pxt.log(`updating APIs in ${fn} (size=${cont.length})...`)
                     this.host().writeFile(this, fn, updatedCont, true)
                 }
                 return updatedCont;

@@ -122,8 +122,10 @@ namespace pxt.editor {
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
 
+        openTutorials(): void;
         setTutorialStep(step: number): void;
-        exitTutorial(): void;
+        exitTutorial(keep?: boolean): void;
+        completeTutorial(): void;
         showTutorialHint(): void;
 
         anonymousPublishAsync(): Promise<string>;

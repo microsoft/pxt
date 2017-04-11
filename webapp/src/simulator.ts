@@ -91,14 +91,15 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    core.confirmAsync({
-                        header: msg.header,
-                        body: msg.body,
-                        size: "large",
-                        copyable: msg.copyable,
-                        hideAgree: true,
-                        disagreeLbl: lf("Close")
-                    }).done();
+                    if (core.isLoading())
+                        core.confirmAsync({
+                            header: msg.header,
+                            body: msg.body,
+                            size: "large",
+                            copyable: msg.copyable,
+                            hideAgree: true,
+                            disagreeLbl: lf("Close")
+                        }).done();
                     break;
             }
         }
