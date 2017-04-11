@@ -3112,7 +3112,7 @@ ${lbl}: .short 0xffff
             proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
 
             // Declaration of iterating variable
-            let intVarIter = proc.mkLocalUnnamed(); // i
+            let intVarIter = proc.mkLocalUnnamed(opts.target.taggedInts ? true : false); // i
             proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
 
