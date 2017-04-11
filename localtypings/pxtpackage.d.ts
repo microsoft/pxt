@@ -6,6 +6,7 @@ declare namespace pxt {
     interface TargetVersions {
         target: string;
         pxt: string;
+        pxtCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
