@@ -523,7 +523,7 @@ ${files["main.ts"]}
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^###[^#].*$/gmi);
-                if (steps.length < 1) return null;
+                if (steps.length < 1) return undefined;
 
                 let options = steps[0];
                 steps = steps.slice(1, steps.length);

@@ -508,7 +508,7 @@ namespace ts.pxtc {
     }
 
     function isArrayType(t: Type) {
-        return (t.flags & TypeFlags.Object) && t.symbol.name == "Array"
+        return isReferenceType(t) && t.symbol.name == "Array"
     }
 
     function isInterfaceType(t: Type)  {
@@ -519,11 +519,6 @@ namespace ts.pxtc {
         return (t.flags & TypeFlags.Object && (<ObjectType>t).objectFlags & ObjectFlags.Reference); 
     }
 
-/*
-    function isThisType(t: Type) {
-        return t.flags & TypeFlags.TypeParameter && (t as TypeParameter).isThisType;
-    }
-*/
     function genericRoot(t: Type) {
         if (isReferenceType(t)) {
             let r = t as TypeReference
@@ -2236,7 +2231,7 @@ ${lbl}: .short 0xffff
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (!isUsed(node))
-                return null;
+                return undefined;
 
             let attrs = parseComments(node)
             if (attrs.shim != null) {
@@ -2247,14 +2242,14 @@ ${lbl}: .short 0xffff
                         getParameters(node).length);
                 }
                 if (!hasShimDummy(node))
-                    return null;
+                    return undefined;
             }
 
             if (getCombinedModifierFlags(node) & ModifierFlags.Ambient)
-                return null;
+                return undefined;
 
             if (!node.body)
-                return null;
+                return undefined;
 
             let info = getFunctionInfo(node)
             let lit: ir.Expr = null
