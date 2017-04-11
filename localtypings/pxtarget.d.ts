@@ -136,6 +136,7 @@ declare namespace pxt {
         organizationLogo?: string;
         organizationWideLogo?: string;
         homeUrl?: string;
+        shareUrl?: string; 
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
