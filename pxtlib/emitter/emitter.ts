@@ -518,11 +518,11 @@ namespace ts.pxtc {
     }
 
     function isInterfaceType(t: Type)  {
-        return (t.flags & TypeFlags.Object && (<ObjectType>t).objectFlags & ObjectFlags.Interface); 
+        return (t.flags & TypeFlags.Object && (<ObjectType>t).objectFlags & ObjectFlags.Interface);
     }
 
     function isReferenceType(t: Type) {
-        return (t.flags & TypeFlags.Object && (<ObjectType>t).objectFlags & ObjectFlags.Reference); 
+        return (t.flags & TypeFlags.Object && (<ObjectType>t).objectFlags & ObjectFlags.Reference);
     }
 
     function genericRoot(t: Type) {
@@ -3289,7 +3289,7 @@ ${lbl}: .short 0xffff
         function emitVariableDeclaration(node: VarOrParam | BindingElement): ir.Cell {
             if (node.name.kind === SK.ObjectBindingPattern) {
                 if (!node.initializer) {
-                    (node.name as ObjectBindingPattern).elements.forEach((e : BindingElement) => emitVariableDeclaration(e))
+                    (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVariableDeclaration(e))
                     return null;
                 }
                 else {

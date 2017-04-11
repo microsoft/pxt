@@ -269,7 +269,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: (!hasParams || !decl.parameters) ? null : decl.parameters.map((p : any)  => {
+                parameters: (!hasParams || !decl.parameters) ? null : decl.parameters.map((p: any)  => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin ? attributes.paramMin[n] : undefined
