@@ -1629,8 +1629,8 @@ function pxtVersion(): string {
 
 function pxtCrowdinBranch(): string {
     return pxt.appTarget.id == "core" ?
-        readJson("package.json").appTheme.crowdinBranch :
-        readJson("node_modules/pxt-core/package.json").appTheme.crowdinBranch;
+        readJson("pxtarget.json").appTheme.crowdinBranch :
+        readJson("node_modules/pxt-core/pxtarget.json").appTheme.crowdinBranch;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
