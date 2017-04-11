@@ -2439,7 +2439,10 @@ ${lbl}: .short 0xffff
             let result = ir.shared(emitIntOp(meth, prev, oneExpr))
             emitStore(trg, irToNode(result))
             cleanup()
-            return isPost ? prev : result
+            let r = isPost ? prev : result
+            if (opts.target.taggedInts)
+                return ir.op(EK.Incr, [r])
+            return r
         }
 
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
