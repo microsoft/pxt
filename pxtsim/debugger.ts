@@ -32,7 +32,7 @@ namespace pxsim {
         exceptionMessage?: string;
         exceptionStack?: string;
     }
-    
+
     // subtype=trace
     export interface TraceMessage extends DebuggerMessage {
         breakpointId: number;
