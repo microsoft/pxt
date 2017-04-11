@@ -666,13 +666,11 @@ namespace ts.pxtc.Util {
         return Util.httpGetJsonAsync(url);
     }
 
-    export function updateLocalizationAsync(pxtVersion: string, baseUrl: string, code: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
-        const m = /^v\d+/.exec(pxtVersion);
-        const branch = m ? m[0] : undefined;
         if (_localizeLang != code && live) {
             return downloadLiveTranslationsAsync(code, "strings.json", branch)
                 .then(tr => {
