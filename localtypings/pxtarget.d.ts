@@ -137,6 +137,7 @@ declare namespace pxt {
         organizationLogo?: string;
         organizationWideLogo?: string;
         homeUrl?: string;
+        shareUrl?: string; 
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
@@ -187,7 +188,8 @@ declare namespace pxt {
             tutorialStep?: string;
             tutorialNext?: string;
             dialogClick?: string;            
-        }
+        },
+        disableLiveTranslations?: boolean; // don't load translations from crowdin
     }
 
     interface DocMenuEntry {
