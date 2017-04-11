@@ -73,6 +73,16 @@ global.savedModuleExports = module.exports;
 module.exports = null;
 `, ['built/pxt-common.json'])
 
+ju.catFiles('built/web/pxtweb.js', [
+     "built/web/pxtlib.js",
+     "built/web/pxtblocks.js",
+     "built/web/pxtwinrt.js",
+     "built/web/pxteditor.js",
+     "built/web/pxtsim.js"
+], `
+"use strict";
+`);
+
 file('built/nodeutil.js', ['built/cli.js'])
 file('built/pxt.d.ts', ['built/cli.js'], function () {
     jake.cpR("built/cli.d.ts", "built/pxt.d.ts")
@@ -222,6 +232,7 @@ task('wapp', [
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js",
     "built/web/pxtwinrt.js",
+    "built/web/pxtweb.js",
     'built/web/main.js',
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
@@ -361,6 +372,7 @@ file('built/web/fonts/icons.woff2', [], function () {
 })
 
 file('built/web/semantic.css', ['built/pxt.js',
+    'built/web/icons.css',
     "theme/style.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
 ], { async: true }, function () {
     cmdIn(this, ".", 'node built/pxt.js buildcss')

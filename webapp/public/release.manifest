@@ -14,10 +14,9 @@ CACHE:
 /blb/pxtwinrt.js
 /blb/pxteditor.js
 /blb/pxtsim.js
+/blb/pxtweb.js
 /blb/semantic.css
 /blb/rtlsemantic.css
-/blb/custom.css
-/blb/icons.css
 @defaultLocaleStrings@
 @cachedHexFiles@
 
