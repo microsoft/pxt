@@ -1010,7 +1010,7 @@ namespace ts.pxtc.service {
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
             if (type) {
-                if (type.flags & ts.TypeFlags.Anonymous) {
+                if (type.flags & ts.TypeFlags.Object && (<ObjectType>type).flags & ts.ObjectFlags.Anonymous) {
                     const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                     if (sigs.length) {
                         return getFunctionString(sigs[0]);
