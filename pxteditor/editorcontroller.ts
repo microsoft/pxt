@@ -79,11 +79,19 @@ namespace pxt.editor {
         action: "workspacesync" | "workspacereset";
     }
 
+    // UI properties to sync on load
+    export interface EditorSyncState {
+        // (optional) filtering argument
+        filters?: pxt.editor.ProjectFilters;
+    }
+
     export interface EditorWorkspaceSyncResponse extends EditorMessageResponse {
         /*
         * Full list of project, required for init
         */
         projects: pxt.workspace.Project[];
+        // (optional) filtering argument
+        editor?: EditorSyncState;
     }
 
     export interface EditorWorkspaceSaveRequest extends EditorMessageRequest {

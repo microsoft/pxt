@@ -272,6 +272,7 @@ namespace pxt.Cloud {
     }
 
     export interface JsonScript extends JsonPublication {
+        shortid?: string;
         name: string;
         description: string;
         icon: string; // script icon name

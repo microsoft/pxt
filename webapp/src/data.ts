@@ -281,9 +281,10 @@ export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspac
         }),
         getHeaders: ws.getHeaders,
         getHeader: ws.getHeader,
-        syncAsync: () => ws.syncAsync().then(() => {
+        syncAsync: () => ws.syncAsync().then((state) => {
             invalidate("header:*");
             invalidate("text:*");
+            return state;
         }),
         getTextAsync: ws.getTextAsync,
         saveAsync: (h,t) => ws.saveAsync(h,t).then(() => {

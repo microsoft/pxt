@@ -24,6 +24,8 @@ import * as serial from './serial';
 import * as gdb from './gdb';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
+const rtlcss = require('rtlcss');
+const autoprefixer = require('autoprefixer');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -1385,7 +1387,19 @@ function buildSemanticUIAsync() {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
-        fs.writeFileSync('built/web/semantic.css', semCss)
+        return semCss;
+    }).then((semCss) => {
+        // run autoprefixer
+        console.log("running autoprefixer");
+        return autoprefixer.process(semCss).then((result: any) => {
+            fs.writeFileSync('built/web/semantic.css', result.css);
+            return result.css;
+        });
+    }).then((semCss) => {
+        // convert to rtl
+        let rtlCss = rtlcss.process(semCss);
+        console.log("converting semantic css to rtl");
+        fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
 }
 
@@ -1583,7 +1597,8 @@ function buildTargetCoreAsync() {
                 tag: info.tag,
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
-                pxt: pxtVersion()
+                pxt: pxtVersion(),
+                pxtCrowdinBranch: pxtCrowdinBranch()
             }
 
             saveThemeJson(cfg)
@@ -1610,6 +1625,12 @@ function pxtVersion(): string {
     return pxt.appTarget.id == "core" ?
         readJson("package.json")["version"] :
         readJson("node_modules/pxt-core/package.json")["version"];
+}
+
+function pxtCrowdinBranch(): string {
+    return pxt.appTarget.id == "core" ?
+        readJson("pxtarget.json").appTheme.crowdinBranch :
+        readJson("node_modules/pxt-core/pxtarget.json").appTheme.crowdinBranch;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
@@ -2288,7 +2309,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
             files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
 
             configMap = U.clone(configMap)
-            configMap["target"] = pxt.appTarget.id
+            configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
 
             U.iterMap(files, (k, v) => {
                 v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
@@ -3614,7 +3635,8 @@ function fetchTextAsync(filename: string): Promise<Buffer> {
     }
 
     if (/^https?:/.test(filename)) {
-        pxt.log(`Fetching ${filename}...`)
+        pxt.log(`fetching ${filename}...`)
+        pxt.log(`compile log: ${filename.replace(/\.json$/i, ".log")}`)
         return U.requestAsync({ url: filename, allowHttpErrors: !!fn2 })
             .then(resp => {
                 if (fn2 && (resp.statusCode != 200 || /html/.test(resp.headers["content-type"]))) {
@@ -3898,7 +3920,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
-    fs.writeFileSync("built/noTOC.md", noTOCs.map(p => `[${p}](${p})`).join('\n'), "utf8");
+    fs.writeFileSync("built/noTOC.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
         return testSnippetsAsync(snippets, re);
     return Promise.resolve();

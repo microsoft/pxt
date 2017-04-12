@@ -368,4 +368,15 @@ namespace pxt.BrowserUtils {
             img.src = data;
         });
     }
+
+    export function loadScriptAsync(url: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = url;
+            script.addEventListener('load', () => resolve());
+            script.addEventListener('error', (e) => reject(e));
+            document.body.appendChild(script);
+        });
+    }
 }

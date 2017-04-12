@@ -68,7 +68,8 @@ namespace pxt.runner {
         let $c = $('<div class="ui top attached segment"></div>');
         let $menu = $h.find('.right.menu');
 
-        if (woptions.showEdit) { // edit button
+        const theme = pxt.appTarget.appTheme || {};
+        if (woptions.showEdit && !theme.hideDocsEdit) { // edit button
             const $editBtn = $('<a class="item"><i aria-label="edit" class="edit icon"></i></a>').click(() => {
                 decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${window.btoa(Util.uint8ArrayToString(buf))}`, 'pxt'))
@@ -113,7 +114,7 @@ namespace pxt.runner {
         }
 
         // runner menu
-        if (woptions.run) {
+        if (woptions.run && !theme.hideDocsSimulator) {
             let $runBtn = $('<a class="item"><i aria-label="run" class="play icon"></i></a>').click(() => {
                 if ($c.find('.sim')[0])
                     $c.find('.sim').remove(); // remove previous simulators
@@ -153,7 +154,7 @@ namespace pxt.runner {
 
 .blocklyText {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-    font-size:${fontSize} !important;  
+    font-size:${fontSize} !important;
 }
 
 .blocklyCheckbox,
@@ -164,7 +165,7 @@ namespace pxt.runner {
 }`;
             let svgElement = $svg.get(0) as any;
             let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height)
+            pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height, 4)
                 .done(uri => {
                     if (uri)
                         BrowserUtils.browserDownloadDataUri(
@@ -249,7 +250,10 @@ namespace pxt.runner {
             let info = decompileCallInfo(file.statements[0]);
             if (!info) return;
 
-            let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            let block = Blockly.Blocks[info.attrs.blockId];
+            let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
+
+            let s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code class="lang-typescript highlight"/>').text(sig);

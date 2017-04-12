@@ -2,6 +2,14 @@
 
 The following macros are custom extensions to markdown.
 
+## Checkboxes in bullet points
+
+Use ``* [ ]`` to create a bullet point with a square and ``* [x]`` for a checked bullet point
+
+* [ ] unchecked bullet point
+* [x] checked bullet point
+* a regular bullet point
+
 ## avatar
 
 ```

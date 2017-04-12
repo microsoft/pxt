@@ -46,12 +46,9 @@ html, body {
     right: 0;
     overflow: visible;
 }
-.rtl #maineditor {
-    left:0;
-    right:@simulatorWidth;
-}
 
 /* Editor tools */
+@editorToolsCollapsedHeight: 4.7rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -59,12 +56,12 @@ html, body {
     left: 0;
     right: 0;
     z-index: 3;
-    height: 5rem;
+    height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
 }
 
 #blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
-    bottom: 5rem;
+    bottom: @editorToolsCollapsedHeight;
 }
 
 .hideEditorToolbar #blocksArea,
@@ -82,10 +79,6 @@ html, body {
     min-width: @simulatorWidth;
     max-width: @simulatorWidth;
     left: 0;
-}
-.rtl #filelist {
-    left: auto;
-    right: 0;
 }
 
 #filelist {
@@ -140,10 +133,6 @@ html, body {
     position: absolute;
     right: 2rem;
 }
-.rtl #getting-started-btn {
-    right: auto;
-    left: 2rem;
-}
 #getting-started-btn:not(.sideDocs) {
     display: block;
 }
@@ -161,19 +150,11 @@ html, body {
   padding-top: @mainMenuHeight;
   height: 100%;
 }
-.rtl #sidedocs {
-    right:auto;
-    left:0;
-}
 #sidedocspopout {
   position: absolute;
   top:@sidedocsButtonsTop;
   right:@sidedocsButtonsRight;
   display:none;
-}
-.rtl #sidedocspopout {
-    right:auto;
-    left:@sidedocsButtonsRight;
 }
 
 #sidedocsexpand {
@@ -181,10 +162,6 @@ html, body {
   top:@sidedocsButtonsTop;
   right:1.25rem;
   display:none;
-}
-.rtl #sidedocsexpand {
-    right:auto;
-    left:1.25rem;
 }
 
 /* Cookie Message */
@@ -200,12 +177,6 @@ html, body {
 #cookiemsg > a {
    color:white;
    text-decoration: underline;
-}
-
-.rtl #cookiemsg {
-    right:auto;
-    left:2rem;
-    text-align: right;
 }
 
 .collapsedEditorTools #cookiemsg {
@@ -274,9 +245,14 @@ div.simframe > iframe {
     z-index: 5;
     font-size:0.8rem;
 }
-.rtl #helpcard {
-    left:7rem;
-    right:auto;
+
+/* Project code cards */
+.ui.cardimage {
+    background-color: @secondaryColor;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 12rem;
 }
 
 /* Logo */
@@ -317,10 +293,6 @@ div.simframe > iframe {
 }
 .sandboxfooter .item{
     font-size: 0.8rem !important;
-}
-.rtl .sandboxfooter{
-    right: auto;
-    left:1rem;
 }
 
 /* code card */
@@ -371,21 +343,16 @@ div.simframe > iframe {
 
 /* Button Colors */
 .ui.button.editortools-btn {
-    &:extend(.grey all);
+    &:extend(.ui.grey.button all);
 }
 .ui.button.getting-started-btn {
-    &:extend(.green all);
+    &:extend(.ui.green.button all);
 }
 
 /* Icon and text */
 #content .ui.button > .icon-and-text {
     margin-right: 4px;
     margin-left: -2px;
-}
-
-.rtl #content .ui.button > .icon-and-text {
-    margin-left: 4px;
-    margin-right: -2px;
 }
 
 /*******************************
@@ -864,14 +831,6 @@ Avatar
     .sideDocs #maineditor, .sideDocs #editortools {
         right:@sideBarWidth;
     }
-    .rtl .sideDocs #maineditor {
-        left:@sideBarWidth;
-        right:@simulatorWidth;
-    }
-    .rtl .sideDocs #editortools {
-        left:@sideBarWidth;
-        right:0;
-    }
     .sideDocs #sidedocs {
         display:block;
         width:@sideBarWidth;
@@ -933,10 +892,6 @@ Avatar
     }
     .collapsedEditorTools #maineditor {
         left: 0;
-    }
-    .rtl .collapsedEditorTools #maineditor {
-        left: inherit;
-        right: 0 !important;
     }
     #cookiemsg {
         bottom: 7.5rem;
@@ -1026,10 +981,6 @@ Avatar
     #maineditor {
         left:@simulatorWidthSmall;
     }
-    .rtl #maineditor {
-        right:@simulatorWidthSmall;
-        left:0;
-    }
     /* Logo */
     #logo .name {
         display: none !important;
@@ -1072,15 +1023,11 @@ Avatar
         max-width: inherit;
         background: transparent !important;
     }
-    .rtl #filelist {
-        left:auto;
-        right:0;
-    }
-    #maineditor, .rtl #maineditor {
+    #maineditor {
         left: 0;
         right:0;
     }
-    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
+    #maineditor:not(.sandbox) {
         bottom: 0rem;
     }
     #editortools {
@@ -1093,13 +1040,13 @@ Avatar
         bottom: 11rem;
     }
     .hideEditorFloats #editortools {
-        height: 5rem;
+        height: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #tutorialcard.bottom {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
     /* Simulator */
     div.simframe {
@@ -1196,10 +1143,10 @@ Avatar
         display: none !important;
     }
     .hideEditorFloats #editortools {
-        height: 5rem;
+        height: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
 }
 
@@ -1271,10 +1218,6 @@ Avatar
     }
     .sandboxfooter .item{
         font-size: 0.7rem !important;
-    }
-    .rtl .sandbox .sandboxfooter {
-        right: 0.5em;
-        left: auto;
     }
     .simView .sandboxfooter {
         z-index:100;
