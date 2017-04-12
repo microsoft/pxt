@@ -844,7 +844,7 @@ export class ProjectView
         this.setFile(f);
     }
 
-    saveBlocksToTypeScript(): Promise<string> {
+    saveBlocksToTypeScriptAsync(): Promise<string> {
         return this.blocksEditor.saveToTypeScript();
     }
 
