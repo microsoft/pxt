@@ -125,6 +125,7 @@ export class Editor extends srceditor.Editor {
                     }
                     return oldWorkspace;
                 }).then((oldWorkspace) => {
+                    if (!oldWorkspace) return Promise.resolve();
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
                             if (!resp.success) {
