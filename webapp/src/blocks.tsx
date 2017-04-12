@@ -522,7 +522,7 @@ export class Editor extends srceditor.Editor {
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
-                    let txt = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+                    let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
                 }
             }

@@ -108,12 +108,21 @@ export class Editor extends srceditor.Editor {
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(this.editor.getValue(), 0).formatted) {
-                            pxt.debug('js not changed, skipping decompile');
-                            pxt.tickEvent("typescript.noChanges")
-                            return this.parent.setFile(mainPkg.files[blockFile]);
-                        }
+                        return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
+                            return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
+                                if (oldFormatted.formatted == newFormatted.formatted) {
+                                    pxt.debug('js not changed, skipping decompile');
+                                    pxt.tickEvent("typescript.noChanges")
+                                    this.parent.setFile(mainPkg.files[blockFile]);
+                                    return null; // return null to indicate we don't want to decompile
+                                } else {
+                                    return oldWorkspace;
+                                }
+                            });
+                        });
                     }
+                    return oldWorkspace;
+                }).then((oldWorkspace) => {
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
                             if (!resp.success) {
@@ -210,6 +219,7 @@ export class Editor extends srceditor.Editor {
             this.editor.getAction('editor.action.formatDocument').run();
     }
 
+    /*
     public formatCode(isAutomatic = false): string {
         Util.assert(this.editor != undefined); // Guarded
         if (this.fileType != FileType.TypeScript) return;
@@ -225,7 +235,7 @@ export class Editor extends srceditor.Editor {
             isAutomatic = false
             data.charNo = cursorOverride
         }
-        let tmp = pxtc.format(data.programText, data.charNo)
+        let tmp = formatter.format(data.programText, data.charNo)
         if (isAutomatic && tmp.formatted == data.programText)
             return;
         let formatted = tmp.formatted
@@ -243,7 +253,7 @@ export class Editor extends srceditor.Editor {
         this.editor.setScrollPosition(line)
         this.editor.setPosition(position)
         return formatted
-    }
+    }*/
 
     private textAndPosition(pos: monaco.IPosition) {
         let programText = this.editor.getValue()

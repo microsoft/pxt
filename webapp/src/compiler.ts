@@ -33,7 +33,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         }
 
         const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
-        output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
+        output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
     if (!output)
@@ -183,6 +183,10 @@ function ensureApisInfoAsync(): Promise<void> {
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => workerOpAsync("apiSearch", { search: searchFor }));
+}
+
+export function formatAsync(input: string, pos: number) {
+    return workerOpAsync("format", { format: {input: input, pos: pos} });
 }
 
 export function typecheckAsync() {

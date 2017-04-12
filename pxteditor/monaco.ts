@@ -54,9 +54,10 @@ namespace pxt.vs {
             });
     }
 
+    /*
     function displayPartsToParameterSignature(parts: ts.SymbolDisplayPart[]): string {
         return `(${parts.filter(part => part.kind == "parameterName").map(part => part.text).join(", ")})`;
-    }
+    }*/
 
 
     export function initMonacoAsync(element: HTMLElement): Promise<monaco.editor.IStandaloneCodeEditor> {

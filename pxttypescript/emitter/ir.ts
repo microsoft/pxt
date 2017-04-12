@@ -20,12 +20,6 @@ namespace ts.pxtc.ir {
         Nop,
     }
 
-    export enum CallingConvention {
-        Plain,
-        Async,
-        Promise,
-    }
-
     export class Node {
         isExpr(): this is Expr { return false }
         isStmt(): this is Stmt { return false }

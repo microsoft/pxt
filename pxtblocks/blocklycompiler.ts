@@ -931,7 +931,6 @@ namespace pxt.blocks {
 
         e.renames.oldToNew[name] = n;
         e.renames.takenNames[n] = true;
-
         return n;
     }
 
@@ -1594,7 +1593,7 @@ namespace pxt.blocks {
             output += "\n"
 
         // outformat
-        output = pxtc.format(output, 1).formatted;
+        //TODO: samelh output = pxtc.format(output, 1).formatted;
 
         return {
             source: output,
