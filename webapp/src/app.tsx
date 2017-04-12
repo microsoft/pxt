@@ -898,6 +898,7 @@ export class ProjectView
     }
 
     saveAndCompile() {
+        this.saveProjectName();
         this.saveFile();
 
         if (!pxt.appTarget.compile.hasHex) {
