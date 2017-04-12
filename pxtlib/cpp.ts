@@ -1,5 +1,4 @@
 /// <reference path="../localtypings/pxtarget.d.ts"/>
-/// <reference path="emitter/util.ts"/>
 
 namespace pxt {
     declare var require: any;

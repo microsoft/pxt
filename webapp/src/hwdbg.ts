@@ -3,12 +3,11 @@ import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as compiler from "./compiler"
-import * as workeriface from "./workeriface"
 
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
-let iface: workeriface.Iface
+let iface: pxt.worker.Iface
 let isHalted = false
 let lastCompileResult: pxtc.CompileResult;
 let haltCheckRunning = false
@@ -43,7 +42,7 @@ function init() {
         if (!Cloud.isLocalHost() || !Cloud.localToken)
             return;
         pxt.debug('initializing debug pipe');
-        iface = workeriface.makeWebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/debug`)
+        iface = pxt.worker.makeWebSocket(`ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/debug`)
     }
 }
 

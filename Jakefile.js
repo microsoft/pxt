@@ -63,6 +63,7 @@ task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
 ju.catFiles('built/pxt.js', [
     "node_modules/typescript/lib/typescript.js",
     "built/pxtlib.js",
+    "built/pxtcompiler.js",
     "built/pxtsim.js",
     "built/cli.js"
 ],
@@ -91,14 +92,15 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
-compileDir("pxtlib", ["built/typescriptServices.d.ts"])
+compileDir("pxtlib", "built/typescriptServices.d.ts")
+compileDir("pxtcompiler", ["built/pxtlib.js"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
 compileDir("pxtblocks", ["built/pxtlib.js"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
-compileDir("backendutils", ['pxtlib/emitter/util.ts', 'pxtlib/docsrender.ts'])
+compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
 
 task("travis", ["lint", "test", "upload"])
 
@@ -123,7 +125,7 @@ task("lint", [], { async: true }, function () {
         "pxtblocks",
         "pxteditor",
         "pxtlib",
-        "pxtlib/emitter",
+        "pxtcompiler/emitter",
         "pxtrunner",
         "pxtsim",
         "pxtwinrt",
@@ -218,6 +220,7 @@ file('built/localization.json', ju.expand1(
 
 task('wapp', [
     "built/web/pxtlib.js",
+    "built/web/pxtcompiler.js",
     "built/web/pxtsim.js",
     "built/web/pxtblocks.js",
     "built/web/pxteditor.js",
@@ -232,6 +235,7 @@ task('wapp', [
 
 file("built/web/pxtlib.js", [
     "built/pxtlib.js",
+    "built/pxtcompiler.js",
     "built/pxtblocks.js",
     "built/pxtsim.js",
     "built/pxtrunner.js",
@@ -244,6 +248,7 @@ file("built/web/pxtlib.js", [
     jake.cpR("node_modules/fuse.js/src/fuse.min.js", "built/web/fuse.min.js")
 
     jake.cpR("built/pxtlib.js", "built/web/")
+    jake.cpR("built/pxtcompiler.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
     jake.cpR("built/pxtrunner.js", "built/web/")
@@ -351,10 +356,9 @@ file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
 })
 
-file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
-    jake.cpR("built/webapp/src/worker.js", "built/web/")
+file('built/web/worker.js', ["built/webapp/src/app.js"], function () {		
+    jake.cpR("built/webapp/src/worker.js", "built/web/")		
 })
-
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")

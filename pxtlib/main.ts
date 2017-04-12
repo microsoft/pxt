@@ -2,7 +2,7 @@
 /// <reference path="../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
-/// <reference path="emitter/util.ts"/>
+/// <reference path="util.ts"/>
 
 namespace pxt {
     export import U = pxtc.Util;
@@ -773,20 +773,6 @@ namespace pxt {
                         }
                     }
                     return opts;
-                })
-        }
-
-        buildAsync(target: pxtc.CompileTarget) {
-            return this.getCompileOptionsAsync(target)
-                .then(opts => pxtc.compile(opts))
-        }
-
-        serviceAsync(op: string) {
-            return this.getCompileOptionsAsync()
-                .then(opts => {
-                    pxtc.service.performOperation("reset", {})
-                    pxtc.service.performOperation("setOpts", { options: opts })
-                    return pxtc.service.performOperation(op, {})
                 })
         }
 

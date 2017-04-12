@@ -107,13 +107,25 @@ export class Editor extends srceditor.Editor {
                     pxt.blocks.initBlocks(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
-                        const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(this.editor.getValue(), 0).formatted) {
-                            pxt.debug('js not changed, skipping decompile');
-                            pxt.tickEvent("typescript.noChanges")
-                            return this.parent.setFile(mainPkg.files[blockFile]);
-                        }
+                        return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
+                            const oldJs = compilationResult.source;
+                            return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
+                                return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
+                                    if (oldFormatted.formatted == newFormatted.formatted) {
+                                        pxt.debug('js not changed, skipping decompile');
+                                        pxt.tickEvent("typescript.noChanges")
+                                        this.parent.setFile(mainPkg.files[blockFile]);
+                                        return null; // return null to indicate we don't want to decompile
+                                    } else {
+                                        return oldWorkspace;
+                                    }
+                                });
+                            });
+                        })
                     }
+                    return oldWorkspace;
+                }).then((oldWorkspace) => {
+                    if (!oldWorkspace) return Promise.resolve();
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then((resp: pxtc.CompileResult) => {
                             if (!resp.success) {
@@ -153,8 +165,10 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else {
                 pxt.tickEvent("typescript.discardText");
-                this.overrideFile(this.parent.saveBlocksToTypeScript());
-                this.parent.setFile(bf);
+                this.parent.saveBlocksToTypeScriptAsync().then((src) => {
+                    this.overrideFile(src);
+                    this.parent.setFile(bf);
+                })
             }
         })
     }
@@ -208,41 +222,6 @@ export class Editor extends srceditor.Editor {
     beforeCompile() {
         if (this.editor)
             this.editor.getAction('editor.action.formatDocument').run();
-    }
-
-    public formatCode(isAutomatic = false): string {
-        Util.assert(this.editor != undefined); // Guarded
-        if (this.fileType != FileType.TypeScript) return undefined;
-
-        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
-            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
-        }
-
-        let position = this.editor.getPosition()
-        let data = this.textAndPosition(position)
-        let cursorOverride = this.editor.getModel().getOffsetAt(position)
-        if (cursorOverride >= 0) {
-            isAutomatic = false
-            data.charNo = cursorOverride
-        }
-        let tmp = pxtc.format(data.programText, data.charNo)
-        if (isAutomatic && tmp.formatted == data.programText)
-            return undefined;
-        let formatted = tmp.formatted
-        let line = 1
-        let col = 0
-        //console.log(data.charNo, tmp.pos)
-        for (let i = 0; i < formatted.length; ++i) {
-            let c = formatted.charCodeAt(i)
-            col++
-            if (i >= tmp.pos)
-                break;
-            if (c == 10) { line++; col = 0 }
-        }
-        this.editor.setValue(formatted)
-        this.editor.setScrollPosition(line)
-        this.editor.setPosition(position)
-        return formatted
     }
 
     private textAndPosition(pos: monaco.IPosition) {

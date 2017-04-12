@@ -1,5 +1,3 @@
-/// <reference path="assembler.ts"/>
-
 /* Docs:
  *
  * Thumb 16-bit Instruction Set Quick Reference Card
