@@ -1,14 +1,26 @@
 ///<reference path='../localtypings/blockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                A compiler from Blocky to TouchDevelop                     //
 ///////////////////////////////////////////////////////////////////////////////
 
 import B = Blockly;
 
+let iface: pxt.worker.Iface
+
 namespace pxt.blocks {
+
+    export function initWorker() {
+        if (!iface) {
+            iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
+        }
+    }
+
+    export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
+        initWorker()
+        return iface.opAsync(op, arg)
+    }
 
     export enum NT {
         Prefix, // op + map(children)
@@ -931,7 +943,6 @@ namespace pxt.blocks {
 
         e.renames.oldToNew[name] = n;
         e.renames.takenNames[n] = true;
-
         return n;
     }
 
@@ -1341,7 +1352,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    export function compileBlock(b: B.Block, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+    export function compileBlockAsync(b: B.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
         infer(e, w);
@@ -1479,7 +1490,7 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+    export function compileAsync(b: B.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
@@ -1521,7 +1532,7 @@ namespace pxt.blocks {
         ".": 18,
     }
 
-    function tdASTtoTS(app: JsNode[]): BlockCompilationResult {
+    function tdASTtoTS(app: JsNode[]): Promise<BlockCompilationResult> {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
@@ -1593,13 +1604,13 @@ namespace pxt.blocks {
         if (!output)
             output += "\n"
 
-        // outformat
-        output = pxtc.format(output, 1).formatted;
-
-        return {
-            source: output,
-            sourceMap: sourceMap
-        };
+        // outformat async
+        return workerOpAsync("format", { format: {input: output, pos: 1} }).then(() => {
+            return {
+                source: output,
+                sourceMap: sourceMap
+            };
+        })
 
         function emit(n: JsNode) {
             if (n.glueToBlock) {

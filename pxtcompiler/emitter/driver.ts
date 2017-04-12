@@ -2,9 +2,6 @@
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 
 // Enforce order:
-/// <reference path="util.ts"/>
-/// <reference path="cloud.ts"/>
-/// <reference path="assembler.ts"/>
 /// <reference path="avr.ts"/>
 /// <reference path="thumb.ts"/>
 /// <reference path="ir.ts"/>
@@ -13,85 +10,9 @@
 /// <reference path="decompiler.ts"/>
 
 namespace ts.pxtc {
-    export interface Breakpoint extends LocationInfo {
-        id: number;
-        isDebuggerStmt: boolean;
-        successors: number[]; // ids of all breakpoints that we could hit next
-        binAddr?: number;
-    }
-
-    export interface CellInfo {
-        name: string;
-        type: string;
-    }
-
-    export interface ProcCallInfo {
-        procIndex: number;
-        callLabel: string;
-        addr: number;
-        stack: number;
-    }
-
-    export interface ProcDebugInfo {
-        name: string;
-        idx: number;
-        bkptLoc: number;
-        codeStartLoc: number;
-        locals: CellInfo[];
-        args: CellInfo[];
-        localsMark: number;
-        calls: ProcCallInfo[];
-    }
-
     export interface CompileResult {
-        outfiles: pxt.Map<string>;
-        diagnostics: KsDiagnostic[];
-        success: boolean;
-        times: pxt.Map<number>;
+        // Extend the CompileResult interface with ts specific fields
         ast?: Program;
-        breakpoints?: Breakpoint[];
-        procDebugInfo?: ProcDebugInfo[];
-        blocksInfo?: BlocksInfo;
-        usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
-        usedArguments?: pxt.Map<string[]>;
-        // client options
-        saveOnly?: boolean;
-        userContextWindow?: Window;
-    }
-
-    export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
-        if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
-            return [];
-
-        let parts: string[] = [];
-        for (let symbol in resp.usedSymbols) {
-            let info = resp.usedSymbols[symbol]
-            if (info && info.attributes.parts) {
-                let partsRaw = info.attributes.parts;
-                if (partsRaw) {
-                    let partsSplit = partsRaw.split(/[ ,]+/);
-                    partsSplit.forEach(p => {
-                        if (0 < p.length && parts.indexOf(p) < 0) {
-                            parts.push(p);
-                        }
-                    });
-                }
-            }
-        }
-
-        if (ignoreBuiltin) {
-            const builtinParts = pxt.appTarget.simulator.boardDefinition.onboardComponents;
-            if (builtinParts)
-                parts = parts.filter(p => builtinParts.indexOf(p) < 0);
-        }
-
-        //sort parts (so breadboarding layout is stable w.r.t. code ordering)
-        parts.sort();
-        parts = parts.reverse(); //not strictly necessary, but it's a little
-        // nicer for demos to have "ledmatrix"
-        // before "buttonpair"
-
-        return parts;
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {
@@ -103,24 +24,6 @@ namespace ts.pxtc {
         options.noImplicitReturns = true;
         options.allowUnreachableCode = true;
         return options
-    }
-
-    export interface LocationInfo {
-        fileName: string;
-        start: number;
-        length: number;
-
-        //derived
-        line: number;
-        column: number;
-        endLine?: number;
-        endColumn?: number;
-    }
-
-    export interface KsDiagnostic extends LocationInfo {
-        code: number;
-        category: DiagnosticCategory;
-        messageText: string | DiagnosticMessageChain;
     }
 
     export function nodeLocationInfo(node: ts.Node) {
@@ -137,10 +40,6 @@ namespace ts.pxtc {
             fileName: file.fileName,
         }
         return r
-    }
-
-    export interface FunctionLocationInfo extends LocationInfo {
-        functionName: string;
     }
 
     export function patchUpDiagnostics(diags: Diagnostic[]) {
