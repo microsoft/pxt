@@ -925,9 +925,9 @@ namespace pxt.blocks {
         }
 
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
-            ts.isIdentifierPart(a.charCodeAt(0), ts.ScriptTarget.ES5) ? a : "");
+            ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.ScriptTarget.ES5) ? a : "");
 
-        if (!n || !ts.isIdentifierStart(n.charCodeAt(0), ts.ScriptTarget.ES5)) {
+        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.ScriptTarget.ES5)) {
             n = "_" + n;
         }
 
