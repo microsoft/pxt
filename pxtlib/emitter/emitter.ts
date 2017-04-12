@@ -540,7 +540,8 @@ namespace ts.pxtc {
     }
 
     function isObjectLiteral(t: Type) {
-        return t.symbol && (t.symbol.flags & (SymbolFlags.ObjectLiteral | SymbolFlags.TypeLiteral)) !== 0;
+        return (t.flags & TypeFlags.Object) && (<ObjectType>t).objectFlags & ObjectFlags.ObjectLiteral;
+        //return t.symbol && (t.symbol.flags & (SymbolFlags.ObjectLiteral | SymbolFlags.TypeLiteral)) !== 0;
     }
 
     function isStructureType(t: Type) {
