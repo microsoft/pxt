@@ -1,10 +1,9 @@
 import * as core from "./core";
-import * as workeriface from "./workeriface"
 
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
-let iface: workeriface.Iface
+let iface: pxt.worker.Iface
 let devPath: Promise<string>
 
 
@@ -53,7 +52,7 @@ function init() {
         if (!Cloud.isLocalHost() || !Cloud.localToken)
             return;
         pxt.debug('initializing hid pipe');
-        iface = workeriface.makeWebSocket(
+        iface = pxt.worker.makeWebSocket(
             `ws://localhost:${pxt.options.wsPort}/${Cloud.localToken}/hid`, onOOB)
     }
 }

@@ -101,8 +101,8 @@ export class Editor implements pxt.editor.IEditor {
     setDiagnostics(file: pkg.File, snapshot: any): void { }
     setViewState(view: ViewState): void { }
 
-    saveToTypeScript(): string {
-        return null
+    saveToTypeScript(): Promise<string> {
+        return Promise.resolve('');
     }
 
     highlightStatement(brk: pxtc.LocationInfo) { }

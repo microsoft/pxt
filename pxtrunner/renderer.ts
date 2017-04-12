@@ -154,7 +154,7 @@ namespace pxt.runner {
 
 .blocklyText {
     font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-    font-size:${fontSize} !important;  
+    font-size:${fontSize} !important;
 }
 
 .blocklyCheckbox,
@@ -250,7 +250,10 @@ namespace pxt.runner {
             let info = decompileCallInfo(file.statements[0]);
             if (!info) return;
 
-            let s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            let block = Blockly.Blocks[info.attrs.blockId];
+            let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
+
+            let s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
