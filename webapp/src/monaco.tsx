@@ -658,7 +658,7 @@ export class Editor extends srceditor.Editor {
         } else {
             hasChild = true;
         }
-        if (!hasChild) return null;
+        if (!hasChild) return undefined;
 
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
@@ -1074,7 +1074,6 @@ export class Editor extends srceditor.Editor {
 
         if (file && file.diagnostics) {
             let model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
-            
 
             for (let d of file.diagnostics) {
                 let endPos = model.getPositionAt(d.start + d.length);
