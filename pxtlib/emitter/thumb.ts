@@ -246,8 +246,10 @@ namespace ts.pxtc.thumb {
                         } else {
                             needsJumpOver = true
                             while (--j > i) {
-                                if (f.lines[j].type == "instruction")
+                                if (f.lines[j].type == "instruction") {
                                     nextGoodSpot = f.lines[j]
+                                    break
+                                }
                             }
                         }
                     }
