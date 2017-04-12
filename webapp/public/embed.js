@@ -15,7 +15,7 @@
         "/blb/blockly/blocks_compressed.js",
         "/blb/blockly/msg/js/en.js",
         "/blb/pxtlib.js",
-        "/blb/pxttypescript.js",
+        "/blb/pxtcompiler.js",
         "/blb/pxtblocks.js",
         "/blb/pxteditor.js",
         "/blb/pxtsim.js",

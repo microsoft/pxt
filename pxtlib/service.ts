@@ -179,7 +179,7 @@ namespace ts.pxtc {
         diagnostics: KsDiagnostic[];
         success: boolean;
         times: pxt.Map<number>;
-        //ast?: Program; // Not needed, moved to pxttypescript
+        //ast?: Program; // Not needed, moved to pxtcompiler
         breakpoints?: Breakpoint[];
         procDebugInfo?: ProcDebugInfo[];
         blocksInfo?: BlocksInfo;

@@ -1,5 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../built/pxttypescript.d.ts" />
+/// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
