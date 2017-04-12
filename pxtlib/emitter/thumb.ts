@@ -58,6 +58,7 @@ namespace ts.pxtc.thumb {
             this.addEnc("$i5", "#0-124", v => this.inrange(31, v / 4, (v >> 2) << 6))
             this.addEnc("$i6", "#1-32", v => v == 0 ? null : v == 32 ? 0 : this.inrange(31, v, v << 6))
             this.addEnc("$i7", "#0-62", v => this.inrange(31, v / 2, (v >> 1) << 6))
+            this.addEnc("$i32", "#0-2^32", v => 1)
 
             this.addEnc("$rl0", "{R0-7,...}", v => this.inrange(255, v, v))
             this.addEnc("$rl1", "{LR,R0-7,...}", v => (v & 0x4000) ? this.inrange(255, (v & ~0x4000), 0x100 | (v & 0xff)) : this.inrange(255, v, v))
@@ -177,6 +178,9 @@ namespace ts.pxtc.thumb {
             this.addInst("bl    $lb", 0xf000, 0xf800, "BL");
             // this is normally emitted as 'b' but will be emitted as 'bl' if needed
             this.addInst("bb    $lb", 0xe000, 0xf800, "B");
+
+            // this will emit as PC-relative LDR or ADDS
+            this.addInst("ldlit   $r5, $i32", 0x4800, 0xf800);
         }
 
 
@@ -214,6 +218,71 @@ namespace ts.pxtc.thumb {
                 numArgs: [v],
                 labelName: actual
             }
+        }
+
+        public expandLdlit(f: assembler.File): void {
+            let nextGoodSpot: assembler.Line
+            let needsJumpOver = false
+            let outlines: assembler.Line[] = []
+            let values: pxt.Map<string> = {}
+            let seq = 1
+
+            for (let i = 0; i < f.lines.length; ++i) {
+                let line = f.lines[i]
+                outlines.push(line)
+                if (line.type == "instruction" && line.instruction && line.instruction.name == "ldlit") {
+                    if (!nextGoodSpot) {
+                        let limit = line.location + 900 // leave some space - real limit is 1020
+                        let j = i + 1
+                        for (; j < f.lines.length; ++j) {
+                            if (f.lines[j].location > limit)
+                                break
+                            let op = f.lines[j].getOp()
+                            if (op == "b" || op == "bb" || (op == "pop" && f.lines[j].words[2] == "pc"))
+                                nextGoodSpot = f.lines[j]
+                        }
+                        if (nextGoodSpot) {
+                            needsJumpOver = false
+                        } else {
+                            needsJumpOver = true
+                            while (--j > i) {
+                                if (f.lines[j].type == "instruction")
+                                    nextGoodSpot = f.lines[j]
+                            }
+                        }
+                    }
+                    let reg = line.words[1]
+                    let v = line.words[3]
+                    let lbl = U.lookup(values, v)
+                    if (!lbl) {
+                        lbl = "_ldlit__" + ++seq
+                        values[v] = lbl
+                    }
+                    line.update(`ldr ${reg}, ${lbl}`)
+                }
+                if (line === nextGoodSpot) {
+                    nextGoodSpot = null
+                    let txtLines: string[] = []
+                    let jmplbl = "_jmpwords__" + ++seq
+                    if (needsJumpOver)
+                        txtLines.push("bb " + jmplbl)
+                    txtLines.push(".balign 4")
+                    for (let v of Object.keys(values)) {
+                        let lbl = values[v]
+                        txtLines.push(lbl + ": .word " + v)
+                    }
+                    if (needsJumpOver)
+                        txtLines.push(jmplbl + ":")
+                    for (let t of txtLines) {
+                        f.buildLine(t, outlines)
+                        let ll = outlines[outlines.length - 1]
+                        ll.scope = line.scope
+                        ll.lineNo = line.lineNo
+                    }
+                    values = {}
+                }
+            }
+            f.lines = outlines
         }
 
         public getAddressFromLabel(f: assembler.File, i: assembler.Instruction, s: string, wordAligned = false): number {
@@ -405,7 +474,7 @@ namespace ts.pxtc.thumb {
                 "bc08      pop {r3}\n" +
                 "bd20      pop {r5, pc}\n" +
                 "9003      str r0, [sp, #4*3]\n")
-            }
+        }
     }
 
 

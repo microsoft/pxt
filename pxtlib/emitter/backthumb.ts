@@ -9,8 +9,8 @@ namespace ts.pxtc {
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}"}
-        pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
+        push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}" }
+        pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}" }
         proc_setup(main?: boolean) { return "push {lr}" }
         proc_return() { return "pop {pc}" }
         debugger_hook(lbl: string) {
@@ -112,6 +112,13 @@ ${lbl}:`
     @stackempty args
 `
         }
+        load_ptr_full(lbl: string, reg: string) {
+            assert(!!lbl)
+            return `
+    ldlit ${reg}, ${lbl}
+`
+        }
+
         load_ptr(lbl: string, reg: string) {
             assert(!!lbl)
             return `
@@ -186,8 +193,14 @@ ${lbl}:`
                 result += shift(numShift)
 
             if (isNeg) {
-                result += `negs ${reg}, ${reg}`
+                result += `negs ${reg}, ${reg}\n`
             }
+
+            if (result.split("\n").length > 3 + 1) {
+                // more than 3 instructions? replace with LDR at PC-relative address
+                return `ldlit ${reg}, ${Math.floor(v)}\n`
+            }
+
             return result
         }
     }

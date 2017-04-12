@@ -237,7 +237,7 @@ namespace ts.pxtc.assembler {
         public lookupExternalLabel: (name: string) => number;
         public normalizeExternalLabel = (n: string) => n;
         private ei: AbstractProcessor;
-        private lines: Line[];
+        public lines: Line[];
         private currLineNo: number = 0;
         private realCurrLineNo: number;
         private currLine: Line;
@@ -725,12 +725,49 @@ namespace ts.pxtc.assembler {
             this.pushError(lf("assembly error"), hints);
         }
 
-        private mkLine(tx: string) {
-            let l = new Line(this, tx);
-            l.scope = this.scope;
-            l.lineNo = this.currLineNo;
-            this.lines.push(l);
-            return l;
+        public buildLine(tx: string, lst: Line[]) {
+            let mkLine = (tx: string) => {
+                let l = new Line(this, tx);
+                l.scope = this.scope;
+                l.lineNo = this.currLineNo;
+                lst.push(l)
+                return l;
+            }
+
+            let l = mkLine(tx);
+            let words = tokenize(l.text) || [];
+            l.words = words;
+
+            let w0 = words[0] || ""
+
+            if (w0.charAt(w0.length - 1) == ":") {
+                let m = /^([\.\w]+):$/.exec(words[0])
+                if (m) {
+                    l.type = "label";
+                    l.text = m[1] + ":"
+                    l.words = [m[1]]
+                    if (words.length > 1) {
+                        words.shift()
+                        l = mkLine(tx.replace(/^[^:]*:/, ""))
+                        l.words = words
+                        w0 = words[0] || ""
+                    } else {
+                        return;
+                    }
+                }
+            }
+
+            let c0 = w0.charAt(0)
+            if (c0 == "." || c0 == "@") {
+                l.type = "directive";
+                if (l.words[0] == "@scope")
+                    this.handleDirective(l);
+            } else {
+                if (l.words.length == 0)
+                    l.type = "empty";
+                else
+                    l.type = "instruction";
+            }
         }
 
         private prepLines(text: string) {
@@ -744,41 +781,7 @@ namespace ts.pxtc.assembler {
 
                 this.currLineNo++;
                 this.realCurrLineNo++;
-
-                let l = this.mkLine(tx);
-                let words = tokenize(l.text) || [];
-                l.words = words;
-
-                let w0 = words[0] || ""
-
-                if (w0.charAt(w0.length - 1) == ":") {
-                    let m = /^([\.\w]+):$/.exec(words[0])
-                    if (m) {
-                        l.type = "label";
-                        l.text = m[1] + ":"
-                        l.words = [m[1]]
-                        if (words.length > 1) {
-                            words.shift()
-                            l = this.mkLine(tx.replace(/^[^:]*:/, ""))
-                            l.words = words
-                            w0 = words[0] || ""
-                        } else {
-                            return;
-                        }
-                    }
-                }
-
-                let c0 = w0.charAt(0)
-                if (c0 == "." || c0 == "@") {
-                    l.type = "directive";
-                    if (l.words[0] == "@scope")
-                        this.handleDirective(l);
-                } else {
-                    if (l.words.length == 0)
-                        l.type = "empty";
-                    else
-                        l.type = "instruction";
-                }
+                this.buildLine(tx, this.lines)
             })
         }
 
@@ -926,6 +929,10 @@ namespace ts.pxtc.assembler {
             if (this.errors.length > 0)
                 return;
 
+            this.ei.expandLdlit(this);
+            this.labels = {};
+            this.iterLines();            
+
             this.finalEmit = true;
             this.reallyFinalEmit = this.disablePeepHole;
             this.iterLines();
@@ -1023,6 +1030,9 @@ namespace ts.pxtc.assembler {
 
         public testAssembler() {
             assert(false)
+        }
+
+        public expandLdlit(f: File): void {
         }
 
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {

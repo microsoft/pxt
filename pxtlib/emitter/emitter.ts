@@ -1450,8 +1450,7 @@ ${lbl}: .short 0xffff
                 return ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                let ptr = ir.ptrlit(lbl + "meta", JSON.stringify(str))
-                return ir.rtcall("pxt::ptrOfLiteral", [ptr])
+                return ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
             }
         }
         function emitLiteral(node: LiteralExpression) {
@@ -2148,10 +2147,7 @@ ${lbl}: .short 0xffff
 
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node, getEnclosingTypeBindings(node))
-            let r = ir.ptrlit(lbl + "_Lit", lbl)
-            if (!raw) {
-                r = ir.rtcall("pxt::ptrOfLiteral", [r])
-            }
+            let r = ir.ptrlit(lbl + "_Lit", lbl, !raw)
             return r
         }
 
@@ -2572,8 +2568,7 @@ ${lbl}: .short 0xffff
                         return ir.numlit(((v as number) << 1) | 1)
                     else {
                         let lbl = bin.emitDouble(v as number)
-                        let ptr = ir.ptrlit(lbl, JSON.stringify(v))
-                        return ir.rtcall("pxt::ptrOfLiteral", [ptr])
+                        return ir.ptrlit(lbl, JSON.stringify(v), true)
                     }
                 } else {
                     throw U.oops("bad literal: " + v)
@@ -2600,6 +2595,8 @@ ${lbl}: .short 0xffff
                             !isNaN(parseFloat(vo.args[0].jsInfo)))
                             return true
                         return false
+                    } else if (vo.exprKind == EK.PointerLiteral && !isNaN(parseFloat(vo.jsInfo))) {
+                        return true
                     } else
                         return false
                 }

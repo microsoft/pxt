@@ -757,9 +757,15 @@ namespace ts.pxtc.ir {
         return op(EK.SharedRef, [expr])
     }
 
-    export function ptrlit(lbl: string, jsInfo: string): Expr {
+    export function ptrlit(lbl: string, jsInfo: string, full = false): Expr {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
+        if (full) {
+            if (target.nativeType == "AVR")
+                return rtcall("pxt::ptrOfLiteral", [r])
+            else
+                r.args = []
+        }
         return r
     }
 

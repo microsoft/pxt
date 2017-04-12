@@ -62,6 +62,7 @@ namespace ts.pxtc {
         lambda_prologue() { return "TBD" }
         lambda_epilogue() { return "TBD" }
         load_ptr(lbl: string, reg: string) { return "TBD" }
+        load_ptr_full(lbl: string, reg: string) { return "TBD" }
 
         emit_int(v: number, reg: string) { return "TBD" }
     }
@@ -300,7 +301,10 @@ ${baseLabel}:
                     else oops();
                     break;
                 case ir.EK.PointerLiteral:
-                    this.write(this.t.load_ptr(e.data, reg))
+                    if (e.args)
+                        this.write(this.t.load_ptr_full(e.data, reg))
+                    else
+                        this.write(this.t.load_ptr(e.data, reg))
                     break;
                 case ir.EK.SharedRef:
                     let arg = e.args[0]
