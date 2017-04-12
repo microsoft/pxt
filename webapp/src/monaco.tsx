@@ -219,42 +219,6 @@ export class Editor extends srceditor.Editor {
             this.editor.getAction('editor.action.formatDocument').run();
     }
 
-    /*
-    public formatCode(isAutomatic = false): string {
-        Util.assert(this.editor != undefined); // Guarded
-        if (this.fileType != FileType.TypeScript) return;
-
-        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
-            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
-        }
-
-        let position = this.editor.getPosition()
-        let data = this.textAndPosition(position)
-        let cursorOverride = this.editor.getModel().getOffsetAt(position)
-        if (cursorOverride >= 0) {
-            isAutomatic = false
-            data.charNo = cursorOverride
-        }
-        let tmp = formatter.format(data.programText, data.charNo)
-        if (isAutomatic && tmp.formatted == data.programText)
-            return;
-        let formatted = tmp.formatted
-        let line = 1
-        let col = 0
-        //console.log(data.charNo, tmp.pos)
-        for (let i = 0; i < formatted.length; ++i) {
-            let c = formatted.charCodeAt(i)
-            col++
-            if (i >= tmp.pos)
-                break;
-            if (c == 10) { line++; col = 0 }
-        }
-        this.editor.setValue(formatted)
-        this.editor.setScrollPosition(line)
-        this.editor.setPosition(position)
-        return formatted
-    }*/
-
     private textAndPosition(pos: monaco.IPosition) {
         let programText = this.editor.getValue()
         let lines = pos.lineNumber
