@@ -136,6 +136,7 @@ declare namespace pxt {
         organizationLogo?: string;
         organizationWideLogo?: string;
         homeUrl?: string;
+        shareUrl?: string; 
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
@@ -169,7 +170,7 @@ declare namespace pxt {
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
-        crowdinBranch?: string; // optional branch specification
+        crowdinBranch?: string; // optional branch specification for pxt
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
@@ -186,7 +187,8 @@ declare namespace pxt {
             tutorialStep?: string;
             tutorialNext?: string;
             dialogClick?: string;            
-        }
+        },
+        disableLiveTranslations?: boolean; // don't load translations from crowdin
     }
 
     interface DocMenuEntry {

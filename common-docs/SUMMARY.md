@@ -14,6 +14,7 @@
 
 * [Blocks](/blocks)
     * [Loops](/blocks/loops)
+        * [repeat](/blocks/loops/repeat)
         * [for](/blocks/loops/for)
         * [while](/blocks/loops/while)
     * [Logic](/blocks/logic)
