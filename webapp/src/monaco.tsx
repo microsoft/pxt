@@ -107,19 +107,21 @@ export class Editor extends srceditor.Editor {
                     pxt.blocks.initBlocks(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
-                        const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
-                            return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
-                                if (oldFormatted.formatted == newFormatted.formatted) {
-                                    pxt.debug('js not changed, skipping decompile');
-                                    pxt.tickEvent("typescript.noChanges")
-                                    this.parent.setFile(mainPkg.files[blockFile]);
-                                    return null; // return null to indicate we don't want to decompile
-                                } else {
-                                    return oldWorkspace;
-                                }
+                        return pxt.blocks.compile(oldWorkspace, blocksInfo).then((compilationResult) => {
+                            const oldJs = compilationResult.source;
+                            return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
+                                return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
+                                    if (oldFormatted.formatted == newFormatted.formatted) {
+                                        pxt.debug('js not changed, skipping decompile');
+                                        pxt.tickEvent("typescript.noChanges")
+                                        this.parent.setFile(mainPkg.files[blockFile]);
+                                        return null; // return null to indicate we don't want to decompile
+                                    } else {
+                                        return oldWorkspace;
+                                    }
+                                });
                             });
-                        });
+                        })
                     }
                     return oldWorkspace;
                 }).then((oldWorkspace) => {
@@ -162,8 +164,10 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else {
                 pxt.tickEvent("typescript.discardText");
-                this.overrideFile(this.parent.saveBlocksToTypeScript());
-                this.parent.setFile(bf);
+                this.parent.saveBlocksToTypeScript().then((src) => {
+                    this.overrideFile(src);
+                    this.parent.setFile(bf);
+                })
             }
         })
     }

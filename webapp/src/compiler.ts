@@ -1,19 +1,20 @@
+/// <reference path="../../built/worker.d.ts"/>
+
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
-import * as workeriface from "./workeriface"
 
 
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
-let iface: workeriface.Iface
+let iface: pxt.worker.Iface
 
 export function init() {
     if (!iface) {
-        iface = workeriface.makeWebWorker(pxt.webConfig.workerjs)
+        iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
     }
 }
 

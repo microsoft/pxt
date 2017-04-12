@@ -94,8 +94,9 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
 
 compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxttypescript", ["built/pxtlib.js"])
+compileDir("worker", ["built/pxtlib.js", "built/pxttypescript.js"])
 compileDir("pxtwinrt", ["built/pxtlib.js"])
-compileDir("pxtblocks", ["built/pxtlib.js"])
+compileDir("pxtblocks", ["built/pxtlib.js", "built/worker.js"])
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtblocks.js"])
 compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
@@ -126,6 +127,7 @@ task("lint", [], { async: true }, function () {
         "pxteditor",
         "pxtlib",
         "pxttypescript/emitter",
+        "pxtworker",
         "pxtrunner",
         "pxtsim",
         "pxtwinrt",
@@ -235,6 +237,7 @@ task('wapp', [
 
 file("built/web/pxtlib.js", [
     "built/pxtlib.js",
+    "built/worker.js",
     "built/pxttypescript.js",
     "built/pxtblocks.js",
     "built/pxtsim.js",
@@ -249,6 +252,7 @@ file("built/web/pxtlib.js", [
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxttypescript.js", "built/web/")
+    jake.cpR("built/worker.js", "built/web/")
     jake.cpR("built/pxtblocks.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
     jake.cpR("built/pxtrunner.js", "built/web/")
@@ -355,11 +359,6 @@ file('built/webapp/src/app.js', expand([
 file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function () {
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
 })
-
-file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
-    jake.cpR("built/webapp/src/worker.js", "built/web/")
-})
-
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")

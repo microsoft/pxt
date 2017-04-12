@@ -14,6 +14,8 @@ import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
 let lf = Util.lf
 
+let iface: pxt.worker.Iface
+
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     currFile: pkg.File;
@@ -43,11 +45,13 @@ export class Editor extends srceditor.Editor {
         else $(classes).hide();
     }
 
-    saveToTypeScript(): string {
+    saveToTypeScript(): Promise<string> {
         if (!this.typeScriptSaveable) return undefined;
         try {
-            this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
-            return this.compilationResult.source;
+            return pxt.blocks.compile(this.editor, this.blockInfo).then((compilationResult) => {
+                this.compilationResult = compilationResult;
+                return this.compilationResult.source;
+            });
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
