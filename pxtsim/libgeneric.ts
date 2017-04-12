@@ -137,10 +137,9 @@ namespace pxsim {
         }
 
         export function setAt(c: RefCollection, x: number, y: any) {
-            if (!c.isValidIndex(x))
-                return
-            //if there is an existing element handle refcount
-            decr(c.getAt(x));
+            if (c.isValidIndex(x))
+                //if there is an existing element handle refcount
+                decr(c.getAt(x));
             incr(y);
             c.setAt(x, y);
         }

@@ -1602,7 +1602,7 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitIndexedAccess(node: ElementAccessExpression, assign: ir.Expr = null): ir.Expr {
+        function emitIndexedAccess(node: ElementAccessExpression, assign: Expression = null): ir.Expr {
             let t = typeOf(node.expression)
 
             let attrs: CommentAttrs = {
@@ -2437,7 +2437,7 @@ ${lbl}: .short 0xffff
             let oneExpr = one ? emitExpr(one) : emitLit(1)
             let prev = ir.shared(emitExpr(trg))
             let result = ir.shared(emitIntOp(meth, prev, oneExpr))
-            emitStore(trg, irToNode(result))
+            emitStore(trg, irToNode(result, opts.target.taggedInts))
             cleanup()
             let r = isPost ? prev : result
             if (opts.target.taggedInts)
@@ -2514,7 +2514,7 @@ ${lbl}: .short 0xffff
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
                 }
             } else if (trg.kind == SK.ElementAccessExpression) {
-                proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, emitExpr(src)))
+                proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
             } else {
                 unhandled(trg, lf("bad assignment target"), 9249)
             }
@@ -2607,10 +2607,12 @@ ${lbl}: .short 0xffff
             return !!(typeOf(e).flags & TypeFlags.NumberLike)
         }
 
-        function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: ir.Expr[] = null) {
+        function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: Expression[] = null) {
             let fmt = ""
             let inf = hex.lookupFunc(name)
             if (inf) fmt = inf.argsFmt
+
+            if (append) args = args.concat(append)
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
@@ -2638,7 +2640,6 @@ ${lbl}: .short 0xffff
                     throw U.oops("invalid format specifier: " + f)
                 }
             })
-            if (append) args2 = args2.concat(append)
             let r = ir.rtcallMask(name, getMask(args), attrs.callingConvention, args2)
             if (opts.target.taggedInts) {
                 if (fmt.charAt(0) == "I")
@@ -3138,7 +3139,7 @@ ${lbl}: .short 0xffff
             }
 
             // c = a[i]
-            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.load())])))
+            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
 
             emit(node.statement);
             proc.emitLblDirect(l.cont);
