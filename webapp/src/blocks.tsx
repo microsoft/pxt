@@ -46,7 +46,7 @@ export class Editor extends srceditor.Editor {
     }
 
     saveToTypeScript(): Promise<string> {
-        if (!this.typeScriptSaveable) return undefined;
+        if (!this.typeScriptSaveable) return Promise.resolve('');
         try {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo).then((compilationResult) => {
                 this.compilationResult = compilationResult;
@@ -55,7 +55,7 @@ export class Editor extends srceditor.Editor {
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return undefined;
+            return Promise.resolve('');
         }
     }
 
