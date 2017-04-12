@@ -90,6 +90,7 @@ declare namespace pxt {
         autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
+        enableTrace?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
@@ -249,6 +250,7 @@ declare namespace ts.pxtc {
         forceEmit?: boolean;
         ast?: boolean;
         breakpoints?: boolean;
+        trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
 

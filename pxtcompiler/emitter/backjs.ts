@@ -1,5 +1,5 @@
 namespace ts.pxtc {
-    // TODO: ARM specific code should be lifted out 
+    // TODO: ARM specific code should be lifted out
     const jsOpMap: pxt.Map<string> = {
         "thumb::adds": "+",
         "thumb::subs": "-",
@@ -64,7 +64,7 @@ namespace ts.pxtc {
 var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
 var r0 = s.r0, step = s.pc;
 s.pc = -1;
-while (true) { 
+while (true) {
 if (yieldSteps-- < 0 && maybeYield(s, step, r0)) return null;
 switch (step) {
   case 0:
@@ -134,15 +134,22 @@ switch (step) {
 
         function emitBreakpoint(s: ir.Stmt) {
             let id = s.breakpointInfo.id
+            let lbl: number;
             write(`s.lastBrkId = ${id};`)
-            if (!bin.options.breakpoints)
-                return;
-            let lbl = ++lblIdx
-            let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
-            if (s.breakpointInfo.isDebuggerStmt)
-                write(brkCall)
-            else
-                write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+            if (bin.options.trace) {
+                lbl = ++lblIdx
+                write(`return trace(${id}, s, ${lbl});`)
+            }
+            else {
+                if (!bin.options.breakpoints)
+                    return;
+                lbl = ++lblIdx
+                let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
+                if (s.breakpointInfo.isDebuggerStmt)
+                    write(brkCall)
+                else
+                    write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+            }
             writeRaw(`  case ${lbl}:`)
         }
 
