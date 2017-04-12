@@ -566,7 +566,7 @@ export class ProjectView
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
-                    .catch((e: any) => {
+                    .catch((e: pxtc.CompileOptions) => {
                         if (e instanceof pxt.cpp.PkgConflictError) {
                             const confl = e as pxt.cpp.PkgConflictError
                             const remove = (lib: pxt.Package) => ({
@@ -1742,7 +1742,7 @@ function showIcons() {
 function assembleCurrent() {
     compiler.compileAsync({ native: true })
         .then(() => compiler.assembleAsync(getEditor().editorFile.content))
-        .then((v) => {
+        .then(v => {
             let nums = v.words
             pxt.debug("[" + nums.map((n : any) => "0x" + n.toString(16)).join(",") + "]")
         })

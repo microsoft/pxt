@@ -70,7 +70,7 @@ export class Editor extends srceditor.Editor {
 
         let promise = Promise.resolve().then(() => {
             if (!this.hasBlocks())
-                return null;
+                return undefined;
 
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
@@ -115,7 +115,7 @@ export class Editor extends srceditor.Editor {
                         }
                     }
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
-                        .then((resp: any) => {
+                        .then((resp: pxtc.CompileResult) => {
                             if (!resp.success) {
                                 this.currFile.diagnostics = resp.diagnostics;
                                 return failedAsync(blockFile);

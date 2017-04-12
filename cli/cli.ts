@@ -3660,10 +3660,10 @@ function extractAsyncInternal(filename: string, out: string, vscode: boolean): P
 
     return fetchTextAsync(filename)
         .then(buf => extractBufferAsync(buf, out))
-        .then(dirs => {
+        .then((dirs: string[]) => {
             if (dirs && vscode) {
                 pxt.debug('launching code...')
-                dirs.forEach((dir: any) => openVsCode(dir));
+                dirs.forEach(dir => openVsCode(dir));
             }
         })
 }

@@ -101,14 +101,14 @@ namespace pxt.HF2 {
     const HF2_STATUS_EXEC_ERR = 0x02
 
 
-    export function write32(buf: any, pos: number, v: number) {
+    export function write32(buf: { [index: number]: number }, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
         buf[pos + 2] = (v >> 16) & 0xff;
         buf[pos + 3] = (v >> 24) & 0xff;
     }
 
-    export function write16(buf: any, pos: number, v: number) {
+    export function write16(buf: { [index: number]: number }, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
         buf[pos + 1] = (v >> 8) & 0xff;
     }

@@ -27,7 +27,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
             output += `${diagnostic.category == ts.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
-            let f = mainPkg.filterFiles((f: any) => f.getTypeScriptName() == diagnostic.fileName)[0]
+            let f = mainPkg.filterFiles((f: pkg.File) => f.getTypeScriptName() == diagnostic.fileName)[0]
             if (f)
                 f.diagnostics.push(diagnostic)
         }
@@ -72,7 +72,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
     trg.isNative = options.native
     trg.preferredEditor = options.preferredEditor;
     return pkg.mainPkg.getCompileOptionsAsync(trg)
-        .then((opts: any) => {
+        .then((opts: pxtc.CompileOptions) => {
             if (options.debug) {
                 opts.breakpoints = true
                 opts.justMyCode = true
@@ -85,7 +85,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             return opts
         })
         .then(compileCoreAsync)
-        .then((resp: any) => {
+        .then((resp: pxtc.CompileResult) => {
             let outpkg = pkg.mainEditorPkg().outputPkg
 
             // keep the assembly file - it is only generated when user hits "Download"
@@ -133,11 +133,11 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
 export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: B.Workspace, blockFile?: string) {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
-        .then((opts: any) => {
+        .then((opts: pxtc.CompileOptions) => {
             opts.ast = true;
             return decompileCoreAsync(opts, fileName)
         })
-        .then((resp: any) => {
+        .then((resp: pxtc.CompileResult) => {
             // try to patch event locations
             if (resp.success && blockInfo && oldWorkspace && blockFile) {
                 const newXml = pxt.blocks.layout.patchBlocksFromOldWorkspace(blockInfo, oldWorkspace, resp.outfiles[blockFile]);
@@ -187,7 +187,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
 
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
-        .then((opts: any) => {
+        .then((opts: pxtc.CompileOptions) => {
             opts.testMode = true // show errors in all top-level code
             return workerOpAsync("setOptions", { options: opts })
         })
@@ -207,7 +207,7 @@ export function getApisInfoAsync() {
 export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return cachedBlocks
         ? Promise.resolve(cachedBlocks)
-        : getApisInfoAsync().then((info: any) => cachedBlocks = pxtc.getBlocksInfo(info));
+        : getApisInfoAsync().then((info: pxtc.ApisInfo) => cachedBlocks = pxtc.getBlocksInfo(info));
 }
 
 export function newProject() {
