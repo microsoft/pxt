@@ -2336,7 +2336,12 @@ enum BuildOption {
 
 export function serviceAsync(parsed: commandParser.ParsedCommand) {
     let fn = "built/response.json"
-    return mainPkg.serviceAsync(parsed.arguments[0])
+    return mainPkg.getCompileOptionsAsync()
+        .then(opts => {
+            pxtc.service.performOperation("reset", {})
+            pxtc.service.performOperation("setOpts", { options: opts })
+            return pxtc.service.performOperation(parsed.arguments[0], {})
+        })
         .then(res => {
             if (res.errorMessage) {
                 console.error("Error calling service:", res.errorMessage)
@@ -2359,7 +2364,8 @@ export function timeAsync() {
     ensurePkgDir();
     let min: Map<number> = null;
     let loop = () =>
-        mainPkg.buildAsync(mainPkg.getTargetOptions())
+        mainPkg.getCompileOptionsAsync(mainPkg.getTargetOptions())
+            .then(opts => pxtc.compile(opts))
             .then(res => {
                 if (!min) {
                     min = res.times
