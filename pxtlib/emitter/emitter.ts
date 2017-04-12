@@ -3225,7 +3225,7 @@ ${lbl}: .short 0xffff
                     if (opts.target.taggedInts) {
                         // we assume the value we're switching over will stay alive
                         // so, the mask only applies to the case expression if needed
-                        let cmpCall = ir.rtcallMask(mapIntOpName("pxt::eq_bool"),
+                        let cmpCall = ir.rtcallMask(mapIntOpName("pxt::switch_eq"),
                             isRefCountedExpr(cc.expression) ? 1 : 0,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
@@ -3267,6 +3267,10 @@ ${lbl}: .short 0xffff
                 }
                 return lbl
             })
+
+            if (opts.target.taggedInts) {
+                proc.emitExpr(ir.op(EK.Decr, [expr]))
+            }
 
             if (defaultLabel)
                 proc.emitJmp(defaultLabel, plainExpr)

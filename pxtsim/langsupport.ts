@@ -526,6 +526,14 @@ namespace pxsim {
             decr(map)
         }
 
+        export function switch_eq(a: any, b: any) {
+            if (a == b) {
+                decr(b)
+                return true
+            }
+            return false
+        }
+
         // these are never used in simulator; silence the warnings
         export var getGlobalsPtr: any;
     }
