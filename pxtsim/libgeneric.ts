@@ -7,20 +7,16 @@ namespace pxsim {
         //default values of boolean, string, number & object arrays are respectively, false, null, 0, null
         //All of the default values are implemented by mapping undefined\null to zero.
 
-        // 1 - collection of refs (need decr)
-        // 2 - collection of strings (in fact we always have 3, never 2 alone)
-
-        constructor(public flags: number) {
+        constructor() {
             super();
         }
 
         destroy() {
             let data = this.data
-            if (this.flags & 1)
-                for (let i = 0; i < data.length; ++i) {
-                    decr(data[i]);
-                    data[i] = 0;
-                }
+            for (let i = 0; i < data.length; ++i) {
+                decr(data[i]);
+                data[i] = 0;
+            }
             this.data = [];
         }
 
@@ -92,13 +88,13 @@ namespace pxsim {
         }
 
         print() {
-            console.log(`RefCollection id:${this.id} refs:${this.refcnt} len:${this.data.length} flags:${this.flags} d0:${this.data[0]}`)
+            console.log(`RefCollection id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
         }
     }
 
     export namespace Array_ {
-        export function mk(f: number) {
-            return new RefCollection(f);
+        export function mk() {
+            return new RefCollection();
         }
 
         export function length(c: RefCollection) {
@@ -111,19 +107,19 @@ namespace pxsim {
 
 
         export function push(c: RefCollection, x: any) {
-            if (c.flags & 1) incr(x);
+            incr(x);
             c.push(x);
         }
 
         export function pop(c: RefCollection, x: any) {
             let ret = c.pop();
-            if (c.flags & 1) decr(ret);
+            decr(ret);
             return ret;
         }
 
         export function getAt(c: RefCollection, x: number) {
             let tmp = c.getAt(x);
-            if (c.flags & 1) incr(tmp);
+            incr(tmp);
             return tmp;
         }
 
@@ -131,23 +127,21 @@ namespace pxsim {
             if (!c.isValidIndex(x))
                 return;
 
-            if (c.flags & 1) {
-                decr(c.getAt(x));
-            }
+            decr(c.getAt(x));
             return c.removeAt(x);
         }
 
         export function insertAt(c: RefCollection, x: number, y: number) {
-            if (c.flags & 1) incr(y);
+            incr(y);
             c.insertAt(x, y);
         }
 
         export function setAt(c: RefCollection, x: number, y: any) {
-            if (c.isValidIndex(x) && (c.flags & 1)) {
-                //if there is an existing element handle refcount
-                decr(c.getAt(x));
-                incr(y);
-            }
+            if (!c.isValidIndex(x))
+                return
+            //if there is an existing element handle refcount
+            decr(c.getAt(x));
+            incr(y);
             c.setAt(x, y);
         }
 

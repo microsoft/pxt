@@ -1510,7 +1510,7 @@ ${lbl}: .short 0xffff
                 flag = 3;
             else if (isRef)
                 flag = 1;
-            let coll = ir.shared(ir.rtcall("Array_::mk", [ir.numlit(flag)]))
+            let coll = ir.shared(ir.rtcall("Array_::mk", opts.target.floatingPoint ? [] : [ir.numlit(flag)]))
             for (let elt of node.elements) {
                 let e = ir.shared(emitExpr(elt))
                 proc.emitExpr(ir.rtcall("Array_::push", [coll, e]))
@@ -2537,12 +2537,12 @@ ${lbl}: .short 0xffff
                         return "thumb::" + b
                     else if (b == "lt_bool")
                         return "Number_::lt"
-                    else if (b == "eq_bool")
-                        return "Number_::eq"
                     else
                         return "Number_::" + b.replace(/eqq/, "eq")
                 }
                 switch (n) {
+                    case "pxt::eq_bool":
+                    case "pxt::eqq_bool":
                     case "langsupp::ptreq":
                     case "langsupp::ptreqq":
                         return "Number_::eq";
@@ -2867,8 +2867,10 @@ ${lbl}: .short 0xffff
                     case SK.EqualsEqualsEqualsToken:
                     case SK.ExclamationEqualsEqualsToken:
                     case SK.ExclamationEqualsToken:
-                        return ir.rtcall(
+                        return ir.rtcallMask(
                             mapIntOpName(simpleInstruction(node.operatorToken.kind)),
+                            opts.target.boxDebug ? 1 : 0,
+                            ir.CallingConvention.Plain,
                             [fromInt(shim("String_::compare")), emitLit(0)])
                     default:
                         unhandled(node.operatorToken, lf("unknown string operator"), 9251)
@@ -2897,7 +2899,7 @@ ${lbl}: .short 0xffff
             let tp = typeOf(e)
 
             if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean)))
-                return ir.rtcall(mapIntOpName("numops::toString"), [r])
+                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
             else if (tp.flags & TypeFlags.NumberLike)
                 return ir.rtcall("Number_::toString", [r])
             else if (tp.flags & TypeFlags.Boolean)
@@ -3222,7 +3224,7 @@ ${lbl}: .short 0xffff
                     if (opts.target.taggedInts) {
                         // we assume the value we're switching over will stay alive
                         // so, the mask only applies to the case expression if needed
-                        let cmpCall = ir.rtcallMask(mapIntOpName("langsupp::eq_bool"),
+                        let cmpCall = ir.rtcallMask(mapIntOpName("pxt::eq_bool"),
                             isRefCountedExpr(cc.expression) ? 1 : 0,
                             ir.CallingConvention.Plain, [cmpExpr, expr])
                         quickCmpMode = false
@@ -3248,7 +3250,7 @@ ${lbl}: .short 0xffff
                             }
                             proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, plainExpr)
                         } else {
-                            let cmpCall = emitIntOp("numops::eq_bool", cmpExpr, expr)
+                            let cmpCall = emitIntOp("pxt::eq_bool", cmpExpr, expr)
                             quickCmpMode = false
                             proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                         }
