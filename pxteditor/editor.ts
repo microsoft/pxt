@@ -96,7 +96,7 @@ namespace pxt.editor {
 
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;
-        saveBlocksToTypeScript(): string;
+        saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;

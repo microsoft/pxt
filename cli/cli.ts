@@ -1,5 +1,6 @@
 /// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
+/// <reference path="../built/pxtcompiler.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
 (global as any).pxt = pxt;
@@ -1597,7 +1598,8 @@ function buildTargetCoreAsync() {
                 tag: info.tag,
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
-                pxt: pxtVersion()
+                pxt: pxtVersion(),
+                pxtCrowdinBranch: pxtCrowdinBranch()
             }
 
             saveThemeJson(cfg)
@@ -1624,6 +1626,12 @@ function pxtVersion(): string {
     return pxt.appTarget.id == "core" ?
         readJson("package.json")["version"] :
         readJson("node_modules/pxt-core/package.json")["version"];
+}
+
+function pxtCrowdinBranch(): string {
+    return pxt.appTarget.id == "core" ?
+        readJson("pxtarget.json").appTheme.crowdinBranch :
+        readJson("node_modules/pxt-core/pxtarget.json").appTheme.crowdinBranch;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
@@ -2328,7 +2336,12 @@ enum BuildOption {
 
 export function serviceAsync(parsed: commandParser.ParsedCommand) {
     let fn = "built/response.json"
-    return mainPkg.serviceAsync(parsed.arguments[0])
+    return mainPkg.getCompileOptionsAsync()
+        .then(opts => {
+            pxtc.service.performOperation("reset", {})
+            pxtc.service.performOperation("setOpts", { options: opts })
+            return pxtc.service.performOperation(parsed.arguments[0], {})
+        })
         .then(res => {
             if (res.errorMessage) {
                 console.error("Error calling service:", res.errorMessage)
@@ -2351,7 +2364,8 @@ export function timeAsync() {
     ensurePkgDir();
     let min: Map<number> = null;
     let loop = () =>
-        mainPkg.buildAsync(mainPkg.getTargetOptions())
+        mainPkg.getCompileOptionsAsync(mainPkg.getTargetOptions())
+            .then(opts => pxtc.compile(opts))
             .then(res => {
                 if (!min) {
                     min = res.times

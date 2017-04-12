@@ -2,7 +2,7 @@
 /// <reference path="../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
-/// <reference path="emitter/util.ts"/>
+/// <reference path="util.ts"/>
 
 namespace pxt {
     export import U = pxtc.Util;
@@ -601,32 +601,34 @@ namespace pxt {
             const targetId = pxt.appTarget.id;
             const filenames = [this.id + "-jsdoc", this.id];
             const r: Map<string> = {};
+            const theme = pxt.appTarget.appTheme || {};
 
             // live loc of bundled packages
             if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.log(`loading live translations for ${this.id}`)
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
                         .then(tr => Util.jsonMergeFrom(r, tr))
                         .catch(e => pxt.log(`error while downloading ${targetId}/${fn}-strings.json`)))
                 ).then(() => r);
             }
-
-            const files = this.config.files;
-            filenames.map(name => {
-                let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
-                if (files.indexOf(fn) > -1)
-                    return JSON.parse(this.readFile(fn)) as Map<string>;
-                if (lang.length > 2) {
-                    fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
+            else {
+                const files = this.config.files;
+                filenames.map(name => {
+                    let fn = `_locales/${lang.toLowerCase()}/${name}-strings.json`;
                     if (files.indexOf(fn) > -1)
                         return JSON.parse(this.readFile(fn)) as Map<string>;
-                }
-                return undefined;
-            }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
+                    if (lang.length > 2) {
+                        fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${name}-strings.json`;
+                        if (files.indexOf(fn) > -1)
+                            return JSON.parse(this.readFile(fn)) as Map<string>;
+                    }
+                    return undefined;
+                }).filter(d => !!d).forEach(d => Util.jsonMergeFrom(r, d));
 
-            return Promise.resolve(r);
+                return Promise.resolve(r);
+            }
         }
     }
 
@@ -771,20 +773,6 @@ namespace pxt {
                         }
                     }
                     return opts;
-                })
-        }
-
-        buildAsync(target: pxtc.CompileTarget) {
-            return this.getCompileOptionsAsync(target)
-                .then(opts => pxtc.compile(opts))
-        }
-
-        serviceAsync(op: string) {
-            return this.getCompileOptionsAsync()
-                .then(opts => {
-                    pxtc.service.performOperation("reset", {})
-                    pxtc.service.performOperation("setOpts", { options: opts })
-                    return pxtc.service.performOperation(op, {})
                 })
         }
 

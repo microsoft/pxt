@@ -844,7 +844,7 @@ export class ProjectView
         this.setFile(f);
     }
 
-    saveBlocksToTypeScript(): string {
+    saveBlocksToTypeScriptAsync(): Promise<string> {
         return this.blocksEditor.saveToTypeScript();
     }
 
@@ -855,20 +855,20 @@ export class ProjectView
         let promise = Promise.resolve().then(() => {
             return open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         }).then(() => {
-            let src = this.editor.saveToTypeScript();
+            return this.editor.saveToTypeScript().then((src) => {
+                if (!src) return Promise.resolve();
+                // format before saving
+                // if (open) src = pxtc.format(src, 0).formatted;
 
-            if (!src) return Promise.resolve();
-            // format before saving
-            if (open) src = pxtc.format(src, 0).formatted;
-
-            let mainPkg = pkg.mainEditorPkg();
-            let tsName = this.editorFile.getVirtualFileName();
-            Util.assert(tsName != this.editorFile.name);
-            return mainPkg.setContentAsync(tsName, src).then(() => {
-                if (open) {
-                    let f = mainPkg.files[tsName];
-                    this.setFile(f);
-                }
+                let mainPkg = pkg.mainEditorPkg();
+                let tsName = this.editorFile.getVirtualFileName();
+                Util.assert(tsName != this.editorFile.name);
+                return mainPkg.setContentAsync(tsName, src).then(() => {
+                    if (open) {
+                        let f = mainPkg.files[tsName];
+                        this.setFile(f);
+                    }
+                });
             });
         });
 
@@ -1979,7 +1979,7 @@ $(document).ready(() => {
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(config.pxtVersion, config.commitCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

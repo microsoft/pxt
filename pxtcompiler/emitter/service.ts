@@ -1,75 +1,6 @@
 /// <reference path="../../typings/globals/fusejs/index.d.ts" />
 
 namespace ts.pxtc {
-    export interface ParameterDesc {
-        name: string;
-        description: string;
-        type: string;
-        initializer?: string;
-        defaults?: string[];
-        properties?: PropertyDesc[];
-        options?: Map<PropertyOption>;
-        isEnum?: boolean;
-    }
-
-    export interface PropertyDesc {
-        name: string;
-        type: string;
-    }
-
-    export interface PropertyOption {
-        value: string;
-    }
-
-    export enum SymbolKind {
-        None,
-        Method,
-        Property,
-        Function,
-        Variable,
-        Module,
-        Enum,
-        EnumMember,
-        Class,
-        Interface,
-    }
-
-    export interface SymbolInfo {
-        attributes: CommentAttrs;
-        name: string;
-        namespace: string;
-        kind: SymbolKind;
-        parameters: ParameterDesc[];
-        retType: string;
-        extendsTypes?: string[]; // for classes and interfaces
-        isContextual?: boolean;
-        qName?: string;
-        pkg?: string;
-        snippet?: string;
-    }
-
-    export interface ApisInfo {
-        byQName: pxt.Map<SymbolInfo>;
-    }
-
-    export interface BlocksInfo {
-        apis: ApisInfo;
-        blocks: SymbolInfo[];
-        blocksById: pxt.Map<SymbolInfo>;
-    }
-
-    export interface CompletionEntry {
-        name: string;
-        kind: string;
-        qualifiedName: string;
-    }
-
-    export interface CompletionInfo {
-        entries: pxt.Map<SymbolInfo>;
-        isMemberCompletion: boolean;
-        isNewIdentifierLocation: boolean;
-        isTypeLocation: boolean;
-    }
 
     export const placeholderChar = "◊";
     export const defaultImgLit = `
@@ -79,40 +10,6 @@ namespace ts.pxtc {
 . . . . .
 . . . . .
 `
-
-    export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
-        const lang = pxtc.Util.userLanguage();
-        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
-
-        return mainPkg.localizationStringsAsync(lang)
-            .then(loc => Util.values(apis.byQName).forEach(fn => {
-                const jsDoc = loc[fn.qName]
-                if (jsDoc) {
-                    fn.attributes.jsDoc = jsDoc;
-                    if (fn.parameters)
-                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
-                }
-                if (fn.attributes.block) {
-                    const locBlock = loc[`${fn.qName}|block`];
-                    if (locBlock) {
-                        fn.attributes.block = locBlock;
-                    }
-                }
-                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                if (nsDoc) {
-                    fn.attributes.block = nsDoc;
-                }
-            }))
-            .then(() => apis);
-    }
-
-    /**
-     * Unlocalized category name for a symbol
-     */
-    export function blocksCategory(si: SymbolInfo): string {
-        const n = !si ? undefined : (si.attributes.blockNamespace || si.namespace);
-        return n ? Util.capitalize(n.split('.')[0]) : undefined;
-    }
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
@@ -304,16 +201,6 @@ namespace ts.pxtc {
             }
         }
         return null;
-    }
-
-    export function getBlocksInfo(info: ApisInfo): BlocksInfo {
-        const blocks = pxtc.Util.values(info.byQName)
-            .filter(s => !!s.attributes.block && !!s.attributes.blockId && (s.kind != pxtc.SymbolKind.EnumMember));
-        return {
-            apis: info,
-            blocks,
-            blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId)
-        }
     }
 
     export interface GenMarkdownOptions {
@@ -679,7 +566,7 @@ namespace ts.pxtc.service {
 
         getNewLine() { return "\n" }
         getCurrentDirectory(): string { return "." }
-        getDefaultLibFileName(options: CompilerOptions): string { return null }
+        getDefaultLibFileName(options: CompilerOptions): string { return "no-default-lib.d.ts" }
         log(s: string): void { console.log("LOG", s) }
         trace(s: string): void { console.log("TRACE", s) }
         error(s: string): void { console.error("ERROR", s) }
@@ -696,29 +583,6 @@ namespace ts.pxtc.service {
     let lastFuse: Fuse;
     let builtinItems: SearchInfo[];
     let tbSubset: Map<boolean>;
-
-    export interface OpArg {
-        fileName?: string;
-        fileContent?: string;
-        position?: number;
-        options?: CompileOptions;
-        search?: SearchOptions;
-    }
-
-    export interface SearchOptions {
-        subset?: Map<boolean>;
-        term: string;
-    }
-
-    export interface SearchInfo {
-        id: string;
-        name: string;
-        qName?: string;
-        block?: string;
-        namespace?: string;
-        jsdoc?: string;
-        field?: [string, string];
-    }
 
     function fileDiags(fn: string) {
         if (!/\.ts$/.test(fn))
@@ -808,6 +672,11 @@ namespace ts.pxtc.service {
             }
 
             return patchUpDiagnostics(allD)
+        },
+
+        format: v => {
+            const formatOptions = v.format;
+            return pxtc.format(formatOptions.input, formatOptions.pos);
         },
 
         apiInfo: () => {

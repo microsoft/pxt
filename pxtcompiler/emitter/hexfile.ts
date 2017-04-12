@@ -33,84 +33,6 @@ namespace ts.pxtc {
         export const startMagic = "UF2\x0AWQ]\x9E"
         export const endMagic = "0o\xB1\x0A"
 
-        export const UF2_MAGIC_START0 = 0x0A324655; // "UF2\n"
-        export const UF2_MAGIC_START1 = 0x9E5D5157; // Randomly selected
-        export const UF2_MAGIC_END = 0x0AB16F30;    // Ditto
-
-        export interface Block {
-            flags: number;
-            targetAddr: number;
-            payloadSize: number;
-            blockNo: number;
-            numBlocks: number;
-            data: Uint8Array;
-        }
-
-        export function parseBlock(block: Uint8Array): Block {
-            let wordAt = (k: number) => {
-                return (block[k] + (block[k + 1] << 8) + (block[k + 2] << 16) + (block[k + 3] << 24)) >>> 0
-            }
-            if (!block || block.length != 512 ||
-                wordAt(0) != UF2_MAGIC_START0 || wordAt(4) != UF2_MAGIC_START1 ||
-                wordAt(block.length - 4) != UF2_MAGIC_END)
-                return null
-            return {
-                flags: wordAt(8),
-                targetAddr: wordAt(12),
-                payloadSize: wordAt(16),
-                blockNo: wordAt(20),
-                numBlocks: wordAt(24),
-                data: block.slice(32, 512 - 4)
-            }
-        }
-
-        export function parseFile(blocks: Uint8Array) {
-            let r: Block[] = []
-            for (let i = 0; i < blocks.length; i += 512) {
-                let b = parseBlock(blocks.slice(i, i + 512))
-                if (b) r.push(b)
-            }
-            return r
-        }
-
-        export function toBin(blocks: Uint8Array) {
-            if (blocks.length < 512)
-                return null
-            let curraddr = -1
-            let appstartaddr = -1
-            let bufs: Uint8Array[] = []
-            for (let i = 0; i < blocks.length; ++i) {
-                let ptr = i * 512
-                let bl = parseBlock(blocks.slice(ptr, ptr + 512))
-                if (!bl) continue
-                if (curraddr == -1) {
-                    curraddr = bl.targetAddr
-                    appstartaddr = curraddr
-                }
-                let padding = bl.targetAddr - curraddr
-                if (padding < 0 || padding % 4 || padding > 1024 * 1024)
-                    continue
-                if (padding > 0)
-                    bufs.push(new Uint8Array(padding))
-                bufs.push(blocks.slice(ptr + 32, ptr + 32 + bl.payloadSize))
-                curraddr = bl.targetAddr + bl.payloadSize
-            }
-            let len = 0
-            for (let b of bufs) len += b.length
-            if (len == 0)
-                return null
-            let r = new Uint8Array(len)
-            let dst = 0
-            for (let b of bufs) {
-                for (let i = 0; i < b.length; ++i)
-                    r[dst++] = b[i]
-            }
-            return {
-                buf: r,
-                start: appstartaddr,
-            }
-        }
-
         function setWord(block: Uint8Array, ptr: number, v: number) {
             block[ptr] = (v & 0xff)
             block[ptr + 1] = ((v >> 8) & 0xff)
@@ -141,23 +63,6 @@ namespace ts.pxtc {
             let res = ""
             for (let b of f.blocks)
                 res += Util.uint8ArrayToString(b)
-            return res
-        }
-
-        function hasAddr(b: Block, a: number) {
-            if (!b) return false
-            return b.targetAddr <= a && a < b.targetAddr + b.payloadSize
-        }
-
-        export function readBytes(blocks: Block[], addr: number, length: number) {
-            let res = new Uint8Array(length)
-            let bl: Block
-            for (let i = 0; i < length; ++i, ++addr) {
-                if (!hasAddr(bl, addr))
-                    bl = blocks.filter(b => hasAddr(b, addr))[0]
-                if (bl)
-                    res[i] = bl.data[addr - bl.targetAddr]
-            }
             return res
         }
 
@@ -251,56 +156,6 @@ namespace ts.pxtc {
             return r
         }
 
-        export interface ChecksumBlock {
-            magic: number;
-            endMarkerPos: number;
-            endMarker: number;
-            regions: { start: number; length: number; checksum: number; }[];
-        }
-
-        export function parseChecksumBlock(buf: ArrayLike<number>, pos = 0): ChecksumBlock {
-            let magic = pxt.HF2.read32(buf, pos)
-            if ((magic & 0x7fffffff) != 0x07eeb07c) {
-                pxt.log("no checksum block magic")
-                return null
-            }
-            let endMarkerPos = pxt.HF2.read32(buf, pos + 4)
-            let endMarker = pxt.HF2.read32(buf, pos + 8)
-            if (endMarkerPos & 3) {
-                pxt.log("invalid end marker position")
-                return null
-            }
-            let pageSize = 1 << (endMarker & 0xff)
-            if (pageSize != pxt.appTarget.compile.flashCodeAlign) {
-                pxt.log("invalid page size: " + pageSize)
-                return null
-            }
-
-            let blk: ChecksumBlock = {
-                magic,
-                endMarkerPos,
-                endMarker,
-                regions: []
-            }
-
-            for (let i = pos + 12; i < buf.length - 7; i += 8) {
-                let r = {
-                    start: pageSize * pxt.HF2.read16(buf, i),
-                    length: pageSize * pxt.HF2.read16(buf, i + 2),
-                    checksum: pxt.HF2.read32(buf, i + 4)
-                }
-                if (r.length && r.checksum) {
-                    blk.regions.push(r)
-                } else {
-                    break
-                }
-            }
-
-            //console.log(hexDump(buf), blk)
-
-            return blk
-        }
-
         export function hexDump(bytes: ArrayLike<number>, startOffset = 0) {
             function toHex(n: number, len = 8) {
                 let r = n.toString(16)
@@ -352,11 +207,6 @@ namespace ts.pxtc {
             }
         }
 
-
-        export function isSetupFor(extInfo: ExtensionInfo) {
-            return currentSetup == extInfo.sha
-        }
-
         function parseHexBytes(bytes: string): number[] {
             bytes = bytes.replace(/^[\s:]/, "")
             if (!bytes) return []
@@ -366,9 +216,6 @@ namespace ts.pxtc {
             else
                 throw oops("bad bytes " + bytes)
         }
-
-        let currentSetup: string = null;
-        export let currentHexInfo: pxtc.HexInfo;
 
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function flashCodeAlign(opts: CompileTarget) {
@@ -946,4 +793,3 @@ __flash_checksums:
 
     export let validateShim = hex.validateShim;
 }
-

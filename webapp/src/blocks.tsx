@@ -14,6 +14,8 @@ import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
 let lf = Util.lf
 
+let iface: pxt.worker.Iface
+
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     currFile: pkg.File;
@@ -43,15 +45,17 @@ export class Editor extends srceditor.Editor {
         else $(classes).hide();
     }
 
-    saveToTypeScript(): string {
-        if (!this.typeScriptSaveable) return undefined;
+    saveToTypeScript(): Promise<string> {
+        if (!this.typeScriptSaveable) return Promise.resolve('');
         try {
-            this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
-            return this.compilationResult.source;
+            return pxt.blocks.compileAsync(this.editor, this.blockInfo).then((compilationResult) => {
+                this.compilationResult = compilationResult;
+                return this.compilationResult.source;
+            });
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return undefined;
+            return Promise.resolve('');
         }
     }
 
@@ -522,7 +526,7 @@ export class Editor extends srceditor.Editor {
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
-                    let txt = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+                    let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
                 }
             }
