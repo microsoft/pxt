@@ -36,6 +36,7 @@
     "built/pxtparts.d.ts",
     "built/pxtlib.js",
     "built/pxtlib.d.ts",
+    "built/pxtcompiler.d.ts",
     "built/pxtsim.d.ts",
     "built/pxtblocks.d.ts",
     "built/pxtrunner.d.ts",
