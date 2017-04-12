@@ -1,5 +1,5 @@
-/// <reference path="../built/pxtlib.d.ts"/>
-/// <reference path="../built/pxttypescript.d.ts"/>
+/// <reference path="../../built/pxtlib.d.ts"/>
+/// <reference path="../../built/pxttypescript.d.ts"/>
 
 importScripts(
     "/blb/typescript.js",

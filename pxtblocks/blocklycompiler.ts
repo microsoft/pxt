@@ -1,7 +1,5 @@
 ///<reference path='../localtypings/blockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
-/// <reference path="../built/worker.d.ts" />
-
 
 ///////////////////////////////////////////////////////////////////////////////
 //                A compiler from Blocky to TouchDevelop                     //
@@ -1354,7 +1352,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    export function compileBlock(b: B.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
+    export function compileBlockAsync(b: B.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
         infer(e, w);
@@ -1492,7 +1490,7 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
+    export function compileAsync(b: B.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 

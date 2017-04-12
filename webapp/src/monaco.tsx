@@ -107,7 +107,7 @@ export class Editor extends srceditor.Editor {
                     pxt.blocks.initBlocks(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
-                        return pxt.blocks.compile(oldWorkspace, blocksInfo).then((compilationResult) => {
+                        return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
                             const oldJs = compilationResult.source;
                             return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
                                 return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {

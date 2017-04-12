@@ -2084,7 +2084,7 @@ namespace pxt.blocks {
                 Blockly.Tooltip.DIV.style.left = anchorX + 'px';
             }
             if (card) {
-                pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).then((compileResult) => {
+                pxt.blocks.compileBlockAsync(Blockly.Tooltip.element_, blockInfo).then((compileResult) => {
                     const cardEl = pxt.docs.codeCard.render({
                         header: renderTip(Blockly.Tooltip.element_),
                         typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
