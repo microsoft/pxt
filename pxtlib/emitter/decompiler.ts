@@ -500,7 +500,7 @@ ${output}</xml>`;
                     case SK.PropertyAccessExpression:
                         return getPropertyAccessExpression(n as ts.PropertyAccessExpression);
                     case SK.CallExpression:
-                        return getStatementBlock(n) as any;
+                        return getStatementBlock(n, undefined, undefined, true) as any;
                     default:
                         error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
                         break;
@@ -726,11 +726,11 @@ ${output}</xml>`;
             }
         }
 
-        function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node): StatementNode {
+        function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false): StatementNode {
             const node = n as ts.Node;
             let stmt: StatementNode;
 
-            if (checkStatement(node, blocksInfo)) {
+            if (checkStatement(node, blocksInfo, asExpression)) {
                 stmt = getTypeScriptStatementBlock(node);
             }
             else {
@@ -738,7 +738,7 @@ ${output}</xml>`;
                     case SK.Block:
                         return codeBlock((node as ts.Block).statements, next);
                     case SK.ExpressionStatement:
-                        return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node);
+                        return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression);
                     case SK.VariableStatement:
                         return codeBlock((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
                     case SK.ArrowFunction:
@@ -947,40 +947,59 @@ ${output}</xml>`;
             const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
             const condition = n.condition as ts.BinaryExpression
 
-            const r: StatementNode = {
-                kind: "statement",
-                type: "controls_simple_for",
-                fields: [getField("VAR", getVariableName(initializer.declarations[0].name as ts.Identifier))],
-                inputs: [],
-                handlers: []
-            };
+            const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
 
-            // FIXME: We never decompile repeat blocks correctly, they are always converted into a for-loop.
-            // To decompile repeat, we would need to check to make sure the initialized variable is
-            // never referenced in the loop body
+            let r: StatementNode;
 
-            if (condition.operatorToken.kind === SK.LessThanToken) {
-                r.inputs.push({
-                    kind: "value",
-                    name: "TO",
-                    shadowType: ShadowType.Number,
-                    value: {
-                        kind: "expr",
-                        type: "math_arithmetic",
-                        fields: [getField("OP", "MINUS")],
-                            inputs: [
-                                getValue("A", condition.right, ShadowType.Number),
-                                getValue("B", 1)
-                            ]
-                    }
-                });
+            if (condition.operatorToken.kind === SK.LessThanToken && !checkForVariableUsages(n.statement)) {
+                r = {
+                    kind: "statement",
+                    type: "controls_repeat_ext",
+                    fields: [],
+                    inputs: [getValue("TIMES", condition.right, ShadowType.Number)],
+                    handlers: []
+                };
             }
-            else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
-                r.inputs.push(getValue("TO", condition.right, ShadowType.Number));
+            else {
+                r = {
+                    kind: "statement",
+                    type: "controls_simple_for",
+                    fields: [getField("VAR", renamed)],
+                    inputs: [],
+                    handlers: []
+                };
+
+                if (condition.operatorToken.kind === SK.LessThanToken) {
+                    r.inputs.push({
+                        kind: "value",
+                        name: "TO",
+                        shadowType: ShadowType.Number,
+                        value: {
+                            kind: "expr",
+                            type: "math_arithmetic",
+                            fields: [getField("OP", "MINUS")],
+                                inputs: [
+                                    getValue("A", condition.right, ShadowType.Number),
+                                    getValue("B", 1)
+                                ]
+                        }
+                    });
+                }
+                else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
+                    r.inputs.push(getValue("TO", condition.right, ShadowType.Number));
+                }
             }
 
             r.handlers.push({ name: "DO", statement: getStatementBlock(n.statement) });
             return r;
+
+            function checkForVariableUsages(node: Node): boolean {
+                if (node.kind === SK.Identifier && getVariableName(node as ts.Identifier) === renamed) {
+                    return true;
+                }
+
+                return ts.forEachChild(node, checkForVariableUsages);
+            }
         }
 
         function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
@@ -1345,18 +1364,18 @@ ${output}</xml>`;
         }
     }
 
-    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo): string {
+    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo, asExpression = false): string {
         switch (node.kind) {
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
                 return undefined;
             case SK.ExpressionStatement:
-                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo);
+                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo, asExpression);
             case SK.VariableStatement:
                 return checkVariableStatement(node as ts.VariableStatement, blocksInfo);
             case SK.CallExpression:
-                return checkCall(node as ts.CallExpression, blocksInfo);
+                return checkCall(node as ts.CallExpression, blocksInfo, asExpression);
             case SK.VariableDeclaration:
                 return checkVariableDeclaration(node as ts.VariableDeclaration, blocksInfo);
             case SK.PostfixUnaryExpression:
@@ -1469,9 +1488,6 @@ ${output}</xml>`;
                 check = checkExpression(n.initializer, blocksInfo);
             }
 
-            if (check) {
-            }
-
             return check;
         }
 
@@ -1485,10 +1501,14 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo) {
+        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo, asExpression = false) {
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
+            }
+
+            if (!asExpression && info.isExpression) {
+                return Util.lf("No output expressions as statements");
             }
 
             if (!info.attrs.blockId || !info.attrs.block) {
@@ -1692,7 +1712,7 @@ ${output}</xml>`;
             case SK.PropertyAccessExpression:
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression);
             case SK.CallExpression:
-                return checkStatement(n, blocksInfo);
+                return checkStatement(n, blocksInfo, true);
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
 

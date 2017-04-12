@@ -77,25 +77,25 @@ namespace pxt.blocks.layout {
     export function toPngAsync(ws: B.Workspace): Promise<string> {
         let sg = toSvg(ws);
         if (!sg) return Promise.resolve<string>(undefined);
-        return toPngAsyncInternal(sg.width, sg.height, sg.xml);
+        return toPngAsyncInternal(sg.width, sg.height, 4, sg.xml);
     }
 
-    export function svgToPngAsync(svg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number): Promise<string> {
+    export function svgToPngAsync(svg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
         let sg = toSvgInternal(svg, customCss, x, y, width, height);
         if (!sg) return Promise.resolve<string>(undefined);
-        return toPngAsyncInternal(sg.width, sg.height, sg.xml);
+        return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
     }
 
-    function toPngAsyncInternal(width: number, height: number, data: string): Promise<string> {
+    function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            let cvs = document.createElement("canvas") as HTMLCanvasElement,
-                ctx = cvs.getContext("2d");
-            let img = new Image;
+            const cvs = document.createElement("canvas") as HTMLCanvasElement;
+            const ctx = cvs.getContext("2d");
+            const img = new Image;
 
-            cvs.width = width;
-            cvs.height = height;
+            cvs.width = width * pixelDensity;
+            cvs.height = height * pixelDensity;
             img.onload = function () {
-                ctx.drawImage(img, 0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                 const canvasdata = cvs.toDataURL("image/png");
                 resolve(canvasdata);
             };

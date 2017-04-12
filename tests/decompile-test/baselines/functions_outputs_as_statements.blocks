@@ -1,46 +1,26 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="test_no_argument_output">
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.noArgumentOutput&#40;&#41;" />
 <next>
-<block type="test_boolean_argument_output">
-<value name="arg">
-<shadow type="logic_boolean">
-<field name="BOOL">TRUE</field>
-</shadow>
-</value>
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.booleanArgumentOutput&#40;true&#41;" />
 <next>
-<block type="test_number_argument_output">
-<value name="arg">
-<shadow type="math_number">
-<field name="NUM">5</field>
-</shadow>
-</value>
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.numberArgumentOutput&#40;5&#41;" />
 <next>
-<block type="test_string_argument_output">
-<value name="arg">
-<shadow type="text">
-<field name="TEXT">okay</field>
-</shadow>
-</value>
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.stringArgumentOutput&#40;&#34;okay&#34;&#41;" />
 <next>
-<block type="test_enum_argument_output">
-<field name="arg">TestEnum.testValue1</field>
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.enumArgumentOutput&#40;TestEnum.testValue1&#41;" />
 <next>
-<block type="test_enum_function_argument_output">
-<field name="arg">EnumWithValueBlock.testValue2</field>
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.enumFunctionArgumentOutput&#40;EnumWithValueBlock.testValue2&#41;" />
 <next>
-<block type="test_multiple_argument_output">
-<value name="arg1">
-<shadow type="math_number">
-<field name="NUM">2</field>
-</shadow>
-</value>
-<value name="arg2">
-<shadow type="logic_boolean">
-<field name="BOOL">FALSE</field>
-</shadow>
-</value>
+<block type="typescript_statement">
+<mutation numlines="1" line0="testNamespace.multipleArgumentsOutput&#40;2&#44; false&#41;" />
 </block>
 </next>
 </block>

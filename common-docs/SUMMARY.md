@@ -8,10 +8,13 @@
 
 ## #reference
 
+## #packages
+
 ## Blocks #blocks
 
 * [Blocks](/blocks)
     * [Loops](/blocks/loops)
+        * [repeat](/blocks/loops/repeat)
         * [for](/blocks/loops/for)
         * [while](/blocks/loops/while)
     * [Logic](/blocks/logic)
@@ -58,6 +61,9 @@
 
 * Developers
     * [Packages](/packages)
+        * [Build your own](/packages/build-your-own)
+        * [Approval](/packages/approval)
+        * [Versioning](/packages/versioning)
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Coding on Raspberry Pi](/raspberry-pi)

@@ -45,6 +45,7 @@ namespace ts.pxtc {
         isContextual?: boolean;
         qName?: string;
         pkg?: string;
+        snippet?: string;
     }
 
     export interface ApisInfo {
@@ -298,7 +299,8 @@ namespace ts.pxtc {
                         options: options,
                         isEnum
                     }
-                })
+                }),
+                snippet: service.getSnippet(decl, attributes)
             }
         }
         return null;
@@ -677,7 +679,7 @@ namespace ts.pxtc.service {
 
         getNewLine() { return "\n" }
         getCurrentDirectory(): string { return "." }
-        getDefaultLibFileName(options: CompilerOptions): string { return null }
+        getDefaultLibFileName(options: CompilerOptions): string { return "no-default-lib.d.ts" }
         log(s: string): void { console.log("LOG", s) }
         trace(s: string): void { console.log("TRACE", s) }
         error(s: string): void { console.error("ERROR", s) }
@@ -952,6 +954,97 @@ namespace ts.pxtc.service {
         if (!service) {
             host = new Host()
             service = ts.createLanguageService(host)
+        }
+    }
+    const defaultImgLit = `\`
+. . . . .
+. . . . .
+. . # . .
+. . . . .
+. . . . .
+\``;
+
+    export function getSnippet(n: ts.SignatureDeclaration, attrs?: CommentAttrs): string {
+        if (!ts.isFunctionLike(n)) {
+            return undefined;
+        }
+        const checker = service ? service.getProgram().getTypeChecker() : undefined;
+        const args = n.parameters ? n.parameters.filter(param => !param.questionToken).map(param => {
+            const typeNode = param.type;
+            if (!typeNode) return "null";
+
+            const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
+
+            if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
+                return attrs.paramDefl[name];
+            }
+            switch (typeNode.kind) {
+                case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
+                case SK.NumberKeyword: return "0";
+                case SK.BooleanKeyword: return "false";
+                case SK.ArrayType: return "[]";
+                case SK.TypeReference:
+                    if (checker) {
+                        const type = checker.getTypeAtLocation(param);
+                        if (type) {
+                            if (type.flags & ts.TypeFlags.Enum) {
+                                if (type.symbol) {
+                                    const decl = type.symbol.valueDeclaration as ts.EnumDeclaration;
+                                    if (decl.members.length && decl.members[0].name.kind === SK.Identifier) {
+                                        return `${type.symbol.name}.${(decl.members[0].name as ts.Identifier).text}`;
+                                    }
+                                }
+                                return `0`;
+                            }
+                        }
+                    }
+                    break;
+                case SK.FunctionType:
+                    const tn = typeNode as ts.FunctionTypeNode;
+                    let functionSignature = checker ? checker.getSignatureFromDeclaration(tn) : undefined;
+                    if (functionSignature) {
+                        return getFunctionString(functionSignature);
+                    }
+                    return `() => {}`;
+            }
+
+            const type = checker ? checker.getTypeAtLocation(param) : undefined;
+            if (type) {
+                if (type.flags & ts.TypeFlags.Anonymous) {
+                    const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
+                    if (sigs.length) {
+                        return getFunctionString(sigs[0]);
+                    }
+                    return `() => {}`;
+                }
+            }
+            return "null";
+        }) : [];
+
+
+        return `${n.name.getText()}(${args.join(', ')})`;
+
+        function getFunctionString(functionSignature: ts.Signature) {
+            let functionArgument = "()";
+            let returnValue = "";
+
+            let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
+                checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
+            });
+
+            let returnType = checker.getReturnTypeOfSignature(functionSignature);
+
+            if (returnType.flags & ts.TypeFlags.NumberLike)
+                returnValue = "return 0;";
+            else if (returnType.flags & ts.TypeFlags.StringLike)
+                returnValue = "return \"\";";
+            else if (returnType.flags & ts.TypeFlags.Boolean)
+                returnValue = "return false;";
+
+            let displayPartsStr = ts.displayPartsToString(displayParts);
+            functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+
+            return `${functionArgument} => {\n    ${returnValue}\n}`
         }
     }
 }

@@ -96,7 +96,7 @@ function initAsync(target: string) {
     allScripts = [];
     currentTarget = target;
     // TODO check that target is correct.
-    return syncAsync();
+    return syncAsync().then(() => {});
 }
 
 function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
@@ -207,14 +207,14 @@ function saveToCloudAsync(h: Header) {
     return Promise.resolve()
 }
 
-function syncAsync() {
+function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     return apiAsync("list").then((h: pxt.FsPkgs) => {
         h.pkgs.forEach(mergeFsPkg)
+        data.invalidate("header:")
+        data.invalidate("text:")
+
+        return undefined;
     })
-        .then(() => {
-            data.invalidate("header:")
-            data.invalidate("text:")
-        })
 }
 
 function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
