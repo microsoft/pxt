@@ -755,9 +755,9 @@ export class ProjectView
         );
     }
 
-    openProject() {
+    openProject(tab?: string) {
         pxt.tickEvent("menu.open");
-        this.projects.showOpenProject();
+        this.projects.showOpenProject(tab);
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -1894,6 +1894,12 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
+            window.location.hash = "";
+            return true;
+        case "projects":
+            pxt.tickEvent("hash.projects");
+            editor.openProject(hash.arg);
+            window.location.hash = "";
             return true;
         case "sandbox":
         case "pub":
