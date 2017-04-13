@@ -107,6 +107,8 @@ export class Editor implements pxt.editor.IEditor {
 
     highlightStatement(brk: pxtc.LocationInfo) { }
 
+    clearHighlightedStatements() { }
+
     filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.blocks.CategoryMode.All): Element {
         return null
     }

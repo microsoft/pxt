@@ -75,15 +75,19 @@ namespace pxt.blocks.layout {
     }
 
     export function toPngAsync(ws: B.Workspace): Promise<string> {
-        let sg = toSvg(ws);
-        if (!sg) return Promise.resolve<string>(undefined);
-        return toPngAsyncInternal(sg.width, sg.height, 4, sg.xml);
+        return toSvgAsync(ws)
+            .then(sg => {
+                if (!sg) return Promise.resolve<string>(undefined);
+                return toPngAsyncInternal(sg.width, sg.height, 4, sg.xml);
+            });
     }
 
     export function svgToPngAsync(svg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
-        let sg = toSvgInternal(svg, customCss, x, y, width, height);
-        if (!sg) return Promise.resolve<string>(undefined);
-        return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
+        return toSvgInternalAsync(svg, customCss, x, y, width, height)
+            .then(sg => {
+                if (!sg) return Promise.resolve<string>(undefined);
+                return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
+            });
     }
 
     function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string): Promise<string> {
@@ -107,10 +111,11 @@ namespace pxt.blocks.layout {
         })
     }
 
-    export function toSvg(ws: B.Workspace): {
+    export function toSvgAsync(ws: B.Workspace): Promise<{
         width: number; height: number; xml: string;
-    } {
-        if (!ws) return undefined;
+    }> {
+        if (!ws)
+            return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
         const bbox = (document.getElementsByClassName("blocklyBlockCanvas")[0] as any).getBBox();
         let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
@@ -138,21 +143,22 @@ namespace pxt.blocks.layout {
     font-size: 17pt !important;
 }`;
 
-        return toSvgInternal(sg, customCss, bbox.x, bbox.y, bbox.width, bbox.height);
+        return toSvgInternalAsync(sg, customCss, bbox.x, bbox.y, bbox.width, bbox.height);
     }
 
-    function toSvgInternal(sg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number): {
+    const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+    function toSvgInternalAsync(sg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number): Promise<{
         width: number; height: number; xml: string;
-    } {
+    }> {
         if (!sg.childNodes[0])
-            return undefined;
+            return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
         sg.removeAttribute("width");
         sg.removeAttribute("height");
         sg.removeAttribute("transform");
 
-        let xsg = new DOMParser().parseFromString(
-            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">
+        const xsg = new DOMParser().parseFromString(
+            `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="${XLINK_NAMESPACE}" width="${width}" height="${height}" viewBox="${x} ${y} ${width} ${height}">
             ${new XMLSerializer().serializeToString(sg)}
             </svg>`, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
@@ -160,10 +166,41 @@ namespace pxt.blocks.layout {
         cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
         xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
+        return expandImagesAsync(xsg)
+            .then(() => {
+                return { width: width, height: height, xml: documentToSvg(xsg) };
+            });
+    }
+
+    function documentToSvg(xsg: Document): string {
         const xml = new XMLSerializer().serializeToString(xsg);
         const data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
+        return data;
+    }
 
-        return { width: width, height: height, xml: data };
+    function expandImagesAsync(xsg: Document): Promise<void> {
+        const cache: pxt.Map<HTMLImageElement> = {};
+        const images = xsg.querySelectorAll("image");
+        const p = pxt.Util.toArray(images)
+            .filter(image => !/^data:/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
+            .map((image: HTMLImageElement) => {
+                const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
+                return (cache[href] ? Promise.resolve(cache[href]) : pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href")))
+                    .then((img: HTMLImageElement) => {
+                        cache[href] = img;
+                        const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                        const ctx = cvs.getContext("2d");
+                        cvs.width = img.width;
+                        cvs.height = img.height;
+                        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
+                        const canvasdata = cvs.toDataURL("image/png");
+                        image.setAttributeNS(XLINK_NAMESPACE, "href", canvasdata);
+                    })
+                    .catch(e => {
+                        // ignore load error
+                    });
+            });
+        return Promise.all(p).then(() => { })
     }
 
     function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62) {

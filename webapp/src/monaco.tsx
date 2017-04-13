@@ -976,8 +976,7 @@ export class Editor extends srceditor.Editor {
                 if (!file.isReadonly()) {
                     model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent2) => {
                         // Remove any Highlighted lines
-                        if (this.highlightDecorations)
-                            this.editor.deltaDecorations(this.highlightDecorations, []);
+                        this.clearHighlightedStatements();
 
                         // Remove any current error shown, as a change has been made.
                         let viewZones = this.editorViewZones || [];
@@ -1112,6 +1111,11 @@ export class Editor extends srceditor.Editor {
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+    }
+
+    clearHighlightedStatements() {
+        if (this.highlightDecorations)
+            this.editor.deltaDecorations(this.highlightDecorations, []);
     }
 
     private partitionBlocks() {
