@@ -216,6 +216,8 @@ namespace ts.pxtc.assembler {
             this.words = tokenize(s) || [];
             if (this.words.length == 0)
                 this.type = "empty";
+            else if (this.words[0][0] == "@")
+                this.type = "directive";
         }
     }
 

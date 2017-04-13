@@ -110,8 +110,8 @@ namespace ts.pxtc.thumb {
             this.addInst("lsls  $r0, $r1, $i4", 0x0000, 0xf800);
             this.addInst("lsrs  $r0, $r1", 0x40c0, 0xffc0);
             this.addInst("lsrs  $r0, $r1, $i6", 0x0800, 0xf800);
-            this.addInst("mov   $r0, $r1", 0x4600, 0xffc0);
-            //this.addInst("mov   $r2, $r3",        0x4600, 0xff00);
+            //this.addInst("mov   $r0, $r1", 0x4600, 0xffc0);
+            this.addInst("mov   $r2, $r3", 0x4600, 0xff00);
             this.addInst("movs  $r0, $r1", 0x0000, 0xffc0);
             this.addInst("movs  $r5, $i0", 0x2000, 0xf800);
             this.addInst("muls  $r0, $r1", 0x4340, 0xffc0);
@@ -280,8 +280,8 @@ namespace ts.pxtc.thumb {
                             frags[key].push(frag)
                         else
                             frags[key] = [frag]
-                        frag = []
                     }
+                    frag = []
                 }
             }
 
@@ -294,10 +294,13 @@ namespace ts.pxtc.thumb {
                 let f = frags[k]
                 if (f.length <= 1)
                     continue
+                if (addLines.length == 0) {
+                    file.buildLine("; shared assembly fragments", addLines)
+                    file.buildLine("@nostackcheck", addLines)
+                }
                 let hasBL = k.indexOf("BL") >= 0
                 let lbl = "__frag__" + ++seq
                 file.buildLine(lbl + ":", addLines)
-                file.buildLine("@dummystack 100", addLines)
                 if (hasBL)
                     file.buildLine("mov r7, lr", addLines)
                 let stack = 0
@@ -308,7 +311,6 @@ namespace ts.pxtc.thumb {
                     file.buildLine(tx, addLines)
                     stack += l.stack
                 }
-                file.buildLine("@dummystack " + (stack - 100), addLines)
                 file.buildLine(hasBL ? "bx r7" : "bx lr", addLines)
                 for (let frag of f) {
                     frag[0].update("bl " + lbl)
