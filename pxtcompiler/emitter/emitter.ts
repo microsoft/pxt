@@ -542,7 +542,7 @@ namespace ts.pxtc {
                         let tp = typeOf(h.types[0])
                         if (isClassType(tp)) {
                             let parent = <ClassDeclaration>tp.symbol.valueDeclaration
-                            return inheritsFrom(parent,tgt)
+                            return inheritsFrom(parent, tgt)
                         }
                 }
             }
@@ -553,7 +553,7 @@ namespace ts.pxtc {
         for (let cl in classes) {
             // TODO: namespace??? correct name checking??
             if (classes[cl].decl.name.text == decl.name.text)
-                 userError(9261, lf("Interface with same name as a class not supported."))
+                userError(9261, lf("Interface with same name as a class not supported."))
         }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
@@ -567,7 +567,7 @@ namespace ts.pxtc {
             }
     }
 
-    function typeCheckSrcFlowstoTrg(src: Node|Type, trg: Node|Type) {
+    function typeCheckSrcFlowstoTrg(src: Node | Type, trg: Node | Type) {
         // get the direct types
         let trgTypeLoc = (trg as any).kind ? checker.getTypeAtLocation(trg as Node) : trg as Type;
         let srcTypeLoc = (src as any).kind ? checker.getTypeAtLocation(src as Node) : src as Type;
@@ -596,8 +596,8 @@ namespace ts.pxtc {
     }
 
     let occursCheck: string[] = []
-    let cachedSubtypeQueries: Map<[boolean,string]> = {}
-    function insertSubtype(key: string, val: [boolean,string]) {
+    let cachedSubtypeQueries: Map<[boolean, string]> = {}
+    function insertSubtype(key: string, val: [boolean, string]) {
         cachedSubtypeQueries[key] = val
         occursCheck.pop()
         return val
@@ -622,95 +622,95 @@ namespace ts.pxtc {
 
         // check to see if query already on the stack
         if (occursCheck.indexOf(key) != -1)
-            return [true,""]
+            return [true, ""]
         occursCheck.push(key)
 
         // we don't allow Any!
         if (superType.flags & TypeFlags.Any)
-            return insertSubtype(key,[false, "Unsupported type: any."])
+            return insertSubtype(key, [false, "Unsupported type: any."])
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
-            return insertSubtype(key,[false, "Cast to class/interface unsupported."])
+            return insertSubtype(key, [false, "Cast to class/interface unsupported."])
         }
 
         if (isClassType(superType)) {
-           if (isClassType(subType)) {
+            if (isClassType(subType)) {
                 let superDecl = <ClassDeclaration>superType.symbol.valueDeclaration
                 let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
                 // only allow upcast (sub -> ... -> sup) in inheritance chain
-                if (!inheritsFrom(subDecl,superDecl)) {
-                    if (inheritsFrom(superDecl,subDecl))
-                       return insertSubtype(key, [false, "Downcasts not supported."])
+                if (!inheritsFrom(subDecl, superDecl)) {
+                    if (inheritsFrom(superDecl, subDecl))
+                        return insertSubtype(key, [false, "Downcasts not supported."])
                     else
-                       return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
+                        return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
                 }
-           } else {
+            } else {
                 if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    return insertSubtype(key,[false, "Cast to class unsupported."])
+                    return insertSubtype(key, [false, "Cast to class unsupported."])
                 }
-           }
+            }
         } else if (isFunctionType(superType)) {
             // implement standard function subtyping (no bivariance)
             let superFun = isFunctionType(superType)
             if (isFunctionType(subType)) {
                 let subFun = isFunctionType(subType)
                 U.assert(superFun.parameters.length >= subFun.parameters.length, "sup should have at least params of sub")
-                let [ret,msg] = [true,""]
+                let [ret, msg] = [true, ""]
                 for (let i = 0; i < subFun.parameters.length; i++) {
                     let superParamType = checker.getTypeAtLocation(superFun.parameters[i].valueDeclaration)
                     let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
-                    let [retSub,msgSub] = checkSubtype(superParamType, subParamType)
-                    if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                    let [retSub, msgSub] = checkSubtype(superParamType, subParamType)
+                    if (ret && !retSub)[ret, msg] = [retSub, msgSub]
                 }
                 // check return type (co-variant)
                 let superRetType = superFun.getReturnType()
                 let subRetType = superFun.getReturnType()
-                let [retSub,msgSub] = checkSubtype(subRetType, superRetType)
-                if (ret && !retSub) [ret,msg] = [retSub,msgSub]
-                return insertSubtype(key,[ret,msg])
+                let [retSub, msgSub] = checkSubtype(subRetType, superRetType)
+                if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                return insertSubtype(key, [ret, msg])
             }
         } else if (isInterfaceType(superType)) {
             if (isStructureType(subType)) {
                 let superProps = checker.getPropertiesOfType(superType)
                 let subProps = checker.getPropertiesOfType(subType)
-                let [ret,msg] = [true,""]
+                let [ret, msg] = [true, ""]
                 superProps.forEach(superProp => {
                     let superPropDecl = <PropertyDeclaration>superProp.valueDeclaration
                     let find = subProps.filter(sp => sp.name == superProp.name)
                     if (find.length == 1) {
                         let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                         // TODO: record the property on which we have a mismatch
-                        let [retSub,msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl),checker.getTypeAtLocation(superPropDecl))
-                        if (ret && !retSub) [ret,msg] = [retSub,msgSub]
+                        let [retSub, msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl), checker.getTypeAtLocation(superPropDecl))
+                        if (ret && !retSub)[ret, msg] = [retSub, msgSub]
                     } else if (find.length == 0) {
                         if (!(superProp.flags & SymbolFlags.Optional)) {
                             // we have a cast to an interface with more properties (unsound)
-                            [ret,msg] = [false,"Property " + superProp.name + " not present in " + subType.getSymbol().name]
+                            [ret, msg] = [false, "Property " + superProp.name + " not present in " + subType.getSymbol().name]
                         } else {
                             // we will reach this case for something like
                             // let x: Foo = { a:42 }
                             // where x has some optional properties, in addition to "a"
                         }
                     } else {
-                        U.assert(false,"subsetCheck: unreachable (1)")
+                        U.assert(false, "subsetCheck: unreachable (1)")
                     }
                 })
-                return insertSubtype(key,[ret,msg])
+                return insertSubtype(key, [ret, msg])
             }
         } else if (isArrayType(superType)) {
             if (isArrayType(subType)) {
                 let superElemType = arrayElementType(superType)
                 let subElemType = arrayElementType(subType)
-                return checkSubtype(subElemType,superElemType)
+                return checkSubtype(subElemType, superElemType)
             } else {
-                U.assert(false,"subsetCheck: unreachable (2)")
+                U.assert(false, "subsetCheck: unreachable (2)")
             }
         } else if (lookupTypeParameter(superType)) {
             // TODO
         }
-        return insertSubtype(key,[true,""])
+        return insertSubtype(key, [true, ""])
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
@@ -1611,7 +1611,7 @@ ${lbl}: .short 0xffff
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
             if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
-                emitExpr(node.expression,false)
+                emitExpr(node.expression, false)
                 if (!decl)
                     return ir.numlit(0)
             }
@@ -2722,6 +2722,9 @@ ${lbl}: .short 0xffff
                 } else if (f == "I") {
                     if (!isNumber)
                         U.userError("argsFmt=...I... but argument not a number in " + name)
+                    if (r.exprKind == EK.NumberLiteral && typeof r.data == "number") {
+                        return ir.numlit(r.data >> 1)
+                    }
                     return ir.rtcallMask("pxt::toInt", getMask([a]),
                         ir.CallingConvention.Plain, [r])
                 } else if (f == "B") {
@@ -2955,14 +2958,16 @@ ${lbl}: .short 0xffff
 
             if ((lt.flags & TypeFlags.String) && (rt.flags & TypeFlags.String)) {
                 switch (node.operatorToken.kind) {
-                    case SK.LessThanEqualsToken:
-                    case SK.LessThanToken:
-                    case SK.GreaterThanEqualsToken:
-                    case SK.GreaterThanToken:
                     case SK.EqualsEqualsToken:
                     case SK.EqualsEqualsEqualsToken:
                     case SK.ExclamationEqualsEqualsToken:
                     case SK.ExclamationEqualsToken:
+                        if (opts.target.taggedInts)
+                            break; // let the generic case handle this
+                    case SK.LessThanEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.GreaterThanEqualsToken:
+                    case SK.GreaterThanToken:
                         return ir.rtcallMask(
                             mapIntOpName(simpleInstruction(node.operatorToken.kind)),
                             opts.target.boxDebug ? 1 : 0,
@@ -3417,14 +3422,14 @@ ${lbl}: .short 0xffff
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
                 let rhs = bindingElementAccessExpression(node as BindingElement)
-                typeCheckSrcFlowstoTrg(rhs[1],node)
+                typeCheckSrcFlowstoTrg(rhs[1], node)
                 proc.emitExpr(loc.storeByRef(rhs[0]))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
                 // TODO: make sure we don't emit code for top-level globals being initialized to zero
                 emitBrk(node)
-                typeCheckSrcFlowstoTrg(node.initializer,node)
+                typeCheckSrcFlowstoTrg(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 proc.stackEmpty();
             }
@@ -3468,7 +3473,7 @@ ${lbl}: .short 0xffff
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            checkInterfaceDeclaration(node,classInfos)
+            checkInterfaceDeclaration(node, classInfos)
             let attrs = parseComments(node)
             if (attrs.autoCreate)
                 autoCreateFunctions[attrs.autoCreate] = true
