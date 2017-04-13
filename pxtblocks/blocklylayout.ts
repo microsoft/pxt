@@ -178,16 +178,18 @@ namespace pxt.blocks.layout {
         return data;
     }
 
+    let imageXLinkCache: pxt.Map<HTMLImageElement>;
     function expandImagesAsync(xsg: Document): Promise<void> {
-        const cache: pxt.Map<HTMLImageElement> = {};
+        if (!imageXLinkCache) imageXLinkCache = {};
+
         const images = xsg.querySelectorAll("image");
         const p = pxt.Util.toArray(images)
             .filter(image => !/^data:/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
             .map((image: HTMLImageElement) => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
-                return (cache[href] ? Promise.resolve(cache[href]) : pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href")))
+                return (imageXLinkCache[href] ? Promise.resolve(imageXLinkCache[href]) : pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href")))
                     .then((img: HTMLImageElement) => {
-                        cache[href] = img;
+                        imageXLinkCache[href] = img;
                         const cvs = document.createElement("canvas") as HTMLCanvasElement;
                         const ctx = cvs.getContext("2d");
                         cvs.width = img.width;
@@ -198,6 +200,7 @@ namespace pxt.blocks.layout {
                     })
                     .catch(e => {
                         // ignore load error
+                        pxt.debug(`svg render: failed to load ${href}`)
                     });
             });
         return Promise.all(p).then(() => { })
