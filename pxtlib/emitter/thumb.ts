@@ -320,11 +320,8 @@ namespace ts.pxtc.thumb {
                 }
             }
 
-            if (addLines.length > 0) {
+            if (addLines.length > 0)
                 file.lines = file.lines.slice(0, lastLine).concat(addLines).concat(file.lines.slice(lastLine))
-            }
-
-            console.log(file.lines.map(l => l.text).join("\n"))
         }
 
         public expandLdlit(f: assembler.File): void {
