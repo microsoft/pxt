@@ -519,6 +519,7 @@ export interface ModalProps {
     children?: any;
     className?: string;
     closeIcon?: any;
+    closeIconClassName?: string;
     closeOnDimmerClick?: boolean;
     closeOnDocumentClick?: boolean;
     dimmer?: boolean | 'blurring' | 'inverted';
@@ -534,6 +535,7 @@ export interface ModalProps {
     headerClass?: string;
     header?: string;
     helpUrl?: string;
+    helpUrlClass?: string;
 
     action?: string;
     actionClick?: () => void;
@@ -663,6 +665,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             children,
             className,
             closeIcon,
+            closeIconClassName,
             closeOnDimmerClick,
             closeOnDocumentClick,
             dimmer,
@@ -681,6 +684,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         ]);
 
         const closeIconName = closeIcon === true ? 'close' : closeIcon;
+        const closeIconClasses = cx([
+            'clear right floated',
+            closeIconClassName
+        ])
 
         const modalJSX = (
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
@@ -688,10 +695,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     {this.props.header}
                     {this.props.closeIcon ? <Button
                         icon={closeIconName}
-                        class="clear right floated"
+                        class={closeIconClasses}
                         onClick={() => this.handleClose(null) } /> : undefined }
                     {this.props.helpUrl ?
-                        <a className="ui button icon-and-text right floated labeled" href={this.props.helpUrl} target="_docs">
+                        <a className={`ui button icon-and-text right floated labeled ${this.props.helpUrlClass}`} href={this.props.helpUrl} target="_docs">
                             <i className="help icon"></i>
                             {lf("Help") }</a>
                         : undefined}
