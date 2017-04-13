@@ -190,9 +190,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" size="large"
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
-                closeIconClassName={`${targetTheme.invertedMenu ? 'inverted' : ''}`}
                 helpUrl="/packages"
-                helpUrlClass={`${targetTheme.invertedMenu ? 'inverted' : ''}`}
                 closeOnDimmerClick>
                 <div className="ui vertical segment">
                     <div className="ui search">

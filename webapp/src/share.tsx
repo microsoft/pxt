@@ -163,7 +163,6 @@ pxt extract ${url}`;
                 actionClick={publish}
                 actionLoading={actionLoading}
                 closeIcon={true}
-                closeIconClassName={`${targetTheme.invertedMenu ? 'inverted' : ''}`}
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className={`ui form`}>
