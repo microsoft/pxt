@@ -255,7 +255,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
                                     key={'importurl'}
-                                    icon="upload"
+                                    icon="cloud download"
                                     iconColor="secondary"
                                     name={lf("Import URL...") }
                                     description={lf("Open a shared project URL") }
