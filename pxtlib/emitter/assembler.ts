@@ -39,9 +39,9 @@ namespace ts.pxtc.assembler {
         public friendlyFmt: string;
         public code: string;
         private ei: AbstractProcessor;
-        public is32bit: boolean;
+        public canBeShared = false;
 
-        constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public jsFormat: string) {
+        constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public is32bit: boolean) {
             assert((opcode & mask) == opcode)
 
             this.ei = ei;
@@ -56,8 +56,6 @@ namespace ts.pxtc.assembler {
             let words = tokenize(format)
             this.name = words[0]
             this.args = words.slice(1)
-            // a bit of a hack here...
-            this.is32bit = (jsFormat != undefined)
         }
 
         emit(ln: Line): EmitResult {
@@ -190,6 +188,8 @@ namespace ts.pxtc.assembler {
         public location: number;
         public instruction: Instruction;
         public numArgs: number[];
+        public opcode: number;
+        public stack: number;
 
         constructor(public bin: File, public text: string) {
         }
@@ -617,7 +617,7 @@ namespace ts.pxtc.assembler {
                 // push {...}
                 // @stackmark locals   ; locals := sp
                 // ... some push/pops ...
-                // ldr r0, [pc, locals@3] ; load local number 3
+                // ldr r0, [sp, locals@3] ; load local number 3
                 // ... some push/pops ...
                 // @stackempty locals ; expect an empty stack here
                 case "@stackmark":
@@ -684,6 +684,8 @@ namespace ts.pxtc.assembler {
                 if (this.checkStack && this.stack < 0)
                     this.pushError(lf("stack underflow"))
                 ln.location = this.location()
+                ln.opcode = op.opcode
+                ln.stack = op.stack
                 this.emitShort(op.opcode);
                 if (op.opcode2 != null)
                     this.emitShort(op.opcode2);
@@ -930,8 +932,9 @@ namespace ts.pxtc.assembler {
                 return;
 
             this.ei.expandLdlit(this);
+            this.ei.commonalize(this);
             this.labels = {};
-            this.iterLines();            
+            this.iterLines();
 
             this.finalEmit = true;
             this.reallyFinalEmit = this.disablePeepHole;
@@ -1032,6 +1035,8 @@ namespace ts.pxtc.assembler {
             assert(false)
         }
 
+        public commonalize(file: assembler.File): void {
+        }
         public expandLdlit(f: File): void {
         }
 
@@ -1078,11 +1083,12 @@ namespace ts.pxtc.assembler {
         }
 
 
-        protected addInst = (name: string, code: number, mask: number, jsFormat?: string) => {
-            let ins = new Instruction(this, name, code, mask, jsFormat)
+        protected addInst = (name: string, code: number, mask: number, is32Bit?: boolean) => {
+            let ins = new Instruction(this, name, code, mask, is32Bit)
             if (!this.instructions.hasOwnProperty(ins.name))
                 this.instructions[ins.name] = [];
             this.instructions[ins.name].push(ins)
+            return ins
         }
     }
 

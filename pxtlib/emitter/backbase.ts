@@ -581,7 +581,7 @@ ${baseLabel}:
                 this.write(".themain:")
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup())
-            this.write(this.t.push_fixed(["r5", "r6"]))
+            this.write(this.t.push_fixed(["r5", "r6", "r7"]))
             if (parms.length >= 1)
                 this.write(this.t.push_local("r1"))
 
@@ -610,7 +610,7 @@ ${baseLabel}:
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
-            this.write(this.t.pop_fixed(["r6", "r5"]))
+            this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
             this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }

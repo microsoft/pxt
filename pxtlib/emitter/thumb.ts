@@ -72,14 +72,14 @@ namespace ts.pxtc.thumb {
             //this.addInst("nop",                   0xbf00, 0xffff);  // we use mov r8,r8 as gcc
 
             this.addInst("adcs  $r0, $r1", 0x4140, 0xffc0);
-            this.addInst("add   $r2, $r3", 0x4400, 0xff00, "$r2 += $r3");
+            this.addInst("add   $r2, $r3", 0x4400, 0xff00);
             this.addInst("add   $r5, pc, $i1", 0xa000, 0xf800);
             this.addInst("add   $r5, sp, $i1", 0xa800, 0xf800);
-            this.addInst("add   sp, $i2", 0xb000, 0xff80);
+            this.addInst("add   sp, $i2", 0xb000, 0xff80).canBeShared = true;
             this.addInst("adds  $r0, $r1, $i3", 0x1c00, 0xfe00);
             this.addInst("adds  $r0, $r1, $r4", 0x1800, 0xfe00);
             this.addInst("adds  $r01, $r4", 0x1800, 0xfe00);
-            this.addInst("adds  $r5, $i0", 0x3000, 0xf800, "$r5 += $i0");
+            this.addInst("adds  $r5, $i0", 0x3000, 0xf800);
             this.addInst("adr   $r5, $la", 0xa000, 0xf800);
             this.addInst("ands  $r0, $r1", 0x4000, 0xffc0);
             this.addInst("asrs  $r0, $r1", 0x4100, 0xffc0);
@@ -95,28 +95,28 @@ namespace ts.pxtc.thumb {
             this.addInst("eors  $r0, $r1", 0x4040, 0xffc0);
             this.addInst("ldmia $r5!, $rl0", 0xc800, 0xf800);
             this.addInst("ldmia $r5, $rl0", 0xc800, 0xf800);
-            this.addInst("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800);
+            this.addInst("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800).canBeShared = true;
             this.addInst("ldr   $r0, [$r1, $r4]", 0x5800, 0xfe00);
             this.addInst("ldr   $r5, [pc, $i1]", 0x4800, 0xf800);
             this.addInst("ldr   $r5, $la", 0x4800, 0xf800);
-            this.addInst("ldr   $r5, [sp, $i1]", 0x9800, 0xf800);
+            this.addInst("ldr   $r5, [sp, $i1]", 0x9800, 0xf800).canBeShared = true;
             this.addInst("ldrb  $r0, [$r1, $i4]", 0x7800, 0xf800);
             this.addInst("ldrb  $r0, [$r1, $r4]", 0x5c00, 0xfe00);
             this.addInst("ldrh  $r0, [$r1, $i7]", 0x8800, 0xf800);
             this.addInst("ldrh  $r0, [$r1, $r4]", 0x5a00, 0xfe00);
             this.addInst("ldrsb $r0, [$r1, $r4]", 0x5600, 0xfe00);
             this.addInst("ldrsh $r0, [$r1, $r4]", 0x5e00, 0xfe00);
-            this.addInst("lsls  $r0, $r1", 0x4080, 0xffc0, "$r0 = $r0 << $r1");
-            this.addInst("lsls  $r0, $r1, $i4", 0x0000, 0xf800, "$r0 = $r1 << $i4");
+            this.addInst("lsls  $r0, $r1", 0x4080, 0xffc0);
+            this.addInst("lsls  $r0, $r1, $i4", 0x0000, 0xf800);
             this.addInst("lsrs  $r0, $r1", 0x40c0, 0xffc0);
             this.addInst("lsrs  $r0, $r1, $i6", 0x0800, 0xf800);
-            this.addInst("mov   $r0, $r1", 0x4600, 0xffc0, "$r0 = $r1");
+            this.addInst("mov   $r0, $r1", 0x4600, 0xffc0);
             //this.addInst("mov   $r2, $r3",        0x4600, 0xff00);
-            this.addInst("movs  $r0, $r1", 0x0000, 0xffc0, "$r0 = $r1");
-            this.addInst("movs  $r5, $i0", 0x2000, 0xf800, "$r5 = $i0");
+            this.addInst("movs  $r0, $r1", 0x0000, 0xffc0);
+            this.addInst("movs  $r5, $i0", 0x2000, 0xf800);
             this.addInst("muls  $r0, $r1", 0x4340, 0xffc0);
             this.addInst("mvns  $r0, $r1", 0x43c0, 0xffc0);
-            this.addInst("negs  $r0, $r1", 0x4240, 0xffc0, "$r0 = -$r1");
+            this.addInst("negs  $r0, $r1", 0x4240, 0xffc0);
             this.addInst("nop", 0x46c0, 0xffff); // mov r8, r8
             this.addInst("orrs  $r0, $r1", 0x4300, 0xffc0);
             this.addInst("pop   $rl2", 0xbc00, 0xfe00);
@@ -128,9 +128,9 @@ namespace ts.pxtc.thumb {
             this.addInst("sbcs  $r0, $r1", 0x4180, 0xffc0);
             this.addInst("sev", 0xbf40, 0xffff);
             this.addInst("stmia $r5!, $rl0", 0xc000, 0xf800);
-            this.addInst("str   $r0, [$r1, $i5]", 0x6000, 0xf800);
+            this.addInst("str   $r0, [$r1, $i5]", 0x6000, 0xf800).canBeShared = true;
             this.addInst("str   $r0, [$r1, $r4]", 0x5000, 0xfe00);
-            this.addInst("str   $r5, [sp, $i1]", 0x9000, 0xf800);
+            this.addInst("str   $r5, [sp, $i1]", 0x9000, 0xf800).canBeShared = true;
             this.addInst("strb  $r0, [$r1, $i4]", 0x7000, 0xf800);
             this.addInst("strb  $r0, [$r1, $r4]", 0x5400, 0xfe00);
             this.addInst("strh  $r0, [$r1, $i7]", 0x8000, 0xf800);
@@ -171,13 +171,13 @@ namespace ts.pxtc.thumb {
             this.addInst("bhs   $lb", 0xd200, 0xff00); // cs
             this.addInst("blo   $lb", 0xd300, 0xff00); // cc
 
-            this.addInst("b     $lb11", 0xe000, 0xf800, "B");
-            this.addInst("bal   $lb11", 0xe000, 0xf800, "B");
+            this.addInst("b     $lb11", 0xe000, 0xf800);
+            this.addInst("bal   $lb11", 0xe000, 0xf800);
 
             // handled specially - 32 bit instruction
-            this.addInst("bl    $lb", 0xf000, 0xf800, "BL");
+            this.addInst("bl    $lb", 0xf000, 0xf800, true);
             // this is normally emitted as 'b' but will be emitted as 'bl' if needed
-            this.addInst("bb    $lb", 0xe000, 0xf800, "B");
+            this.addInst("bb    $lb", 0xe000, 0xf800, true);
 
             // this will emit as PC-relative LDR or ADDS
             this.addInst("ldlit   $r5, $i32", 0x4800, 0xf800);
@@ -218,6 +218,111 @@ namespace ts.pxtc.thumb {
                 numArgs: [v],
                 labelName: actual
             }
+        }
+
+        public commonalize(file: assembler.File): void {
+            // this is a heuristic - we could allow more instructions
+            // to be shared, but it seems to result in less sharing
+            let canBeShared = (l: assembler.Line) => {
+                if (l.type == "empty") return true
+                if (l.type == "instruction") {
+                    let inst = l.instruction
+                    if (inst && inst.canBeShared)
+                        return true
+                    switch (l.words[0]) {
+                        case "pop":
+                        case "push":
+                            if (l.numArgs[0] & ~0xf)
+                                return false // we only allow r0-r3
+                            return true
+                        case "bl":
+                            switch (l.words[1]) {
+                                case "pxt::incr":
+                                case "pxt::decr":
+                                case "pxt::fromInt":
+                                    return true
+                                default:
+                                    return false
+                            }
+                        default:
+                            return false
+                    }
+                }
+                return false
+            }
+
+            let frag: assembler.Line[] = []
+            let frags: pxt.Map<assembler.Line[][]> = {}
+            let lastLine = -1
+            for (let i = 0; i < file.lines.length; ++i) {
+                let l = file.lines[i]
+                //console.log(i, l.text)
+                if (l.type == "empty")
+                    continue
+                if (canBeShared(l)) {
+                    frag.push(l)
+                } else {
+                    if (l.words[0] == "_js_end")
+                        lastLine = i
+                    if (frag.length > 2) {
+                        let key = ""
+                        for (let ll of frag) {
+                            if (ll.type == "empty") continue
+                            assert(!!ll.instruction);
+                            assert(!!ll.opcode);
+                            if (ll.words[0] == "bl") {
+                                key += ",BL " + ll.words[1]
+                            } else {
+                                key += "," + ll.opcode
+                            }
+                        }
+                        if (frags[key])
+                            frags[key].push(frag)
+                        else
+                            frags[key] = [frag]
+                        frag = []
+                    }
+                }
+            }
+
+            if (lastLine < 0)
+                return // testing?
+
+            let addLines: assembler.Line[] = []
+            let seq = 0
+            for (let k of Object.keys(frags)) {
+                let f = frags[k]
+                if (f.length <= 1)
+                    continue
+                let hasBL = k.indexOf("BL") >= 0
+                let lbl = "__frag__" + ++seq
+                file.buildLine(lbl + ":", addLines)
+                file.buildLine("@dummystack 100", addLines)
+                if (hasBL)
+                    file.buildLine("mov r7, lr", addLines)
+                let stack = 0
+                for (let l of f[0]) {
+                    let tx = l.text.replace(/;.*/, "")
+                    if (/@\d/.test(tx))
+                        tx = ".short " + l.opcode + " ; " + tx
+                    file.buildLine(tx, addLines)
+                    stack += l.stack
+                }
+                file.buildLine("@dummystack " + (stack - 100), addLines)
+                file.buildLine(hasBL ? "bx r7" : "bx lr", addLines)
+                for (let frag of f) {
+                    frag[0].update("bl " + lbl)
+                    frag[1].update("@dummystack " + stack)
+                    for (let ii = 2; ii < frag.length; ++ii)
+                        frag[ii].update("")
+                }
+            }
+
+            if (addLines.length > 0) {
+                file.lines = file.lines.slice(0, lastLine).concat(addLines).concat(file.lines.slice(lastLine))
+            }
+
+            console.log(file.lines.map(l => l.text).join("\n"))
         }
 
         public expandLdlit(f: assembler.File): void {
