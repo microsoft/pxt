@@ -784,7 +784,7 @@ namespace ts.pxtc {
 
     export function getFunctionLabel(node: FunctionLikeDeclaration, bindings: TypeBinding[]) {
         let text = getDeclName(node)
-        return "_" + text.replace(/[^\w]+/g, "_") + "_" + getNodeId(node) + refMask(bindings)
+        return text.replace(/[^\w]+/g, "_") + "__P" + getNodeId(node) + refMask(bindings)
     }
 
     export interface FieldAccessInfo {
