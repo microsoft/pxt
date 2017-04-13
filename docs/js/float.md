@@ -22,58 +22,12 @@ tends to be cleared to `0` by default.
 
 ## Arithmetic operations in assembly
 
-### Add
+The following operations have the integer fast-path implemented in assembly for speed.
 
-```armasm
-add:
-    ands r2, r0, r1
-    lsls r2, r2, #31
-    beq .boxed
-    subs r2, r0, #1
-    adds r0, r2, r1  ; the actual add
-    bvs .overflow
-    blx lr
+* `adds`, `subs`
+* `orrs`, `ands`, `eors`
+* `toInt` and `fromInt`
 
-.overflow:
-    adds r0, r2, #1 ; restore
-.boxed:
-    push {lr}
-    bl add_boxed
-    pop {lr}
-```
-
-### Sub
-
-Same as add.
-
-### Or, and, xor
-
-```armasm
-or:
-    ands r2, r0, r1
-    lsls r2, r2, #31
-    beq .boxed
-    ors r0, r0, r1
-    blx lr
-
-.boxed:
-    push {lr}
-    bl or_boxed
-    pop {lr}
-```
-
-And same. Xor, with `adds r0, r0, #1` before `blx lr`.
-
-### Mul, div
-
-In C++.
-
-### To int
-
-```armasm
-toInt:
-    asrs r0, r0, #1
-    bcs .ok
-    bl toInt_boxed
-.ok:
-```
+It's particularly important for `adds` and `subs` since they otherwise always
+use doubles (for easier overflow checking in C++). In the other cases it just saves a few
+cycles.

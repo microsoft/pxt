@@ -3,6 +3,15 @@
 
 namespace ts.pxtc {
 
+    const inlineArithmetic: pxt.Map<string> = {
+        "numops::adds": "_numops_adds",
+        "numops::subs": "_numops_subs",
+        "numops::orrs": "_numops_orrs",
+        "numops::ands": "_numops_ands",
+        "pxt::toInt": "_numops_toInt",
+        "pxt::fromInt": "_numops_fromInt",
+    }
+
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
         nop() { return "nop" }
@@ -66,6 +75,10 @@ ${lbl}:`
             return name + " " + r0 + ", " + r1;
         }
         call_lbl(lbl: string) {
+            if (target.taggedInts && !target.boxDebug) {
+                let o = U.lookup(inlineArithmetic, lbl)
+                if (o) lbl = o
+            }
             return "bl " + lbl;
         }
         call_reg(reg: string) {
@@ -128,6 +141,73 @@ ${lbl}:`
     lsls ${reg}, ${reg}, #8
     adds ${reg}, ${lbl}@lo
 `
+        }
+
+        arithmetic() {
+            let r = ""
+
+            if (!target.taggedInts || target.boxDebug) {
+                return r
+            }
+
+            for (let op of ["adds", "subs", "ands", "orrs", "eors"]) {
+                r +=
+                    `
+_numops_${op}:
+    @scope _numops_${op}
+    lsls r2, r0, #31
+    beq .boxed
+    lsls r2, r1, #31
+    beq .boxed
+`
+                if (op == "adds" || op == "subs")
+                    r += `
+    subs r2, r1, #1
+    ${op} r2, r0, r2
+    bvs .boxed
+    movs r0, r2
+    blx lr
+`
+                else {
+                    r += `    ${op} r0, r1\n`
+                    if (op == "eors")
+                        r += `    adds r0, r0, #1\n`
+                    r += `    blx lr\n`
+                }
+
+                r += `
+.boxed:
+    push {lr}
+    bl numops::${op}
+    pop {pc}
+`
+            }
+
+            r += `
+@scope _numops_toInt
+_numops_toInt:
+    asrs r0, r0, #1
+    bcc .over
+    blx lr
+.over:
+    push {lr}
+    bl pxt::toInt
+    pop {pc}
+
+_numops_fromInt:
+    lsls r2, r0, #1
+    asrs r1, r2, #1
+    cmp r0, r1
+    bne .over2
+    adds r0, r2, #1
+    blx lr
+.over2:
+    push {lr}
+    bl pxt::fromInt
+    pop {pc}
+`
+
+            return r
         }
 
         emit_int(v: number, reg: string) {

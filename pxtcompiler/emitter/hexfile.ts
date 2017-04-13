@@ -721,6 +721,7 @@ ${hex.hexPrelude()}
         U.iterMap(bin.codeHelpers, (code, lbl) => {
             asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
+        asmsource += snippets.arithmetic()
 
         asmsource += hex.asmTotalSource
 

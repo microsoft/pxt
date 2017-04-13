@@ -47,6 +47,7 @@ namespace ts.pxtc {
         bne(lbl: string) { return "TBD" }
         cmp(reg1: string, reg: string) { return "TBD" }
         cmp_zero(reg1: string) { return "TBD" }
+        arithmetic() { return "" }
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
