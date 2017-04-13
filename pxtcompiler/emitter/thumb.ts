@@ -337,7 +337,7 @@ namespace ts.pxtc.thumb {
                     file.buildLine("_frag_start:", addLines)
                 }
                 let hasBL = k.indexOf("BL") >= 0
-                let lbl = "__frag__" + ++seq
+                let lbl = "_frag_" + ++seq
                 file.buildLine(`; num.uses: ${f.length}`, addLines)
                 file.buildLine(lbl + ":", addLines)
                 if (hasBL)
@@ -402,7 +402,7 @@ namespace ts.pxtc.thumb {
                     let v = line.words[3]
                     let lbl = U.lookup(values, v)
                     if (!lbl) {
-                        lbl = "_ldlit__" + ++seq
+                        lbl = "_ldlit_" + ++seq
                         values[v] = lbl
                     }
                     line.update(`ldr ${reg}, ${lbl}`)
@@ -410,7 +410,7 @@ namespace ts.pxtc.thumb {
                 if (line === nextGoodSpot) {
                     nextGoodSpot = null
                     let txtLines: string[] = []
-                    let jmplbl = "_jmpwords__" + ++seq
+                    let jmplbl = "_jmpwords_" + ++seq
                     if (needsJumpOver)
                         txtLines.push("bb " + jmplbl)
                     txtLines.push(".balign 4")
