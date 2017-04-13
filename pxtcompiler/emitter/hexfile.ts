@@ -30,9 +30,6 @@ namespace ts.pxtc {
     export const vtableShift = 2;
 
     export namespace UF2 {
-        export const startMagic = "UF2\x0AWQ]\x9E"
-        export const endMagic = "0o\xB1\x0A"
-
         function setWord(block: Uint8Array, ptr: number, v: number) {
             block[ptr] = (v & 0xff)
             block[ptr + 1] = ((v >> 8) & 0xff)
@@ -69,18 +66,6 @@ namespace ts.pxtc {
         function hasAddr(b: Block, a: number) {
             if (!b) return false
             return b.targetAddr <= a && a < b.targetAddr + b.payloadSize
-        }
-
-        export function readBytes(blocks: Block[], addr: number, length: number) {
-            let res = new Uint8Array(length)
-            let bl: Block
-            for (let i = 0; i < length; ++i, ++addr) {
-                if (!hasAddr(bl, addr))
-                    bl = blocks.filter(b => hasAddr(b, addr))[0]
-                if (bl)
-                    res[i] = bl.data[addr - bl.targetAddr]
-            }
-            return res
         }
 
         export function readBytesFromFile(f: BlockFile, addr: number, length: number): Uint8Array {
@@ -272,7 +257,6 @@ namespace ts.pxtc {
         }
         let pendingPatches: HexPatch[] = []
         export let compiledVTs: string[] = []
-        export let currentHexInfo: pxtc.HexInfo;
 
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function flashCodeAlign(opts: CompileTarget) {

@@ -2902,7 +2902,7 @@ ${lbl}: .short 0xffff
             let shim = (n: string) => {
                 n = mapIntOpName(n)
                 let args = [node.left, node.right]
-                return ir.rtcallMask(n, getMask(args), ir.CallingConvention.Plain, args.map(emitExpr))
+                return ir.rtcallMask(n, getMask(args), ir.CallingConvention.Plain, args.map(x => emitExpr(x)))
             }
 
             if (node.operatorToken.kind == SK.CommaToken) {
@@ -3735,23 +3735,6 @@ ${lbl}: .short 0xffff
                 */
             }
         }
-    }
-
-    export function emptyExtInfo(): ExtensionInfo {
-        const pio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
-        const r: ExtensionInfo = {
-            functions: [],
-            generatedFiles: {},
-            extensionFiles: {},
-            sha: "",
-            compileData: "",
-            shimsDTS: "",
-            enumsDTS: "",
-            onlyPublic: true
-        }
-        if (pio) r.platformio = { dependencies: {} };
-        else r.yotta = { config: {}, dependencies: {} };
-        return r;
     }
 
     function doubleToBits(v: number) {
