@@ -3,15 +3,6 @@ import * as data from "./data";
 
 type Header = pxt.workspace.Header;
 
-function loadImageAsync(data: string): Promise<HTMLImageElement> {
-    const img = document.createElement("img") as HTMLImageElement;
-    return new Promise<HTMLImageElement>((resolve, reject) => {
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(undefined);
-        img.src = data;
-    });
-}
-
 function renderIcon(img: HTMLImageElement): string {
     let icon: string = null;
     if (img && img.width > 0 && img.height > 0) {
@@ -41,7 +32,7 @@ function renderIcon(img: HTMLImageElement): string {
 }
 
 export function saveAsync(header: Header, screenshot: string): Promise<void> {
-    return loadImageAsync(screenshot)
+    return pxt.BrowserUtils.loadImageAsync(screenshot)
         .then(img => {
             const icon = renderIcon(img);
             return workspace.saveScreenshotAsync(header, screenshot, icon)
