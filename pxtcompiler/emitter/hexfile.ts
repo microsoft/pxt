@@ -251,12 +251,6 @@ namespace ts.pxtc {
         }
 
         let currentSetup: string = null;
-        interface HexPatch {
-            addr: number;
-            bytes: number[];
-        }
-        let pendingPatches: HexPatch[] = []
-        export let compiledVTs: string[] = []
 
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function flashCodeAlign(opts: CompileTarget) {
@@ -371,9 +365,6 @@ namespace ts.pxtc {
 
             funcInfo = {};
             let funs: FuncInfo[] = extInfo.functions;
-            let patchMode = opts.taggedInts ? true : false
-            let vtlistMode = opts.taggedInts ? true : false
-            let patchVT: number = null
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
                 let m = /^:10(....)00(.{16})/.exec(hex[i])
@@ -386,34 +377,13 @@ namespace ts.pxtc {
                     let hexb = s.slice(0, step)
                     let value = parseInt(swapBytes(hexb), 16)
                     s = s.slice(step)
-
-                    if (patchMode) {
-                        if (!value)
-                            patchMode = false
-                        else if (patchVT == null)
-                            patchVT = value
-                        else {
-                            let vv = encodeVTPtr(patchVT)
-                            patchVT = null
-                            pendingPatches.push({
-                                addr: value + 2,
-                                bytes: [vv & 0xff, vv >> 8]
-                            })
-                        }
-                    } else if (vtlistMode) {
-                        if (!value)
-                            vtlistMode = false
-                        else
-                            compiledVTs.push(assembler.tohex(encodeVTPtr(value)))
-                    } else {
-                        let inf = funs.shift()
-                        if (!inf) return;
-                        funcInfo[inf.name] = inf;
-                        if (!value) {
-                            U.oops("No value for " + inf.name + " / " + hexb)
-                        }
-                        inf.value = value
+                    let inf = funs.shift()
+                    if (!inf) return;
+                    funcInfo[inf.name] = inf;
+                    if (!value) {
+                        U.oops("No value for " + inf.name + " / " + hexb)
                     }
+                    inf.value = value
                 }
             }
 
@@ -486,14 +456,11 @@ namespace ts.pxtc {
         }
 
         function applyPatches(f: UF2.BlockFile) {
-            for (let p of pendingPatches)
-                UF2.writeBytes(f, p.addr, p.bytes)
-
             // constant strings in the binary are 4-byte aligned, and marked 
             // with "@PXT@:" at the beginning - this 6 byte string needs to be
             // replaced with proper reference count (0xffff to indicate read-only
             // flash location), string virtual table, and the length of the string
-            let stringVT = [0xff, 0xff].concat(pendingPatches[0].bytes)
+            let stringVT = [0xff, 0xff, 0x01, 0x00]
             assert(stringVT.length == 4)
             for (let bidx = 0; bidx < f.blocks.length; ++bidx) {
                 let b = f.blocks[bidx]
@@ -638,7 +605,7 @@ namespace ts.pxtc {
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
-${lbl}meta: .short 0xffff, ${hex.compiledVTs[0]}, ${s.length}
+${lbl}meta: .short 0xffff, 1, ${s.length}
 ${lbl}: .string ${stringLiteral(s)}
 `)
         }
@@ -647,7 +614,7 @@ ${lbl}: .string ${stringLiteral(s)}
             let lbl = bin.doubles[data]
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short 0xffff, ${hex.compiledVTs[1]}
+${lbl}: .short 0xffff, 10
         .hex ${data}
 `)
         }
