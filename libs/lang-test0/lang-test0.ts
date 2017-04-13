@@ -1,11 +1,29 @@
 //
 // Note that this is supposed to run from command line.
-// Do not use anything besides basic.pause, control.inBackground, console.log
+// Do not use anything besides control.pause, control.runInBackground, console.log
 //
 
+control.pause(2000)
+
 function msg(s: string): void {
-    console.log(s)
-    //basic.pause(50);
+    serial.writeString(s)
+    serial.writeString("\n")
+    //control.pause(50);
+}
+
+msg("start!")
+
+namespace control {
+export function assert(cond: boolean, m?: string) {
+    if (!cond) {
+        msg("control.assertion failed: ")
+        if (m)
+            msg(m)
+        while (1) {
+            control.pause(1000)
+        }
+    }
+}
 }
 
 //
@@ -26,9 +44,6 @@ let i16: int16
 
 let xyz = 12;
 
-console.log("Starting...")
-
-basic.showNumber(0);
 
 let hasFloat = true
 if ((1 / 10) == 0) {
@@ -75,23 +90,30 @@ function optstring2(x: number, s: string = null) {
 }
 
 function testNums(): void {
+    msg("TN")
+    let z = 12
+    msg("ZZ" + z);
     let x = 40 + 2;
     control.assert(x == 42, "add");
     x = 40 / 2;
     control.assert(x == 20, "div");
     let r = fib(15);
+    msg("FB")
     msg("FIB" + r);
     control.assert(r == 987, "fib");
     let x3 = doStuff(x, 2);
+    msg("nums#0")
     control.assert(x3 == 10, "call order");
     glb1 = 5;
     incrBy_2();
     control.assert(glb1 == 7, "glb1");
     incrBy_2();
+    msg("nums#1")
     control.assert(glb1 == 9, "glb2");
     control.assert(Math.abs(-42) == 42, "abs");
     control.assert(Math.abs(42) == 42, "abs");
     control.assert(Math.sign(42) == 1, "abs");
+    msg("nums#3")
     testIf();
 
     control.assert((3 & 6) == 2, "&")
@@ -107,6 +129,7 @@ function testNums(): void {
         control.assert(1000000 * 1000000 == -727379968, "*")
         control.assert(100000001 * 100000001 == 2074919425, "*2")
     }
+    msg("nums#4")
 
     control.assert(105 % 100 == 5, "perc")
 
@@ -115,6 +138,7 @@ function testNums(): void {
     if (!x) {
         control.assert(false, "wrong bang")
     }
+    msg("nums#5")
 }
 
 
@@ -155,24 +179,35 @@ function incrBy_2(): void {
 }
 
 function testStrings(): void {
+    msg("testStrings")
     control.assert((42).toString() == "42", "42");
 
+    msg("ts0x")
     let s = "live";
     control.assert(s == "live", "hello eq");
+    msg("ts0y")
+
     s = s + "4OK";
     s2 = s;
+    msg("ts0")
     control.assert(s.charCodeAt(4) == 52, "hello eq2");
     control.assert(s.charAt(4) == "4", "hello eq2X");
     control.assert(s[4] == "4", "hello eq2X");
     control.assert(s.length == 7, "len7");
+    msg("ts0")
     s = "";
+
+    control.pause(3)
     for (let i = 0; i < 10; i++) {
+        msg("Y")
         s = s + i;
+        msg(s)
     }
     control.assert(s == "0123456789", "for");
     let x = 10;
     s = "";
     while (x >= 0) {
+        msg("X")
         s = s + x;
         x = x - 1;
     }
@@ -188,21 +223,31 @@ function testStrings(): void {
     s = `a${x * 2}X${s}X${s}Z`
     control.assert(s == "a42XfooXfoo" + "Z", "`")
 
+    msg("X" + true)
+
     control.assert("X" + true == "Xt" + "rue", "boolStr")
+    msg("testStrings DONE")
 }
 
 
 function testNumCollection(): void {
+    msg("test num coll")
     let collXYZ: number[] = [];
     control.assert(collXYZ.length == 0, "");
     collXYZ.push(42);
+    msg("#1")
     control.assert(collXYZ.length == 1, "");
     collXYZ.push(22);
     control.assert(collXYZ[1] == 22, "");
+    msg("#2")
     collXYZ.splice(0, 1);
+    msg("#2")
     control.assert(collXYZ[0] == 22, "");
+    msg("#2")
     collXYZ.removeElement(22);
+    msg("#2")
     control.assert(collXYZ.length == 0, "");
+    msg("loop")
     for (let i = 0; i < 100; i++) {
         collXYZ.push(i);
     }
@@ -213,6 +258,7 @@ function testNumCollection(): void {
     control.assert(collXYZ[0] == 1, "cons0");
     control.assert(collXYZ[1] == 2, "cons1");
     control.assert(collXYZ[2] == 3, "cons2");
+    msg("loop done")
 }
 
 function testStringCollection(): void {
@@ -267,6 +313,7 @@ function postPreFix() {
     recordId(x).num >>= 1
     control.assert(x.num == 7, "X3")
     control.assert(lazyAcc == 4, "X4")
+    lazyAcc = 0
 }
 
 function testArrIncr() {
@@ -326,16 +373,17 @@ function inBg() {
     let q = 14
     let rec = new Testrec();
     glb1 = 0
-    control.inBackground(() => {
+    control.runInBackground(() => {
         glb1 = glb1 + 10 + (q - k)
         rec.str = "foo"
     })
-    control.inBackground(() => {
+    control.runInBackground(() => {
         glb1 = glb1 + 1
     })
-    basic.pause(50)
+    control.pause(50)
     control.assert(glb1 == 18, "inbg0")
     control.assert(rec.str == "foo", "inbg1")
+    glb1 = 0
 }
 
 function runTwice(fn: Action): void {
@@ -357,6 +405,7 @@ function testIter() {
         x = x + (v + 1)
     })
     control.assert(x == 55, "55")
+    x = 0
 }
 
 function testAction(p: number): void {
@@ -371,6 +420,7 @@ function testAction(p: number): void {
     });
     control.assert(x == 42 + p * 6, "run2");
     control.assert(coll.length == 2, "run2");
+    x = 0
 }
 
 function add7() {
@@ -398,6 +448,7 @@ function testFunDecl() {
     addX();
     add10();
     control.assert(sum == 44 + 14 + x + 10, "direct");
+    sum = 0
 }
 
 function saveAction(fn: Action): void {
@@ -477,6 +528,7 @@ function testLazyOps(): void {
     control.assert(lazyAcc == 1, "?:0");
     control.assert((false ? incrLazyNum(1, 42) : incrLazyNum(10, 36)) == 36, "?:1")
     control.assert(lazyAcc == 11, "?:2");
+    lazyAcc = 0
 
     msg("testing lazy done")
 }
@@ -499,22 +551,22 @@ function testRefLocals(): void {
     for (let i = 0; i < 3; i++) {
         msg(i + "");
         let copy = i;
-        control.inBackground(() => {
-            basic.pause(10 * i);
+        control.runInBackground(() => {
+            control.pause(10 * i);
             copy = copy + 10;
         });
-        control.inBackground(() => {
-            basic.pause(20 * i);
+        control.runInBackground(() => {
+            control.pause(20 * i);
             s = s + copy;
         });
     }
-    basic.pause(200);
+    control.pause(200);
     control.assert(s == "101112", "reflocals");
 }
 
 function byRefParam_0(p: number): void {
-    control.inBackground(() => {
-        basic.pause(1);
+    control.runInBackground(() => {
+        control.pause(1);
         sum = sum + p;
     });
     p = p + 1;
@@ -522,8 +574,8 @@ function byRefParam_0(p: number): void {
 
 function byRefParam_2(pxx: number): void {
     pxx = pxx + 1;
-    control.inBackground(() => {
-        basic.pause(1);
+    control.runInBackground(() => {
+        control.pause(1);
         sum = sum + pxx;
     });
 }
@@ -535,15 +587,16 @@ function testByRefParams(): void {
     refparamWrite3(new Testrec());
     sum = 0;
     let x = 1;
-    control.inBackground(() => {
-        basic.pause(1);
+    control.runInBackground(() => {
+        control.pause(1);
         sum = sum + x;
     });
     x = 2;
     byRefParam_0(4);
     byRefParam_2(10);
-    basic.pause(30);
+    control.pause(30);
     control.assert(sum == 18, "by ref");
+    sum = 0
     msg("byref done")
 }
 
@@ -561,14 +614,14 @@ function refparamWrite2(testrec: Testrec): void {
 }
 
 function refparamWrite3(testrecX: Testrec): void {
-    control.inBackground(() => {
-        basic.pause(1);
+    control.runInBackground(() => {
+        control.pause(1);
         control.assert(testrecX.str == "foo", "ff");
         testrecX.str = testrecX.str + "x";
     });
     testrecX = new Testrec();
     testrecX.str = "foo";
-    basic.pause(30);
+    control.pause(30);
     control.assert(testrecX.str == "foox", "ff2");
 }
 
@@ -632,6 +685,7 @@ function testClass() {
     control.assert(f.getPin() == 42, "getpin")
 }
 
+
 enum En {
     A,
     B,
@@ -665,6 +719,7 @@ function testEnums() {
     msg("enums0")
     control.assert(switchA(En.A) == 7, "s1")
     control.assert(switchA(En.B) == 7, "s2")
+    control.assert(switchA((3 - 2) as En) == 7, "s2")
     control.assert(switchA(En.C) == 12, "s3")
     control.assert(switchA(En.D) == 13, "s4")
     control.assert(switchA(En.E) == 12, "s5")
@@ -676,6 +731,8 @@ function testEnums() {
     control.assert(switchB(En.C) == 17, "x3")
     control.assert(switchB(En.D) == 13, "x4")
     control.assert(switchB(En.E) == 14, "x5")
+
+    control.pause(3)
 
     let kk = 1
     if (kk & En2.D2) {
@@ -715,9 +772,11 @@ function testForOf() {
     let arr = [1, 7, 8]
     let sum = 0
     for (let e of arr) {
+        msg("FO:" + e)
         sum += (e - 1)
     }
     control.assert(sum == 13, "fo1")
+    msg("loop1 done")
 
     // make sure we incr reference count of the array during the loop execution
     for (let q of [3, 4, 12]) {
@@ -763,6 +822,8 @@ function testForOf() {
         sum += y
     }
     control.assert(sum == 55, "fo7")
+
+    msg("for of done")
 }
 
 
@@ -1189,12 +1250,12 @@ namespace Ctors {
         control.assert(a.v == 12, "A12")
         a = new B()
         control.assert(a.v == 12, "B12")
-        // downcasts not allowed for now
-        // control.assert((a as B).q == 17, "B17")
+        // downcasts outlawed for now
+        //control.assert((a as B).q == 17, "B17")
         a = new C()
         control.assert(a.v == 12, "C12")
-        // downcasts not allowed for now
-        // control.assert((a as B).q == 17, "C17")
+        // downcasts outlawed for now
+        //control.assert((a as B).q == 17, "C17")
         let d = new D(33)
         control.assert(d.v == 33, "D33")
         d = new D()
@@ -1356,23 +1417,25 @@ function testBitSize() {
     msg("testBitSize")
 
     u8 = 10 * 100
-    control.assert(u8 == 232)
+    control.assert(u8 == 232, "bs0")
     u8 = 255
-    control.assert(u8 == 255)
+    control.assert(u8 == 255, "bs1")
     i8 = -10
-    control.assert(i8 == -10)
+    control.assert(i8 == -10, "bs2")
     i8 = 127
-    control.assert(i8 == 127)
+    control.assert(i8 == 127, "bs3")
     i8 = -130 * 10 - 1
-    control.assert(i8 == -21)
+    control.assert(i8 == -21, "bs4")
     u16 = 0xffff
-    control.assert(u16 == 0xffff)
+    control.assert(u16 == 0xffff, "bs5")
     u16 = -1
-    control.assert(u16 == 0xffff)
+    control.assert(u16 == 0xffff, "bs6")
     i16 = 1000 * 1000
-    control.assert(i16 == 16960)
+    control.assert(i16 == 16960, "bs7")
     i16 = -1000 * 1000
-    control.assert(i16 == -16960)
+    control.assert(i16 == -16960, "bs8")
+
+    msg("testBitSize DONE")
 }
 
 namespace ObjectDestructuring {
@@ -1445,6 +1508,28 @@ namespace ObjectDestructuring {
     }
 }
 
+function testFloat() {
+    if (!hasFloat)
+        return
+    let v = 13/32
+    v *= 32
+    control.assert(v == 13, "/")
+    for (let i = 0; i < 20; ++i) {
+        v *= 10000
+    }
+    //control.assert(v > 1e81, "81")
+}
+
+function clean() {
+    glb1 = 0
+    s2 = ""
+    x = 0
+    action = null
+    tot = ""
+    lazyAcc = 0
+    sum = 0
+}
+
 namespace Generics {
 
     function swap<T>(arr: T[], i : number, j: number) : void {
@@ -1500,7 +1585,6 @@ namespace AnonymousTypes {
     function foo(f: { a: number }) {
        return f.a + 1
     }
-
     export function test() {
         msg("AnonymousTypes")
         let x = { a: 2, b: "" }
@@ -1513,6 +1597,7 @@ namespace AnonymousTypes {
         // HUH bar(40) - new (expects any)
     }
 }
+
 
 
 // ---------------------------------------------------------------------------
@@ -1564,22 +1649,28 @@ Ifaces.run()
 ObjLit.run()
 testBitSize()
 ObjectDestructuring.run();
+testFloat()
 testGenerics()
 AnonymousTypes.test()
 
 msg("test top level code")
 let xsum = 0;
+let forclean = () => {}
 for (let i = 0; i < 11; ++i) {
     xsum = xsum + i;
+    forclean = () => { i = 0 }
 }
+forclean()
+forclean = null
 control.assert(xsum == 55, "mainfor")
 
-control.inBackground(() => {
+control.runInBackground(() => {
     xsum = xsum + 10;
 })
 
-basic.pause(20)
+control.pause(20)
 control.assert(xsum == 65, "mainforBg")
+xsum = 0
 
 control.assert(xyz == 12, "init")
 
@@ -1590,19 +1681,10 @@ function incrXyz() {
 let unusedInit = incrXyz();
 
 control.assert(xyz == 13, "init2")
+xyz = 0
 
 
 testClass()
 
-basic.showNumber(1)
-
-/*
-msg('test rest')
-
-function rest(...args: number[]): number[] {
-    return args;
-}
-
-control.assert(rest(0,10,20,30)[1] == 10, "rest");
-*/
-console.log("ALL TESTS OK")
+clean()
+msg("test OK!")
