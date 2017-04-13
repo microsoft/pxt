@@ -10,6 +10,9 @@ interface SimulatorConfig {
     editor: string;
 }
 
+export const FAST_TRACE_INTERVAL = 100;
+export const SLOW_TRACE_INTERVAL = 400;
+
 export var driver: pxsim.SimulatorDriver;
 let nextFrameId: number = 0;
 const themes = ["blue", "red", "green", "yellow"];
@@ -66,6 +69,10 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             }
         },
+        onTraceMessage: function (msg) {
+            let brkInfo = lastCompileResult.breakpoints[msg.breakpointId]
+            config.highlightStatement(brkInfo)
+        },
         onDebuggerWarning: function (wrn) {
             for (let id of wrn.breakpointIds) {
                 let brkInfo = lastCompileResult.breakpoints[id]
@@ -91,14 +98,15 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    core.confirmAsync({
-                        header: msg.header,
-                        body: msg.body,
-                        size: "large",
-                        copyable: msg.copyable,
-                        hideAgree: true,
-                        disagreeLbl: lf("Close")
-                    }).done();
+                    if (core.isLoading())
+                        core.confirmAsync({
+                            header: msg.header,
+                            body: msg.body,
+                            size: "large",
+                            copyable: msg.copyable,
+                            hideAgree: true,
+                            disagreeLbl: lf("Close")
+                        }).done();
                     break;
             }
         }
@@ -168,6 +176,10 @@ export function hide(completeHandler?: () => void) {
 
 export function unhide() {
     driver.unhide();
+}
+
+export function setTraceInterval(intervalMs: number) {
+    driver.setTraceInterval(intervalMs);
 }
 
 export function proxy(message: pxsim.SimulatorCustomMessage) {

@@ -10,9 +10,10 @@ A *Number* is an integer such as `42` or `-42`. More precisely, a *Number* is a 
 
 You can assign a number to a variable:
 
-```blocks
+#### #declareexample
+
+```block
 let num = 42;
-basic.showNumber(42);
 ```
 
 ### Arithmetic operators
@@ -41,11 +42,11 @@ The following relational operators work on numbers and return a [Boolean](/block
 ### Functions that return a number
 
 Some functions return a number, which you can store in a variable. 
-For example the following code gets the display brightness 
-(using the [brightness function](/reference/led/brightness)) and stores the value in a variable named `brightness`:
 
-```blocks
-let brightness = led.brightness()
+### #functionreturnexample
+
+```block
+let abs = Math.abs(-42);
 ```
 
 ### Math functions
@@ -53,12 +54,10 @@ let brightness = led.brightness()
 The [math library](/blocks/math) includes math related functions. 
 For example, the `absolute` function returns the returns the absolute value of input parameter `x`:
 
-```blocks
-let abs = Math.abs(-42);
-basic.showNumber(abs);
+```block
+let abs = Math.min(-42, 1000);
 ```
 
 ### See also
 
-[math](/blocks/math), [var](/blocks/variables/var), [Boolean](/blocks/logic/boolean), [show number](/reference/basic/show-number)
-
+[math](/blocks/math), [var](/blocks/variables/var), [Boolean](/blocks/logic/boolean)

@@ -43,9 +43,9 @@ npm install -g http-server
 http-server -c-1 built/packaged
 ```
 
-You can also run ``pxt staticpkg foo``, which will create files under ``built/packaged/foo``
+You can also run ``pxt staticpkg --route foo``, which will create files under ``built/packaged/foo``
 that assume they sit under `/foo/` on the web server. If you do not specify anything,
-the files assume they sit right under `/`. To test it, run `pxt server -pkg` and head to
+the files assume they sit right under `/`. To test it, run `pxt serve -pkg` and head to
 `http://localhost:3232/foo/index.html`.
 
 ## [GitHub Pages](https://pages.github.com/) support
@@ -56,7 +56,7 @@ If you wish to publish your web site to GitHub pages, simply add ``--githubpages
 
 This will:
 * create a fresh checkout in `built/gh-pages` if needed
-* implicityly run `pxt staticpkg repo-name`
+* implicityly run `pxt staticpkg --route repo-name`
 * copy files from `built/packaged/repo-name` to `built/gh-pages`
 * add files to git, commit, and push
 

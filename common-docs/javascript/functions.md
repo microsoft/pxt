@@ -48,7 +48,7 @@ provide a lightweight syntax for functions. Arrow functions are used extensively
 many APIs. For example:
 
 ```typescript
-function forever(handler: RefAction) {
+function forever(handler: Action) {
     // call handler in a loop...
 }
 

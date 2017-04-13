@@ -12,34 +12,23 @@
     #logs {
         position: absolute;
         left: 0;
-        top: 1rem;
+        top: 2rem;
         width: 100%;
-        height: 6rem;
+        height: 10rem;
         border: 0;
+        font-size: 0.6rem;
     }
     
     #iframe {
         position: absolute;
         left: 0;
-        top: 7rem;
+        top: 10.5rem;
         width: 100%;
-        height: calc(100% - 7rem);
+        height: calc(100% - 10.5rem);
         border: 0;
     }
 </style>
 <script>
-    function sendMessage(action) {
-        console.log('send ' + action)
-        var logs = document.getElementById("logs");
-        logs.innerText += ">" + action + "\n";
-        let editor = document.getElementById("iframe").contentWindow;
-        editor.postMessage({
-            type: "pxteditor",
-            id: "xxxxxxxxx",
-            action: action
-        }, "*")
-    }
-
     let projects = [
 {
   "text": {
@@ -49,6 +38,38 @@
     "pxt.json": "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
   }
 }];
+    let filters = {
+        "namespaces": {
+            "loops": 0
+        }
+    }
+    let lastSaved;
+    let filter = false;
+
+    function toggleFilters() {
+        filter = !filter;        
+        var logs = document.getElementById("logs");
+        logs.innerText += "filter: " + filter + "\n";
+    }
+    
+    function sendMessage(action) {
+        console.log('send ' + action)
+        var logs = document.getElementById("logs");
+        logs.innerText += "> " + action + "\n";
+        let editor = document.getElementById("iframe").contentWindow;
+        let msg = {
+            type: "pxteditor",
+            id: "xxxxxxxxx",
+            action: action
+        };
+        if(action == 'importproject') {
+            let prj = JSON.parse(JSON.stringify(projects[0]));
+            msg.project = prj;
+            if (filter) msg.filters = JSON.parse(JSON.stringify(filters));
+            msg.response = true;
+        }
+        editor.postMessage(msg, "*")
+    }
 
     function receiveMessage(ev) {
         let editor = document.getElementById("iframe").contentWindow;
@@ -56,15 +77,19 @@
         console.log('received...')
         console.log(msg)
         var logs = document.getElementById("logs");
-        logs.innerText += "<" + msg.type + " " + msg.action + "\n";
+        logs.innerText += "< " + msg.type +(msg.action ? " " + msg.action : "" ) + "\n";
         if (msg.type == "pxthost") {
             if (msg.action == "workspacesync") {
                 // no project
                 msg.projects = projects;
+                if (filter) msg.editor = {
+                    "filters": JSON.parse(JSON.stringify(filters))
+                }
                 editor.postMessage(msg, "*")
                 return;
             } else if (msg.action == "workspacesave") {
                 console.log(JSON.stringify(msg.project, null, 2))
+                lastSaved = msg.project;
             }
         }
     }
@@ -80,6 +105,8 @@
         <button class="ui button" onclick="sendMessage('restartsimulator')">reset sim</button>
         <button class="ui button" onclick="sendMessage('stopsimulator')">stop sim</button>
         <button class="ui button" onclick="sendMessage('newproject')">newproject</button>
+        <button class="ui button" onclick="sendMessage('importproject')">importproject</button>
+        <button class="ui button" onclick="toggleFilters()">filter</button>
         <button class="ui button" onclick="sendMessage('undo')">undo</button>
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
     </div>

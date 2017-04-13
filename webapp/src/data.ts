@@ -273,5 +273,29 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
     }
 }
 
+export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspace.WorkspaceProvider {
+    return {
+        initAsync: ws.initAsync,
+        resetAsync: () => ws.resetAsync().then(() => {
+            clearCache()
+        }),
+        getHeaders: ws.getHeaders,
+        getHeader: ws.getHeader,
+        syncAsync: () => ws.syncAsync().then((state) => {
+            invalidate("header:*");
+            invalidate("text:*");
+            return state;
+        }),
+        getTextAsync: ws.getTextAsync,
+        saveAsync: (h,t) => ws.saveAsync(h,t).then(() => {
+            invalidate("header:" + h.id);
+            invalidate("text:" + h.id);
+        }),
+        saveToCloudAsync: ws.saveToCloudAsync,
+        saveScreenshotAsync: ws.saveScreenshotAsync,
+        installAsync: ws.installAsync
+    };
+}
+
 
 loadCache();

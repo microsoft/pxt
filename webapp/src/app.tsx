@@ -27,6 +27,7 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as sounds from "./sounds";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -47,6 +48,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import CategoryMode = pxt.blocks.CategoryMode;
 const lf = Util.lf
 
 pxsim.util.injectPolyphils();
@@ -91,6 +93,7 @@ export class ProjectView
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
+    tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
 
     private lastChangeTime: number;
@@ -104,7 +107,7 @@ export class ProjectView
         this.state = {
             showFiles: false,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless
+            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -202,7 +205,7 @@ export class ProjectView
     openJavaScript() {
         pxt.tickEvent("menu.javascript");
         if (this.isJavaScriptActive()) {
-            if (this.state.embedSimView) this.setState({embedSimView: false});
+            if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
         if (this.isBlocksActive()) this.blocksEditor.openTypeScript();
@@ -212,22 +215,22 @@ export class ProjectView
     openBlocks() {
         pxt.tickEvent("menu.blocks");
         if (this.isBlocksActive()) {
-            if (this.state.embedSimView) this.setState({embedSimView: false});
+            if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
         if (this.isJavaScriptActive()) this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
-          this.saveFileAsync()
-            .then(() => {
-                compiler.newProject();
-                return compiler.getBlocksAsync()
-            })
-            .done((bi: pxtc.BlocksInfo) => {
-                pxt.blocks.initBlocks(bi);
-                this.blocksEditor.updateBlocksInfo(bi);
-                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
-            });
+            this.saveFileAsync()
+                .then(() => {
+                    compiler.newProject();
+                    return compiler.getBlocksAsync()
+                })
+                .done((bi: pxtc.BlocksInfo) => {
+                    pxt.blocks.initBlocks(bi);
+                    this.blocksEditor.updateBlocksInfo(bi);
+                    this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+                });
         } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
     }
 
@@ -255,7 +258,7 @@ export class ProjectView
         if (this.state.embedSimView) {
             this.startStopSimulator();
         } else {
-            this.setState({embedSimView: true});
+            this.setState({ embedSimView: true });
             this.startSimulator();
         }
     }
@@ -487,7 +490,7 @@ export class ProjectView
         if (step > -1) {
             tutorial.TutorialContent.notify({
                 type: "tutorial",
-                tutorial: this.state.tutorial,
+                tutorial: this.state.tutorialOptions.tutorial,
                 subtype: "stepchange",
                 step: step
             } as pxsim.TutorialStepChangeMessage)
@@ -501,9 +504,13 @@ export class ProjectView
                 switch (t.subtype) {
                     case 'steploaded':
                         let tt = msg as pxsim.TutorialStepLoadedMessage;
-                        let showCategories = tt.showCategories ? tt.showCategories : Object.keys(tt.data).length > 7;
-                        this.editor.filterToolbox(tt.data, showCategories, false);
-                        this.setState({ tutorialReady: true, tutorialCardLocation: tt.location });
+                        let showCategories = CategoryMode.Basic;
+                        this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Disabled }, showCategories);
+                        let tutorialOptions = this.state.tutorialOptions;
+                        tutorialOptions.tutorialReady = true;
+                        tutorialOptions.tutorialHeaderContent = tt.headercontent;
+                        tutorialOptions.tutorialHint = tt.content;
+                        this.setState({ tutorialOptions: tutorialOptions });
                         tutorial.TutorialContent.refresh();
                         core.hideLoading();
                         break;
@@ -513,10 +520,10 @@ export class ProjectView
     }
 
     reloadHeaderAsync() {
-        return this.loadHeaderAsync(this.state.header)
+        return this.loadHeaderAsync(this.state.header, this.state.filters)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, filters?: pxt.editor.ProjectFilters): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -524,8 +531,10 @@ export class ProjectView
         pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
+        if (!filters) filters = h.filters;
         this.setState({
-            showFiles: false
+            showFiles: false,
+            filters: filters
         })
         return pkg.loadPkgAsync(h.id)
             .then(() => {
@@ -553,7 +562,7 @@ export class ProjectView
                     sideDocsLoadUrl: ''
                 })
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
-                    this.loadHeaderAsync(h).done()
+                    this.loadHeaderAsync(h, this.state.filters).done()
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
@@ -585,10 +594,10 @@ export class ProjectView
                     })
                     .done()
 
-                let readme = main.lookupFile("this/README.md");
+                const readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
-                else if (pkg.mainPkg.config.documentation)
+                else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation);
             })
     }
@@ -684,7 +693,7 @@ export class ProjectView
             const files = JSON.parse(data.source) as pxt.Map<string>;
             // we cannot load the workspace until we've loaded the project
             workspace.installAsync(h, files)
-                .done(hd => this.loadHeaderAsync(hd));
+                .done(hd => this.loadHeaderAsync(hd, null));
             return;
         }
 
@@ -718,6 +727,22 @@ export class ProjectView
         } else core.warningNotification(lf("Oops, don't know how to load this file!"));
     }
 
+    importProjectAsync(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void> {
+        let h: pxt.workspace.InstallHeader = project.header;
+        if (!h) {
+            h = {
+                target: pxt.appTarget.id,
+                editor: pxt.BLOCKS_PROJECT_NAME,
+                name: lf("Untitled"),
+                meta: {},
+                pubId: "",
+                pubCurrent: false
+            }
+        }
+        return workspace.installAsync(h, project.text)
+            .then(hd => this.loadHeaderAsync(hd, filters));
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && isHexFile(file.name) || isBlocksFile(file.name),
@@ -737,20 +762,7 @@ export class ProjectView
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
         const mpkg = pkg.mainPkg;
-        return this.saveFileAsync()
-            .then(() => mpkg.filesToBePublishedAsync(true))
-            .then(files => {
-                const project: pxt.cpp.HexFile = {
-                    meta: {
-                        cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
-                        targetVersions: pxt.appTarget.versions,
-                        editor: this.getPreferredEditor(),
-                        name: mpkg.config.name
-                    },
-                    source: JSON.stringify(files, null, 2)
-                }
-                return pxt.lzmaCompressAsync(JSON.stringify(project, null, 2));
-            });
+        return mpkg.compressToFileAsync(this.getPreferredEditor())
     }
 
     getPreferredEditor(): string {
@@ -779,7 +791,7 @@ export class ProjectView
         const mpkg = pkg.mainPkg
         this.exportProjectToFileAsync()
             .done((buf: Uint8Array) => {
-                const fn = pkg.genFileName(".pxt");
+                const fn = pkg.genFileName(".mkcd");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
     }
@@ -822,7 +834,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd))
+        }, files).then(hd => this.loadHeaderAsync(hd, options.filters))
     }
 
     switchTypeScript() {
@@ -832,7 +844,7 @@ export class ProjectView
         this.setFile(f);
     }
 
-    saveBlocksToTypeScript(): string {
+    saveBlocksToTypeScriptAsync(): Promise<string> {
         return this.blocksEditor.saveToTypeScript();
     }
 
@@ -843,20 +855,20 @@ export class ProjectView
         let promise = Promise.resolve().then(() => {
             return open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         }).then(() => {
-            let src = this.editor.saveToTypeScript();
+            return this.editor.saveToTypeScript().then((src) => {
+                if (!src) return Promise.resolve();
+                // format before saving
+                // if (open) src = pxtc.format(src, 0).formatted;
 
-            if (!src) return Promise.resolve();
-            // format before saving
-            //src = pxtc.format(src, 0).formatted;
-
-            let mainPkg = pkg.mainEditorPkg();
-            let tsName = this.editorFile.getVirtualFileName();
-            Util.assert(tsName != this.editorFile.name);
-            return mainPkg.setContentAsync(tsName, src).then(() => {
-                if (open) {
-                    let f = mainPkg.files[tsName];
-                    this.setFile(f);
-                }
+                let mainPkg = pkg.mainEditorPkg();
+                let tsName = this.editorFile.getVirtualFileName();
+                Util.assert(tsName != this.editorFile.name);
+                return mainPkg.setContentAsync(tsName, src).then(() => {
+                    if (open) {
+                        let f = mainPkg.files[tsName];
+                        this.setFile(f);
+                    }
+                });
             });
         });
 
@@ -886,6 +898,7 @@ export class ProjectView
     }
 
     saveAndCompile() {
+        this.saveProjectName();
         this.saveFile();
 
         if (!pxt.appTarget.compile.hasHex) {
@@ -901,6 +914,9 @@ export class ProjectView
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
+        let userContextWindow: Window = undefined;
+        if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
+            userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
@@ -924,14 +940,19 @@ export class ProjectView
                     return Promise.resolve()
                 }
                 resp.saveOnly = saveOnly
+                resp.userContextWindow = userContextWindow;
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf(".hex file upload failed, please try again."));
                         pxt.reportException(e);
+                        if (userContextWindow)
+                            try { userContextWindow.close() } catch (e) { }
                     })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
+                if (userContextWindow)
+                    try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
                 this.setState({ compiling: false });
                 if (simRestart) this.runSimulator();
@@ -953,6 +974,18 @@ export class ProjectView
         pxt.tickEvent('simulator.restart')
         this.stopSimulator();
         this.startSimulator();
+    }
+
+    toggleTrace() {
+        if (this.state.tracing) {
+            this.editor.clearHighlightedStatements();
+            simulator.setTraceInterval(0);
+        }
+        else {
+            simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL);
+        }
+        this.setState({ tracing: !this.state.tracing })
+        this.restartSimulator();
     }
 
     startSimulator() {
@@ -1080,6 +1113,10 @@ export class ProjectView
         if (!opts.background)
             this.editor.beforeCompile();
 
+        if (this.state.tracing) {
+            opts.trace = true;
+        }
+
         this.stopSimulator();
         this.clearLog();
 
@@ -1105,14 +1142,15 @@ export class ProjectView
 
     importFileDialog() {
         let input: HTMLInputElement;
+        const ext = pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? ".hex" : ".mkcd";
         core.confirmAsync({
-            header: lf("Open .hex file"),
+            header: lf("Open {0} file", ext),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a .hex file to open.")}</label>
+    <label>${lf("Select a {0} file to open.", ext)}</label>
     <input type="file" class="ui button blue fluid"></input>
   </div>
 </div>`,
@@ -1271,6 +1309,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.startTutorial(targetTheme.sideDoc);
     }
 
+    openTutorials() {
+        pxt.tickEvent("menu.openTutorials");
+        this.projects.showOpenTutorials();
+    }
+
     startTutorial(tutorialId: string) {
         pxt.tickEvent("tutorial.start");
         core.showLoading(lf("starting tutorial..."));
@@ -1282,57 +1325,81 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         let title = tutorialId;
         let result: string[] = [];
 
+        sounds.initTutorial(); // pre load sounds
         return pxt.Cloud.downloadMarkdownAsync(tutorialId)
             .then(md => {
                 let titleRegex = /^#(.*)/g.exec(md);
                 if (!titleRegex || titleRegex.length < 1) return;
                 title = titleRegex[1];
 
-                let steps = md.split('###');
+                let steps = md.split(/^###[^#].*$/gmi);
                 for (let step = 1; step < steps.length; step++) {
                     let stepmd = `###${steps[step]}`;
                     result.push(stepmd);
                 }
                 //TODO: parse for tutorial options, mainly initial blocks
             }).then(() => {
-                this.setState({ tutorial: tutorialId, tutorialName: title, tutorialStep: 0, tutorialSteps: result })
-                let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+                let tutorialOptions: pxt.editor.TutorialOptions = {
+                    tutorial: tutorialId,
+                    tutorialName: title,
+                    tutorialStep: 0,
+                    tutorialSteps: result
+                };
+                this.setState({ tutorialOptions: tutorialOptions })
+
+                let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
-                    filesOverride: {
-                        "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"><block type="${ts.pxtc.ON_START_TYPE}"></block></xml>`,
-                        "main.ts": "  "
-                    },
                     name: tutorialId,
                     temporary: true
                 });
             });
     }
 
-    exitTutorial() {
+    exitTutorial(keep?: boolean) {
         pxt.tickEvent("tutorial.exit");
         core.showLoading(lf("leaving tutorial..."));
-        this.exitTutorialAsync()
+        this.exitTutorialAsync(keep)
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading());
     }
 
-    exitTutorialAsync() {
+    exitTutorialAsync(keep?: boolean) {
         // tutorial project is temporary, no need to delete
-        let curr = pkg.mainEditorPkg().header
-        curr.isDeleted = true
-        this.setState({ active: false });
+        let curr = pkg.mainEditorPkg().header;
+        let files = pkg.mainEditorPkg().getAllFiles();
+        if (!keep) {
+            curr.isDeleted = true;
+        } else {
+            curr.temporary = false;
+        }
+        this.setState({ active: false, filters: undefined });
         return workspace.saveAsync(curr, {})
+            .then(() => { return keep ? workspace.installAsync(curr, files) : Promise.resolve(null); })
             .then(() => {
                 if (workspace.getHeaders().length > 0) {
-                    this.loadHeaderAsync(workspace.getHeaders()[0]);
+                    return this.loadHeaderAsync(workspace.getHeaders()[0], null);
                 } else {
-                    this.newProject();
+                    return this.newProject();
                 }
-            }).finally(() => {
-                this.setState({ active: true, tutorial: null, tutorialName: null, tutorialSteps: null, tutorialStep: -1 });
+            })
+            .finally(() => {
+                core.hideLoading()
+                this.setState({ active: true, tutorialOptions: undefined });
             });
+    }
+
+    completeTutorial() {
+        pxt.tickEvent("tutorial.complete");
+        this.tutorialComplete.show();
+    }
+
+    showTutorialHint() {
+        let th = this.refs["tutorialhint"] as tutorial.TutorialHint;
+        th.showHint();
+        const options = this.state.tutorialOptions;
+        pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
     renderCore() {
@@ -1363,20 +1430,27 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
-        const inTutorial = !!this.state.tutorial;
-        const tutorialName = this.state.tutorialName;
+        const tutorialOptions = this.state.tutorialOptions;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const gettingStarted = !sandbox && !inTutorial && !this.state.sideDocsLoadUrl && targetTheme && targetTheme.sideDoc && isBlocks;
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
-        const fullscreen = run && !simOpts.hideFullscreen;
-        const showMenuBar = !targetTheme.hideMenuBar;
+        const trace = run && simOpts.enableTrace;
+        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
+        const audio = run && !inTutorial && targetTheme.hasAudio;
+        const {
+            hideMenuBar,
+            hideEditorToolbar} = targetTheme;
         const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || !!pxt.storage.getLocal(cookieKey);
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
+        const debugTooltip = this.state.tracing ? lf("Stop showing execution trace") : lf("Show execution trace");
+        const slowTraceTooltip = lf("Slow code execution");
+        const fastTraceTooltip = lf("Fast code execution");
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
@@ -1395,14 +1469,15 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             inTutorial ? 'tutorial' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
-            showMenuBar ? '' : 'hideMenuBar',
+            hideMenuBar ? 'hideMenuBar' : '',
+            hideEditorToolbar ? 'hideEditorToolbar' : '',
             sandbox && simActive ? 'simView' : '',
             'full-abs'
         ]);
 
         return (
             <div id='root' className={rootClasses}>
-                {showMenuBar ?
+                {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                             {!sandbox ? <div className="left menu">
@@ -1414,14 +1489,14 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </span>
                                 {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
-                                {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialName} /> : null}
+                                {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
-                                <span id="logo" className="ui item logo">
-                                    <img className="ui mini image" src={Util.toDataUri(rightLogo) } onClick={() => this.launchFullEditor() } alt={`${targetTheme.boardName} Logo`}/>
-                                </span>
-                            </div> }
+                                    <span id="logo" className="ui item logo">
+                                        <img className="ui mini image" src={Util.toDataUri(rightLogo) } onClick={() => this.launchFullEditor() } alt={`${targetTheme.boardName} Logo`}/>
+                                    </span>
+                                </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
-                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator")} icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
+                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
                                 <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
                                 <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
@@ -1447,20 +1522,20 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank">{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
 
-                                {sandbox ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
+                                {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
                                 {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
 
                                 {inTutorial ? <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial() } /> : undefined}
 
                                 {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                                        ? <img className={`ui logo ${targetTheme.portraitLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
+                                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
                             </div>
                         </div>
-                    </div> : undefined}
+                    </div> }
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
@@ -1473,14 +1548,23 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                         <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
-                                {run ? <sui.Button key='runbtn' class={`play-button`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
+                                {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
+                                {trace ? <sui.Button key='debug'  icon="bug" title={debugTooltip} onClick={() => this.toggleTrace() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {run && targetTheme.hasAudio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
+                                {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
                         </div>
+                        { this.state.tracing ?
+                            <div className="ui item grid centered portrait hide simtoolbar">
+                                <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
+                                    <sui.Button key="slow "icon="forward" title={slowTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL)}/>
+                                    <sui.Button key="fast "icon="fast forward" title={fastTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.FAST_TRACE_INTERVAL)}/>
+                                </div>
+                            </div>
+                        : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
@@ -1492,21 +1576,24 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined}
+                    {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
                     {this.allEditors.map(e => e.displayOuter()) }
                 </div>
-                <div id="editortools" role="complementary">
+                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
+                {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
+                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary">
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
-                </div>
+                </div> }
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
-                        {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                        <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
-                        <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                        <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download")}</a></span>
+                    {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
+                    <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
+                    <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
+                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>
@@ -1542,7 +1629,7 @@ function isTypescriptFile(filename: string): boolean {
 }
 
 function isProjectFile(filename: string): boolean {
-    return /\.pxt$/i.test(filename)
+    return /\.(pxt|mkcd)$/i.test(filename)
 }
 
 function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
@@ -1727,10 +1814,18 @@ function initTheme() {
         document.getElementsByTagName('head')[0].appendChild(style);
     }
     // RTL languages
-    if (/^ar/i.test(Util.userLanguage())) {
+    if (Util.isUserLanguageRtl()) {
         pxt.debug("rtl layout");
         pxsim.U.addClass(document.body, "rtl");
         document.body.style.direction = "rtl";
+
+        // replace semantic.css with rtlsemantic.css
+        const semanticLink = document.head.querySelector('link[href$="semantic.css"]');
+        const semanticHref = semanticLink.getAttribute("data-rtl");
+        if (semanticHref) {
+            pxt.debug(`swapping to ${semanticHref}`)
+            semanticLink.setAttribute("href", semanticHref);
+        }
     }
 
     function patchCdn(url: string): string {
@@ -1826,9 +1921,9 @@ function loadHeaderBySharedId(id: string) {
         .filter(h => h.pubCurrent && h.pubId == id)[0]
     core.showLoading(lf("loading project..."));
     (existing
-        ? theEditor.loadHeaderAsync(existing)
+        ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
-            .then(hd => theEditor.loadHeaderAsync(hd)))
+            .then(hd => theEditor.loadHeaderAsync(hd, null)))
         .finally(() => core.hideLoading());
 }
 
@@ -1843,7 +1938,7 @@ $(document).ready(() => {
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
     pxt.options.light = /light=1/i.test(window.location.href) || pxt.BrowserUtils.isARM() || pxt.BrowserUtils.isIE();
-    const wsPortMatch = /ws=(\d+)/i.exec(window.location.href);
+    const wsPortMatch = /wsport=(\d+)/i.exec(window.location.href);
     if (wsPortMatch) {
         pxt.options.wsPort = parseInt(wsPortMatch[1]) || 3233;
         window.location.hash = window.location.hash.replace(wsPortMatch[0], "");
@@ -1853,9 +1948,20 @@ $(document).ready(() => {
     pkg.setupAppTarget((window as any).pxtTargetBundle)
 
     enableAnalytics()
+
+    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
+        pxt.tickEvent("unsupported");
+        const redirect = pxt.BrowserUtils.suggestedBrowserPath();
+        if (redirect) {
+            window.location.href = redirect;
+        }
+    }
+
     appcache.init();
     initLogin();
 
+    pxt.docs.requireMarked = () => require("marked");
+    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
     const hash = parseHash();
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
@@ -1865,42 +1971,33 @@ $(document).ready(() => {
     if (ws) workspace.setupWorkspace(ws[1]);
     else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
+    else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
-
-    pxt.docs.requireMarked = () => require("marked");
-
-    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
-
-    if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
-        pxt.tickEvent("unsupported");
-        let redirect = pxt.BrowserUtils.suggestedBrowserPath();
-        if (redirect) {
-            window.location.href = redirect;
-        }
-    }
 
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
-            const live = mlang && !!mlang[1];
+            const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, live);
+            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => compiler.init())
         .then(() => workspace.initAsync())
-        .then(() => {
+        .then(state => {
             $("#loading").remove();
             render()
             return workspace.syncAsync();
         })
+        .then(state => state ? theEditor.setState(state) : undefined)
         .then(() => {
             initSerial();
             initScreenshots();
             initHashchange();
-        }).then(() => pxt.winrt.initAsync(ih))
+        })
+        .then(() => pxt.winrt.initAsync(ih))
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))
@@ -1910,7 +2007,7 @@ $(document).ready(() => {
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
             let hd = workspace.getHeaders()[0]
             if (ent) hd = workspace.getHeader(ent.id)
-            if (hd) return theEditor.loadHeaderAsync(hd)
+            if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();
         }).then(() => workspace.importLegacyScriptsAsync())

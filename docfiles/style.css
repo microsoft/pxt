@@ -40,6 +40,27 @@ div.listing A:hover
     text-decoration: underline; 
 }
 
+#docs ul {
+    padding: 0rem;
+}
+
+#docs ul li {
+    list-style-type: none;
+}
+
+#docs ul li:before {
+  margin: 0 1em; 
+  content: "\25CF";
+}
+
+#docs ul li.checked:before {
+  content: "\25C9";
+}
+
+#docs ul li.unchecked:before {
+  content: "\25CE";
+}
+
 .prodname {
     font-weight: normal;
     font-size: 1.8em;
@@ -210,6 +231,14 @@ svg {
   margin-bottom: 2em;
 }
 
+#pagemenu {
+    border-radius: 0;    
+}
+
+#pagemenu .ui.item .header {
+    padding: 0;
+}
+
 .fixed.menu > .container {
     margin-left: 0em !important;
     margin-right: 0em !important;
@@ -305,4 +334,53 @@ svg {
         padding-left: 6rem;
         padding-right: 6rem;
     }
+}
+
+/**
+print only stuff
+**/
+.showprint {
+    display:none !important;
+}
+
+@media only print {
+    .showprint {
+        display:block !important;
+    }
+    .hideprint,
+    .ui.embed > .icon,
+    .ui.docbutton {
+        display:none !important;
+    }
+    /* bigger fonts */
+    body {
+        color: #000; /* explicit colors */
+        background: #fff;
+        font-size: 12pt;
+        line-height: 1.3;
+    }    
+    /* page margins */
+    @page {
+        margin-top: 2cm;
+        margin-left: 2.5cm;
+        margin-right: 2.5cm;
+        margin-bottom: 2cm;
+    }
+    /* lists */
+    /* links */
+    a:link, a:visited {
+        color: #000;
+        font-weight: bolder;
+        text-decoration: none;
+    }    
+    a:after {
+        content:" (" attr(href) ") ";
+        font-size:0.8em;
+        font-weight:normal;
+    }
+    /* page breaks */
+    ul, ol, img, h2, h3 {
+        page-break-inside: avoid;
+    }
+    /* headers, footers */ 
 }

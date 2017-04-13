@@ -1,7 +1,7 @@
 /// <reference path='../typings/globals/marked/index.d.ts' />
 /// <reference path='../typings/globals/highlightjs/index.d.ts' />
 /// <reference path='../localtypings/pxtarget.d.ts' />
-/// <reference path="emitter/util.ts"/>
+/// <reference path="util.ts"/>
 
 namespace pxt.docs {
     declare var require: any;
@@ -60,13 +60,13 @@ namespace pxt.docs {
 
     //The extra YouTube macros are in case there is a timestamp on the YouTube URL.
     //TODO: Add equivalent support for youtu.be links
-    let links: CmdLink[] = [
+    const links: CmdLink[] = [
         {
-            rx: /^vimeo\.com\/(\d+)/,
+            rx: /^vimeo\.com\/(\d+)/i,
             cmd: "### @vimeo $1"
         },
         {
-            rx: /^(www\.youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/,
+            rx: /^(www\.youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/i,
             cmd: "### @youtube $2"
         }
     ]
@@ -117,7 +117,7 @@ namespace pxt.docs {
         return attrs
     }
 
-    let error = (s: string) =>
+    const error = (s: string) =>
         `<div class='ui negative message'>${htmlQuote(s)}</div>`
 
     export function prepTemplate(d: RenderData) {
@@ -188,7 +188,7 @@ namespace pxt.docs {
                     return true
                 }
             }
-            if (d.filepath && d.filepath.indexOf(m.path) >= 0) {
+            if (d.filepath && d.filepath.indexOf(m.path) == 0) {
                 tocPath.push(m)
                 return true
             }
@@ -228,6 +228,9 @@ namespace pxt.docs {
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
 
+        if (theme.appStoreID)
+            params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
+
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
@@ -256,6 +259,8 @@ namespace pxt.docs {
 
         if (theme.boardName)
             params["boardname"] = html2Quote(theme.boardName);
+        if (theme.driveDisplayName)
+            params["drivename"] = html2Quote(theme.driveDisplayName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetid"] = theme.id || "???";
@@ -297,7 +302,8 @@ namespace pxt.docs {
             "breadcrumb",
             "targetlogo",
             "github",
-            "JSON"
+            "JSON",
+            "appstoremeta"
         ])
     }
 
@@ -309,6 +315,7 @@ namespace pxt.docs {
         filepath?: string;
         locale?: Map<string>;
         ghEditURLs?: string[];
+        repo?: { name: string; fullName: string; tag?: string };
     }
 
     export function renderMarkdown(opts: RenderOptions): string {
@@ -349,6 +356,15 @@ namespace pxt.docs {
                 return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
             })
 
+        template = template
+            .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
+            (full, cond, sym, inner) => {
+                if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
+                    return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
+                else
+                    return `<!-- ${cond} ${sym} endif -->`
+            })
+
         if (opts.locale)
             template = translate(template, opts.locale).text
 
@@ -371,6 +387,11 @@ namespace pxt.docs {
                 }
                 out += this.options.xhtml ? '/>' : '>';
                 return out;
+            }
+            renderer.listitem = function (text: string): string {
+                const m = /^\s*\[( |x)\]/i.exec(text);
+                if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
+                return '<li>' + text + '</li>\n';
             }
             renderer.heading = function (text: string, level: number, raw: string) {
                 let m = /(.*)#([\w\-]+)\s*$/.exec(text)
@@ -406,6 +427,14 @@ namespace pxt.docs {
         };
 
         let markdown = opts.markdown
+
+        // append repo info if any
+        if (opts.repo)
+            markdown += `
+\`\`\`package
+${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.tag || "master"}
+\`\`\`
+`;
 
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
         markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
@@ -482,6 +511,13 @@ namespace pxt.docs {
             if (descM)
                 pubinfo["description"] = html2Quote(descM[1])
         }
+
+        // try getting a better custom image for twitter
+        const imgM = /<div class="ui embed mdvid"[^<>]+?data-placeholder="([^"]+)"[^>]*\/?>/i.exec(html)
+            || /<img class="ui image" src="([^"]+)"[^>]*\/?>/i.exec(html);
+        if (imgM)
+            pubinfo["cardLogo"] = html2Quote(imgM[1]);
+
         pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
 
         let registers: Map<string> = {}
@@ -535,18 +571,18 @@ namespace pxt.docs {
     export function embedUrl(rootUrl: string, tag: string, id: string, height?: number): string {
         const url = `${rootUrl}#${tag}:${id}`;
         let padding = '70%';
-        return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe></div>`;
+        return `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe></div>`;
     }
 
     export function runUrl(url: string, padding: string, id: string): string {
-        let embed = `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}?id=${encodeURIComponent(id)}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-scripts allow-same-origin" frameborder="0"></iframe></div>`;
+        let embed = `<div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}?id=${encodeURIComponent(id)}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div>`;
         return embed;
     }
 
     export function docsEmbedUrl(rootUrl: string, id: string, height?: number): string {
         const docurl = `${rootUrl}--docs?projectid=${id}`;
         height = Math.ceil(height || 300);
-        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-scripts allow-same-origin"></iframe></div>`
+        return `<div style="position:relative;height:calc(${height}px + 5em);width:100%;overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${docurl}" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe></div>`
     }
 
     const inlineTags: Map<number> = {

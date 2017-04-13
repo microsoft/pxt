@@ -43,11 +43,27 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.setState({ visible: true, searchFor: '' })
     }
 
+    fetchUrlData(): Cloud.JsonScript[] {
+        if (!this.state.searchFor) return [];
+        let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
+        if (scriptid) {
+            let res = this.getData(`cloud-search:${scriptid}`)
+            if (res) {
+                if (res.statusCode !== 404)
+                    this.prevUrlData = [res];
+                else this.prevUrlData = [];
+            }
+        } else {
+            this.prevUrlData = [];
+        }
+        return this.prevUrlData;
+    }
+
     fetchGhData(): pxt.github.GitRepo[] {
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
-        let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let res: pxt.github.GitRepo[] =
+        const searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
+        const res: pxt.github.GitRepo[] =
             searchFor || cloud.preferredPackages
                 ? this.getData(`gh-search:${searchFor || cloud.preferredPackages.join('|')}`)
                 : null
@@ -56,11 +72,12 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     fetchBundled(): pxt.PackageConfig[] {
-        if (!!this.state.searchFor) return [];
-
+        const query = this.state.searchFor;
         const bundled = pxt.appTarget.bundledpkgs;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
-            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig);
+            .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
+            .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
+            .filter(pk => !pkg.mainPkg.deps[pk.name]); // don't show package already referenced
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
@@ -71,22 +88,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     renderCore() {
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
+        const urldata = this.fetchUrlData();
 
-        const chgHeader = (hdr: pxt.workspace.Header) => {
-            pxt.tickEvent("projects.header");
+        const addUrl = (scr: pxt.Cloud.JsonScript) => {
             this.hide();
-            this.props.parent.loadHeaderAsync(hdr)
+            let p = pkg.mainEditorPkg();
+            return p.addDepAsync(scr.name, "pub:" + scr.id)
+                .then(() => this.props.parent.reloadHeaderAsync());
         }
-        const chgBundle = (scr: pxt.PackageConfig) => {
+        const addBundle = (scr: pxt.PackageConfig) => {
             pxt.tickEvent("packages.bundled", { name: scr.name });
             this.hide();
             addDepIfNoConflict(scr, "*")
                 .done();
-        }
-        const chgGallery = (scr: pxt.CodeCard) => {
-            pxt.tickEvent("projects.gallery", { name: scr.name });
-            this.hide();
-            this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
         }
         const upd = (v: any) => {
             let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
@@ -163,8 +177,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
         const isEmpty = () => {
             if (this.state.searchFor) {
-                if (bundles.length > 0
-                    || ghdata.length > 0)
+                if (bundles.length || ghdata.length || urldata.length)
                     return false;
                 return true;
             }
@@ -176,43 +189,53 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" size="large"
                 onClose={() => this.setState({ visible: false }) }
                 closeIcon={true}
+                helpUrl="/packages"
                 closeOnDimmerClick>
                 <div className="ui vertical segment">
                     <div className="ui search">
                         <div className="ui fluid action input" role="search">
-                            <input ref="searchInput" type="text" placeholder={lf("Search...") } onKeyUp={kupd} />
+                            <input ref="searchInput" type="text" placeholder={lf("Search or enter project URL...") } onKeyUp={kupd} />
                             <button title={lf("Search") } className="ui right icon button" onClick={upd}>
                                 <i className="search icon"></i>
                             </button>
                         </div>
                     </div>
                     <div className="ui cards">
+                        {urldata.map(scr =>
+                            <codecard.CodeCardView
+                                key={'url' + scr.id}
+                                name={scr.name}
+                                description={scr.description}
+                                url={"/" + scr.id}
+                                onClick={() => addUrl(scr) }
+                                color="red"
+                                />
+                        ) }
                         {bundles.map(scr =>
                             <codecard.CodeCardView
                                 key={'bundled' + scr.name}
                                 name={scr.name}
                                 description={scr.description}
                                 url={"/" + scr.installedVersion}
-                                onClick={() => chgBundle(scr) }
+                                onClick={() => addBundle(scr) }
                                 />
                         ) }
                         {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                             <codecard.CodeCardView
                                 name={scr.name.replace(/^pxt-/, "") }
-                                header={scr.fullName}
                                 description={scr.description}
-                                key={'gh' + scr.fullName}
+                                key={'gha' + scr.fullName}
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}
                                 color="blue"
+                                imageUrl={pxt.github.repoIconUrl(scr)}
                                 />
                         ) }
                         {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
                             <codecard.CodeCardView
                                 name={scr.name.replace(/^pxt-/, "") }
-                                header={scr.fullName}
-                                description={scr.description}
-                                key={'gh' + scr.fullName}
+                                description={lf("User provided package, not endorsed by Microsoft.") + (scr.description || "")}
+                                key={'ghd' + scr.fullName}
                                 onClick={() => installGh(scr) }
                                 url={'github:' + scr.fullName}
                                 color="red"

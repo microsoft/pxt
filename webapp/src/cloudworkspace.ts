@@ -209,14 +209,14 @@ function syncOneUpAsync(h: Header) {
         })
 }
 
-function syncAsync() {
+function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     let numUp = 0
     let numDown = 0
     let blobConatiner = ""
     let updated: pxt.Map<number> = {}
 
     if (!Cloud.hasAccessToken())
-        return Promise.resolve()
+        return Promise.resolve(undefined)
 
     function uninstallAsync(h: Header) {
         pxt.debug(`uninstall local ${h.id}`)
@@ -360,6 +360,7 @@ function syncAsync() {
         })
         .then(() => progressMsg(lf("Syncing done")))
         .then(() => pkg.notifySyncDone(updated))
+        .then(() => undefined)
         .catch(core.handleNetworkError)
 }
 
@@ -443,7 +444,7 @@ function importLegacyScriptsAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-export var provider: WorkspaceProvider = {
+export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,

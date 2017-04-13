@@ -47,7 +47,7 @@ namespace pxt.blocks {
                 zoom: false,
                 sound: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
-                rtl: Util.userLanguageRtl()
+                rtl: Util.isUserLanguageRtl()
             });
         }
 

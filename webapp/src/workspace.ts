@@ -1,5 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
+/// <reference path="../../built/pxtwinrt.d.ts" />
 
 import * as db from "./db";
 import * as core from "./core";
@@ -38,6 +39,9 @@ export function setupWorkspace(id: string) {
             break;
         case "iframe":
             impl = iframeworkspace.provider;
+            break;
+        case "uwp":
+            impl = data.wrapWorkspace(pxt.winrt.workspace.provider);
             break;
         case "cloud":
         default:
@@ -122,10 +126,11 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
     pxt.debug(`publishing script; ${stext.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq)
         .then((inf: Cloud.JsonScript) => {
-            h.pubId = inf.id
+            if (inf.shortid) inf.id = inf.shortid;
+            h.pubId = inf.shortid
             h.pubCurrent = h.saveId === saveId
             h.meta = inf.meta;
-            pxt.debug(`published; id /${inf.id}`)
+            pxt.debug(`published; id /${h.pubId}`)
             return saveAsync(h)
                 .then(() => inf)
         })
@@ -210,7 +215,7 @@ export function saveToCloudAsync(h: Header) {
     return impl.saveToCloudAsync(h)
 }
 
-export function syncAsync() {
+export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
     return impl.syncAsync();
 }

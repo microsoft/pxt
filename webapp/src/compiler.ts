@@ -3,17 +3,16 @@ import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as srceditor from "./srceditor"
-import * as workeriface from "./workeriface"
 
 
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
 
-let iface: workeriface.Iface
+let iface: pxt.worker.Iface
 
 export function init() {
     if (!iface) {
-        iface = workeriface.makeWebWorker(pxt.webConfig.workerjs)
+        iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
     }
 }
 
@@ -33,7 +32,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         }
 
         const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
-        output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
+        output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
     if (!output)
@@ -60,6 +59,7 @@ function catchUserErrorAndSetDiags(r: any) {
 }
 
 export interface CompileOptions {
+    trace?: boolean;
     native?: boolean;
     debug?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
@@ -76,6 +76,9 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             if (options.debug) {
                 opts.breakpoints = true
                 opts.justMyCode = true
+            }
+            if (options.trace) {
+                opts.trace = true;
             }
             opts.computeUsedSymbols = true
             if (options.forceEmit)
@@ -183,6 +186,10 @@ function ensureApisInfoAsync(): Promise<void> {
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
         .then(() => workerOpAsync("apiSearch", { search: searchFor }));
+}
+
+export function formatAsync(input: string, pos: number) {
+    return workerOpAsync("format", { format: {input: input, pos: pos} });
 }
 
 export function typecheckAsync() {

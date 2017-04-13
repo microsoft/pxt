@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta charset="UTF-8">
+    <title>@title@ @version@ (@slug@)</title>
+    <meta name="Description" content="@description@" />
+
+    <!-- @include meta.html -->
+    <!-- @include head.html -->
+</head>
+
+<body id='root' class='root'>
+
+
+    <!-- @include pageheader.html -->
+    <!-- @include macros.html -->
+    <aside id=main-container class=box>
+        @BODY@
+    </aside>
+
+
+
+    <div class="ui main container mainbody">
+
+        @breadcrumb@
+
+        <!-- @ifndef official -->
+        <!-- @include abuse.html -->
+        <!-- @endif -->
+
+        <!-- @ifdef official -->
+        <div class="ui icon green message" style='margin: 3em 0'>
+            <i class="check icon"></i>
+            <div class="content">
+                <h3 class="header">
+                    Approved content
+                </h3>
+                <p>
+                    The content below is provided by partner.
+                </p>
+            </div>
+        </div>
+        <!-- @endif -->
+
+        <h1 class="ui header">
+            <div class="ui content">
+                @title@ @version@ (@slug@)
+                <a href="https://github.com/@slug@" class="ui primary button">Fork me</a>
+            </div>
+        </h1>
+        <p class="ui content description">
+            @description@
+        </p>
+
+        @body@
+
+    </div>
+
+
+    <script>
+        const pkgJson = @JSON@;
+// do something with it
+    </script>
+
+    <!-- @include footer.html -->
+    <!-- Do not add analytics!!!! -->
+</body>
+
+</html>

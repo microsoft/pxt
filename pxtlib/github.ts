@@ -61,9 +61,9 @@ namespace pxt.github {
             return Promise.resolve<CachedPackage>(undefined);
         }
 
-        if (!isRepoApproved(p, config)) {
-            pxt.tickEvent("github.download.unauthorized");
-            pxt.log('Github repo not approved');
+        if (isRepoBanned(p, config)) {
+            pxt.tickEvent("github.download.banned");
+            pxt.log('Github repo is banned');
             return Promise.resolve<CachedPackage>(undefined);
         }
 
@@ -154,6 +154,12 @@ namespace pxt.github {
         status?: GitRepoStatus;
     }
 
+    export function repoIconUrl(repo: GitRepo): string {
+        if (repo.status != GitRepoStatus.Approved) return undefined;
+
+        return Cloud.apiRoot + `gh/${repo.fullName}/icon`;
+    }
+
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
         if (!r) return undefined;
         const rr: GitRepo = {
@@ -175,7 +181,8 @@ namespace pxt.github {
     }
 
     function isOrgBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
-        if (!repo || !config || !repo.owner) return true;
+        if (!config) return false; // don't know
+        if (!repo || !repo.owner) return true;
         if (config.bannedOrgs
             && config.bannedOrgs.some(org => org.toLowerCase() == repo.owner.toLowerCase()))
             return true;
@@ -185,7 +192,8 @@ namespace pxt.github {
     function isRepoBanned(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
         if (isOrgBanned(repo, config))
             return true;
-        if (!repo || !config || !repo.fullName) return true;
+        if (!config) return false; // don't know
+        if (!repo || !repo.fullName) return true;
         if (config.bannedRepos
             && config.bannedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
             return true;
@@ -242,11 +250,14 @@ namespace pxt.github {
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
-                .then(rs => rs.filter(r => r.status == GitRepoStatus.Approved));
+                .then(rs => rs.filter(r => r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
-        query += ` in:name,description,readme "for PXT/${appTarget.id}"`
+        query += ` in:name,description,readme "for PXT/${appTarget.platformid || appTarget.id}"`
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
-            .then((rs: SearchResults) => rs.items.map(item => mkRepo(item, config)).filter(r => r.status == GitRepoStatus.Approved));
+            .then((rs: SearchResults) =>
+                rs.items.map(item => mkRepo(item, config))
+                    .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown)))
+            .catch(err => []); // offline
     }
 
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
@@ -327,11 +338,12 @@ namespace pxt.github {
             method = 'POST';
         }
         return U.requestAsync({
-                url: url,
-                allowHttpErrors: true,
-                headers: headers,
-                method: method,
-                data: data || {} })
+            url: url,
+            allowHttpErrors: true,
+            headers: headers,
+            method: method,
+            data: data || {}
+        })
             .then((resp) => {
                 if ((resp.statusCode == 200 || resp.statusCode == 201) && resp.json.id) {
                     return Promise.resolve<string>(resp.json.id);

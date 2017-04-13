@@ -6,6 +6,7 @@ declare namespace pxt {
     interface TargetVersions {
         target: string;
         pxt: string;
+        pxtCrowdinBranch?: string;
         tag?: string;
         branch?: string;
         commits?: string; // URL
@@ -73,6 +74,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
+        cardType?: "example" | "tutorial" | "project";
 
         header?: string;
         any?: number;

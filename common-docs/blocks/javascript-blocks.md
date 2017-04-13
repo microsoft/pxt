@@ -6,9 +6,9 @@ that can't be converted into blocks, it instead creates a grey JavaScript block
 to preserve it. These blocks get converted right back into the original
 JavaScript when you switch back to the text editor.
 
-```blocks
+```block
 for (let index = 0; index <= 5; index++) {
-    basic.showNumber(fibonacci(index))
+    let x = fibonacci(index);
 }
 
 function fibonacci(n: number): number {
@@ -43,7 +43,7 @@ for (let x = 0; x <= 5; x++) {
 
 The following examples can't be represented by the blocks:
 
-```typescript
+```typescript-ignore
 // Condition must be either < or <= with a variable on the left side
 for (let x = 0; x > -1; x++) {
 }

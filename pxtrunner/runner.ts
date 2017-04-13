@@ -1,4 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts" />
+/// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
@@ -132,11 +133,11 @@ namespace pxt.runner {
 
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
         const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
-        const live = mlang && !!mlang[1];
+        const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
 
         patchSemantic();
         const cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, live)
+        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -272,8 +273,10 @@ namespace pxt.runner {
         if (locale != editorLocale) {
             const localeLiveRx = /^live-/;
             editorLocale = locale;
-            return pxt.Util.updateLocalizationAsync(pxt.webConfig.commitCdnUrl,
+            return pxt.Util.updateLocalizationAsync(
+                pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
+                pxt.appTarget.versions.pxtCrowdinBranch,
                 localeLiveRx.test(editorLocale)
             );
         }
@@ -522,7 +525,7 @@ ${files["main.ts"]}
         tutorialid = tutorialid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
-                let steps = tutorialmd.split(/\###.*(?!$)/i);
+                let steps = tutorialmd.split(/^###[^#].*$/gmi);
                 if (steps.length < 1) return;
                 let options = steps[0];
                 steps = steps.slice(1, steps.length);
@@ -530,6 +533,8 @@ ${files["main.ts"]}
                 // Extract toolbox block ids
                 let uptoSteps = steps.slice(0, step + 1).join();
                 uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
+
+                let header = steps[step].split('###')[0];
 
                 let regex = /```(sim|block|blocks|shuffle)\n([\s\S]*?)\n```/gmi;
                 let match: RegExpExecArray;
@@ -563,7 +568,8 @@ ${files["main.ts"]}
                                     tutorial: tutorialid,
                                     subtype: "steploaded",
                                     data: toolboxSubset,
-                                    location: "bottom"
+                                    headercontent: content.firstElementChild.firstElementChild.innerHTML,
+                                    content: content.innerHTML
                                 }, "*");
                             }
                         })
@@ -572,6 +578,7 @@ ${files["main.ts"]}
     }
 
     export interface DecompileResult {
+        package: pxt.MainPackage;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
         blocksSvg?: HTMLElement;
@@ -588,7 +595,7 @@ ${files["main.ts"]}
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
-                    return Promise.resolve<DecompileResult>({ compileJS: resp });
+                    return Promise.resolve<DecompileResult>({ package: mainPkg, compileJS: resp });
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(resp.ast);
@@ -603,9 +610,10 @@ ${files["main.ts"]}
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ compileJS: resp, compileBlocks: bresp };
+                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         return <DecompileResult>{
+                            package: mainPkg,
                             compileJS: resp,
                             compileBlocks: bresp,
                             blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)

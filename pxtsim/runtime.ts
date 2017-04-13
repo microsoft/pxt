@@ -75,6 +75,7 @@ namespace pxsim {
     export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
+    const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
         public runOptions: SimulatorRunMessage;
 
@@ -90,21 +91,15 @@ namespace pxsim {
         public writeSerial(s: string) {
             if (!s) return
 
-            for (let i = 0; i < s.length; ++i) {
-                let c = s[i];
-                switch (c) {
-                    case '\n':
-                        Runtime.postMessage(<SimulatorSerialMessage>{
-                            type: 'serial',
-                            data: this.serialOutBuffer + '\n',
-                            id: runtime.id,
-                            sim: true
-                        })
-                        this.serialOutBuffer = ''
-                        break;
-                    case '\r': continue;
-                    default: this.serialOutBuffer += c;
-                }
+            this.serialOutBuffer += s;
+            if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
+                Runtime.postMessage(<SimulatorSerialMessage>{
+                    type: 'serial',
+                    data: this.serialOutBuffer,
+                    id: runtime.id,
+                    sim: true
+                })
+                this.serialOutBuffer = '';
             }
         }
     }
@@ -320,6 +315,7 @@ namespace pxsim {
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
             let __this = this
+            let tracePauseMs = 0;
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
@@ -401,6 +397,17 @@ namespace pxsim {
                 return null;
             }
 
+            function trace(brkId: number, s: StackFrame, retPc: number) {
+                Runtime.postMessage({
+                    type: "debugger",
+                    subtype: "trace",
+                    breakpointId: brkId,
+                } as TraceMessage)
+                setupResume(s, retPc);
+                thread.pause(tracePauseMs)
+                checkResumeConsumed();
+            }
+
             function handleDebuggerMsg(msg: DebuggerMessage) {
                 switch (msg.subtype) {
                     case "config":
@@ -410,6 +417,10 @@ namespace pxsim {
                             for (let n of cfg.setBreakpoints)
                                 breakpoints[n] = 1
                         }
+                        break;
+                    case "traceConfig":
+                        let trc = msg as TraceConfigMessage;
+                        tracePauseMs = trc.interval;
                         break;
                     case "pause":
                         breakAlways = true
