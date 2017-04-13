@@ -839,9 +839,14 @@ namespace ts.pxtc.assembler {
         public getSource(clean: boolean) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
+            let lenFrag = this.labels["_frag_start"] || 0
+            if (lenFrag) lenFrag = this.labels["_js_end"] - lenFrag
+            let lenLit = this.labels["_program_end"]
+            if (lenLit) lenLit -= this.labels["_js_end"]
             let res =
                 // ARM-specific
-                lf("; thumb size: {0} bytes; src size {1} bytes\n", lenThumb, lenTotal - lenThumb) +
+                lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
+                    lenThumb, lenFrag, lenLit, lenTotal - lenThumb) +
                 lf("; assembly: {0} lines\n", this.lines.length) +
                 this.stats + "\n\n"
 

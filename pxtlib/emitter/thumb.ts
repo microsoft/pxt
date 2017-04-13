@@ -336,6 +336,7 @@ namespace ts.pxtc.thumb {
                 if (addLines.length == 0) {
                     file.buildLine("; shared assembly fragments", addLines)
                     file.buildLine("@nostackcheck", addLines)
+                    file.buildLine("_frag_start:", addLines)
                 }
                 let hasBL = k.indexOf("BL") >= 0
                 let lbl = "__frag__" + ++seq
@@ -360,8 +361,10 @@ namespace ts.pxtc.thumb {
                 }
             }
 
-            if (addLines.length > 0)
+
+            if (addLines.length > 0) {
                 file.lines = file.lines.slice(0, lastLine).concat(addLines).concat(file.lines.slice(lastLine))
+            }
         }
 
         public expandLdlit(f: assembler.File): void {
