@@ -270,10 +270,11 @@ namespace ts.pxtc.thumb {
                             if (ll.type == "empty") continue
                             assert(!!ll.instruction);
                             assert(!!ll.opcode);
+                            if (key) key += ","
                             if (ll.words[0] == "bl") {
-                                key += ",BL " + ll.words[1]
+                                key += "BL " + ll.words[1]
                             } else {
-                                key += "," + ll.opcode
+                                key += ll.opcode
                             }
                         }
                         if (frags[key])
@@ -288,6 +289,44 @@ namespace ts.pxtc.thumb {
             if (lastLine < 0)
                 return // testing?
 
+            for (let k of Object.keys(frags)) {
+                let f = frags[k]
+                if (f.length == 1) {
+                    if (f[0].length > 3) {
+                        //console.log(k)
+                        let kleft = k.split(",")
+                        let kright = kleft.slice()
+                        let left = f[0].slice()
+                        let right = f[0].slice()
+                        let res: assembler.Line[] = null
+                        let reskey = ""
+                        while (left.length >= 3) {
+                            kleft.pop()
+                            left.pop()
+                            right.shift()
+                            kright.shift()
+
+                            reskey = kleft.join(",")
+                            let other = frags[reskey]
+                            if (other && other.length) {
+                                res = left
+                                break
+                            }
+                            reskey = kright.join(",")
+                            other = frags[reskey]
+                            if (other && other.length) {
+                                res = right
+                                break
+                            }
+                        }
+                        if (res) {
+                            frags[k] = []
+                            frags[reskey].push(res)
+                        }
+                    }
+                }
+            }
+
             let addLines: assembler.Line[] = []
             let seq = 0
             for (let k of Object.keys(frags)) {
@@ -300,6 +339,7 @@ namespace ts.pxtc.thumb {
                 }
                 let hasBL = k.indexOf("BL") >= 0
                 let lbl = "__frag__" + ++seq
+                file.buildLine(`; num.uses: ${f.length}`, addLines)
                 file.buildLine(lbl + ":", addLines)
                 if (hasBL)
                     file.buildLine("mov r7, lr", addLines)
