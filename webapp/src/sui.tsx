@@ -663,7 +663,6 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             children,
             className,
             closeIcon,
-            closeIconClassName,
             closeOnDimmerClick,
             closeOnDocumentClick,
             dimmer,
