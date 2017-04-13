@@ -1164,13 +1164,25 @@ export class ProjectView
 
     importUrlDialog() {
         let input: HTMLInputElement;
-        const shareUrl = pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl;
+        const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
         core.confirmAsync({
             header: lf("Open project URL"),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
+<div class="ui icon violet message">
+    <i class="user icon"></i>
+    <div class="content">
+        <h3 class="header">
+            ${lf("User-provided content")}
+        </h3>
+        <p>
+            ${lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
+            ${lf("If you think it's not appropriate, please report abuse through the project page.")}
+        </p>
+    </div>
+</div>
   <div class="ui field">
     <label>${lf("Copy the URL of the project.")}</label>
     <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
