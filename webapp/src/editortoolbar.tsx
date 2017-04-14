@@ -100,7 +100,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
-        const headless = pxt.appTarget.simulator.headless;
+        const headless = simOpts.headless;
 
         const hasUndo = this.props.parent.editor.hasUndo();
         const hasRedo = this.props.parent.editor.hasRedo();
@@ -279,7 +279,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="column computer only">
                 <div className="ui grid equal width">
-                    <div id="downloadArea" className="ui column items">{headless && collapsed ?
+                    <div id="downloadArea" className="ui column items">{headless ?
                             <div className="ui item">
                                 <div className="ui icon large buttons">
                                     <sui.Button icon={`${collapseEditorTools ? 'toggle right' : 'toggle left'}`} class={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />

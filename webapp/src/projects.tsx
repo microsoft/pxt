@@ -302,7 +302,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards">
+                    <div className="ui cards centered">
                         {gals[tab].map(scr => <codecard.CodeCardView
                             key={tab + scr.name}
                             name={scr.name}
