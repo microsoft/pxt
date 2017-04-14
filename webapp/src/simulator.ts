@@ -18,6 +18,7 @@ let nextFrameId: number = 0;
 const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
+let tutorialMode: boolean;
 
 let $debugger: JQuery;
 
@@ -98,15 +99,23 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    if (core.isLoading())
-                        core.confirmAsync({
+                    if (!tutorialMode) {
+                        const modalOptions: core.ConfirmOptions = {
                             header: msg.header,
-                            body: msg.body,
                             size: "large",
                             copyable: msg.copyable,
                             hideAgree: true,
                             disagreeLbl: lf("Close")
-                        }).done();
+                        };
+
+                        if (msg.body) {
+                            modalOptions.body = msg.body;
+                        } else if (msg.htmlBody) {
+                            modalOptions.htmlBody = msg.htmlBody;
+                        }
+                        
+                        core.confirmAsync(modalOptions).done();
+                    }
                     break;
             }
         }
@@ -116,12 +125,14 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     updateDebuggerButtons();
 }
 
-export function setState(editor: string) {
+export function setState(editor: string, tutMode?: boolean) {
     if (config.editor != editor) {
         config.editor = editor;
         config.highlightStatement(null)
         updateDebuggerButtons();
     }
+
+    tutorialMode = tutMode;
 }
 
 export function makeDirty() { // running outdated code

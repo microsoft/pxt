@@ -64,6 +64,7 @@ namespace pxsim {
         command: "modal" | "restart"
         header?: string;
         body?: string;
+        htmlBody?: string;
         copyable?: string;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
