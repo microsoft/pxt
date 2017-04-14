@@ -925,9 +925,9 @@ namespace pxt.blocks {
         }
 
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
-            ts.isIdentifierPart(a.charCodeAt(0), ts.ScriptTarget.ES5) ? a : "");
+            ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
 
-        if (!n || !ts.isIdentifierStart(n.charCodeAt(0), ts.ScriptTarget.ES5)) {
+        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5)) {
             n = "_" + n;
         }
 
@@ -1484,7 +1484,7 @@ namespace pxt.blocks {
         if (!loc) return undefined;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end >= loc.start + loc.length)
+            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length)
                 return chunk.id;
         }
         return undefined;
@@ -1618,7 +1618,7 @@ namespace pxt.blocks {
                 output += " "
             }
 
-            let start = output.length
+            let start = getCurrentLine();
 
             switch (n.type) {
                 case NT.Infix:
@@ -1641,12 +1641,17 @@ namespace pxt.blocks {
                     break
             }
 
-            let end = output.length
+            let end = getCurrentLine();
 
             if (n.id && start != end) {
                 sourceMap.push({ id: n.id, start: start, end: end })
-
             }
+        }
+
+        function getCurrentLine() {
+            let i = 0;
+            output.replace(/\n/g, a => { i++; return a; })
+            return i;
         }
 
         function write(s: string) {

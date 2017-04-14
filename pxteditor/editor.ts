@@ -50,6 +50,7 @@ namespace pxt.editor {
         fullscreen?: boolean;
         mute?: boolean;
         embedSimView?: boolean;
+        tracing?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -139,6 +140,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
+        toggleTrace(): void;
 
         startTutorial(tutorialId: string): void;
 

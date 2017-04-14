@@ -1470,17 +1470,6 @@ namespace pxt.blocks {
             }
             menuOptions.push(formatCodeOption);
 
-            const shuffleOption = {
-                text: lf("Shuffle Blocks"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.shuffle");
-                    pxt.blocks.layout.shuffle(this, 1);
-                }
-            };
-            // TODO: temporarily removing shuffle blocks option until we have a better way of surfacing it to content creators
-            //menuOptions.push(shuffleOption);
-
             const screenshotOption = {
                 text: lf("Download Screenshot"),
                 enabled: topBlocks.length > 0,

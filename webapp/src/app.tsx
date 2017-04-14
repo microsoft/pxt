@@ -755,9 +755,9 @@ export class ProjectView
         );
     }
 
-    openProject() {
+    openProject(tab?: string) {
         pxt.tickEvent("menu.open");
-        this.projects.showOpenProject();
+        this.projects.showOpenProject(tab);
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -858,7 +858,7 @@ export class ProjectView
             return this.editor.saveToTypeScript().then((src) => {
                 if (!src) return Promise.resolve();
                 // format before saving
-                //src = pxtc.format(src, 0).formatted;
+                // if (open) src = pxtc.format(src, 0).formatted;
 
                 let mainPkg = pkg.mainEditorPkg();
                 let tsName = this.editorFile.getVirtualFileName();
@@ -898,6 +898,7 @@ export class ProjectView
     }
 
     saveAndCompile() {
+        this.saveProjectName();
         this.saveFile();
 
         if (!pxt.appTarget.compile.hasHex) {
@@ -973,6 +974,18 @@ export class ProjectView
         pxt.tickEvent('simulator.restart')
         this.stopSimulator();
         this.startSimulator();
+    }
+
+    toggleTrace() {
+        if (this.state.tracing) {
+            this.editor.clearHighlightedStatements();
+            simulator.setTraceInterval(0);
+        }
+        else {
+            simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL);
+        }
+        this.setState({ tracing: !this.state.tracing })
+        this.restartSimulator();
     }
 
     startSimulator() {
@@ -1100,6 +1113,10 @@ export class ProjectView
         if (!opts.background)
             this.editor.beforeCompile();
 
+        if (this.state.tracing) {
+            opts.trace = true;
+        }
+
         this.stopSimulator();
         this.clearLog();
 
@@ -1145,15 +1162,71 @@ export class ProjectView
         })
     }
 
+    showReportAbuse() {
+        pxt.tickEvent("menu.reportabuse");
+        let urlInput: JQuery;
+        let reasonInput: JQuery;
+        const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
+        core.confirmAsync({
+            header: lf("Report Abuse"),
+            onLoaded: ($el) => {
+                urlInput = $el.find('input');
+                reasonInput = $el.find('textarea');
+                if (this.state.header && this.state.header.pubCurrent && this.state.header.pubId)
+                    urlInput.val(shareUrl + this.state.header.pubId);
+            },
+            agreeLbl: lf("Submit"),
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>${lf("What is the URL of the offensive project?")}</label>
+    <input type="url" placeholder="Enter project URL here..."></input>
+  </div>
+  <div class="ui field">
+    <label>${lf("Why do you find it offensive?")}</label>
+    <textarea></textarea>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                pxt.tickEvent("menu.reportabuse.send");
+                const id = pxt.Cloud.parseScriptId(urlInput.val());
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
+                    core.infoNotification(lf("Sending abuse report..."));
+                    Cloud.privatePostAsync(`${id}/abusereports`, {
+                        text: reasonInput.val()
+                    })
+                        .then(res => {
+                            core.infoNotification(lf("Report sent. Thank you!"))
+                        })
+                        .catch(core.handleNetworkError);
+                }
+            }
+        })
+    }
+
     importUrlDialog() {
         let input: HTMLInputElement;
-        const shareUrl = pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl;
+        const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
         core.confirmAsync({
             header: lf("Open project URL"),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
+<div class="ui icon violet message">
+    <i class="user icon"></i>
+    <div class="content">
+        <h3 class="header">
+            ${lf("User-provided content")}
+        </h3>
+        <p>
+            ${lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
+            ${lf("If you think it's not appropriate, please report abuse through Settings -> Report Abuse.")}
+        </p>
+    </div>
+</div>
   <div class="ui field">
     <label>${lf("Copy the URL of the project.")}</label>
     <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
@@ -1163,7 +1236,9 @@ export class ProjectView
             if (res) {
                 pxt.tickEvent("menu.open.url");
                 const id = pxt.Cloud.parseScriptId(input.value);
-                if (id) {
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
                     loadHeaderBySharedId(id);
                 }
             }
@@ -1398,6 +1473,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+        const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex;
         const simOpts = pxt.appTarget.simulator;
@@ -1420,16 +1496,19 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
+        const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
-        const {
-            hideMenuBar,
-            hideEditorToolbar} = targetTheme;
+        const { hideMenuBar, hideEditorToolbar} = targetTheme;
+        const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
         const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
+        const debugTooltip = this.state.tracing ? lf("Stop showing execution trace") : lf("Show execution trace");
+        const slowTraceTooltip = lf("Slow code execution");
+        const fastTraceTooltip = lf("Fast code execution");
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
@@ -1487,6 +1566,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                         {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
+                                        {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
                                         <div className="ui divider"></div>
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
@@ -1524,17 +1604,18 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <div id="filelist" className="ui items" role="complementary">
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
-                        <div className="ui item grid centered portrait hide simtoolbar">
+                        { !isHeadless ? <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
+                                {trace ? <sui.Button key='debug'  class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="bug" title={debugTooltip} onClick={() => this.toggleTrace() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {audio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
+                                {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
-                        </div>
+                        </div> : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
@@ -1864,6 +1945,12 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
+            window.location.hash = "";
+            return true;
+        case "projects":
+            pxt.tickEvent("hash.projects");
+            editor.openProject(hash.arg);
+            window.location.hash = "";
             return true;
         case "sandbox":
         case "pub":
@@ -1894,6 +1981,7 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd, null)))
+            .catch(core.handleNetworkError)
         .finally(() => core.hideLoading());
 }
 
