@@ -1172,14 +1172,14 @@ export class ProjectView
             onLoaded: ($el) => {
                 urlInput = $el.find('input');
                 reasonInput = $el.find('textarea');
-                if (this.state.header && this.state.header.pubCurrent)
+                if (this.state.header && this.state.header.pubCurrent && this.state.header.pubId)
                     urlInput.val(shareUrl + this.state.header.pubId);
             },
             agreeLbl: lf("Submit"),
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label>${lf("What is the URL of the offensive project?")}</label>
-    <input type="url" placeholder="${shareUrl}..."></input>
+    <input type="url" placeholder="Enter project URL here..."></input>
   </div>
   <div class="ui field">
     <label>${lf("Why do you find it offensive?")}</label>
@@ -1236,7 +1236,9 @@ export class ProjectView
             if (res) {
                 pxt.tickEvent("menu.open.url");
                 const id = pxt.Cloud.parseScriptId(input.value);
-                if (id) {
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
                     loadHeaderBySharedId(id);
                 }
             }
