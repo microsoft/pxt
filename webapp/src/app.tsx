@@ -474,10 +474,10 @@ export class ProjectView
         sd.setMarkdown(md);
     }
 
-    setSideDoc(path: string) {
+    setSideDoc(path: string, blocksEditor = true) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
-        if (path) sd.setPath(path);
+        if (path) sd.setPath(path, blocksEditor);
         else sd.collapse();
     }
 
@@ -594,11 +594,12 @@ export class ProjectView
                     })
                     .done()
 
+                const preferredEditor = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation);
+                    this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
             })
     }
 
@@ -1918,7 +1919,7 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     switch (hash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg);
+            editor.setSideDoc(hash.arg, editor == this.blockEditor);
             break;
         case "follow":
             pxt.tickEvent("hash.follow")

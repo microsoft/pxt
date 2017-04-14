@@ -460,10 +460,10 @@ export class Editor extends srceditor.Editor {
         if (prevWordInfo && wordInfo) {
             let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
             let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`);
+            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`, false);
         } else if (wordInfo) {
             let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${methodName}`);
+            this.parent.setSideDoc(`/reference/${methodName}`, false);
         }
     }
 
