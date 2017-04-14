@@ -138,7 +138,7 @@ switch (step) {
             write(`s.lastBrkId = ${id};`)
             if (bin.options.trace) {
                 lbl = ++lblIdx
-                write(`return trace(${id}, s, ${lbl});`)
+                write(`return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
             }
             else {
                 if (!bin.options.breakpoints)

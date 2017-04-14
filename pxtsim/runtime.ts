@@ -397,14 +397,19 @@ namespace pxsim {
                 return null;
             }
 
-            function trace(brkId: number, s: StackFrame, retPc: number) {
-                Runtime.postMessage({
-                    type: "debugger",
-                    subtype: "trace",
-                    breakpointId: brkId,
-                } as TraceMessage)
+            function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
-                thread.pause(tracePauseMs)
+                if (info.functionName === "<main>" || info.fileName === "main.ts") {
+                    Runtime.postMessage({
+                        type: "debugger",
+                        subtype: "trace",
+                        breakpointId: brkId,
+                    } as TraceMessage)
+                    thread.pause(tracePauseMs)
+                }
+                else {
+                    thread.pause(0)
+                }
                 checkResumeConsumed();
             }
 
