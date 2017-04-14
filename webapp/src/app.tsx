@@ -1073,7 +1073,9 @@ export class ProjectView
             simulator.driver.stopRecording();
             this.setState({ recording: false });
             screenshot.stopRecordingAsync(this.state.header, pkg.genFileName(""))
-                .then((recorded) => !recorded || this.embed());
+                .done(() => {
+                    pxt.tickEvent("recorder.saved")
+                });
         }
     }
 
