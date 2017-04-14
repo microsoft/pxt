@@ -51,6 +51,7 @@ namespace pxt.editor {
         mute?: boolean;
         recording?: boolean;
         embedSimView?: boolean;
+        tracing?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -96,7 +97,7 @@ namespace pxt.editor {
 
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;
-        saveBlocksToTypeScript(): string;
+        saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
@@ -140,6 +141,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
+        toggleTrace(): void;
 
         startTutorial(tutorialId: string): void;
 

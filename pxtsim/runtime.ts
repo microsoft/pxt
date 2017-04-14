@@ -351,6 +351,7 @@ namespace pxsim {
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
             let __this = this
+            let tracePauseMs = 0;
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
@@ -432,6 +433,22 @@ namespace pxsim {
                 return null;
             }
 
+            function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
+                setupResume(s, retPc);
+                if (info.functionName === "<main>" || info.fileName === "main.ts") {
+                    Runtime.postMessage({
+                        type: "debugger",
+                        subtype: "trace",
+                        breakpointId: brkId,
+                    } as TraceMessage)
+                    thread.pause(tracePauseMs)
+                }
+                else {
+                    thread.pause(0)
+                }
+                checkResumeConsumed();
+            }
+
             function handleDebuggerMsg(msg: DebuggerMessage) {
                 switch (msg.subtype) {
                     case "config":
@@ -441,6 +458,10 @@ namespace pxsim {
                             for (let n of cfg.setBreakpoints)
                                 breakpoints[n] = 1
                         }
+                        break;
+                    case "traceConfig":
+                        let trc = msg as TraceConfigMessage;
+                        tracePauseMs = trc.interval;
                         break;
                     case "pause":
                         breakAlways = true

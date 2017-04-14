@@ -60,6 +60,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     renderCore() {
         const { visible } = this.state;
 
+        const targetTheme = pxt.appTarget.appTheme;
         const cloud = pxt.appTarget.cloud || {};
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;

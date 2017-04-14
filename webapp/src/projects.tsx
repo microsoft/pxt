@@ -42,8 +42,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.setState({ visible: false });
     }
 
-    showOpenProject() {
-        this.setState({ visible: true, tab: MYSTUFF })
+    showOpenProject(tab?: string) {
+        const gals = pxt.appTarget.appTheme.galleries || {};
+        tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
+        this.setState({ visible: true, tab: tab || MYSTUFF })
     }
 
     showOpenTutorials() {
@@ -300,7 +302,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards">
+                    <div className="ui cards centered">
                         {gals[tab].map(scr => <codecard.CodeCardView
                             key={tab + scr.name}
                             name={scr.name}

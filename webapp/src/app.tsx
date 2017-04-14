@@ -769,9 +769,9 @@ export class ProjectView
         );
     }
 
-    openProject() {
+    openProject(tab?: string) {
         pxt.tickEvent("menu.open");
-        this.projects.showOpenProject();
+        this.projects.showOpenProject(tab);
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -858,7 +858,7 @@ export class ProjectView
         this.setFile(f);
     }
 
-    saveBlocksToTypeScript(): string {
+    saveBlocksToTypeScriptAsync(): Promise<string> {
         return this.blocksEditor.saveToTypeScript();
     }
 
@@ -869,20 +869,20 @@ export class ProjectView
         let promise = Promise.resolve().then(() => {
             return open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         }).then(() => {
-            let src = this.editor.saveToTypeScript();
+            return this.editor.saveToTypeScript().then((src) => {
+                if (!src) return Promise.resolve();
+                // format before saving
+                // if (open) src = pxtc.format(src, 0).formatted;
 
-            if (!src) return Promise.resolve();
-            // format before saving
-            //src = pxtc.format(src, 0).formatted;
-
-            let mainPkg = pkg.mainEditorPkg();
-            let tsName = this.editorFile.getVirtualFileName();
-            Util.assert(tsName != this.editorFile.name);
-            return mainPkg.setContentAsync(tsName, src).then(() => {
-                if (open) {
-                    let f = mainPkg.files[tsName];
-                    this.setFile(f);
-                }
+                let mainPkg = pkg.mainEditorPkg();
+                let tsName = this.editorFile.getVirtualFileName();
+                Util.assert(tsName != this.editorFile.name);
+                return mainPkg.setContentAsync(tsName, src).then(() => {
+                    if (open) {
+                        let f = mainPkg.files[tsName];
+                        this.setFile(f);
+                    }
+                });
             });
         });
 
@@ -912,6 +912,7 @@ export class ProjectView
     }
 
     saveAndCompile() {
+        this.saveProjectName();
         this.saveFile();
 
         if (!pxt.appTarget.compile.hasHex) {
@@ -987,6 +988,18 @@ export class ProjectView
         pxt.tickEvent('simulator.restart')
         this.stopSimulator();
         this.startSimulator();
+    }
+
+    toggleTrace() {
+        if (this.state.tracing) {
+            this.editor.clearHighlightedStatements();
+            simulator.setTraceInterval(0);
+        }
+        else {
+            simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL);
+        }
+        this.setState({ tracing: !this.state.tracing })
+        this.restartSimulator();
     }
 
     startSimulator() {
@@ -1135,6 +1148,10 @@ export class ProjectView
 
         if (!opts.background)
             this.editor.beforeCompile();
+
+        if (this.state.tracing) {
+            opts.trace = true;
+        }
 
         this.stopSimulator();
         this.clearLog();
@@ -1456,18 +1473,21 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const gettingStartedTooltip = lf("Open beginner tutorial");
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
+        const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
         const recorder = run && this.state.fullscreen && !pxt.options.light && !simOpts.hideRecorder;
         const recording = recorder && !!this.state.recording;
-        const {
-            hideMenuBar,
-            hideEditorToolbar} = targetTheme;
+        const { hideMenuBar, hideEditorToolbar} = targetTheme;
+        const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
         const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
+        const debugTooltip = this.state.tracing ? lf("Stop showing execution trace") : lf("Show execution trace");
+        const slowTraceTooltip = lf("Slow code execution");
+        const fastTraceTooltip = lf("Fast code execution");
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
@@ -1562,18 +1582,19 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <div id="filelist" className="ui items" role="complementary">
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
-                        <div className="ui item grid centered portrait hide simtoolbar">
+                        { !isHeadless ? <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
+                                {trace ? <sui.Button key='debug'  class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="bug" title={debugTooltip} onClick={() => this.toggleTrace() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                {audio ? <sui.Button key='mutebtn' class={`mute-button`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
+                                {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                                 {recorder ? <sui.Button key='recorderbtn' class={`recorder-button`} icon={recording ? 'square' : 'circle'} title={lf("Record animated gif") } onClick={() => this.toggleRecording() } /> : undefined }
                             </div>
-                        </div>
+                        </div> : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
@@ -1903,6 +1924,12 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
+            window.location.hash = "";
+            return true;
+        case "projects":
+            pxt.tickEvent("hash.projects");
+            editor.openProject(hash.arg);
+            window.location.hash = "";
             return true;
         case "sandbox":
         case "pub":

@@ -1,14 +1,26 @@
 ///<reference path='../localtypings/blockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                A compiler from Blocky to TouchDevelop                     //
 ///////////////////////////////////////////////////////////////////////////////
 
 import B = Blockly;
 
+let iface: pxt.worker.Iface
+
 namespace pxt.blocks {
+
+    export function initWorker() {
+        if (!iface) {
+            iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
+        }
+    }
+
+    export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
+        initWorker()
+        return iface.opAsync(op, arg)
+    }
 
     export enum NT {
         Prefix, // op + map(children)
@@ -913,9 +925,9 @@ namespace pxt.blocks {
         }
 
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
-            ts.isIdentifierPart(a.charCodeAt(0), ts.ScriptTarget.ES5) ? a : "");
+            ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
 
-        if (!n || !ts.isIdentifierStart(n.charCodeAt(0), ts.ScriptTarget.ES5)) {
+        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5)) {
             n = "_" + n;
         }
 
@@ -931,7 +943,6 @@ namespace pxt.blocks {
 
         e.renames.oldToNew[name] = n;
         e.renames.takenNames[n] = true;
-
         return n;
     }
 
@@ -1341,7 +1352,7 @@ namespace pxt.blocks {
         return e;
     }
 
-    export function compileBlock(b: B.Block, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+    export function compileBlockAsync(b: B.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
         infer(e, w);
@@ -1473,13 +1484,13 @@ namespace pxt.blocks {
         if (!loc) return undefined;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end >= loc.start + loc.length)
+            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length)
                 return chunk.id;
         }
         return undefined;
     }
 
-    export function compile(b: B.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+    export function compileAsync(b: B.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         return tdASTtoTS(compileWorkspace(b, blockInfo));
     }
 
@@ -1521,7 +1532,7 @@ namespace pxt.blocks {
         ".": 18,
     }
 
-    function tdASTtoTS(app: JsNode[]): BlockCompilationResult {
+    function tdASTtoTS(app: JsNode[]): Promise<BlockCompilationResult> {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
@@ -1593,13 +1604,13 @@ namespace pxt.blocks {
         if (!output)
             output += "\n"
 
-        // outformat
-        output = pxtc.format(output, 1).formatted;
-
-        return {
-            source: output,
-            sourceMap: sourceMap
-        };
+        // outformat async
+        return workerOpAsync("format", { format: {input: output, pos: 1} }).then(() => {
+            return {
+                source: output,
+                sourceMap: sourceMap
+            };
+        })
 
         function emit(n: JsNode) {
             if (n.glueToBlock) {
@@ -1607,7 +1618,7 @@ namespace pxt.blocks {
                 output += " "
             }
 
-            let start = output.length
+            let start = getCurrentLine();
 
             switch (n.type) {
                 case NT.Infix:
@@ -1630,12 +1641,17 @@ namespace pxt.blocks {
                     break
             }
 
-            let end = output.length
+            let end = getCurrentLine();
 
             if (n.id && start != end) {
                 sourceMap.push({ id: n.id, start: start, end: end })
-
             }
+        }
+
+        function getCurrentLine() {
+            let i = 0;
+            output.replace(/\n/g, a => { i++; return a; })
+            return i;
         }
 
         function write(s: string) {

@@ -1,5 +1,5 @@
 /// <reference path="../pxtlib/docsrender.ts"/>
 
-declare var global:any;
+declare var global: any;
 
 global.pxt = pxt;
