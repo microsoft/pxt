@@ -107,7 +107,8 @@ export class ProjectView
         this.state = {
             showFiles: false,
             active: document.visibilityState == 'visible',
-            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
+            collapseEditorTools: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile(),
+            sideDocsCollapsed: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 20;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
