@@ -11,7 +11,7 @@ interface SimulatorConfig {
 }
 
 export const FAST_TRACE_INTERVAL = 100;
-export const SLOW_TRACE_INTERVAL = 400;
+export const SLOW_TRACE_INTERVAL = 500;
 
 export var driver: pxsim.SimulatorDriver;
 let nextFrameId: number = 0;
