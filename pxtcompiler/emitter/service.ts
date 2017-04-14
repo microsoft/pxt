@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/fusejs/index.d.ts" />
-
 namespace ts.pxtc {
     export const placeholderChar = "◊";
     export const defaultImgLit = `

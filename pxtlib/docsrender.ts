@@ -1,5 +1,3 @@
-/// <reference path='../typings/globals/marked/index.d.ts' />
-/// <reference path='../typings/globals/highlightjs/index.d.ts' />
 /// <reference path='../localtypings/pxtarget.d.ts' />
 /// <reference path="util.ts"/>
 

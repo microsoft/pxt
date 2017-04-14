@@ -1,5 +1,3 @@
-/// <reference path="../typings/modules/request/index.d.ts"/>
-
 "use strict";
 
 import * as p from "./commandparser";

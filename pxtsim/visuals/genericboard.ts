@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/bluebird/index.d.ts"/>
-
 namespace pxsim.visuals {
     export const BOARD_SYTLE = `
         .noselect {

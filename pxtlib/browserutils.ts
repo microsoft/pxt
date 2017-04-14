@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
-
 namespace pxt.BrowserUtils {
     export function isWinRT(): boolean {
         return typeof Windows !== "undefined";

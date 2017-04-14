@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
-
 namespace ts.pxtc {
     export var __dummy = 42;
 }

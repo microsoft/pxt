@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 namespace pxt.winrt {
     export function promisify<T>(p: Windows.Foundation.IPromise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {

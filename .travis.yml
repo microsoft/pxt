@@ -3,7 +3,6 @@ node_js:
   - "5.7.0"
 before_script:
   - "npm install"
-  - "typings install"
 sudo: false
 notifications:
   email:
@@ -11,7 +10,6 @@ notifications:
 cache:
   directories:
     - node_modules
-    - typings
 addons:
   apt:
     sources:

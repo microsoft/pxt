@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 namespace pxt.winrt {
     export function deployCoreAsync(res: pxtc.CompileResult): Promise<void> {
