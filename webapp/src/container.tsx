@@ -41,9 +41,9 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    setPath(path: string) {
+    setPath(path: string, blocksEditor: boolean) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
+        const mode = blocksEditor ? "blocks" : "js";
         const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
