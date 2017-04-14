@@ -1989,6 +1989,7 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd, null)))
+            .catch(core.handleNetworkError)
         .finally(() => core.hideLoading());
 }
 
