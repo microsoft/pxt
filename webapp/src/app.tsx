@@ -1082,8 +1082,9 @@ export class ProjectView
         if (!this.state.recording) {
             let size = simulator.driver.startRecording();
             if (size) {
-                screenshot.startRecording(size.width, size.height);
-                this.setState({ recording: true });
+                screenshot.startRecordingAsync(size.width, size.height).done(() => {
+                    this.setState({ recording: true });
+                })
             }
         }
         else this.stopRecording();

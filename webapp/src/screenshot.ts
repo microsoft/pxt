@@ -62,8 +62,8 @@ function renderAsync(rec: IGIF, fn?: string): Promise<string> {
     });
 }
 
-export function startRecording(width: number, height: number) {
-    if (recorder) return;
+export function startRecordingAsync(width: number, height: number): Promise<void> {
+    if (recorder) return Promise.resolve();
 
     // scale down as needed
     const MAX_SIZE = 320;
@@ -75,14 +75,16 @@ export function startRecording(width: number, height: number) {
         height = MAX_SIZE;
     }
 
-    recorder = new (window as any).GIF({
-        workerScript: pxt.webConfig.pxtCdnUrl + "gifjs/gif.worker.js",
-        workers: 2,
-        repeat: 0,
-        width,
-        height
-    });
-
+    return pxt.BrowserUtils.loadScriptAsync((<any>window).MonacoPaths['gifjs/gif.js'])
+        .then(() => {
+            recorder = new (window as any).GIF({
+                workerScript: (<any>window).MonacoPaths['gifjs/gif.worker.js'],
+                workers: 2,
+                repeat: 0,
+                width,
+                height
+            });
+        });
 }
 
 export function addFrameAsync(uri: string): Promise<void> {

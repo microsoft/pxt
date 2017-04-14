@@ -370,7 +370,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function loadScriptAsync(url: string): Promise<void> {
-        if (document.head.querySelector(`script[src="${url}"]`))
+        if (document.body.querySelector(`script[src="${url}"]`))
             return Promise.resolve();
 
         return new Promise<void>((resolve, reject) => {
@@ -379,7 +379,7 @@ namespace pxt.BrowserUtils {
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
             script.src = url;
-            document.head.appendChild(script);
+            document.body.appendChild(script);
         });
     }
 }
