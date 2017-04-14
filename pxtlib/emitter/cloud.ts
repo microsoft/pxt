@@ -107,11 +107,19 @@ namespace pxt.Cloud {
 
     export function parseScriptId(uri: string): string {
         const target = pxt.appTarget;
-        if (!uri || !target.appTheme || !target.appTheme.embedUrl) return undefined;
+        if (!uri || !target.appTheme || !target.cloud || !target.cloud.sharing) return undefined;
 
-        const embedUrl = Util.escapeForRegex(Util.stripUrlProtocol(target.appTheme.embedUrl));
-        const m = new RegExp(`^((https:\/\/)?${embedUrl})?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-]+))$`, 'i').exec(uri.trim());
-        const scriptid = m && (!m[1] || m[1] == "https://" + Util.stripUrlProtocol(target.appTheme.embedUrl)) && (m[3] || m[4]) ? (m[3] ? m[3].toLowerCase() : m[4].toLowerCase()) : null
+        let domains = ["makecode.com"];
+        if (target.appTheme.embedUrl)
+            domains.push(target.appTheme.embedUrl);
+        if (target.appTheme.shareUrl)
+            domains.push(target.appTheme.shareUrl);
+        if (target.appTheme.legacyDomain)
+            domains.push(target.appTheme.legacyDomain);
+        domains = Util.unique(domains, d => d).map(d => Util.escapeForRegex(Util.stripUrlProtocol(d).replace(/\/$/, '')).toLowerCase());
+        const rx = `^((https:\/\/)?(?:${domains.join('|')})\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-_]+))$`;
+        const m = new RegExp(rx, 'i').exec(uri.trim());
+        const scriptid = m && (!m[1] || domains.indexOf(Util.escapeForRegex(m[1].replace(/https:\/\//, '').replace(/\/$/, '')).toLowerCase()) >= 0) && (m[3] || m[4]) ? (m[3] ? m[3] : m[4]) : null
         return scriptid;
     }
 

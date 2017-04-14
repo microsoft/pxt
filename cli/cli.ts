@@ -1391,7 +1391,7 @@ function buildSemanticUIAsync() {
         return semCss;
     }).then((semCss) => {
         // run autoprefixer
-        console.log("running autoprefixer");
+        pxt.debug("running autoprefixer");
         return autoprefixer.process(semCss).then((result: any) => {
             fs.writeFileSync('built/web/semantic.css', result.css);
             return result.css;
@@ -1399,7 +1399,7 @@ function buildSemanticUIAsync() {
     }).then((semCss) => {
         // convert to rtl
         let rtlCss = rtlcss.process(semCss);
-        console.log("converting semantic css to rtl");
+        pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
 }
