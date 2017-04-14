@@ -59,6 +59,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (el) el.src = url;
         else this.props.parent.setState({ sideDocsLoadUrl: url });
+        this.props.parent.setState({ sideDocsCollapsed: pxt.appTarget.simulator.headless || pxt.BrowserUtils.isMobile() });
     }
 
     collapse() {
