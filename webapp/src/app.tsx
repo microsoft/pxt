@@ -1162,6 +1162,50 @@ export class ProjectView
         })
     }
 
+    showReportAbuse() {
+        pxt.tickEvent("menu.reportabuse");
+        let urlInput: JQuery;
+        let reasonInput: JQuery;
+        const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
+        core.confirmAsync({
+            header: lf("Report Abuse"),
+            onLoaded: ($el) => {
+                urlInput = $el.find('input');
+                reasonInput = $el.find('textarea');
+                if (this.state.header && this.state.header.pubCurrent)
+                    urlInput.val(shareUrl + this.state.header.pubId);
+            },
+            agreeLbl: lf("Submit"),
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>${lf("What is the URL of the offensive project?")}</label>
+    <input type="url" placeholder="${shareUrl}..."></input>
+  </div>
+  <div class="ui field">
+    <label>${lf("Why do you find it offensive?")}</label>
+    <textarea></textarea>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                pxt.tickEvent("menu.reportabuse.send");
+                const id = pxt.Cloud.parseScriptId(urlInput.val());
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
+                    core.infoNotification(lf("Sending abuse report..."));
+                    Cloud.privatePostAsync(`${id}/abusereports`, {
+                        text: reasonInput.val()
+                    })
+                        .then(res => {
+                            core.infoNotification(lf("Report sent. Thank you!"))
+                        })
+                        .catch(core.handleNetworkError);
+                }
+            }
+        })
+    }
+
     importUrlDialog() {
         let input: HTMLInputElement;
         const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
@@ -1179,7 +1223,7 @@ export class ProjectView
         </h3>
         <p>
             ${lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
-            ${lf("If you think it's not appropriate, please report abuse through the project page.")}
+            ${lf("If you think it's not appropriate, please report abuse through Settings -> Report Abuse.")}
         </p>
     </div>
 </div>
@@ -1427,6 +1471,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+        const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex;
         const simOpts = pxt.appTarget.simulator;
@@ -1519,6 +1564,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                         {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
+                                        {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
                                         <div className="ui divider"></div>
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
@@ -1571,11 +1617,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                         { this.state.tracing ?
                             <div className="ui item grid centered portrait hide simtoolbar">
                                 <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                    <sui.Button key="slow "icon="forward" title={slowTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL)}/>
-                                    <sui.Button key="fast "icon="fast forward" title={fastTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.FAST_TRACE_INTERVAL)}/>
+                                    <sui.Button key="slow "icon="forward" title={slowTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL) }/>
+                                    <sui.Button key="fast "icon="fast forward" title={fastTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.FAST_TRACE_INTERVAL) }/>
                                 </div>
                             </div>
-                        : undefined }
+                            : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
