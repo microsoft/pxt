@@ -40,10 +40,10 @@ export function serialAsync() {
 
 export function dmesgAsync() {
     return hf2DeviceAsync()
-        .then(d => d.talkAsync(0x0010)
+        .then(d => d.talkAsync(pxt.HF2.HF2_CMD_DMESG)
             .then(resp => {
                 console.log(U.fromUTF8(U.uint8ArrayToString(resp)))
-                return d.talkAsync(0x0003) // reset into app; otherwise cannot disconnect
+                return d.talkAsync(pxt.HF2.HF2_CMD_RESET_INTO_APP) // otherwise cannot disconnect
                     .then(() => { })
             }))
 }
