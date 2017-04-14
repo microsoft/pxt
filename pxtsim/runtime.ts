@@ -297,12 +297,27 @@ namespace pxsim {
             const uri = this.board.screenshot();
             if (uri == this.lastRecordedUri) return;
 
-            Runtime.postMessage(<SimulatorRecorderMessage>{
-                type: "recorder",
-                action: "frame",
-                data: uri
-            })
+            // it's safer to render the SVG within the current CSS context
+            this.renderScreenshot(uri);
             this.lastRecordedUri = uri;
+        }
+
+        private renderScreenshot(uri: string) {
+            const img = new Image;
+            img.onload = function () {
+                const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                cvs.width = img.width;
+                cvs.height = img.height;
+                const ctx = cvs.getContext("2d");
+                ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
+                const canvasdata = cvs.toDataURL("image/png");
+                Runtime.postMessage(<SimulatorRecorderMessage>{
+                    type: "recorder",
+                    action: "frame",
+                    data: uri
+                })
+            };
+            img.src = uri;
         }
 
         private numDisplayUpdates = 0;
