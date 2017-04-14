@@ -3853,10 +3853,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
 
     if (!summaryMD) {
-        console.log('no SUMMARY.md file found, skipping check docs');
+        pxt.log('no SUMMARY.md file found, skipping check docs');
         return Promise.resolve();
     }
-    console.log(`checking docs`);
+    pxt.log(`checking docs`);
 
     const noTOCs: string[] = [];
     const todo: string[] = [];
@@ -3866,12 +3866,17 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     let snipCount = 0;
     let snippets: CodeSnippet[] = [];
 
-    function pushUrl(url: string) {
+    function pushUrl(url: string, toc: boolean) {
         // cache value
         if (!urls.hasOwnProperty(url)) {
-            const isResource = /\.[a-z]+$/i.test(url);
-            if (!isResource) {
-                pxt.debug(`link not in TOC: ${url}`);
+            const isPackage = /^\/pkg\//.test(url);
+            if (isPackage) {
+                urls[url] = url;
+                return;
+            }
+            const isResource = /\.[a-z]+$/i.test(url)
+            if (!isResource && !toc) {
+                pxt.debug(`link not in SUMMARY: ${url}`);
                 noTOCs.push(url);
             }
             // TODO: correct resolution of static resources
@@ -3884,8 +3889,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     }
 
     function checkTOCEntry(entry: pxt.TOCMenuEntry) {
-        if (entry.path && !/^https:\/\//.test(entry.path))
-            pushUrl(entry.path);
+        if (entry.path && !/^https:\/\//.test(entry.path)) {
+            pushUrl(entry.path, true);
+            if (!urls[entry.path]) {
+                pxt.log(`SUMMARY: broken link ${entry.path}`);
+                broken++;
+            }
+        }
         // look for sub items
         if (entry.subitems)
             entry.subitems.forEach(checkTOCEntry);
@@ -3908,7 +3918,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
             // remove hash
             url = url.replace(/#.*$/, '');
-            pushUrl(url);
+            pushUrl(url, false);
             if (!urls[url]) {
                 pxt.log(`${entrypath}: broken link ${url}`);
                 broken++;
@@ -3926,8 +3936,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         });
     }
 
-    pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
-    fs.writeFileSync("built/noTOC.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
+    pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
+    fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
         return testSnippetsAsync(snippets, re);
     return Promise.resolve();

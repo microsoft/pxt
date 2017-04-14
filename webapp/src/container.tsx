@@ -24,9 +24,9 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m =>
-               !m.tutorial ? <a href={m.path} target="docs" key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item">{m.name}</a>
-                : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } />
-                ) }
+                !m.tutorial ? <a href={m.path} target={/^#/.test(m.path) ? "" : "docs"} key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item">{m.name}</a>
+                    : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } />
+            ) }
         </sui.DropdownMenuItem>
     }
 }

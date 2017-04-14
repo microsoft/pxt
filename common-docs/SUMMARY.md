@@ -13,6 +13,7 @@
 ## Blocks #blocks
 
 * [Blocks](/blocks)
+    * [On Start](/blocks/on-start)
     * [Loops](/blocks/loops)
         * [repeat](/blocks/loops/repeat)
         * [for](/blocks/loops/for)
@@ -22,8 +23,9 @@
         * [Boolean](/blocks/logic/boolean)
     * [Variables](/blocks/variables)
         * [assign](/blocks/variables/assign)
-        * [change var](/blocks/variables/change-var)
+        * [change var](/blocks/variables/change)
         * [var](/blocks/variables/var)
+    * [Math](/blocks/math)
     * [JavaScript blocks](/blocks/javascript-blocks)
     * [Custom blocks](/blocks/custom)
 
@@ -51,6 +53,7 @@
 ## Miscellanous #misc
 
 * Miscellanous
+    * [Support](/support)
     * [FAQ](/faq)
     * [Translate](/translate)
     * [Sharing projects](/share)

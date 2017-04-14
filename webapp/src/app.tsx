@@ -755,9 +755,9 @@ export class ProjectView
         );
     }
 
-    openProject() {
+    openProject(tab?: string) {
         pxt.tickEvent("menu.open");
-        this.projects.showOpenProject();
+        this.projects.showOpenProject(tab);
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -1452,9 +1452,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
-        const {
-            hideMenuBar,
-            hideEditorToolbar} = targetTheme;
+        const { hideMenuBar, hideEditorToolbar} = targetTheme;
+        const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
         const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
@@ -1557,7 +1556,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <div id="filelist" className="ui items" role="complementary">
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
-                        <div className="ui item grid centered portrait hide simtoolbar">
+                        { !isHeadless ? <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
@@ -1568,7 +1567,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
-                        </div>
+                        </div> : undefined }
                         { this.state.tracing ?
                             <div className="ui item grid centered portrait hide simtoolbar">
                                 <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
@@ -1906,6 +1905,12 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
+            window.location.hash = "";
+            return true;
+        case "projects":
+            pxt.tickEvent("hash.projects");
+            editor.openProject(hash.arg);
+            window.location.hash = "";
             return true;
         case "sandbox":
         case "pub":
