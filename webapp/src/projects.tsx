@@ -257,7 +257,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
                                     key={'importurl'}
-                                    icon="upload"
+                                    icon="cloud download"
                                     iconColor="secondary"
                                     name={lf("Import URL...") }
                                     description={lf("Open a shared project URL") }
@@ -302,7 +302,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards">
+                    <div className="ui cards centered">
                         {gals[tab].map(scr => <codecard.CodeCardView
                             key={tab + scr.name}
                             name={scr.name}
