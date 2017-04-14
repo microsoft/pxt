@@ -1515,6 +1515,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             this.forceUpdate();
         }
 
+        const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
@@ -1522,7 +1524,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
             this.state.collapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
-            !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
+            showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inTutorial ? 'tutorial' : '',
             pxt.options.light ? 'light' : '',

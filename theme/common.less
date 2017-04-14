@@ -48,6 +48,7 @@ html, body {
 }
 
 /* Editor tools */
+@editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
 #editortools {
     position: fixed;
@@ -55,7 +56,7 @@ html, body {
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 3;
+    z-index: 12;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
 }
@@ -138,30 +139,6 @@ html, body {
 }
 .ui.button.getting-started-btn .ui.text {
     font-weight: 100 !important;
-}
-
-/* Side Docs layout */
-#sidedocs {
-  display:none;
-  overflow-y: auto;
-  right: 0;
-  border:none;
-  top: 0;
-  padding-top: @mainMenuHeight;
-  height: 100%;
-}
-#sidedocspopout {
-  position: absolute;
-  top:@sidedocsButtonsTop;
-  right:@sidedocsButtonsRight;
-  display:none;
-}
-
-#sidedocsexpand {
-  position: absolute;
-  top:@sidedocsButtonsTop;
-  right:1.25rem;
-  display:none;
 }
 
 /* Cookie Message */
@@ -827,17 +804,6 @@ Avatar
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* Layout */
-    .sideDocs #maineditor, .sideDocs #editortools {
-        right:@sideBarWidth;
-    }
-    .sideDocs #sidedocs {
-        display:block;
-        width:@sideBarWidth;
-    }
-    #sidedocspopout, #sidedocsexpand {
-        display:block;
-    }
     /* Blockly */
     div.blocklyTreeRow {
         min-width: 200px;
@@ -848,7 +814,7 @@ Avatar
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     /* Blockly row */
     div.blocklyTreeRow {
-        min-width: 200px;
+        min-width: 180px;
     }
 }
 
