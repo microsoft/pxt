@@ -255,7 +255,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                 <div className="ui two stackable cards">
                     <div className="ui grid centered link card" onClick={() => this.moreTutorials() }>
                         <div className="content">
-                            <i className="avatar-image icon massive" />
+                            <i className="avatar-image icon huge" style={{fontSize: '100px'}}/>
                         </div>
                         <div className="content">
                             <div className="header">
@@ -265,7 +265,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                     </div>
                     <div className="ui grid centered link card" onClick={() => this.exitTutorial() }>
                         <div className="content">
-                            <i className="external icon black" style={{fontSize: '100px'}} />
+                            <i className="external icon huge black" style={{fontSize: '100px'}} />
                         </div>
                         <div className="content">
                             <div className="header">
