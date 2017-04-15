@@ -1410,8 +1410,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
-                    name: tutorialId,
-                    temporary: true
+                    name: tutorialId
                 });
             });
     }
