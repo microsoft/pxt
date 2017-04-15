@@ -100,21 +100,28 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 case "modal":
                     stop();
                     if (!tutorialMode) {
-                        const modalOptions: core.ConfirmOptions = {
+                        const modalOpts: core.ConfirmOptions = {
                             header: msg.header,
+                            body: msg.body,
                             size: "large",
                             copyable: msg.copyable,
-                            hideAgree: true,
                             disagreeLbl: lf("Close")
                         };
+                        const hasTrustedLink = msg.linkButtonHref && core.getSimulatorModalUrls().indexOf(msg.linkButtonHref) !== -1;
 
-                        if (msg.body) {
-                            modalOptions.body = msg.body;
-                        } else if (msg.htmlBody) {
-                            modalOptions.htmlBody = msg.htmlBody;
+                        if (hasTrustedLink) {
+                            modalOpts.agreeLbl = msg.linkButtonLabel;
+                        } else {
+                            modalOpts.hideAgree = true;
                         }
-                        
-                        core.confirmAsync(modalOptions).done();
+
+                        core.confirmAsync(modalOpts)
+                            .then((selection) => {
+                                if (hasTrustedLink && selection == 1) {
+                                    window.open(msg.linkButtonHref,'_blank');
+                                }
+                            })
+                            .done();
                     }
                     break;
             }

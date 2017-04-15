@@ -455,3 +455,7 @@ export function apiAsync(path: string, data?: any) {
             console.log(err.message)
         })
 }
+
+export function getSimulatorModalUrls() {
+    return pxt.appTarget.simulator.trustedUrls;
+}

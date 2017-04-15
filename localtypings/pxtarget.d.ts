@@ -99,6 +99,7 @@ declare namespace pxt {
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
+        trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
     }
 
     interface TargetCompileService {
