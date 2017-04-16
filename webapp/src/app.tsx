@@ -1387,9 +1387,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         sounds.initTutorial(); // pre load sounds
         return pxt.Cloud.downloadMarkdownAsync(tutorialId)
             .then(md => {
-                let titleRegex = /^#(.*)/g.exec(md);
+                let titleRegex = /^#\s*(.*)/g.exec(md);
                 if (!titleRegex || titleRegex.length < 1) return;
-                title = titleRegex[1];
+                title = titleRegex[1].trim();
 
                 let steps = md.split(/^###[^#].*$/gmi);
                 for (let step = 1; step < steps.length; step++) {
