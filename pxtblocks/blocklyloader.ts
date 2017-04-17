@@ -521,7 +521,7 @@ namespace pxt.blocks {
             || 255;
 
         if (fn.attributes.help)
-            setHelpUrl(block, "/reference/" + fn.attributes.help.replace(/^\//, ''));
+            block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color);
@@ -1138,7 +1138,7 @@ namespace pxt.blocks {
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string) {
         if (tooltip) block.setTooltip(tooltip);
-        if (url) setHelpUrl(block, url);
+        if (url) block.setHelpUrl(url);
         if (colour) block.setColour(colour);
 
         let tb = document.getElementById('blocklyToolboxDefinition');
@@ -1165,11 +1165,7 @@ namespace pxt.blocks {
         }
     }
 
-    export let openHelpUrl: any;
-
-    function setHelpUrl(block: Blockly.Block, url: string) {
-        pxt.blocks.openHelpUrl != undefined ? block.setHelpUrl(pxt.blocks.openHelpUrl) : block.setHelpUrl(url);
-    }
+    export let openHelpUrl: (url: string) => void;
 
     function initLoops() {
         let msg: any = Blockly.Msg;
@@ -1354,6 +1350,12 @@ namespace pxt.blocks {
         msg.DELETE_BLOCK = lf("Delete Block");
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
         msg.HELP = lf("Help");
+
+        // inject hook to handle openings docs
+        (<any>Blockly).BlockSvg.prototype.showHelp_ = function() {
+            const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
+            if (url) (pxt.blocks.openHelpUrl || window.open)(url);
+        };
 
         /**
          * Show the context menu for the workspace.

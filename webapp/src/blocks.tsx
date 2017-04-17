@@ -329,7 +329,7 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         pxt.blocks.openHelpUrl = (url: string) => {
-            this.parent.setSideDoc(url);
+            /^\//.test(url) ? this.parent.setSideDoc(url) : window.open(url, 'docs');
         }
 
         this.prepareBlockly();
