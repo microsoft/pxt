@@ -20,11 +20,16 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         this.props.parent.startTutorial(path);
     }
 
+    openDocs(path: string) {
+        pxt.tickEvent(`docs`, { path });
+        this.props.parent.setSideDoc(path);
+    }
+
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m =>
-                !m.tutorial ? <a href={m.path} target={/^#/.test(m.path) ? "" : "docs"} key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item">{m.name}</a>
+                !m.tutorial ? <sui.Item key={"docsmenu" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openDocs(m.path) } />
                     : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } />
             ) }
         </sui.DropdownMenuItem>
@@ -59,7 +64,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (el) el.src = url;
         else this.props.parent.setState({ sideDocsLoadUrl: url });
-        this.props.parent.setState({ sideDocsCollapsed: pxt.BrowserUtils.isMobile() });
+        this.props.parent.setState({ sideDocsCollapsed: pxt.BrowserUtils.isMobile() || pxt.options.light });
     }
 
     collapse() {

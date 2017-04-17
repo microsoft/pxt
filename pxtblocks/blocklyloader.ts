@@ -521,7 +521,7 @@ namespace pxt.blocks {
             || 255;
 
         if (fn.attributes.help)
-            block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
+            setHelpUrl(block, "/reference/" + fn.attributes.help.replace(/^\//, ''));
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color);
@@ -1138,7 +1138,7 @@ namespace pxt.blocks {
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string) {
         if (tooltip) block.setTooltip(tooltip);
-        if (url) block.setHelpUrl(url);
+        if (url) setHelpUrl(block, url);
         if (colour) block.setColour(colour);
 
         let tb = document.getElementById('blocklyToolboxDefinition');
@@ -1163,6 +1163,12 @@ namespace pxt.blocks {
             let block = this;
             setHelpResources(this, id, name, tooltip, url, colour);
         }
+    }
+
+    export let openHelpUrl: any;
+
+    function setHelpUrl(block: Blockly.Block, url: string) {
+        pxt.blocks.openHelpUrl != undefined ? block.setHelpUrl(pxt.blocks.openHelpUrl) : block.setHelpUrl(url);
     }
 
     function initLoops() {
