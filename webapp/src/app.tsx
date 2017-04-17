@@ -1366,8 +1366,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
                 const svg = pxt.blocks.render(resp, { snippetMode: true });
-                return pxt.blocks.layout.documentToSvg(svg);
-            });
+                const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
+                return pxt.blocks.layout.blocklyToSvgAsync(svg, '', viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
+            }).then(re => re.xml);
     }
 
     gettingStarted() {
