@@ -107,7 +107,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                             copyable: msg.copyable,
                             disagreeLbl: lf("Close")
                         };
-                        const hasTrustedLink = msg.linkButtonHref && core.getSimulatorModalUrls().indexOf(msg.linkButtonHref) !== -1;
+                        const trustedSimUrls = pxt.appTarget.simulator.trustedUrls;
+                        const hasTrustedLink = msg.linkButtonHref && trustedSimUrls && trustedSimUrls.indexOf(msg.linkButtonHref) !== -1;
 
                         if (hasTrustedLink) {
                             modalOpts.agreeLbl = msg.linkButtonLabel;
