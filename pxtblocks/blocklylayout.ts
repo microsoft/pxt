@@ -172,7 +172,7 @@ namespace pxt.blocks.layout {
             });
     }
 
-    function documentToSvg(xsg: Document): string {
+    export function documentToSvg(xsg: Node): string {
         const xml = new XMLSerializer().serializeToString(xsg);
         const data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
         return data;

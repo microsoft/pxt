@@ -52,6 +52,7 @@
         logs.innerText += "filter: " + filter + "\n";
     }
     
+    var pendingMsgs = {};
     function sendMessage(action) {
         console.log('send ' + action)
         var logs = document.getElementById("logs");
@@ -59,7 +60,7 @@
         let editor = document.getElementById("iframe").contentWindow;
         let msg = {
             type: "pxteditor",
-            id: "xxxxxxxxx",
+            id: Math.random().toString(),
             action: action
         };
         if(action == 'importproject') {
@@ -67,7 +68,12 @@
             msg.project = prj;
             if (filter) msg.filters = JSON.parse(JSON.stringify(filters));
             msg.response = true;
+        } else if (action == `renderblocks`) {
+            msg.response = true;
+            msg.ts = `control.forever(() => { dash.setWheelSpeed(0 - 0, 0); dash.setWheelSpeed(0, 0); dash.setHeadPan(0); })`
         }
+        if (msg.response)
+            pendingMsgs[msg.id] = msg;
         editor.postMessage(msg, "*")
     }
 
@@ -78,6 +84,9 @@
         console.log(msg)
         var logs = document.getElementById("logs");
         logs.innerText += "< " + msg.type +(msg.action ? " " + msg.action : "" ) + "\n";
+        if(msg.resp)
+            console.log(JSON.stringify(msg.resp, null, 2))
+
         if (msg.type == "pxthost") {
             if (msg.action == "workspacesync") {
                 // no project
@@ -92,6 +101,15 @@
                 lastSaved = msg.project;
             }
         }
+        if (msg.type == "pxteditor") {
+            let req = pendingMsgs[msg.id];
+            if (req.action == "renderblocks") {
+                let img = document.createElement("img");
+                img.src = msg.resp;
+                logs.appendChild(img)
+            }
+        }
+        delete pendingMsgs[msg.id];
     }
 
     window.addEventListener("message", receiveMessage, false);
@@ -109,6 +127,7 @@
         <button class="ui button" onclick="toggleFilters()">filter</button>
         <button class="ui button" onclick="sendMessage('undo')">undo</button>
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
+        <button class="ui button" onclick="sendMessage('renderblocks')">renderblocks</button>
     </div>
     <pre id="logs" class="ui"></pre>
     <iframe id="iframe" src="http://localhost:3232/index.html?dbg=1&editorlayout=ide" />
