@@ -365,6 +365,7 @@ namespace pxt.BrowserUtils {
         return new Promise<HTMLImageElement>((resolve, reject) => {
             img.onload = () => resolve(img);
             img.onerror = () => resolve(undefined);
+            img.crossOrigin = "anonymous";
             img.src = data;
         });
     }

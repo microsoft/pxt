@@ -179,7 +179,7 @@ namespace pxt.blocks.layout {
         return data;
     }
 
-    let imageXLinkCache: pxt.Map<HTMLImageElement>;
+    let imageXLinkCache: pxt.Map<string>;
     function expandImagesAsync(xsg: Document): Promise<void> {
         if (!imageXLinkCache) imageXLinkCache = {};
 
@@ -188,21 +188,22 @@ namespace pxt.blocks.layout {
             .filter(image => !/^data:/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
             .map((image: HTMLImageElement) => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
-                return (imageXLinkCache[href] ? Promise.resolve(imageXLinkCache[href]) : pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href")))
-                    .then((img: HTMLImageElement) => {
-                        imageXLinkCache[href] = img;
-                        const cvs = document.createElement("canvas") as HTMLCanvasElement;
-                        const ctx = cvs.getContext("2d");
-                        cvs.width = img.width;
-                        cvs.height = img.height;
-                        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
-                        const canvasdata = cvs.toDataURL("image/png");
-                        image.setAttributeNS(XLINK_NAMESPACE, "href", canvasdata);
-                    })
-                    .catch(e => {
-                        // ignore load error
-                        pxt.debug(`svg render: failed to load ${href}`)
-                    });
+                let dataUri = imageXLinkCache[href];
+                return (dataUri ? Promise.resolve(imageXLinkCache[href])
+                    : pxt.BrowserUtils.loadImageAsync(image.getAttributeNS(XLINK_NAMESPACE, "href"))
+                        .then((img: HTMLImageElement) => {
+                            const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                            const ctx = cvs.getContext("2d");
+                            cvs.width = img.width;
+                            cvs.height = img.height;
+                            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
+                            imageXLinkCache[href] = dataUri = cvs.toDataURL("image/png");
+                            return dataUri;
+                        }).catch(e => {
+                            // ignore load error
+                            pxt.debug(`svg render: failed to load ${href}`)
+                        }))
+                    .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
             });
         return Promise.all(p).then(() => { })
     }
