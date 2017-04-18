@@ -182,6 +182,6 @@ namespace pxt.editor {
         hexFileImporters?: IHexFileImporter[];
     }
 
-    export declare function initExtensionsAsync(opts: ExtensionOptions): Promise<ExtensionResult>;
+    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
 }
 

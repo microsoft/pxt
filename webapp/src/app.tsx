@@ -685,7 +685,14 @@ export class ProjectView
             pxt.tickEvent("import." + importer.id);
             core.showLoading(lf("loading project..."))
             importer.importAsync(this, data)
-                .done(() => core.hideLoading());
+                .done(
+                    () => core.hideLoading(),
+                    e => {
+                        pxt.reportException(e, { importer: importer.id });
+                        core.hideLoading();
+                        core.errorNotification(lf("Oops, something went wrong when importing your project"));
+                    }
+                );
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
