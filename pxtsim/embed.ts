@@ -65,6 +65,8 @@ namespace pxsim {
         header?: string;
         body?: string;
         copyable?: string;
+        linkButtonHref?: string;
+        linkButtonLabel?: string;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
         rssi: number;
