@@ -21,6 +21,7 @@ CACHE:
 /blb/icons.css
 @defaultLocaleStrings@
 @cachedHexFiles@
+@targetEditorJs@
 
 # blockly
 /blb/blockly/blockly_compressed.js

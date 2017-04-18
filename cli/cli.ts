@@ -867,6 +867,10 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
+    let targetEditorJs = "";
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
+        targetEditorJs = "@commitCdnUrl@editor.js";
+
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
         "/sim/siminstructions.html": "@partsUrl@",
@@ -879,7 +883,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
-        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : ""
+        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
+        "@targetEditorJs@" : targetEditorJs
     }
 
     if (opts.localDir) {
@@ -914,7 +919,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
-            "@cachedHexFiles@": ""
+            "@cachedHexFiles@": "",
+            "@targetEditorJs@": ""
         }
     }
 
