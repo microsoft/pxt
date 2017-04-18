@@ -16,6 +16,10 @@ namespace pxt.editor {
 
     export interface EditorMessageResponse extends EditorMessage {
         /**
+         * Additional response payload provided by the command
+         */
+        resp?: any;
+        /**
          * indicate if operation started or completed successfully
          */
         success: boolean;
@@ -41,6 +45,7 @@ namespace pxt.editor {
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
+        | "renderblocks"
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
@@ -110,6 +115,17 @@ namespace pxt.editor {
         filters?: pxt.editor.ProjectFilters;
     }
 
+    export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest  {
+        action: "renderblocks";
+        // typescript code to render
+        ts: string;
+    }
+
+    export interface EditorMessageRenderBlocksResponse {
+        mime: "application/svg+xml";
+        data: string;
+    }
+
     const pendingRequests: pxt.Map<{
         resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
         reject: (err: any) => void;
@@ -131,6 +147,7 @@ namespace pxt.editor {
             if (!data || !/^pxt(host|editor)$/.test(data.type)) return false;
 
             let p = Promise.resolve();
+            let resp: any = undefined;
             if (data.type == "pxthost") { // response from the host
                 const req = pendingRequests[data.id];
                 if (!req) {
@@ -152,42 +169,53 @@ namespace pxt.editor {
                         const editor = projectView.editor;
                         if (editor && editor.hasRedo())
                             editor.redo();
-                    });
+                    }); break;
                     case "undo": p = p.then(() => {
                         const editor = projectView.editor;
                         if (editor && editor.hasUndo())
                             editor.undo();
-                    });
+                    }); break;
                     case "stopsimulator": {
                         const stop = data as EditorMessageStopRequest;
-                        p = p.then(() => projectView.stopSimulator(stop.unload)); break;
+                        p = p.then(() => projectView.stopSimulator(stop.unload));
+                        break;
                     }
                     case "newproject": {
                         const create = data as EditorMessageNewProjectRequest;
-                        p = p.then(() => projectView.newProject(create.options)); break;
+                        p = p.then(() => projectView.newProject(create.options));
+                        break;
                     }
                     case "importproject": {
                         const load = data as EditorMessageImportProjectRequest;
                         p = p.then(() => projectView.importProjectAsync(load.project, load.filters));
+                        break;
                     }
                     case "proxytosim": {
                         const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
-                        p = p.then(() => projectView.proxySimulatorMessage(simmsg.content)); break;
+                        p = p.then(() => projectView.proxySimulatorMessage(simmsg.content));
+                        break;
+                    }
+                    case "renderblocks": {
+                        const rendermsg = data as EditorMessageRenderBlocksRequest;
+                        p = p.then(() => projectView.renderBlocksAsync(rendermsg))
+                            .then((img: string) => { resp = img; });
+                        break;
                     }
                 }
             }
-            p.done(() => sendResponse(data, true, undefined),
-                (err) => sendResponse(data, false, err))
+            p.done(() => sendResponse(data, resp, true, undefined),
+                (err) => sendResponse(data, resp, false, err))
 
             return true;
         }, false)
     }
 
-    function sendResponse(request: EditorMessage, success: boolean, error: any) {
+    function sendResponse(request: EditorMessage, resp: any, success: boolean, error: any) {
         if (request.response) {
             window.parent.postMessage({
                 type: request.type,
                 id: request.id,
+                resp,
                 success,
                 error
             }, "*");

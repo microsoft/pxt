@@ -151,6 +151,7 @@ namespace pxt.editor {
 
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
+        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
 
         settings: EditorSettings;
 

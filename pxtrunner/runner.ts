@@ -581,7 +581,7 @@ ${files["main.ts"]}
         package: pxt.MainPackage;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
-        blocksSvg?: HTMLElement;
+        blocksSvg?: SVGSVGElement;
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
