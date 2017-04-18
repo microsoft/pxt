@@ -2021,10 +2021,9 @@ $(document).ready(() => {
 
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");
-        const redirect = pxt.BrowserUtils.suggestedBrowserPath();
-        if (redirect) {
-            window.location.href = redirect;
-        }
+        window.location.href = "/browsers";
+        core.showLoading(lf("Sorry, this browser is not supported."));
+        return;
     }
 
     appcache.init();
