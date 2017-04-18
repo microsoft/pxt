@@ -1361,6 +1361,16 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.shareEditor.show(header);
     }
 
+    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<string> {
+        return compiler.getBlocksAsync()
+            .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
+            .then(resp => {
+                const svg = pxt.blocks.render(resp, { snippetMode: true });
+                const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
+                return pxt.blocks.layout.blocklyToSvgAsync(svg, '', viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
+            }).then(re => re.xml);
+    }
+
     gettingStarted() {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
@@ -1983,7 +1993,7 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd, null)))
-            .catch(core.handleNetworkError)
+        .catch(core.handleNetworkError)
         .finally(() => core.hideLoading());
 }
 
