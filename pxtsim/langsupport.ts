@@ -239,7 +239,7 @@ namespace pxsim {
         strings["false"] = 1
 
         // comment out next line to disable string ref counting
-        stringLiterals = strings
+        // stringLiterals = strings
     }
 
     function stringRefDelta(s: string, n: number) {
