@@ -20,11 +20,16 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         this.props.parent.startTutorial(path);
     }
 
+    openDocs(path: string) {
+        pxt.tickEvent(`docs`, { path });
+        this.props.parent.setSideDoc(path);
+    }
+
     render() {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m =>
-                !m.tutorial ? <a href={m.path} target={/^#/.test(m.path) ? "" : "docs"} key={"docsmenu" + m.path} role="menuitem" title={m.name} className="ui item">{m.name}</a>
+                !m.tutorial ? <sui.Item key={"docsmenu" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openDocs(m.path) } />
                     : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } />
             ) }
         </sui.DropdownMenuItem>
@@ -33,7 +38,7 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 
 export class SideDocs extends data.Component<ISettingsProps, {}> {
     public static notify(message: pxsim.SimulatorMessage) {
-        let sd = document.getElementById("sidedocs") as HTMLIFrameElement;
+        let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
     }
 
@@ -41,9 +46,9 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         super(props);
     }
 
-    setPath(path: string) {
+    setPath(path: string, blocksEditor: boolean) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
+        const mode = blocksEditor ? "blocks" : "js";
         const url = `${docsUrl}#doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
@@ -56,10 +61,10 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     private setUrl(url: string) {
-        let el = document.getElementById("sidedocs") as HTMLIFrameElement;
+        let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (el) el.src = url;
         else this.props.parent.setState({ sideDocsLoadUrl: url });
-        this.props.parent.setState({ sideDocsCollapsed: false });
+        this.props.parent.setState({ sideDocsCollapsed: pxt.BrowserUtils.isMobile() || pxt.options.light });
     }
 
     collapse() {
@@ -86,15 +91,19 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         const docsUrl = state.sideDocsLoadUrl;
         if (!docsUrl) return null;
 
-        const icon = !docsUrl || state.sideDocsCollapsed ? "expand" : "compress";
         return <div>
-            <iframe id="sidedocs" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
-            <button id="sidedocspopout" role="button" title={lf("Open documentation in new tab") } className={`circular ui icon button ${state.sideDocsCollapsed ? "hidden" : ""}`} onClick={() => this.popOut() }>
-                <i className={`external icon`}></i>
+            <button id="sidedocstoggle" role="button" className="ui icon button" onClick={() => this.toggleVisibility() }>
+                <i className={`icon large inverted ${state.sideDocsCollapsed ? 'book' : 'chevron right'}`}></i>
+                {state.sideDocsCollapsed ? <i className={`icon large inverted chevron left hover`}></i> : undefined }
             </button>
-            <button id="sidedocsexpand" role="button" title={lf("Show/Hide side documentation") } className="circular ui icon button" onClick={() => this.toggleVisibility() }>
-                <i className={`${icon} icon`}></i>
-            </button>
+            <div id="sidedocs">
+                <div id="sidedocsbar">
+                    <h3><a className="ui icon link" data-content={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut()} >
+                        <i className="external icon"></i>
+                    </a></h3>
+                </div>
+                <iframe id="sidedocsframe" src={docsUrl} role="complementary" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+            </div>
         </div>
     }
 }

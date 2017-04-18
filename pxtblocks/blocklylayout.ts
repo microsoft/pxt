@@ -82,8 +82,8 @@ namespace pxt.blocks.layout {
             });
     }
 
-    export function svgToPngAsync(svg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
-        return toSvgInternalAsync(svg, customCss, x, y, width, height)
+    export function svgToPngAsync(svg: SVGElement, customCss: string, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
+        return blocklyToSvgAsync(svg, customCss, x, y, width, height)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
                 return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
@@ -111,16 +111,7 @@ namespace pxt.blocks.layout {
         })
     }
 
-    export function toSvgAsync(ws: B.Workspace): Promise<{
-        width: number; height: number; xml: string;
-    }> {
-        if (!ws)
-            return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
-
-        const bbox = (document.getElementsByClassName("blocklyBlockCanvas")[0] as any).getBBox();
-        let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
-
-        const customCss = `
+    const CUSTOM_CSS = `
 .blocklyMainBackground {
     stroke:none !important;
 }
@@ -142,12 +133,22 @@ namespace pxt.blocks.layout {
     text-shadow: 0px 0px 6px #f00;
     font-size: 17pt !important;
 }`;
+    const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-        return toSvgInternalAsync(sg, customCss, bbox.x, bbox.y, bbox.width, bbox.height);
+    export function toSvgAsync(ws: B.Workspace): Promise<{
+        width: number; height: number; xml: string;
+    }> {
+        if (!ws)
+            return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
+
+        const bbox = (document.getElementsByClassName("blocklyBlockCanvas")[0] as any).getBBox();
+        let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
+
+
+        return blocklyToSvgAsync(sg, CUSTOM_CSS, bbox.x, bbox.y, bbox.width, bbox.height);
     }
 
-    const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
-    function toSvgInternalAsync(sg: SVGGElement, customCss: string, x: number, y: number, width: number, height: number): Promise<{
+    export function blocklyToSvgAsync(sg: SVGElement, customCss: string, x: number, y: number, width: number, height: number): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!sg.childNodes[0])
@@ -172,7 +173,7 @@ namespace pxt.blocks.layout {
             });
     }
 
-    function documentToSvg(xsg: Document): string {
+    export function documentToSvg(xsg: Node): string {
         const xml = new XMLSerializer().serializeToString(xsg);
         const data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(xml)));
         return data;

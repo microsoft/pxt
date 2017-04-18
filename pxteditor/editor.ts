@@ -119,7 +119,7 @@ namespace pxt.editor {
 
         setFile(fn: IFile): void;
         setSideFile(fn: IFile): void;
-        setSideDoc(path: string): void;
+        setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
 
@@ -151,6 +151,7 @@ namespace pxt.editor {
 
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
+        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
 
         settings: EditorSettings;
 

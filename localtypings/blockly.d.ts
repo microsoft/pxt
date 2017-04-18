@@ -161,7 +161,7 @@ declare namespace Blockly {
         setDisabled(disabled: boolean): void;
         setEditable(editable: boolean): void;
         setFieldValue(newValue: string, name: string): void;
-        setHelpUrl(url: string): void;
+        setHelpUrl(url: string | Function): void;
         setInputsInline(newBoolean: boolean): void;
         setMovable(movable: boolean): void;
         setMutator(mutator: Mutator): void;

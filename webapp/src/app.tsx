@@ -474,10 +474,10 @@ export class ProjectView
         sd.setMarkdown(md);
     }
 
-    setSideDoc(path: string) {
+    setSideDoc(path: string, blocksEditor = true) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
-        if (path) sd.setPath(path);
+        if (path) sd.setPath(path, blocksEditor);
         else sd.collapse();
     }
 
@@ -594,11 +594,12 @@ export class ProjectView
                     })
                     .done()
 
+                const preferredEditor = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation);
+                    this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
             })
     }
 
@@ -1360,6 +1361,16 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.shareEditor.show(header);
     }
 
+    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<string> {
+        return compiler.getBlocksAsync()
+            .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
+            .then(resp => {
+                const svg = pxt.blocks.render(resp, { snippetMode: true });
+                const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
+                return pxt.blocks.layout.blocklyToSvgAsync(svg, '', viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
+            }).then(re => re.xml);
+    }
+
     gettingStarted() {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
@@ -1386,9 +1397,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         sounds.initTutorial(); // pre load sounds
         return pxt.Cloud.downloadMarkdownAsync(tutorialId)
             .then(md => {
-                let titleRegex = /^#(.*)/g.exec(md);
+                let titleRegex = /^#\s*(.*)/g.exec(md);
                 if (!titleRegex || titleRegex.length < 1) return;
-                title = titleRegex[1];
+                title = titleRegex[1].trim();
 
                 let steps = md.split(/^###[^#].*$/gmi);
                 for (let step = 1; step < steps.length; step++) {
@@ -1409,8 +1420,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
-                    name: tutorialId,
-                    temporary: true
+                    name: title
                 });
             });
     }
@@ -1488,7 +1498,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const fullscreenTooltip = this.state.fullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
-        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
+        const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
@@ -1515,6 +1525,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             this.forceUpdate();
         }
 
+        const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
@@ -1522,7 +1534,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
             this.state.collapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
-            !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
+            showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inTutorial ? 'tutorial' : '',
             pxt.options.light ? 'light' : '',
@@ -1916,7 +1928,7 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     switch (hash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg);
+            editor.setSideDoc(hash.arg, editor == this.blockEditor);
             break;
         case "follow":
             pxt.tickEvent("hash.follow")
@@ -1981,7 +1993,7 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd, null)))
-            .catch(core.handleNetworkError)
+        .catch(core.handleNetworkError)
         .finally(() => core.hideLoading());
 }
 

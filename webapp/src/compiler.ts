@@ -133,7 +133,7 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: B.Workspace, blockFile?: string) {
+export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: B.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
@@ -149,6 +149,23 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
             return resp
+        })
+}
+
+export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+    const snippetTs = "___snippet.ts";
+    const snippetBlocks = "___snippet.blocks";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.fileSystem[snippetTs] = code;
+            opts.fileSystem[snippetBlocks] = "";
+            opts.sourceFiles.push(snippetTs);
+            opts.sourceFiles.push(snippetBlocks);
+            opts.ast = true;
+            return decompileCoreAsync(opts, snippetTs)
+        }).then(resp => {
+            return resp.outfiles[snippetBlocks]
         })
 }
 
@@ -189,7 +206,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
 }
 
 export function formatAsync(input: string, pos: number) {
-    return workerOpAsync("format", { format: {input: input, pos: pos} });
+    return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
 export function typecheckAsync() {
