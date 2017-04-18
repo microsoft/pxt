@@ -2061,7 +2061,6 @@ $(document).ready(() => {
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => initExtensionsAsync())
         .then(() => compiler.init())
         .then(() => workspace.initAsync())
         .then(state => {
@@ -2076,6 +2075,7 @@ $(document).ready(() => {
             initHashchange();
         })
         .then(() => pxt.winrt.initAsync(ih))
+        .then(() => initExtensionsAsync())
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))
