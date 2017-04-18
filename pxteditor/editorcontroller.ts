@@ -208,4 +208,12 @@ namespace pxt.editor {
                 resolve(undefined)
         })
     }
+
+    export interface ExtensionOptions {
+
+    }
+
+    export interface ExtensionResult {
+
+    }
 }
