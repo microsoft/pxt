@@ -113,13 +113,6 @@ declare namespace pxt {
         buildEngine?: string;  // default is yotta, set to platformio
     }
 
-    interface SpecializedResource {
-        name: string,
-        browser?: string,
-        os?: string,
-        path: string
-    }
-
     interface AppTheme {
         id?: string;
         name?: string;
@@ -159,7 +152,6 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
-        browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
