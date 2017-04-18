@@ -2003,7 +2003,10 @@ function initExtensionsAsync(): Promise<void> {
         .then(() => pxt.editor.initExtensionsAsync(opts))
         .then(res => {
             if (res.hexFileImporters)
-                res.hexFileImporters.forEach(fi => theEditor.hexFileImporters.push(fi));
+                res.hexFileImporters.forEach(fi => {
+                    pxt.debug(`\tadded hex importer ${fi.id}`);
+                    theEditor.hexFileImporters.push(fi);
+                });
         });
 }
 
