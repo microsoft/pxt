@@ -70,6 +70,10 @@ namespace pxt.blocks.layout {
         flowBlocks(ws.getTopBlocks(true), ratio);
     }
 
+    export function screenshotEnabled(): boolean {
+        return !BrowserUtils.isIE();
+    }
+
     export function screenshotAsync(ws: B.Workspace): Promise<string> {
         return toPngAsync(ws);
     }
