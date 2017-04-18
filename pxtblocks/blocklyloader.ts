@@ -1165,6 +1165,8 @@ namespace pxt.blocks {
         }
     }
 
+    export let openHelpUrl: (url: string) => void;
+
     function initLoops() {
         let msg: any = Blockly.Msg;
 
@@ -1348,6 +1350,12 @@ namespace pxt.blocks {
         msg.DELETE_BLOCK = lf("Delete Block");
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
         msg.HELP = lf("Help");
+
+        // inject hook to handle openings docs
+        (<any>Blockly).BlockSvg.prototype.showHelp_ = function() {
+            const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
+            if (url) (pxt.blocks.openHelpUrl || window.open)(url);
+        };
 
         /**
          * Show the context menu for the workspace.
