@@ -115,7 +115,7 @@ namespace pxt.editor {
         filters?: pxt.editor.ProjectFilters;
     }
 
-    export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest  {
+    export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
         action: "renderblocks";
         // typescript code to render
         ts: string;

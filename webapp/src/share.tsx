@@ -105,7 +105,7 @@ pxt extract ${url}`;
                         embed = editUrl;
                         break;
                     default:
-                        if (isBlocks) {
+                        if (isBlocks && pxt.blocks.layout.screenshotEnabled()) {
                             // Render screenshot
                             if (this.state.screenshotId == currentPubId) {
                                 if (this.state.screenshotUri)

@@ -1478,22 +1478,24 @@ namespace pxt.blocks {
             }
             menuOptions.push(formatCodeOption);
 
-            const screenshotOption = {
-                text: lf("Download Screenshot"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.screenshot");
-                    pxt.blocks.layout.screenshotAsync(this)
-                        .done((uri) => {
-                            if (pxt.BrowserUtils.isSafari())
-                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                            BrowserUtils.browserDownloadDataUri(
-                                uri,
-                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                        });
-                }
-            };
-            menuOptions.push(screenshotOption);
+            if (pxt.blocks.layout.screenshotEnabled()) {
+                const screenshotOption = {
+                    text: lf("Download Screenshot"),
+                    enabled: topBlocks.length > 0,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.screenshot");
+                        pxt.blocks.layout.screenshotAsync(this)
+                            .done((uri) => {
+                                if (pxt.BrowserUtils.isSafari())
+                                    uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                                BrowserUtils.browserDownloadDataUri(
+                                    uri,
+                                    `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                            });
+                    }
+                };
+                menuOptions.push(screenshotOption);
+            }
 
             // custom options...
             if (onShowContextMenu)

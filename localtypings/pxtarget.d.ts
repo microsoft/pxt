@@ -99,6 +99,7 @@ declare namespace pxt {
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
+        trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
     }
 
     interface TargetCompileService {
@@ -111,13 +112,6 @@ declare namespace pxt {
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
-    }
-
-    interface SpecializedResource {
-        name: string,
-        browser?: string,
-        os?: string,
-        path: string
     }
 
     interface AppTheme {
@@ -159,7 +153,6 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
-        browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -190,6 +183,7 @@ declare namespace pxt {
             dialogClick?: string;            
         },
         disableLiveTranslations?: boolean; // don't load translations from crowdin
+        extendEditor?: boolean; // whether a target specific editor.js is loaded
     }
 
     interface DocMenuEntry {

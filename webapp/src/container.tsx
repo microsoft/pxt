@@ -29,14 +29,16 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m =>
-                !m.tutorial ? <sui.Item key={"docsmenu" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openDocs(m.path) } />
-                    : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } />
+                !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" className="ui item link" href={m.path} target="docs">{m.name}</a>
+                : !m.tutorial ? <sui.Item key={"docsmenu" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openDocs(m.path) } />
+                : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } />
             ) }
         </sui.DropdownMenuItem>
     }
 }
 
 export class SideDocs extends data.Component<ISettingsProps, {}> {
+    private firstLoad = true;
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (sd && sd.contentWindow) sd.contentWindow.postMessage(message, "*");
@@ -64,7 +66,9 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
         if (el) el.src = url;
         else this.props.parent.setState({ sideDocsLoadUrl: url });
-        this.props.parent.setState({ sideDocsCollapsed: pxt.BrowserUtils.isMobile() || pxt.options.light });
+        let sideDocsCollapsed = this.firstLoad && (pxt.BrowserUtils.isMobile() || pxt.options.light);
+        this.props.parent.setState({ sideDocsCollapsed: sideDocsCollapsed });
+        this.firstLoad = false;
     }
 
     collapse() {

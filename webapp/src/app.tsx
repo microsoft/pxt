@@ -157,7 +157,7 @@ export class ProjectView
     componentDidUpdate() {
         this.saveSettings()
         this.editor.domUpdate();
-        simulator.setState(this.state.header ? this.state.header.editor : '')
+        simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
         this.editor.resize();
     }
 
@@ -648,43 +648,18 @@ export class ProjectView
             })
     }
 
-    importHex(data: pxt.cpp.HexFile) {
-        const targetId = pxt.appTarget.id;
-        if (!data || !data.meta) {
-            core.warningNotification(lf("Sorry, we could not recognize this file."))
-            return;
-        }
-        if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
-            pxt.tickEvent("import.blocks")
-            pxt.debug('importing microbit.co.uk blocks project')
-            pxt.debug('blocks: ' + data.source)
-            core.showLoading(lf("loading project..."))
-            this.createProjectAsync({
-                filesOverride: {
-                    "main.blocks": data.source
-                }, name: data.meta.name
-            }).done(() => core.hideLoading());
-            return;
-        } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
-            pxt.tickEvent("import.td")
-            pxt.debug('importing microbit.co.uk TD project')
-            pxt.debug('td: ' + data.source)
-            core.showLoading("loading project...")
-            this.createProjectAsync({
-                filesOverride: { "main.blocks": "", "main.ts": "  " },
-                name: data.meta.name
-            })
-                .then(() => tdlegacy.td2tsAsync(data.source))
-                .then(text => this.textEditor.overrideFile(text))
-                .done(() => core.hideLoading());
-            return;
-        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
-            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
-        ) {
-            pxt.tickEvent("import.pxt")
-            pxt.debug("importing project")
+    convertTouchDevelopToTypeScriptAsync(td: string): Promise<string> {
+        return tdlegacy.td2tsAsync(td);
+    }
+
+    hexFileImporters: pxt.editor.IHexFileImporter[] = [{
+        id: "default",
+        canImport: data => data.meta.cloudId == "ks/" + pxt.appTarget.id || data.meta.cloudId == pxt.CLOUD_ID + pxt.appTarget.id // match on targetid
+            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + pxt.appTarget.id)) // trying to load white-label file into main target
+        ,
+        importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
-                target: targetId,
+                target: pxt.appTarget.id,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
@@ -693,13 +668,36 @@ export class ProjectView
             };
             const files = JSON.parse(data.source) as pxt.Map<string>;
             // we cannot load the workspace until we've loaded the project
-            workspace.installAsync(h, files)
-                .done(hd => this.loadHeaderAsync(hd, null));
+            return workspace.installAsync(h, files)
+                .then(hd => this.loadHeaderAsync(hd, null));
+        }
+    }];
+
+    importHex(data: pxt.cpp.HexFile) {
+        const targetId = pxt.appTarget.id;
+        if (!data || !data.meta) {
+            core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
         }
 
-        core.warningNotification(lf("Sorry, we could not import this project."))
-        pxt.tickEvent("warning.importfailed");
+        const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
+        if (importer) {
+            pxt.tickEvent("import." + importer.id);
+            core.showLoading(lf("loading project..."))
+            importer.importAsync(this, data)
+                .done(
+                    () => core.hideLoading(),
+                    e => {
+                        pxt.reportException(e, { importer: importer.id });
+                        core.hideLoading();
+                        core.errorNotification(lf("Oops, something went wrong when importing your project"));
+                    }
+                );
+        }
+        else {
+            core.warningNotification(lf("Sorry, we could not import this project."))
+            pxt.tickEvent("warning.importfailed");
+        }
     }
 
     importProjectFile(file: File) {
@@ -1796,7 +1794,7 @@ function initScreenshots() {
         if (msg && msg.type == "screenshot") {
             pxt.tickEvent("sim.screenshot");
             const scmsg = msg as pxsim.SimulatorScreenshotMessage;
-            console.log('received screenshot');
+            pxt.debug('received screenshot');
             screenshot.saveAsync(theEditor.state.header, scmsg.data)
                 .done(() => { pxt.debug('screenshot saved') })
         };
@@ -2003,6 +2001,22 @@ function initHashchange() {
     });
 }
 
+function initExtensionsAsync(): Promise<void> {
+    if (!pxt.appTarget.appTheme || !pxt.appTarget.appTheme.extendEditor) return Promise.resolve();
+
+    pxt.debug('loading editor extensions...');
+    const opts: pxt.editor.ExtensionOptions = {};
+    return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+        .then(() => pxt.editor.initExtensionsAsync(opts))
+        .then(res => {
+            if (res.hexFileImporters)
+                res.hexFileImporters.forEach(fi => {
+                    pxt.debug(`\tadded hex importer ${fi.id}`);
+                    theEditor.hexFileImporters.push(fi);
+                });
+        });
+}
+
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
@@ -2021,10 +2035,9 @@ $(document).ready(() => {
 
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");
-        const redirect = pxt.BrowserUtils.suggestedBrowserPath();
-        if (redirect) {
-            window.location.href = redirect;
-        }
+        window.location.href = "/browsers";
+        core.showLoading(lf("Sorry, this browser is not supported."));
+        return;
     }
 
     appcache.init();
@@ -2068,6 +2081,7 @@ $(document).ready(() => {
             initHashchange();
         })
         .then(() => pxt.winrt.initAsync(ih))
+        .then(() => initExtensionsAsync())
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))
