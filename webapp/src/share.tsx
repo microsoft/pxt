@@ -59,6 +59,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     renderCore() {
         const { visible } = this.state;
 
+        const targetTheme = pxt.appTarget.appTheme;
         const cloud = pxt.appTarget.cloud || {};
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
@@ -104,7 +105,7 @@ pxt extract ${url}`;
                         embed = editUrl;
                         break;
                     default:
-                        if (isBlocks) {
+                        if (isBlocks && pxt.blocks.layout.screenshotEnabled()) {
                             // Render screenshot
                             if (this.state.screenshotId == currentPubId) {
                                 if (this.state.screenshotUri)

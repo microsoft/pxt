@@ -208,61 +208,6 @@ namespace pxt.BrowserUtils {
         return isSupported
     }
 
-
-    export function bestResourceForOsAndBrowser(resources: pxt.SpecializedResource[], name: string): pxt.SpecializedResource {
-        if (!resources || resources.length == 0) {
-            return null;
-        }
-
-        enum MatchLevel {
-            None,
-            Any,
-            Exact
-        };
-
-        function matchLevelForStrings(haystack: string, needle: string): MatchLevel {
-            if (!haystack || !needle) {
-                return MatchLevel.Any; //If either browser or OS isn't defined then we behave the same as *
-            }
-            if (haystack.indexOf(needle) !== -1) {
-                return MatchLevel.Exact;
-            }
-            else if (haystack.indexOf("*") !== -1) {
-                return MatchLevel.Any;
-            }
-            else {
-                return MatchLevel.None
-            }
-        }
-
-        let osMatch = (res: pxt.SpecializedResource) => matchLevelForStrings(res.os, os());
-        let browserMatch = (res: pxt.SpecializedResource) => matchLevelForStrings(res.browser, browser());
-        let matches = resources.filter((res) => res.name == name &&
-            osMatch(res) != MatchLevel.None &&
-            browserMatch(res) != MatchLevel.None);
-        if (matches.length == 0) {
-            return null;
-        }
-        let bestMatch = 0;
-
-        for (let i = 1; i < matches.length; i++) {
-            //First we want to match on OS, then on browser
-            if (osMatch(matches[i]) > osMatch(matches[bestMatch])) {
-                bestMatch = i;
-            }
-            else if (browserMatch(matches[i]) > browserMatch(matches[bestMatch])) {
-                bestMatch = i;
-            }
-        }
-
-        return matches[bestMatch];
-    }
-
-    export function suggestedBrowserPath(): string {
-        let match = bestResourceForOsAndBrowser(pxt.appTarget.appTheme.browserSupport, "unsupported");
-        return match ? match.path : null;
-    }
-
     export function devicePixelRatio(): number {
         if (typeof window === "undefined" || !window.screen) return 1;
 
@@ -358,6 +303,16 @@ namespace pxt.BrowserUtils {
             pxt.debug("saving failed")
         }
         return dataurl;
+    }
+
+    export function loadImageAsync(data: string): Promise<HTMLImageElement> {
+        const img = document.createElement("img") as HTMLImageElement;
+        return new Promise<HTMLImageElement>((resolve, reject) => {
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(undefined);
+            img.crossOrigin = "anonymous";
+            img.src = data;
+        });
     }
 
     export function loadScriptAsync(url: string): Promise<void> {

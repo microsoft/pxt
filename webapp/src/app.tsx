@@ -157,7 +157,7 @@ export class ProjectView
     componentDidUpdate() {
         this.saveSettings()
         this.editor.domUpdate();
-        simulator.setState(this.state.header ? this.state.header.editor : '')
+        simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
         this.editor.resize();
     }
 
@@ -474,10 +474,10 @@ export class ProjectView
         sd.setMarkdown(md);
     }
 
-    setSideDoc(path: string) {
+    setSideDoc(path: string, blocksEditor = true) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
-        if (path) sd.setPath(path);
+        if (path) sd.setPath(path, blocksEditor);
         else sd.collapse();
     }
 
@@ -594,11 +594,12 @@ export class ProjectView
                     })
                     .done()
 
+                const preferredEditor = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
                 if (readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation);
+                    this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
             })
     }
 
@@ -647,43 +648,18 @@ export class ProjectView
             })
     }
 
-    importHex(data: pxt.cpp.HexFile) {
-        const targetId = pxt.appTarget.id;
-        if (!data || !data.meta) {
-            core.warningNotification(lf("Sorry, we could not recognize this file."))
-            return;
-        }
-        if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "blockly") {
-            pxt.tickEvent("import.blocks")
-            pxt.debug('importing microbit.co.uk blocks project')
-            pxt.debug('blocks: ' + data.source)
-            core.showLoading(lf("loading project..."))
-            this.createProjectAsync({
-                filesOverride: {
-                    "main.blocks": data.source
-                }, name: data.meta.name
-            }).done(() => core.hideLoading());
-            return;
-        } else if (data.meta.cloudId == "microbit.co.uk" && data.meta.editor == "touchdevelop") {
-            pxt.tickEvent("import.td")
-            pxt.debug('importing microbit.co.uk TD project')
-            pxt.debug('td: ' + data.source)
-            core.showLoading("loading project...")
-            this.createProjectAsync({
-                filesOverride: { "main.blocks": "", "main.ts": "  " },
-                name: data.meta.name
-            })
-                .then(() => tdlegacy.td2tsAsync(data.source))
-                .then(text => this.textEditor.overrideFile(text))
-                .done(() => core.hideLoading());
-            return;
-        } else if (data.meta.cloudId == "ks/" + targetId || data.meta.cloudId == pxt.CLOUD_ID + targetId // match on targetid
-            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + targetId)) // trying to load white-label file into main target
-        ) {
-            pxt.tickEvent("import.pxt")
-            pxt.debug("importing project")
+    convertTouchDevelopToTypeScriptAsync(td: string): Promise<string> {
+        return tdlegacy.td2tsAsync(td);
+    }
+
+    hexFileImporters: pxt.editor.IHexFileImporter[] = [{
+        id: "default",
+        canImport: data => data.meta.cloudId == "ks/" + pxt.appTarget.id || data.meta.cloudId == pxt.CLOUD_ID + pxt.appTarget.id // match on targetid
+            || (Util.startsWith(data.meta.cloudId, pxt.CLOUD_ID + pxt.appTarget.id)) // trying to load white-label file into main target
+        ,
+        importAsync: (project, data) => {
             let h: pxt.workspace.InstallHeader = {
-                target: targetId,
+                target: pxt.appTarget.id,
                 editor: data.meta.editor,
                 name: data.meta.name,
                 meta: {},
@@ -692,13 +668,36 @@ export class ProjectView
             };
             const files = JSON.parse(data.source) as pxt.Map<string>;
             // we cannot load the workspace until we've loaded the project
-            workspace.installAsync(h, files)
-                .done(hd => this.loadHeaderAsync(hd, null));
+            return workspace.installAsync(h, files)
+                .then(hd => this.loadHeaderAsync(hd, null));
+        }
+    }];
+
+    importHex(data: pxt.cpp.HexFile) {
+        const targetId = pxt.appTarget.id;
+        if (!data || !data.meta) {
+            core.warningNotification(lf("Sorry, we could not recognize this file."))
             return;
         }
 
-        core.warningNotification(lf("Sorry, we could not import this project."))
-        pxt.tickEvent("warning.importfailed");
+        const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
+        if (importer) {
+            pxt.tickEvent("import." + importer.id);
+            core.showLoading(lf("loading project..."))
+            importer.importAsync(this, data)
+                .done(
+                    () => core.hideLoading(),
+                    e => {
+                        pxt.reportException(e, { importer: importer.id });
+                        core.hideLoading();
+                        core.errorNotification(lf("Oops, something went wrong when importing your project"));
+                    }
+                );
+        }
+        else {
+            core.warningNotification(lf("Sorry, we could not import this project."))
+            pxt.tickEvent("warning.importfailed");
+        }
     }
 
     importProjectFile(file: File) {
@@ -755,9 +754,9 @@ export class ProjectView
         );
     }
 
-    openProject() {
+    openProject(tab?: string) {
         pxt.tickEvent("menu.open");
-        this.projects.showOpenProject();
+        this.projects.showOpenProject(tab);
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -1162,15 +1161,71 @@ export class ProjectView
         })
     }
 
+    showReportAbuse() {
+        pxt.tickEvent("menu.reportabuse");
+        let urlInput: JQuery;
+        let reasonInput: JQuery;
+        const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
+        core.confirmAsync({
+            header: lf("Report Abuse"),
+            onLoaded: ($el) => {
+                urlInput = $el.find('input');
+                reasonInput = $el.find('textarea');
+                if (this.state.header && this.state.header.pubCurrent && this.state.header.pubId)
+                    urlInput.val(shareUrl + this.state.header.pubId);
+            },
+            agreeLbl: lf("Submit"),
+            htmlBody: `<div class="ui form">
+  <div class="ui field">
+    <label>${lf("What is the URL of the offensive project?")}</label>
+    <input type="url" placeholder="Enter project URL here..."></input>
+  </div>
+  <div class="ui field">
+    <label>${lf("Why do you find it offensive?")}</label>
+    <textarea></textarea>
+  </div>
+</div>`,
+        }).done(res => {
+            if (res) {
+                pxt.tickEvent("menu.reportabuse.send");
+                const id = pxt.Cloud.parseScriptId(urlInput.val());
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
+                    core.infoNotification(lf("Sending abuse report..."));
+                    Cloud.privatePostAsync(`${id}/abusereports`, {
+                        text: reasonInput.val()
+                    })
+                        .then(res => {
+                            core.infoNotification(lf("Report sent. Thank you!"))
+                        })
+                        .catch(core.handleNetworkError);
+                }
+            }
+        })
+    }
+
     importUrlDialog() {
         let input: HTMLInputElement;
-        const shareUrl = pxt.appTarget.appTheme.embedUrl || pxt.appTarget.appTheme.homeUrl;
+        const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
         core.confirmAsync({
             header: lf("Open project URL"),
             onLoaded: ($el) => {
                 input = $el.find('input')[0] as HTMLInputElement;
             },
             htmlBody: `<div class="ui form">
+<div class="ui icon violet message">
+    <i class="user icon"></i>
+    <div class="content">
+        <h3 class="header">
+            ${lf("User-provided content")}
+        </h3>
+        <p>
+            ${lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
+            ${lf("If you think it's not appropriate, please report abuse through Settings -> Report Abuse.")}
+        </p>
+    </div>
+</div>
   <div class="ui field">
     <label>${lf("Copy the URL of the project.")}</label>
     <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
@@ -1180,7 +1235,9 @@ export class ProjectView
             if (res) {
                 pxt.tickEvent("menu.open.url");
                 const id = pxt.Cloud.parseScriptId(input.value);
-                if (id) {
+                if (!id) {
+                    core.errorNotification(lf("Sorry, the project url looks invalid."));
+                } else {
                     loadHeaderBySharedId(id);
                 }
             }
@@ -1302,6 +1359,16 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.shareEditor.show(header);
     }
 
+    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<string> {
+        return compiler.getBlocksAsync()
+            .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
+            .then(resp => {
+                const svg = pxt.blocks.render(resp, { snippetMode: true });
+                const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
+                return pxt.blocks.layout.blocklyToSvgAsync(svg, '', viewBox[0], viewBox[1], viewBox[2], viewBox[3]);
+            }).then(re => re.xml);
+    }
+
     gettingStarted() {
         pxt.tickEvent("btn.gettingstarted");
         const targetTheme = pxt.appTarget.appTheme;
@@ -1328,9 +1395,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         sounds.initTutorial(); // pre load sounds
         return pxt.Cloud.downloadMarkdownAsync(tutorialId)
             .then(md => {
-                let titleRegex = /^#(.*)/g.exec(md);
+                let titleRegex = /^#\s*(.*)/g.exec(md);
                 if (!titleRegex || titleRegex.length < 1) return;
-                title = titleRegex[1];
+                title = titleRegex[1].trim();
 
                 let steps = md.split(/^###[^#].*$/gmi);
                 for (let step = 1; step < steps.length; step++) {
@@ -1351,8 +1418,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 tc.setPath(tutorialId);
             }).then(() => {
                 return this.createProjectAsync({
-                    name: tutorialId,
-                    temporary: true
+                    name: title
                 });
             });
     }
@@ -1415,6 +1481,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const workspaces = pxt.appTarget.cloud && pxt.appTarget.cloud.workspaces;
         const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+        const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex;
         const simOpts = pxt.appTarget.simulator;
@@ -1429,7 +1496,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const fullscreenTooltip = this.state.fullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = this.state.mute ? lf("Unmute audio") : lf("Mute audio");
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
-        const sideDocs = !(sandbox || pxt.options.light || targetTheme.hideSideDocs);
+        const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
@@ -1440,9 +1507,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
-        const {
-            hideMenuBar,
-            hideEditorToolbar} = targetTheme;
+        const { hideMenuBar, hideEditorToolbar} = targetTheme;
+        const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
         const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey);
         const simActive = this.state.embedSimView;
@@ -1457,6 +1523,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             this.forceUpdate();
         }
 
+        const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+
         // update window title
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
@@ -1464,7 +1532,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
             this.state.collapseEditorTools ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
-            !sideDocs || !this.state.sideDocsLoadUrl || this.state.sideDocsCollapsed ? '' : 'sideDocs',
+            showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inTutorial ? 'tutorial' : '',
             pxt.options.light ? 'light' : '',
@@ -1508,6 +1576,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } /> : undefined}
                                         {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } /> : undefined}
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
+                                        {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
                                         <div className="ui divider"></div>
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
@@ -1545,26 +1614,18 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <div id="filelist" className="ui items" role="complementary">
                         <div id="boardview" className={`ui vertical editorFloat`}>
                         </div>
-                        <div className="ui item grid centered portrait hide simtoolbar">
+                        { !isHeadless ? <div className="ui item grid centered portrait hide simtoolbar">
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
                                 {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator() } /> : undefined}
-                                {trace ? <sui.Button key='debug'  icon="bug" title={debugTooltip} onClick={() => this.toggleTrace() } /> : undefined}
+                                {trace ? <sui.Button key='debug'  class={`trace-button ${this.state.tracing ? 'orange' : ''}`} icon="bug" title={debugTooltip} onClick={() => this.toggleTrace() } /> : undefined}
                             </div>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
-                        </div>
-                        { this.state.tracing ?
-                            <div className="ui item grid centered portrait hide simtoolbar">
-                                <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                                    <sui.Button key="slow "icon="forward" title={slowTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL)}/>
-                                    <sui.Button key="fast "icon="fast forward" title={fastTraceTooltip} onClick={() => simulator.setTraceInterval(simulator.FAST_TRACE_INTERVAL)}/>
-                                </div>
-                            </div>
-                        : undefined }
+                        </div> : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
@@ -1733,7 +1794,7 @@ function initScreenshots() {
         if (msg && msg.type == "screenshot") {
             pxt.tickEvent("sim.screenshot");
             const scmsg = msg as pxsim.SimulatorScreenshotMessage;
-            console.log('received screenshot');
+            pxt.debug('received screenshot');
             screenshot.saveAsync(theEditor.state.header, scmsg.data)
                 .done(() => { pxt.debug('screenshot saved') })
         };
@@ -1742,6 +1803,8 @@ function initScreenshots() {
 
 function enableAnalytics() {
     pxt.analytics.enable();
+    pxt.editor.enableControllerAnalytics();
+
     const stats: pxt.Map<string | number> = {}
     if (typeof window !== "undefined") {
         const screen = window.screen;
@@ -1865,7 +1928,7 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     switch (hash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg);
+            editor.setSideDoc(hash.arg, editor == this.blockEditor);
             break;
         case "follow":
             pxt.tickEvent("hash.follow")
@@ -1894,6 +1957,12 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
         case "tutorial":
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
+            window.location.hash = "";
+            return true;
+        case "projects":
+            pxt.tickEvent("hash.projects");
+            editor.openProject(hash.arg);
+            window.location.hash = "";
             return true;
         case "sandbox":
         case "pub":
@@ -1924,6 +1993,7 @@ function loadHeaderBySharedId(id: string) {
         ? theEditor.loadHeaderAsync(existing, null)
         : workspace.installByIdAsync(id)
             .then(hd => theEditor.loadHeaderAsync(hd, null)))
+        .catch(core.handleNetworkError)
         .finally(() => core.hideLoading());
 }
 
@@ -1931,6 +2001,22 @@ function initHashchange() {
     window.addEventListener("hashchange", e => {
         handleHash(parseHash());
     });
+}
+
+function initExtensionsAsync(): Promise<void> {
+    if (!pxt.appTarget.appTheme || !pxt.appTarget.appTheme.extendEditor) return Promise.resolve();
+
+    pxt.debug('loading editor extensions...');
+    const opts: pxt.editor.ExtensionOptions = {};
+    return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+        .then(() => pxt.editor.initExtensionsAsync(opts))
+        .then(res => {
+            if (res.hexFileImporters)
+                res.hexFileImporters.forEach(fi => {
+                    pxt.debug(`\tadded hex importer ${fi.id}`);
+                    theEditor.hexFileImporters.push(fi);
+                });
+        });
 }
 
 $(document).ready(() => {
@@ -1951,10 +2037,9 @@ $(document).ready(() => {
 
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");
-        const redirect = pxt.BrowserUtils.suggestedBrowserPath();
-        if (redirect) {
-            window.location.href = redirect;
-        }
+        window.location.href = "/browsers";
+        core.showLoading(lf("Sorry, this browser is not supported."));
+        return;
     }
 
     appcache.init();
@@ -1998,6 +2083,7 @@ $(document).ready(() => {
             initHashchange();
         })
         .then(() => pxt.winrt.initAsync(ih))
+        .then(() => initExtensionsAsync())
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))

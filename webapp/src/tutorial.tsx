@@ -233,16 +233,13 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
 
     moreTutorials() {
         pxt.tickEvent(`tutorial.completed.more`);
+        this.hide();
         this.props.parent.openTutorials();
     }
 
-    continueEditing() {
-        pxt.tickEvent(`tutorial.completed.continue`);
-        this.props.parent.exitTutorial(true);
-    }
-
-    backToPrevious() {
-        pxt.tickEvent(`tutorial.completed.back`);
+    exitTutorial() {
+        pxt.tickEvent(`tutorial.completed.exit`);
+        this.hide();
         this.props.parent.exitTutorial();
     }
 
@@ -255,34 +252,24 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick
                 >
-                <div className="ui three stackable cards">
+                <div className="ui two stackable cards">
                     <div className="ui grid centered link card" onClick={() => this.moreTutorials() }>
-                        <div className="ui inverted segment blue content">
-                            <i className="avatar-image icon inverted bordered huge blue" />
+                        <div className="content">
+                            <i className="avatar-image icon huge" style={{fontSize: '100px'}}/>
                         </div>
                         <div className="content">
-                            <div className="description">
-                                {lf("More tutorials")}
+                            <div className="header">
+                                {lf("More Tutorials")}
                             </div>
                         </div>
                     </div>
-                    <div className="ui grid centered link card" onClick={() => this.backToPrevious() }>
-                        <div className="ui inverted segment green content">
-                            <i className="reply layout icon inverted bordered huge green" />
+                    <div className="ui grid centered link card" onClick={() => this.exitTutorial() }>
+                        <div className="content">
+                            <i className="external icon huge black" style={{fontSize: '100px'}} />
                         </div>
                         <div className="content">
-                            <div className="description">
-                                {lf("Exit")}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="ui grid centered link card" onClick={() => this.continueEditing() }>
-                        <div className="ui inverted segment yellow content">
-                            <i className="share layout icon inverted bordered huge yellow" />
-                        </div>
-                        <div className="content">
-                            <div className="description">
-                                {lf("Keep coding")}
+                            <div className="header">
+                                {lf("Exit Tutorial")}
                             </div>
                         </div>
                     </div>

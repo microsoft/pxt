@@ -1165,6 +1165,8 @@ namespace pxt.blocks {
         }
     }
 
+    export let openHelpUrl: (url: string) => void;
+
     function initLoops() {
         let msg: any = Blockly.Msg;
 
@@ -1349,6 +1351,12 @@ namespace pxt.blocks {
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
         msg.HELP = lf("Help");
 
+        // inject hook to handle openings docs
+        (<any>Blockly).BlockSvg.prototype.showHelp_ = function() {
+            const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
+            if (url) (pxt.blocks.openHelpUrl || window.open)(url);
+        };
+
         /**
          * Show the context menu for the workspace.
          * @param {!Event} e Mouse event.
@@ -1470,33 +1478,24 @@ namespace pxt.blocks {
             }
             menuOptions.push(formatCodeOption);
 
-            const shuffleOption = {
-                text: lf("Shuffle Blocks"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.shuffle");
-                    pxt.blocks.layout.shuffle(this, 1);
-                }
-            };
-            // TODO: temporarily removing shuffle blocks option until we have a better way of surfacing it to content creators
-            //menuOptions.push(shuffleOption);
-
-            const screenshotOption = {
-                text: lf("Download Screenshot"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.screenshot");
-                    pxt.blocks.layout.screenshotAsync(this)
-                        .done((uri) => {
-                            if (pxt.BrowserUtils.isSafari())
-                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                            BrowserUtils.browserDownloadDataUri(
-                                uri,
-                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                        });
-                }
-            };
-            menuOptions.push(screenshotOption);
+            if (pxt.blocks.layout.screenshotEnabled()) {
+                const screenshotOption = {
+                    text: lf("Download Screenshot"),
+                    enabled: topBlocks.length > 0,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.screenshot");
+                        pxt.blocks.layout.screenshotAsync(this)
+                            .done((uri) => {
+                                if (pxt.BrowserUtils.isSafari())
+                                    uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                                BrowserUtils.browserDownloadDataUri(
+                                    uri,
+                                    `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                            });
+                    }
+                };
+                menuOptions.push(screenshotOption);
+            }
 
             // custom options...
             if (onShowContextMenu)
