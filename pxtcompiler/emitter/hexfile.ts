@@ -612,9 +612,10 @@ ${lbl}: .string ${stringLiteral(s)}
 
         for (let data of Object.keys(bin.doubles)) {
             let lbl = bin.doubles[data]
+            // this is REF_TAG_NUMBER in pxt.h
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short 0xffff, 10
+${lbl}: .short 0xffff, 32
         .hex ${data}
 `)
         }
