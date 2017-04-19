@@ -646,6 +646,10 @@ namespace ts.pxtc.service {
         decompile: v => {
             return decompile(v.options, v.fileName);
         },
+        compileTd: v => {
+            let res = compile(v.options);
+            return getApiInfo(res.ast, true);
+        },
 
         assemble: v => {
             return {
