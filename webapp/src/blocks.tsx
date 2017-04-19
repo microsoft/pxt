@@ -51,6 +51,7 @@ export class Editor extends srceditor.Editor {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo)
                 .then((compilationResult) => {
                     this.compilationResult = compilationResult;
+                    pxt.tickActivity("blocks.compile");
                     return this.compilationResult.source;
                 });
         } catch (e) {
@@ -359,7 +360,7 @@ export class Editor extends srceditor.Editor {
                         : 'unknown')
                     : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
+                pxt.tickActivity("blocks.create", "blocks.create." + blockId);
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
