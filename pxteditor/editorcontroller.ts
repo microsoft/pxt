@@ -55,6 +55,9 @@ namespace pxt.editor {
         ;
     }
 
+    /**
+     * Request sent by the editor when a tick/error/expection is registered
+     */
     export interface EditorMessageEventRequest extends EditorMessageRequest {
         action: "event";
         // metric identifier
