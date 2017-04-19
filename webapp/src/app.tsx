@@ -959,6 +959,10 @@ export class ProjectView
             .done();
     }
 
+    overrideTypescriptFile(text: string) {
+        if (this.textEditor) this.textEditor.overrideFile(text);
+    }
+
     startStopSimulator() {
         if (this.state.running) {
             pxt.tickEvent('simulator.stop')
