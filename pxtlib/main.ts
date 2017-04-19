@@ -91,7 +91,8 @@ namespace pxt {
      * Ticks activity events. This event gets aggregated and eventually gets sent.
      */
     export function tickActivity(...ids: string[]) {
-        ids.forEach(id => activityEvents[id] = (activityEvents[id] || 0) + 1);
+        ids.filter(id => !!id).map(id => id.slice(0, 64))
+            .forEach(id => activityEvents[id] = (activityEvents[id] || 0) + 1);
         tickActivityDebounced();
     }
 

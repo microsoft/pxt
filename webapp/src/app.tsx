@@ -959,6 +959,10 @@ export class ProjectView
             .done();
     }
 
+    overrideTypescriptFile(text: string) {
+        if (this.textEditor) this.textEditor.overrideFile(text);
+    }
+
     startStopSimulator() {
         if (this.state.running) {
             pxt.tickEvent('simulator.stop')
@@ -1803,6 +1807,8 @@ function initScreenshots() {
 
 function enableAnalytics() {
     pxt.analytics.enable();
+    pxt.editor.enableControllerAnalytics();
+
     const stats: pxt.Map<string | number> = {}
     if (typeof window !== "undefined") {
         const screen = window.screen;
