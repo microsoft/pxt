@@ -1803,6 +1803,8 @@ function initScreenshots() {
 
 function enableAnalytics() {
     pxt.analytics.enable();
+    pxt.editor.enableControllerAnalytics();
+
     const stats: pxt.Map<string | number> = {}
     if (typeof window !== "undefined") {
         const screen = window.screen;

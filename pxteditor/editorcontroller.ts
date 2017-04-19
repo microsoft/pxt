@@ -50,7 +50,21 @@ namespace pxt.editor {
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
         | "workspacesave" // EditorWorkspaceSaveRequest
+
+        | "event"
         ;
+    }
+
+    export interface EditorMessageEventRequest extends EditorMessageRequest {
+        action: "event";
+        // metric identifier
+        tick: string;
+        // error category if any
+        category?: string;
+        // error message if any
+        message?: string;
+        // custom data
+        data?: Map<string | number>;
     }
 
     export interface EditorMessageStopRequest extends EditorMessageRequest {
@@ -140,7 +154,7 @@ namespace pxt.editor {
      * Some commands may be async, use the ``id`` field to correlate to the original request.
      */
     export function bindEditorMessages(projectView: IProjectView) {
-        if (!window.parent) return;
+        if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
 
         window.addEventListener("message", (msg: MessageEvent) => {
             const data = msg.data as EditorMessage;
@@ -208,6 +222,55 @@ namespace pxt.editor {
 
             return true;
         }, false)
+    }
+
+    /**
+     * Sends analytics messages upstream to container if any
+     */
+    export function enableControllerAnalytics() {
+        if (!pxt.appTarget.appTheme.allowParentController || !pxt.BrowserUtils.isIFrame()) return;
+
+        const te = pxt.tickEvent;
+        pxt.tickEvent = function (id: string, data?: Map<string | number>): void {
+            if (te) te(id, data);
+            postHostMessageAsync(<EditorMessageEventRequest>{
+                type: 'pxthost',
+                action: 'event',
+                tick: id,
+                response: false,
+                data
+            });
+        }
+
+        const rexp = pxt.reportException;
+        pxt.reportException = function (err: any, data: pxt.Map<string>): void {
+            if (rexp) rexp(err, data);
+            try {
+                postHostMessageAsync(<EditorMessageEventRequest>{
+                    type: 'pxthost',
+                    action: 'event',
+                    tick: 'error',
+                    message: err.message,
+                    response: false,
+                    data
+                })
+            } catch (e) {
+
+            }
+        };
+
+        const re = pxt.reportError;
+        pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string>): void {
+            if (re) re(cat, msg, data);
+            postHostMessageAsync(<EditorMessageEventRequest>{
+                type: 'pxthost',
+                action: 'event',
+                tick: 'error',
+                category: cat,
+                message: msg,
+                data
+            })
+        }
     }
 
     function sendResponse(request: EditorMessage, resp: any, success: boolean, error: any) {
