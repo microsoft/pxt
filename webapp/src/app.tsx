@@ -171,11 +171,7 @@ export class ProjectView
         }
     }
 
-    saveFile() {
-        this.saveFileAsync().done()
-    }
-
-    saveFileAsync() {
+    saveFileAsync(): Promise<void> {
         if (!this.editorFile)
             return Promise.resolve()
         return this.saveTypeScriptAsync()
@@ -264,7 +260,7 @@ export class ProjectView
     }
 
     public typecheckNow() {
-        this.saveFile(); // don't wait for saving to backend store to finish before typechecking
+        this.saveFileAsync().done(); // don't wait for saving to backend store to finish before typechecking
         this.typecheck()
     }
 
@@ -311,7 +307,7 @@ export class ProjectView
     }, 4000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
-            this.saveFile(); // don't wait till save is done
+            this.saveFileAsync().done(); // don't wait till save is done
             this.typecheck();
         }
         this.markdownChangeHandler();
@@ -383,7 +379,7 @@ export class ProjectView
             })
             .then(() => { return this.editor.loadFileAsync(this.editorFile); })
             .then(() => {
-                this.saveFile(); // make sure state is up to date
+                this.saveFileAsync().done(); // make sure state is up to date
                 this.typecheck();
 
                 let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
@@ -786,10 +782,10 @@ export class ProjectView
             })
     }
 
-    saveProjectToFile() {
+    saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg
-        this.exportProjectToFileAsync()
-            .done((buf: Uint8Array) => {
+        return this.exportProjectToFileAsync()
+            .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
@@ -896,16 +892,39 @@ export class ProjectView
         });
     }
 
-    saveAndCompile() {
-        this.saveProjectName();
-        this.saveFile();
+    promptRenameProjectAsync(): Promise<boolean> {
+        if (!this.state.header) return Promise.resolve(false);
 
-        if (!pxt.appTarget.compile.hasHex) {
-            this.saveProjectToFile();
-        }
-        else {
-            this.compile(true);
-        }
+        const opts: core.ConfirmOptions = {
+            header: lf("Rename your project"),
+            agreeLbl: lf("Save"),
+            input: lf("Enter your project name here")
+        };
+        return core.confirmAsync(opts).then(res => {
+            if (!res || !opts.inputValue) return Promise.resolve(false); // cancelled
+
+            return new Promise<void>((resolve, reject) => {
+                this.setState({ projectName: opts.inputValue }, () => resolve());
+            }).then(() => this.saveProjectNameAsync())
+                .then(() => true);
+        });
+    }
+
+    saveAndCompile() {
+        if (!this.state.header) return;
+
+        return (this.state.projectName !== lf("Untitled")
+            ? Promise.resolve(true) : this.promptRenameProjectAsync())
+            .then(() => this.saveProjectNameAsync())
+            .then(() => this.saveFileAsync())
+            .then(() => {
+                if (!pxt.appTarget.compile.hasHex) {
+                    this.saveProjectToFileAsync().done();
+                }
+                else {
+                    this.compile(true);
+                }
+            });
     }
 
     compile(saveOnly = false) {
@@ -1275,7 +1294,8 @@ export class ProjectView
         this.setState({ publishing: true })
         const mpkg = pkg.mainPkg
         const epkg = pkg.getEditorPkg(mpkg)
-        return this.saveFileAsync()
+        return this.saveProjectNameAsync()
+            .then(() => this.saveFileAsync())
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
                 if (epkg.header.pubCurrent)
@@ -1300,7 +1320,7 @@ export class ProjectView
     }
 
     private debouncedSaveProjectName = Util.debounce(() => {
-        this.saveProjectName();
+        this.saveProjectNameAsync().done();
     }, 2000, false);
 
     updateHeaderName(name: string) {
@@ -1310,26 +1330,32 @@ export class ProjectView
         this.debouncedSaveProjectName();
     }
 
-    saveProjectName() {
-        if (!this.state.projectName || !this.state.header) return;
+    saveProjectNameAsync(): Promise<void> {
+        if (!this.state.projectName || !this.state.header) return Promise.resolve();
 
-        pxt.debug('saving project name to ' + this.state.projectName);
         try {
+            // nothing to do?
+            if (pkg.mainPkg.config.name == this.state.projectName)
+                return Promise.resolve();
+
             //Save the name in the target MainPackage as well
             pkg.mainPkg.config.name = this.state.projectName;
 
+            pxt.debug('saving project name to ' + this.state.projectName);
             let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
             let config = JSON.parse(f.content) as pxt.PackageConfig;
             config.name = this.state.projectName;
-            f.setContentAsync(JSON.stringify(config, null, 4) + "\n").done(() => {
-                if (this.state.header)
-                    this.setState({
-                        projectName: this.state.header.name
-                    })
-            });
+            return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+                .then(() => {
+                    if (this.state.header)
+                        this.setState({
+                            projectName: this.state.header.name
+                        })
+                });
         }
         catch (e) {
-            console.error('failed to read pxt.json')
+            pxt.reportException(e);
+            return Promise.resolve();
         }
     }
 
