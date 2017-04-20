@@ -232,6 +232,7 @@ namespace pxsim {
                 code: js,
                 partDefinitions: opts.partDefinitions,
                 mute: opts.mute,
+                highContrast: opts.highContrast
             }
 
             this.applyAspectRatio();
