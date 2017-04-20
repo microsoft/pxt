@@ -527,7 +527,6 @@ export class ProjectView
         pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
-        if (!filters) filters = h.filters;
         this.setState({
             showFiles: false,
             filters: filters
