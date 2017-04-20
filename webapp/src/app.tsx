@@ -1128,7 +1128,7 @@ export class ProjectView
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute)
+                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
@@ -1461,9 +1461,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     }
 
     toggleHighContrast() {
-        const hc = !!this.state.highContrast;
+        const hc = !this.state.highContrast;
         pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
-        this.setState({ highContrast: hc });
+        this.setState({ highContrast: hc }, () => this.restartSimulator());
     }
 
     completeTutorial() {
@@ -1588,7 +1588,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
                                         <div className="ui divider"></div>
-                                        {targetTheme.highContrast ? <sui.Item role="menuitem" icon="eye" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined }
+                                        {targetTheme.highContrast ? <sui.Item role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined }
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
                                         }
