@@ -328,24 +328,58 @@ namespace pxt.blocks {
         if (b.type == "variables_get")
             return find(lookup(e, escapeVarName(b.getFieldValue("VAR"), e)).type);
 
-        assert(!b.outputConnection || b.outputConnection.check_ && b.outputConnection.check_.length > 0);
-
-        if (!b.outputConnection)
+        if (!b.outputConnection) {
             return ground(pUnit.type);
+        }
+        else if (!b.outputConnection.check_ || b.outputConnection.check_.length === 0) {
+            return mkPoint(null);
+        }
 
-        return ground(b.outputConnection.check_[0]);
+        const check = b.outputConnection.check_[0];
+
+        if (check === "Array") {
+            let itemType = "number";
+            if (b.inputList && b.inputList.length) {
+                for (const input of b.inputList) {
+                    if (input.connection.targetBlock()) {
+                        let t = returnType(e, input.connection.targetBlock())
+                        if (t) {
+                            itemType = t.type;
+                            break;
+                        }
+                    }
+                }
+            }
+            return ground(itemType + "[]");
+        }
+        else if (check === "T") {
+            // TODO: Right now we only support array generics
+            const parentInput =  b.inputList.filter(i => i.name === "this");
+            if (parentInput.length && parentInput[0].connection.targetBlock()) {
+                const parentType = returnType(e, parentInput[0].connection.targetBlock()).type;
+                if (isArrayType(parentType)) {
+                    return ground(parentType.substr(0, parentType.length - 2));
+                }
+            }
+        }
+
+        return ground(check);
     }
 
     // Basic type unification routine; easy, because there's no structural types.
     function unify(t1: string, t2: string) {
-        if (t1 == null)
+        if (t1 == null || t1 === "Array" && isArrayType(t2))
             return t2;
-        else if (t2 == null)
+        else if (t2 == null || t2 === "Array" && isArrayType(t1))
             return t1;
         else if (t1 == t2)
             return t1;
         else
             throw new Error("cannot mix " + t1 + " with " + t2);
+    }
+
+    function isArrayType(type: string) {
+        return type.indexOf("[]") !== -1;
     }
 
     function mkPlaceholderBlock(e: Environment, type?: string): B.Block {
@@ -484,11 +518,10 @@ namespace pxt.blocks {
                             e.stdCallTable[b.type].args.forEach((p: StdArg) => {
                                 if (p.field && !b.getFieldValue(p.field)) {
                                     let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
-                                    // This will throw if someone modified blocks-custom.js and forgot to add
-                                    // [setCheck]s in the block definition. This is intentional and MUST be
-                                    // fixed.
-                                    let t = i.connection.check_[0];
-                                    unionParam(e, b, p.field, ground(t));
+                                    if (i.connection.check_) {
+                                        let t = i.connection.check_[0];
+                                        unionParam(e, b, p.field, ground(t));
+                                    }
                                 }
                             });
                         }
@@ -678,6 +711,10 @@ namespace pxt.blocks {
         if (t.type == null) {
             union(t, ground(pNumber.type));
             t = find(t);
+        }
+
+        if (t.type.indexOf("[]") !== -1) {
+            return mkText("[]");
         }
 
         switch (t.type) {
@@ -1007,8 +1044,10 @@ namespace pxt.blocks {
         let f = b.getFieldValue(p.field);
         if (f)
             return mkText(f);
-        else
+        else {
+            attachPlaceholderIf(e, b, p.field);
             return compileExpression(e, getInputTargetBlock(b, p.field), comments)
+        }
     }
 
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): JsNode {
@@ -1393,7 +1432,7 @@ namespace pxt.blocks {
                     // Not sure we need the type here - is is always number or boolean?
                     let defl = defaultValueForType(find(b.type))
                     let tp = ""
-                    if (defl.op == "null") {
+                    if (defl.op == "null" || defl.op == "[]") {
                         let tpname = find(b.type).type
                         let tpinfo = blockInfo.apis.byQName[tpname]
                         if (tpinfo && tpinfo.attributes.autoCreate)

@@ -25,13 +25,13 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
-            output += `${diagnostic.category == ts.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
+            output += `${diagnostic.category == pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
             let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
             if (f)
                 f.diagnostics.push(diagnostic)
         }
 
-        const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
+        const category = pxtc.DiagnosticCategory[diagnostic.category].toLowerCase();
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
@@ -41,7 +41,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 
     let f = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
-    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error).length
+    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error).length
 }
 
 let hang = new Promise<any>(() => { })

@@ -522,11 +522,11 @@ export class Editor extends srceditor.Editor {
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
-        let diags = tsfile.diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error);
+        let diags = tsfile.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
-        diags.filter(diag => diag.category == ts.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
+        diags.filter(diag => diag.category == pxtc.DiagnosticCategory.Error).forEach(diag => {
+            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine !== undefined ? diag.endLine - diag.line : 0 });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {

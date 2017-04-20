@@ -650,7 +650,7 @@ namespace pxt.blocks {
             case "boolean": block.setOutput(true, "Boolean"); break;
             case "void": break; // do nothing
             //TODO
-            default: block.setOutput(true, fn.retType);
+            default: block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
         }
 
         // hook up/down if return value is void
