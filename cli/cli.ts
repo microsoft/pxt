@@ -1573,7 +1573,7 @@ function buildTargetCoreAsync() {
             .then(res => {
                 cfg.bundledpkgs[path.basename(dirname)] = res
             })
-            .then(testForBuildTargetAsync)
+            .then(() => testForBuildTargetAsync(isPrj))
             .then((compileOpts) => {
                 // For the projects, we need to save the base HEX file to the offline HEX cache
                 if (isPrj && pxt.appTarget.compile.hasHex) {
@@ -2552,7 +2552,7 @@ function testAssemblers(): Promise<void> {
 }
 
 
-function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
+function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOptions> {
     let opts: pxtc.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
@@ -2560,18 +2560,27 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
             let target = mainPkg.getTargetOptions()
             if (target.hasHex)
                 target.isNative = true
+            if (!useNative)
+                target.isNative = false
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(o => {
             opts = o
             opts.testMode = true
             opts.ast = true
-            return pxtc.compile(opts)
+            if (useNative)
+                return pxtc.compile(opts)
+            else {
+                pxt.log("  skip native build of non-project")
+                return null
+            }
         })
         .then(res => {
-            reportDiagnostics(res.diagnostics);
-            if (!res.success) U.userError("Compiler test failed")
-            simulatorCoverage(res, opts)
+            if (res) {
+                reportDiagnostics(res.diagnostics);
+                if (!res.success) U.userError("Compiler test failed")
+                simulatorCoverage(res, opts)
+            }
         })
         .then(() => opts);
 }
