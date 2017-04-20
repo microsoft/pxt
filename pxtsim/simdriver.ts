@@ -35,6 +35,7 @@ namespace pxsim {
         aspectRatio?: number;
         partDefinitions?: pxsim.Map<PartDefinition>;
         mute?: boolean;
+        highContrast?: boolean;
     }
 
     export interface HwDebugger {

@@ -51,6 +51,8 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+
+        highContrast?: boolean;
     }
 
     export interface ProjectCreationOptions {

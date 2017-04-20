@@ -686,12 +686,12 @@ export class ProjectView
             core.showLoading(lf("loading project..."))
             importer.importAsync(this, data)
                 .done(
-                    () => core.hideLoading(),
-                    e => {
-                        pxt.reportException(e, { importer: importer.id });
-                        core.hideLoading();
-                        core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                    }
+                () => core.hideLoading(),
+                e => {
+                    pxt.reportException(e, { importer: importer.id });
+                    core.hideLoading();
+                    core.errorNotification(lf("Oops, something went wrong when importing your project"));
+                }
                 );
         }
         else {
@@ -1460,6 +1460,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             });
     }
 
+    toggleHighContrast() {
+        const hc = !!this.state.highContrast;
+        pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
+        this.setState({ highContrast: hc });
+    }
+
     completeTutorial() {
         pxt.tickEvent("tutorial.complete");
         this.tutorialComplete.show();
@@ -1582,6 +1588,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
                                         <div className="ui divider"></div>
+                                        {targetTheme.highContrast ? <sui.Item role="menuitem" icon="eye" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined }
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
                                         }
