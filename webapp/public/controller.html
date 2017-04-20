@@ -36,7 +36,7 @@
     let projects = [
 {
   "text": {
-    "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"dash_wheel_speed\" id=\"Z.~x[F0kmYKbiA{3yiK|\" disabled=\"true\" x=\"203\" y=\"113\">\n    <value name=\"left\">\n      <shadow type=\"math_number\" id=\"ST8}MLcWWE/DrA/gXR`r\">\n        <field name=\"NUM\">0</field>\n      </shadow>\n    </value>\n    <value name=\"right\">\n      <shadow type=\"math_number\" id=\"%%5=q4?dlI1*zD*lE=zH\">\n        <field name=\"NUM\">0</field>\n      </shadow>\n    </value>\n  </block>\n</xml>",
+    "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"device_forever\" id=\",{,HjW]u:lVGcDRS_Cu|\" x=\"-247\" y=\"113\"></block>\n</xml>",
     "main.ts": "\n",
     "README.md": " ",
     "pxt.json": "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
@@ -74,7 +74,7 @@
             msg.response = true;
         } else if (action == `renderblocks`) {
             msg.response = true;
-            msg.ts = `control.forever(() => { dash.setWheelSpeed(0 - 0, 0); dash.setWheelSpeed(0, 0); dash.setHeadPan(0); })`
+            msg.ts = `control.forever(() => { })`
         }
         if (msg.response)
             pendingMsgs[msg.id] = msg;
