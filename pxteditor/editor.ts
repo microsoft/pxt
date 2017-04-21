@@ -51,6 +51,8 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+
+        highContrast?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -102,11 +104,13 @@ namespace pxt.editor {
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void>;
+        overrideTypescriptFile(text: string): void;
 
         exportAsync(): Promise<string>;
 
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
+        createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importFileDialog(): void;
         importUrlDialog(): void;
         removeProject(): void;
@@ -153,14 +157,34 @@ namespace pxt.editor {
         isTextEditor(): boolean;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
 
+        // obsolete, may go away
+        convertTouchDevelopToTypeScriptAsync(td: string): Promise<string>;
+
         settings: EditorSettings;
 
         editor: IEditor;
+    }
+
+    export interface IHexFileImporter {
+        id: string;
+        canImport(data: pxt.cpp.HexFile): boolean;
+        importAsync(project: IProjectView, data: pxt.cpp.HexFile): Promise<void>;
     }
 
     export interface ISettingsProps {
         parent: IProjectView;
         visible?: boolean;
     }
+
+
+    export interface ExtensionOptions {
+
+    }
+
+    export interface ExtensionResult {
+        hexFileImporters?: IHexFileImporter[];
+    }
+
+    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
 }
 

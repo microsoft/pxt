@@ -1,5 +1,6 @@
 import * as core from "./core";
 import * as pkg from "./package";
+import * as compiler from "./compiler"
 
 import Cloud = pxt.Cloud;
 import U = pxt.Util;
@@ -10,10 +11,11 @@ export function td2tsAsync(td: string) {
     if (!iface) iface = pxt.worker.makeWebWorker(pxt.webConfig.tdworkerjs)
 
     return pkg.mainPkg.getCompileOptionsAsync()
-        .then(opts => {
+        .then((opts) => {
             opts.ast = true
-            let res = pxtc.compile(opts)
-            let apiinfo = pxtc.getApiInfo(res.ast, true)
+            return compiler.workerOpAsync("compileTd", {options: opts});
+        })
+        .then(apiinfo => {
             let arg = {
                 text: td,
                 useExtensions: true,

@@ -867,6 +867,10 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
+    let targetEditorJs = "";
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
+        targetEditorJs = "@commitCdnUrl@editor.js";
+
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
         "/sim/siminstructions.html": "@partsUrl@",
@@ -879,7 +883,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
-        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : ""
+        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
+        "@targetEditorJs@" : targetEditorJs
     }
 
     if (opts.localDir) {
@@ -914,7 +919,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
-            "@cachedHexFiles@": ""
+            "@cachedHexFiles@": "",
+            "@targetEditorJs@": ""
         }
     }
 
@@ -1205,17 +1211,23 @@ export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
     return simshimAsync()
-        .then(() => buildFolderAsync('sim', true))
+        .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(buildTargetCoreAsync)
         .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('server', true))
+        .then(() => buildFolderAsync('editor', true, 'editor'))
+        .then(() => buildFolderAsync('server', true, 'server'))
 }
 
-function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
+function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
     if (!fs.existsSync(p + "/tsconfig.json")) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
+    }
+
+    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
+        U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
     }
 
     if (!fs.existsSync("node_modules/typescript")) {

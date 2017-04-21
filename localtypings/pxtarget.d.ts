@@ -183,6 +183,8 @@ declare namespace pxt {
             dialogClick?: string;            
         },
         disableLiveTranslations?: boolean; // don't load translations from crowdin
+        extendEditor?: boolean; // whether a target specific editor.js is loaded
+        highContrast?: boolean; // simulator has a high contrast mode
     }
 
     interface DocMenuEntry {

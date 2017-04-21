@@ -168,11 +168,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             this.props.parent.newProject();
         }
-        const saveProject = () => {
-            pxt.tickEvent("projects.save");
-            this.hide();
-            this.props.parent.saveAndCompile();
-        }
         const renameProject = () => {
             pxt.tickEvent("projects.rename");
             this.hide();
