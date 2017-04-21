@@ -185,7 +185,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
       ${options.htmlBody || ""}
       ${options.input ? `<div class="ui fluid action input">
          <input class="userinput" spellcheck="false" placeholder="${Util.htmlEscape(options.input)}" type="text">
-         </div>` : undefined}
+         </div>` : ""}
       ${options.copyable ? `<div class="ui fluid action input">
          <input class="linkinput" readonly spellcheck="false" type="text" value="${Util.htmlEscape(options.copyable)}">
          <button class="ui teal right labeled icon button copybtn" data-content="${lf("Copied!")}">
