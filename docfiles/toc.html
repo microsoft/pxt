@@ -6,13 +6,11 @@
             Documentation
         </a>
         <div class="item">
-            <form id="tocsearch2" method="get" target="_blank" action="https://www.bing.com/search" onsubmit="searchSubmit(this)">
-                <div class="ui small fluid action input">
+            <form id="tocsearch2" method="get" target="_blank" action="https://www.bing.com/search">
+                <div class="ui fluid icon input">
                     <input type="hidden" name="q1" value="site:@homeurl@" />
                     <input type="search" name="q" placeholder="Search...">
-                    <button type="submit" class="ui icon button">
-                        <i class="search icon"></i>
-                    </button>
+                    <i onclick="document.getElementById('tocsearch2').submit();" class="search link icon"></i>
                 </div>
             </form>
         </div>

@@ -46,25 +46,23 @@ html, body {
     right: 0;
     overflow: visible;
 }
-.rtl #maineditor {
-    left:0;
-    right:@simulatorWidth;
-}
 
 /* Editor tools */
+@editorToolsHeight: 10rem;
+@editorToolsCollapsedHeight: 4.7rem;
 #editortools {
     position: fixed;
     top: auto;
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 3;
-    height: 5rem;
+    z-index: 12;
+    height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
 }
 
 #blocksArea, #monacoEditor, #pxtJsonEditor, #filelist {
-    bottom: 5rem;
+    bottom: @editorToolsCollapsedHeight;
 }
 
 .hideEditorToolbar #blocksArea,
@@ -82,10 +80,6 @@ html, body {
     min-width: @simulatorWidth;
     max-width: @simulatorWidth;
     left: 0;
-}
-.rtl #filelist {
-    left: auto;
-    right: 0;
 }
 
 #filelist {
@@ -140,51 +134,11 @@ html, body {
     position: absolute;
     right: 2rem;
 }
-.rtl #getting-started-btn {
-    right: auto;
-    left: 2rem;
-}
 #getting-started-btn:not(.sideDocs) {
     display: block;
 }
 .ui.button.getting-started-btn .ui.text {
     font-weight: 100 !important;
-}
-
-/* Side Docs layout */
-#sidedocs {
-  display:none;
-  overflow-y: auto;
-  right: 0;
-  border:none;
-  top: 0;
-  padding-top: @mainMenuHeight;
-  height: 100%;
-}
-.rtl #sidedocs {
-    right:auto;
-    left:0;
-}
-#sidedocspopout {
-  position: absolute;
-  top:@sidedocsButtonsTop;
-  right:@sidedocsButtonsRight;
-  display:none;
-}
-.rtl #sidedocspopout {
-    right:auto;
-    left:@sidedocsButtonsRight;
-}
-
-#sidedocsexpand {
-  position: absolute;
-  top:@sidedocsButtonsTop;
-  right:1.25rem;
-  display:none;
-}
-.rtl #sidedocsexpand {
-    right:auto;
-    left:1.25rem;
 }
 
 /* Cookie Message */
@@ -200,12 +154,6 @@ html, body {
 #cookiemsg > a {
    color:white;
    text-decoration: underline;
-}
-
-.rtl #cookiemsg {
-    right:auto;
-    left:2rem;
-    text-align: right;
 }
 
 .collapsedEditorTools #cookiemsg {
@@ -274,9 +222,14 @@ div.simframe > iframe {
     z-index: 5;
     font-size:0.8rem;
 }
-.rtl #helpcard {
-    left:7rem;
-    right:auto;
+
+/* Project code cards */
+.ui.cardimage {
+    background-color: @secondaryColor;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 10rem;
 }
 
 /* Logo */
@@ -317,10 +270,6 @@ div.simframe > iframe {
 }
 .sandboxfooter .item{
     font-size: 0.8rem !important;
-}
-.rtl .sandboxfooter{
-    right: auto;
-    left:1rem;
 }
 
 /* code card */
@@ -371,21 +320,16 @@ div.simframe > iframe {
 
 /* Button Colors */
 .ui.button.editortools-btn {
-    &:extend(.grey all);
+    &:extend(.ui.grey.button all);
 }
 .ui.button.getting-started-btn {
-    &:extend(.green all);
+    &:extend(.ui.green.button all);
 }
 
 /* Icon and text */
 #content .ui.button > .icon-and-text {
     margin-right: 4px;
     margin-left: -2px;
-}
-
-.rtl #content .ui.button > .icon-and-text {
-    margin-left: 4px;
-    margin-right: -2px;
 }
 
 /*******************************
@@ -453,13 +397,18 @@ span.docs.inlineblock {
              Blockly
 *******************************/
 
-/* Lower Z index for BLocklyWidgetDiv and grid picker tooltips */
+/* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
 .blocklyWidgetDiv {
     z-index: 9;
 }
 
 .blocklyGridPickerTooltip {
     z-index: 10;
+}
+
+/* Set Z index of the Blockly scrollbars to be beneath the BlocklyWidgetDiv */
+.blocklyScrollbarHorizontal, .blocklyScrollbarVertical {
+    z-index: 8;
 }
 
 .blocklyTooltipDiv {
@@ -676,7 +625,7 @@ span.blocklyTreeIcon {
 
 /* Monaco Editor Main tokens */
 .monaco-editor .highlight-statement {
-    background-color: #FFB900;
+    background-color: #FF8B27;
 }
 
 /* Monaco Toolbox */
@@ -729,7 +678,7 @@ Avatar
     position: relative;
 }
 
-#root .avatar .message {
+#docs .avatar .message {
     margin-left: 4em;
     margin-bottom: 1em;
 }
@@ -855,25 +804,6 @@ Avatar
 
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
-    /* Layout */
-    .sideDocs #maineditor, .sideDocs #editortools {
-        right:@sideBarWidth;
-    }
-    .rtl .sideDocs #maineditor {
-        left:@sideBarWidth;
-        right:@simulatorWidth;
-    }
-    .rtl .sideDocs #editortools {
-        left:@sideBarWidth;
-        right:0;
-    }
-    .sideDocs #sidedocs {
-        display:block;
-        width:@sideBarWidth;
-    }
-    #sidedocspopout, #sidedocsexpand {
-        display:block;
-    }
     /* Blockly */
     div.blocklyTreeRow {
         min-width: 200px;
@@ -884,7 +814,7 @@ Avatar
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     /* Blockly row */
     div.blocklyTreeRow {
-        min-width: 200px;
+        min-width: 180px;
     }
 }
 
@@ -928,10 +858,6 @@ Avatar
     }
     .collapsedEditorTools #maineditor {
         left: 0;
-    }
-    .rtl .collapsedEditorTools #maineditor {
-        left: inherit;
-        right: 0 !important;
     }
     #cookiemsg {
         bottom: 7.5rem;
@@ -1021,10 +947,6 @@ Avatar
     #maineditor {
         left:@simulatorWidthSmall;
     }
-    .rtl #maineditor {
-        right:@simulatorWidthSmall;
-        left:0;
-    }
     /* Logo */
     #logo .name {
         display: none !important;
@@ -1058,7 +980,7 @@ Avatar
         position:absolute;
         padding: 0;
         margin: 1em;
-        z-index:5;
+        z-index: 15;
         bottom:0rem !important;
         left:4rem !important;
         top:auto;
@@ -1067,15 +989,11 @@ Avatar
         max-width: inherit;
         background: transparent !important;
     }
-    .rtl #filelist {
-        left:auto;
-        right:0;
-    }
-    #maineditor, .rtl #maineditor {
+    #maineditor {
         left: 0;
         right:0;
     }
-    #maineditor:not(.sandbox), .rtl #maineditor:not(.sandbox) {
+    #maineditor:not(.sandbox) {
         bottom: 0rem;
     }
     #editortools {
@@ -1088,13 +1006,13 @@ Avatar
         bottom: 11rem;
     }
     .hideEditorFloats #editortools {
-        height: 5rem;
+        height: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #tutorialcard.bottom {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
     /* Simulator */
     div.simframe {
@@ -1191,10 +1109,10 @@ Avatar
         display: none !important;
     }
     .hideEditorFloats #editortools {
-        height: 5rem;
+        height: @editorToolsCollapsedHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: 5rem;
+        bottom: @editorToolsCollapsedHeight;
     }
 }
 
@@ -1266,10 +1184,6 @@ Avatar
     }
     .sandboxfooter .item{
         font-size: 0.7rem !important;
-    }
-    .rtl .sandbox .sandboxfooter {
-        right: 0.5em;
-        left: auto;
     }
     .simView .sandboxfooter {
         z-index:100;

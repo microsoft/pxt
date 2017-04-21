@@ -1,7 +1,7 @@
 /// <reference path='../typings/globals/marked/index.d.ts' />
 /// <reference path='../typings/globals/highlightjs/index.d.ts' />
 /// <reference path='../localtypings/pxtarget.d.ts' />
-/// <reference path="emitter/util.ts"/>
+/// <reference path="util.ts"/>
 
 namespace pxt.docs {
     declare var require: any;
@@ -228,6 +228,9 @@ namespace pxt.docs {
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
 
+        if (theme.appStoreID)
+            params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
+
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
@@ -299,7 +302,8 @@ namespace pxt.docs {
             "breadcrumb",
             "targetlogo",
             "github",
-            "JSON"
+            "JSON",
+            "appstoremeta"
         ])
     }
 
@@ -311,6 +315,7 @@ namespace pxt.docs {
         filepath?: string;
         locale?: Map<string>;
         ghEditURLs?: string[];
+        repo?: { name: string; fullName: string; tag?: string };
     }
 
     export function renderMarkdown(opts: RenderOptions): string {
@@ -351,6 +356,15 @@ namespace pxt.docs {
                 return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
             })
 
+        template = template
+            .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
+            (full, cond, sym, inner) => {
+                if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
+                    return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
+                else
+                    return `<!-- ${cond} ${sym} endif -->`
+            })
+
         if (opts.locale)
             template = translate(template, opts.locale).text
 
@@ -373,6 +387,11 @@ namespace pxt.docs {
                 }
                 out += this.options.xhtml ? '/>' : '>';
                 return out;
+            }
+            renderer.listitem = function (text: string): string {
+                const m = /^\s*\[( |x)\]/i.exec(text);
+                if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
+                return '<li>' + text + '</li>\n';
             }
             renderer.heading = function (text: string, level: number, raw: string) {
                 let m = /(.*)#([\w\-]+)\s*$/.exec(text)
@@ -408,6 +427,14 @@ namespace pxt.docs {
         };
 
         let markdown = opts.markdown
+
+        // append repo info if any
+        if (opts.repo)
+            markdown += `
+\`\`\`package
+${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.tag || "master"}
+\`\`\`
+`;
 
         //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
         markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
@@ -486,7 +513,8 @@ namespace pxt.docs {
         }
 
         // try getting a better custom image for twitter
-        let imgM = /<img class="ui image" src="(https:\/\/(.+?)\.(png|jpeg|jpg|gif))"[^>]*\/?>/i.exec(html);
+        const imgM = /<div class="ui embed mdvid"[^<>]+?data-placeholder="([^"]+)"[^>]*\/?>/i.exec(html)
+            || /<img class="ui image" src="([^"]+)"[^>]*\/?>/i.exec(html);
         if (imgM)
             pubinfo["cardLogo"] = html2Quote(imgM[1]);
 

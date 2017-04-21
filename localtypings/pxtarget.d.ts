@@ -13,10 +13,12 @@ declare namespace pxt {
         approvedRepos?: string[];
         bannedOrgs?: string[];
         bannedRepos?: string[];
+        allowUnapproved?: boolean;
     }
 
     interface AppTarget {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
+        platformid?: string; // eg "codal"; used when search for gh packages ("for PXT/codal"); defaults to id
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
         name: string;
         description?: string;
@@ -88,6 +90,7 @@ declare namespace pxt {
         autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
+        enableTrace?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
@@ -96,6 +99,7 @@ declare namespace pxt {
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
+        trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
     }
 
     interface TargetCompileService {
@@ -108,13 +112,6 @@ declare namespace pxt {
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
-    }
-
-    interface SpecializedResource {
-        name: string,
-        browser?: string,
-        os?: string,
-        path: string
     }
 
     interface AppTheme {
@@ -134,6 +131,7 @@ declare namespace pxt {
         organizationLogo?: string;
         organizationWideLogo?: string;
         homeUrl?: string;
+        shareUrl?: string; 
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
@@ -155,8 +153,6 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
-        exportVsCode?: boolean;
-        browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -166,17 +162,29 @@ declare namespace pxt {
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
-        projectGallery?: string;
-        exampleGallery?: string;
+        galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
-        crowdinBranch?: string; // optional branch specification
+        crowdinBranch?: string; // optional branch specification for pxt
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
+        hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
+        hideDocsSimulator?: boolean; // do not show simulator button in docs
+        hideDocsEdit?: boolean; // do not show edit button in docs
         hideCookieNotice?: boolean; // always hide cookie notice for targets that embed the editor in apps/chrome
         hideMenuBar?: boolean; // Hides the main menu bar
         hideEditorToolbar?: boolean; // Hides the bottom editor toolbar
+        appStoreID?: string; // Apple iTune Store ID if any
+        mobileSafariDownloadProtocol?: string; // custom protocol to be used on iOS
+        sounds?: {
+            tutorialStep?: string;
+            tutorialNext?: string;
+            dialogClick?: string;            
+        },
+        disableLiveTranslations?: boolean; // don't load translations from crowdin
+        extendEditor?: boolean; // whether a target specific editor.js is loaded
+        highContrast?: boolean; // simulator has a high contrast mode
     }
 
     interface DocMenuEntry {
@@ -237,6 +245,7 @@ declare namespace ts.pxtc {
         forceEmit?: boolean;
         ast?: boolean;
         breakpoints?: boolean;
+        trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
 
@@ -245,7 +254,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type : "api" | "blockId" | "missingPackage" | "package";
+        type: "api" | "blockId" | "missingPackage" | "package";
         map?: pxt.Map<string>;
     }
 

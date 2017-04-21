@@ -50,6 +50,9 @@ namespace pxt.editor {
         fullscreen?: boolean;
         mute?: boolean;
         embedSimView?: boolean;
+        tracing?: boolean;
+
+        highContrast?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -95,17 +98,19 @@ namespace pxt.editor {
 
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;
-        saveBlocksToTypeScript(): string;
+        saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void>;
+        overrideTypescriptFile(text: string): void;
 
         exportAsync(): Promise<string>;
 
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
+        createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importFileDialog(): void;
         importUrlDialog(): void;
         removeProject(): void;
@@ -118,12 +123,14 @@ namespace pxt.editor {
 
         setFile(fn: IFile): void;
         setSideFile(fn: IFile): void;
-        setSideDoc(path: string): void;
+        setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
 
+        openTutorials(): void;
         setTutorialStep(step: number): void;
-        exitTutorial(): void;
+        exitTutorial(keep?: boolean): void;
+        completeTutorial(): void;
         showTutorialHint(): void;
 
         anonymousPublishAsync(): Promise<string>;
@@ -137,6 +144,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
+        toggleTrace(): void;
 
         startTutorial(tutorialId: string): void;
 
@@ -147,15 +155,36 @@ namespace pxt.editor {
 
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
+        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<string>;
+
+        // obsolete, may go away
+        convertTouchDevelopToTypeScriptAsync(td: string): Promise<string>;
 
         settings: EditorSettings;
 
         editor: IEditor;
     }
 
+    export interface IHexFileImporter {
+        id: string;
+        canImport(data: pxt.cpp.HexFile): boolean;
+        importAsync(project: IProjectView, data: pxt.cpp.HexFile): Promise<void>;
+    }
+
     export interface ISettingsProps {
         parent: IProjectView;
         visible?: boolean;
     }
+
+
+    export interface ExtensionOptions {
+
+    }
+
+    export interface ExtensionResult {
+        hexFileImporters?: IHexFileImporter[];
+    }
+
+    export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;
 }
 

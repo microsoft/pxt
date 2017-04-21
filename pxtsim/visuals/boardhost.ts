@@ -1,7 +1,8 @@
 namespace pxsim.visuals {
     export interface BoardViewOptions {
         visual: string |  BoardImageDefinition,
-        wireframe?: boolean
+        wireframe?: boolean,
+        highContrast?: boolean
     }
 
     export interface BoardHostOpts {
@@ -15,6 +16,7 @@ namespace pxsim.visuals {
         maxWidth?: string,
         maxHeight?: string,
         wireframe?: boolean,
+        highContrast?: boolean
     }
 
     export var mkBoardView = (opts: BoardViewOptions): BoardView => {

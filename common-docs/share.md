@@ -42,17 +42,11 @@ If you self host a Wordpress blog you can install the [iframe-plugin][] and then
 * Create a new post
 * Click the 'HTML' button next to 'Compose' and paste in the HTML
 
-![Blogger](/static/embed/blogger.png)
-
 ### Squarespace
 
-[Squarespace][] allows you to embed HTML code inside a blog post or page. In the editor, click to add a new block:
+[Squarespace][] allows you to embed HTML code inside a blog post or page. In the editor, click to add a new block.
 
-![Squarespace block insertion](/static/embed/squarespace-insert.png)
-
-Scroll to **More** and select **Code**. Paste the embed HTML and click **Apply**:
-
-![Squarespace code insertion](/static/embed/squarespace-code.png)
+Scroll to **More** and select **Code**. Paste the embed HTML and click **Apply**.
 
 ### Google Sites
 
