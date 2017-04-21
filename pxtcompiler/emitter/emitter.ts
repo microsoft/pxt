@@ -631,8 +631,6 @@ namespace ts.pxtc {
                             // let x: Foo = { a:42 }
                             // where x has some optional properties, in addition to "a"
                         }
-                    } else {
-                        U.assert(false,"subsetCheck: unreachable (1)")
                     }
                 })
                 return insertSubtype(key,[ret,msg])
@@ -642,8 +640,6 @@ namespace ts.pxtc {
                 let superElemType = arrayElementType(superType)
                 let subElemType = arrayElementType(subType)
                 return checkSubtype(subElemType,superElemType)
-            } else {
-                U.assert(false,"subsetCheck: unreachable (2)")
             }
         } else if (lookupTypeParameter(superType)) {
             // TODO
