@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# bir kabuğu'nu açın ve pxt ayıklamak kodu @ https:\/\/codethemicrobit.com\/@id@ cd @title bu komutları çalıştırın.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). Tecrübeli bir profesyonel entegre geliştirme environemnt (sonuna kadar güçlü auto-ikmal ve auto-sabitleme, tarayıcıda metin düzenleyicisiyle aracılığıyla blok tabanlı basit editörü yerleşik bir ilerleme",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). Tecrübeli bir profesyonel entegre geliştirme environment (sonuna kadar güçlü auto-ikmal ve auto-sabitleme, tarayıcıda metin düzenleyicisiyle aracılığıyla blok tabanlı basit editörü yerleşik bir ilerleme",
   ", or":", veya",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/thumbnail\/1024\/Vimeo\/@args @",

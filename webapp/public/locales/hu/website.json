@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# Nyiss egy parancssort, és fuss ezeket a parancsokat, pxt kivonat, https:\/\/codethemicrobit.com\/@id@ cd @title @ kód.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). A tapasztalat van egy beépített progresszió egyszerű blokk alapú szerkesztő segítségével a böngésző szöveg szerkesztő-val erős kocsi-befejezés és auto-rögzítő, egészen a szakmai, integrált fejlődés environemnt)",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). A tapasztalat van egy beépített progresszió egyszerű blokk alapú szerkesztő segítségével a böngésző szöveg szerkesztő-val erős kocsi-befejezés és auto-rögzítő, egészen a szakmai, integrált fejlődés environment)",
   ", or":", vagy",
   "\/@id@":"a szó \/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"a szó \/thumbnail\/1024\/Vimeo\/@ARGS @",

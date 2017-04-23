@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# Отвори шкољка и покренули ове команде пxт издвојите хттпс:\/\/цодетхемицробит.цом\/@ид@ цд@титле @ кода.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). Искуство има уграђену напредовање од једноставне засноване на блок уредник, кроз уређивач текста у прегледачу са робусно аутоматско довршавање и ауто-поправљам, све до (за професионални развој интегрисаног енвиронемнт)",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). Искуство има уграђену напредовање од једноставне засноване на блок уредник, кроз уређивач текста у прегледачу са робусно аутоматско довршавање и ауто-поправљам, све до (за професионални развој интегрисаног енвиронемнт)",
   ", or":", или",
   "\/@id@":"\/@ид @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/Тхумбнаил\/1024\/Вимео\/@АРГС @",

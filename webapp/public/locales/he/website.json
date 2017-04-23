@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# פתח פגז, להפעיל פקודות אלה pxt לחלץ cd https:\/\/codethemicrobit.com\/@id@ @title @ קוד.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). החוויה יש התקדמות מובנה מעורך פשוטה מבוסס בלוק, באמצעות עורך טקסט בדפדפן השלמה אוטומטית החזקה ותיקון אוטומטי-, כל הדרך עד (ולשלילת פיתוח מקצועי משולב",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). החוויה יש התקדמות מובנה מעורך פשוטה מבוסס בלוק, באמצעות עורך טקסט בדפדפן השלמה אוטומטית החזקה ותיקון אוטומטי-, כל הדרך עד (ולשלילת פיתוח מקצועי משולב",
   ", or":", או",
   "\/@id@":"\/@id @",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"\/thumbnail\/1024\/vimeo\/@ARGS @",

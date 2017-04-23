@@ -1,6 +1,6 @@
 {
   "# open a shell and run these commands pxt extract https:\/\/codethemicrobit.com\/@id@ cd @title@ code .":"# 쉘 열고 pxt 추출 코드 @ https:\/\/codethemicrobit.com\/@id@ cd @title 이러한 명령을 실행 합니다.",
-  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environemnt (":"). 경험을 전문 통합된 개발 environemnt (강력한 자동 완성 및 자동 수정, 브라우저에서 텍스트 편집기를 통해 간단한 블록 기반 편집기에서 기본 진행은",
+  "). The experience has a built-in progression from simple block-based editor, through in-browser text editor with robust auto-completion and auto-fixing, all the way to a professional integrated development environment (":"). 경험을 전문 통합된 개발 environment (강력한 자동 완성 및 자동 수정, 브라우저에서 텍스트 편집기를 통해 간단한 블록 기반 편집기에서 기본 진행은",
   ", or":"또는",
   "\/@id@":"@ \/@id",
   "\/thumbnail\/1024\/vimeo\/@ARGS@":"@ \/thumbnail\/1024\/vimeo\/@ARGS",
