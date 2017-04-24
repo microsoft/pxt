@@ -1811,8 +1811,11 @@ ${lbl}: .short 0xffff
             let isMethod = false
             if (decl)
                 switch (decl.kind) {
+                    // note that we treat properties via an indirect call
+                    // so we say they are "methods"
                     case SK.PropertySignature:
                     case SK.PropertyAssignment:
+                    // these are the real methods
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
                     case SK.GetAccessor:
@@ -1885,6 +1888,9 @@ ${lbl}: .short 0xffff
                 addDefaultParametersAndTypeCheck(sig, args, attrs);
             })
 
+            // first we handle a set of direct cases, note that
+            // we are not recursing on funcExpr here, but looking
+            // at the associated decl
             if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
@@ -1897,7 +1903,7 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 }
             }
-
+            // special case call to super
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
                 assert(!bin.finalPass || !!baseCtor)
@@ -1905,7 +1911,7 @@ ${lbl}: .short 0xffff
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
             }
-
+            // more special cases (need to be very careful here)
             if (isMethod) {
                 let isSuper = false
                 if (isStatic(decl)) {
@@ -1957,26 +1963,36 @@ ${lbl}: .short 0xffff
                     })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
-                } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature
-                            || decl.kind == SK.PropertyAssignment) {
+                } else if (decl.kind == SK.MethodSignature) {
                     let name = getName(decl)
-                    let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
-                    if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
-                        let pid = res.data as ir.ProcId
-                        pid.mapIdx = pid.ifaceIndex
-                        let refSuff = ""
-                        if (args.length == 2) {
-                            if (isRefCountedExpr(args[1]))
-                                refSuff = "Ref"
-                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
-                            pid.mapMethod = "pxtrt::mapSet" + refSuff
-                        } else {
-                            if (isRefType(typeOf(node)))
-                                refSuff = "Ref"
-                            pid.mapMethod = "pxtrt::mapGet" + refSuff
+                    return mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                    // TODO: need to make the above check more precise, we are getting into this case
+                    // TODO: when we shouldn't be, such as x.foo(), where foo is a property, thus we
+                    // TODO: are stripping the ()s
+                    // HACK: this is just to see what happens
+                    if (node == funcExpr) {
+                        let name = getName(decl)
+                        let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                        if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                            let pid = res.data as ir.ProcId
+                            pid.mapIdx = pid.ifaceIndex
+                            let refSuff = ""
+                            if (args.length == 2) {
+                                if (isRefCountedExpr(args[1]))
+                                    refSuff = "Ref"
+                                pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                                pid.mapMethod = "pxtrt::mapSet" + refSuff
+                            } else {
+                                if (isRefType(typeOf(node)))
+                                    refSuff = "Ref"
+                                // why don't we set pid.ifaceIndex here?
+                                // pid.ifaceIndex = getIfaceMemberId("get/" + name)
+                                pid.mapMethod = "pxtrt::mapGet" + refSuff
+                            }
                         }
+                        return res
                     }
-                    return res
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
@@ -1993,13 +2009,15 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda
-
+            // michal: otherwise we assume a lambda 
+            // tball: this is not quite correct, we could be here because of 
+            // tball: something foo()(2,3)
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
 
+            // here's where we will recurse to generate toe evaluate funcExpr
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
@@ -2210,6 +2228,8 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
+                    // lit = ir.shared(ir.rtcall("pxt::mkAction",
+                    //                [ir.numlit(0), ir.numlit(0), emitFunLitCore(node, true)]))
                     lit = emitFunLitCore(node)
                 }
             }
