@@ -1475,13 +1475,15 @@ namespace AnonymousTypes {
 
     export function test() {
         msg("AnonymousTypes")
-        let x = { a: 2, b: "" }
+        let x = { a: 2, b: "bar" }
         let bar = new Foo(42)
         let baz: {a: number} = bar
-        control.assert(foo(x) == 3)
+        control.assert(x.a == 2);
+        control.assert(x.b == "bar");
+        control.assert(foo(x) == 3);
         control.assert(foo(bar) == 43);
-        control.assert(bar.bar() == 43)
-        control.assert(foo(baz) == 43)
+        control.assert(bar.bar() == 43);
+        control.assert(foo(baz) == 43);
         // HUH bar(40) - new (expects any)
     }
 }

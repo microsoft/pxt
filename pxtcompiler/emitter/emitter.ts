@@ -1550,7 +1550,9 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
-            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
+            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) 
+                      || decl.kind == SK.PropertySignature
+                      || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression,false)
                 if (!decl)
                     return ir.numlit(0)
@@ -1581,7 +1583,7 @@ ${lbl}: .short 0xffff
                 if (/^[+-]?\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
                 return ir.rtcall(ev, [])
-            } else if (decl.kind == SK.PropertySignature) {
+            } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
                 /*
                 if (attrs.shim) {
@@ -1810,6 +1812,7 @@ ${lbl}: .short 0xffff
             if (decl)
                 switch (decl.kind) {
                     case SK.PropertySignature:
+                    case SK.PropertyAssignment:
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
                     case SK.GetAccessor:
@@ -1954,10 +1957,11 @@ ${lbl}: .short 0xffff
                     })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
-                } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
+                } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature
+                            || decl.kind == SK.PropertyAssignment) {
                     let name = getName(decl)
                     let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
-                    if (decl.kind == SK.PropertySignature) {
+                    if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                         let pid = res.data as ir.ProcId
                         pid.mapIdx = pid.ifaceIndex
                         let refSuff = ""
