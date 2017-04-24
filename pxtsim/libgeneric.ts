@@ -98,32 +98,38 @@ namespace pxsim {
         }
 
         export function length(c: RefCollection) {
+            pxtrt.nullCheck(c)
             return c.getLength();
         }
 
         export function setLength(c: RefCollection, x: number) {
+            pxtrt.nullCheck(c)
             c.setLength(x);
         }
 
 
         export function push(c: RefCollection, x: any) {
+            pxtrt.nullCheck(c)
             incr(x);
             c.push(x);
         }
 
         export function pop(c: RefCollection, x: any) {
+            pxtrt.nullCheck(c)
             let ret = c.pop();
             decr(ret);
             return ret;
         }
 
         export function getAt(c: RefCollection, x: number) {
+            pxtrt.nullCheck(c)
             let tmp = c.getAt(x);
             incr(tmp);
             return tmp;
         }
 
         export function removeAt(c: RefCollection, x: number) {
+            pxtrt.nullCheck(c)
             if (!c.isValidIndex(x))
                 return;
 
@@ -132,23 +138,28 @@ namespace pxsim {
         }
 
         export function insertAt(c: RefCollection, x: number, y: number) {
+            pxtrt.nullCheck(c)
             incr(y);
             c.insertAt(x, y);
         }
 
         export function setAt(c: RefCollection, x: number, y: any) {
-            if (c.isValidIndex(x))
+            pxtrt.nullCheck(c)
+            if (c.isValidIndex(x)) {
                 //if there is an existing element handle refcount
                 decr(c.getAt(x));
+            }
             incr(y);
             c.setAt(x, y);
         }
 
         export function indexOf(c: RefCollection, x: any, start: number) {
+            pxtrt.nullCheck(c)
             return c.indexOf(x, start)
         }
 
         export function removeElement(c: RefCollection, x: any) {
+            pxtrt.nullCheck(c)
             let idx = indexOf(c, x, 0);
             if (idx >= 0) {
                 removeAt(c, idx);
@@ -230,6 +241,7 @@ namespace pxsim {
         }
 
         export function substring(s: string, i: number, j: number) {
+            pxtrt.nullCheck(s)
             return initString(s.slice(i, i + j));
         }
 
@@ -244,6 +256,7 @@ namespace pxsim {
         }
 
         export function length(s: string) {
+            pxtrt.nullCheck(s)
             return s.length
         }
 
@@ -255,13 +268,18 @@ namespace pxsim {
             return initString(s.substr(start, length));
         }
 
-        function inRange(s: string, i: number) { return 0 <= i && i < s.length }
+        function inRange(s: string, i: number) {
+            pxtrt.nullCheck(s)
+            return 0 <= i && i < s.length
+        }
 
         export function charAt(s: string, i: number) {
+            pxtrt.nullCheck(s)
             return inRange(s, i) ? initString(s.charAt(i)) : null;
         }
 
         export function charCodeAt(s: string, i: number) {
+            pxtrt.nullCheck(s)
             return inRange(s, i) ? s.charCodeAt(i) : 0;
         }
     }

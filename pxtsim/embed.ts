@@ -16,6 +16,7 @@ namespace pxsim {
         fnArgs?: any;
         code: string;
         mute?: boolean;
+        highContrast?: boolean;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {

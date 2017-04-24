@@ -65,6 +65,7 @@ declare namespace pxt {
         name?: string;
         shortName?: string;
         title?: string;
+        label?: string;
 
         color?: string; // one of semantic ui colors
         description?: string;

@@ -51,6 +51,13 @@ namespace pxt.docs.codeCard {
 
         let img = div(r, "ui image" + (card.responsive ? " tall landscape only" : ""));
 
+        if (card.label) {
+            let lbl = document.createElement("label");
+            lbl.className = "ui orange right ribbon label";
+            lbl.innerText = card.label;
+            img.appendChild(lbl);
+        }
+
         if (card.blocksXml) {
             let svg = pxt.blocks.render(card.blocksXml);
             if (!svg) {

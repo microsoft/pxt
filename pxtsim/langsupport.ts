@@ -374,7 +374,7 @@ namespace pxsim {
 
         export function nullCheck(v: any) {
             if (!v)
-                U.userError("Using null value.")
+                U.userError("Dereferencing null value.")
         }
 
         export function panic(code: number) {
