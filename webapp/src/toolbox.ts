@@ -182,7 +182,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </block>
             </category>
         </category>
-        <category colour="#D83B01" name="Lists" nameid="lists" category="45" iconclass="blocklyTreeIconlists" advanced="true">
+        <category colour="#66672C" name="Lists" nameid="lists" category="45" iconclass="blocklyTreeIconlists" expandedclass="blocklyTreeIconlists" advanced="true">
             <block type="lists_create_with">
                 <mutation items="1"></mutation>
                 <value name="ADD0">
@@ -191,9 +191,22 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
+            <block type="lists_create_with">
+                <mutation items="2"></mutation>
+                <value name="ADD0">
+                    <shadow type="text">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+                <value name="ADD1">
+                    <shadow type="text">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+            </block>
             <block type="lists_length"></block>
         </category>
-        <category colour="#996600" name="Text" nameid="text" category="46" iconclass="blocklyTreeIcontext" advanced="true">
+        <category colour="#996600" name="Text" nameid="text" category="46" iconclass="blocklyTreeIcontext" expandedclass="blocklyTreeIcontext" advanced="true">
             <block type="text"></block>
             <block type="text_length">
                 <value name="VALUE">

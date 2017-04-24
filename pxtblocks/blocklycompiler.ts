@@ -341,7 +341,7 @@ namespace pxt.blocks {
             let itemType = "number";
             if (b.inputList && b.inputList.length) {
                 for (const input of b.inputList) {
-                    if (input.connection.targetBlock()) {
+                    if (input.connection && input.connection.targetBlock()) {
                         let t = returnType(e, input.connection.targetBlock())
                         if (t) {
                             itemType = t.type;
@@ -355,7 +355,7 @@ namespace pxt.blocks {
         else if (check === "T") {
             // TODO: Right now we only support array generics
             const parentInput =  b.inputList.filter(i => i.name === "this");
-            if (parentInput.length && parentInput[0].connection.targetBlock()) {
+            if (parentInput.length && parentInput[0].connection && parentInput[0].connection.targetBlock()) {
                 const parentType = returnType(e, parentInput[0].connection.targetBlock()).type;
                 if (isArrayType(parentType)) {
                     return ground(parentType.substr(0, parentType.length - 2));
@@ -518,9 +518,17 @@ namespace pxt.blocks {
                             e.stdCallTable[b.type].args.forEach((p: StdArg) => {
                                 if (p.field && !b.getFieldValue(p.field)) {
                                     let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
-                                    if (i.connection.check_) {
-                                        let t = i.connection.check_[0];
-                                        unionParam(e, b, p.field, ground(t));
+                                    if (i.connection && i.connection.check_) {
+                                        for (let j = 0; j < i.connection.check_.length; j++) {
+                                            try {
+                                                let t = i.connection.check_[j];
+                                                unionParam(e, b, p.field, ground(t));
+                                                break;
+                                            }
+                                            catch (e) {
+                                                // Ignore type checking errors in the blocks...
+                                            }
+                                        }
                                     }
                                 }
                             });
@@ -713,7 +721,7 @@ namespace pxt.blocks {
             t = find(t);
         }
 
-        if (t.type.indexOf("[]") !== -1) {
+        if (isArrayType(t.type)) {
             return mkText("[]");
         }
 

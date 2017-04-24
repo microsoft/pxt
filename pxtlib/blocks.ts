@@ -170,6 +170,18 @@ namespace pxt.blocks {
                 url: '/blocks/logic/if',
                 category: 'logic'
             },
+            'lists_create_with': {
+                name: Util.lf("create a list"),
+                tooltip: Util.lf("Creates a new list."),
+                url: '/blocks/lists/create',
+                category: 'lists'
+            },
+            'lists_length': {
+                name: Util.lf("list length"),
+                tooltip: Util.lf("Returns the number of items in a list."),
+                url: '/blocks/lists/length',
+                category: 'lists'
+            },
             'logic_compare': {
                 name: Util.lf("comparing two numbers"),
                 url: '/blocks/logic/boolean',

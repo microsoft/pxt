@@ -248,6 +248,123 @@ export const text: BuiltinCategoryDefinition = {
     }
 }
 
+export const lists: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Lists"),
+    blocks: [
+        {
+            name: "create",
+            snippet: `[0];`,
+            snippetOnly: true,
+            attributes: {
+                weight: 100,
+                jsDoc: lf("Creates a new Array")
+            }
+        },
+        {
+            name: "length",
+            snippet: `[0].length;`,
+            snippetOnly: true,
+            attributes: {
+                weight: 99,
+                jsDoc: lf("Returns the number of values in an Array")
+            }
+        },
+        {
+            name: "get",
+            snippet: `[0].get(0);`,
+            attributes: {
+                weight: 98,
+                jsDoc: lf("Returns the value in the Array at the given index")
+            }
+        },
+        {
+            name: "set",
+            snippet: `[0].set(0, 0);`,
+            attributes: {
+                weight: 97,
+                jsDoc: lf("Overwrites the value in an Array at the given index")
+            }
+        },
+        {
+            name: "push",
+            snippet: `[0].push(0);`,
+            attributes: {
+                weight: 96,
+                jsDoc: lf("Adds a value to the end of an Array")
+            }
+        },
+        {
+            name: "pop",
+            snippet: `[0].pop();`,
+            attributes: {
+                weight: 95,
+                jsDoc: lf("Removes and returns the value at the end of an Array")
+            }
+        },
+        {
+            name: "insertAt",
+            snippet: `[0].insertAt(0, 0);`,
+            attributes: {
+                weight: 50,
+                jsDoc: lf("Inserts a value into the Array at the given index"),
+                advanced: true
+            }
+        },
+        {
+            name: "removeAt",
+            snippet: `[0].removeAt(0);`,
+            attributes: {
+                weight: 49,
+                jsDoc: lf("Removes a value from the Array at the given index and returns it"),
+                advanced: true
+            }
+        },
+        {
+            name: "shift",
+            snippet: `[0].shift();`,
+            attributes: {
+                weight: 48,
+                jsDoc: lf("Removes and returns the value at the front of an Array"),
+                advanced: true
+            }
+        },
+        {
+            name: "unshift",
+            snippet: `[0].unshift(0);`,
+            attributes: {
+                weight: 47,
+                jsDoc: lf("Inserts a value at the beginning of an Array"),
+                advanced: true
+            }
+        },
+        {
+            name: "indexOf",
+            snippet: `["A", "B", "C"].indexOf("B");`,
+            attributes: {
+                weight: 46,
+                jsDoc: lf("Returns the first index in the Array that contains the given value or -1 if it does not exist in the Array"),
+                advanced: true
+            }
+        },
+        {
+            name: "reverse",
+            snippet: `["A", "B", "C"].reverse();`,
+            attributes: {
+                weight: 45,
+                jsDoc: lf("Reverses the contents of an Array"),
+                advanced: true
+            }
+        },
+    ],
+    attributes: {
+        advanced: true,
+        color: pxt.blocks.blockColors["lists"].toString(),
+        icon: "lists",
+        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        paramDefl: {}
+    }
+}
+
 export function getBuiltinCategory(ns: string) {
         switch (ns) {
             case loops.name: return loops;
@@ -255,6 +372,7 @@ export function getBuiltinCategory(ns: string) {
             case variables.name: return variables;
             case maths.name: return maths;
             case text.name: return text;
+            case lists.name: return lists;
         }
     return undefined;
 }
@@ -266,6 +384,7 @@ export function isBuiltin(ns: string) {
         case variables.name:
         case maths.name:
         case text.name:
+        case lists.name:
             return true;
     }
     return false;

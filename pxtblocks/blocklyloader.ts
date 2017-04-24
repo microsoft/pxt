@@ -12,7 +12,7 @@ namespace pxt.blocks {
         images: '#5C2D91',
         variables: '#A80000',
         text: '#996600',
-        lists: '#D83B01'
+        lists: '#66672C'
     }
 
     export enum CategoryMode {
@@ -36,6 +36,11 @@ namespace pxt.blocks {
             field: "BOOL",
             block: "logic_boolean",
             defaultValue: "false"
+        },
+        "Array": {
+            field: "VAR",
+            block: "variables_get",
+            defaultValue: "list"
         }
     }
 
@@ -1120,6 +1125,7 @@ namespace pxt.blocks {
         initOnStart();
         initMath();
         initVariables();
+        initLists();
         initLoops();
         initLogic();
         initText();
@@ -1166,6 +1172,17 @@ namespace pxt.blocks {
     }
 
     export let openHelpUrl: (url: string) => void;
+
+    function initLists() {
+        let msg: any = Blockly.Msg;
+        msg.LISTS_CREATE_EMPTY_TITLE = lf("create empty list");
+        msg.LISTS_CREATE_WITH_INPUT_WITH = lf("create list with");
+        msg.LISTS_CREATE_WITH_CONTAINER_TITLE_ADD = lf("list");
+        msg.LISTS_CREATE_WITH_ITEM_TITLE = lf("value");
+
+        installBuiltinHelpInfo("lists_create_with");
+        installBuiltinHelpInfo("lists_length");
+    }
 
     function initLoops() {
         let msg: any = Blockly.Msg;

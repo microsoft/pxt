@@ -499,6 +499,8 @@ ${output}</xml>`;
                         return getPrefixUnaryExpression(n as ts.PrefixUnaryExpression);
                     case SK.PropertyAccessExpression:
                         return getPropertyAccessExpression(n as ts.PropertyAccessExpression);
+                    case SK.ArrayLiteralExpression:
+                        return getArrayLiteralExpression(n as ts.ArrayLiteralExpression);
                     case SK.CallExpression:
                         return getStatementBlock(n, undefined, undefined, true) as any;
                     default:
@@ -724,6 +726,17 @@ ${output}</xml>`;
                     value
                 }
             }
+        }
+
+        function getArrayLiteralExpression(n: ts.ArrayLiteralExpression): ExpressionNode {
+            return {
+                kind: "expr",
+                type: "lists_create_with",
+                inputs: n.elements.map((e, i) => getValue("ADD" + i, e)),
+                mutation: {
+                    "items": n.elements.length.toString()
+                }
+            };
         }
 
         function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false): StatementNode {
@@ -1697,6 +1710,7 @@ ${output}</xml>`;
             case SK.TrueKeyword:
             case SK.FalseKeyword:
             case SK.ExpressionStatement:
+            case SK.ArrayLiteralExpression:
                 return undefined;
             case SK.ParenthesizedExpression:
                 return checkExpression((n as ts.ParenthesizedExpression).expression, blocksInfo);
