@@ -124,7 +124,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
                                 {headless && run ? <sui.Button class={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
                                 {headless && restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
-                                {headless && trace ? <sui.Button key='tracebtn' class={`trace-button ${tracing ? 'orange' : ''}`} icon="bug" title={traceTooltip} onClick={() => this.toggleTrace('mobile') } /> : undefined }
+                                {headless && trace ? <sui.Button key='tracebtn' class={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('mobile') } /> : undefined }
                                 {compileBtn ? <sui.Button class={`primary download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
                             </div>
                         </div>
@@ -169,7 +169,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             <div className="row" style={readOnly ? undefined : { paddingTop: 0 }}>
                                 <div className="column">
                                     <div className="ui icon large buttons">
-                                        {trace ? <sui.Button key='tracebtn' class={`trace-button ${tracing ? 'orange' : ''}`} icon="bug" title={traceTooltip} onClick={() => this.toggleTrace('mobile') } /> : undefined }
+                                        {trace ? <sui.Button key='tracebtn' class={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('mobile') } /> : undefined }
                                         {compileBtn ? <sui.Button class={`primary download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('mobile') } /> : undefined }
                                     </div>
                                 </div>
@@ -186,7 +186,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('tablet') } />
                                     {run ? <sui.Button role="menuitem" class={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('tablet') } /> : undefined }
                                     {restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('tablet') } /> : undefined }
-                                    {trace ? <sui.Button key='tracebtn' class={`trace-button ${tracing ? 'orange' : ''}`} icon="bug" title={traceTooltip} onClick={() => this.toggleTrace('tablet') } /> : undefined }
+                                    {trace ? <sui.Button key='tracebtn' class={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('tablet') } /> : undefined }
                                     {compileBtn ? <sui.Button class={`primary download-button download-button-full ${compileLoading ? 'loading' : ''}`} icon="download" title={compileTooltip} onClick={() => this.compile('tablet') } /> : undefined }
                                 </div>
                             </div> :
@@ -270,7 +270,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {trace ?
                                     <div className="row" style={showUndoRedo || showZoomControls ? { paddingTop: 0 } : {}}>
                                         <div className="column">
-                                            <sui.Button key='tracebtn' class={`large trace-button ${tracing ? 'orange' : ''}`} icon="bug" title={traceTooltip} onClick={() => this.toggleTrace('tablet') } />
+                                            <sui.Button key='tracebtn' class={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('tablet') } />
                                         </div>
                                     </div> : undefined }
                             </div>
@@ -285,7 +285,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <sui.Button icon={`${collapseEditorTools ? 'toggle right' : 'toggle left'}`} class={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />
                                     {run ? <sui.Button role="menuitem" class={`large play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('computer') } /> : undefined }
                                     {restart ? <sui.Button key='restartbtn' class={`large restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('computer') } /> : undefined }
-                                    {trace ? <sui.Button key='tracebtn' class={`large trace-button ${tracing ? 'orange' : ''}`} icon="bug" title={traceTooltip} onClick={() => this.toggleTrace('computer') } /> : undefined }
+                                    {trace ? <sui.Button key='tracebtn' class={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('computer') } /> : undefined }
                                     {compileBtn ? <sui.Button icon='icon download' class={`primary large download-button ${compileLoading ? 'loading' : ''}`} title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
                                 </div>
                             </div> :
