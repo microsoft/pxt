@@ -233,7 +233,6 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
 
     moreTutorials() {
         pxt.tickEvent(`tutorial.completed.more`);
-        this.hide();
         this.props.parent.openTutorials();
     }
 
