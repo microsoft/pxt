@@ -63,13 +63,20 @@ namespace pxt.runner {
             return Promise.resolve(null as string)
         }
 
+        private githubPackageCache: pxt.Map<Map<string>> = {};
         downloadPackageAsync(pkg: pxt.Package) {
             let proto = pkg.verProtocol()
+            let cached: pxt.Map<string> = undefined;
+            // cache resolve github packages
+            if (proto == "github")
+                cached = this.githubPackageCache[pkg._verspec];
             let epkg = getEditorPkg(pkg)
 
-            return pkg.commonDownloadAsync()
+            return (cached ? Promise.resolve(cached) : pkg.commonDownloadAsync())
                 .then(resp => {
                     if (resp) {
+                        if (proto == "github" && !cached)
+                            this.githubPackageCache[pkg._verspec] = Util.clone(resp);
                         epkg.setFiles(resp)
                         return Promise.resolve()
                     }
