@@ -489,9 +489,9 @@ namespace ts.pxtc {
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
-            // TODO: namespace??? correct name checking??
-            if (classes[cl].decl.name.text == decl.name.text)
-                 userError(9261, lf("Interface with same name as a class not supported."))
+            if (classes[cl].decl.symbol == decl.symbol) {
+                 userError(9261, lf("Interface with same name as a class not supported"))
+            }
         }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
@@ -1550,7 +1550,8 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
-            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
+            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl))
+                      || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression,false)
                 if (!decl)
                     return ir.numlit(0)
@@ -1581,7 +1582,7 @@ ${lbl}: .short 0xffff
                 if (/^[+-]?\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
                 return ir.rtcall(ev, [])
-            } else if (decl.kind == SK.PropertySignature) {
+            } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
                 /*
                 if (attrs.shim) {
@@ -1807,9 +1808,14 @@ ${lbl}: .short 0xffff
             if (!decl)
                 decl = getDecl(funcExpr) as FunctionLikeDeclaration
             let isMethod = false
-            if (decl)
+            if (decl) {
                 switch (decl.kind) {
+                    // we treat properties via calls
+                    // so we say they are "methods"
                     case SK.PropertySignature:
+                    case SK.PropertyAssignment:
+                    // TOTO case: case SK.ShorthandPropertyAssignment
+                    // these are the real methods
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
                     case SK.GetAccessor:
@@ -1824,7 +1830,7 @@ ${lbl}: .short 0xffff
                         decl = null; // no special handling
                         break;
                 }
-
+            }
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
@@ -1882,6 +1888,9 @@ ${lbl}: .short 0xffff
                 addDefaultParametersAndTypeCheck(sig, args, attrs);
             })
 
+            // first we handle a set of direct cases, note that
+            // we are not recursing on funcExpr here, but looking
+            // at the associated decl
             if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
@@ -1894,7 +1903,7 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 }
             }
-
+            // special case call to super
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
                 assert(!bin.finalPass || !!baseCtor)
@@ -1902,14 +1911,11 @@ ${lbl}: .short 0xffff
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
             }
-
             if (isMethod) {
                 let isSuper = false
                 if (isStatic(decl)) {
                     // no additional arguments
-                } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
-                    if (!recv)
-                        recv = (<PropertyAccessExpression>funcExpr).expression
+                } else if (recv) {
                     if (recv.kind == SK.SuperKeyword) {
                         isSuper = true
                     }
@@ -1954,25 +1960,38 @@ ${lbl}: .short 0xffff
                     })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
-                } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
+                } else if (decl.kind == SK.MethodSignature) {
                     let name = getName(decl)
-                    let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
-                    if (decl.kind == SK.PropertySignature) {
-                        let pid = res.data as ir.ProcId
-                        pid.mapIdx = pid.ifaceIndex
-                        let refSuff = ""
-                        if (args.length == 2) {
-                            if (isRefCountedExpr(args[1]))
-                                refSuff = "Ref"
-                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
-                            pid.mapMethod = "pxtrt::mapSet" + refSuff
-                        } else {
-                            if (isRefType(typeOf(node)))
-                                refSuff = "Ref"
-                            pid.mapMethod = "pxtrt::mapGet" + refSuff
+                    return mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                    if (node == funcExpr) {
+                        // in this special base case, we have property access recv.foo
+                        // where recv is a map obejct 
+                        let name = getName(decl)
+                        let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                        if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                            let pid = res.data as ir.ProcId
+                            pid.mapIdx = pid.ifaceIndex
+                            let refSuff = ""
+                            if (args.length == 2) {
+                                if (isRefCountedExpr(args[1]))
+                                    refSuff = "Ref"
+                                pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                                pid.mapMethod = "pxtrt::mapSet" + refSuff
+                            } else {
+                                if (isRefType(typeOf(node)))
+                                    refSuff = "Ref"
+                                pid.mapMethod = "pxtrt::mapGet" + refSuff
+                            }
                         }
+                        return res
+                    } else {
+                        // in this case, recv.foo represents a function/lambda
+                        // so the receiver is not needed, as we have already done 
+                        // the property lookup to get the lambda
+                        args.shift()
+                        callInfo.args.shift()
                     }
-                    return res
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
@@ -1989,13 +2008,13 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda
-
+            // otherwise we assume a lambda 
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
 
+            // here's where we will recurse to generate toe evaluate funcExpr
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
@@ -2206,6 +2225,8 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
+                    // lit = ir.shared(ir.rtcall("pxt::mkAction",
+                    //                [ir.numlit(0), ir.numlit(0), emitFunLitCore(node, true)]))
                     lit = emitFunLitCore(node)
                 }
             }
@@ -2511,7 +2532,7 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && decl.kind == SK.PropertySignature) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
