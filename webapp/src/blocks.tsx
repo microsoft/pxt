@@ -338,7 +338,7 @@ export class Editor extends srceditor.Editor {
                 if (dep && dep.verProtocol() == "github") {
                     // rewrite url to point to current endpoint
                     url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
-                    window.open(url, 'docs');
+                    window.open(url, m[1]);
                     return; // TODO support serving package docs in docs frame.
                 }
             };
