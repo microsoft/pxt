@@ -136,7 +136,7 @@ namespace pxt.blocks {
                     let container: HTMLElement;
                     if (pr.options && pr.options['min'] && pr.options['max']) {
                         shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, 'math_number_minmax');
-                        if (!container) container = document.createElement('mutation');
+                        container = document.createElement('mutation');
                         container.setAttribute('min', pr.options['min'].value);
                         container.setAttribute('max', pr.options['max'].value);
                     } else {
@@ -631,9 +631,9 @@ namespace pxt.blocks {
         const oldMutationToDom = (block as MutatingBlock).mutationToDom;
         const oldDomToMutation = (block as MutatingBlock).domToMutation;
         (block as MutatingBlock).mutationToDom = () => {
-            let retVal = (oldMutationToDom) ? oldMutationToDom.call(this) : document.createElement('mutation');
-            block.inputList.forEach((input, i) => {
-                input.fieldRow.forEach((fieldRow: Blockly.FieldCustom, j: number) => {
+            let retVal = oldMutationToDom ? oldMutationToDom.call(this) : document.createElement('mutation');
+            block.inputList.forEach(input => {
+                input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                         const getOptions = fieldRow.saveOptions();
                         retVal.setAttribute(`customfield`, JSON.stringify(getOptions));
@@ -644,8 +644,8 @@ namespace pxt.blocks {
         }
         (block as MutatingBlock).domToMutation = (mutation) => {
             if (oldDomToMutation) oldDomToMutation.call(this, mutation);
-            block.inputList.forEach((input, i) => {
-                input.fieldRow.forEach((fieldRow: Blockly.FieldCustom, j: number) => {
+            block.inputList.forEach(input => {
+                input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                     if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                         const options = JSON.parse(mutation.getAttribute(`customfield`));
                         fieldRow.restoreOptions(options);

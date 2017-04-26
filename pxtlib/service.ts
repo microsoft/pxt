@@ -149,8 +149,8 @@ namespace ts.pxtc {
         paramMax?: pxt.Map<string>; // max range
         // Map for custom field editor parameters
         paramFieldEditor?: pxt.Map<string>; //.fieldEditor
-        paramShadowOptions?: pxt.Map<pxt.Map<any>>; //.shadowOptions.
-        paramFieldEditorOptions?: pxt.Map<pxt.Map<any>>; //.fieldOptions.
+        paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
+        paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
     }
 
     export interface LocationInfo {
