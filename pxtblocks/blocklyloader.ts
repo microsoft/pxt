@@ -522,6 +522,11 @@ namespace pxt.blocks {
 
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
+        else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
+            let anchor = fn.qName.toLowerCase().split('.');
+            if (anchor[0] == fn.pkg) anchor.shift();
+            block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
+        }
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color);
