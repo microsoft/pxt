@@ -488,10 +488,9 @@ namespace ts.pxtc {
     }
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
-        let interName = checker.getFullyQualifiedName(decl.symbol)
         for (let cl in classes) {
-            if (checker.getFullyQualifiedName(classes[cl].decl.symbol) == interName) {
-                 userError(9261, lf("Interface with same name as a class not supported: " + interName))
+            if (classes[cl].decl.symbol == decl.symbol) {
+                 userError(9261, lf("Interface with same name as a class not supported"))
             }
         }
         if (decl.heritageClauses)
