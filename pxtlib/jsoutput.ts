@@ -48,7 +48,7 @@ namespace pxt.blocks {
     }
 
     export function mkInfix(child0: JsNode, op: string, child1: JsNode) {
-        return mkNode(NT.Infix, op, [child0, child1])
+        return mkNode(NT.Infix, op, child0 == null ? [child1] : [child0, child1])
     }
 
     export function mkText(s: string) {
@@ -221,7 +221,13 @@ namespace pxt.blocks {
         "*": 14,
         "/": 14,
         "%": 14,
-        "!": 15,
+        "**": 15,
+        "!": 16,
+        "~": 16,
+        "P-": 16,
+        "P+": 16,
+        "++": 16,
+        "--": 16,
         ".": 18,
     }
 
@@ -248,6 +254,7 @@ namespace pxt.blocks {
                 let r: JsNode[] = []
 
                 function pushOp(c: string) {
+                    if (c[0] == "P") c = c.slice(1)
                     r.push(mkText(c))
                 }
 
@@ -258,6 +265,7 @@ namespace pxt.blocks {
                 if (e.children.length == 1) {
                     pushOp(e.op)
                     rec(e.children[0], infixPri)
+                    r.push(e.children[0])
                 } else {
                     let bindLeft = infixPri != 3 && e.op != "**"
                     let letType: string = undefined;

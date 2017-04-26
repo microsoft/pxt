@@ -443,10 +443,18 @@ function docComment(cmt: string) {
     return B.mkStmt(B.mkText("/** " + cmt + " */"))
 }
 
+interface VarDesc {
+    expandsTo?: string;
+    isImportStar?: boolean;
+    isPlainImport?: boolean;
+    isLocal?: boolean;
+    isParam?: boolean;
+}
+
 let ctx = {
     currClass: null as py.ClassDef,
     currFun: null as py.FunctionDef,
-    vars: {} as pxt.Map<boolean>,
+    vars: {} as pxt.Map<VarDesc>,
 }
 
 function scope(f: () => B.JsNode) {
@@ -490,6 +498,7 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
     }
     let didx = args.defaults.length - nargs.length
     let lst = nargs.map(a => {
+        ctx.vars[a.arg] = { isParam: true }
         let res = [quote(a.arg)]
         if (a.annotation)
             res.push(todoExpr("annotation", expr(a.annotation)))
@@ -501,11 +510,7 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
         return B.mkGroup(res)
     })
 
-    return B.mkGroup([
-        B.mkText("("),
-        B.mkCommaSep(lst),
-        B.mkText(")")
-    ])
+    return B.H.mkParenthesizedExpression(B.mkCommaSep(lst))
 }
 
 const opMapping: pxt.Map<string> = {
@@ -533,14 +538,26 @@ const opMapping: pxt.Map<string> = {
     Gt: ">",
     GtE: ">=",
 
-    Is: "py.Is",
-    IsNot: "py.IsNot",
+    Is: "===",
+    IsNot: "!==",
     In: "py.In",
     NotIn: "py.NotIn",
 }
 
+const prefixOps: pxt.Map<string> = {
+    Invert: "~",
+    Not: "!",
+    UAdd: "P+",
+    USub: "P-",
+}
+
 function stmts(ss: py.Stmt[]) {
     return B.mkBlock(ss.map(stmt))
+}
+
+function exprs0(ee: py.Expr[]) {
+    ee = ee.filter(e => !!e)
+    return ee.map(expr)
 }
 
 const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
@@ -617,7 +634,33 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
         }
         return B.mkStmt(B.mkInfix(trg, "=", expr(n.value)))
     },
-    For: (n: py.For) => stmtTODO(n),
+    For: (n: py.For) => {
+        U.assert(n.orelse.length == 0)
+        if (isCallTo(n.iter, "range")) {
+            let r = n.iter as py.Call
+            let def = expr(n.target)
+            let start = r.args.length == 1 ? B.mkText("0") : expr(r.args[0])
+            let stop = expr(r.args[r.args.length == 1 ? 0 : 1])
+            return B.mkStmt(
+                B.mkText("for ("),
+                B.mkInfix(def, "=", start),
+                B.mkText("; "),
+                B.mkInfix(expr(n.target), "<", stop),
+                B.mkText("; "),
+                r.args.length >= 3 ?
+                    B.mkInfix(expr(n.target), "+=", expr(r.args[2])) :
+                    B.mkInfix(null, "++", expr(n.target)),
+                B.mkText(")"),
+                stmts(n.body))
+        }
+        return B.mkStmt(
+            B.mkText("for ("),
+            expr(n.target),
+            B.mkText(" of "),
+            expr(n.iter),
+            B.mkText(")"),
+            stmts(n.body))
+    },
     While: (n: py.While) => stmtTODO(n),
     If: (n: py.If) => {
         let nodes = [
@@ -630,11 +673,51 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
             nodes.push(B.mkText("else"), stmts(n.orelse))
         return B.mkStmt(B.mkGroup(nodes))
     },
-    With: (n: py.With) => stmtTODO(n),
+    With: (n: py.With) => {
+        let cleanup: B.JsNode[] = []
+        let stmts = n.items.map((it, idx) => {
+            let varName = "with" + idx
+            if (it.optional_vars) {
+                U.assert(it.optional_vars.kind == "Name")
+                let id = (it.optional_vars as py.Name).id
+                ctx.vars[id] = { isLocal: true }
+                varName = quoteStr(id)
+            }
+            cleanup.push(B.mkStmt(B.mkText(varName + ".end()")))
+            return B.mkStmt(B.mkText("const " + varName + " = "),
+                B.mkInfix(expr(it.context_expr), ".", B.mkText("begin()")))
+        })
+        U.pushRange(stmts, n.body.map(stmt))
+        U.pushRange(stmts, cleanup)
+        return B.mkBlock(stmts)
+    },
     Raise: (n: py.Raise) => stmtTODO(n),
-    Assert: (n: py.Assert) => stmtTODO(n),
-    Import: (n: py.Import) => stmtTODO(n),
-    ImportFrom: (n: py.ImportFrom) => stmtTODO(n),
+    Assert: (n: py.Assert) => B.mkStmt(B.H.mkCall("control.assert", exprs0([n.test, n.msg]))),
+    Import: (n: py.Import) => {
+        for (let nm of n.names) {
+            if (nm.asname)
+                ctx.vars[nm.asname] = {
+                    expandsTo: nm.name
+                }
+            ctx.vars[nm.name] = {
+                isPlainImport: true
+            }
+        }
+        return B.mkText("")
+    },
+    ImportFrom: (n: py.ImportFrom) => {
+        for (let nn of n.names) {
+            if (nn.name == "*")
+                ctx.vars[n.module] = {
+                    isImportStar: true
+                }
+            else
+                ctx.vars[nn.asname || nn.name] = {
+                    expandsTo: n.module + "." + nn.name
+                }
+        }
+        return B.mkText("")
+    },
     ExprStmt: (n: py.ExprStmt) =>
         n.value.kind == "Str" ?
             docComment((n.value as py.Str).s) :
@@ -655,12 +738,25 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
         B.mkStmt(B.mkText("TODO: nonlocal: "), B.mkGroup(n.names.map(B.mkText))),
 }
 
+function possibleDef(id: py.identifier) {
+    let curr = U.lookup(ctx.vars, id)
+    if (curr) return quote(id)
+    if (ctx.currClass && !ctx.currFun)
+        return quote(id) // field
+    ctx.vars[id] = { isLocal: true }
+    return B.mkGroup([B.mkText("let "), quote(id)])
+}
+
+function quoteStr(id: string) {
+    if (B.isReservedWord(id))
+        return id + "_"
+    else
+        return id
+}
 function quote(id: py.identifier) {
     if (id == "self")
         return B.mkText("this")
-    if (B.isReservedWord(id))
-        return B.mkText(id + "_")
-    return B.mkText(id)
+    return B.mkText(quoteStr(id))
 }
 
 function isCallTo(n: py.Expr, fn: string) {
@@ -690,7 +786,11 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
         return r
     },
     BinOp: (n: py.BinOp) => binop(expr(n.left), n.op, expr(n.right)),
-    UnaryOp: (n: py.UnaryOp) => exprTODO(n),
+    UnaryOp: (n: py.UnaryOp) => {
+        let op = prefixOps[n.op]
+        U.assert(!!op)
+        return B.mkInfix(null, op, expr(n.operand))
+    },
     Lambda: (n: py.Lambda) => exprTODO(n),
     IfExp: (n: py.IfExp) => exprTODO(n),
     Dict: (n: py.Dict) => exprTODO(n),
@@ -710,7 +810,13 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
         return r
     },
     Call: (n: py.Call) => {
-        return exprTODO(n)
+        return B.mkGroup([
+            expr(n.func),
+            B.mkText("("),
+            B.mkCommaSep(n.args.map(expr)),
+            todoComment("keywords", n.keywords.map(k => expr(k.value))),
+            B.mkText(")")
+        ])
     },
     Num: (n: py.Num) => B.mkText(n.n + ""),
     Str: (n: py.Str) => B.mkText(B.stringLit(n.s)),
@@ -721,11 +827,32 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
     Ellipsis: (n: py.Ellipsis) => exprTODO(n),
     Constant: (n: py.Constant) => exprTODO(n),
     Attribute: (n: py.Attribute) => B.mkInfix(expr(n.value), ".", B.mkText(n.attr)),
-    Subscript: (n: py.Subscript) => exprTODO(n),
-    Starred: (n: py.Starred) => exprTODO(n),
-    Name: (n: py.Name) => quote(n.id),
-    List: (n: py.List) => exprTODO(n),
-    Tuple: (n: py.Tuple) => exprTODO(n),
+    Subscript: (n: py.Subscript) => {
+        U.assert(n.slice.kind == "Index")
+        return B.mkGroup([
+            expr(n.value),
+            B.mkText("["),
+            expr((n.slice as py.Index).value),
+            B.mkText("]"),
+        ])
+    },
+    Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
+    Name: (n: py.Name) => {
+        if (n.ctx.indexOf("Load") >= 0)
+            return quote(n.id)
+        else
+            return possibleDef(n.id)
+    },
+    List: (n: py.List) => B.mkGroup([
+        B.mkText("["),
+        B.mkCommaSep(n.elts.map(expr)),
+        B.mkText("]"),
+    ]),
+    Tuple: (n: py.Tuple) => B.mkGroup([
+        B.mkText("["),
+        B.mkCommaSep(n.elts.map(expr)),
+        B.mkText("]"),
+    ]),
 }
 
 function expr(e: py.Expr): B.JsNode {
