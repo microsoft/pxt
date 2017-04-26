@@ -1550,7 +1550,7 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
-            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) 
+            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl))
                       || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression,false)
                 if (!decl)
