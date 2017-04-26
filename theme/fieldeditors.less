@@ -1,0 +1,98 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+
+////// Note Editor Field ////////
+
+.blocklyWidgetDiv .blocklyPianoDiv {
+    position: relative
+}
+
+.blocklyWidgetDiv .blocklyNote {
+border: solid 0.5px;
+cursor: pointer;
+display: inline-block;
+position: absolute;
+top: 0px;
+border-bottom-left-radius: 3px;
+border-bottom-right-radius: 3px;
+}
+
+.blocklyWidgetDiv .blocklyNote:hover {
+background-color: yellow !important
+}
+
+.blocklyWidgetDiv .blocklyNoteLabel {
+border: solid 0.5px;
+color: white;
+display: inline-block;
+line-height: normal;
+position: absolute;
+text-align: center;
+}
+
+.blocklyWidgetDiv .blocklyNotePrevNext {
+border: solid 0.5px;
+cursor: pointer;
+color: white;
+display: inline-block;
+font-weight: bold;
+line-height: normal;
+position: absolute;
+text-align: center;
+}
+
+////// Grid Picker Editor Field ////////
+
+.blocklyWidgetDiv .blocklyGridPickerMenu {
+display: table;
+outline: none;
+}
+
+.blocklyGridPickerScroller {
+outline: none;
+padding: 4px;
+border-radius: 10px;
+}
+
+.blocklyGridPickerPadder {
+border-radius: 10px;
+outline: none;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerRow {
+display: table-row;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem {
+background: white;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-highlight, .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem-hover {
+background: #d6e9f8;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerMenu .goog-option {
+border: solid 4px black;
+border-radius: 10px;
+display: table-cell;
+padding: 4px;
+text-align: center;
+vertical-align: top;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerMenu .goog-option.goog-option-selected {
+outline: solid 3px #fc3;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem .goog-menuitem-checkbox {
+display: none;
+}
+
+.blocklyGridPickerTooltip {
+z-index: 100000; /* big value for bootstrap3 compatibility */
+}

@@ -32,7 +32,7 @@ namespace ts.pxtc {
     }
 
     export interface PropertyOption {
-        value: string;
+        value: any;
     }
 
     export enum SymbolKind {
@@ -107,7 +107,6 @@ namespace ts.pxtc {
         blockAllowMultiple?: boolean; // override single block behavior for events
         blockHidden?: boolean; // not available directly in toolbox
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
-        blockFieldEditor?: string; // Custom field editor
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         indexedInstanceNS?: string;
@@ -149,7 +148,9 @@ namespace ts.pxtc {
         paramMin?: pxt.Map<string>; // min range
         paramMax?: pxt.Map<string>; // max range
         // Map for custom field editor parameters
-        blockFieldEditorParams?: pxt.Map<string>;
+        paramFieldEditor?: pxt.Map<string>; //.fieldEditor
+        paramShadowOptions?: pxt.Map<pxt.Map<any>>; //.shadowOptions.
+        paramFieldEditorOptions?: pxt.Map<pxt.Map<any>>; //.fieldOptions.
     }
 
     export interface LocationInfo {
@@ -334,15 +335,27 @@ namespace ts.pxtc {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (U.endsWith(n, ".defl")) {
                         res.paramDefl[n.slice(0, n.length - 5)] = v
+                    } else if (U.endsWith(n, ".fieldEditor")) {
+                        if (!res.paramFieldEditor) res.paramFieldEditor = {}
+                        res.paramFieldEditor[n.slice(0, n.length - 12)] = v
+                    } else if (U.contains(n, ".fieldOptions.")) {
+                        if (!res.paramFieldEditorOptions) res.paramFieldEditorOptions = {}
+                        const field = n.slice(0, n.indexOf('.fieldOptions.'));
+                        const key = n.slice(n.indexOf('.fieldOptions.') + 14, n.length);
+                        if (!res.paramFieldEditorOptions[field]) res.paramFieldEditorOptions[field] = {};
+                        res.paramFieldEditorOptions[field][key] = v
+                    } else if (U.contains(n, ".shadowOptions.")) {
+                        if (!res.paramShadowOptions) res.paramShadowOptions = {}
+                        const field = n.slice(0, n.indexOf('.shadowOptions.'));
+                        const key = n.slice(n.indexOf('.shadowOptions.') + 15, n.length);
+                        if (!res.paramShadowOptions[field]) res.paramShadowOptions[field] = {};
+                        res.paramShadowOptions[field][key] = v
                     } else if (U.endsWith(n, ".min")) {
                         if (!res.paramMin) res.paramMin = {}
                         res.paramMin[n.slice(0, n.length - 4)] = v
                     } else if (U.endsWith(n, ".max")) {
                         if (!res.paramMax) res.paramMax = {}
                         res.paramMax[n.slice(0, n.length - 4)] = v
-                    } else if (U.startsWith(n, "blockFieldEditorParams")) {
-                        if (!res.blockFieldEditorParams) res.blockFieldEditorParams = {}
-                        res.blockFieldEditorParams[n.slice(23, n.length)] = v
                     } else {
                         (<any>res)[n] = v;
                     }
