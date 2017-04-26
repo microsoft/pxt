@@ -2,6 +2,7 @@ export module py {
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
         lineno: number;
+        col_offset: number;
         kind: string;
     }
     export interface Stmt extends AST {
@@ -398,7 +399,7 @@ def to_json(val):
         js = dict()
         js['kind'] = val.__class__.__name__
         for attr_name in dir(val):
-            if not attr_name.startswith("_") and attr_name != "col_offset":
+            if not attr_name.startswith("_"):
                 js[attr_name] = to_json(getattr(val, attr_name))
         return js    
     if isinstance(val, (bytearray, bytes)):
@@ -435,16 +436,177 @@ function exprTODO(v: py.Expr) {
 }
 
 function docComment(cmt: string) {
-    return B.mkStmt(B.mkText("/** " + cmt.replace(/\n/g, "\n * ") + "\n */"))
+    if (cmt.trim().split(/\n/).length <= 1)
+        cmt = cmt.trim()
+    else
+        cmt = cmt.replace(/\n/g, "\n * ") + "\n"
+    return B.mkStmt(B.mkText("/** " + cmt + " */"))
+}
+
+let ctx = {
+    currClass: null as py.ClassDef,
+    currFun: null as py.FunctionDef,
+    vars: {} as pxt.Map<boolean>,
+}
+
+function scope(f: () => B.JsNode) {
+    let prevCtx = U.flatClone(ctx)
+    prevCtx.vars = U.flatClone(ctx.vars)
+    let r = f()
+    ctx = prevCtx
+    return r
+}
+
+function todoExpr(name: string, e: B.JsNode) {
+    if (!e)
+        return B.mkText("")
+    return B.mkGroup([B.mkText("/* TODO: " + name + " "), e, B.mkText(" */")])
+}
+
+function todoComment(name: string, n: B.JsNode[]) {
+    if (n.length == 0)
+        return B.mkText("")
+    return B.mkGroup([B.mkText("/* TODO: " + name + " "), B.mkGroup(n), B.mkText(" */"), B.mkNewLine()])
+}
+
+function doKeyword(k: py.Keyword) {
+    let t = expr(k.value)
+    if (k.arg)
+        return B.mkInfix(B.mkText(k.arg), "=", t)
+    else
+        return B.mkGroup([B.mkText("**"), t])
+}
+
+function doArgs(args: py.Arguments, isMethod: boolean) {
+    U.assert(!args.kwarg)
+    U.assert(!args.vararg)
+    U.assert(!args.kwonlyargs.length)
+    let nargs = args.args.slice()
+    if (isMethod) {
+        U.assert(nargs[0].arg == "self")
+        nargs.shift()
+    } else {
+        U.assert(nargs[0].arg != "self")
+    }
+    let didx = args.defaults.length - nargs.length
+    let lst = nargs.map(a => {
+        let res = [quote(a.arg)]
+        if (a.annotation)
+            res.push(todoExpr("annotation", expr(a.annotation)))
+        if (didx >= 0) {
+            res.push(B.mkText(" = "))
+            res.push(expr(args.defaults[didx]))
+        }
+        didx++
+        return B.mkGroup(res)
+    })
+
+    return B.mkGroup([
+        B.mkText("("),
+        B.mkCommaSep(lst),
+        B.mkText(")")
+    ])
+}
+
+const opMapping: pxt.Map<string> = {
+    Add: "+",
+    Sub: "-",
+    Mult: "*",
+    MatMult: "Math.matrixMult",
+    Div: "/",
+    Mod: "%",
+    Pow: "**",
+    LShift: "<<",
+    RShift: ">>",
+    BitOr: "|",
+    BitXor: "^",
+    BitAnd: "&",
+    FloorDiv: "Math.idiv",
+
+    And: "&&",
+    Or: "||",
+
+    Eq: "==",
+    NotEq: "!=",
+    Lt: "<",
+    LtE: "<=",
+    Gt: ">",
+    GtE: ">=",
+
+    Is: "py.Is",
+    IsNot: "py.IsNot",
+    In: "py.In",
+    NotIn: "py.NotIn",
+}
+
+function stmts(ss: py.Stmt[]) {
+    return B.mkBlock(ss.map(stmt))
 }
 
 const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
-    FunctionDef: (n: py.FunctionDef) => stmtTODO(n),
-    ClassDef: (n: py.ClassDef) => stmtTODO(n),
+    FunctionDef: (n: py.FunctionDef) => scope(() => {
+        let isMethod = !!ctx.currClass && !ctx.currFun
+        ctx.currFun = n
+        let nodes = [
+            todoComment("decorators", n.decorator_list.map(expr))
+        ]
+        if (isMethod) {
+            if (n.name == "__init__")
+                nodes.push(B.mkText("constructor"))
+            else if (n.name[0] == "_")
+                nodes.push(B.mkText("private "), quote(n.name))
+            else
+                nodes.push(B.mkText("public "), quote(n.name))
+        } else {
+            if (n.name[0] == "_")
+                nodes.push(B.mkText("function "), quote(n.name))
+            else
+                nodes.push(B.mkText("export function "), quote(n.name))
+        }
+        nodes.push(
+            doArgs(n.args, isMethod),
+            todoComment("returns", n.returns ? [expr(n.returns)] : []),
+            stmts(n.body)
+        )
+        return B.mkStmt(B.mkGroup(nodes))
+    }),
+
+    ClassDef: (n: py.ClassDef) => scope(() => {
+        U.assert(!ctx.currClass)
+        ctx.currClass = n
+        let nodes = [
+            todoComment("keywords", n.keywords.map(doKeyword)),
+            todoComment("decorators", n.decorator_list.map(expr)),
+            B.mkText("export class "),
+            quote(n.name)
+        ]
+        if (n.bases.length > 0) {
+            nodes.push(B.mkText(" extends "))
+            nodes.push(B.mkCommaSep(n.bases.map(expr)))
+        }
+        nodes.push(stmts(n.body))
+        return B.mkStmt(B.mkGroup(nodes))
+    }),
+
     Return: (n: py.Return) =>
         n.value ?
             B.mkStmt(B.mkText("return "), expr(n.value)) :
             B.mkStmt(B.mkText("return")),
+    AugAssign: (n: py.AugAssign) => {
+        let op = opMapping[n.op]
+        if (op.length > 3)
+            return B.mkStmt(B.mkInfix(
+                expr(n.target),
+                "=",
+                B.H.mkCall(op, [expr(n.target), expr(n.value)])
+            ))
+        else
+            return B.mkStmt(
+                expr(n.target),
+                B.mkText(" " + op + "= "),
+                expr(n.value)
+            )
+    },
     Assign: (n: py.Assign) => {
         if (n.targets.length != 1)
             return stmtTODO(n)
@@ -457,7 +619,17 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
     },
     For: (n: py.For) => stmtTODO(n),
     While: (n: py.While) => stmtTODO(n),
-    If: (n: py.If) => stmtTODO(n),
+    If: (n: py.If) => {
+        let nodes = [
+            B.mkText("if ("),
+            expr(n.test),
+            B.mkText(")"),
+            stmts(n.body)
+        ]
+        if (n.orelse.length)
+            nodes.push(B.mkText("else"), stmts(n.orelse))
+        return B.mkStmt(B.mkGroup(nodes))
+    },
     With: (n: py.With) => stmtTODO(n),
     Raise: (n: py.Raise) => stmtTODO(n),
     Assert: (n: py.Assert) => stmtTODO(n),
@@ -473,7 +645,6 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
 
     Delete: (n: py.Delete) => stmtTODO(n),
     Try: (n: py.Try) => stmtTODO(n),
-    AugAssign: (n: py.AugAssign) => stmtTODO(n),
     AnnAssign: (n: py.AnnAssign) => stmtTODO(n),
     AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
     AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
@@ -485,6 +656,8 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
 }
 
 function quote(id: py.identifier) {
+    if (id == "self")
+        return B.mkText("this")
     if (B.isReservedWord(id))
         return B.mkText(id + "_")
     return B.mkText(id)
@@ -499,9 +672,24 @@ function isCallTo(n: py.Expr, fn: string) {
     return (c.func as py.Name).id == fn
 }
 
+function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
+    let op = opMapping[pyName]
+    U.assert(!!op)
+    if (op.length > 3)
+        return B.H.mkCall(op, [left, right])
+    else
+        return B.mkInfix(left, op, right)
+}
+
 const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
-    BoolOp: (n: py.BoolOp) => exprTODO(n),
-    BinOp: (n: py.BinOp) => exprTODO(n),
+    BoolOp: (n: py.BoolOp) => {
+        let r = expr(n.values[0])
+        for (let i = 1; i < n.values.length; ++i) {
+            r = binop(r, n.op, expr(n.values[i]))
+        }
+        return r
+    },
+    BinOp: (n: py.BinOp) => binop(expr(n.left), n.op, expr(n.right)),
     UnaryOp: (n: py.UnaryOp) => exprTODO(n),
     Lambda: (n: py.Lambda) => exprTODO(n),
     IfExp: (n: py.IfExp) => exprTODO(n),
@@ -514,7 +702,13 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
     Await: (n: py.Await) => exprTODO(n),
     Yield: (n: py.Yield) => exprTODO(n),
     YieldFrom: (n: py.YieldFrom) => exprTODO(n),
-    Compare: (n: py.Compare) => exprTODO(n),
+    Compare: (n: py.Compare) => {
+        let r = binop(expr(n.left), n.ops[0], expr(n.comparators[0]))
+        for (let i = 1; i < n.ops.length; ++i) {
+            r = binop(r, "And", binop(expr(n.comparators[i - 1]), n.ops[i], expr(n.comparators[i])))
+        }
+        return r
+    },
     Call: (n: py.Call) => {
         return exprTODO(n)
     },
@@ -523,10 +717,10 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
     FormattedValue: (n: py.FormattedValue) => exprTODO(n),
     JoinedStr: (n: py.JoinedStr) => exprTODO(n),
     Bytes: (n: py.Bytes) => exprTODO(n),
-    NameConstant: (n: py.NameConstant) => exprTODO(n),
+    NameConstant: (n: py.NameConstant) => B.mkText(JSON.stringify(n.value)),
     Ellipsis: (n: py.Ellipsis) => exprTODO(n),
     Constant: (n: py.Constant) => exprTODO(n),
-    Attribute: (n: py.Attribute) => exprTODO(n),
+    Attribute: (n: py.Attribute) => B.mkInfix(expr(n.value), ".", B.mkText(n.attr)),
     Subscript: (n: py.Subscript) => exprTODO(n),
     Starred: (n: py.Starred) => exprTODO(n),
     Name: (n: py.Name) => quote(n.id),
@@ -549,6 +743,8 @@ function stmt(e: py.Stmt): B.JsNode {
     }
     return f(e)
 }
+
+// TODO based on lineno/col_offset mark which numbers are written in hex
 
 export function convertAsync(fn: string) {
     return nodeutil.spawnWithPipeAsync({

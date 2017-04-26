@@ -67,10 +67,10 @@ namespace pxt.blocks {
         return mkGroup(nodes)
     }
 
-    export function mkCommaSep(nodes: JsNode[], externalInputs: boolean) {
+    export function mkCommaSep(nodes: JsNode[], withNewlines = false) {
         const r: JsNode[] = []
         for (const n of nodes) {
-            if (externalInputs) {
+            if (withNewlines) {
                 if (r.length > 0) r.push(mkText(","));
                 r.push(mkNewLine());
             } else if (r.length > 0) {
@@ -78,7 +78,7 @@ namespace pxt.blocks {
             }
             r.push(n)
         }
-        if (externalInputs) r.push(mkNewLine());
+        if (withNewlines) r.push(mkNewLine());
         return mkGroup(r)
     }
 
@@ -111,7 +111,7 @@ namespace pxt.blocks {
             ])
         }
 
-        export function mkCall(name: string, args: JsNode[], externalInputs: boolean, method = false) {
+        export function mkCall(name: string, args: JsNode[], externalInputs = false, method = false) {
             if (method)
                 return mkGroup([
                     mkInfix(args[0], ".", mkText(name)),
