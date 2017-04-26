@@ -486,8 +486,6 @@ function doKeyword(k: py.Keyword) {
 }
 
 function doArgs(args: py.Arguments, isMethod: boolean) {
-    U.assert(!args.kwarg)
-    U.assert(!args.vararg)
     U.assert(!args.kwonlyargs.length)
     let nargs = args.args.slice()
     if (isMethod) {
@@ -509,6 +507,11 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
         didx++
         return B.mkGroup(res)
     })
+
+    if (args.vararg)
+        lst.push(B.mkText("TODO *" + args.vararg.arg))
+    if (args.kwarg)
+        lst.push(B.mkText("TODO **" + args.kwarg.arg))
 
     return B.H.mkParenthesizedExpression(B.mkCommaSep(lst))
 }
@@ -828,13 +831,15 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
     Constant: (n: py.Constant) => exprTODO(n),
     Attribute: (n: py.Attribute) => B.mkInfix(expr(n.value), ".", B.mkText(n.attr)),
     Subscript: (n: py.Subscript) => {
-        U.assert(n.slice.kind == "Index")
-        return B.mkGroup([
-            expr(n.value),
-            B.mkText("["),
-            expr((n.slice as py.Index).value),
-            B.mkText("]"),
-        ])
+        if (n.slice.kind == "Index")
+            return B.mkGroup([
+                expr(n.value),
+                B.mkText("["),
+                expr((n.slice as py.Index).value),
+                B.mkText("]"),
+            ])
+        else
+            return exprTODO(n)
     },
     Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
     Name: (n: py.Name) => {
