@@ -28,8 +28,8 @@ For the complete guide, read https://makecode.com/defining-blocks.
 
 ## Storing blocks within a project
 
-While it is possible to define functions and new blocks in ``main.ts``, it is generally preferrable
-to store them in a separate file, ``custom.ts``.
+Do not add block definitions directly into ``main.ts`` as they will show up as grey blocks.
+Instead follow the steps below to add a new file, ``custom.ts`` and add all your blocks in that file.
 
 In order to add ``custom.ts`` to your project,
 
@@ -56,4 +56,7 @@ Make sure that your code compiles and that the comments look correct.
 ## Sharing your blocks
 
 The easiest way to share your blocks is to share the entire project using the [share button](/share).
+
+## Taking it to GitHub
+
 If you plan to reuse those blocks further, you might consider turning them into a [package](/packages).

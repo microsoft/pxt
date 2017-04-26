@@ -115,17 +115,20 @@ export class Editor extends srceditor.Editor {
                                         pxt.debug('js not changed, skipping decompile');
                                         pxt.tickEvent("typescript.noChanges")
                                         this.parent.setFile(mainPkg.files[blockFile]);
-                                        return null; // return null to indicate we don't want to decompile
+                                        return [oldWorkspace, false]; // return false to indicate we don't want to decompile
                                     } else {
-                                        return oldWorkspace;
+                                        return [oldWorkspace, true];
                                     }
                                 });
                             });
                         })
                     }
-                    return oldWorkspace;
-                }).then((oldWorkspace) => {
-                    if (!oldWorkspace) return Promise.resolve();
+                    return [oldWorkspace, true];
+                }).then((values) => {
+                    if (!values) return Promise.resolve();
+                    const oldWorkspace = values[0] as B.Workspace;
+                    const shouldDecompile = values[1] as boolean;
+                    if (!shouldDecompile) return Promise.resolve();
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
                             if (!resp.success) {
