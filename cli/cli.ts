@@ -4325,7 +4325,13 @@ function initCommands() {
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
-    advancedCommand("pyconv", "convert from python", c => pyconv.convertAsync(c.arguments[0]), "<filename>")
+    p.defineCommand({
+        name: "pyconv",
+        help: "convert from python",
+        argString: "<filename...>",
+        anyArgs: true,
+        advanced: true,
+    }, c => pyconv.convertAsync(c.arguments))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({

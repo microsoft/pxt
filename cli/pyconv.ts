@@ -406,7 +406,10 @@ def to_json(val):
         return [x for x in val]
     raise Exception("unhandled: %s (type %s)" % (val, type(val)))
 
-print(json.dumps(to_json(ast.parse(open("@file@", "r").read()))))
+js = dict()
+for fn in @files@:
+    js[fn] = to_json(ast.parse(open(fn, "r").read()))
+print(json.dumps(js))
 `
 
 const nameMap: pxt.Map<string> = {
@@ -455,6 +458,14 @@ let ctx = {
     currClass: null as py.ClassDef,
     currFun: null as py.FunctionDef,
     vars: {} as pxt.Map<VarDesc>,
+}
+
+function resetCtx() {
+    ctx = {
+        currClass: null,
+        currFun: null,
+        vars: {}
+    }
 }
 
 function scope(f: () => B.JsNode) {
@@ -878,11 +889,18 @@ function stmt(e: py.Stmt): B.JsNode {
 
 // TODO based on lineno/col_offset mark which numbers are written in hex
 
-export function convertAsync(fn: string) {
+function toTS(js: py.AST) {
+    U.assert(js.kind == "Module")
+    let nodes = (js as any).body.map(stmt)
+    let res = B.flattenNode(nodes)
+    return res.output
+}
+
+export function convertAsync(fns: string[]) {
     return nodeutil.spawnWithPipeAsync({
         cmd: "python3",
         args: [],
-        input: convPy.replace("@file@", fn),
+        input: convPy.replace("@files@", JSON.stringify(fns)),
         silent: true
     })
         .then(buf => {
@@ -903,10 +921,16 @@ export function convertAsync(fn: string) {
                 }
                 return v
             }
+            js.kind = "FileSet"
             js = rec(js)
-            U.assert(js.kind == "Module")
-            let nodes = js.body.map(stmt)
-            let res = B.flattenNode(nodes)
-            console.log(res.output)
+            delete js.kind
+
+            U.iterMap(js, (fn: string, js: any) => {
+                console.log("*")
+                console.log("*")
+                console.log(fn)
+                console.log("*******************")
+                console.log(toTS(js))
+            })
         })
 }
