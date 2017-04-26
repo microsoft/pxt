@@ -4,10 +4,10 @@ export module py {
         lineno: number;
         kind: string;
     }
-    export interface Stmt extends AST { 
+    export interface Stmt extends AST {
         _stmtBrand: void;
     }
-    export interface Expr extends AST { 
+    export interface Expr extends AST {
         _exprBrand: void;
     }
 
@@ -72,7 +72,7 @@ export module py {
         optional_vars?: Expr;
     }
 
-    export interface AnySlice extends AST { 
+    export interface AnySlice extends AST {
         _anySliceBrand: void;
     }
     export interface Slice extends AnySlice {
@@ -335,7 +335,7 @@ export module py {
         kind: "NameConstant";
         value: boolean; // null=None, True, False
     }
-    export interface Ellipsis {
+    export interface Ellipsis extends Expr {
         kind: "Ellipsis";
     }
     export interface Constant extends Expr {
@@ -384,7 +384,7 @@ import * as nodeutil from './nodeutil';
 import U = pxt.Util;
 import B = pxt.blocks;
 
-let convPy = `
+const convPy = `
 import ast
 import sys
 import json
@@ -408,7 +408,7 @@ def to_json(val):
 print(json.dumps(to_json(ast.parse(open("@file@", "r").read()))))
 `
 
-let nameMap: pxt.Map<string> = {
+const nameMap: pxt.Map<string> = {
     "Expr": "ExprStmt",
     "arg": "Arg",
     "arguments": "Arguments",
@@ -418,7 +418,7 @@ let nameMap: pxt.Map<string> = {
     "withitem": "WithItem"
 }
 
-let simpleNames: pxt.Map<boolean> = {
+const simpleNames: pxt.Map<boolean> = {
     "Load": true, "Store": true, "Del": true, "AugLoad": true, "AugStore": true, "Param": true, "And": true,
     "Or": true, "Add": true, "Sub": true, "Mult": true, "MatMult": true, "Div": true, "Mod": true, "Pow": true,
     "LShift": true, "RShift": true, "BitOr": true, "BitXor": true, "BitAnd": true, "FloorDiv": true,
@@ -426,13 +426,128 @@ let simpleNames: pxt.Map<boolean> = {
     "Gt": true, "GtE": true, "Is": true, "IsNot": true, "In": true, "NotIn": true,
 }
 
+function stmtTODO(v: py.Stmt) {
+    return B.mkStmt(B.mkText("TODO: " + v.kind))
+}
+
+function exprTODO(v: py.Expr) {
+    return B.mkText(" {TODO: " + v.kind + "} ")
+}
+
+function docComment(cmt: string) {
+    return B.mkStmt(B.mkText("/** " + cmt.replace(/\n/g, "\n * ") + "\n */"))
+}
+
+const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
+    FunctionDef: (n: py.FunctionDef) => stmtTODO(n),
+    ClassDef: (n: py.ClassDef) => stmtTODO(n),
+    Return: (n: py.Return) =>
+        n.value ?
+            B.mkStmt(B.mkText("return "), expr(n.value)) :
+            B.mkStmt(B.mkText("return")),
+    Assign: (n: py.Assign) => {
+        if (n.targets.length != 1)
+            return stmtTODO(n)
+        let trg = expr(n.targets[0])
+        if (isCallTo(n.value, "const")) {
+            return B.mkStmt(B.mkText("const "),
+                B.mkInfix(trg, "=", expr((n.value as py.Call).args[0])))
+        }
+        return B.mkStmt(B.mkInfix(trg, "=", expr(n.value)))
+    },
+    For: (n: py.For) => stmtTODO(n),
+    While: (n: py.While) => stmtTODO(n),
+    If: (n: py.If) => stmtTODO(n),
+    With: (n: py.With) => stmtTODO(n),
+    Raise: (n: py.Raise) => stmtTODO(n),
+    Assert: (n: py.Assert) => stmtTODO(n),
+    Import: (n: py.Import) => stmtTODO(n),
+    ImportFrom: (n: py.ImportFrom) => stmtTODO(n),
+    ExprStmt: (n: py.ExprStmt) =>
+        n.value.kind == "Str" ?
+            docComment((n.value as py.Str).s) :
+            B.mkStmt(expr(n.value)),
+    Pass: (n: py.Pass) => B.mkStmt(B.mkText(";")),
+    Break: (n: py.Break) => B.mkStmt(B.mkText("break")),
+    Continue: (n: py.Continue) => B.mkStmt(B.mkText("break")),
+
+    Delete: (n: py.Delete) => stmtTODO(n),
+    Try: (n: py.Try) => stmtTODO(n),
+    AugAssign: (n: py.AugAssign) => stmtTODO(n),
+    AnnAssign: (n: py.AnnAssign) => stmtTODO(n),
+    AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
+    AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
+    AsyncWith: (n: py.AsyncWith) => stmtTODO(n),
+    Global: (n: py.Global) =>
+        B.mkStmt(B.mkText("TODO: global: "), B.mkGroup(n.names.map(B.mkText))),
+    Nonlocal: (n: py.Nonlocal) =>
+        B.mkStmt(B.mkText("TODO: nonlocal: "), B.mkGroup(n.names.map(B.mkText))),
+}
+
+function quote(id: py.identifier) {
+    if (B.isReservedWord(id))
+        return B.mkText(id + "_")
+    return B.mkText(id)
+}
+
+function isCallTo(n: py.Expr, fn: string) {
+    if (n.kind != "Call")
+        return false
+    let c = n as py.Call
+    if (c.func.kind != "Name")
+        return false
+    return (c.func as py.Name).id == fn
+}
+
+const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
+    BoolOp: (n: py.BoolOp) => exprTODO(n),
+    BinOp: (n: py.BinOp) => exprTODO(n),
+    UnaryOp: (n: py.UnaryOp) => exprTODO(n),
+    Lambda: (n: py.Lambda) => exprTODO(n),
+    IfExp: (n: py.IfExp) => exprTODO(n),
+    Dict: (n: py.Dict) => exprTODO(n),
+    Set: (n: py.Set) => exprTODO(n),
+    ListComp: (n: py.ListComp) => exprTODO(n),
+    SetComp: (n: py.SetComp) => exprTODO(n),
+    DictComp: (n: py.DictComp) => exprTODO(n),
+    GeneratorExp: (n: py.GeneratorExp) => exprTODO(n),
+    Await: (n: py.Await) => exprTODO(n),
+    Yield: (n: py.Yield) => exprTODO(n),
+    YieldFrom: (n: py.YieldFrom) => exprTODO(n),
+    Compare: (n: py.Compare) => exprTODO(n),
+    Call: (n: py.Call) => {
+        return exprTODO(n)
+    },
+    Num: (n: py.Num) => B.mkText(n.n + ""),
+    Str: (n: py.Str) => B.mkText(B.stringLit(n.s)),
+    FormattedValue: (n: py.FormattedValue) => exprTODO(n),
+    JoinedStr: (n: py.JoinedStr) => exprTODO(n),
+    Bytes: (n: py.Bytes) => exprTODO(n),
+    NameConstant: (n: py.NameConstant) => exprTODO(n),
+    Ellipsis: (n: py.Ellipsis) => exprTODO(n),
+    Constant: (n: py.Constant) => exprTODO(n),
+    Attribute: (n: py.Attribute) => exprTODO(n),
+    Subscript: (n: py.Subscript) => exprTODO(n),
+    Starred: (n: py.Starred) => exprTODO(n),
+    Name: (n: py.Name) => quote(n.id),
+    List: (n: py.List) => exprTODO(n),
+    Tuple: (n: py.Tuple) => exprTODO(n),
+}
 
 function expr(e: py.Expr): B.JsNode {
-    return null
+    let f = exprMap[e.kind]
+    if (!f) {
+        U.oops(e.kind + " - unknown expr")
+    }
+    return f(e)
 }
 
 function stmt(e: py.Stmt): B.JsNode {
-    return null
+    let f = stmtMap[e.kind]
+    if (!f) {
+        U.oops(e.kind + " - unknown stmt")
+    }
+    return f(e)
 }
 
 export function convertAsync(fn: string) {
@@ -461,6 +576,9 @@ export function convertAsync(fn: string) {
                 return v
             }
             js = rec(js)
-            console.log(JSON.stringify(js, null, 1))
+            U.assert(js.kind == "Module")
+            let nodes = js.body.map(stmt)
+            let res = B.flattenNode(nodes)
+            console.log(res.output)
         })
 }
