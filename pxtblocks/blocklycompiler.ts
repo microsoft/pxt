@@ -49,13 +49,13 @@ namespace pxt.blocks {
 
     let placeholders: Map<Map<any>> = {};
 
-    function stringLit(s: string) {
+    export function stringLit(s: string) {
         if (s.length > 20 && /\n/.test(s))
             return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
         else return JSON.stringify(s)
     }
 
-    function mkNode(tp: NT, pref: string, children: JsNode[]): JsNode {
+    export function mkNode(tp: NT, pref: string, children: JsNode[]): JsNode {
         return {
             type: tp,
             op: pref,
@@ -63,22 +63,22 @@ namespace pxt.blocks {
         }
     }
 
-    function mkNewLine() {
+    export function mkNewLine() {
         return mkNode(NT.NewLine, "", [])
     }
 
-    function mkPrefix(pref: string, children: JsNode[]) {
+    export function mkPrefix(pref: string, children: JsNode[]) {
         return mkNode(NT.Prefix, pref, children)
     }
 
-    function mkInfix(child0: JsNode, op: string, child1: JsNode) {
+    export function mkInfix(child0: JsNode, op: string, child1: JsNode) {
         return mkNode(NT.Infix, op, [child0, child1])
     }
 
     export function mkText(s: string) {
         return mkPrefix(s, [])
     }
-    function mkBlock(nodes: JsNode[]) {
+    export function mkBlock(nodes: JsNode[]) {
         return mkNode(NT.Block, "", nodes)
     }
 
@@ -86,12 +86,12 @@ namespace pxt.blocks {
         return mkPrefix("", nodes)
     }
 
-    function mkStmt(...nodes: JsNode[]) {
+    export function mkStmt(...nodes: JsNode[]) {
         nodes.push(mkNewLine())
         return mkGroup(nodes)
     }
 
-    function mkCommaSep(nodes: JsNode[], externalInputs: boolean) {
+    export function mkCommaSep(nodes: JsNode[], externalInputs: boolean) {
         const r: JsNode[] = []
         for (const n of nodes) {
             if (externalInputs) {
@@ -107,7 +107,7 @@ namespace pxt.blocks {
     }
 
     // A series of utility functions for constructing various J* AST nodes.
-    namespace Helpers {
+    export namespace Helpers {
 
         export function mkArrayLiteral(args: JsNode[]) {
             return mkGroup([
@@ -209,7 +209,7 @@ namespace pxt.blocks {
         }
     }
 
-    import H = Helpers;
+    export import H = Helpers;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Miscellaneous utility functions
@@ -450,7 +450,7 @@ namespace pxt.blocks {
 
                     case "controls_if":
                         for (let i = 0; i <= (<B.IfBlock>b).elseifCount_; ++i)
-                        attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
+                            attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
                         break;
 
                     case "controls_simple_for":
@@ -1541,6 +1541,21 @@ namespace pxt.blocks {
     }
 
     function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
+        let res = flattenNode(app)
+
+        // Note: the result of format is not used!
+
+        return workerOpAsync("format", { format: { input: res.output, pos: 1 } }).then(() => {
+            return {
+                source: res.output,
+                sourceMap: res.sourceMap,
+                stats: env.stats
+            };
+        })
+
+    }
+
+    export function flattenNode(app: JsNode[]) {
         let sourceMap: SourceInterval[] = [];
         let output = ""
         let indent = ""
@@ -1570,17 +1585,6 @@ namespace pxt.blocks {
                 } else {
                     let bindLeft = infixPri != 3 && e.op != "**"
                     let letType: string = undefined;
-                    /*
-                    if (e.name == "=" && e.args[0].nodeType == 'localRef') {
-                        let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
-                        let varname = varloc.name;
-                        if (!variables[variables.length - 1][varname]) {
-                            variables[variables.length - 1][varname] = "1";
-                            pushOp("let")
-                            letType = varloc.type as any as string;
-                        }
-                    }
-                    */
                     rec(e.children[0], bindLeft ? infixPri : infixPri + 0.1)
                     r.push(e.children[0])
                     if (letType && letType != "number") {
@@ -1612,14 +1616,7 @@ namespace pxt.blocks {
         if (!output)
             output += "\n"
 
-        // outformat async
-        return workerOpAsync("format", { format: {input: output, pos: 1} }).then(() => {
-            return {
-                source: output,
-                sourceMap: sourceMap,
-                stats: env.stats
-            };
-        })
+        return { output, sourceMap }
 
         function emit(n: JsNode) {
             if (n.glueToBlock) {
