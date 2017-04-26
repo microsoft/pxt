@@ -1198,6 +1198,12 @@ namespace pxt.blocks {
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
 
+        r.forEach(l => {
+            if (l.type === NT.Block) {
+                l.id = b.id
+            }
+        });
+
         if (comments.length) {
             addCommentNodes(comments, r)
         }
@@ -1487,10 +1493,17 @@ namespace pxt.blocks {
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
+        let bestChunk: SourceInterval;
+        let bestChunkLength: number;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length)
-                return chunk.id;
+            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
+                bestChunk = chunk;
+                bestChunkLength = chunk.end - chunk.start;
+            }
+        }
+        if (bestChunk) {
+            return bestChunk.id;
         }
         return undefined;
     }
@@ -1542,6 +1555,7 @@ namespace pxt.blocks {
 
     function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
         let sourceMap: SourceInterval[] = [];
+        let sourceMapById: pxt.Map<SourceInterval> = {};
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
@@ -1653,7 +1667,16 @@ namespace pxt.blocks {
             let end = getCurrentLine();
 
             if (n.id && start != end) {
-                sourceMap.push({ id: n.id, start: start, end: end })
+                if (sourceMapById[n.id]) {
+                    const node = sourceMapById[n.id];
+                    node.start = Math.min(node.start, start);
+                    node.end = Math.max(node.end, end);
+                }
+                else {
+                    const interval = { id: n.id, start: start, end: end }
+                    sourceMapById[n.id] = interval;
+                    sourceMap.push(interval)
+                }
             }
         }
 
