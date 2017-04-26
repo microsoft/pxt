@@ -99,7 +99,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    if (!tutorialMode) {
+                    if (!tutorialMode && !pxt.shell.isSandboxMode()) {
                         const modalOpts: core.ConfirmOptions = {
                             header: msg.header,
                             body: msg.body,
