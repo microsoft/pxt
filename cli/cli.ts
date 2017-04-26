@@ -2012,7 +2012,7 @@ class Host
                 }
                 let proto = pkg.verProtocol()
                 if (proto == "file") {
-                    console.log(`skip download of local pkg: ${pkg.version()}`)
+                    pxt.log(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
                 } else {
                     return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
