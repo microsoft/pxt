@@ -796,6 +796,7 @@ export class ProjectView
     }
 
     newEmptyProject(name?: string, documentation?: string) {
+        this.setState({tutorialOptions: {}});
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name, documentation
