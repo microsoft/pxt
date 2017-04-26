@@ -3,10 +3,10 @@
 namespace pxsim {
     export var quiet = false;
 
-    export function check(cond: boolean) {
+    export function check(cond: boolean, msg: string = "sim: check failed") {
         if (!cond) {
             debugger
-            throw new Error("sim: check failed")
+            throw new Error(msg)
         }
     }
 
@@ -343,7 +343,7 @@ namespace pxsim {
 
         export function nullCheck(v: any) {
             if (!v)
-                U.userError("Using null value.")
+                U.userError("Dereferencing null value.")
         }
 
         export function panic(code: number) {

@@ -9,7 +9,7 @@ namespace helpers {
             arr.removeAt(start)
         }
     }
-    
+
     export function arrayReverse<T>(arr: T[]) : void {
         let len = arr.length;
         for (let i = 0; i < len/2; i++)
@@ -44,7 +44,7 @@ namespace helpers {
     function sortHelper<T>(arr: T[], callbackfn ?: (value1: T, value2: T) => number) : T[] {
         if (arr.length <= 0 || !callbackfn) {
             return arr;
-        }        
+        }
         let len = arr.length; 
         // simple selection sort.     
         for (let i = 0; i < len - 1; ++i) {
