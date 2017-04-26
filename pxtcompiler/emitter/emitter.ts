@@ -488,10 +488,11 @@ namespace ts.pxtc {
     }
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
+        let interName = checker.getFullyQualifiedName(decl.symbol)
         for (let cl in classes) {
-            // TODO: namespace??? correct name checking??
-            if (classes[cl].decl.name.text == decl.name.text)
-                 userError(9261, lf("Interface with same name as a class not supported."))
+            if (checker.getFullyQualifiedName(classes[cl].decl.symbol) == interName) {
+                 userError(9261, lf("Interface with same name as a class not supported: " + interName))
+            }
         }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
@@ -1810,7 +1811,7 @@ ${lbl}: .short 0xffff
             let isMethod = false
             if (decl) {
                 switch (decl.kind) {
-                    // note that we treat properties via an indirect call
+                    // we treat properties via calls
                     // so we say they are "methods"
                     case SK.PropertySignature:
                     case SK.PropertyAssignment:
@@ -1911,22 +1912,19 @@ ${lbl}: .short 0xffff
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
             }
-            // more special cases (need to be very careful here)
             if (isMethod) {
                 let isSuper = false
                 if (isStatic(decl)) {
                     // no additional arguments
-                } else if (recv) { // || funcExpr.kind == SK.PropertyAccessExpression) {
-                    // if (!recv)
-                    //    recv = (<PropertyAccessExpression>funcExpr).expression
+                } else if (recv) {
                     if (recv.kind == SK.SuperKeyword) {
                         isSuper = true
                     }
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
-                } //else
-                  //   unhandled(node, lf("strange method call"), 9241)
+                } else
+                    unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
                 // if we call a method and it overrides then
                 // mark the virtual root class and all its overrides as used,
@@ -1967,11 +1965,9 @@ ${lbl}: .short 0xffff
                     let name = getName(decl)
                     return mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
                 } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
-                    // TODO: need to make the above check more precise, we are getting into this case
-                    // TODO: when we shouldn't be, such as x.foo(), where foo is a property, thus we
-                    // TODO: are stripping the ()s
-                    // HACK: this is just to see what happens
                     if (node == funcExpr) {
+                        // in this special base case, we have property access recv.foo
+                        // where recv is a map obejct 
                         let name = getName(decl)
                         let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
                         if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
@@ -1986,14 +1982,14 @@ ${lbl}: .short 0xffff
                             } else {
                                 if (isRefType(typeOf(node)))
                                     refSuff = "Ref"
-                                // why don't we set pid.ifaceIndex here?
-                                // pid.ifaceIndex = getIfaceMemberId("get/" + name)
                                 pid.mapMethod = "pxtrt::mapGet" + refSuff
                             }
                         }
                         return res
                     } else {
-                        // remove recv
+                        // in this case, recv.foo represents a function/lambda
+                        // so the receiver is not needed, as we have already done 
+                        // the property lookup to get the lambda
                         args.shift()
                         callInfo.args.shift()
                     }
@@ -2013,9 +2009,7 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // michal: otherwise we assume a lambda 
-            // tball: this is not quite correct, we could be here because of 
-            // tball: something foo()(2,3)
+            // otherwise we assume a lambda 
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
