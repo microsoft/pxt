@@ -1551,8 +1551,7 @@ ${lbl}: .short 0xffff
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
             if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) 
-                      || decl.kind == SK.PropertySignature
-                      || decl.kind == SK.PropertyAssignment) {
+                      || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression,false)
                 if (!decl)
                     return ir.numlit(0)
@@ -1809,12 +1808,13 @@ ${lbl}: .short 0xffff
             if (!decl)
                 decl = getDecl(funcExpr) as FunctionLikeDeclaration
             let isMethod = false
-            if (decl)
+            if (decl) {
                 switch (decl.kind) {
                     // note that we treat properties via an indirect call
                     // so we say they are "methods"
                     case SK.PropertySignature:
                     case SK.PropertyAssignment:
+                    // TOTO case: case SK.ShorthandPropertyAssignment
                     // these are the real methods
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
@@ -1830,7 +1830,7 @@ ${lbl}: .short 0xffff
                         decl = null; // no special handling
                         break;
                 }
-
+            }
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
@@ -1916,17 +1916,17 @@ ${lbl}: .short 0xffff
                 let isSuper = false
                 if (isStatic(decl)) {
                     // no additional arguments
-                } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
-                    if (!recv)
-                        recv = (<PropertyAccessExpression>funcExpr).expression
+                } else if (recv) { // || funcExpr.kind == SK.PropertyAccessExpression) {
+                    // if (!recv)
+                    //    recv = (<PropertyAccessExpression>funcExpr).expression
                     if (recv.kind == SK.SuperKeyword) {
                         isSuper = true
                     }
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
                     bindings = getTypeBindings(typeOf(recv)).concat(bindings)
-                } else
-                    unhandled(node, lf("strange method call"), 9241)
+                } //else
+                  //   unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
                 // if we call a method and it overrides then
                 // mark the virtual root class and all its overrides as used,
@@ -1992,6 +1992,10 @@ ${lbl}: .short 0xffff
                             }
                         }
                         return res
+                    } else {
+                        // remove recv
+                        args.shift()
+                        callInfo.args.shift()
                     }
                 } else {
                     markFunctionUsed(decl, bindings)
@@ -2535,7 +2539,7 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && decl.kind == SK.PropertySignature) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))

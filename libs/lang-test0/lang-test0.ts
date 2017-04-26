@@ -1476,8 +1476,11 @@ namespace AnonymousTypes {
     export function test() {
         msg("AnonymousTypes")
         let x = { a: 2, b: "bar" }
+        let nested = { a: { b: { c: 3 } } }
+
         let bar = new Foo(42)
         let baz: {a: number} = bar
+        control.assert(nested.a.b.c == 3)
         control.assert(x.a == 2);
         control.assert(x.b == "bar");
         control.assert(foo(x) == 3);
