@@ -19,6 +19,8 @@ export interface SpawnOptions {
     cwd?: string;
     shell?: boolean;
     pipe?: boolean;
+    input?: string;
+    silent?: boolean;
 }
 
 //This should be correct at startup when running from command line
@@ -75,7 +77,7 @@ export function spawnAsync(opts: SpawnOptions) {
         .then(() => { })
 }
 
-export function spawnWithPipeAsync(opts: SpawnOptions, silent: boolean = false) {
+export function spawnWithPipeAsync(opts: SpawnOptions) {
     if (opts.pipe === undefined) opts.pipe = true
     let info = opts.cmd + " " + opts.args.join(" ")
     if (opts.cwd && opts.cwd != ".") info = "cd " + opts.cwd + "; " + info
@@ -84,14 +86,14 @@ export function spawnWithPipeAsync(opts: SpawnOptions, silent: boolean = false) 
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
             env: process.env,
-            stdio: opts.pipe ? [process.stdin, "pipe", process.stderr] : "inherit",
+            stdio: opts.pipe ? [opts.input == null ? process.stdin : "pipe", "pipe", process.stderr] : "inherit",
             shell: opts.shell || false
         } as any)
         let bufs: Buffer[] = []
         if (opts.pipe)
             ch.stdout.on('data', (buf: Buffer) => {
                 bufs.push(buf)
-                if (!silent) {
+                if (!opts.silent) {
                     process.stdout.write(buf)
                 }
             })
@@ -100,6 +102,8 @@ export function spawnWithPipeAsync(opts: SpawnOptions, silent: boolean = false) 
                 reject(new Error("Exit code: " + code + " from " + info))
             resolve(Buffer.concat(bufs))
         });
+        if (opts.input != null)
+            ch.stdin.end(opts.input, "utf8")
     })
 }
 
@@ -132,8 +136,9 @@ export function gitInfoAsync(args: string[], cwd?: string, silent: boolean = fal
         .then(() => spawnWithPipeAsync({
             cmd: "git",
             args: args,
-            cwd
-        }, silent))
+            cwd,
+            silent
+        }))
         .then(buf => buf.toString("utf8").trim())
 }
 

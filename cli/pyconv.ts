@@ -1,11 +1,15 @@
-module py {
+export module py {
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
         lineno: number;
         kind: string;
     }
-    export interface Stmt extends AST { }
-    export interface Expr extends AST { }
+    export interface Stmt extends AST { 
+        _stmtBrand: void;
+    }
+    export interface Expr extends AST { 
+        _exprBrand: void;
+    }
 
     export type expr_context = "Load" | "Store" | "Del" | "AugLoad" | "AugStore" | "Param"
     export type boolop = "And" | "Or"
@@ -68,7 +72,9 @@ module py {
         optional_vars?: Expr;
     }
 
-    export interface AnySlice extends AST { }
+    export interface AnySlice extends AST { 
+        _anySliceBrand: void;
+    }
     export interface Slice extends AnySlice {
         kind: "Slice";
         lower?: Expr;
@@ -371,4 +377,90 @@ module py {
         elts: Expr[];
         ctx: expr_context;
     }
+}
+
+
+import * as nodeutil from './nodeutil';
+import U = pxt.Util;
+import B = pxt.blocks;
+
+let convPy = `
+import ast
+import sys
+import json
+
+def to_json(val):
+    if val is None or isinstance(val, (bool, str, int, float)):
+        return val
+    if isinstance(val, list):
+        return [to_json(x) for x in val]
+    if isinstance(val, ast.AST):
+        js = dict()
+        js['kind'] = val.__class__.__name__
+        for attr_name in dir(val):
+            if not attr_name.startswith("_") and attr_name != "col_offset":
+                js[attr_name] = to_json(getattr(val, attr_name))
+        return js    
+    if isinstance(val, (bytearray, bytes)):
+        return [x for x in val]
+    raise Exception("unhandled: %s (type %s)" % (val, type(val)))
+
+print(json.dumps(to_json(ast.parse(open("@file@", "r").read()))))
+`
+
+let nameMap: pxt.Map<string> = {
+    "Expr": "ExprStmt",
+    "arg": "Arg",
+    "arguments": "Arguments",
+    "keyword": "Keyword",
+    "comprehension": "Comprehension",
+    "alias": "Alias",
+    "withitem": "WithItem"
+}
+
+let simpleNames: pxt.Map<boolean> = {
+    "Load": true, "Store": true, "Del": true, "AugLoad": true, "AugStore": true, "Param": true, "And": true,
+    "Or": true, "Add": true, "Sub": true, "Mult": true, "MatMult": true, "Div": true, "Mod": true, "Pow": true,
+    "LShift": true, "RShift": true, "BitOr": true, "BitXor": true, "BitAnd": true, "FloorDiv": true,
+    "Invert": true, "Not": true, "UAdd": true, "USub": true, "Eq": true, "NotEq": true, "Lt": true, "LtE": true,
+    "Gt": true, "GtE": true, "Is": true, "IsNot": true, "In": true, "NotIn": true,
+}
+
+
+function expr(e: py.Expr): B.JsNode {
+    return null
+}
+
+function stmt(e: py.Stmt): B.JsNode {
+    return null
+}
+
+export function convertAsync(fn: string) {
+    return nodeutil.spawnWithPipeAsync({
+        cmd: "python3",
+        args: [],
+        input: convPy.replace("@file@", fn),
+        silent: true
+    })
+        .then(buf => {
+            let js = JSON.parse(buf.toString("utf8"))
+            let rec = (v: any): any => {
+                if (Array.isArray(v)) {
+                    for (let i = 0; i < v.length; ++i)
+                        v[i] = rec(v[i])
+                    return v
+                }
+                if (!v || !v.kind)
+                    return v
+                v.kind = U.lookup(nameMap, v.kind) || v.kind
+                if (U.lookup(simpleNames, v.kind))
+                    return v.kind
+                for (let k of Object.keys(v)) {
+                    v[k] = rec(v[k])
+                }
+                return v
+            }
+            js = rec(js)
+            console.log(JSON.stringify(js, null, 1))
+        })
 }

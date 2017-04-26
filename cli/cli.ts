@@ -2,6 +2,7 @@
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
+/// <reference path="../built/pxtblocks.d.ts" />
 
 (global as any).pxt = pxt;
 
@@ -23,6 +24,7 @@ import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
+import * as pyconv from './pyconv';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 const rtlcss = require('rtlcss');
@@ -4324,6 +4326,7 @@ function initCommands() {
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
+    advancedCommand("pyconv", "convert from python", c => pyconv.convertAsync(c.arguments[0]), "<filename>")
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({
