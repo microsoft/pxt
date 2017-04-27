@@ -442,7 +442,7 @@ function docComment(cmt: string) {
     if (cmt.trim().split(/\n/).length <= 1)
         cmt = cmt.trim()
     else
-        cmt = cmt.replace(/\n/g, "\n * ") + "\n"
+        cmt = cmt + "\n"
     return B.mkStmt(B.mkText("/** " + cmt + " */"))
 }
 
@@ -454,11 +454,13 @@ interface VarDesc {
     isParam?: boolean;
 }
 
-let ctx = {
-    currClass: null as py.ClassDef,
-    currFun: null as py.FunctionDef,
-    vars: {} as pxt.Map<VarDesc>,
+interface Ctx {
+    currClass: py.ClassDef;
+    currFun: py.FunctionDef;
+    vars: pxt.Map<VarDesc>;
 }
+
+let ctx: Ctx
 
 function resetCtx() {
     ctx = {
@@ -661,6 +663,8 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
             return stmtTODO(n)
         let trg = expr(n.targets[0])
         if (isCallTo(n.value, "const")) {
+            // first run would have "let" in it
+            trg = expr(n.targets[0])
             return B.mkStmt(B.mkText("const "),
                 B.mkInfix(trg, "=", expr((n.value as py.Call).args[0])))
         }
@@ -702,15 +706,26 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
             stmts(n.body))
     },
     If: (n: py.If) => {
-        let nodes = [
-            B.mkText("if ("),
-            expr(n.test),
-            B.mkText(")"),
-            stmts(n.body)
-        ]
-        if (n.orelse.length)
-            nodes.push(B.mkText("else"), stmts(n.orelse))
-        return B.mkStmt(B.mkGroup(nodes))
+        let innerIf = (n: py.If) => {
+            let nodes = [
+                B.mkText("if ("),
+                expr(n.test),
+                B.mkText(")"),
+                stmts(n.body)
+            ]
+            if (n.orelse.length) {
+                nodes[nodes.length - 1].noFinalNewline = true
+                if (n.orelse.length == 1 && n.orelse[0].kind == "If") {
+                    // else if
+                    nodes.push(B.mkText(" else "))
+                    U.pushRange(nodes, innerIf(n.orelse[0] as py.If))
+                } else {
+                    nodes.push(B.mkText(" else"), stmts(n.orelse))
+                }
+            }
+            return nodes
+        }
+        return B.mkStmt(B.mkGroup(innerIf(n)))
     },
     With: (n: py.With) => {
         let cleanup: B.JsNode[] = []
@@ -967,6 +982,7 @@ function stmt(e: py.Stmt): B.JsNode {
 
 function toTS(js: py.AST) {
     U.assert(js.kind == "Module")
+    resetCtx()
     let nodes = (js as any).body.map(stmt)
     let res = B.flattenNode(nodes)
     return res.output
