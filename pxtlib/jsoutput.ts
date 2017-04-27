@@ -201,7 +201,8 @@ namespace pxt.blocks {
         "=": 3,
         "+=": 3,
         "-=": 3,
-        // 4 = conditional (?:)
+        "?": 4,
+        ":": 4,
         "||": 5,
         "&&": 6,
         "|": 7,
@@ -217,7 +218,7 @@ namespace pxt.blocks {
         ">": 11,
         "<=": 11,
         ">=": 11,
-        // 12 = bitise shift
+        // 12 = bitwise shift
         ">>": 12,
         ">>>": 12,
         "<<": 12,

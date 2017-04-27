@@ -578,21 +578,39 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
     FunctionDef: (n: py.FunctionDef) => scope(() => {
         let isMethod = !!ctx.currClass && !ctx.currFun
         ctx.currFun = n
+        let prefix = ""
+        let funname = n.name
+        let decs = n.decorator_list.filter(d => {
+            if (d.kind == "Name" && (d as py.Name).id == "property") {
+                prefix = "get"
+                return false
+            }
+            if (d.kind == "Attribute" && (d as py.Attribute).attr == "setter" &&
+                (d as py.Attribute).value.kind == "Name") {
+                funname = ((d as py.Attribute).value as py.Name).id
+                prefix = "set"
+                return false
+            }
+            return true
+        })
         let nodes = [
-            todoComment("decorators", n.decorator_list.map(expr))
+            todoComment("decorators", decs.map(expr))
         ]
         if (isMethod) {
             if (n.name == "__init__")
                 nodes.push(B.mkText("constructor"))
-            else if (n.name[0] == "_")
-                nodes.push(B.mkText("private "), quote(n.name))
-            else
-                nodes.push(B.mkText("public "), quote(n.name))
+            else {
+                if (!prefix) {
+                    prefix = n.name[0] == "_" ? "private" : "public"
+                }
+                nodes.push(B.mkText(prefix + " "), quote(funname))
+            }
         } else {
+            U.assert(!prefix)
             if (n.name[0] == "_")
-                nodes.push(B.mkText("function "), quote(n.name))
+                nodes.push(B.mkText("function "), quote(funname))
             else
-                nodes.push(B.mkText("export function "), quote(n.name))
+                nodes.push(B.mkText("export function "), quote(funname))
         }
         nodes.push(
             doArgs(n.args, isMethod),
@@ -843,7 +861,8 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
         return B.mkInfix(null, op, expr(n.operand))
     },
     Lambda: (n: py.Lambda) => exprTODO(n),
-    IfExp: (n: py.IfExp) => exprTODO(n),
+    IfExp: (n: py.IfExp) =>
+        B.mkInfix(B.mkInfix(expr(n.test), "?", expr(n.body)), ":", expr(n.orelse)),
     Dict: (n: py.Dict) => exprTODO(n),
     Set: (n: py.Set) => exprTODO(n),
     ListComp: (n: py.ListComp) => exprTODO(n),
@@ -861,13 +880,23 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
         return r
     },
     Call: (n: py.Call) => {
-        return B.mkGroup([
+        let allargs = n.args.map(expr)
+        if (n.keywords.length > 0) {
+            let kwargs = n.keywords.map(kk => B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
+            allargs.push(B.mkGroup([
+                B.mkText("{"),
+                B.mkCommaSep(kwargs),
+                B.mkText("}")
+            ]))
+        }
+
+        let nodes = [
             expr(n.func),
             B.mkText("("),
-            B.mkCommaSep(n.args.map(expr)),
-            todoComment("keywords", n.keywords.map(k => expr(k.value))),
+            B.mkCommaSep(allargs),
             B.mkText(")")
-        ])
+        ]
+        return B.mkGroup(nodes)
     },
     Num: (n: py.Num) => B.mkText(n.n + ""),
     Str: (n: py.Str) => B.mkText(B.stringLit(n.s)),
