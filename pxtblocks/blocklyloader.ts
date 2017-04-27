@@ -176,9 +176,10 @@ namespace pxt.blocks {
             let isAdvanced = nsn && nsn.attributes.advanced;
 
             if (nsn) ns = nsn.attributes.block || ns;
-            let catName = ns
-            if (!catName)
-                catName = ts.pxtc.blocksCategory(fn);
+            let catName = ts.pxtc.blocksCategory(fn);
+            if (nsn && nsn.attributes.block)
+                catName = nsn.attributes.block
+
             let category = categoryElement(tb, catName);
 
             if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
