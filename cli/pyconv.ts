@@ -769,7 +769,7 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
             stmts(n.body),
         ]
         for (let e of n.handlers) {
-            r.push(B.mkText("catch ("), e.name? quote(e.name) : B.mkText("_"))
+            r.push(B.mkText("catch ("), e.name ? quote(e.name) : B.mkText("_"))
             // This isn't JS syntax, but PXT doesn't support try at all anyway
             if (e.type)
                 r.push(B.mkText(" instanceof "), expr(e.type))
@@ -873,7 +873,10 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
     Str: (n: py.Str) => B.mkText(B.stringLit(n.s)),
     FormattedValue: (n: py.FormattedValue) => exprTODO(n),
     JoinedStr: (n: py.JoinedStr) => exprTODO(n),
-    Bytes: (n: py.Bytes) => exprTODO(n),
+    Bytes: (n: py.Bytes) => {
+        let hex = B.stringLit(U.toHex(new Uint8Array(n.s)))
+        return B.H.mkCall("pins.createBufferFromHex", [B.mkText(hex)])
+    },
     NameConstant: (n: py.NameConstant) => B.mkText(JSON.stringify(n.value)),
     Ellipsis: (n: py.Ellipsis) => exprTODO(n),
     Constant: (n: py.Constant) => exprTODO(n),
