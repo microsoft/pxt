@@ -63,7 +63,12 @@ namespace pxt.blocks {
     }
 
     export function mkStmt(...nodes: JsNode[]) {
-        nodes.push(mkNewLine())
+        let last = nodes[nodes.length - 1]
+        if (last && last.type == NT.Block) {
+            // OK - no newline needed
+        } else {
+            nodes.push(mkNewLine())
+        }
         return mkGroup(nodes)
     }
 
@@ -362,7 +367,9 @@ namespace pxt.blocks {
             let vars = U.clone<Map<string>>(variables[variables.length - 1] || {});
             variables.push(vars);
             indent += "    "
-            write(" {\n")
+            if (output[output.length - 1] != " ")
+                write(" ")
+            write("{\n")
             for (let nn of n.children)
                 emit(nn)
             indent = indent.slice(4)

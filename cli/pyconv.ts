@@ -675,7 +675,14 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
             B.mkText(")"),
             stmts(n.body))
     },
-    While: (n: py.While) => stmtTODO(n),
+    While: (n: py.While) => {
+        U.assert(n.orelse.length == 0)
+        return B.mkStmt(
+            B.mkText("while ("),
+            expr(n.test),
+            B.mkText(")"),
+            stmts(n.body))
+    },
     If: (n: py.If) => {
         let nodes = [
             B.mkText("if ("),
@@ -705,7 +712,22 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
         U.pushRange(stmts, cleanup)
         return B.mkBlock(stmts)
     },
-    Raise: (n: py.Raise) => stmtTODO(n),
+    Raise: (n: py.Raise) => {
+        let ex = n.exc || n.cause
+        if (!ex)
+            return B.mkStmt(B.mkText("throw"))
+        let msg: B.JsNode
+        if (ex && ex.kind == "Call") {
+            let cex = ex as py.Call
+            if (cex.args[0] && cex.args[0].kind == "Str") {
+                msg = expr(cex.args[0])
+            }
+        }
+        // didn't find string - just compile and quote; and hope for the best
+        if (!msg)
+            msg = B.mkGroup([B.mkText("`"), expr(ex), B.mkText("`")])
+        return B.mkStmt(B.H.mkCall("control.assert", [B.mkText("false"), msg]))
+    },
     Assert: (n: py.Assert) => B.mkStmt(B.H.mkCall("control.assert", exprs0([n.test, n.msg]))),
     Import: (n: py.Import) => {
         for (let nm of n.names) {
@@ -741,7 +763,22 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
     Continue: (n: py.Continue) => B.mkStmt(B.mkText("break")),
 
     Delete: (n: py.Delete) => stmtTODO(n),
-    Try: (n: py.Try) => stmtTODO(n),
+    Try: (n: py.Try) => {
+        let r = [
+            B.mkText("try"),
+            stmts(n.body),
+        ]
+        for (let e of n.handlers) {
+            r.push(B.mkText("catch ("), e.name? quote(e.name) : B.mkText("_"))
+            // This isn't JS syntax, but PXT doesn't support try at all anyway
+            if (e.type)
+                r.push(B.mkText(" instanceof "), expr(e.type))
+            r.push(B.mkText(")"), stmts(e.body))
+        }
+        if (n.finalbody.length)
+            r.push(B.mkText("finally"), stmts(n.finalbody))
+        return B.mkStmt(B.mkGroup(r))
+    },
     AnnAssign: (n: py.AnnAssign) => stmtTODO(n),
     AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
     AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
