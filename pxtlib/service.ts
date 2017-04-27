@@ -103,6 +103,7 @@ namespace ts.pxtc {
         blockImportId?: string;
         blockBuiltin?: boolean;
         blockNamespace?: string;
+        blockFriendlyNamespace?: string;
         blockIdentity?: string;
         blockAllowMultiple?: boolean; // override single block behavior for events
         blockHidden?: boolean; // not available directly in toolbox
@@ -259,8 +260,12 @@ namespace ts.pxtc {
      * Unlocalized category name for a symbol
      */
     export function blocksCategory(si: SymbolInfo): string {
-        const n = !si ? undefined : (si.attributes.blockNamespace || si.namespace);
-        return n ? Util.capitalize(n.split('.')[0]) : undefined;
+        if (si && si.attributes.blockFriendlyNamespace) {
+            return si.attributes.blockFriendlyNamespace;
+        } else {
+            const n = !si ? undefined : (si.attributes.blockNamespace || si.namespace);
+            return n ? Util.capitalize(n.split('.')[0]) : undefined;
+        }
     }
 
     export function getBlocksInfo(info: ApisInfo): BlocksInfo {
