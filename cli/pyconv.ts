@@ -1018,10 +1018,9 @@ export function convertAsync(fns: string[]) {
             delete js.kind
 
             U.iterMap(js, (fn: string, js: any) => {
-                console.log("*")
-                console.log("*")
-                console.log(fn)
-                console.log("*******************")
+                console.log("\n//")
+                console.log("// *** " + fn + " ***")
+                console.log("//\n")
                 console.log(toTS(js))
             })
         })
