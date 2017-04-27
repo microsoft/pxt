@@ -176,7 +176,7 @@ namespace pxt.blocks {
             let isAdvanced = nsn && nsn.attributes.advanced;
 
             if (nsn) ns = nsn.attributes.block || ns;
-            let catName = nsn ? ts.pxtc.blocksCategory(nsn) : undefined;
+            let catName = ns
             if (!catName)
                 catName = ts.pxtc.blocksCategory(fn);
             let category = categoryElement(tb, catName);

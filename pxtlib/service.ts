@@ -96,14 +96,13 @@ namespace ts.pxtc {
         promise?: boolean;
         hidden?: boolean;
         callingConvention: ir.CallingConvention;
-        block?: string; // format of the block
+        block?: string; // format of the block, used at namespace level for category name
         blockId?: string; // unique id of the block
         blockGap?: string; // pixels in toolbox after the block is inserted
         blockExternalInputs?: boolean; // force external inputs
         blockImportId?: string;
         blockBuiltin?: boolean;
         blockNamespace?: string;
-        blockFriendlyNamespace?: string;
         blockIdentity?: string;
         blockAllowMultiple?: boolean; // override single block behavior for events
         blockHidden?: boolean; // not available directly in toolbox
@@ -260,12 +259,8 @@ namespace ts.pxtc {
      * Unlocalized category name for a symbol
      */
     export function blocksCategory(si: SymbolInfo): string {
-        if (si && si.attributes.blockFriendlyNamespace) {
-            return si.attributes.blockFriendlyNamespace;
-        } else {
-            const n = !si ? undefined : (si.attributes.blockNamespace || si.namespace);
-            return n ? Util.capitalize(n.split('.')[0]) : undefined;
-        }
+        const n = !si ? undefined : (si.attributes.blockNamespace || si.namespace);
+        return n ? Util.capitalize(n.split('.')[0]) : undefined;
     }
 
     export function getBlocksInfo(info: ApisInfo): BlocksInfo {
