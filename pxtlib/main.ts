@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 /// <reference path="../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
@@ -306,7 +305,7 @@ namespace pxt {
                 .then(verNo => {
                     if (!/^embed:/.test(verNo) &&
                         this.config && this.config.installedVersion == verNo)
-                        return
+                        return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
@@ -550,7 +549,7 @@ namespace pxt {
                         Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
                                 .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
-                                .then((conflicts) => {
+                                .then((conflicts: cpp.PkgConflictError[]) => {
                                     if (conflicts.length) {
                                         const conflictNames = conflicts.map((c) => c.pkg0.id).join(", ");
                                         const settingNames = conflicts.map((c) => c.settingName).filter((s) => !!s).join(", ");

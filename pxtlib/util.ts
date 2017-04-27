@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
-
 namespace ts.pxtc {
     export var __dummy = 42;
 }
@@ -897,7 +895,7 @@ namespace ts.pxtc.BrowserImpl {
                     let res: Util.HttpResponse = {
                         statusCode: client.status,
                         headers: {},
-                        buffer: client.responseBody || client.response,
+                        buffer:  client.response,
                         text: options.responseArrayBuffer ? undefined : client.responseText,
                     }
                     client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {

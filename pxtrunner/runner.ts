@@ -139,9 +139,8 @@ namespace pxt.runner {
         Util.assert(!!pxt.appTarget);
 
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+        const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-
         patchSemantic();
         const cfg = pxt.webConfig
         return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live)
@@ -533,7 +532,8 @@ ${files["main.ts"]}
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^###[^#].*$/gmi);
-                if (steps.length < 1) return;
+                if (steps.length < 1) return undefined;
+
                 let options = steps[0];
                 steps = steps.slice(1, steps.length);
 
@@ -552,7 +552,7 @@ ${files["main.ts"]}
                 // Render current step
                 return renderMarkdownAsync(content, steps[step], { tutorial: true })
                     .then(() => {
-                        if (code == '') return;
+                        if (code == '') return undefined;
                         // Convert all blocks to blocks
                         return pxt.runner.decompileToBlocksAsync(code, {
                             emPixels: 14,

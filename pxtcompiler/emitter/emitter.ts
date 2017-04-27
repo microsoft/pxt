@@ -60,8 +60,6 @@ namespace ts.pxtc {
 
     function isRefType(t: Type) {
         checkType(t);
-        if (t.flags & TypeFlags.ThisType)
-            return true
         if (t.flags & TypeFlags.Null)
             return false
         if (t.flags & TypeFlags.Undefined)
@@ -148,7 +146,7 @@ namespace ts.pxtc {
         }
     }
 
-    function isEmptyStringLiteral(e: Expression | TemplateLiteralFragment) {
+    function isEmptyStringLiteral(e: Expression | TemplateTail | TemplateMiddle) {
         return isStringLiteral(e) && (e as LiteralExpression).text == ""
     }
 
@@ -358,30 +356,35 @@ namespace ts.pxtc {
         return (node.name as Identifier).text
     }
 
+    function isArrayType(t: Type) {
+        return isReferenceType(t) && t.symbol.name == "Array"
+    }
+
+    function isInterfaceType(t: Type)  {
+        return (t.flags & TypeFlags.Object && (<ObjectType>t).objectFlags & ObjectFlags.Interface);
+    }
+
+    function isReferenceType(t: Type) {
+        return (t.flags & TypeFlags.Object && (<ObjectType>t).objectFlags & ObjectFlags.Reference);
+    }
+
     function genericRoot(t: Type) {
-        if (t.flags & TypeFlags.Reference) {
+        if (isReferenceType(t)) {
             let r = t as TypeReference
             if (r.typeArguments && r.typeArguments.length)
                 return r.target
         }
-        return null
-    }
-
-    function isArrayType(t: Type) {
-        return (t.flags & TypeFlags.Reference) && t.symbol.name == "Array"
-    }
-
-    function isInterfaceType(t: Type) {
-        return !!(t.flags & TypeFlags.Interface) || !!(t.flags & TypeFlags.Anonymous)
+        return null;
     }
 
     function isClassType(t: Type) {
         // check if we like the class?
-        return !!(t.flags & TypeFlags.Class) || !!(t.flags & TypeFlags.ThisType)
+        return (t.flags & TypeFlags.Object) && (<ObjectType>t).objectFlags & ObjectFlags.Class;
     }
 
     function isObjectLiteral(t: Type) {
-        return t.symbol && (t.symbol.flags & (SymbolFlags.ObjectLiteral | SymbolFlags.TypeLiteral)) !== 0;
+        return (t.flags & TypeFlags.Object) && (<ObjectType>t).objectFlags & ObjectFlags.ObjectLiteral;
+        //return t.symbol && (t.symbol.flags & (SymbolFlags.ObjectLiteral | SymbolFlags.TypeLiteral)) !== 0;
     }
 
     function isStructureType(t: Type) {
@@ -534,7 +537,7 @@ namespace ts.pxtc {
     }
 
     let occursCheck: string[] = []
-    let cachedSubtypeQueries: Map<[boolean,string]> = {}
+    let cachedSubtypeQueries: MapLike<[boolean,string]> = {}
     function insertSubtype(key: string, val: [boolean,string]) {
         cachedSubtypeQueries[key] = val
         occursCheck.pop()
@@ -805,7 +808,8 @@ namespace ts.pxtc {
                         code: 9043,
                         messageText: lf("The hex file is not available, please connect to internet and try again.")
                     }],
-                    emitSkipped: true
+                    emitSkipped: true,
+                    emittedFiles : []
                 };
             }
 
@@ -884,7 +888,8 @@ namespace ts.pxtc {
 
         return {
             diagnostics: diagnostics.getDiagnostics(),
-            emitSkipped: !!opts.noEmit
+            emitSkipped: !!opts.noEmit,
+            emittedFiles: []
         }
 
         function error(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
@@ -937,7 +942,7 @@ namespace ts.pxtc {
                 case ts.SyntaxKind.TypeOfExpression:
                     syntax = lf("typeof")
                     break
-                case ts.SyntaxKind.SpreadElementExpression:
+                case ts.SyntaxKind.SpreadElement:
                     syntax = lf("spread")
                     break
                 case ts.SyntaxKind.TryStatement:
@@ -1481,7 +1486,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitTemplateExpression(node: TemplateExpression) {
-            let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
+            let concat = (a: ir.Expr, b: Expression | TemplateMiddle | TemplateTail) =>
                 isEmptyStringLiteral(b) ? a :
                     ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
                         a,
@@ -2339,7 +2344,7 @@ ${lbl}: .short 0xffff
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (!isUsed(node))
-                return;
+                return undefined;
 
             let attrs = parseComments(node)
             if (attrs.shim != null) {
@@ -2350,14 +2355,14 @@ ${lbl}: .short 0xffff
                         getParameters(node).length);
                 }
                 if (!hasShimDummy(node))
-                    return
+                    return undefined;
             }
 
-            if (node.flags & NodeFlags.Ambient)
-                return;
+            if (getCombinedModifierFlags(node) & ModifierFlags.Ambient)
+                return undefined;
 
             if (!node.body)
-                return;
+                return undefined;
 
             let info = getFunctionInfo(node)
             let lit: ir.Expr = null
@@ -2770,7 +2775,7 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitAsString(e: Expression | TemplateLiteralFragment): ir.Expr {
+        function emitAsString(e: Expression | TemplateHead | TemplateMiddle | TemplateTail): ir.Expr {
             let r = emitExpr(e)
             // TS returns 'any' as type of template elements
             if (isStringLiteral(e))
@@ -2816,7 +2821,7 @@ ${lbl}: .short 0xffff
             return v;
         }
 
-        function emitSpreadElementExpression(node: SpreadElementExpression) { }
+        function emitSpreadElementExpression(node: SpreadElement) { }
         function emitYieldExpression(node: YieldExpression) { }
         function emitBlock(node: Block) {
             node.statements.forEach(emit)
@@ -2828,7 +2833,7 @@ ${lbl}: .short 0xffff
             throw userError(9260, lf("variable needs to be defined using 'let' instead of 'var'"));
         }
         function emitVariableStatement(node: VariableStatement) {
-            if (node.flags & NodeFlags.Ambient)
+            if (getCombinedModifierFlags(node) & ModifierFlags.Ambient)
                 return;
             checkForLetOrConst(node.declarationList);
             node.declarationList.declarations.forEach(emit);
@@ -3145,10 +3150,10 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
-        function emitVariableDeclaration(node: VarOrParam): ir.Cell {
+        function emitVariableDeclaration(node: VarOrParam | BindingElement): ir.Cell {
             if (node.name.kind === SK.ObjectBindingPattern) {
                 if (!node.initializer) {
-                    (node.name as BindingPattern).elements.forEach(e => emitVariableDeclaration(e))
+                    (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVariableDeclaration(e))
                     return null;
                 }
                 else {
@@ -3231,7 +3236,7 @@ ${lbl}: .short 0xffff
         }
         function emitEnumMember(node: EnumMember) { }
         function emitModuleDeclaration(node: ModuleDeclaration) {
-            if (node.flags & NodeFlags.Ambient)
+            if (getCombinedModifierFlags(node) & ModifierFlags.Ambient)
                 return;
             emit(node.body);
         }
@@ -3503,9 +3508,9 @@ ${lbl}: .short 0xffff
         sourceHash = "";
         checksumBlock: number[];
 
-        strings: Map<string> = {};
+        strings: MapLike<string> = {};
         otherLiterals: string[] = [];
-        codeHelpers: Map<string> = {};
+        codeHelpers: MapLike<string> = {};
         lblNo = 0;
 
         reset() {

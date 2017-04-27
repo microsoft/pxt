@@ -70,7 +70,7 @@ export class Editor extends srceditor.Editor {
 
         let promise = Promise.resolve().then(() => {
             if (!this.hasBlocks())
-                return
+                return undefined;
 
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
@@ -79,7 +79,7 @@ export class Editor extends srceditor.Editor {
                     if (mainPkg) {
                         this.parent.setFile(mainPkg.files["main.ts"]);
                     }
-                    return;
+                    return undefined;
                 }
                 this.currFile = mainPkg.files["main.ts"];
                 blockFile = this.currFile.getVirtualFileName();
@@ -130,7 +130,7 @@ export class Editor extends srceditor.Editor {
                     const shouldDecompile = values[1] as boolean;
                     if (!shouldDecompile) return Promise.resolve();
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
-                        .then(resp => {
+                        .then((resp: pxtc.CompileResult) => {
                             if (!resp.success) {
                                 this.currFile.diagnostics = resp.diagnostics;
                                 return failedAsync(blockFile);
@@ -178,7 +178,7 @@ export class Editor extends srceditor.Editor {
 
     public decompileAsync(blockFile: string): Promise<boolean> {
         return compiler.decompileAsync(blockFile)
-            .then(resp => resp.success);
+            .then((resp: any) => resp.success);
     }
 
     display() {
@@ -661,7 +661,7 @@ export class Editor extends srceditor.Editor {
         } else {
             hasChild = true;
         }
-        if (!hasChild) return;
+        if (!hasChild) return undefined;
 
         let appTheme = pxt.appTarget.appTheme;
         let monacoEditor = this;
@@ -1076,26 +1076,32 @@ export class Editor extends srceditor.Editor {
 
         if (file && file.diagnostics) {
             let model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
+
             for (let d of file.diagnostics) {
                 let endPos = model.getPositionAt(d.start + d.length);
                 if (typeof d.messageText === 'string') {
-                    addErrorMessage(d.messageText as string);
+                    monacoErrors.push({   
+                            severity: monaco.Severity.Error,
+                            message: d.messageText,
+                            startLineNumber: d.line,
+                            startColumn: d.column,
+                            endLineNumber: d.endLine || endPos.lineNumber,
+                            endColumn: d.endColumn || endPos.column
+                        });
                 } else {
                     let curr = d.messageText as ts.DiagnosticMessageChain;
                     while (curr.next != undefined) {
-                        addErrorMessage(curr.messageText);
+                        monacoErrors.push({   
+                                severity: monaco.Severity.Error,
+                                message: curr.messageText,
+                                startLineNumber: d.line,
+                                startColumn: d.column,
+                                endLineNumber: d.endLine || endPos.lineNumber,
+                                endColumn: d.endColumn || endPos.column
+                            });
+
                         curr = curr.next;
                     }
-                }
-                function addErrorMessage(message: string) {
-                    monacoErrors.push({
-                        severity: monaco.Severity.Error,
-                        message: message,
-                        startLineNumber: d.line,
-                        startColumn: d.column,
-                        endLineNumber: d.endLine || endPos.lineNumber,
-                        endColumn: d.endColumn || endPos.column
-                    })
                 }
             }
             monaco.editor.setModelMarkers(model, 'typescript', monacoErrors);

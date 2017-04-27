@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/jquery/index.d.ts" />
-
 import * as React from "react";
 import * as ReactDOM from "react-dom"
 import * as pkg from "./package";

@@ -26,7 +26,11 @@ interface ExtCallInfo {
 }
 
 
-export var postMessage: (msg: pxsim.DebuggerMessage) => void;
+export let postMessage: (msg: pxsim.DebuggerMessage) => void;
+
+export function setPostMessage(postMessage: (msg: pxsim.DebuggerMessage) => void) {
+    this.postMessage = postMessage;
+}
 
 export interface MachineState {
     registers: number[];

@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
-
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
@@ -423,7 +421,7 @@ function initSocketServer(wsPort: number) {
                             hios[msg.arg.path] = hio = hid.hf2ConnectAsync(msg.arg.path)
                         return hio
                     })
-                    .then(hio => {
+                    .then((hio: pxt.HF2.Wrapper) => {
                         switch (msg.op) {
                             case "init":
                                 return hio.reconnectAsync()
@@ -444,7 +442,7 @@ function initSocketServer(wsPort: number) {
                             case "talk":
                                 return Promise.mapSeries(msg.arg.cmds, (obj: any) =>
                                     hio.talkAsync(obj.cmd, U.fromHex(obj.data))
-                                        .then(res => ({ data: U.toHex(res) })))
+                                        .then((res: any) => ({ data: U.toHex(res) })))
                             case "sendserial":
                                 return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError)
                             case "list":

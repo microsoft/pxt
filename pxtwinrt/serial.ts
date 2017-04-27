@@ -1,5 +1,3 @@
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
-
 namespace pxt.winrt {
     let watcher: any;
     let ports: pxt.Map<DevicePort> = {}

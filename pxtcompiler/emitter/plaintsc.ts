@@ -36,13 +36,13 @@ namespace ts.pxtc {
             if (!configObject) {
                 reportDiagnostics([result.error], /* compilerHost */ undefined);
                 sys.exit(ExitStatus.DiagnosticsPresent_OutputsSkipped);
-                return;
+                return undefined;
             }
             const configParseResult = parseJsonConfigFileContent(configObject, sys, dir, commandLine.options, configFileName);
             if (configParseResult.errors.length > 0) {
                 reportDiagnostics(configParseResult.errors, /* compilerHost */ undefined);
                 sys.exit(ExitStatus.DiagnosticsPresent_OutputsSkipped);
-                return;
+                return undefined;
             }
 
             return configParseResult;

@@ -1,5 +1,3 @@
-/// <reference path="../../typings/globals/bluebird/index.d.ts"/>
-
 namespace pxsim.visuals {
     export function mkBtnSvg(xy: Coord): SVGAndSize<SVGGElement> {
         let [innerCls, outerCls] = ["sim-button", "sim-button-outer"];

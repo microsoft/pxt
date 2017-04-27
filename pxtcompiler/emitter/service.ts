@@ -1,7 +1,4 @@
-/// <reference path="../../typings/globals/fusejs/index.d.ts" />
-
 namespace ts.pxtc {
-
     export const placeholderChar = "◊";
     export const defaultImgLit = `
 . . . . .
@@ -166,7 +163,7 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters || []).map(p => {
+                parameters: (!hasParams || !decl.parameters) ? null : decl.parameters.map((p: any)  => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
                     let minVal = attributes.paramMin ? attributes.paramMin[n] : undefined
@@ -181,7 +178,7 @@ namespace ts.pxtc {
                             return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
                         });
                     }
-                    let options: Map<PropertyOption> = {};
+                    let options: MapLike<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
                     let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
                     if (minVal) options['min'] = {value: minVal};
@@ -450,11 +447,11 @@ ${sipkg}
         }
 
         // transitive closure of inheritance
-        let closed: Map<boolean> = {}
+        let closed: MapLike<boolean> = {}
         let closeSi = (si: SymbolInfo) => {
             if (U.lookup(closed, si.qName)) return;
             closed[si.qName] = true
-            let mine: Map<boolean> = {}
+            let mine: MapLike<boolean> = {}
             mine[si.qName] = true
             for (let e of si.extendsTypes || []) {
                 mine[e] = true
@@ -582,7 +579,7 @@ namespace ts.pxtc.service {
     let lastBlocksInfo: BlocksInfo;
     let lastFuse: Fuse;
     let builtinItems: SearchInfo[];
-    let tbSubset: Map<boolean>;
+    let tbSubset: pxt.Map<boolean>;
 
     function fileDiags(fn: string) {
         if (!/\.ts$/.test(fn))
@@ -883,7 +880,7 @@ namespace ts.pxtc.service {
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
             if (type) {
-                if (type.flags & ts.TypeFlags.Anonymous) {
+                if (type.flags & ts.TypeFlags.Object && (<ObjectType>type).flags & ts.ObjectFlags.Anonymous) {
                     const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                     if (sigs.length) {
                         return getFunctionString(sigs[0]);

@@ -286,7 +286,7 @@ export class ProjectView
         () => {
             let state = this.editor.snapshotState()
             compiler.typecheckAsync()
-                .done(resp => {
+                .done((resp: any) => {
                     this.editor.setDiagnostics(this.editorFile, state)
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                         let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
@@ -561,7 +561,7 @@ export class ProjectView
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
-                    .catch(e => {
+                    .catch((e: pxtc.CompileOptions) => {
                         if (e instanceof pxt.cpp.PkgConflictError) {
                             const confl = e as pxt.cpp.PkgConflictError
                             const remove = (lib: pxt.Package) => ({
@@ -1122,7 +1122,7 @@ export class ProjectView
                     hwdbg.handleMessage(msg as pxsim.DebuggerMessage)
                 }
             })
-            hwdbg.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
+            hwdbg.setPostMessage((msg) => simulator.driver.handleHwDebuggerMsg(msg));
             return hwdbg.startDebugAsync()
         })
     }
@@ -1872,7 +1872,7 @@ function assembleCurrent() {
         .then(() => compiler.assembleAsync(getEditor().editorFile.content))
         .then(v => {
             let nums = v.words
-            pxt.debug("[" + nums.map(n => "0x" + n.toString(16)).join(",") + "]")
+            pxt.debug("[" + nums.map((n : any) => "0x" + n.toString(16)).join(",") + "]")
         })
 }
 
@@ -2097,7 +2097,7 @@ $(document).ready(() => {
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
             return Util.updateLocalizationAsync(config.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live);

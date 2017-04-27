@@ -1,4 +1,3 @@
-/// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
@@ -950,7 +949,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         }
         if (!rdf) {
             if (!fs.existsSync(p))
-                return;
+                return undefined;
             rdf = readFileAsync(p)
         }
 
@@ -2714,7 +2713,7 @@ function findTestFile() {
 
 function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
-        .then(opts => {
+        .then((opts: pxtc.CompileOptions) => {
             let tsFile = findTestFile()
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
@@ -2993,7 +2992,7 @@ function testPkgConflictsAsync() {
 
         return mainPkg.installAllAsync()
             .then(() => mainPkg.findConflictsAsync(tc.pkgToAdd, "*"))
-            .then((conflicts) => {
+            .then((conflicts: pxt.cpp.PkgConflictError[]) => {
                 let conflictNames = conflicts.map((c) => c.pkg0.id).sort();
                 if (conflictNames.length !== tc.expectedConflicts.length || !conflictNames.every((cn, i) => conflictNames[i] === tc.expectedConflicts[i])) {
                     testFailed(`Mismatch on expected conflicts (found: [${conflictNames.join(", ")}], expected: [${tc.expectedConflicts.join(", ")}])`);
@@ -3266,7 +3265,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
                 target.isNative = true
             return mainPkg.getCompileOptionsAsync(target)
         })
-        .then(opts => {
+        .then((opts: pxtc.CompileOptions) => {
             if (mode == BuildOption.Test)
                 opts.testMode = true
             if (mode == BuildOption.GenDocs)
@@ -3680,7 +3679,7 @@ function extractAsyncInternal(filename: string, out: string, vscode: boolean): P
 
     return fetchTextAsync(filename)
         .then(buf => extractBufferAsync(buf, out))
-        .then(dirs => {
+        .then((dirs: string[]) => {
             if (dirs && vscode) {
                 pxt.debug('launching code...')
                 dirs.forEach(dir => openVsCode(dir));
@@ -3742,7 +3741,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
         .then(json => {
             if (!json) {
                 console.log("Couldn't extract.")
-                return
+                return undefined;
             }
             if (Array.isArray(json.scripts)) {
                 console.log("Legacy TD workspace.")
@@ -3768,7 +3767,7 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
             let prjs: SavedProject[] = json.projects
             if (!prjs) {
                 console.log("No projects found.")
-                return
+                return undefined;
             }
             const dirs = writeProjects(prjs, outDir)
             return dirs;
@@ -4492,7 +4491,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
 
     if (compileId != "none") {
-        build.thisBuild = build.buildEngines[compileId]
+        build.setBuild(build.buildEngines[compileId]);
         if (!build.thisBuild) U.userError("cannot find build engine: " + compileId)
     }
 

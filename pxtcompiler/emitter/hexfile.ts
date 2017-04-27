@@ -134,7 +134,7 @@ namespace ts.pxtc {
 
     // TODO should be internal
     export namespace hex {
-        let funcInfo: Map<FuncInfo>;
+        let funcInfo: MapLike<FuncInfo>;
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
@@ -142,7 +142,7 @@ namespace ts.pxtc {
         let bytecodeStartAddr: number;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
-        let asmLabels: Map<boolean> = {};
+        let asmLabels: MapLike<boolean> = {};
         export let asmTotalSource: string = "";
         export const defaultPageSize = 0x400;
 
