@@ -43,7 +43,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9264
+    // next free error 9265
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -569,7 +569,7 @@ namespace ts.pxtc {
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
-            return insertSubtype(key,[false, "Cast to class/interface unsupported."])
+            return insertSubtype(key,[false, "Cast to class/interface not supported."])
         }
 
         if (isClassType(superType)) {
@@ -581,11 +581,11 @@ namespace ts.pxtc {
                     if (inheritsFrom(superDecl,subDecl))
                        return insertSubtype(key, [false, "Downcasts not supported."])
                     else
-                       return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
+                       return insertSubtype(key, [false, "Casts between unrelated classes not supported."])
                 }
            } else {
                 if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    return insertSubtype(key,[false, "Cast to class unsupported."])
+                    return insertSubtype(key,[false, "Cast to class not supported."])
                 }
            }
         } else if (isFunctionType(superType)) {
@@ -903,7 +903,7 @@ namespace ts.pxtc {
             }
 
             if (!n) {
-                userError(code, lf("Sorry, this language feature isn't supported"))
+                userError(code, lf("Sorry, this language feature is not supported"))
             }
 
             let syntax = stringKind(n)
@@ -1525,6 +1525,9 @@ ${lbl}: .short 0xffff
         function emitObjectLiteral(node: ObjectLiteralExpression) {
             let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment) => {
+                if (p.kind == SK.ShorthandPropertyAssignment) {
+                    userError(9264, "Shorthand properties not supported.")
+                }
                 let refSuff = ""
                 if (isRefCountedExpr(p.initializer))
                     refSuff = "Ref"
