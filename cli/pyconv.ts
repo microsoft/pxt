@@ -918,8 +918,15 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
                 expr((n.slice as py.Index).value),
                 B.mkText("]"),
             ])
-        else
+        else if (n.slice.kind == "Slice") {
+            let s = n.slice as py.Slice
+            return B.mkInfix(expr(n.value), ".",
+                B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
+                    s.upper ? expr(s.upper) : null].filter(x => !!x)))
+        }
+        else {
             return exprTODO(n)
+        }
     },
     Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
     Name: (n: py.Name) => {
