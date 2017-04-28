@@ -96,7 +96,7 @@ namespace ts.pxtc {
         promise?: boolean;
         hidden?: boolean;
         callingConvention: ir.CallingConvention;
-        block?: string; // format of the block
+        block?: string; // format of the block, used at namespace level for category name
         blockId?: string; // unique id of the block
         blockGap?: string; // pixels in toolbox after the block is inserted
         blockExternalInputs?: boolean; // force external inputs

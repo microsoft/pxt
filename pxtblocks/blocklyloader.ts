@@ -177,6 +177,9 @@ namespace pxt.blocks {
 
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
+            if (nsn && nsn.attributes.block)
+                catName = nsn.attributes.block
+
             let category = categoryElement(tb, catName);
 
             if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
