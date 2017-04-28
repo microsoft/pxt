@@ -1,7 +1,13 @@
+
 declare namespace goog {
     function require(name: string): void;
     function provide(name: string): void;
     function isFunction(f: any): boolean;
+    function isString(s: any): boolean;
+
+    class Disposable {
+        dispose(): void;
+    }
 
     namespace string {
         let caseInsensitiveCompare: (a: string, b: string) => number;
@@ -12,24 +18,300 @@ declare namespace goog {
     }
 
     namespace dom {
+        function createDom(tagName: string, opt_attributes?: Object, ...var_args: Object[]): Element;
         function createDom(name: string, ns?: string, children?: any): HTMLElement;
         function removeChildren(el: Element): void;
         function getViewportSize(): any;
     }
 
     namespace math {
+        class Box {
+            top: number;
+            right: number;
+            bottom: number;
+            left: number;
+            constructor(top: number, right: number, bottom: number, left: number);
+        }
         class Coordinate {
             x: number;
             y: number;
             constructor(x: number, y: number);
-            clone() : Coordinate;
+            clone(): Coordinate;
 
             static difference(a: Coordinate, b: Coordinate): Coordinate;
             static sum(a: Coordinate, b: Coordinate): Coordinate;
             static magnitude(a: Coordinate): number;
         }
+        class Size {
+            width: number;
+            height: number;
+            constructor(width: number, height: number);
+        }
+        function clamp(n: number, min: number, max: number): void;
+    }
+
+    namespace ui {
+        class Control extends Component {
+            getChildCount(): number;
+            getContent(): string | Node | Array<Node>;
+            getContentElement(): Element;
+            setChecked(checked: boolean): void;
+            setContent(content: string | Node | Array<Node>): void;
+            setVisible(visible: boolean, opt_force?: boolean): boolean;
+        }
+        class Component {
+            static EventType: {
+                BEFORE_SHOW: string;
+                SHOW: string;
+                HIDE: string;
+                DISABLE: string;
+                ENABLE: string;
+                HIGHLIGHT: string;
+                UNHIGHLIGHT: string;
+                ACTIVATE: string;
+                DEACTIVATE: string;
+                SELECT: string;
+                UNSELECT: string;
+                CHECK: string;
+                UNCHECK: string;
+                FOCUS: string;
+                BLUR: string;
+                OPEN: string;
+                CLOSE: string;
+                ENTER: string;
+                LEAVE: string;
+                ACTION: string;
+                CHANGE: string;
+            };
+            getHandler<T>(): events.EventHandler<T>;
+            getElement(): Element;
+            render(opt_parentElement?: Element): void;
+            setId(id: string): void;
+            setRightToLeft(rightToLeft: boolean): void;
+            addChild(child: Component, opt_render?: boolean): void;
+            getChildAt(index: number): Component;
+        }
+        class CustomButton extends Control {
+            title: string;
+        }
+        class Container extends Component {
+        }
+        class Menu extends Container implements events.Listenable {
+            listen: () => events.ListenableKey;
+            setAllowAutoFocus(allow: boolean): void;
+        }
+        class MenuItem extends Control {
+            constructor(content: (string | Node));
+            setCheckable(checkable: boolean): void;
+            setValue(value: any): void;
+            getValue(): any;
+            addClassName(className: string): void;
+        }
+        class Popup extends PopupBase {
+            setPosition(position: positioning.ClientPosition): void;
+        }
+        class PopupBase extends events.EventTarget {
+        }
+        class Tooltip extends Popup {
+            className: string;
+            cursorPosition: math.Coordinate;
+            constructor(opt_el?: Node | string, opt_str?: string);
+            onShow(): void;
+            setShowDelayMs(ms: number): void;
+        }
+        class Slider extends Component {
+            setMoveToPointEnabled(val: boolean): void;
+            setMinimum(min: number): void;
+            setMaximum(max: number): void;
+            setRightToLeft(rightToLeft: boolean): void;
+            setValue(value: number): void;
+        }
+    }
+
+    namespace style {
+        let backgroundColor: number;
+        function getBorderBox(element: Element): math.Box;
+        function getMarginBox(element: Element): math.Box;
+        function getPaddingBox(element: Element): math.Box;
+        function getSize(element: Element): math.Size;
+        function getViewportPageOffset(doc: Document): math.Coordinate;
+        function scrollIntoContainerView(element: Element, opt_container?: Element, opt_center?: boolean): void;
+        function setHeight(element: Element, height: number | string): void;
+        function setWidth(element: Element, width: number | string): void;
+    }
+
+    namespace events {
+        function listen(eventSource: Element | Listenable, eventType: EventType, listener: any, capturePhase?: boolean, handler?: Object): void;
+        function unlistenByKey(key: any): void;
+        interface ListenableKey {
+            key: number;
+        }
+        interface Listenable {
+            listen: () => ListenableKey;
+        }
+        type EventType = string;
+        let EventType: {
+            CLICK: EventType;
+            RIGHTCLICK: EventType;
+            DBLCLICK: EventType;
+            MOUSEDOWN: EventType;
+            MOUSEUP: EventType;
+            MOUSEOVER: EventType;
+            MOUSEOUT: EventType;
+            MOUSEMOVE: EventType;
+            MOUSEENTER: EventType;
+            MOUSELEAVE: EventType;
+            SELECTSTART: EventType;
+            WHEEL: EventType;
+            KEYPRESS: EventType;
+            KEYDOWN: EventType;
+            KEYUP: EventType;
+            BLUR: EventType;
+            FOCUS: EventType;
+            DEACTIVATE: EventType;
+            FOCUSIN: EventType;
+            FOCUSOUT: EventType;
+            CHANGE: EventType;
+            SELECT: EventType;
+            SUBMIT: EventType;
+            INPUT: EventType;
+            PROPERTYCHANGE: EventType;
+            DRAGSTART: EventType;
+            DRAG: EventType;
+            DRAGENTER: EventType;
+            DRAGOVER: EventType;
+            DRAGLEAVE: EventType;
+            DROP: EventType;
+            DRAGEND: EventType;
+            TOUCHSTART: EventType;
+            TOUCHMOVE: EventType;
+            TOUCHEND: EventType;
+            TOUCHCANCEL: EventType;
+            BEFOREUNLOAD: EventType;
+            CONSOLEMESSAGE: EventType;
+            CONTEXTMENU: EventType;
+            DOMCONTENTLOADED: EventType;
+            ERROR: EventType;
+            HELP: EventType;
+            LOAD: EventType;
+            LOSECAPTURE: EventType;
+            ORIENTATIONCHANGE: EventType;
+            READYSTATECHANGE: EventType;
+            RESIZE: EventType;
+            SCROLL: EventType;
+            UNLOAD: EventType;
+            HASHCHANGE: EventType;
+            PAGEHIDE: EventType;
+            PAGESHOW: EventType;
+            POPSTATE: EventType;
+            COPY: EventType;
+            PASTE: EventType;
+            CUT: EventType;
+            BEFORECOPY: EventType;
+            BEFORECUT: EventType;
+            BEFOREPASTE: EventType;
+            ONLINE: EventType;
+            OFFLINE: EventType;
+            MESSAGE: EventType;
+            CONNECT: EventType;
+            ANIMATIONSTART: EventType;
+            ANIMATIONEND: EventType;
+            ANIMATIONITERATION: EventType;
+            TRANSITIONEND: EventType;
+            POINTERDOWN: EventType;
+            POINTERUP: EventType;
+            POINTERCANCEL: EventType;
+            POINTERMOVE: EventType;
+            POINTEROVER: EventType;
+            POINTEROUT: EventType;
+            POINTERENTER: EventType;
+            POINTERLEAVE: EventType;
+            GOTPOINTERCAPTURE: EventType;
+            LOSTPOINTERCAPTURE: EventType;
+            MSGESTURECHANGE: EventType;
+            MSGESTUREEND: EventType;
+            MSGESTUREHOLD: EventType;
+            MSGESTURESTART: EventType;
+            MSGESTURETAP: EventType;
+            MSGOTPOINTERCAPTURE: EventType;
+            MSINERTIASTART: EventType;
+            MSLOSTPOINTERCAPTURE: EventType;
+            MSPOINTERCANCEL: EventType;
+            MSPOINTERDOWN: EventType;
+            MSPOINTERENTER: EventType;
+            MSPOINTERHOVER: EventType;
+            MSPOINTERLEAVE: EventType;
+            MSPOINTERMOVE: EventType;
+            MSPOINTEROUT: EventType;
+            MSPOINTEROVER: EventType;
+            MSPOINTERUP: EventType;
+            TEXT: EventType;
+            TEXTINPUT: EventType;
+            COMPOSITIONSTART: EventType;
+            COMPOSITIONUPDATE: EventType;
+            COMPOSITIONEND: EventType;
+            EXIT: EventType;
+            LOADABORT: EventType;
+            LOADCOMMIT: EventType;
+            LOADREDIRECT: EventType;
+            LOADSTART: EventType;
+            LOADSTOP: EventType;
+            RESPONSIVE: EventType;
+            SIZECHANGED: EventType;
+            UNRESPONSIVE: EventType;
+            VISIBILITYCHANGE: EventType;
+            STORAGE: EventType;
+            DOMSUBTREEMODIFIED: EventType;
+            DOMNODEINSERTED: EventType;
+            DOMNODEREMOVED: EventType;
+            DOMNODEREMOVEDFROMDOCUMENT: EventType;
+            DOMNODEINSERTEDINTODOCUMENT: EventType;
+            DOMATTRMODIFIED: EventType;
+            DOMCHARACTERDATAMODIFIED: EventType;
+        };
+        class EventTarget extends Disposable {
+        }
+        class EventHandler<T> {
+            handleEvent(e: any): void;
+            listen(src: Element | Listenable, type: string, opt_fn?: any): EventHandler<T>;
+        }
+    }
+    namespace userAgent {
+        /**
+         * Whether the user agent is running on a mobile device.
+         *
+         * TODO(nnaze): Consider deprecating MOBILE when labs.userAgent
+         *   is promoted as the gecko/webkit logic is likely inaccurate.
+         *
+         * @type {boolean}
+         */
+        var MOBILE: boolean;
+
+        /**
+         * Whether the user agent is running on Android.
+         * @type {boolean}
+         */
+        var ANDROID: boolean;
+
+        /**
+         * Whether the user agent is running on an iPhone.
+         * @type {boolean}
+         */
+        var IPHONE: boolean;
+
+        /**
+         * Whether the user agent is running on an iPad.
+         * @type {boolean}
+         */
+        var IPAD: boolean;
+    }
+    namespace positioning {
+        class ClientPosition {
+            constructor(x: number, y: number);
+        }
     }
 }
+
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
@@ -68,11 +350,21 @@ declare namespace Blockly {
     class Field {
         name: string;
         EDITABLE: boolean;
+        borderRect_: any;
+        sourceBlock_: Block;
         init(block: Block): void;
         static superClass_: Field;
+        constructor(text: string, opt_validator?: Function);
+        callValidator(text: string): string;
         getText(): string;
         setText(newText: any): void;
         updateEditable(): void;
+        dispose(): void;
+        showEditor_(): void;
+        getAbsoluteXY_(): goog.math.Coordinate;
+        getScaledBBox_(): goog.math.Size;
+        setValue(newValue: string): void;
+        getValue(): string;
     }
 
     class FieldVariable extends Field {
@@ -85,24 +377,54 @@ declare namespace Blockly {
     }
 
     class FieldTextInput extends Field {
+        text_: string;
         constructor(text: string, validator: any);
         static numberValidator: any;
+        static htmlInput_: HTMLInputElement;
+
+        onHtmlInputChange_(e: any): void;
     }
 
     class FieldDropdown extends Field {
         constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]));
+
+        static CHECKMARK_OVERHANG: number;
+        protected value_: any;
+        constructor(val: (string[] | Object)[]);
+        protected getOptions_(): (string[] | Object)[];
+        onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
     }
 
     class FieldNumber extends FieldTextInput {
         constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: any);
+        setConstraints(min: any, max: any, precision?: any): void;
     }
-    class FieldNote extends FieldNumber{
-        constructor(note: string, colour: string | number, opt_validator?: any); 
-    }
+
     class FieldGridPicker extends FieldDropdown {
         constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> ); 
     }
     
+    class FieldSlider extends FieldNumber {
+    }
+
+    interface FieldCustomOptions {
+        colour?: string | number;
+    }
+
+    interface FieldCustomDropdownOptions extends FieldCustomOptions {
+        data?: any;
+    }
+
+    interface FieldCustom extends Field {
+        isFieldCustom_: boolean;
+        saveOptions?(): pxt.Map<string | number | boolean>;
+        restoreOptions?(map: pxt.Map<string | number | boolean>): void;
+    }
+
+    interface FieldCustomConstructor {
+        new(text: string, options: FieldCustomOptions, validator?: Function): FieldCustom;
+    }
+
     class Block {
         static obtain(workspace: Workspace, prototypeName?: string): Block;
 
@@ -114,6 +436,8 @@ declare namespace Blockly {
         outputConnection: Connection;
         previousConnection: Connection;
         workspace: Workspace;
+
+        RTL: boolean;
 
         // private
         xy_: goog.math.Coordinate;
@@ -430,8 +754,12 @@ declare namespace Blockly {
         function setGroup(group: any): void;
         function fire(ev: Abstract): void;
         function disableOrphans(ev: Abstract): void;
+        function isEnabled(): boolean;
         class Abstract {
             type: string;
+        }
+        class Change extends Abstract {
+            constructor(block: Block, element: String, name: String, oldValue: String, newValue: String);
         }
     }
 
@@ -457,6 +785,15 @@ declare namespace Blockly {
             getSelectedItem(): TreeNode;
             setSelectedItem(t: TreeNode): void;
         }
+    }
+
+    namespace WidgetDiv {
+        let DIV: Element;
+        function show(newOwner: any, rtl: boolean, dispose?: () => void): void;
+        function hideIfOwner(oldOwner: any): void;
+        function hide(): void;
+        function position(anchorX: number, anchorY: number, windowSize: goog.math.Size,
+            scrollOffset: goog.math.Coordinate, rtl: boolean): void;
     }
 
     var Tooltip: any;
