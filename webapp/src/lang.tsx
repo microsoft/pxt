@@ -87,11 +87,13 @@ export class LanguagePicker extends React.Component<ISettingsProps, LanguagesSta
 
     changeLanguage(langId: string) {
         if (allLanguages[langId] && getCookieLang() !== langId) {
+            pxt.tickEvent(`menu.lang.newlang.${langId}`);
             const expiration = new Date();
             expiration.setTime(expiration.getTime() + (langCookieExpirationDays * 24 * 60 * 60 * 1000));
             document.cookie = `${pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
             window.location.reload();
         } else {
+            pxt.tickEvent(`menu.lang.samelang.${langId}`);
             this.hide();
         }
     }
@@ -131,8 +133,7 @@ export class LanguagePicker extends React.Component<ISettingsProps, LanguagesSta
                     </div>
                 </div>
                 <p><br/><br/>
-                    {lf("Don't see your language? ") + " " }
-                    <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank">{lf("Help us translate!") }</a>
+                    <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank">{lf("Help us translate") }</a>
                 </p>
             </sui.Modal>
         );
