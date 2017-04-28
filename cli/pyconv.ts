@@ -53,6 +53,11 @@ export module py {
         is_async: int;
     }
 
+    export interface Module extends AST {
+        kind: "Module";
+        body: Stmt[];
+    }
+
     export interface ExceptHandler extends AST {
         kind: "ExceptHandler";
         type?: Expr;
@@ -445,6 +450,8 @@ function docComment(cmt: string) {
         cmt = cmt + "\n"
     return B.mkStmt(B.mkText("/** " + cmt + " */"))
 }
+
+let moduleAst: pxt.Map<py.Module> = {}
 
 interface VarDesc {
     expandsTo?: string;
@@ -989,10 +996,35 @@ function toTS(js: py.AST) {
 }
 
 export function convertAsync(fns: string[]) {
+    let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
+    let dirs: pxt.Map<number> = {}
+    for (let f of files) {
+        for (let suff of ["/docs/conf.py", "/conf.py", "/setup.py", "/README.md", "/README.rst"]) {
+            if (U.endsWith(f, suff)) {
+                dirs[f.slice(0, f.length - suff.length)] = 1
+            }
+        }
+    }
+    let pkgFiles: pxt.Map<string> = {}
+    for (let f of files) {
+        if (U.endsWith(f, ".py") && !U.endsWith(f, "/setup.py") && !U.endsWith(f, "/conf.py")) {
+            let par = f
+            while (par) {
+                if (dirs[par]) {
+                    let modName = f.slice(par.length + 1).replace(/\.py$/, "").replace(/\//g, ".")
+                    if (!U.startsWith(modName, "examples."))
+                        pkgFiles[f] = modName
+                    break
+                }
+                par = par.replace(/\/?[^\/]*$/, "")
+            }
+        }
+    }
+
     return nodeutil.spawnWithPipeAsync({
         cmd: "python3",
         args: [],
-        input: convPy.replace("@files@", JSON.stringify(fns)),
+        input: convPy.replace("@files@", JSON.stringify(Object.keys(pkgFiles))),
         silent: true
     })
         .then(buf => {
@@ -1017,9 +1049,14 @@ export function convertAsync(fns: string[]) {
             js = rec(js)
             delete js.kind
 
+            moduleAst = {}
+            U.iterMap(js, (fn: string, js: py.Module) => {
+                moduleAst[pkgFiles[fn]] = js
+            })
+
             U.iterMap(js, (fn: string, js: any) => {
                 console.log("\n//")
-                console.log("// *** " + fn + " ***")
+                console.log("// *** " +  fn + " ***")
                 console.log("//\n")
                 console.log(toTS(js))
             })
