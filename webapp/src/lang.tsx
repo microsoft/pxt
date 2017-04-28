@@ -54,6 +54,8 @@ const pxtLangCookieId = "PXT_LANG";
 const langCookieExpirationDays = 30;
 const defaultLanguages = ["en"];
 
+export let initialLang: string;
+
 export function getCookieLang() {
     const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxtLangCookieId)}=(.*?)(?:;|$)`)
     const cookieValue = cookiePropRegex.exec(document.cookie);
@@ -82,15 +84,24 @@ export class LanguagePicker extends React.Component<ISettingsProps, LanguagesSta
             })
             .catch((e) => {
                 pxt.log("Error fetching supported languages: " + e.message || e);
+                pxt.tickEvent("menu.lang.langfetcherror");
             });
     }
 
     changeLanguage(langId: string) {
-        if (allLanguages[langId] && getCookieLang() !== langId) {
-            pxt.tickEvent(`menu.lang.newlang.${langId}`);
+        if (!allLanguages[langId]) {
+            return;
+        }
+
+        if (langId !== getCookieLang()) {
+            pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
             const expiration = new Date();
             expiration.setTime(expiration.getTime() + (langCookieExpirationDays * 24 * 60 * 60 * 1000));
             document.cookie = `${pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
+        }
+
+        if (langId !== initialLang) {
+            pxt.tickEvent(`menu.lang.changelang.${langId}`);
             window.location.reload();
         } else {
             pxt.tickEvent(`menu.lang.samelang.${langId}`);
