@@ -127,7 +127,7 @@ export class Editor extends srceditor.Editor {
                     return [oldWorkspace, true];
                 }).then((values) => {
                     if (!values) return Promise.resolve();
-                    const oldWorkspace = values[0] as B.Workspace;
+                    const oldWorkspace = values[0] as Blockly.Workspace;
                     const shouldDecompile = values[1] as boolean;
                     if (!shouldDecompile) return Promise.resolve();
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)

@@ -43,15 +43,19 @@ export class Editor extends srceditor.Editor {
         else $(classes).hide();
     }
 
-    saveToTypeScript(): string {
-        if (!this.typeScriptSaveable) return undefined;
+    saveToTypeScript(): Promise<string> {
+        if (!this.typeScriptSaveable) return Promise.resolve('');
         try {
-            this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
-            return this.compilationResult.source;
+            return pxt.blocks.compileAsync(this.editor, this.blockInfo)
+                .then((compilationResult) => {
+                    this.compilationResult = compilationResult;
+                    pxt.tickActivity("blocks.compile");
+                    return this.compilationResult.source;
+                });
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return undefined;
+            return Promise.resolve('');
         }
     }
 

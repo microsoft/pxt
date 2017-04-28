@@ -347,8 +347,6 @@ export class Editor extends srceditor.Editor {
             else window.open(url, 'docs');
         }
 
-        this.prepareBlockly();
-
         this.isReady = true
     }
 

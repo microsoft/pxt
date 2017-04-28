@@ -1212,7 +1212,6 @@ export function buildTargetAsync(): Promise<void> {
         .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(buildTargetCoreAsync)
         .then(buildSemanticUIAsync)
-        .then(buildBlocklyAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('editor', true, 'editor'))
         .then(() => buildFolderAsync('server', true, 'server'))
@@ -1416,18 +1415,6 @@ function buildSemanticUIAsync() {
         pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
-}
-
-function buildBlocklyAsync() {
-    const pxtPrefix = "node_modules/pxt-core/";
-    const blockDir = pxt.appTarget.appTheme.blocksVersion == 'v2' ? 'newblockly' : 'blockly';
-    const blocklyCompressed = fs.readFileSync(`${pxtPrefix}webapp/public/${blockDir}/blockly_compressed.js`)
-    const blocksCompressed = fs.readFileSync(`${pxtPrefix}webapp/public/${blockDir}/blocks_compressed.js`)
-    const blocksLocale = fs.readFileSync(`${pxtPrefix}webapp/public/${blockDir}/msg/js/en.js`)
-
-    fs.writeFileSync('built/web/blocks/blockly_compressed.js', blocklyCompressed)
-    fs.writeFileSync('built/web/blocks/blocks_compressed.js', blocksCompressed)
-    fs.writeFileSync('built/web/blocks/msg/js/en.js', blocksLocale)
 }
 
 function buildWebStringsAsync() {
