@@ -89,6 +89,7 @@ namespace ts.pxtc.decompiler {
 
     interface ExpressionNode extends BlockNode {
         kind: "expr";
+        isShadow?: boolean;
     }
 
     interface StatementNode extends BlockNode {
@@ -455,7 +456,7 @@ ${output}</xml>`;
             }
             else {
                 const node = n as ExpressionNode;
-                const tag = shadow ? "shadow" : "block";
+                const tag = shadow || node.isShadow ? "shadow" : "block";
 
                 write(`<${tag} type="${U.htmlEscape(node.type)}">`)
                 emitBlockNodeCore(node);
@@ -639,11 +640,12 @@ ${output}</xml>`;
             return getFieldBlock("logic_boolean", "BOOL", value ? "TRUE" : "FALSE");
         }
 
-        function getFieldBlock(type: string, fieldName: string, value: string): ExpressionNode {
+        function getFieldBlock(type: string, fieldName: string, value: string, isShadow?: boolean): ExpressionNode {
             return {
                 kind: "expr",
                 type,
-                fields: [getField(fieldName, value)]
+                fields: [getField(fieldName, value)],
+                isShadow: isShadow
             };
         }
 
@@ -1061,14 +1063,14 @@ ${output}</xml>`;
                 // }
             }
 
-            const argNames: string[] = []
-            info.attrs.block.replace(/%(\w+)/g, (f, n) => {
-                argNames.push(n)
+            const argNames: [string, string][] = []
+            info.attrs.block.replace(/%(\w+)(?:=(\w+))?/g, (f, n, v) => {
+                argNames.push([n, v])
                 return ""
             });
 
             if (info.attrs.defaultInstance) {
-                argNames.unshift("__instance__");
+                argNames.unshift(["__instance__", undefined]);
             }
 
             const r: StatementNode = {
@@ -1111,7 +1113,7 @@ ${output}</xml>`;
                     case SK.PropertyAccessExpression:
                         const callInfo = (e as any).callInfo as pxtc.CallInfo;
                         const shadow = callInfo && !!callInfo.attrs.blockIdentity
-                        const aName = U.htmlEscape(argNames[i]);
+                        const aName = U.htmlEscape(argNames[i][0]);
 
                         if (shadow && callInfo.attrs.blockIdentity !== info.qName) {
                             (r.inputs || (r.inputs = [])).push(getValue(aName, e));
@@ -1132,7 +1134,8 @@ ${output}</xml>`;
                         break;
                     default:
                         let v: ValueNode;
-                        const vName = U.htmlEscape(argNames[i]);
+                        const vName = U.htmlEscape(argNames[i][0]);
+                        let defaultV = true;
 
                         if (info.qName == "Math.random") {
                             v = {
@@ -1140,8 +1143,40 @@ ${output}</xml>`;
                                 name: vName,
                                 value: getMathRandomArgumentExpresion(e)
                             };
+                            defaultV = false;
+                        } else if (((e.kind == SK.TrueKeyword || e.kind == SK.FalseKeyword)
+                            || (e.kind == SK.StringLiteral || e.kind == SK.FirstTemplateToken || e.kind == SK.NoSubstitutionTemplateLiteral)
+                            || e.kind == SK.NumericLiteral
+                            || (e.kind == SK.PrefixUnaryExpression
+                                && ((e as PrefixUnaryExpression).operator == SK.PlusToken
+                                    || (e as PrefixUnaryExpression).operator == SK.MinusToken)
+                                && ((e as PrefixUnaryExpression).operand.kind == SK.NumericLiteral)))
+                            && argNames[i][1]) {
+                            // Literal
+                            const shadowName = argNames[i][0];
+                            const shadowType = argNames[i][1];
+                            const shadowBlock = blocksInfo.blocksById[shadowType];
+                            if (shadowBlock) {
+                                let fieldName = '';
+                                blocksInfo.blocksById[shadowType].attributes.block.replace(/%(\w+)/g, (f, n) => {
+                                    fieldName = n;
+                                    return "";
+                                });
+                                if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
+                                    let fieldBlock = getFieldBlock(shadowType, fieldName, e.getText(), true);
+                                    if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[shadowName]) {
+                                        fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(info.attrs.paramShadowOptions[shadowName]))}
+                                    }
+                                    v = {
+                                        kind: "value",
+                                        name: vName,
+                                        value: fieldBlock
+                                    };
+                                    defaultV = false;
+                                }
+                            }
                         }
-                        else {
+                        if (defaultV) {
                             v = getValue(vName, e);
                         }
 
