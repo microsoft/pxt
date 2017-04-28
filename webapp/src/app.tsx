@@ -21,6 +21,7 @@ import * as appcache from "./appcache";
 import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
 import * as share from "./share";
+import * as lang from "./lang";
 import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as filelist from "./filelist";
@@ -93,6 +94,7 @@ export class ProjectView
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
+    languagePicker: lang.LanguagePicker;
     tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
 
@@ -796,7 +798,7 @@ export class ProjectView
     }
 
     newEmptyProject(name?: string, documentation?: string) {
-        this.setState({tutorialOptions: {}});
+        this.setState({ tutorialOptions: {} });
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name, documentation
@@ -1389,6 +1391,10 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.shareEditor.show(header);
     }
 
+    selectLang() {
+        this.languagePicker.show();
+    }
+
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<string> {
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
@@ -1551,6 +1557,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
         const traceTooltip = this.state.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
+        const selectLanguage = targetTheme.selectLanguage;
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
@@ -1612,6 +1619,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
                                         <div className="ui divider"></div>
+                                        {selectLanguage ? <sui.Item icon="xicon globe" role="menuitem" text={lf("Language") } onClick={() => this.selectLang() } /> : undefined }
                                         {targetTheme.highContrast ? <sui.Item role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined }
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
@@ -1684,6 +1692,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
@@ -2097,10 +2106,10 @@ $(document).ready(() => {
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-            if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live);
+            if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
+            return Util.updateLocalizationAsync(config.commitCdnUrl, useLang, pxt.appTarget.versions.pxtCrowdinBranch, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
