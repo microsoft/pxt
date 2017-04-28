@@ -1475,17 +1475,46 @@ namespace AnonymousTypes {
 
     export function test() {
         msg("AnonymousTypes")
-        let x = { a: 2, b: "" }
+        let x = { a: 2, b: "bar" }
+        let nested = { a: { b: { c: 3 } } }
+
         let bar = new Foo(42)
         let baz: {a: number} = bar
-        control.assert(foo(x) == 3)
+        control.assert(nested.a.b.c == 3)
+        control.assert(x.a == 2);
+        control.assert(x.b == "bar");
+        control.assert(foo(x) == 3);
         control.assert(foo(bar) == 43);
-        control.assert(bar.bar() == 43)
-        control.assert(foo(baz) == 43)
+        control.assert(bar.bar() == 43);
+        control.assert(foo(baz) == 43);
         // HUH bar(40) - new (expects any)
     }
 }
 
+namespace LambdaProperty {
+
+    interface IFoo {
+        y: number;
+        z: number;
+        bar: () => number;
+        baz: (i:number) => number;
+    }
+
+    let x: IFoo = {
+        y: 3, z: 4, bar: () => {
+            return 0
+        }, baz: (i: number) => i + 1
+    }
+
+    x.bar = () => {
+        return x.y
+    }
+
+    export function test() {
+        control.assert(x.bar() == 3);
+        control.assert(x.baz(42) == 43);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -1538,6 +1567,7 @@ testBitSize()
 ObjectDestructuring.run();
 testGenerics()
 AnonymousTypes.test()
+LambdaProperty.test()
 
 msg("test top level code")
 let xsum = 0;
