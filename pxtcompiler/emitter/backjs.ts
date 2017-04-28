@@ -1,5 +1,5 @@
 namespace ts.pxtc {
-    // TODO: ARM specific code should be lifted out 
+    // TODO: ARM specific code should be lifted out
     const jsOpMap: pxt.Map<string> = {
         "thumb::adds": "+",
         "thumb::subs": "-",
@@ -64,7 +64,7 @@ namespace ts.pxtc {
 var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
 var r0 = s.r0, step = s.pc;
 s.pc = -1;
-while (true) { 
+while (true) {
 if (yieldSteps-- < 0 && maybeYield(s, step, r0)) return null;
 switch (step) {
   case 0:
@@ -134,15 +134,22 @@ switch (step) {
 
         function emitBreakpoint(s: ir.Stmt) {
             let id = s.breakpointInfo.id
+            let lbl: number;
             write(`s.lastBrkId = ${id};`)
-            if (!bin.options.breakpoints)
-                return;
-            let lbl = ++lblIdx
-            let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
-            if (s.breakpointInfo.isDebuggerStmt)
-                write(brkCall)
-            else
-                write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+            if (bin.options.trace) {
+                lbl = ++lblIdx
+                write(`return trace(${id}, s, ${lbl}, ${proc.label()}.info);`)
+            }
+            else {
+                if (!bin.options.breakpoints)
+                    return;
+                lbl = ++lblIdx
+                let brkCall = `return breakpoint(s, ${lbl}, ${id}, r0);`
+                if (s.breakpointInfo.isDebuggerStmt)
+                    write(brkCall)
+                else
+                    write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+            }
             writeRaw(`  case ${lbl}:`)
         }
 
@@ -325,11 +332,16 @@ switch (step) {
                     args.splice(1, 0, procid.mapIdx.toString())
                     write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
                     write(`  ${frameRef}.fn = doNothing;`)
-                    write(`} else`)
+                    write(`} else {`)
                 }
+                write (`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface[${procid.ifaceIndex}];`)
+                if (procid.mapMethod) {
+                    write(`}`)
+                }
             } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
+                write (`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             }
             write(`return actionCall(${frameRef})`)

@@ -14,6 +14,8 @@ import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
 const lf = Util.lf
 
+let iface: pxt.worker.Iface
+
 export class Editor extends srceditor.Editor {
     editor: Blockly.Workspace;
     currFile: pkg.File;
@@ -43,15 +45,19 @@ export class Editor extends srceditor.Editor {
         else $(classes).hide();
     }
 
-    saveToTypeScript(): string {
-        if (!this.typeScriptSaveable) return undefined;
+    saveToTypeScript(): Promise<string> {
+        if (!this.typeScriptSaveable) return Promise.resolve('');
         try {
-            this.compilationResult = pxt.blocks.compile(this.editor, this.blockInfo);
-            return this.compilationResult.source;
+            return pxt.blocks.compileAsync(this.editor, this.blockInfo)
+                .then((compilationResult) => {
+                    this.compilationResult = compilationResult;
+                    pxt.tickActivity("blocks.compile");
+                    return this.compilationResult.source;
+                });
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return undefined;
+            return Promise.resolve('');
         }
     }
 
@@ -324,6 +330,25 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
+        pxt.blocks.openHelpUrl = (url: string) => {
+            pxt.tickEvent("blocks.help", { url });
+            const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
+            if (m) {
+                const dep = pkg.mainPkg.deps[m[1]];
+                if (dep && dep.verProtocol() == "github") {
+                    // rewrite url to point to current endpoint
+                    url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
+                    window.open(url, m[1]);
+                    return; // TODO support serving package docs in docs frame.
+                }
+            };
+            if (/^\//.test(url))
+                this.parent.setSideDoc(url);
+            else window.open(url, 'docs');
+        }
+
+        this.prepareBlockly();
+
         this.isReady = true
     }
 
@@ -337,20 +362,20 @@ export class Editor extends srceditor.Editor {
 
             let blocklyPromises: Promise<void>[] = [];
             if (/newblocks=1/i.test(window.location.href)) {
-                return pxt.BrowserUtils.loadScript('/blb/newblockly/blockly_compressed.js').then(() => {
-                    return pxt.BrowserUtils.loadScript('/blb/newblockly/blocks_compressed.js').then(() => {
-                        return pxt.BrowserUtils.loadScript('/blb/newblockly/msg/js/en.js').then(() => {
-                            return pxt.BrowserUtils.loadScript('/blb/pxtblocks.js').then(() => {
+                return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blockly_compressed.js').then(() => {
+                    return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blocks_compressed.js').then(() => {
+                        return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/msg/js/en.js').then(() => {
+                            return pxt.BrowserUtils.loadScriptAsync('/blb/pxtblocks.js').then(() => {
                                 resolve();
                             });
                         })
                     })
                 })
             } else {
-                return pxt.BrowserUtils.loadScript('/blb/blockly/blockly_compressed.js').then(() => {
-                    return pxt.BrowserUtils.loadScript('/blb/blockly/blocks_compressed.js').then(() => {
-                        return pxt.BrowserUtils.loadScript('/blb/blockly/msg/js/en.js').then(() => {
-                            return pxt.BrowserUtils.loadScript('/blb/pxtblocks.js').then(() => {
+                return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/blockly_compressed.js').then(() => {
+                    return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/blocks_compressed.js').then(() => {
+                        return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/msg/js/en.js').then(() => {
+                            return pxt.BrowserUtils.loadScriptAsync('/blb/pxtblocks.js').then(() => {
                                 resolve();
                             });
                         })
@@ -383,7 +408,7 @@ export class Editor extends srceditor.Editor {
                         : 'unknown')
                     : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
+                pxt.tickActivity("blocks.create", "blocks.create." + blockId);
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }
@@ -553,11 +578,11 @@ export class Editor extends srceditor.Editor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.filter(diag => diag.category == ts.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockId(sourceMap, diag);
+            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
-                    let txt = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+                    let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
                 }
             }
@@ -567,8 +592,16 @@ export class Editor extends srceditor.Editor {
     highlightStatement(brk: pxtc.LocationInfo) {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return;
-        let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, brk);
-        this.editor.highlightBlock(bid);
+        if (brk) {
+            let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: brk.line, length: brk.endLine - brk.line });
+            if (bid) {
+                this.editor.highlightBlock(bid);
+            }
+        }
+    }
+
+    clearHighlightedStatements() {
+        this.editor.highlightBlock(null);
     }
 
     openTypeScript() {

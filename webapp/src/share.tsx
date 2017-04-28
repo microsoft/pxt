@@ -62,6 +62,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     renderCore() {
         const { visible } = this.state;
 
+        const targetTheme = pxt.appTarget.appTheme;
         const cloud = pxt.appTarget.cloud || {};
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
@@ -74,6 +75,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         let help = lf("Copy this HTML to your website or blog.");
 
         if (header) {
+            let shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
+            if (!/\/$/.test(shareUrl)) shareUrl += '/';
             let rootUrl = pxt.appTarget.appTheme.embedUrl
             if (!/\/$/.test(rootUrl)) rootUrl += '/';
 
@@ -83,7 +86,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
             ready = (!!currentPubId && header.pubCurrent);
             if (ready) {
-                url = `${rootUrl}${header.pubId}`;
+                url = `${shareUrl}${currentPubId}`;
                 let editUrl = `${rootUrl}#pub:${currentPubId}`;
                 switch (mode) {
                     case ShareMode.Cli:
@@ -105,7 +108,7 @@ pxt extract ${url}`;
                         embed = editUrl;
                         break;
                     default:
-                        if (isBlocks) {
+                        if (isBlocks && pxt.blocks.layout.screenshotEnabled()) {
                             // Render screenshot
                             if (this.state.screenshotId == currentPubId) {
                                 if (this.state.screenshotUri)

@@ -44,8 +44,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.setState({ visible: false });
     }
 
-    showOpenProject() {
-        this.setState({ visible: true, tab: MYSTUFF })
+    showOpenProject(tab?: string) {
+        const gals = pxt.appTarget.appTheme.galleries || {};
+        tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
+        this.setState({ visible: true, tab: tab || MYSTUFF })
     }
 
     showOpenTutorials() {
@@ -168,11 +170,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             this.props.parent.newProject();
         }
-        const saveProject = () => {
-            pxt.tickEvent("projects.save");
-            this.hide();
-            this.props.parent.saveAndCompile();
-        }
         const renameProject = () => {
             pxt.tickEvent("projects.rename");
             this.hide();
@@ -257,7 +254,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
                                     key={'importurl'}
-                                    icon="upload"
+                                    icon="cloud download"
                                     iconColor="secondary"
                                     name={lf("Import URL...") }
                                     description={lf("Open a shared project URL") }
@@ -302,7 +299,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards">
+                    <div className="ui cards centered">
                         {gals[tab].map(scr => <codecard.CodeCardView
                             key={tab + scr.name}
                             name={scr.name}

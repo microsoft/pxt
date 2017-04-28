@@ -1,8 +1,11 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
+/// <reference path="../../built/pxtcompiler.d.ts"/>
+
 importScripts(
     "/blb/typescript.js",
     "/blb/fuse.min.js",
-    "/blb/pxtlib.js"
+    "/blb/pxtlib.js",
+    "/blb/pxtcompiler.js"
 )
 
 let pm: any = postMessage;

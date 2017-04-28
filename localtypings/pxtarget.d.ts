@@ -90,6 +90,7 @@ declare namespace pxt {
         autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
+        enableTrace?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
@@ -98,6 +99,7 @@ declare namespace pxt {
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
+        trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
     }
 
     interface TargetCompileService {
@@ -110,13 +112,6 @@ declare namespace pxt {
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
-    }
-
-    interface SpecializedResource {
-        name: string,
-        browser?: string,
-        os?: string,
-        path: string
     }
 
     interface AppTheme {
@@ -136,6 +131,7 @@ declare namespace pxt {
         organizationLogo?: string;
         organizationWideLogo?: string;
         homeUrl?: string;
+        shareUrl?: string; 
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
@@ -157,7 +153,6 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
-        browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -169,7 +164,7 @@ declare namespace pxt {
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         galleries?: pxt.Map<string>; // list of galleries to display in projects dialog
         crowdinProject?: string;
-        crowdinBranch?: string; // optional branch specification
+        crowdinBranch?: string; // optional branch specification for pxt
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
@@ -186,7 +181,11 @@ declare namespace pxt {
             tutorialStep?: string;
             tutorialNext?: string;
             dialogClick?: string;            
-        }
+        },
+        disableLiveTranslations?: boolean; // don't load translations from crowdin
+        extendEditor?: boolean; // whether a target specific editor.js is loaded
+        highContrast?: boolean; // simulator has a high contrast mode
+        blocksVersion?: string; // version of blocks to use 
     }
 
     interface DocMenuEntry {
@@ -247,6 +246,7 @@ declare namespace ts.pxtc {
         forceEmit?: boolean;
         ast?: boolean;
         breakpoints?: boolean;
+        trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
 

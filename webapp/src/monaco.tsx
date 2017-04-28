@@ -25,6 +25,7 @@ enum FileType {
     Markdown
 }
 
+// this is a supertype of pxtc.SymbolInfo (see partitionBlocks)
 export interface MonacoBlockDefinition {
     name: string;
     snippet?: string;
@@ -107,13 +108,28 @@ export class Editor extends srceditor.Editor {
                     pxt.blocks.initBlocks(blocksInfo);
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
-                        const oldJs = pxt.blocks.compile(oldWorkspace, blocksInfo).source;
-                        if (pxtc.format(oldJs, 0).formatted == pxtc.format(this.editor.getValue(), 0).formatted) {
-                            pxt.debug('js not changed, skipping decompile');
-                            pxt.tickEvent("typescript.noChanges")
-                            return this.parent.setFile(mainPkg.files[blockFile]);
-                        }
+                        return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
+                            const oldJs = compilationResult.source;
+                            return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
+                                return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
+                                    if (oldFormatted.formatted == newFormatted.formatted) {
+                                        pxt.debug('js not changed, skipping decompile');
+                                        pxt.tickEvent("typescript.noChanges")
+                                        this.parent.setFile(mainPkg.files[blockFile]);
+                                        return [oldWorkspace, false]; // return false to indicate we don't want to decompile
+                                    } else {
+                                        return [oldWorkspace, true];
+                                    }
+                                });
+                            });
+                        })
                     }
+                    return [oldWorkspace, true];
+                }).then((values) => {
+                    if (!values) return Promise.resolve();
+                    const oldWorkspace = values[0] as B.Workspace;
+                    const shouldDecompile = values[1] as boolean;
+                    if (!shouldDecompile) return Promise.resolve();
                     return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
                         .then(resp => {
                             if (!resp.success) {
@@ -153,8 +169,10 @@ export class Editor extends srceditor.Editor {
                 pxt.tickEvent("typescript.keepText");
             } else {
                 pxt.tickEvent("typescript.discardText");
-                this.overrideFile(this.parent.saveBlocksToTypeScript());
-                this.parent.setFile(bf);
+                this.parent.saveBlocksToTypeScriptAsync().then((src) => {
+                    this.overrideFile(src);
+                    this.parent.setFile(bf);
+                })
             }
         })
     }
@@ -208,41 +226,6 @@ export class Editor extends srceditor.Editor {
     beforeCompile() {
         if (this.editor)
             this.editor.getAction('editor.action.formatDocument').run();
-    }
-
-    public formatCode(isAutomatic = false): string {
-        Util.assert(this.editor != undefined); // Guarded
-        if (this.fileType != FileType.TypeScript) return;
-
-        function spliceStr(big: string, idx: number, deleteCount: number, injection: string = "") {
-            return big.slice(0, idx) + injection + big.slice(idx + deleteCount)
-        }
-
-        let position = this.editor.getPosition()
-        let data = this.textAndPosition(position)
-        let cursorOverride = this.editor.getModel().getOffsetAt(position)
-        if (cursorOverride >= 0) {
-            isAutomatic = false
-            data.charNo = cursorOverride
-        }
-        let tmp = pxtc.format(data.programText, data.charNo)
-        if (isAutomatic && tmp.formatted == data.programText)
-            return;
-        let formatted = tmp.formatted
-        let line = 1
-        let col = 0
-        //console.log(data.charNo, tmp.pos)
-        for (let i = 0; i < formatted.length; ++i) {
-            let c = formatted.charCodeAt(i)
-            col++
-            if (i >= tmp.pos)
-                break;
-            if (c == 10) { line++; col = 0 }
-        }
-        this.editor.setValue(formatted)
-        this.editor.setScrollPosition(line)
-        this.editor.setPosition(position)
-        return formatted
     }
 
     private textAndPosition(pos: monaco.IPosition) {
@@ -481,10 +464,10 @@ export class Editor extends srceditor.Editor {
         if (prevWordInfo && wordInfo) {
             let namespaceName = prevWordInfo.word.replace(/([A-Z]+)/g, "-$1");
             let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`);
+            this.parent.setSideDoc(`/reference/${namespaceName}/${methodName}`, false);
         } else if (wordInfo) {
             let methodName = wordInfo.word.replace(/([A-Z]+)/g, "-$1");
-            this.parent.setSideDoc(`/reference/${methodName}`);
+            this.parent.setSideDoc(`/reference/${methodName}`, false);
         }
     }
 
@@ -608,7 +591,8 @@ export class Editor extends srceditor.Editor {
 
                 if (!snippets.isBuiltin(ns)) {
                     const blocks = monacoEditor.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated));
-                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks);
+                    let categoryName = md.block ? md.block : undefined
+                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks, undefined, categoryName);
                 }
                 else {
                     el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, ns);
@@ -904,7 +888,7 @@ export class Editor extends srceditor.Editor {
             pxt.blocks.appendToolboxIconCss(iconClass, icon);
         }
         treerow.style.paddingLeft = '0px';
-        label.innerText = `${Util.capitalize(category || ns)}`;
+        label.innerText = category ? category : `${Util.capitalize(ns)}`;
 
         return treeitem;
     }
@@ -997,8 +981,7 @@ export class Editor extends srceditor.Editor {
                 if (!file.isReadonly()) {
                     model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent2) => {
                         // Remove any Highlighted lines
-                        if (this.highlightDecorations)
-                            this.editor.deltaDecorations(this.highlightDecorations, []);
+                        this.clearHighlightedStatements();
 
                         // Remove any current error shown, as a change has been made.
                         let viewZones = this.editorViewZones || [];
@@ -1133,6 +1116,11 @@ export class Editor extends srceditor.Editor {
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+    }
+
+    clearHighlightedStatements() {
+        if (this.highlightDecorations)
+            this.editor.deltaDecorations(this.highlightDecorations, []);
     }
 
     private partitionBlocks() {

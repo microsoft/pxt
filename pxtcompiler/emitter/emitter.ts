@@ -2,18 +2,6 @@
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
 namespace ts.pxtc {
-    export const assert = Util.assert;
-    export const oops = Util.oops;
-    export import U = pxtc.Util;
-
-    export const ON_START_TYPE = "pxt-on-start";
-    export const ON_START_COMMENT = U.lf("on start");
-    export const TS_STATEMENT_TYPE = "typescript_statement";
-    export const TS_OUTPUT_TYPE = "typescript_expression";
-    export const BINARY_JS = "binary.js";
-    export const BINARY_HEX = "binary.hex";
-    export const BINARY_ASM = "binary.asm";
-    export const BINARY_UF2 = "binary.uf2";
 
     let EK = ir.EK;
     export const SK = SyntaxKind;
@@ -55,7 +43,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9264
+    // next free error 9265
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -269,75 +257,6 @@ namespace ts.pxtc {
         Int32,
     }
 
-    export interface CommentAttrs {
-        debug?: boolean; // requires ?dbg=1
-        shim?: string;
-        enumval?: string;
-        helper?: string;
-        help?: string;
-        async?: boolean;
-        promise?: boolean;
-        hidden?: boolean;
-        callingConvention: ir.CallingConvention;
-        block?: string; // format of the block
-        blockId?: string; // unique id of the block
-        blockGap?: string; // pixels in toolbox after the block is inserted
-        blockExternalInputs?: boolean; // force external inputs
-        blockImportId?: string;
-        blockBuiltin?: boolean;
-        blockNamespace?: string;
-        blockIdentity?: string;
-        blockAllowMultiple?: boolean; // override single block behavior for events
-        blockHidden?: boolean; // not available directly in toolbox
-        blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
-        blockFieldEditor?: string; // Custom field editor
-        fixedInstances?: boolean;
-        fixedInstance?: boolean;
-        indexedInstanceNS?: string;
-        indexedInstanceShim?: string;
-        defaultInstance?: string;
-        autoCreate?: string;
-        noRefCounting?: boolean;
-        color?: string;
-        icon?: string;
-        imageLiteral?: number;
-        weight?: number;
-        parts?: string;
-        trackArgs?: number[];
-        advanced?: boolean;
-        deprecated?: boolean;
-        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
-        // On block
-        subcategory?: string;
-        // On namepspace
-        subcategories?: string[];
-
-        // on interfaces
-        indexerGet?: string;
-        indexerSet?: string;
-
-        mutate?: string;
-        mutateText?: string;
-        mutatePrefix?: string;
-        mutateDefaults?: string;
-        mutatePropertyEnum?: string;
-
-        _name?: string;
-        _source?: string;
-        jsDoc?: string;
-        paramHelp?: pxt.Map<string>;
-        // foo.defl=12 -> paramDefl: { foo: "12" }
-        paramDefl: pxt.Map<string>;
-
-        paramMin?: pxt.Map<string>; // min range
-        paramMax?: pxt.Map<string>; // max range
-        // Map for custom field editor parameters
-        blockFieldEditorParams?: pxt.Map<string>;
-    }
-
-    const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced"]
-
     export interface CallInfo {
         decl: Declaration;
         qName: string;
@@ -398,82 +317,6 @@ namespace ts.pxtc {
         } else {
             return cmtCore(node)
         }
-    }
-
-    export function parseCommentString(cmt: string): CommentAttrs {
-        let res: CommentAttrs = {
-            paramDefl: {},
-            callingConvention: ir.CallingConvention.Plain,
-            _source: cmt
-        }
-        let didSomething = true
-        while (didSomething) {
-            didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]*)))?/,
-                (f: string, n: string, d0: string, d1: string,
-                    v0: string, v1: string, v2: string) => {
-                    let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
-                    if (U.endsWith(n, ".defl")) {
-                        res.paramDefl[n.slice(0, n.length - 5)] = v
-                    } else if (U.endsWith(n, ".min")) {
-                        if (!res.paramMin) res.paramMin = {}
-                        res.paramMin[n.slice(0, n.length - 4)] = v
-                    } else if (U.endsWith(n, ".max")) {
-                        if (!res.paramMax) res.paramMax = {}
-                        res.paramMax[n.slice(0, n.length - 4)] = v
-                    } else if (U.startsWith(n, "blockFieldEditorParams")) {
-                        if (!res.blockFieldEditorParams) res.blockFieldEditorParams = {}
-                        res.blockFieldEditorParams[n.slice(23, n.length)] = v
-                    } else {
-                        (<any>res)[n] = v;
-                    }
-                    didSomething = true
-                    return "//% "
-                })
-        }
-
-        for (let n of numberAttributes) {
-            if (typeof (res as any)[n] == "string")
-                (res as any)[n] = parseInt((res as any)[n])
-        }
-
-        for (let n of booleanAttributes) {
-            if (typeof (res as any)[n] == "string")
-                (res as any)[n] = (res as any)[n] == 'true' || (res as any)[n] == '1' ? true : false;
-        }
-
-        if (res.trackArgs) {
-            res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
-        }
-
-        res.paramHelp = {}
-        res.jsDoc = ""
-        cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
-            doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
-            doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
-                res.paramHelp[name] = desc
-                return ""
-            })
-            res.jsDoc += doccmt
-            return ""
-        })
-
-        res.jsDoc = res.jsDoc.trim()
-
-        if (res.async)
-            res.callingConvention = ir.CallingConvention.Async
-        if (res.promise)
-            res.callingConvention = ir.CallingConvention.Promise
-        if (res.subcategories) {
-            try {
-                res.subcategories = JSON.parse(res.subcategories as any);
-            }
-            catch (e) {
-                res.subcategories = undefined;
-            }
-        }
-
-        return res
     }
 
     export function parseCommentsOnSymbol(symbol: Symbol): CommentAttrs {
@@ -646,9 +489,9 @@ namespace ts.pxtc {
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
-            // TODO: namespace??? correct name checking??
-            if (classes[cl].decl.name.text == decl.name.text)
-                 userError(9261, lf("Interface with same name as a class not supported."))
+            if (classes[cl].decl.symbol == decl.symbol) {
+                 userError(9261, lf("Interface with same name as a class not supported"))
+            }
         }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
@@ -726,7 +569,7 @@ namespace ts.pxtc {
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
-            return insertSubtype(key,[false, "Cast to class/interface unsupported."])
+            return insertSubtype(key,[false, "Cast to class/interface not supported."])
         }
 
         if (isClassType(superType)) {
@@ -738,11 +581,11 @@ namespace ts.pxtc {
                     if (inheritsFrom(superDecl,subDecl))
                        return insertSubtype(key, [false, "Downcasts not supported."])
                     else
-                       return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
+                       return insertSubtype(key, [false, "Casts between unrelated classes not supported."])
                 }
            } else {
                 if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    return insertSubtype(key,[false, "Cast to class unsupported."])
+                    return insertSubtype(key,[false, "Cast to class not supported."])
                 }
            }
         } else if (isFunctionType(superType)) {
@@ -788,8 +631,6 @@ namespace ts.pxtc {
                             // let x: Foo = { a:42 }
                             // where x has some optional properties, in addition to "a"
                         }
-                    } else {
-                        U.assert(false,"subsetCheck: unreachable (1)")
                     }
                 })
                 return insertSubtype(key,[ret,msg])
@@ -799,8 +640,6 @@ namespace ts.pxtc {
                 let superElemType = arrayElementType(superType)
                 let subElemType = arrayElementType(subType)
                 return checkSubtype(subElemType,superElemType)
-            } else {
-                U.assert(false,"subsetCheck: unreachable (2)")
             }
         } else if (lookupTypeParameter(superType)) {
             // TODO
@@ -1064,7 +903,7 @@ namespace ts.pxtc {
             }
 
             if (!n) {
-                userError(code, lf("Sorry, this language feature isn't supported"))
+                userError(code, lf("Sorry, this language feature is not supported"))
             }
 
             let syntax = stringKind(n)
@@ -1686,6 +1525,9 @@ ${lbl}: .short 0xffff
         function emitObjectLiteral(node: ObjectLiteralExpression) {
             let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment) => {
+                if (p.kind == SK.ShorthandPropertyAssignment) {
+                    userError(9264, "Shorthand properties not supported.")
+                }
                 let refSuff = ""
                 if (isRefCountedExpr(p.initializer))
                     refSuff = "Ref"
@@ -1711,7 +1553,8 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
-            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
+            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl))
+                      || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression,false)
                 if (!decl)
                     return ir.numlit(0)
@@ -1742,7 +1585,7 @@ ${lbl}: .short 0xffff
                 if (/^[+-]?\d+$/.test(ev))
                     return ir.numlit(parseInt(ev));
                 return ir.rtcall(ev, [])
-            } else if (decl.kind == SK.PropertySignature) {
+            } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
                 /*
                 if (attrs.shim) {
@@ -1968,9 +1811,14 @@ ${lbl}: .short 0xffff
             if (!decl)
                 decl = getDecl(funcExpr) as FunctionLikeDeclaration
             let isMethod = false
-            if (decl)
+            if (decl) {
                 switch (decl.kind) {
+                    // we treat properties via calls
+                    // so we say they are "methods"
                     case SK.PropertySignature:
+                    case SK.PropertyAssignment:
+                    // TOTO case: case SK.ShorthandPropertyAssignment
+                    // these are the real methods
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
                     case SK.GetAccessor:
@@ -1985,7 +1833,7 @@ ${lbl}: .short 0xffff
                         decl = null; // no special handling
                         break;
                 }
-
+            }
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
@@ -2043,6 +1891,9 @@ ${lbl}: .short 0xffff
                 addDefaultParametersAndTypeCheck(sig, args, attrs);
             })
 
+            // first we handle a set of direct cases, note that
+            // we are not recursing on funcExpr here, but looking
+            // at the associated decl
             if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
@@ -2055,7 +1906,7 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 }
             }
-
+            // special case call to super
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
                 assert(!bin.finalPass || !!baseCtor)
@@ -2063,14 +1914,11 @@ ${lbl}: .short 0xffff
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
             }
-
             if (isMethod) {
                 let isSuper = false
                 if (isStatic(decl)) {
                     // no additional arguments
-                } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
-                    if (!recv)
-                        recv = (<PropertyAccessExpression>funcExpr).expression
+                } else if (recv) {
                     if (recv.kind == SK.SuperKeyword) {
                         isSuper = true
                     }
@@ -2115,25 +1963,38 @@ ${lbl}: .short 0xffff
                     })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
-                } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
+                } else if (decl.kind == SK.MethodSignature) {
                     let name = getName(decl)
-                    let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
-                    if (decl.kind == SK.PropertySignature) {
-                        let pid = res.data as ir.ProcId
-                        pid.mapIdx = pid.ifaceIndex
-                        let refSuff = ""
-                        if (args.length == 2) {
-                            if (isRefCountedExpr(args[1]))
-                                refSuff = "Ref"
-                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
-                            pid.mapMethod = "pxtrt::mapSet" + refSuff
-                        } else {
-                            if (isRefType(typeOf(node)))
-                                refSuff = "Ref"
-                            pid.mapMethod = "pxtrt::mapGet" + refSuff
+                    return mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                    if (node == funcExpr) {
+                        // in this special base case, we have property access recv.foo
+                        // where recv is a map obejct 
+                        let name = getName(decl)
+                        let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                        if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                            let pid = res.data as ir.ProcId
+                            pid.mapIdx = pid.ifaceIndex
+                            let refSuff = ""
+                            if (args.length == 2) {
+                                if (isRefCountedExpr(args[1]))
+                                    refSuff = "Ref"
+                                pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                                pid.mapMethod = "pxtrt::mapSet" + refSuff
+                            } else {
+                                if (isRefType(typeOf(node)))
+                                    refSuff = "Ref"
+                                pid.mapMethod = "pxtrt::mapGet" + refSuff
+                            }
                         }
+                        return res
+                    } else {
+                        // in this case, recv.foo represents a function/lambda
+                        // so the receiver is not needed, as we have already done 
+                        // the property lookup to get the lambda
+                        args.shift()
+                        callInfo.args.shift()
                     }
-                    return res
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
@@ -2150,13 +2011,13 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda
-
+            // otherwise we assume a lambda 
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
 
+            // here's where we will recurse to generate toe evaluate funcExpr
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
@@ -2367,6 +2228,8 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
+                    // lit = ir.shared(ir.rtcall("pxt::mkAction",
+                    //                [ir.numlit(0), ir.numlit(0), emitFunLitCore(node, true)]))
                     lit = emitFunLitCore(node)
                 }
             }
@@ -2672,7 +2535,7 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && decl.kind == SK.PropertySignature) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
@@ -3627,24 +3490,6 @@ ${lbl}: .short 0xffff
         }
     }
 
-    export function emptyExtInfo(): ExtensionInfo {
-        const pio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
-        const r: ExtensionInfo = {
-            functions: [],
-            generatedFiles: {},
-            extensionFiles: {},
-            sha: "",
-            compileData: "",
-            shimsDTS: "",
-            enumsDTS: "",
-            onlyPublic: true
-        }
-        if (pio) r.platformio = { dependencies: {} };
-        else r.yotta = { config: {}, dependencies: {} };
-        return r;
-    }
-
-
     export class Binary {
         procs: ir.Procedure[] = [];
         globals: ir.Cell[] = [];
@@ -3685,4 +3530,3 @@ ${lbl}: .short 0xffff
         }
     }
 }
-

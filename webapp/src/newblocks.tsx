@@ -337,17 +337,17 @@ export class Editor extends srceditor.Editor {
 
             let blocklyPromises: Promise<void>[] = [];
             if (/newblocks=1/i.test(window.location.href)) {
-                return pxt.BrowserUtils.loadScript('/blb/newblockly/blockly_compressed.js').then(() => {
-                    return pxt.BrowserUtils.loadScript('/blb/newblockly/blocks_compressed.js').then(() => {
-                        return pxt.BrowserUtils.loadScript('/blb/newblockly/msg/js/en.js').then(() => {
+                return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blockly_compressed.js').then(() => {
+                    return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blocks_compressed.js').then(() => {
+                        return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/msg/js/en.js').then(() => {
                             resolve();
                         })
                     })
                 })
             } else {
-                return pxt.BrowserUtils.loadScript('/blb/blockly/blockly_compressed.js').then(() => {
-                    return pxt.BrowserUtils.loadScript('/blb/blockly/blocks_compressed.js').then(() => {
-                        return pxt.BrowserUtils.loadScript('/blb/blockly/msg/js/en.js').then(() => {
+                return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/blockly_compressed.js').then(() => {
+                    return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/blocks_compressed.js').then(() => {
+                        return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/msg/js/en.js').then(() => {
                             resolve();
                         })
                     })

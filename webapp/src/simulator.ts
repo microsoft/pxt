@@ -11,11 +11,15 @@ interface SimulatorConfig {
     editor: string;
 }
 
+export const FAST_TRACE_INTERVAL = 100;
+export const SLOW_TRACE_INTERVAL = 500;
+
 export var driver: pxsim.SimulatorDriver;
 let nextFrameId: number = 0;
 const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
+let tutorialMode: boolean;
 
 let $debugger: JQuery;
 
@@ -67,6 +71,10 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             }
         },
+        onTraceMessage: function (msg) {
+            let brkInfo = lastCompileResult.breakpoints[msg.breakpointId]
+            config.highlightStatement(brkInfo)
+        },
         onDebuggerWarning: function (wrn) {
             for (let id of wrn.breakpointIds) {
                 let brkInfo = lastCompileResult.breakpoints[id]
@@ -92,15 +100,31 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    if (core.isLoading())
-                        core.confirmAsync({
+                    if (!tutorialMode && !pxt.shell.isSandboxMode()) {
+                        const modalOpts: core.ConfirmOptions = {
                             header: msg.header,
                             body: msg.body,
                             size: "large",
                             copyable: msg.copyable,
-                            hideAgree: true,
                             disagreeLbl: lf("Close")
-                        }).done();
+                        };
+                        const trustedSimUrls = pxt.appTarget.simulator.trustedUrls;
+                        const hasTrustedLink = msg.linkButtonHref && trustedSimUrls && trustedSimUrls.indexOf(msg.linkButtonHref) !== -1;
+
+                        if (hasTrustedLink) {
+                            modalOpts.agreeLbl = msg.linkButtonLabel;
+                        } else {
+                            modalOpts.hideAgree = true;
+                        }
+
+                        core.confirmAsync(modalOpts)
+                            .then((selection) => {
+                                if (hasTrustedLink && selection == 1) {
+                                    window.open(msg.linkButtonHref,'_blank');
+                                }
+                            })
+                            .done();
+                    }
                     break;
             }
         }
@@ -110,12 +134,14 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     updateDebuggerButtons();
 }
 
-export function setState(editor: string) {
+export function setState(editor: string, tutMode?: boolean) {
     if (config.editor != editor) {
         config.editor = editor;
         config.highlightStatement(null)
         updateDebuggerButtons();
     }
+
+    tutorialMode = tutMode;
 }
 
 export function makeDirty() { // running outdated code
@@ -126,7 +152,7 @@ export function isDirty(): boolean { // in need of a restart?
     return /sepia/.test(driver.container.className);
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean) {
+export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean) {
     pxsim.U.removeClass(driver.container, "sepia");
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
@@ -136,10 +162,11 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
-        mute: mute,
-        parts: parts,
-        debug: debug,
-        fnArgs: fnArgs,
+        mute,
+        parts,
+        debug,
+        fnArgs,
+        highContrast,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts)
     }
@@ -170,6 +197,10 @@ export function hide(completeHandler?: () => void) {
 
 export function unhide() {
     driver.unhide();
+}
+
+export function setTraceInterval(intervalMs: number) {
+    driver.setTraceInterval(intervalMs);
 }
 
 export function proxy(message: pxsim.SimulatorCustomMessage) {

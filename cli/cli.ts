@@ -1,5 +1,6 @@
 /// <reference path="../typings/globals/node/index.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
+/// <reference path="../built/pxtcompiler.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
 (global as any).pxt = pxt;
@@ -24,8 +25,6 @@ import * as serial from './serial';
 import * as gdb from './gdb';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
-const rtlcss = require('rtlcss');
-const autoprefixer = require('autoprefixer');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -866,6 +865,10 @@ function uploadCoreAsync(opts: UploadOptions) {
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
 
+    let targetEditorJs = "";
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
+        targetEditorJs = "@commitCdnUrl@editor.js";
+
     let replacements: Map<string> = {
         "/sim/simulator.html": "@simUrl@",
         "/sim/siminstructions.html": "@partsUrl@",
@@ -878,7 +881,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
-        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : ""
+        "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
+        "@targetEditorJs@": targetEditorJs
     }
 
     if (opts.localDir) {
@@ -913,7 +917,8 @@ function uploadCoreAsync(opts: UploadOptions) {
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
-            "@cachedHexFiles@": ""
+            "@cachedHexFiles@": "",
+            "@targetEditorJs@": ""
         }
     }
 
@@ -1204,17 +1209,24 @@ export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
     return simshimAsync()
-        .then(() => buildFolderAsync('sim', true))
+        .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(buildTargetCoreAsync)
         .then(buildSemanticUIAsync)
+        .then(buildBlocklyAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('server', true))
+        .then(() => buildFolderAsync('editor', true, 'editor'))
+        .then(() => buildFolderAsync('server', true, 'server'))
 }
 
-function buildFolderAsync(p: string, optional?: boolean): Promise<void> {
+function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
     if (!fs.existsSync(p + "/tsconfig.json")) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
+    }
+
+    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
+        U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
@@ -1362,6 +1374,9 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
+    const rtlcss = require('rtlcss');
+    const autoprefixer = require('autoprefixer');
+
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1390,7 +1405,7 @@ function buildSemanticUIAsync() {
         return semCss;
     }).then((semCss) => {
         // run autoprefixer
-        console.log("running autoprefixer");
+        pxt.debug("running autoprefixer");
         return autoprefixer.process(semCss).then((result: any) => {
             fs.writeFileSync('built/web/semantic.css', result.css);
             return result.css;
@@ -1398,9 +1413,21 @@ function buildSemanticUIAsync() {
     }).then((semCss) => {
         // convert to rtl
         let rtlCss = rtlcss.process(semCss);
-        console.log("converting semantic css to rtl");
+        pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
+}
+
+function buildBlocklyAsync() {
+    const pxtPrefix = "node_modules/pxt-core/";
+    const blockDir = pxt.appTarget.appTheme.blocksVersion == 'v2' ? 'newblockly' : 'blockly';
+    const blocklyCompressed = fs.readFileSync(`${pxtPrefix}webapp/public/${blockDir}/blockly_compressed.js`)
+    const blocksCompressed = fs.readFileSync(`${pxtPrefix}webapp/public/${blockDir}/blocks_compressed.js`)
+    const blocksLocale = fs.readFileSync(`${pxtPrefix}webapp/public/${blockDir}/msg/js/en.js`)
+
+    fs.writeFileSync('built/web/blocks/blockly_compressed.js', blocklyCompressed)
+    fs.writeFileSync('built/web/blocks/blocks_compressed.js', blocksCompressed)
+    fs.writeFileSync('built/web/blocks/msg/js/en.js', blocksLocale)
 }
 
 function buildWebStringsAsync() {
@@ -1597,7 +1624,8 @@ function buildTargetCoreAsync() {
                 tag: info.tag,
                 commits: info.commitUrl,
                 target: readJson("package.json")["version"],
-                pxt: pxtVersion()
+                pxt: pxtVersion(),
+                pxtCrowdinBranch: pxtCrowdinBranch()
             }
 
             saveThemeJson(cfg)
@@ -1624,6 +1652,12 @@ function pxtVersion(): string {
     return pxt.appTarget.id == "core" ?
         readJson("package.json")["version"] :
         readJson("node_modules/pxt-core/package.json")["version"];
+}
+
+function pxtCrowdinBranch(): string {
+    return pxt.appTarget.id == "core" ?
+        readJson("pxtarget.json").appTheme.crowdinBranch :
+        readJson("node_modules/pxt-core/pxtarget.json").appTheme.crowdinBranch;
 }
 
 function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
@@ -1781,6 +1815,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
             wsPort: parsed.flags["wsport"] as number || 0,
+            hostname: parsed.flags["hostname"] as string || "",
             browser: parsed.flags["browser"] as string,
             serial: !parsed.flags["noSerial"]
         }))
@@ -1992,7 +2027,7 @@ class Host
                 }
                 let proto = pkg.verProtocol()
                 if (proto == "file") {
-                    console.log(`skip download of local pkg: ${pkg.version()}`)
+                    pxt.log(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
                 } else {
                     return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
@@ -2328,7 +2363,12 @@ enum BuildOption {
 
 export function serviceAsync(parsed: commandParser.ParsedCommand) {
     let fn = "built/response.json"
-    return mainPkg.serviceAsync(parsed.arguments[0])
+    return mainPkg.getCompileOptionsAsync()
+        .then(opts => {
+            pxtc.service.performOperation("reset", {})
+            pxtc.service.performOperation("setOpts", { options: opts })
+            return pxtc.service.performOperation(parsed.arguments[0], {})
+        })
         .then(res => {
             if (res.errorMessage) {
                 console.error("Error calling service:", res.errorMessage)
@@ -2351,7 +2391,8 @@ export function timeAsync() {
     ensurePkgDir();
     let min: Map<number> = null;
     let loop = () =>
-        mainPkg.buildAsync(mainPkg.getTargetOptions())
+        mainPkg.getCompileOptionsAsync(mainPkg.getTargetOptions())
+            .then(opts => pxtc.compile(opts))
             .then(res => {
                 if (!min) {
                     min = res.times
@@ -3839,10 +3880,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
 
     if (!summaryMD) {
-        console.log('no SUMMARY.md file found, skipping check docs');
+        pxt.log('no SUMMARY.md file found, skipping check docs');
         return Promise.resolve();
     }
-    console.log(`checking docs`);
+    pxt.log(`checking docs`);
 
     const noTOCs: string[] = [];
     const todo: string[] = [];
@@ -3852,12 +3893,17 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     let snipCount = 0;
     let snippets: CodeSnippet[] = [];
 
-    function pushUrl(url: string) {
+    function pushUrl(url: string, toc: boolean) {
         // cache value
         if (!urls.hasOwnProperty(url)) {
-            const isResource = /\.[a-z]+$/i.test(url);
-            if (!isResource) {
-                pxt.debug(`link not in TOC: ${url}`);
+            const isPackage = /^\/pkg\//.test(url);
+            if (isPackage) {
+                urls[url] = url;
+                return;
+            }
+            const isResource = /\.[a-z]+$/i.test(url)
+            if (!isResource && !toc) {
+                pxt.debug(`link not in SUMMARY: ${url}`);
                 noTOCs.push(url);
             }
             // TODO: correct resolution of static resources
@@ -3870,8 +3916,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
     }
 
     function checkTOCEntry(entry: pxt.TOCMenuEntry) {
-        if (entry.path && !/^https:\/\//.test(entry.path))
-            pushUrl(entry.path);
+        if (entry.path && !/^https:\/\//.test(entry.path)) {
+            pushUrl(entry.path, true);
+            if (!urls[entry.path]) {
+                pxt.log(`SUMMARY: broken link ${entry.path}`);
+                broken++;
+            }
+        }
         // look for sub items
         if (entry.subitems)
             entry.subitems.forEach(checkTOCEntry);
@@ -3894,7 +3945,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             let url = /]\((\/[^)]+?)(\s+"[^"]+")?\)/.exec(m)[1];
             // remove hash
             url = url.replace(/#.*$/, '');
-            pushUrl(url);
+            pushUrl(url, false);
             if (!urls[url]) {
                 pxt.log(`${entrypath}: broken link ${url}`);
                 broken++;
@@ -3912,8 +3963,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
         });
     }
 
-    pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in TOC, ${snippets.length} snippets`);
-    fs.writeFileSync("built/noTOC.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
+    pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
+    fs.writeFileSync("built/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), "utf8");
     if (compileSnippets)
         return testSnippetsAsync(snippets, re);
     return Promise.resolve();
@@ -4180,6 +4231,12 @@ function initCommands() {
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
+            hostname: {
+                description: "hostname to run serve, default localhost",
+                aliases: ["h"],
+                type: "string",
+                argument: "hostname"
+            },
             port: {
                 description: "port to bind server, default 3232",
                 aliases: ["p"],

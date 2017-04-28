@@ -1,0 +1,141 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+
+/* Side Docs layout */
+#sidedocs {
+  height:100%;
+  top: 0;
+  z-index: 10;
+  visibility: hidden;
+  opacity: 0;
+  right: 0;
+  width: 0;
+}
+
+#sidedocsbar {
+  position: absolute;
+  right: 1rem;
+}
+
+#sidedocsframe {
+  width: 0;
+  height: 0;
+  border:none;
+  overflow-y: hidden;
+  background: white;
+}
+
+/* Side docs toggle button */
+#sidedocstoggle {
+  position: absolute;
+  border-top-left-radius: 100px;
+  border-bottom-left-radius: 100px;
+  right: 0;
+  top: 40%;
+  bottom: 40%;
+  height: 20%;
+  z-index: 10;
+  padding: 0;
+  margin: 0;
+  background: grey;
+  box-shadow: none !important;
+   transition: none;
+}
+
+.sideDocs #sidedocsframe {
+  width: @sideBarWidth;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.41);
+  -moz-box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.41);
+  box-shadow: 0px 0px 20px 0px rgba(0,0,0,0.41);
+}
+
+.sideDocs #sidedocstoggle {
+   right: @sideBarWidth;
+   transition: right 0.5s, opacity 0.5s linear;
+}
+
+/* Show chevron icon on hover when collapsed */
+#sidedocstoggle > i.icon.hover {
+    display: none;
+}
+#root:not(.sideDocs) #sidedocstoggle.ui.button:hover > i.icon {
+    display: none !important;
+}
+#root:not(.sideDocs) #sidedocstoggle.ui.button:hover > i.icon.hover {
+    display: inherit !important;
+}
+
+.sideDocs #sidedocsbar {
+    top: calc(@mainMenuHeight + 1.5rem);
+}
+
+.sideDocs #sidedocs {
+    visibility: visible;
+    opacity: 1;
+    width: @sideBarWidth;
+    padding-top: calc(@mainMenuHeight + 1rem);
+    padding-bottom: calc(@editorToolsCollapsedHeight + 1rem);
+}
+
+#sidedocsbar .ui.link .icon {
+  cursor: pointer;
+}
+
+/* Large Monitor */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+}
+
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+
+}
+
+/* Tablet */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+
+}
+
+/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
+@media only screen and (min-width: @computerBreakpoint) {
+}
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    .sideDocs #sidedocs {
+        padding-top: calc(@mobileMenuHeight + 1rem);
+        padding-bottom: calc(@editorToolsHeight + 1rem);
+    }
+    .collapsedEditorTools #sidedocs {
+        padding-bottom: calc(@editorToolsCollapsedHeight + 1rem);
+    }
+    .sideDocs #sidedocsbar {
+        top: calc(@mobileMenuHeight + 1.5rem);
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    .sideDocs #sidedocs, #sidedocsframe {
+        width: @sideBarWidthSmall;
+    }
+    .sideDocs #sidedocstoggle {
+        right: @sideBarWidthSmall;
+    }
+}

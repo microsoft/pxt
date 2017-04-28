@@ -89,6 +89,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     renderCore() {
+        const targetTheme = pxt.appTarget.appTheme;
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
@@ -232,6 +233,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={'github:' + scr.fullName}
                                 color="blue"
                                 imageUrl={pxt.github.repoIconUrl(scr)}
+                                label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                 />
                         ) }
                         {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>

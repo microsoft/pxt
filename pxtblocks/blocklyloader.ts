@@ -163,6 +163,9 @@ namespace pxt.blocks {
 
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
+            if (nsn && nsn.attributes.block)
+                catName = nsn.attributes.block
+
             let category = categoryElement(tb, catName);
 
             if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
@@ -508,6 +511,11 @@ namespace pxt.blocks {
 
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
+        else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
+            let anchor = fn.qName.toLowerCase().split('.');
+            if (anchor[0] == fn.pkg) anchor.shift();
+            block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
+        }
 
         block.setTooltip(fn.attributes.jsDoc);
         if (newBlocks) {
@@ -1167,6 +1175,8 @@ namespace pxt.blocks {
         }
     }
 
+    export let openHelpUrl: (url: string) => void;
+
     function initLoops() {
         let msg: any = Blockly.Msg;
 
@@ -1351,6 +1361,12 @@ namespace pxt.blocks {
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
         msg.HELP = lf("Help");
 
+        // inject hook to handle openings docs
+        (<any>Blockly).BlockSvg.prototype.showHelp_ = function() {
+            const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
+            if (url) (pxt.blocks.openHelpUrl || window.open)(url);
+        };
+
         /**
          * Show the context menu for the workspace.
          * @param {!Event} e Mouse event.
@@ -1472,33 +1488,24 @@ namespace pxt.blocks {
             }
             menuOptions.push(formatCodeOption);
 
-            const shuffleOption = {
-                text: lf("Shuffle Blocks"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.shuffle");
-                    pxt.blocks.layout.shuffle(this, 1);
-                }
-            };
-            // TODO: temporarily removing shuffle blocks option until we have a better way of surfacing it to content creators
-            //menuOptions.push(shuffleOption);
-
-            const screenshotOption = {
-                text: lf("Download Screenshot"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.screenshot");
-                    pxt.blocks.layout.screenshotAsync(this)
-                        .done((uri) => {
-                            if (pxt.BrowserUtils.isSafari())
-                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                            BrowserUtils.browserDownloadDataUri(
-                                uri,
-                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                        });
-                }
-            };
-            menuOptions.push(screenshotOption);
+            if (pxt.blocks.layout.screenshotEnabled()) {
+                const screenshotOption = {
+                    text: lf("Download Screenshot"),
+                    enabled: topBlocks.length > 0,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.screenshot");
+                        pxt.blocks.layout.screenshotAsync(this)
+                            .done((uri) => {
+                                if (pxt.BrowserUtils.isSafari())
+                                    uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                                BrowserUtils.browserDownloadDataUri(
+                                    uri,
+                                    `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                            });
+                    }
+                };
+                menuOptions.push(screenshotOption);
+            }
 
             // custom options...
             if (onShowContextMenu)
@@ -2048,14 +2055,54 @@ namespace pxt.blocks {
             goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
             // Get the new text.
             const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
+
+            function render() {
+                let rtl = Blockly.Tooltip.element_.RTL;
+                let windowSize = goog.dom.getViewportSize();
+                // Display the tooltip.
+                Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
+                Blockly.Tooltip.DIV.style.display = 'block';
+                Blockly.Tooltip.visible = true;
+                // Move the tooltip to just below the cursor.
+                let anchorX = Blockly.Tooltip.lastX_;
+                if (rtl) {
+                    anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
+                } else {
+                    anchorX += Blockly.Tooltip.OFFSET_X;
+                }
+                let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
+
+                if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
+                    windowSize.height + window.scrollY) {
+                    // Falling off the bottom of the screen; shift the tooltip up.
+                    anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+                }
+                if (rtl) {
+                    // Prevent falling off left edge in RTL mode.
+                    anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
+                } else {
+                    if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
+                        windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
+                        // Falling off the right edge of the screen;
+                        // clamp the tooltip on the edge.
+                        anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
+                            2 * Blockly.Tooltip.MARGINS;
+                    }
+                }
+                Blockly.Tooltip.DIV.style.top = anchorY + 'px';
+                Blockly.Tooltip.DIV.style.left = anchorX + 'px';
+            }
             if (card) {
-                const cardEl = pxt.docs.codeCard.render({
-                    header: renderTip(Blockly.Tooltip.element_),
-                    typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
-                        ? undefined
-                        : pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
+                pxt.blocks.compileBlockAsync(Blockly.Tooltip.element_, blockInfo).then((compileResult) => {
+                    const cardEl = pxt.docs.codeCard.render({
+                        header: renderTip(Blockly.Tooltip.element_),
+                        typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
+                            ? undefined
+                            : compileResult.source
+                    })
+                    Blockly.Tooltip.DIV.appendChild(cardEl);
+                    render();
                 })
-                Blockly.Tooltip.DIV.appendChild(cardEl);
             } else {
                 let tip = renderTip(Blockly.Tooltip.element_);
                 tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
@@ -2066,41 +2113,8 @@ namespace pxt.blocks {
                     div.appendChild(document.createTextNode(lines[i]));
                     Blockly.Tooltip.DIV.appendChild(div);
                 }
+                render();
             }
-            let rtl = Blockly.Tooltip.element_.RTL;
-            let windowSize = goog.dom.getViewportSize();
-            // Display the tooltip.
-            Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
-            Blockly.Tooltip.DIV.style.display = 'block';
-            Blockly.Tooltip.visible = true;
-            // Move the tooltip to just below the cursor.
-            let anchorX = Blockly.Tooltip.lastX_;
-            if (rtl) {
-                anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
-            } else {
-                anchorX += Blockly.Tooltip.OFFSET_X;
-            }
-            let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
-
-            if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
-                windowSize.height + window.scrollY) {
-                // Falling off the bottom of the screen; shift the tooltip up.
-                anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
-            }
-            if (rtl) {
-                // Prevent falling off left edge in RTL mode.
-                anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
-            } else {
-                if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
-                    windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
-                    // Falling off the right edge of the screen;
-                    // clamp the tooltip on the edge.
-                    anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
-                        2 * Blockly.Tooltip.MARGINS;
-                }
-            }
-            Blockly.Tooltip.DIV.style.top = anchorY + 'px';
-            Blockly.Tooltip.DIV.style.left = anchorX + 'px';
         }
     }
 }

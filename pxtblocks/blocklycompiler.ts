@@ -1,12 +1,24 @@
 ///<reference path='../localtypings/blockly.d.ts'/>
 /// <reference path="../built/pxtlib.d.ts" />
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                A compiler from Blocky to TouchDevelop                     //
 ///////////////////////////////////////////////////////////////////////////////
 
+let iface: pxt.worker.Iface
+
 namespace pxt.blocks {
+
+    export function initWorker() {
+        if (!iface) {
+            iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
+        }
+    }
+
+    export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
+        initWorker()
+        return iface.opAsync(op, arg)
+    }
 
     export enum NT {
         Prefix, // op + map(children)
@@ -683,6 +695,7 @@ namespace pxt.blocks {
     // whenever a block was actually missing).
     export function compileExpression(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         assert(b != null);
+        e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         let expr: JsNode;
         if (b.disabled || b.type == "placeholder")
@@ -750,6 +763,7 @@ namespace pxt.blocks {
         stdCallTable: pxt.Map<StdFunc>;
         errors: Blockly.Block[];
         renames: RenameMap;
+        stats: pxt.Map<number>;
     }
 
     export interface RenameMap {
@@ -782,7 +796,8 @@ namespace pxt.blocks {
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
             stdCallTable: e.stdCallTable,
             errors: e.errors,
-            renames: e.renames
+            renames: e.renames,
+            stats: e.stats
         };
     }
 
@@ -810,7 +825,8 @@ namespace pxt.blocks {
             renames: {
                 oldToNew: {},
                 takenNames: {}
-            }
+            },
+            stats: {}
         }
     };
 
@@ -911,9 +927,9 @@ namespace pxt.blocks {
         }
 
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
-            ts.isIdentifierPart(a.charCodeAt(0), ts.ScriptTarget.ES5) ? a : "");
+            ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
 
-        if (!n || !ts.isIdentifierStart(n.charCodeAt(0), ts.ScriptTarget.ES5)) {
+        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5)) {
             n = "_" + n;
         }
 
@@ -929,7 +945,6 @@ namespace pxt.blocks {
 
         e.renames.oldToNew[name] = n;
         e.renames.takenNames[n] = true;
-
         return n;
     }
 
@@ -1142,6 +1157,7 @@ namespace pxt.blocks {
     function compileStatementBlock(e: Environment, b: Blockly.Block): JsNode[] {
         let r: JsNode[];
         const comments: string[] = [];
+        e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         switch (b.type) {
             case 'controls_if':
@@ -1179,6 +1195,12 @@ namespace pxt.blocks {
                 break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
+
+        r.forEach(l => {
+            if (l.type === NT.Block) {
+                l.id = b.id
+            }
+        });
 
         if (comments.length) {
             addCommentNodes(comments, r)
@@ -1339,18 +1361,17 @@ namespace pxt.blocks {
         return e;
     }
 
-    export function compileBlock(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
+    export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
         infer(e, w);
         const compiled = compileStatementBlock(e, b)
         removeAllPlaceholders();
-        return tdASTtoTS(compiled);
+        return tdASTtoTS(e, compiled);
     }
 
-    function compileWorkspace(w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
+    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
-            const e = mkEnv(w, blockInfo);
             infer(e, w);
 
             const stmtsMain: JsNode[] = [];
@@ -1465,20 +1486,31 @@ namespace pxt.blocks {
     export interface BlockCompilationResult {
         source: string;
         sourceMap: SourceInterval[];
+        stats: pxt.Map<number>;
     }
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
+        let bestChunk: SourceInterval;
+        let bestChunkLength: number;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end >= loc.start + loc.length)
-                return chunk.id;
+            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
+                bestChunk = chunk;
+                bestChunkLength = chunk.end - chunk.start;
+            }
+        }
+        if (bestChunk) {
+            return bestChunk.id;
         }
         return undefined;
     }
 
-    export function compile(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): BlockCompilationResult {
-        return tdASTtoTS(compileWorkspace(b, blockInfo));
+    export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
+        const e = mkEnv(b, blockInfo);
+        const nodes = compileWorkspace(e, b, blockInfo);
+        const result = tdASTtoTS(e, nodes);
+        return result;
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
@@ -1519,8 +1551,9 @@ namespace pxt.blocks {
         ".": 18,
     }
 
-    function tdASTtoTS(app: JsNode[]): BlockCompilationResult {
+    function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
         let sourceMap: SourceInterval[] = [];
+        let sourceMapById: pxt.Map<SourceInterval> = {};
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
@@ -1591,13 +1624,14 @@ namespace pxt.blocks {
         if (!output)
             output += "\n"
 
-        // outformat
-        output = pxtc.format(output, 1).formatted;
-
-        return {
-            source: output,
-            sourceMap: sourceMap
-        };
+        // outformat async
+        return workerOpAsync("format", { format: {input: output, pos: 1} }).then(() => {
+            return {
+                source: output,
+                sourceMap: sourceMap,
+                stats: env.stats
+            };
+        })
 
         function emit(n: JsNode) {
             if (n.glueToBlock) {
@@ -1605,7 +1639,7 @@ namespace pxt.blocks {
                 output += " "
             }
 
-            let start = output.length
+            let start = getCurrentLine();
 
             switch (n.type) {
                 case NT.Infix:
@@ -1628,12 +1662,26 @@ namespace pxt.blocks {
                     break
             }
 
-            let end = output.length
+            let end = getCurrentLine();
 
             if (n.id && start != end) {
-                sourceMap.push({ id: n.id, start: start, end: end })
-
+                if (sourceMapById[n.id]) {
+                    const node = sourceMapById[n.id];
+                    node.start = Math.min(node.start, start);
+                    node.end = Math.max(node.end, end);
+                }
+                else {
+                    const interval = { id: n.id, start: start, end: end }
+                    sourceMapById[n.id] = interval;
+                    sourceMap.push(interval)
+                }
             }
+        }
+
+        function getCurrentLine() {
+            let i = 0;
+            output.replace(/\n/g, a => { i++; return a; })
+            return i;
         }
 
         function write(s: string) {

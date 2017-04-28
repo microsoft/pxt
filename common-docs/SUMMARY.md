@@ -13,7 +13,9 @@
 ## Blocks #blocks
 
 * [Blocks](/blocks)
+    * [On Start](/blocks/on-start)
     * [Loops](/blocks/loops)
+        * [repeat](/blocks/loops/repeat)
         * [for](/blocks/loops/for)
         * [while](/blocks/loops/while)
     * [Logic](/blocks/logic)
@@ -21,8 +23,9 @@
         * [Boolean](/blocks/logic/boolean)
     * [Variables](/blocks/variables)
         * [assign](/blocks/variables/assign)
-        * [change var](/blocks/variables/change-var)
+        * [change var](/blocks/variables/change)
         * [var](/blocks/variables/var)
+    * [Math](/blocks/math)
     * [JavaScript blocks](/blocks/javascript-blocks)
     * [Custom blocks](/blocks/custom)
 
@@ -50,6 +53,7 @@
 ## Miscellanous #misc
 
 * Miscellanous
+    * [Support](/support)
     * [FAQ](/faq)
     * [Translate](/translate)
     * [Sharing projects](/share)
@@ -60,9 +64,9 @@
 
 * Developers
     * [Packages](/packages)
-        * [Build your own](/build-your-own)
-        * [Approval](/approval)
-        * [Versioning](/versioning)
+        * [Build your own](/packages/build-your-own)
+        * [Approval](/packages/approval)
+        * [Versioning](/packages/versioning)
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Coding on Raspberry Pi](/raspberry-pi)

@@ -1,9 +1,10 @@
 # Repeat
 
-Run part of the program the number of times you say. See the [for loop](/blocks/loops/for).
+Run part of the program the number of times you say.
 
-### Block Editor
-
-![](/static/mb/blocks/contents-0.png)
+```block
+for(let i = 0; i < 4; ++i) {
+}
+```
 
 ## #examples

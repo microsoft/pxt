@@ -16,6 +16,7 @@ namespace pxsim {
         fnArgs?: any;
         code: string;
         mute?: boolean;
+        highContrast?: boolean;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -65,6 +66,8 @@ namespace pxsim {
         header?: string;
         body?: string;
         copyable?: string;
+        linkButtonHref?: string;
+        linkButtonLabel?: string;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
         rssi: number;

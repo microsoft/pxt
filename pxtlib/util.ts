@@ -1,4 +1,4 @@
-/// <reference path="../../typings/globals/bluebird/index.d.ts"/>
+/// <reference path="../typings/globals/bluebird/index.d.ts"/>
 
 namespace ts.pxtc {
     export var __dummy = 42;
@@ -659,24 +659,26 @@ namespace ts.pxtc.Util {
         return _localizeStrings[s] || s;
     }
 
-    export function downloadLiveTranslationsAsync(lang: string, filename: string) {
-        return Util.httpGetJsonAsync(`https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}`);
+    export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string): Promise<pxt.Map<string>> {
+        // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
+        let url = `https://www.pxt.io/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+        if (branch) url += '&branch=' + encodeURIComponent(branch);
+        return Util.httpGetJsonAsync(url);
     }
 
-    export function updateLocalizationAsync(baseUrl: string, code: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
-        if (live) {
-            console.log(`loading live translations for ${code}`)
-            return downloadLiveTranslationsAsync(code, "strings.json")
+        if (_localizeLang != code && live) {
+            return downloadLiveTranslationsAsync(code, "strings.json", branch)
                 .then(tr => {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
                     localizeLive = true;
                 }, e => {
-                    console.error('failed to load localizations')
+                    console.log('failed to load localizations')
                 })
         }
 

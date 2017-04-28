@@ -5,6 +5,7 @@ namespace pxsim {
         unhideElement?: (el: HTMLElement) => void;
         onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
+        onTraceMessage?: (msg: TraceMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
@@ -34,6 +35,7 @@ namespace pxsim {
         aspectRatio?: number;
         partDefinitions?: pxsim.Map<PartDefinition>;
         mute?: boolean;
+        highContrast?: boolean;
     }
 
     export interface HwDebugger {
@@ -47,6 +49,7 @@ namespace pxsim {
         private frameCounter = 0;
         private currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
+        private traceInterval = 0;
         public runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
@@ -229,6 +232,7 @@ namespace pxsim {
                 code: js,
                 partDefinitions: opts.partDefinitions,
                 mute: opts.mute,
+                highContrast: opts.highContrast
             }
 
             this.applyAspectRatio();
@@ -244,6 +248,7 @@ namespace pxsim {
             } else this.startFrame(frame);
 
             this.setState(SimulatorState.Running);
+            this.setTraceInterval(this.traceInterval);
         }
 
         private startFrame(frame: HTMLIFrameElement) {
@@ -339,12 +344,19 @@ namespace pxsim {
             this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
         }
 
+        public setTraceInterval(intervalMs: number) {
+            this.traceInterval = intervalMs;
+            this.postDebuggerMessage("traceConfig", { interval: intervalMs });
+        }
+
         private handleSimulatorCommand(msg: pxsim.SimulatorCommandMessage) {
             if (this.options.onSimulatorCommand) this.options.onSimulatorCommand(msg);
         }
 
         private handleDebuggerMessage(msg: pxsim.DebuggerMessage) {
-            console.log("DBG-MSG", msg.subtype, msg)
+            if (msg.subtype !== "trace") {
+                console.log("DBG-MSG", msg.subtype, msg)
+            }
             switch (msg.subtype) {
                 case "warning":
                     if (this.options.onDebuggerWarning)
@@ -361,6 +373,11 @@ namespace pxsim {
                             this.options.onDebuggerBreakpoint(brk);
                     } else {
                         console.error("debugger: trying to pause from " + this.state);
+                    }
+                    break;
+                case "trace":
+                    if (this.options.onTraceMessage) {
+                        this.options.onTraceMessage(msg as pxsim.TraceMessage);
                     }
                     break;
             }
