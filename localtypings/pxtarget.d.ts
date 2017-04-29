@@ -6,6 +6,7 @@ declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
+        languages?: string[];
     }
 
     interface PackagesConfig {
@@ -131,7 +132,7 @@ declare namespace pxt {
         organizationLogo?: string;
         organizationWideLogo?: string;
         homeUrl?: string;
-        shareUrl?: string; 
+        shareUrl?: string;
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
@@ -180,11 +181,12 @@ declare namespace pxt {
         sounds?: {
             tutorialStep?: string;
             tutorialNext?: string;
-            dialogClick?: string;            
+            dialogClick?: string;
         },
         disableLiveTranslations?: boolean; // don't load translations from crowdin
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
+        selectLanguage?: boolean; // add language picker to settings menu
     }
 
     interface DocMenuEntry {
