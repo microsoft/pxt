@@ -138,8 +138,9 @@ namespace pxt.runner {
         pxt.setAppTarget((window as any).pxtTargetBundle)
         Util.assert(!!pxt.appTarget);
 
+        const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+        const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
 
         patchSemantic();
