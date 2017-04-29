@@ -3617,13 +3617,7 @@ export function testAsync() {
 export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     let buf: string = "";
     serial.monitorSerial((info, buffer) => {
-        buf += buffer.toString('utf8');
-        let i: number;
-        while ((i = buf.indexOf('\n')) > -1) {
-            let line = buf.slice(0, i);
-            console.log('' + line);
-            buf = buf.slice(i + 1);
-        }
+        process.stdout.write(buffer);
     })
     return Promise.resolve();
 }
