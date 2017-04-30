@@ -620,14 +620,19 @@ export class Editor extends srceditor.Editor {
         const blocklyOptions: Blockly.ExtendedOptions = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
-            media: pxt.webConfig.commitCdnUrl + "blockly/media/",
+            media: pxt.webConfig.commitCdnUrl + (pxt.shell.isBlocksV2() ? "newblockly/media/" : "blockly/media/"),
             sound: true,
             trashcan: false,
             collapse: false,
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxType: pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal',
+            // TODO: Add this interface to pxt-blockly main
+            toolboxOptions: {
+                border: true,
+                colour: pxt.appTarget.appTheme.coloredToolbox,
+                inverted: pxt.appTarget.appTheme.invertedToolbox
+            },
             zoom: {
                 enabled: false,
                 controls: false,
