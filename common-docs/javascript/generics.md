@@ -6,7 +6,7 @@ Components that are capable of working on the data of today as well as the data 
 In languages like C# and Java, one of the main tools in the toolbox for creating reusable components is *generics*, that is, being able to create a component that can work over a variety of types rather than a single one.
 This allows users to consume these components and use their own types.
 
-# Hello World of Generics
+## Hello World of Generics
 
 To start off, let's do the "hello world" of generics: the identity function.
 The identity function is a function that will return back whatever is passed in.
@@ -53,7 +53,7 @@ let output = identity("myString");  // type of output will be 'string'
 Notice that we didn't have to explicitly pass the type in the angle brackets (`<>`); the compiler just looked at the value `"myString"`, and set `T` to its type.
 While type argument inference can be a helpful tool to keep code shorter and more readable, you may need to explicitly pass in the type arguments as we did in the previous example when the compiler fails to infer the type, as may happen in more complex examples.
 
-# Working with Generic Type Variables
+## Working with Generic Type Variables
 
 When you begin to use generics, you'll notice that when you create generic functions like `identity`, the compiler will enforce that you use any generically typed parameters in the body of the function correctly.
 That is, that you actually treat these parameters as if they could be any and all types.
@@ -105,7 +105,7 @@ function loggingIdentity<T>(arg: Array<T>): Array<T> {
 You may already be familiar with this style of type from other languages.
 In the next section, we'll cover how you can create your own generic types like `Array<T>`.
 
-# Generic Types
+## Generic Types
 
 ### ~hint
 Static TypeScript does not currently support generic functions as values.
@@ -183,7 +183,7 @@ Understanding when to put the type parameter directly on the call signature and 
 In addition to generic interfaces, we can also create generic classes.
 Note that it is not possible to create generic enums and namespaces.
 
-# Generic Classes
+## Generic Classes
 
 A generic class has a similar shape to a generic interface.
 Generic classes have a generic type parameter list in angle brackets (`<>`) following the name of the class.
@@ -217,7 +217,7 @@ console.log(stringNumeric.add(stringNumeric.zeroValue, "test"));
 
 Just as with interface, putting the type parameter on the class itself lets us make sure all of the properties of the class are working with the same type.
 
-# Generic Constraints
+## Generic Constraints
 
 If you remember from an earlier example, you may sometimes want to write a generic function that works on a set of types where you have some knowledge about what capabilities that set of types will have.
 In our `loggingIdentity` example, we wanted to be able to access the `.length` property of `arg`, but the compiler could not prove that every type had a `.length` property, so it warns us that we can't make this assumption.

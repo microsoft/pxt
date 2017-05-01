@@ -38,7 +38,7 @@ Here, it's only the shape that matters. If the object we pass to the function me
 
 It's worth pointing out that the type-checker does not require that these properties come in any sort of order, only that the properties the interface requires are present and have the required type.
 
-# Optional Properties
+## Optional Properties
 
 Not all properties of an interface may be required.
 Some exist under certain conditions or may not be there at all.
@@ -92,7 +92,7 @@ function createSquare(config: SquareConfig): { color: string; area: number } {
 let mySquare = createSquare({color: "black"});
 ```
 
-# Excess Property Checks
+## Excess Property Checks
 
 In our first example using interfaces, TypeScript lets us pass `{ size: number; label: string; }` to something that only expected a `{ label: string; }`.
 We also just learned about optional properties, and how they're useful when describing so-called "option bags".
@@ -134,7 +134,7 @@ If an object literal has any properties that the "target type" doesn't have, you
 let mySquare = createSquare({ colour: "red", width: 100 });
 ```
 
-# Function Types
+## Function Types
 
 Interfaces are capable of describing the wide range of shapes that JavaScript objects can take.
 In addition to describing an object with properties, interfaces are also capable of describing function types.
@@ -185,9 +185,9 @@ Note that you can also give a function type (without using an interface) equival
 type SubstrFunc = (source: string, index: number) => string;
 ```
 
-# Class Types
+## Class Types
 
-## Implementing an interface
+### Implementing an interface
 
 One of the most common uses of interfaces in languages like C# and Java, that of explicitly enforcing that a class meets a particular contract, is also possible in TypeScript.
 
@@ -227,7 +227,7 @@ class Clock implements ClockInterface {
 Interfaces describe the public side of the class, rather than both the public and private side.
 This prohibits you from using them to check that a class also has particular types for the private side of the class instance.
 
-# Extending Interfaces
+## Extending Interfaces
 
 Like classes, interfaces can extend each other.
 This allows you to copy the members of one interface into another, which gives you more flexibility in how you separate your interfaces into reusable components.
@@ -262,7 +262,7 @@ interface Square extends Shape, PenStroke {
 let square = <Square>{ color: "blue", sideLength: 10, penWidth: 5.0}
 ```
 
-# Hybrid Types
+## Hybrid Types
 
 ### ~hint
 
@@ -298,7 +298,7 @@ c.interval = 5.0;
 
 When interacting with 3rd-party JavaScript, you may need to use patterns like the above to fully describe the shape of the type.
 
-# Interfaces Extending Classes
+## Interfaces Extending Classes
 
 ### ~hint
 

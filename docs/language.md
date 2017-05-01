@@ -33,7 +33,7 @@ functions, lambdas, classes).
 * passing functions (with up to 3 arguments) as values
 * classes with static and instance fields, methods and constructors; `new` keyword
 * array literals `[1, 2, 3]`
-* enumeratiosn
+* enumerations (`enum`)
 * asynchronous functions that look [synchronous to the user](/async)
 * method-like properties (get/set accessors)
 * basic generic classes, methods, and functions
