@@ -2,6 +2,7 @@ export interface Type {
     union?: Type;
     classType?: py.ClassDef;
     primType?: string;
+    fields?: pxt.Map<FieldDesc>;
 }
 
 export interface FieldDesc {
@@ -525,7 +526,70 @@ function find(t: Type) {
     return t
 }
 
-function inferType(e: py.Expr) {
+function t2s(t: Type) {
+    if (t.primType)
+        return t.primType
+    else if (t.classType)
+        return t.classType.name
+    else
+        return "?"
+}
+
+function error(t0: Type, t1: Type) {
+    U.userError("types not compatible: " + t2s(t0) + " and " + t2s(t1))
+}
+
+function canUnify(t0: Type, t1: Type) {
+    if (t0 === t1)
+        return true
+
+    if (t0.primType) {
+        return !t1.classType && !t1.primType
+    } else if (t1.primType) {
+        return !t0.classType && !t0.primType
+    } else if (t0.classType) {
+        return !t1.classType || t0.classType === t1.classType
+    }
+    return true
+}
+
+function unify(t0: Type, t1: Type): void {
+    t0 = find(t0)
+    t1 = find(t1)
+    if (!canUnify(t0, t1))
+        error(t0, t1)
+    if (t0.classType && !t1.classType)
+        return unify(t1, t0)
+    if (t0.primType && !t1.primType)
+        return unify(t1, t0)
+    t0.union = t1
+    if (!t0.classType && t0.fields) {
+        for (let k of Object.keys(t0.fields))
+            unify(t0.fields[k].type, getField(t1, k))
+    }
+}
+
+function getField(t: Type, n: string) {
+    t = find(t)
+    let ct = t.classType
+    if (ct) {
+        if (!ct.fields)
+            ct.fields = {}
+        U.assert(!t.fields || ct.fields === t.fields)
+        t.fields = ct.fields
+    } else {
+        if (!t.fields) t.fields = {}
+    }
+    if (!t.fields[n]) {
+        t.fields[n] = {
+            name: n,
+            type: {}
+        }
+    }
+    return t.fields[n]
+}
+
+function inferType(e: py.Expr): Type {
     if (e.tsType) return find(e.tsType)
     switch (e.kind) {
         case "Str": return tpString
@@ -537,10 +601,14 @@ function inferType(e: py.Expr) {
             let n = getName(e)
             if (n == "self" && ctx.currClass)
                 return (e.tsType = { classType: ctx.currClass })
+            let v = U.lookup(ctx.vars, n)
+            if (v)
+                return v.type
             break
         }
         case "Attribute": {
-            let part = inferType(e.)
+            let part = inferType((e as py.Attribute).value)
+            return getField(part, (e as py.Attribute).attr)
         }
     }
     e.tsType = {}
