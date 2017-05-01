@@ -1,3 +1,14 @@
+export interface Type {
+    union?: Type;
+    classType?: py.ClassDef;
+    primType?: string;
+}
+
+export interface FieldDesc {
+    name: string;
+    type: Type;
+}
+
 export module py {
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
@@ -8,7 +19,11 @@ export module py {
     export interface Stmt extends AST {
         _stmtBrand: void;
     }
+    export interface Symbol extends Stmt {
+        _symbolBrand: void;
+    }
     export interface Expr extends AST {
+        tsType?: Type;
         _exprBrand: void;
     }
 
@@ -53,7 +68,7 @@ export module py {
         is_async: int;
     }
 
-    export interface Module extends AST {
+    export interface Module extends Symbol {
         kind: "Module";
         body: Stmt[];
     }
@@ -96,7 +111,7 @@ export module py {
         value: Expr;
     }
 
-    export interface FunctionDef extends Stmt {
+    export interface FunctionDef extends Symbol {
         kind: "FunctionDef";
         name: identifier;
         args: Arguments;
@@ -112,13 +127,14 @@ export module py {
         decorator_list: Expr[];
         returns?: Expr;
     }
-    export interface ClassDef extends Stmt {
+    export interface ClassDef extends Symbol {
         kind: "ClassDef";
         name: identifier;
         bases: Expr[];
         keywords: Keyword[];
         body: Stmt[];
         decorator_list: Expr[];
+        fields?: pxt.Map<FieldDesc>;
     }
     export interface Return extends Stmt {
         kind: "Return";
@@ -128,7 +144,7 @@ export module py {
         kind: "Delete";
         targets: Expr[];
     }
-    export interface Assign extends Stmt {
+    export interface Assign extends Symbol {
         kind: "Assign";
         targets: Expr[];
         value: Expr;
@@ -453,12 +469,40 @@ function docComment(cmt: string) {
 
 let moduleAst: pxt.Map<py.Module> = {}
 
+function lookupSymbol(name: string): py.Symbol {
+    if (!name) return null
+    if (moduleAst[name])
+        return moduleAst[name]
+    let parts = name.split(".")
+    if (parts.length >= 2) {
+        let last = parts.length - 1
+        let par = moduleAst[parts.slice(0, last).join(".")]
+        let ename = parts[last]
+        if (par) {
+            for (let stmt of par.body) {
+                if (stmt.kind == "ClassDef" || stmt.kind == "FunctionDef") {
+                    if ((stmt as py.FunctionDef).name == ename)
+                        return stmt as py.FunctionDef
+                }
+                if (stmt.kind == "Assign") {
+                    let assignment = stmt as py.Assign
+                    if (assignment.targets.length == 1 && getName(assignment.targets[0]) == ename) {
+                        return assignment
+                    }
+                }
+            }
+        }
+    }
+    return null
+}
+
 interface VarDesc {
     expandsTo?: string;
     isImportStar?: boolean;
     isPlainImport?: boolean;
     isLocal?: boolean;
     isParam?: boolean;
+    type?: Type;
 }
 
 interface Ctx {
@@ -468,6 +512,40 @@ interface Ctx {
 }
 
 let ctx: Ctx
+
+let tpString: Type = { primType: "string" }
+let tpNumber: Type = { primType: "number" }
+let tpBoolean: Type = { primType: "boolean" }
+
+function find(t: Type) {
+    if (t.union) {
+        t.union = find(t.union)
+        return t.union
+    }
+    return t
+}
+
+function inferType(e: py.Expr) {
+    if (e.tsType) return find(e.tsType)
+    switch (e.kind) {
+        case "Str": return tpString
+        case "Num": return tpNumber
+        case "NameConstant":
+            if ((e as py.NameConstant).value != null)
+                return tpBoolean
+        case "Name": {
+            let n = getName(e)
+            if (n == "self" && ctx.currClass)
+                return (e.tsType = { classType: ctx.currClass })
+            break
+        }
+        case "Attribute": {
+            let part = inferType(e.)
+        }
+    }
+    e.tsType = {}
+    return e.tsType
+}
 
 function resetCtx() {
     ctx = {
@@ -590,7 +668,7 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
         let prefix = ""
         let funname = n.name
         let decs = n.decorator_list.filter(d => {
-            if (d.kind == "Name" && (d as py.Name).id == "property") {
+            if (getName(d) == "property") {
                 prefix = "get"
                 return false
             }
@@ -669,13 +747,17 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
         if (n.targets.length != 1)
             return stmtTODO(n)
         let trg = expr(n.targets[0])
-        if (isCallTo(n.value, "const")) {
+        let pref = ""
+        if (!ctx.currClass && !ctx.currFun)
+            pref = "export "
+        let isConstCall = isCallTo(n.value, "const")
+        let isUpperCase = getName(n.targets[0]) && !/[a-z]/.test(getName(n.targets[0]))
+        if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             trg = expr(n.targets[0])
-            return B.mkStmt(B.mkText("const "),
-                B.mkInfix(trg, "=", expr((n.value as py.Call).args[0])))
+            return B.mkStmt(B.mkText("const "), B.mkInfix(trg, "=", expr(n.value)))
         }
-        return B.mkStmt(B.mkInfix(trg, "=", expr(n.value)))
+        return B.mkStmt(B.mkText(pref), B.mkInfix(trg, "=", expr(n.value)))
     },
     For: (n: py.For) => {
         U.assert(n.orelse.length == 0)
@@ -739,8 +821,8 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
         let stmts = n.items.map((it, idx) => {
             let varName = "with" + idx
             if (it.optional_vars) {
-                U.assert(it.optional_vars.kind == "Name")
-                let id = (it.optional_vars as py.Name).id
+                let id = getName(it.optional_vars)
+                U.assert(id != null)
                 ctx.vars[id] = { isLocal: true }
                 varName = quoteStr(id)
             }
@@ -759,7 +841,7 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
         let msg: B.JsNode
         if (ex && ex.kind == "Call") {
             let cex = ex as py.Call
-            if (cex.args[0] && cex.args[0].kind == "Str") {
+            if (cex.args.length == 1) {
                 msg = expr(cex.args[0])
             }
         }
@@ -844,6 +926,18 @@ function quoteStr(id: string) {
     else
         return id
 }
+
+function getName(e: py.Expr): string {
+    if (e.kind == "Name")
+        return (e as py.Name).id
+    if (e.kind == "Attribute") {
+        let pref = getName((e as py.Attribute).value)
+        if (pref)
+            return pref + "." + (e as py.Attribute).attr
+    }
+    return null
+}
+
 function quote(id: py.identifier) {
     if (id == "self")
         return B.mkText("this")
@@ -854,9 +948,7 @@ function isCallTo(n: py.Expr, fn: string) {
     if (n.kind != "Call")
         return false
     let c = n as py.Call
-    if (c.func.kind != "Name")
-        return false
-    return (c.func as py.Name).id == fn
+    return getName(c.func) == fn
 }
 
 function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
@@ -866,6 +958,12 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
         return B.H.mkCall(op, [left, right])
     else
         return B.mkInfix(left, op, right)
+}
+
+let funMap: pxt.Map<string> = {
+    "const": "",
+    "int": "Math.floor",
+    "len": ".length"
 }
 
 const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
@@ -902,7 +1000,11 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
         return r
     },
     Call: (n: py.Call) => {
+
+        let nm = getName(n.func)
         let allargs = n.args.map(expr)
+        let over = U.lookup(funMap, nm)
+
         if (n.keywords.length > 0) {
             let kwargs = n.keywords.map(kk => B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
             allargs.push(B.mkGroup([
@@ -911,6 +1013,19 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
                 B.mkText("}")
             ]))
         }
+
+        if (over != null) {
+            if (over == "") {
+                if (allargs.length == 1)
+                    return allargs[0]
+            } else if (over[0] == ".") {
+                return B.mkInfix(allargs[0], ".", B.H.mkCall(over.slice(1), allargs.slice(1)))
+            } else {
+                return B.H.mkCall(over, allargs)
+            }
+        }
+
+        let sym = lookupSymbol(nm)
 
         let nodes = [
             expr(n.func),
@@ -996,6 +1111,7 @@ function toTS(js: py.AST) {
 }
 
 export function convertAsync(fns: string[]) {
+    let primFiles = U.toDictionary(nodeutil.allFiles(fns[0]), s => s)
     let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
     let dirs: pxt.Map<number> = {}
     for (let f of files) {
@@ -1055,10 +1171,12 @@ export function convertAsync(fns: string[]) {
             })
 
             U.iterMap(js, (fn: string, js: any) => {
-                console.log("\n//")
-                console.log("// *** " +  fn + " ***")
-                console.log("//\n")
-                console.log(toTS(js))
+                if (primFiles[fn]) {
+                    console.log("\n//")
+                    console.log("// *** " + fn + " ***")
+                    console.log("//\n")
+                    console.log(toTS(js))
+                }
             })
         })
 }
