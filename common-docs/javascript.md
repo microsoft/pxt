@@ -2,7 +2,7 @@
 
 The Microsoft MakeCode environment supports [Static TypeScript](http://makecode.com/language)
 
-For a brief introduction:
+For a brief introduction, see:
 
 * [Calling](/javascript/call)
 * [Sequencing](/javascript/sequence)
@@ -12,4 +12,5 @@ For a brief introduction:
 * [Functions](/javascript/functions)
 * [Types](/javascript/types)
 * [Classes](/javascript/classes)
-
+* [Interfaces](/javascript/interfaces)
+* [Generics](/javascript/generics)

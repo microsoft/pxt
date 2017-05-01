@@ -222,3 +222,5 @@ class Employee extends Person {
 let howard = new Employee("Howard", "Sales");
 let john = new Person("John"); // Error: The 'Person' constructor is protected
 ```
+
+
