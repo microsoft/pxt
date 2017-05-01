@@ -355,11 +355,16 @@ switch (step) {
                     args.splice(1, 0, procid.mapIdx.toString())
                     write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
                     write(`  ${frameRef}.fn = doNothing;`)
-                    write(`} else`)
+                    write(`} else {`)
                 }
+                write (`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface[${procid.ifaceIndex}];`)
+                if (procid.mapMethod) {
+                    write(`}`)
+                }
             } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
+                write (`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             }
             write(`return actionCall(${frameRef})`)

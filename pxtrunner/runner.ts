@@ -63,13 +63,20 @@ namespace pxt.runner {
             return Promise.resolve(null as string)
         }
 
+        private githubPackageCache: pxt.Map<Map<string>> = {};
         downloadPackageAsync(pkg: pxt.Package) {
             let proto = pkg.verProtocol()
+            let cached: pxt.Map<string> = undefined;
+            // cache resolve github packages
+            if (proto == "github")
+                cached = this.githubPackageCache[pkg._verspec];
             let epkg = getEditorPkg(pkg)
 
-            return pkg.commonDownloadAsync()
+            return (cached ? Promise.resolve(cached) : pkg.commonDownloadAsync())
                 .then(resp => {
                     if (resp) {
+                        if (proto == "github" && !cached)
+                            this.githubPackageCache[pkg._verspec] = Util.clone(resp);
                         epkg.setFiles(resp)
                         return Promise.resolve()
                     }
@@ -131,8 +138,9 @@ namespace pxt.runner {
         pxt.setAppTarget((window as any).pxtTargetBundle)
         Util.assert(!!pxt.appTarget);
 
+        const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+        const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
 
         patchSemantic();

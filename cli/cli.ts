@@ -25,8 +25,6 @@ import * as serial from './serial';
 import * as gdb from './gdb';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
-const rtlcss = require('rtlcss');
-const autoprefixer = require('autoprefixer');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -884,7 +882,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
-        "@targetEditorJs@" : targetEditorJs
+        "@targetEditorJs@": targetEditorJs
     }
 
     if (opts.localDir) {
@@ -1375,6 +1373,9 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
+    const rtlcss = require('rtlcss');
+    const autoprefixer = require('autoprefixer');
+
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1801,6 +1802,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
             wsPort: parsed.flags["wsport"] as number || 0,
+            hostname: parsed.flags["hostname"] as string || "",
             browser: parsed.flags["browser"] as string,
             serial: !parsed.flags["noSerial"]
         }))
@@ -2012,7 +2014,7 @@ class Host
                 }
                 let proto = pkg.verProtocol()
                 if (proto == "file") {
-                    console.log(`skip download of local pkg: ${pkg.version()}`)
+                    pxt.log(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
                 } else {
                     return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
@@ -3621,8 +3623,9 @@ export function testAsync() {
 }
 
 export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    let buf: string = "";
     serial.monitorSerial((info, buffer) => {
-        console.log(buffer.toString('utf8'));
+        process.stdout.write(buffer);
     })
     return Promise.resolve();
 }
@@ -4225,6 +4228,12 @@ function initCommands() {
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
+            hostname: {
+                description: "hostname to run serve, default localhost",
+                aliases: ["h"],
+                type: "string",
+                argument: "hostname"
+            },
             port: {
                 description: "port to bind server, default 3232",
                 aliases: ["p"],

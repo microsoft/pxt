@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9264
+    // next free error 9265
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -551,9 +551,9 @@ namespace ts.pxtc {
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
-            // TODO: namespace??? correct name checking??
-            if (classes[cl].decl.name.text == decl.name.text)
-                userError(9261, lf("Interface with same name as a class not supported."))
+            if (classes[cl].decl.symbol == decl.symbol) {
+                 userError(9261, lf("Interface with same name as a class not supported"))
+            }
         }
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
@@ -631,7 +631,7 @@ namespace ts.pxtc {
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
-            return insertSubtype(key, [false, "Cast to class/interface unsupported."])
+            return insertSubtype(key, [false, "Cast to class/interface not supported."])
         }
 
         if (isClassType(superType)) {
@@ -643,11 +643,11 @@ namespace ts.pxtc {
                     if (inheritsFrom(superDecl, subDecl))
                         return insertSubtype(key, [false, "Downcasts not supported."])
                     else
-                        return insertSubtype(key, [false, "Casts between unrelated classes unsupported."])
+                        return insertSubtype(key, [false, "Casts between unrelated classes not supported."])
                 }
             } else {
                 if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    return insertSubtype(key, [false, "Cast to class unsupported."])
+                    return insertSubtype(key, [false, "Cast to class not supported."])
                 }
             }
         } else if (isFunctionType(superType)) {
@@ -701,7 +701,7 @@ namespace ts.pxtc {
             if (isArrayType(subType)) {
                 let superElemType = arrayElementType(superType)
                 let subElemType = arrayElementType(subType)
-                return checkSubtype(subElemType,superElemType)
+                return checkSubtype(subElemType, superElemType)
             }
         } else if (lookupTypeParameter(superType)) {
             // TODO
@@ -749,7 +749,7 @@ namespace ts.pxtc {
     }
 
     function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
-        U.assert(typeParameters.length == args.length)
+        U.assert(typeParameters.length == args.length, "typeParameters.length == args.length")
         return typeParameters.map((tp, i) => ({ tp: tp, isRef: isRefType(args[i]) }))
     }
 
@@ -966,7 +966,7 @@ namespace ts.pxtc {
             }
 
             if (!n) {
-                userError(code, lf("Sorry, this language feature isn't supported"))
+                userError(code, lf("Sorry, this language feature is not supported"))
             }
 
             let syntax = stringKind(n)
@@ -1176,7 +1176,7 @@ namespace ts.pxtc {
         }
 
         function getVTable(inf: ClassInfo) {
-            assert(inf.isUsed)
+            assert(inf.isUsed, "inf.isUsed")
             if (inf.vtable)
                 return inf.vtable
             let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
@@ -1211,7 +1211,7 @@ namespace ts.pxtc {
                     let id = getIfaceMemberId(name)
                     inf.itable[id] = proc
                     inf.itableInfo[id] = name
-                    assert(!!proc)
+                    assert(!!proc, "!!proc")
                 }
 
                 let emitSynthetic = (fn: MethodDeclaration, fill: (p: ir.Procedure) => void) => {
@@ -1224,7 +1224,7 @@ namespace ts.pxtc {
                             fill(proc)
                         })
                     }
-                    assert(!!proc)
+                    assert(!!proc, "!!proc")
                     storeIface(getName(fn), proc)
                 }
 
@@ -1306,7 +1306,7 @@ namespace ts.pxtc {
                     minf.virtualParent = pinf
                     if (!pinf.virtualParent)
                         pinf.virtualParent = pinf
-                    assert(pinf.virtualParent == pinf)
+                    assert(pinf.virtualParent == pinf, "pinf.virtualParent == pinf")
                     if (!pinf.virtualInstances)
                         pinf.virtualInstances = []
                     pinf.virtualInstances.push(minf)
@@ -1468,7 +1468,7 @@ ${lbl}: .short 0xffff
             if (info.location) {
                 return info.location.load()
             } else {
-                assert(!bin.finalPass || info.capturedVars.length == 0)
+                assert(!bin.finalPass || info.capturedVars.length == 0, "!bin.finalPass || info.capturedVars.length == 0")
                 return emitFunLitCore(f)
             }
         }
@@ -1581,6 +1581,9 @@ ${lbl}: .short 0xffff
         function emitObjectLiteral(node: ObjectLiteralExpression) {
             let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment) => {
+                if (p.kind == SK.ShorthandPropertyAssignment) {
+                    userError(9264, "Shorthand properties not supported.")
+                }
                 let refSuff = ""
                 if (isRefCountedExpr(p.initializer))
                     refSuff = "Ref"
@@ -1606,7 +1609,8 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
             // we need to type check node.expression before committing code gen
-            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl)) || decl.kind == SK.PropertySignature) {
+            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl))
+                || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression, false)
                 if (!decl)
                     return ir.numlit(0)
@@ -1639,7 +1643,7 @@ ${lbl}: .short 0xffff
                 U.userError("enumval=shimanme not supported at the moment")
                 // TODO needs dealing with int conversions
                 return ir.rtcall(ev, [])
-            } else if (decl.kind == SK.PropertySignature) {
+            } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
                 /*
                 if (attrs.shim) {
@@ -1759,7 +1763,7 @@ ${lbl}: .short 0xffff
             return isRefType(typeOf(e))
         }
         function getMask(args: Expression[]) {
-            assert(args.length <= 8)
+            assert(args.length <= 8, "args.length <= 8")
             let m = 0
             args.forEach((a, i) => {
                 if (isRefCountedExpr(a))
@@ -1795,12 +1799,12 @@ ${lbl}: .short 0xffff
             }
 
             if (nm == "TD_NOOP") {
-                assert(!hasRet)
+                assert(!hasRet, "!hasRet")
                 return emitLit(undefined)
             }
 
             if (nm == "TD_ID") {
-                assert(args.length == 1)
+                assert(args.length == 1, "args.length == 1")
                 return emitExpr(args[0])
             }
 
@@ -1890,9 +1894,14 @@ ${lbl}: .short 0xffff
             if (!decl)
                 decl = getDecl(funcExpr) as FunctionLikeDeclaration
             let isMethod = false
-            if (decl)
+            if (decl) {
                 switch (decl.kind) {
+                    // we treat properties via calls
+                    // so we say they are "methods"
                     case SK.PropertySignature:
+                    case SK.PropertyAssignment:
+                    // TOTO case: case SK.ShorthandPropertyAssignment
+                    // these are the real methods
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
                     case SK.GetAccessor:
@@ -1907,7 +1916,7 @@ ${lbl}: .short 0xffff
                         decl = null; // no special handling
                         break;
                 }
-
+            }
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
@@ -1926,16 +1935,7 @@ ${lbl}: .short 0xffff
             if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
                 callInfo.isAutoCreate = true
 
-            let bindings: TypeBinding[] = []
-
-            if (sig) {
-                // NOTE: we are playing with TypeScript internals here
-                let trg: Signature = (sig as any).target
-                let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
-                // NOTE: mapper also a TypeScript internal
-                let args = typeParams.map(x => (sig as any).mapper(x))
-                bindings = getTypeBindingsCore(typeParams, args)
-            }
+            let bindings = getCallBindings(sig)
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
 
@@ -1965,6 +1965,9 @@ ${lbl}: .short 0xffff
                 addDefaultParametersAndTypeCheck(sig, args, attrs);
             })
 
+            // first we handle a set of direct cases, note that
+            // we are not recursing on funcExpr here, but looking
+            // at the associated decl
             if (decl && decl.kind == SK.FunctionDeclaration) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
@@ -1977,22 +1980,19 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 }
             }
-
+            // special case call to super
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
-                assert(!bin.finalPass || !!baseCtor)
+                assert(!bin.finalPass || !!baseCtor, "!bin.finalPass || !!baseCtor")
                 let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
             }
-
             if (isMethod) {
                 let isSuper = false
                 if (isStatic(decl)) {
                     // no additional arguments
-                } else if (recv || funcExpr.kind == SK.PropertyAccessExpression) {
-                    if (!recv)
-                        recv = (<PropertyAccessExpression>funcExpr).expression
+                } else if (recv) {
                     if (recv.kind == SK.SuperKeyword) {
                         isSuper = true
                     }
@@ -2014,7 +2014,7 @@ ${lbl}: .short 0xffff
                     }
                 }
                 if (info.virtualParent && !isSuper) {
-                    assert(!bin.finalPass || info.virtualIndex != null)
+                    U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
                     return mkProcCallCore(null, info.virtualIndex, args.map((x) => emitExpr(x)))
                 }
                 if (attrs.shim && !hasShimDummy(decl)) {
@@ -2037,25 +2037,38 @@ ${lbl}: .short 0xffff
                     })
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
-                } else if (decl.kind == SK.MethodSignature || decl.kind == SK.PropertySignature) {
+                } else if (decl.kind == SK.MethodSignature) {
                     let name = getName(decl)
-                    let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
-                    if (decl.kind == SK.PropertySignature) {
-                        let pid = res.data as ir.ProcId
-                        pid.mapIdx = pid.ifaceIndex
-                        let refSuff = ""
-                        if (args.length == 2) {
-                            if (isRefCountedExpr(args[1]))
-                                refSuff = "Ref"
-                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
-                            pid.mapMethod = "pxtrt::mapSet" + refSuff
-                        } else {
-                            if (isRefType(typeOf(node)))
-                                refSuff = "Ref"
-                            pid.mapMethod = "pxtrt::mapGet" + refSuff
+                    return mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                    if (node == funcExpr) {
+                        // in this special base case, we have property access recv.foo
+                        // where recv is a map obejct 
+                        let name = getName(decl)
+                        let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                        if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                            let pid = res.data as ir.ProcId
+                            pid.mapIdx = pid.ifaceIndex
+                            let refSuff = ""
+                            if (args.length == 2) {
+                                if (isRefCountedExpr(args[1]))
+                                    refSuff = "Ref"
+                                pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                                pid.mapMethod = "pxtrt::mapSet" + refSuff
+                            } else {
+                                if (isRefType(typeOf(node)))
+                                    refSuff = "Ref"
+                                pid.mapMethod = "pxtrt::mapGet" + refSuff
+                            }
                         }
+                        return res
+                    } else {
+                        // in this case, recv.foo represents a function/lambda
+                        // so the receiver is not needed, as we have already done 
+                        // the property lookup to get the lambda
+                        args.shift()
+                        callInfo.args.shift()
                     }
-                    return res
                 } else {
                     markFunctionUsed(decl, bindings)
                     return emitPlain();
@@ -2072,13 +2085,13 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda
-
+            // otherwise we assume a lambda 
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
 
+            // here's where we will recurse to generate toe evaluate funcExpr
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
@@ -2103,7 +2116,7 @@ ${lbl}: .short 0xffff
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
             let proc = lookupProc(decl, bindings)
-            assert(!!proc || !bin.finalPass)
+            assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
             return mkProcCallCore(proc, null, args)
         }
 
@@ -2138,6 +2151,19 @@ ${lbl}: .short 0xffff
 
         function isIfaceMemberUsed(name: string) {
             return U.lookup(ifaceMembers, name) != null
+        }
+
+        function getCallBindings(sig: Signature) {
+            let bindings: TypeBinding[] = []
+            if (sig) {
+                // NOTE: we are playing with TypeScript internals here
+                let trg: Signature = (sig as any).target
+                let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
+                // NOTE: mapper also a TypeScript internal
+                let args = typeParams.map(x => (sig as any).mapper(x))
+                bindings = getTypeBindingsCore(typeParams, args)
+            }
+            return bindings
         }
 
         function markClassUsed(info: ClassInfo) {
@@ -2185,6 +2211,11 @@ ${lbl}: .short 0xffff
                     markUsed(ctor)
                     let args = node.arguments.slice(0)
                     let ctorAttrs = parseComments(ctor)
+
+                    let sig = checker.getResolvedSignature(node)
+                    // TODO: can we have overloeads?
+                    let bindings = getCallBindings(sig)
+                    // NOTE: type checking with bindings
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map((x) => emitExpr(x))
                     if (ctorAttrs.shim) {
@@ -2194,7 +2225,7 @@ ${lbl}: .short 0xffff
                         return ir.rtcall(ctorAttrs.shim, compiled)
                     }
                     compiled.unshift(ir.op(EK.Incr, [obj]))
-                    proc.emitExpr(mkProcCall(ctor, compiled, []))
+                    proc.emitExpr(mkProcCall(ctor, compiled, bindings))
                     return obj
                 } else {
                     if (node.arguments && node.arguments.length)
@@ -2271,7 +2302,7 @@ ${lbl}: .short 0xffff
 
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
-                assert(getEnclosingFunction(node) != null)
+                assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
                 lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
@@ -2289,11 +2320,13 @@ ${lbl}: .short 0xffff
                 }
             } else {
                 if (isExpression) {
+                    // lit = ir.shared(ir.rtcall("pxt::mkAction",
+                    //                [ir.numlit(0), ir.numlit(0), emitFunLitCore(node, true)]))
                     lit = emitFunLitCore(node)
                 }
             }
 
-            assert(!!lit == isExpression)
+            assert(!!lit == isExpression, "!!lit == isExpression")
 
             let id: ir.ProcQuery = { action: node, bindings }
             let existing = bin.procs.filter(p => p.matches(id))[0]
@@ -2302,7 +2335,7 @@ ${lbl}: .short 0xffff
                 proc = existing
                 proc.reset()
             } else {
-                assert(!bin.finalPass)
+                assert(!bin.finalPass, "!bin.finalPass")
                 proc = new ir.Procedure();
                 proc.isRoot = !!(node as any).isRootFunction
                 proc.action = node;
@@ -2316,15 +2349,15 @@ ${lbl}: .short 0xffff
             if (node.parent.kind == SK.ClassDeclaration) {
                 let parClass = node.parent as ClassDeclaration
                 let numTP = parClass.typeParameters ? parClass.typeParameters.length : 0
-                assert(bindings.length >= numTP)
+                assert(bindings.length >= numTP, "bindings.length >= numTP")
                 let classInfo = getClassInfo(null, parClass, bindings.slice(0, numTP))
                 if (proc.classInfo)
-                    assert(proc.classInfo == classInfo)
+                    assert(proc.classInfo == classInfo, "proc.classInfo == classInfo")
                 else
                     proc.classInfo = classInfo
                 if (node.kind == SK.Constructor) {
                     if (classInfo.ctor)
-                        assert(classInfo.ctor == proc)
+                        assert(classInfo.ctor == proc, "classInfo.ctor == proc")
                     else
                         classInfo.ctor = proc
                 }
@@ -2380,7 +2413,7 @@ ${lbl}: .short 0xffff
             // once we have emitted code for this function,
             // we should emit code for all decls that are used
             // as a result
-            assert(!bin.finalPass || usedWorkList.length == 0)
+            assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
             while (usedWorkList.length > 0) {
                 let f = usedWorkList.pop()
                 emit(f)
@@ -2424,7 +2457,7 @@ ${lbl}: .short 0xffff
 
             if (isGenericFunction(node)) {
                 if (!info.usages) {
-                    assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass)
+                    assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass, "opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass")
                     // test mode - make fake binding
                     let bindings = getTypeParameters(node).map(t => ({
                         arg: checker.getTypeAtLocation(t),
@@ -2432,7 +2465,7 @@ ${lbl}: .short 0xffff
                         isRef: true
                     }))
                     addEnclosingTypeBindings(bindings, node)
-                    U.assert(bindings.length > 0)
+                    U.assert(bindings.length > 0, "bindings.length > 0")
                     info.usages = [bindings]
                 }
                 U.assert(info.usages.length > 0, "no generic usages recorded")
@@ -2444,7 +2477,7 @@ ${lbl}: .short 0xffff
                 for (let bindings of todo) {
                     scope(() => {
                         let nolit = emitFuncCore(node, bindings)
-                        U.assert(nolit == null)
+                        U.assert(nolit == null, "nolit == null")
                     })
                 }
             } else {
@@ -2598,7 +2631,7 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && decl.kind == SK.PropertySignature) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
@@ -3356,7 +3389,7 @@ ${lbl}: .short 0xffff
                     // Save default label for emit at the end of the
                     // tests section. Default label doesn't have to come at the
                     // end in JS.
-                    assert(!defaultLabel)
+                    assert(!defaultLabel, "!defaultLabel")
                     defaultLabel = lbl
                 } else {
                     oops()
@@ -3770,7 +3803,7 @@ ${lbl}: .short 0xffff
         }
 
         addProc(proc: ir.Procedure) {
-            assert(!this.finalPass)
+            assert(!this.finalPass, "!this.finalPass")
             this.procs.push(proc)
             proc.seqNo = this.procs.length
             //proc.binary = this

@@ -148,6 +148,22 @@ namespace testNamespace {
     export function createDefInstanceClass(): Anotherclass { return new Anotherclass(); }
 
     export const builtin: Anotherclass = createDefInstanceClass();
+
+
+    /**
+     * Field Editors
+     */
+
+    //% blockId=test_customFieldEditor block="%value=test_customShadowField"
+    export function customFieldEditor(value: number): void {  }
+
+    //% blockId=test_customFieldEditorWithMutation block="%value=test_customShadowField"
+    //% value.shadowOptions.test=0
+    export function customFieldEditorWithMutation(value: number): void { }
+
+    //% blockId=test_customShadowField block="%value"
+    //% value.fieldEditor="note"
+    export function customShadowField(value: number): number { return value; }
 }
 
 //% color=#A80000 weight=30
