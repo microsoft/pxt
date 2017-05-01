@@ -1,6 +1,7 @@
 # JavaScript
 
-The Microsoft MakeCode environment supports [Static TypeScript](http://makecode.com/language)
+The Microsoft MakeCode environment supports JavaScript via
+[Static TypeScript](http://makecode.com/language)
 
 For a brief introduction, see:
 
