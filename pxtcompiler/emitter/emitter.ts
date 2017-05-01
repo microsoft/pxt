@@ -687,7 +687,7 @@ namespace ts.pxtc {
     }
 
     function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
-        U.assert(typeParameters.length == args.length)
+        U.assert(typeParameters.length == args.length, "typeParameters.length == args.length")
         return typeParameters.map((tp, i) => ({ tp: tp, isRef: isRefType(args[i]) }))
     }
 
@@ -1113,7 +1113,7 @@ namespace ts.pxtc {
         }
 
         function getVTable(inf: ClassInfo) {
-            assert(inf.isUsed)
+            assert(inf.isUsed, "inf.isUsed")
             if (inf.vtable)
                 return inf.vtable
             let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
@@ -1148,7 +1148,7 @@ namespace ts.pxtc {
                     let id = getIfaceMemberId(name)
                     inf.itable[id] = proc
                     inf.itableInfo[id] = name
-                    assert(!!proc)
+                    assert(!!proc, "!!proc")
                 }
 
                 let emitSynthetic = (fn: MethodDeclaration, fill: (p: ir.Procedure) => void) => {
@@ -1161,7 +1161,7 @@ namespace ts.pxtc {
                             fill(proc)
                         })
                     }
-                    assert(!!proc)
+                    assert(!!proc, "!!proc")
                     storeIface(getName(fn), proc)
                 }
 
@@ -1243,7 +1243,7 @@ namespace ts.pxtc {
                     minf.virtualParent = pinf
                     if (!pinf.virtualParent)
                         pinf.virtualParent = pinf
-                    assert(pinf.virtualParent == pinf)
+                    assert(pinf.virtualParent == pinf, "pinf.virtualParent == pinf")
                     if (!pinf.virtualInstances)
                         pinf.virtualInstances = []
                     pinf.virtualInstances.push(minf)
@@ -1412,7 +1412,7 @@ ${lbl}: .short 0xffff
             if (info.location) {
                 return info.location.load()
             } else {
-                assert(!bin.finalPass || info.capturedVars.length == 0)
+                assert(!bin.finalPass || info.capturedVars.length == 0, "!bin.finalPass || info.capturedVars.length == 0")
                 return emitFunLitCore(f)
             }
         }
@@ -1700,7 +1700,7 @@ ${lbl}: .short 0xffff
             return isRefType(typeOf(e))
         }
         function getMask(args: Expression[]) {
-            assert(args.length <= 8)
+            assert(args.length <= 8, "args.length <= 8")
             let m = 0
             args.forEach((a, i) => {
                 if (isRefCountedExpr(a))
@@ -1723,12 +1723,12 @@ ${lbl}: .short 0xffff
             }
 
             if (nm == "TD_NOOP") {
-                assert(!hasRet)
+                assert(!hasRet, "!hasRet")
                 return ir.numlit(0)
             }
 
             if (nm == "TD_ID") {
-                assert(args.length == 1)
+                assert(args.length == 1, "args.length == 1")
                 return emitExpr(args[0])
             }
 
@@ -1852,16 +1852,7 @@ ${lbl}: .short 0xffff
             if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
                 callInfo.isAutoCreate = true
 
-            let bindings: TypeBinding[] = []
-
-            if (sig) {
-                // NOTE: we are playing with TypeScript internals here
-                let trg: Signature = (sig as any).target
-                let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
-                // NOTE: mapper also a TypeScript internal
-                let args = typeParams.map(x => (sig as any).mapper(x))
-                bindings = getTypeBindingsCore(typeParams, args)
-            }
+            let bindings = getCallBindings(sig)
             let isSelfGeneric = bindings.length > 0
             addEnclosingTypeBindings(bindings, decl)
 
@@ -1909,7 +1900,7 @@ ${lbl}: .short 0xffff
             // special case call to super
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
-                assert(!bin.finalPass || !!baseCtor)
+                assert(!bin.finalPass || !!baseCtor, "!bin.finalPass || !!baseCtor")
                 let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, null, ctorArgs)
@@ -1940,7 +1931,7 @@ ${lbl}: .short 0xffff
                     }
                 }
                 if (info.virtualParent && !isSuper) {
-                    assert(!bin.finalPass || info.virtualIndex != null)
+                    U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
                     return mkProcCallCore(null, info.virtualIndex, args.map((x) => emitExpr(x)))
                 }
                 if (attrs.shim && !hasShimDummy(decl)) {
@@ -2042,7 +2033,7 @@ ${lbl}: .short 0xffff
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
             let proc = lookupProc(decl, bindings)
-            assert(!!proc || !bin.finalPass)
+            assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
             return mkProcCallCore(proc, null, args)
         }
 
@@ -2077,6 +2068,19 @@ ${lbl}: .short 0xffff
 
         function isIfaceMemberUsed(name: string) {
             return U.lookup(ifaceMembers, name) != null
+        }
+
+        function getCallBindings(sig: Signature) {
+            let bindings: TypeBinding[] = []
+            if (sig) {
+                // NOTE: we are playing with TypeScript internals here
+                let trg: Signature = (sig as any).target
+                let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
+                // NOTE: mapper also a TypeScript internal
+                let args = typeParams.map(x => (sig as any).mapper(x))
+                bindings = getTypeBindingsCore(typeParams, args)
+            }
+            return bindings
         }
 
         function markClassUsed(info: ClassInfo) {
@@ -2124,13 +2128,18 @@ ${lbl}: .short 0xffff
                     markUsed(ctor)
                     let args = node.arguments.slice(0)
                     let ctorAttrs = parseComments(ctor)
+
+                    let sig = checker.getResolvedSignature(node)
+                    // TODO: can we have overloeads?
+                    let bindings = getCallBindings(sig)
+                    // NOTE: type checking with bindings
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map((x) => emitExpr(x))
                     if (ctorAttrs.shim)
                         // we drop 'obj' variable
                         return ir.rtcall(ctorAttrs.shim, compiled)
                     compiled.unshift(ir.op(EK.Incr, [obj]))
-                    proc.emitExpr(mkProcCall(ctor, compiled, []))
+                    proc.emitExpr(mkProcCall(ctor, compiled, bindings))
                     return obj
                 } else {
                     if (node.arguments && node.arguments.length)
@@ -2210,7 +2219,7 @@ ${lbl}: .short 0xffff
 
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
-                assert(getEnclosingFunction(node) != null)
+                assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
                 lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
@@ -2234,7 +2243,7 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            assert(!!lit == isExpression)
+            assert(!!lit == isExpression, "!!lit == isExpression")
 
             let id: ir.ProcQuery = { action: node, bindings }
             let existing = bin.procs.filter(p => p.matches(id))[0]
@@ -2243,7 +2252,7 @@ ${lbl}: .short 0xffff
                 proc = existing
                 proc.reset()
             } else {
-                assert(!bin.finalPass)
+                assert(!bin.finalPass, "!bin.finalPass")
                 proc = new ir.Procedure();
                 proc.isRoot = !!(node as any).isRootFunction
                 proc.action = node;
@@ -2257,15 +2266,15 @@ ${lbl}: .short 0xffff
             if (node.parent.kind == SK.ClassDeclaration) {
                 let parClass = node.parent as ClassDeclaration
                 let numTP = parClass.typeParameters ? parClass.typeParameters.length : 0
-                assert(bindings.length >= numTP)
+                assert(bindings.length >= numTP, "bindings.length >= numTP")
                 let classInfo = getClassInfo(null, parClass, bindings.slice(0, numTP))
                 if (proc.classInfo)
-                    assert(proc.classInfo == classInfo)
+                    assert(proc.classInfo == classInfo, "proc.classInfo == classInfo")
                 else
                     proc.classInfo = classInfo
                 if (node.kind == SK.Constructor) {
                     if (classInfo.ctor)
-                        assert(classInfo.ctor == proc)
+                        assert(classInfo.ctor == proc, "classInfo.ctor == proc")
                     else
                         classInfo.ctor = proc
                 }
@@ -2321,7 +2330,7 @@ ${lbl}: .short 0xffff
             // once we have emitted code for this function,
             // we should emit code for all decls that are used
             // as a result
-            assert(!bin.finalPass || usedWorkList.length == 0)
+            assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
             while (usedWorkList.length > 0) {
                 let f = usedWorkList.pop()
                 emit(f)
@@ -2364,7 +2373,7 @@ ${lbl}: .short 0xffff
 
             if (isGenericFunction(node)) {
                 if (!info.usages) {
-                    assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass)
+                    assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass, "opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass")
                     // test mode - make fake binding
                     let bindings = getTypeParameters(node).map(t => ({
                         arg: checker.getTypeAtLocation(t),
@@ -2372,7 +2381,7 @@ ${lbl}: .short 0xffff
                         isRef: true
                     }))
                     addEnclosingTypeBindings(bindings, node)
-                    U.assert(bindings.length > 0)
+                    U.assert(bindings.length > 0, "bindings.length > 0")
                     info.usages = [bindings]
                 }
                 U.assert(info.usages.length > 0, "no generic usages recorded")
@@ -2384,7 +2393,7 @@ ${lbl}: .short 0xffff
                 for (let bindings of todo) {
                     scope(() => {
                         let nolit = emitFuncCore(node, bindings)
-                        U.assert(nolit == null)
+                        U.assert(nolit == null, "nolit == null")
                     })
                 }
             } else {
@@ -3112,7 +3121,7 @@ ${lbl}: .short 0xffff
                     // Save default label for emit at the end of the
                     // tests section. Default label doesn't have to come at the
                     // end in JS.
-                    assert(!defaultLabel)
+                    assert(!defaultLabel, "!defaultLabel")
                     defaultLabel = lbl
                 } else {
                     oops()
@@ -3515,7 +3524,7 @@ ${lbl}: .short 0xffff
         }
 
         addProc(proc: ir.Procedure) {
-            assert(!this.finalPass)
+            assert(!this.finalPass, "!this.finalPass")
             this.procs.push(proc)
             proc.seqNo = this.procs.length
             //proc.binary = this

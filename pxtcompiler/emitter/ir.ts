@@ -416,7 +416,7 @@ namespace ts.pxtc.ir {
 
         matches(id: ProcQuery) {
             if (this.action == id.action) {
-                U.assert(this.bindings.length == id.bindings.length)
+                U.assert(this.bindings.length == id.bindings.length, "this.bindings.length == id.bindings.length")
                 for (let i = 0; i < this.bindings.length; ++i)
                     if (this.bindings[i].isRef != id.bindings[i].isRef)
                         return false
@@ -482,7 +482,7 @@ namespace ts.pxtc.ir {
         }
 
         emitClrIfRef(p: Cell) {
-            assert(!p.isGlobal() && !p.iscap)
+            assert(!p.isGlobal() && !p.iscap, "!p.isGlobal() && !p.iscap")
             if (p.isRef() || p.isByRefLocal()) {
                 this.emitExpr(op(EK.Decr, [p.loadCore()]))
             }
@@ -572,15 +572,15 @@ namespace ts.pxtc.ir {
                     case EK.SharedDef:
                         let arg = e.args[0]
                         //console.log(arg)
-                        U.assert(arg.totalUses < 0)
-                        U.assert(arg.currUses === 0)
+                        U.assert(arg.totalUses < 0, "arg.totalUses < 0")
+                        U.assert(arg.currUses === 0, "arg.currUses === 0")
                         if (arg.totalUses == -1)
                             return cntuses(arg)
                         else
                             arg.totalUses = 1;
                         break;
                     case EK.SharedRef:
-                        U.assert(e.args[0].totalUses > 0)
+                        U.assert(e.args[0].totalUses > 0, "e.args[0].totalUses > 0")
                         e.args[0].totalUses++;
                         return e;
                 }
