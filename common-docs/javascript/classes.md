@@ -195,32 +195,3 @@ console.log(howard.name); // error
 
 Notice that while we can't use `name` from outside of `Person`, 
 we can still use it from within an instance method of `Employee` because `Employee` derives from `Person`.
-
-A constructor may also be marked `protected`.
-This means that the class cannot be instantiated outside of its containing class, but can be extended. For example,
-
-```typescript-ignore
-class Person {
-    protected name: string;
-    protected constructor(theName: string) { this.name = theName; }
-}
-
-// Employee can extend Person
-class Employee extends Person {
-    private department: string;
-
-    constructor(name: string, department: string) {
-        super(name);
-        this.department = department;
-    }
-
-    public getElevatorPitch() {
-        return `Hello, my name is ${this.name} and I work in ${this.department}.`;
-    }
-}
-
-let howard = new Employee("Howard", "Sales");
-let john = new Person("John"); // Error: The 'Person' constructor is protected
-```
-
-
