@@ -1,6 +1,7 @@
-# PXT Language Subset
+# PXT Language: Static TypeScript
 
-PXT programs are written in a subset of [TypeScript](https://www.typescriptlang.org). 
+PXT programs are written in a subset of [TypeScript](https://www.typescriptlang.org)
+called Static TypeScript.
 TypeScript itself is a superset of JavaScript, and many PXT programs,
 especially at the beginner's level, are also just plain JavaScript.
 
@@ -37,7 +38,7 @@ debugging. On the other hand, the generated code is not really human readable.
 
 ## Supported language features
 
-* variables with `let`, `const`, and `var`
+* variable declarations with `let`, `const`
 * functions with lexical scoping and recursion
 * top-level code in the file; hello world really is `console.log("Hello world")`
 * `if ... else if ... else` statements
