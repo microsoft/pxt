@@ -1,13 +1,17 @@
-export interface Type {
+export interface TypeOptions {
     union?: Type;
     classType?: py.ClassDef;
     primType?: string;
-    fields?: pxt.Map<FieldDesc>;
+}
+
+export interface Type extends TypeOptions {
+    tid: number;
 }
 
 export interface FieldDesc {
     name: string;
     type: Type;
+    fundef?: py.FunctionDef;
 }
 
 export module py {
@@ -497,13 +501,18 @@ function lookupSymbol(name: string): py.Symbol {
     return null
 }
 
-interface VarDesc {
+interface VarDescOptions {
     expandsTo?: string;
     isImportStar?: boolean;
     isPlainImport?: boolean;
     isLocal?: boolean;
     isParam?: boolean;
-    type?: Type;
+    fundef?: py.FunctionDef;
+    classdef?: py.ClassDef;
+}
+
+interface VarDesc extends VarDescOptions {
+    type: Type;
 }
 
 interface Ctx {
@@ -514,9 +523,29 @@ interface Ctx {
 
 let ctx: Ctx
 
-let tpString: Type = { primType: "string" }
-let tpNumber: Type = { primType: "number" }
-let tpBoolean: Type = { primType: "boolean" }
+let typeId = 0
+let numUnifies = 0
+function mkType(o: TypeOptions = {}) {
+    let r: Type = U.flatClone(o) as any
+    r.tid = ++typeId
+    return r
+}
+
+function defvar(n: string, opts: VarDescOptions) {
+    let v = ctx.vars[n]
+    if (!v) {
+        v = ctx.vars[n] = { type: mkType() }
+    }
+    for (let k of Object.keys(opts)) {
+        (v as any)[k] = (opts as any)[k]
+    }
+    return v
+}
+
+let tpString: Type = mkType({ primType: "string" })
+let tpNumber: Type = mkType({ primType: "number" })
+let tpBoolean: Type = mkType({ primType: "boolean" })
+
 
 function find(t: Type) {
     if (t.union) {
@@ -540,6 +569,9 @@ function error(t0: Type, t1: Type) {
 }
 
 function canUnify(t0: Type, t1: Type) {
+    t0 = find(t0)
+    t1 = find(t1)
+
     if (t0 === t1)
         return true
 
@@ -556,37 +588,53 @@ function canUnify(t0: Type, t1: Type) {
 function unify(t0: Type, t1: Type): void {
     t0 = find(t0)
     t1 = find(t1)
+    if (t0 === t1)
+        return
     if (!canUnify(t0, t1))
         error(t0, t1)
     if (t0.classType && !t1.classType)
         return unify(t1, t0)
     if (t0.primType && !t1.primType)
         return unify(t1, t0)
+    numUnifies++
     t0.union = t1
-    if (!t0.classType && t0.fields) {
-        for (let k of Object.keys(t0.fields))
-            unify(t0.fields[k].type, getField(t1, k))
-    }
 }
 
-function getField(t: Type, n: string) {
-    t = find(t)
-    let ct = t.classType
-    if (ct) {
-        if (!ct.fields)
-            ct.fields = {}
-        U.assert(!t.fields || ct.fields === t.fields)
-        t.fields = ct.fields
-    } else {
-        if (!t.fields) t.fields = {}
-    }
-    if (!t.fields[n]) {
-        t.fields[n] = {
+function getClassField(ct: py.ClassDef, n: string) {
+    if (!ct.fields)
+        ct.fields = {}
+    if (!ct.fields[n]) {
+        ct.fields[n] = {
             name: n,
-            type: {}
+            type: mkType()
         }
     }
-    return t.fields[n]
+    return ct.fields[n]
+}
+
+function getTypeField(t: Type, n: string) {
+    t = find(t)
+    let ct = t.classType
+    if (ct)
+        return getClassField(ct, n)
+    return null
+}
+
+function getFunDef(e: py.Expr): py.FunctionDef {
+    switch (e.kind) {
+        case "Name": {
+            let v = U.lookup(ctx.vars, getName(e))
+            if (v)
+                return v.fundef
+            break
+        }
+        case "Attribute": {
+            let part = inferType((e as py.Attribute).value)
+            let fd = getTypeField(part, (e as py.Attribute).attr)
+            if (fd) return fd.fundef
+        }
+    }
+    return null
 }
 
 function inferType(e: py.Expr): Type {
@@ -600,7 +648,7 @@ function inferType(e: py.Expr): Type {
         case "Name": {
             let n = getName(e)
             if (n == "self" && ctx.currClass)
-                return (e.tsType = { classType: ctx.currClass })
+                return (e.tsType = mkType({ classType: ctx.currClass }))
             let v = U.lookup(ctx.vars, n)
             if (v)
                 return v.type
@@ -608,10 +656,11 @@ function inferType(e: py.Expr): Type {
         }
         case "Attribute": {
             let part = inferType((e as py.Attribute).value)
-            return getField(part, (e as py.Attribute).attr)
+            let fd = getTypeField(part, (e as py.Attribute).attr)
+            if (fd) return fd.type
         }
     }
-    e.tsType = {}
+    e.tsType = mkType()
     return e.tsType
 }
 
@@ -658,11 +707,11 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
         U.assert(nargs[0].arg == "self")
         nargs.shift()
     } else {
-        U.assert(nargs[0].arg != "self")
+        U.assert(!nargs[0] || nargs[0].arg != "self")
     }
     let didx = args.defaults.length - nargs.length
     let lst = nargs.map(a => {
-        ctx.vars[a.arg] = { isParam: true }
+        defvar(a.arg, { isParam: true })
         let res = [quote(a.arg)]
         if (a.annotation)
             res.push(todoExpr("annotation", expr(a.annotation)))
@@ -759,6 +808,8 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
                     prefix = n.name[0] == "_" ? "private" : "public"
                 }
                 nodes.push(B.mkText(prefix + " "), quote(funname))
+                let fd = getClassField(ctx.currClass, funname)
+                fd.fundef = n
             }
         } else {
             U.assert(!prefix)
@@ -766,6 +817,7 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
                 nodes.push(B.mkText("function "), quote(funname))
             else
                 nodes.push(B.mkText("export function "), quote(funname))
+            defvar(funname, { fundef: n })
         }
         nodes.push(
             doArgs(n.args, isMethod),
@@ -789,6 +841,7 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
             nodes.push(B.mkCommaSep(n.bases.map(expr)))
         }
         nodes.push(stmts(n.body))
+        defvar(n.name, { classdef: n })
         return B.mkStmt(B.mkGroup(nodes))
     }),
 
@@ -891,7 +944,7 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
             if (it.optional_vars) {
                 let id = getName(it.optional_vars)
                 U.assert(id != null)
-                ctx.vars[id] = { isLocal: true }
+                defvar(id, { isLocal: true })
                 varName = quoteStr(id)
             }
             cleanup.push(B.mkStmt(B.mkText(varName + ".end()")))
@@ -922,25 +975,25 @@ const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
     Import: (n: py.Import) => {
         for (let nm of n.names) {
             if (nm.asname)
-                ctx.vars[nm.asname] = {
+                defvar(nm.asname, {
                     expandsTo: nm.name
-                }
-            ctx.vars[nm.name] = {
+                })
+            defvar(nm.name, {
                 isPlainImport: true
-            }
+            })
         }
         return B.mkText("")
     },
     ImportFrom: (n: py.ImportFrom) => {
         for (let nn of n.names) {
             if (nn.name == "*")
-                ctx.vars[n.module] = {
+                defvar(n.module, {
                     isImportStar: true
-                }
+                })
             else
-                ctx.vars[nn.asname || nn.name] = {
+                defvar(nn.asname || nn.name, {
                     expandsTo: n.module + "." + nn.name
-                }
+                })
         }
         return B.mkText("")
     },
@@ -984,7 +1037,7 @@ function possibleDef(id: py.identifier) {
     if (curr) return quote(id)
     if (ctx.currClass && !ctx.currFun)
         return quote(id) // field
-    ctx.vars[id] = { isLocal: true }
+    defvar(id, { isLocal: true })
     return B.mkGroup([B.mkText("let "), quote(id)])
 }
 
