@@ -637,6 +637,18 @@ function getFunDef(e: py.Expr): py.FunctionDef {
     return null
 }
 
+function getClassDef(e: py.Expr) {
+    switch (e.kind) {
+        case "Name": {
+            let v = U.lookup(ctx.vars, getName(e))
+            if (v)
+                return v.classdef
+            break
+        }
+    }
+    return null
+}
+
 function inferType(e: py.Expr): Type {
     if (e.tsType) return find(e.tsType)
     switch (e.kind) {
@@ -779,71 +791,76 @@ function exprs0(ee: py.Expr[]) {
 }
 
 const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
-    FunctionDef: (n: py.FunctionDef) => scope(() => {
+    FunctionDef: (n: py.FunctionDef) => {
         let isMethod = !!ctx.currClass && !ctx.currFun
-        ctx.currFun = n
-        let prefix = ""
-        let funname = n.name
-        let decs = n.decorator_list.filter(d => {
-            if (getName(d) == "property") {
-                prefix = "get"
-                return false
-            }
-            if (d.kind == "Attribute" && (d as py.Attribute).attr == "setter" &&
-                (d as py.Attribute).value.kind == "Name") {
-                funname = ((d as py.Attribute).value as py.Name).id
-                prefix = "set"
-                return false
-            }
-            return true
-        })
-        let nodes = [
-            todoComment("decorators", decs.map(expr))
-        ]
-        if (isMethod) {
-            if (n.name == "__init__")
-                nodes.push(B.mkText("constructor"))
-            else {
-                if (!prefix) {
-                    prefix = n.name[0] == "_" ? "private" : "public"
+        if (!isMethod)
+            defvar(n.name, { fundef: n })
+        return scope(() => {
+            ctx.currFun = n
+            let prefix = ""
+            let funname = n.name
+            let decs = n.decorator_list.filter(d => {
+                if (getName(d) == "property") {
+                    prefix = "get"
+                    return false
                 }
-                nodes.push(B.mkText(prefix + " "), quote(funname))
-                let fd = getClassField(ctx.currClass, funname)
-                fd.fundef = n
+                if (d.kind == "Attribute" && (d as py.Attribute).attr == "setter" &&
+                    (d as py.Attribute).value.kind == "Name") {
+                    funname = ((d as py.Attribute).value as py.Name).id
+                    prefix = "set"
+                    return false
+                }
+                return true
+            })
+            let nodes = [
+                todoComment("decorators", decs.map(expr))
+            ]
+            if (isMethod) {
+                if (n.name == "__init__")
+                    nodes.push(B.mkText("constructor"))
+                else {
+                    if (!prefix) {
+                        prefix = n.name[0] == "_" ? "private" : "public"
+                    }
+                    nodes.push(B.mkText(prefix + " "), quote(funname))
+                    let fd = getClassField(ctx.currClass, funname)
+                    fd.fundef = n
+                }
+            } else {
+                U.assert(!prefix)
+                if (n.name[0] == "_")
+                    nodes.push(B.mkText("function "), quote(funname))
+                else
+                    nodes.push(B.mkText("export function "), quote(funname))
             }
-        } else {
-            U.assert(!prefix)
-            if (n.name[0] == "_")
-                nodes.push(B.mkText("function "), quote(funname))
-            else
-                nodes.push(B.mkText("export function "), quote(funname))
-            defvar(funname, { fundef: n })
-        }
-        nodes.push(
-            doArgs(n.args, isMethod),
-            todoComment("returns", n.returns ? [expr(n.returns)] : []),
-            stmts(n.body)
-        )
-        return B.mkStmt(B.mkGroup(nodes))
-    }),
+            nodes.push(
+                doArgs(n.args, isMethod),
+                todoComment("returns", n.returns ? [expr(n.returns)] : []),
+                stmts(n.body)
+            )
+            return B.mkStmt(B.mkGroup(nodes))
+        })
+    },
 
-    ClassDef: (n: py.ClassDef) => scope(() => {
-        U.assert(!ctx.currClass)
-        ctx.currClass = n
-        let nodes = [
-            todoComment("keywords", n.keywords.map(doKeyword)),
-            todoComment("decorators", n.decorator_list.map(expr)),
-            B.mkText("export class "),
-            quote(n.name)
-        ]
-        if (n.bases.length > 0) {
-            nodes.push(B.mkText(" extends "))
-            nodes.push(B.mkCommaSep(n.bases.map(expr)))
-        }
-        nodes.push(stmts(n.body))
+    ClassDef: (n: py.ClassDef) => {
         defvar(n.name, { classdef: n })
-        return B.mkStmt(B.mkGroup(nodes))
-    }),
+        return scope(() => {
+            U.assert(!ctx.currClass)
+            ctx.currClass = n
+            let nodes = [
+                todoComment("keywords", n.keywords.map(doKeyword)),
+                todoComment("decorators", n.decorator_list.map(expr)),
+                B.mkText("export class "),
+                quote(n.name)
+            ]
+            if (n.bases.length > 0) {
+                nodes.push(B.mkText(" extends "))
+                nodes.push(B.mkCommaSep(n.bases.map(expr)))
+            }
+            nodes.push(stmts(n.body))
+            return B.mkStmt(B.mkGroup(nodes))
+        })
+    },
 
     Return: (n: py.Return) =>
         n.value ?
@@ -1121,6 +1138,8 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
         return r
     },
     Call: (n: py.Call) => {
+        let cd = getClassDef(n.func)
+        let fd = getFunDef(n.func)
 
         let nm = getName(n.func)
         let allargs = n.args.map(expr)
@@ -1154,6 +1173,9 @@ const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
             B.mkCommaSep(allargs),
             B.mkText(")")
         ]
+
+        if (cd) nodes.unshift(B.mkText("new "))
+
         return B.mkGroup(nodes)
     },
     Num: (n: py.Num) => B.mkText(n.n + ""),
