@@ -54,6 +54,8 @@ Static TypeScript has a more restrictive type checker than TypeScript. In partic
 * inheriting from a built-in type
 * using a built-in or generic function as a value
 * `this` used outside of a method
+* function overloading
+
 Static TypeScript enforces *nominal typing* of classes, rather than the *structural typing* of TypeScript.
 
 We generally stay away from the more dynamic parts of JavaScript.  Things you may miss and we may implement:
