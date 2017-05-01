@@ -2728,6 +2728,8 @@ ${lbl}: .short 0xffff
                         return false
                 }
             }
+            if (e.kind == SK.NumericLiteral)
+                return true
             return !!(typeOf(e).flags & TypeFlags.NumberLike)
         }
 

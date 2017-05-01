@@ -410,13 +410,15 @@ namespace ts.pxtc {
                     let spec = inf.argsFmt[i + 1]
                     if (!spec)
                         U.userError("excessive parameters passed to " + nm)
-                    let needNum = spec == "I" || spec == "N" || spec == "F"
-                    if (spec == "T") {
-                        // OK, both number and non-number allowed
-                    } else if (needNum && !argIsNumber[i])
-                        U.userError("expecting number at parameter " + (i + 1) + " of " + nm)
-                    else if (!needNum && argIsNumber[i])
-                        U.userError("expecting non-number at parameter " + (i + 1) + " of " + nm + " / " + inf.argsFmt)
+                    if (target.taggedInts) {
+                        let needNum = spec == "I" || spec == "N" || spec == "F"
+                        if (spec == "T") {
+                            // OK, both number and non-number allowed
+                        } else if (needNum && !argIsNumber[i])
+                            U.userError("expecting number at parameter " + (i + 1) + " of " + nm)
+                        else if (!needNum && argIsNumber[i])
+                            U.userError("expecting non-number at parameter " + (i + 1) + " of " + nm + " / " + inf.argsFmt)
+                    }
                 }
                 if (argIsNumber.length != inf.argsFmt.length - 1)
                     U.userError("not enough arguments for " + nm)
@@ -605,7 +607,7 @@ namespace ts.pxtc {
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
-${lbl}meta: .short 0xffff, 1, ${s.length}
+${lbl}meta: .short 0xffff, ${target.taggedInts ? "1," : ""} ${s.length}
 ${lbl}: .string ${stringLiteral(s)}
 `)
         }
