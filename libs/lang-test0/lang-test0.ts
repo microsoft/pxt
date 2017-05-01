@@ -794,9 +794,71 @@ function mapGet<T>(m: Map<T>, k: string): T {
     return null
 }
 
+
+function search_array<T>(a: T[], item: T): number {
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] == item) {
+            return i
+        }
+    }
+    return -1 // NOT FOUND
+}
+
+class MyMap<K, V> {
+
+    keys: K[]
+    values: V[]
+
+    constructor() {
+        this.keys = []
+        this.values = []
+    }
+
+    push(key: K, value: V) {
+        this.keys.push(key)
+        this.values.push(value)
+    }
+
+    value_for(key: K): V {
+        let i = search_array(this.keys, key)
+        if (i == -1) {
+            return null
+        }
+        return this.values[i]
+    }
+
+    key_for(value: V): K {
+        let i = search_array(this.values, value)
+        if (i == -1) {
+            return null
+        }
+        return this.keys[i]
+    }
+    set(key: K, value: V): void {
+        let i = search_array(this.keys, key)
+        if (i == -1) {
+            this.keys.push(key)
+            this.values.push(value)
+        } else {
+            this.values[i] = value
+        }
+    }
+
+    has_key(key: K): boolean {
+        return search_array(this.keys, key) != -1
+    }
+
+    has_value(value: V): boolean {
+        return search_array(this.values, value) != -1
+    }
+
+}
+
+
 function testMaps() {
     let m = new Map<number>();
     let q = new Map<string>();
+    let r = new MyMap<number, string>()
 
     mapSet(q, "one", "foo" + "bar")
     control.assert(mapGet(q, "one").length == 6, "")
