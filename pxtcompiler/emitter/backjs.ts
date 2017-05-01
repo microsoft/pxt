@@ -1,11 +1,31 @@
 namespace ts.pxtc {
-    // TODO: ARM specific code should be lifted out
     const jsOpMap: pxt.Map<string> = {
-        "thumb::adds": "+",
-        "thumb::subs": "-",
-        "Number_::div": "/",
-        "Number_::mod": "%",
-        "thumb::muls": "*"
+        "numops::adds": "+",
+        "numops::subs": "-",
+        "numops::div": "/",
+        "numops::mod": "%",
+        "numops::muls": "*",
+        "numops::ands": "&",
+        "numops::orrs": "|",
+        "numops::eors": "^",
+        "numops::lsls": "<<",
+        "numops::asrs": ">>",
+        "numops::lsrs": ">>>",
+        "numops::le": "<=",
+        "numops::lt": "<",
+        "numops::lt_bool": "<",
+        "numops::ge": ">=",
+        "numops::gt": ">",
+        "numops::eq": "==",
+        "pxt::eq_bool": "==",
+        "pxt::eqq_bool": "===",
+        "numops::eqq": "===",
+        "numops::neqq": "!==",
+        "numops::neq": "!=",
+        "langsupp::ptreq": "==",
+        "langsupp::ptreqq": "===",
+        "langsupp::ptrneqq": "!==",
+        "langsupp::ptrneq": "!=",
     }
 
     export function shimToJs(shimName: string) {
@@ -39,6 +59,8 @@ namespace ts.pxtc {
         let jssource = ""
         if (!bin.target.jsRefCounting)
             jssource += "pxsim.noRefCounting();\n"
+        if (bin.target.floatingPoint)
+            jssource += "pxsim.enableFloatingPoint();\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })
@@ -75,7 +97,7 @@ switch (step) {
         //console.log("OPT", proc.toString())
 
         proc.locals.forEach(l => {
-            write(`${locref(l)} = 0;`)
+            write(`${locref(l)} = ${target.floatingPoint ? "undefined" : "0"};`)
         })
 
         if (proc.args.length) {
@@ -186,11 +208,12 @@ switch (step) {
         function emitExprInto(e: ir.Expr): string {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
-                    if (e.data === true) return "1"
-                    else if (e.data === false) return "0"
-                    else if (e.data === null) return "0"
+                    if (e.data === true) return "true"
+                    else if (e.data === false) return "false"
+                    else if (e.data === null) return "null"
+                    else if (e.data === undefined) return "undefined"
                     else if (typeof e.data == "number") return e.data + ""
-                    else throw oops();
+                    else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
                     return e.jsInfo;
                 case EK.SharedRef:

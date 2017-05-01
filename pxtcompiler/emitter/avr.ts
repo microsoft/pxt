@@ -180,7 +180,7 @@ namespace ts.pxtc.avr {
             this.addInst("bset  $r4", 0x9408, 0xff8f);
             this.addInst("bst   $r0, $i9", 0xfa00, 0xfe08);
             // call - 32 bit - special handling
-            this.addInst("call  $lc", 0x940e, 0xffff, "CALL");
+            this.addInst("call  $lc", 0x940e, 0xffff, true);
             this.addInst("cbi   $r7, $i9", 0x9800, 0xff00);
             this.addInst("cbr   $r3, $i3", 0x7000, 0xf000);
             this.addInst("clc", 0x9488, 0xffff);
@@ -213,7 +213,7 @@ namespace ts.pxtc.avr {
             this.addInst("in    $r0, $i5", 0xb000, 0xf800);
             this.addInst("inc   $r0", 0x9403, 0xfe0f);
             // jmp - 32 bit - special handling
-            this.addInst("jmp  $lc", 0x940c, 0xffff, "JMP")
+            this.addInst("jmp  $lc", 0x940c, 0xffff, true)
             this.addInst("lac   Z, $r0", 0x9206, 0xfe0f);
             this.addInst("las   Z, $r0", 0x9205, 0xfe0f);
             this.addInst("lat   Z, $r0", 0x9207, 0xfe0f);
@@ -230,7 +230,7 @@ namespace ts.pxtc.avr {
             this.addInst("ldd   $r0, Z, $i8", 0x8000, 0xd208);
             this.addInst("ldi   $r3, $i1", 0xe000, 0xf000);
             // lds - 32 bit (special handling required)
-            this.addInst("lds   $r0, $la", 0x9000, 0xfe0f, "LDS");
+            this.addInst("lds   $r0, $la", 0x9000, 0xfe0f, true);
             this.addInst("lds   $r3, $i6", 0xa000, 0xf800);
             this.addInst("lpm", 0x95a8, 0xffff);
             this.addInst("lpm   $r0, Z", 0x9004, 0xfe0f);
@@ -288,7 +288,7 @@ namespace ts.pxtc.avr {
             this.addInst("st    -Z, $r0", 0x9202, 0xfe0f);
             this.addInst("std   Z, $i8, $r0", 0x8200, 0xd208);
             // sts - 32-bit (special handing required)
-            this.addInst("sts   $la, $r0", 0x9200, 0xfe0f, "STS");
+            this.addInst("sts   $la, $r0", 0x9200, 0xfe0f, true);
             this.addInst("sts   $i6, $r3", 0xa800, 0xf800);
             this.addInst("sub   $r0, $r1", 0x1800, 0xfC00);
             this.addInst("subi  $r3, $i1", 0x5000, 0xf000);

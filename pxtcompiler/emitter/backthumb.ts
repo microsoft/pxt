@@ -3,14 +3,23 @@
 
 namespace ts.pxtc {
 
+    const inlineArithmetic: pxt.Map<string> = {
+        "numops::adds": "_numops_adds",
+        "numops::subs": "_numops_subs",
+        "numops::orrs": "_numops_orrs",
+        "numops::ands": "_numops_ands",
+        "pxt::toInt": "_numops_toInt",
+        "pxt::fromInt": "_numops_fromInt",
+    }
+
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
-        push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}"}
-        pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}"}
+        push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}" }
+        pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}" }
         proc_setup(main?: boolean) { return "push {lr}" }
         proc_return() { return "pop {pc}" }
         debugger_hook(lbl: string) {
@@ -41,7 +50,7 @@ ${lbl}:`
         bne(lbl: string) { return "bne " + lbl }
         cmp(reg1: string, reg2: string) { return "cmp " + reg1 + ", " + reg2 }
         cmp_zero(reg1: string) { return "cmp " + reg1 + ", #0" }
-        load_reg_src_off(reg: string, src: string, off: string, word: boolean, store: boolean, inf: BitSizeInfo) {
+        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) {
             if (word) {
                 off = `#4*${off}`
             }
@@ -66,6 +75,10 @@ ${lbl}:`
             return name + " " + r0 + ", " + r1;
         }
         call_lbl(lbl: string) {
+            if (target.taggedInts && !target.boxDebug) {
+                let o = U.lookup(inlineArithmetic, lbl)
+                if (o) lbl = o
+            }
             return "bl " + lbl;
         }
         call_reg(reg: string) {
@@ -114,6 +127,13 @@ ${lbl}:`
     @stackempty args
 `
         }
+        load_ptr_full(lbl: string, reg: string) {
+            assert(!!lbl)
+            return `
+    ldlit ${reg}, ${lbl}
+`
+        }
+
         load_ptr(lbl: string, reg: string) {
             assert(!!lbl)
             return `
@@ -121,6 +141,73 @@ ${lbl}:`
     lsls ${reg}, ${reg}, #8
     adds ${reg}, ${lbl}@lo
 `
+        }
+
+        arithmetic() {
+            let r = ""
+
+            if (!target.taggedInts || target.boxDebug) {
+                return r
+            }
+
+            for (let op of ["adds", "subs", "ands", "orrs", "eors"]) {
+                r +=
+                    `
+_numops_${op}:
+    @scope _numops_${op}
+    lsls r2, r0, #31
+    beq .boxed
+    lsls r2, r1, #31
+    beq .boxed
+`
+                if (op == "adds" || op == "subs")
+                    r += `
+    subs r2, r1, #1
+    ${op} r2, r0, r2
+    bvs .boxed
+    movs r0, r2
+    blx lr
+`
+                else {
+                    r += `    ${op} r0, r1\n`
+                    if (op == "eors")
+                        r += `    adds r0, r0, #1\n`
+                    r += `    blx lr\n`
+                }
+
+                r += `
+.boxed:
+    push {lr}
+    bl numops::${op}
+    pop {pc}
+`
+            }
+
+            r += `
+@scope _numops_toInt
+_numops_toInt:
+    asrs r0, r0, #1
+    bcc .over
+    blx lr
+.over:
+    push {lr}
+    bl pxt::toInt
+    pop {pc}
+
+_numops_fromInt:
+    lsls r2, r0, #1
+    asrs r1, r2, #1
+    cmp r0, r1
+    bne .over2
+    adds r0, r2, #1
+    blx lr
+.over2:
+    push {lr}
+    bl pxt::fromInt
+    pop {pc}
+`
+
+            return r
         }
 
         emit_int(v: number, reg: string) {
@@ -188,8 +275,14 @@ ${lbl}:`
                 result += shift(numShift)
 
             if (isNeg) {
-                result += `negs ${reg}, ${reg}`
+                result += `negs ${reg}, ${reg}\n`
             }
+
+            if (result.split("\n").length > 3 + 1) {
+                // more than 3 instructions? replace with LDR at PC-relative address
+                return `ldlit ${reg}, ${Math.floor(v)}\n`
+            }
+
             return result
         }
     }

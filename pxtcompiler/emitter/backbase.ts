@@ -47,6 +47,7 @@ namespace ts.pxtc {
         bne(lbl: string) { return "TBD" }
         cmp(reg1: string, reg: string) { return "TBD" }
         cmp_zero(reg1: string) { return "TBD" }
+        arithmetic() { return "" }
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
         // inf?  - control over size of referenced data
@@ -62,6 +63,7 @@ namespace ts.pxtc {
         lambda_prologue() { return "TBD" }
         lambda_epilogue() { return "TBD" }
         load_ptr(lbl: string, reg: string) { return "TBD" }
+        load_ptr_full(lbl: string, reg: string) { return "TBD" }
 
         emit_int(v: number, reg: string) { return "TBD" }
     }
@@ -77,7 +79,7 @@ namespace ts.pxtc {
 
     export class ProctoAssembler {
 
-        private t: AssemblerSnippets;
+        private t: ThumbSnippets; // TODO change back to AssemblerSnippets
         private bin: Binary;
         private resText = ""
         private exprStack: ir.Expr[] = []
@@ -300,7 +302,10 @@ ${baseLabel}:
                     else oops();
                     break;
                 case ir.EK.PointerLiteral:
-                    this.write(this.t.load_ptr(e.data, reg))
+                    if (e.args)
+                        this.write(this.t.load_ptr_full(e.data, reg))
+                    else
+                        this.write(this.t.load_ptr(e.data, reg))
                     break;
                 case ir.EK.SharedRef:
                     let arg = e.args[0]
@@ -426,7 +431,7 @@ ${baseLabel}:
             let name: string = topExpr.data
             //console.log("RT",name,topExpr.isAsync)
 
-            if (name == "thumb::ignore")
+            if (name == "langsupp::ignore")
                 return
 
             if (U.startsWith(name, "thumb::")) {
@@ -446,6 +451,7 @@ ${baseLabel}:
 
         private emitProcCall(topExpr: ir.Expr) {
             let stackBottom = 0
+            let needsRePush = false
             //console.log("PROCCALL", topExpr.toString())
             let argStmts = topExpr.args.map((a, i) => {
                 this.emitExpr(a)
@@ -454,9 +460,20 @@ ${baseLabel}:
                 a.currUses = 0
                 this.exprStack.unshift(a)
                 if (i == 0) stackBottom = this.exprStack.length
-                U.assert(this.exprStack.length - stackBottom == i)
+                if (this.exprStack.length - stackBottom != i)
+                    needsRePush = true
                 return a
             })
+
+            if (needsRePush) {
+                for (let a of argStmts) {
+                    let idx = this.exprStack.indexOf(a)
+                    assert(idx >= 0)
+                    this.write(this.t.load_reg_src_off("r0", "sp", idx.toString(), true) + ` ; repush`)
+                    this.write(this.t.push_local("r0") + " ; repush")
+                    this.exprStack.unshift(a)
+                }
+            }
 
             let lbl = this.mkLbl("proccall")
             let afterall = this.mkLbl("afterall")
@@ -565,7 +582,7 @@ ${baseLabel}:
                 this.write(".themain:")
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup())
-            this.write(this.t.push_fixed(["r5", "r6"]))
+            this.write(this.t.push_fixed(["r5", "r6", "r7"]))
             if (parms.length >= 1)
                 this.write(this.t.push_local("r1"))
 
@@ -594,7 +611,7 @@ ${baseLabel}:
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
-            this.write(this.t.pop_fixed(["r6", "r5"]))
+            this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
             this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }
@@ -602,7 +619,7 @@ ${baseLabel}:
         private emitCallRaw(name: string) {
             let inf = hex.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
-            this.write(this.t.call_lbl(name) + " ; *" + inf.type + inf.args + " (raw)")
+            this.write(this.t.call_lbl(name) + " ; *" + inf.argsFmt + " (raw)")
         }
     }
 }
