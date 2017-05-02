@@ -61,7 +61,10 @@ how to code with MakeCode.
 
 https://youtu.be/VLdWm7LBGjs
 
-For more information about the Minecraft Learn-to-Code experience, visit the Minecraft: Education Edition site.  
+## More info
+
+For more information about the Minecraft Code Builder experience, visit the [Minecraft: Education Edition site](https://education.minecraft.net/get-started/download).  
+
 And check out some cool new [tutorial resources](https://www.thewecan.zone/mastermodders) from Sarah Guthals.
 
 Have fun Making Code for Minecraft!
