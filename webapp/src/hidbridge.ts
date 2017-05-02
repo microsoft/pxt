@@ -64,26 +64,25 @@ export function shouldUse() {
 
 export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
     init()
-    return iface.opAsync("list", {})
-        .then((devs: any) => {
-            let d0 = (devs.devices as HidDevice[]).filter(d => (d.release & 0xff00) == 0x4200)[0]
-            if (d0) return new BridgeIO(d0)
-            else throw new Error("No device connected")
-        })
-        .then(b => b.initAsync().then(() => b))
+    let b = new BridgeIO()
+    return b.initAsync()
 }
 
 class BridgeIO implements pxt.HF2.PacketIO {
     onData = (v: Uint8Array) => { };
+    onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
     onSerial = (v: Uint8Array, isErr: boolean) => { };
+    public dev: HidDevice;
 
-    constructor(public dev: HidDevice) {
+    constructor() {
     }
 
     onOOB(v: OOB) {
         if (v.op == "serial") {
             this.onSerial(U.fromHex(v.result.data), v.result.isError)
+        } else if (v.op = "event") {
+            this.onEvent(U.fromHex(v.result.data))
         }
     }
 
@@ -118,10 +117,20 @@ class BridgeIO implements pxt.HF2.PacketIO {
     }
 
     initAsync() {
-        bridgeByPath[this.dev.path] = this
-        return iface.opAsync("init", {
-            path: this.dev.path
-        })
+        return iface.opAsync("list", {})
+            .then((devs: any) => {
+                let d0 = (devs.devices as HidDevice[]).filter(d => (d.release & 0xff00) == 0x4200)[0]
+                if (d0) {
+                    if (this.dev)
+                        delete bridgeByPath[this.dev.path]
+                    this.dev = d0
+                    bridgeByPath[this.dev.path] = this
+                }
+                else throw new Error("No device connected")
+            })
+            .then(() => iface.opAsync("init", {
+                path: this.dev.path
+            }))
     }
 }
 

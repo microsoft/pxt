@@ -194,13 +194,13 @@ namespace ts.pxtc {
     export interface Breakpoint extends LocationInfo {
         id: number;
         isDebuggerStmt: boolean;
-        successors: number[]; // ids of all breakpoints that we could hit next
         binAddr?: number;
     }
 
     export interface CellInfo {
         name: string;
         type: string;
+        index: number;
     }
 
     export interface ProcCallInfo {
@@ -215,10 +215,21 @@ namespace ts.pxtc {
         idx: number;
         bkptLoc: number;
         codeStartLoc: number;
+        codeEndLoc: number;
         locals: CellInfo[];
         args: CellInfo[];
         localsMark: number;
         calls: ProcCallInfo[];
+    }
+
+    export const enum BitSize {
+        None,
+        Int8,
+        UInt8,
+        Int16,
+        UInt16,
+        Int32,
+        UInt32,
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
@@ -512,7 +523,12 @@ namespace ts.pxtc {
             return r
         }
 
-        export function toBin(blocks: Uint8Array) {
+        export interface ShiftedBuffer {
+            start: number;
+            buf: Uint8Array;
+        }
+
+        export function toBin(blocks: Uint8Array): ShiftedBuffer {
             if (blocks.length < 512)
                 return null
             let curraddr = -1

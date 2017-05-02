@@ -106,7 +106,7 @@ There are two compilation strategies available - the legacy strategy used by the
 micro:bit target, and a tagged strategy used by the upcoming SAMD21 targets, as well as all
 the other targets going forward (possibly including new version of the micro:bit target).
 
-In the legacy strategy, there are some semantic differences with JavaScript,
+In the **legacy strategy**, there are some semantic differences with JavaScript,
 particularly:
 * numbers are 32 bit signed integers with wrap-around semantics; 
   in JavaScript they are 64 bit floating points
@@ -157,8 +157,8 @@ strategy.
 Compared to a typical dynamic JavaScript engine, PXT compiles code statically,
 giving rise to significant time and space performance improvements:
 * user programs are compiled directly to machine code, and are
-  never in any byte-code form that needs to be interpreted; this results in execution
-  10-20x faster than a typical JS interpreter
+  never in any byte-code form that needs to be interpreted; this results in
+  much faster execution than a typical JS interpreter
 * there is no RAM overhead for user-code - all code sits in flash; in a dynamic VM
   there are usually some data-structures representing code
 * due to lack of boxing for small integers and static class layout the memory consumption for objects
@@ -199,6 +199,13 @@ The supported types are:
 
 If you attempt to store a number exceeding the range of the small int type, only
 the lowest 8 or 16 bits will be stored. There is no clamping nor overflow exceptions.
+
+If you just use `number` type (or specify no type at all) in tagged strategy,
+then if the number fits in signed 31 bits, 4 bytes of memory will be used.
+Otherwise, the 4 bytes will point to a heap-allocated double (all together,
+with memory allocator overhead, around 20 bytes).
+
+In legacy strategy, `number` is equivalent to `int32`, and there is no `uint32`.
 
 ### Limitations
 

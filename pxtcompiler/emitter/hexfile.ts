@@ -607,17 +607,16 @@ namespace ts.pxtc {
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
-${lbl}meta: .short 0xffff, ${target.taggedInts ? "1," : ""} ${s.length}
+${lbl}meta: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_STRING + "," : ""} ${s.length}
 ${lbl}: .string ${stringLiteral(s)}
 `)
         }
 
         for (let data of Object.keys(bin.doubles)) {
             let lbl = bin.doubles[data]
-            // this is REF_TAG_NUMBER in pxt.h
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short 0xffff, 32
+${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         .hex ${data}
 `)
         }
@@ -773,7 +772,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(nativeType)
         b.emit(src);
 
-        src = b.getSource(!peepDbg);
+        src = b.getSource(!peepDbg, bin.numStmts);
 
         throwAssemblerErrors(b)
 
@@ -859,6 +858,7 @@ __flash_checksums:
 `
         }
         bin.writeFile(pxtc.BINARY_ASM, src)
+        bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target.nativeType, bin, src)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)

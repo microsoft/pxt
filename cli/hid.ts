@@ -32,14 +32,14 @@ export function listAsync() {
 }
 
 export function serialAsync() {
-    return hf2DeviceAsync()
+    return initAsync()
         .then(d => {
             connectSerial(d)
         })
 }
 
 export function dmesgAsync() {
-    return hf2DeviceAsync()
+    return initAsync()
         .then(d => d.talkAsync(pxt.HF2.HF2_CMD_DMESG)
             .then(resp => {
                 console.log(U.fromUTF8(U.uint8ArrayToString(resp)))
@@ -69,12 +69,8 @@ export function hf2ConnectAsync(path: string) {
 }
 
 let hf2Dev: Promise<HF2.Wrapper>
-export function hf2DeviceAsync(path: string = null): Promise<HF2.Wrapper> {
+export function initAsync(path: string = null): Promise<HF2.Wrapper> {
     if (!hf2Dev) {
-        let devs = getHF2Devices()
-        if (devs.length == 0)
-            return Promise.reject(new HIDError("no devices found"))
-        path = devs[0].path
         hf2Dev = hf2ConnectAsync(path)
     }
     return hf2Dev
@@ -100,17 +96,29 @@ export class HIDError extends Error {
 
 export class HidIO implements HF2.PacketIO {
     dev: any;
+    private path: string;
 
     onData = (v: Uint8Array) => { };
+    onEvent = (v: Uint8Array) => { };
     onError = (e: Error) => { };
 
-    constructor(private path: string) {
+    constructor(private requestedPath: string) {
         this.connect()
     }
 
     private connect() {
         const hid = getHID();
         U.assert(hid)
+
+        if (this.requestedPath == null) {
+            let devs = getHF2Devices()
+            if (devs.length == 0)
+                throw new HIDError("no devices found")
+            this.path = devs[0].path
+        } else {
+            this.path = this.requestedPath
+        }
+
         this.dev = new HID.HID(this.path)
         this.dev.on("data", (v: Buffer) => {
             //console.log("got", v.toString("hex"))

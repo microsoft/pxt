@@ -382,6 +382,7 @@ switch (step) {
                 case BitSize.Int32: return "pxsim.pxtrt.toInt32"
                 case BitSize.UInt8: return "pxsim.pxtrt.toUInt8"
                 case BitSize.UInt16: return "pxsim.pxtrt.toUInt16"
+                case BitSize.UInt32: return "pxsim.pxtrt.toUInt32"
                 default: throw oops()
             }
         }

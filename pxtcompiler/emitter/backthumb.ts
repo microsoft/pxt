@@ -22,27 +22,33 @@ namespace ts.pxtc {
         pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}" }
         proc_setup(main?: boolean) { return "push {lr}" }
         proc_return() { return "pop {pc}" }
-        debugger_hook(lbl: string) {
+
+        debugger_stmt(lbl: string) {
             return `
-    ldr r0, [r6, #0]
-    lsls r0, r0, #30
-    bmi ${lbl}
-${lbl + "_after"}:
-`;
+    @stackempty locals
+    ldr r0, [r6, #0] ; debugger
+    subs r0, r0, #4  ; debugger
+${lbl}:
+    ldr r0, [r0, #0] ; debugger
+`
         }
 
         debugger_bkpt(lbl: string) {
             return `
-    ldr r0, [r6, #0]
-    lsls r0, r0, #31
-    bpl ${lbl}
-    bkpt 2
+    @stackempty locals
+    ldr r0, [r6, #0] ; brk
+${lbl}:
+    ldr r0, [r0, #0] ; brk
+`
+        }
+
+        debugger_proc(lbl: string) {
+            return `
+    ldr r0, [r6, #0]  ; brk-entry
+    ldr r0, [r0, #4]  ; brk-entry
 ${lbl}:`
         }
 
-        breakpoint() {
-            return "bkpt 1"
-        }
         push_local(reg: string) { return `push {${reg}}` }
         pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
         unconditional_branch(lbl: string) { return "bb " + lbl; }

@@ -101,6 +101,7 @@ namespace pxt.usb {
         epOut: USBEndpoint;
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
+        onEvent = (v: Uint8Array) => { };
 
         constructor(public dev: USBDevice) {
             this.readLoop()
