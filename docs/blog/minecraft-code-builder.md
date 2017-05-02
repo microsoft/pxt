@@ -56,7 +56,7 @@ Getting Started [tutorials](https://minecraft/makecode.com/tutorials) give step-
 
 ## YouTube videos
 
-Subscribe to our channel and check our videos to learn
+Subscribe to our [YouTube channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q) and check our videos to learn
 how to code with MakeCode.
 
 https://youtu.be/VLdWm7LBGjs
