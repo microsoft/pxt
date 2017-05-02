@@ -54,6 +54,13 @@ Getting Started [tutorials](https://minecraft/makecode.com/tutorials) give step-
 
 ![Getting Started](/static/blog/minecraft/gettingstarted.png)
 
+## YouTube videos
+
+Subscribe to our channel and check our videos to learn
+how to code with MakeCode.
+
+https://youtu.be/VLdWm7LBGjs
+
 For more information about the Minecraft Learn-to-Code experience, visit the Minecraft: Education Edition site.  
 And check out some cool new [tutorial resources](https://www.thewecan.zone/mastermodders) from Sarah Guthals.
 
