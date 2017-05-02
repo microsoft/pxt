@@ -12,31 +12,45 @@ Using either the visual block-based editor, or the JavaScript editor, students c
 
 Here are some of the cool new features of Microsoft MakeCode for Minecraft:
 
-1.  Chat Commands - Students can group their code into Chat Commands which they can call directly from the game.
+### Chat Commands 
+
+Students can group their code into Chat Commands which they can call directly from the game.
 
 ![Rain screenshot](/static/blog/minecraft/rain.gif)
 
-2.	Blocks to Text Programming Progression - Once students have mastered drag-and-drop, block-based program construction, they can move into a full-featured JavaScript editor with code snippets, tooltips, and error detection to help them.  Students can also switch back and forth between blocks and JavaScript as they make this transition.
+###	Blocks to Text Programming Progression 
+
+Once students have mastered drag-and-drop, block-based program construction, they can move into a full-featured JavaScript editor with code snippets, tooltips, and error detection to help them.  Students can also switch back and forth between blocks and JavaScript as they make this transition.
 
 ![JavaScript screenshot](/static/blog/minecraft/javascript.gif)
 
-3.	Easy Build tools - One of the things students and teachers most enjoy is building in Minecraft.  Microsoft MakeCode gives you tools to automate builds that make creating a Pyramid, a House, or a Roller Coaster easy!
+###	Easy Build tools 
+
+One of the things students and teachers most enjoy is building in Minecraft.  Microsoft MakeCode gives you tools to automate builds that make creating a Pyramid, a House, or a Roller Coaster easy!
 
 ![House screenshot](/static/blog/minecraft/house.gif)
 
-4.	Minecraft Block Manipulation - Want to create a tunnel of diamonds, or print your name in the sky?  No problem!  With a few blocks/lines of code, it’s all possible.
+###	Minecraft Block Manipulation
+
+Want to create a tunnel of diamonds, or print your name in the sky?  No problem!  With a few blocks/lines of code, it’s all possible.
 
 ![Print screenshot](/static/blog/minecraft/print.gif)
 
-5.	Helpful troubleshooting tools - The real-time game command window shows you exactly what game commands are being issued from your code.  “Slo-Mo” lets you slow your program execution down, and highlight which parts of your program are running.
+###	Helpful troubleshooting tools
+
+ The real-time game command window shows you exactly what game commands are being issued from your code.  “Slo-Mo” lets you slow your program execution down, and highlight which parts of your program are running.
 
 ![Simulator](/static/blog/minecraft/simulator.png) ![Slo-Mo](/static/blog/minecraft/slomo.png)
 
-6.	Sharing - Did you create the most epic mod ever?  Share with your friends via an anonymous URL that they can import and run from Microsoft MakeCode.
+###	Sharing 
+
+Did you create the most epic mod ever?  Share with your friends via an anonymous URL that they can import and run from Microsoft MakeCode.
 
 ![Share](/static/blog/minecraft/share.png)
 
-7.	Tutorials & Examples - Getting Started tutorials give step-by-step guidance to students new to programming, and sample code helps students come up with ideas for their programs.
+###	Tutorials & Examples 
+
+Getting Started tutorials give step-by-step guidance to students new to programming, and sample code helps students come up with ideas for their programs.
 
 ![Getting Started](/static/blog/minecraft/gettingstarted.png)
 
