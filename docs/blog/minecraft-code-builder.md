@@ -59,8 +59,6 @@ Getting Started [tutorials](https://minecraft/makecode.com/tutorials) give step-
 Subscribe to our [YouTube channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q) and check our videos to learn
 how to code with MakeCode.
 
-https://youtu.be/VLdWm7LBGjs
-
 ## More info
 
 For more information about the Minecraft Code Builder experience, visit the [Minecraft: Education Edition site](https://education.minecraft.net/get-started/download).  
