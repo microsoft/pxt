@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Minecraft Code Builder](/blog/minecraft-code-builder)
+May 2nd, 2017 by [Jaqster](https://github.com/Jaqster)
+Learn to code using Microsoft MakeCode and Minecraft Education!
+[Read more](/blog/minecraft-code-builder)
+
+
 ## [Programming the micro:bit on the Apple II](/blog/appleII)
 April 1, 2017 by [tballmsft](https://github.com/tballmsft)
 The Microsoft MakeCode team has worked hard to bring a beginning programming experience
