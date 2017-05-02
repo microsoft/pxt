@@ -2,7 +2,7 @@
 
 ## [Minecraft Code Builder](/blog/minecraft-code-builder)
 May 2nd, 2017 by [Jaqster](https://github.com/Jaqster)
-Learn to code and build mods using Microsoft MakeCode and Minecraft Education!
+Learn to code using Microsoft MakeCode and Minecraft Education!
 [Read more](/blog/minecraft-code-builder)
 
 
