@@ -34,6 +34,13 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
+        experiments?: pxt.Map<AppExperiment>;
+    }
+
+    interface AppExperiment {
+        name: string;
+        description?: string;
+        appTheme: AppTheme;
     }
 
     interface ProjectTemplate {
@@ -185,7 +192,7 @@ declare namespace pxt {
         disableLiveTranslations?: boolean; // don't load translations from crowdin
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
-        blocksVersion?: string; // version of blocks to use 
+        blocksVersion?: number; 
     }
 
     interface DocMenuEntry {

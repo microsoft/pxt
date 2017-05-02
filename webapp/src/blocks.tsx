@@ -359,7 +359,7 @@ export class Editor extends srceditor.Editor {
             }
 
             let blocklyPromises: Promise<void>[] = [];
-            if (/newblocks=1/i.test(window.location.href)) {
+            if (pxt.appTarget.appTheme.blocksVersion == 2) {
                 return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blockly_compressed.js').then(() => {
                     return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blocks_compressed.js').then(() => {
                         return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/msg/js/en.js').then(() => {
@@ -620,30 +620,33 @@ export class Editor extends srceditor.Editor {
         const blocklyOptions: Blockly.ExtendedOptions = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
-            media: pxt.webConfig.commitCdnUrl + (pxt.shell.isBlocksV2() ? "newblockly/media/" : "blockly/media/"),
+            media: pxt.webConfig.commitCdnUrl + (pxt.appTarget.appTheme.blocksVersion == 2 ? "newblockly/media/" : "blockly/media/"),
             sound: true,
             trashcan: false,
             collapse: false,
             comments: true,
             disable: false,
             readOnly: readOnly,
-            // TODO: Add this interface to pxt-blockly main
-            toolboxOptions: {
-                border: true,
-                colour: pxt.appTarget.appTheme.coloredToolbox,
-                inverted: pxt.appTarget.appTheme.invertedToolbox
-            },
             zoom: {
                 enabled: false,
                 controls: false,
                 wheel: true,
-                startScale: 0.75,
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05
             },
             rtl: Util.isUserLanguageRtl()
         };
+        if (pxt.appTarget.appTheme.blocksVersion == 2) {
+            blocklyOptions.toolboxOptions = {
+                border: true,
+                colour: pxt.appTarget.appTheme.coloredToolbox,
+                inverted: pxt.appTarget.appTheme.invertedToolbox
+            };
+            blocklyOptions.zoom.startScale = 0.75;
+        } else {
+            blocklyOptions.toolboxType = pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal';
+        }
         return blocklyOptions;
     }
 
