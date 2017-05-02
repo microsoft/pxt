@@ -102,6 +102,7 @@ export class LanguagePicker extends React.Component<ISettingsProps, LanguagesSta
 
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang.${langId}`);
+            window.location.hash = window.location.hash.replace(/(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i, "");
             window.location.reload();
         } else {
             pxt.tickEvent(`menu.lang.samelang.${langId}`);
