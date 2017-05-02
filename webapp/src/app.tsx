@@ -1956,6 +1956,7 @@ function initTheme() {
     if (pxt.appTarget.experiments) {
         Object.keys(pxt.appTarget.experiments).forEach((key) => {
             if (pxt.shell.inExperiment(key)) {
+                pxt.tickEvent(`app.experiment.${key}`)
                 Util.jsonMergeFrom(theme, pxt.appTarget.experiments[key].appTheme);
             }
         })
