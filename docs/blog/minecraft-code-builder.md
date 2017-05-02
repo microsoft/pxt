@@ -12,6 +12,7 @@ Using either the visual block-based editor, or the JavaScript editor, students c
 
 Here are some of the cool new features of Microsoft MakeCode for Minecraft:
 
+<<<<<<< HEAD:docs/blog/MakeCode for Minecraft blog.md
 1.  Chat Commands - Students can group their code into Chat Commands which they can call directly from the game.
 
 ![Rain screenshot](/static/blog/minecraft/rain.gif)
@@ -41,6 +42,61 @@ Here are some of the cool new features of Microsoft MakeCode for Minecraft:
 ![Getting Started](/static/blog/minecraft/gettingstarted.png)
 
 For more information about the Minecraft Learn-to-Code experience, visit the Minecraft: Education Edition site.  
+=======
+### Chat Commands 
+
+Students can group their code into Chat Commands which they can call directly from the game.
+
+![Rain screenshot](/static/blog/minecraft/rain.gif)
+
+###	Blocks to Text Programming Progression 
+
+Once students have mastered drag-and-drop, block-based program construction, they can move into a full-featured JavaScript editor with code snippets, tooltips, and error detection to help them.  Students can also switch back and forth between blocks and JavaScript as they make this transition.
+
+![JavaScript screenshot](/static/blog/minecraft/javascript.gif)
+
+###	Easy Build tools 
+
+One of the things students and teachers most enjoy is building in Minecraft.  Microsoft MakeCode gives you tools to automate builds that make creating a Pyramid, a House, or a Roller Coaster easy!
+
+![House screenshot](/static/blog/minecraft/house.gif)
+
+###	Minecraft Block Manipulation
+
+Want to create a tunnel of diamonds, or print your name in the sky?  No problem!  With a few blocks/lines of code, it’s all possible.
+
+![Print screenshot](/static/blog/minecraft/print.gif)
+
+###	Helpful troubleshooting tools
+
+ The real-time game command window shows you exactly what game commands are being issued from your code.  “Slo-Mo” lets you slow your program execution down, and highlight which parts of your program are running.
+
+![Simulator](/static/blog/minecraft/simulator.png) ![Slo-Mo](/static/blog/minecraft/slomo.png)
+
+###	Sharing 
+
+Did you create the most epic mod ever?  Share with your friends via an anonymous URL that they can import and run from Microsoft MakeCode.
+
+![Share](/static/blog/minecraft/share.png)
+
+###	Tutorials & Examples 
+
+Getting Started [tutorials](https://minecraft/makecode.com/tutorials) give step-by-step guidance to students new to programming, and [examples](https://minecraft.makecode.com/examples) helps students come up with ideas for their programs.
+
+![Getting Started](/static/blog/minecraft/gettingstarted.png)
+
+## YouTube videos
+
+Subscribe to our [YouTube channel](https://www.youtube.com/channel/UCye7YlvFUUQ1dSy0WZZ1T_Q) and check our videos to learn
+how to code with MakeCode.
+
+https://youtu.be/VLdWm7LBGjs
+
+## More info
+
+For more information about the Minecraft Code Builder experience, visit the [Minecraft: Education Edition site](https://education.minecraft.net/get-started/download).  
+
+>>>>>>> d3912cfaf8b8a0c38672f269c464c2abc87d1fc6:docs/blog/minecraft-code-builder.md
 And check out some cool new [tutorial resources](https://www.thewecan.zone/mastermodders) from Sarah Guthals.
 
 Have fun Making Code for Minecraft!
