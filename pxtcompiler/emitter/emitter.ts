@@ -552,7 +552,7 @@ namespace ts.pxtc {
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
             if (classes[cl].decl.symbol == decl.symbol) {
-                 userError(9261, lf("Interface with same name as a class not supported"))
+                userError(9261, lf("Interface with same name as a class not supported"))
             }
         }
         if (decl.heritageClauses)
@@ -2740,6 +2740,8 @@ ${lbl}: .short 0xffff
 
             if (append) args = args.concat(append)
 
+            let mask = getMask(args)
+
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
                 if (!opts.target.taggedInts)
@@ -2756,20 +2758,25 @@ ${lbl}: .short 0xffff
                     if (r.exprKind == EK.NumberLiteral && typeof r.data == "number") {
                         return ir.numlit(r.data >> 1)
                     }
+                    mask &= ~(1 << i)
                     return ir.rtcallMask("pxt::toInt", getMask([a]),
                         ir.CallingConvention.Plain, [r])
                 } else if (f == "B") {
+                    mask &= ~(1 << i)
                     return emitCondition(a, r)
                 } else if (f == "F" || f == "D") {
+                    if (f == "D")
+                        U.oops("double arguments not yet supported") // take two words
                     if (!isNumber)
                         U.userError("argsFmt=...F/D... but argument not a number in " + name)
+                    mask &= ~(1 << i)
                     return ir.rtcallMask(f == "D" ? "pxt::toDouble" : "pxt::toFloat", getMask([a]),
                         ir.CallingConvention.Plain, [r])
                 } else {
                     throw U.oops("invalid format specifier: " + f)
                 }
             })
-            let r = ir.rtcallMask(name, getMask(args), attrs.callingConvention, args2)
+            let r = ir.rtcallMask(name, mask, attrs.callingConvention, args2)
             if (opts.target.taggedInts) {
                 if (fmt.charAt(0) == "I")
                     r = fromInt(r)
@@ -2777,8 +2784,10 @@ ${lbl}: .short 0xffff
                     r = fromBool(r)
                 else if (fmt.charAt(0) == "F")
                     r = fromFloat(r)
-                else if (fmt.charAt(0) == "D")
+                else if (fmt.charAt(0) == "D") {
+                    U.oops("double returns not yet supported") // take two words
                     r = fromDouble(r)
+                }
             }
             return r
         }
