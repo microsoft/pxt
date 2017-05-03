@@ -1516,6 +1516,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                             newProject.config.dependencies[k] = "*";
                         }
                     });
+                    if (newProject.config.icon)
+                        newProject.config.icon = uploadArtFile(newProject.config.icon);
                 } else {
                     newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
                 }

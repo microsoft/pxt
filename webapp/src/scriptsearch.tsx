@@ -218,6 +218,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 name={scr.name}
                                 description={scr.description}
                                 url={"/" + scr.installedVersion}
+                                imageUrl={scr.icon}
                                 onClick={() => addBundle(scr) }
                                 />
                         ) }
