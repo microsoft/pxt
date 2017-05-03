@@ -170,6 +170,9 @@ namespace pxsim {
     }
 
     export namespace Math_ {
+        // TODO add floor, ceil, trunc, imul, idiv
+
+        // TODO remove >>>0 if in floating point target
         export function sqrt(n: number) {
             return Math.sqrt(n) >>> 0;
         }
