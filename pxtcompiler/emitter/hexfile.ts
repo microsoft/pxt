@@ -30,9 +30,6 @@ namespace ts.pxtc {
     export const vtableShift = 2;
 
     export namespace UF2 {
-        export const startMagic = "UF2\x0AWQ]\x9E"
-        export const endMagic = "0o\xB1\x0A"
-
         function setWord(block: Uint8Array, ptr: number, v: number) {
             block[ptr] = (v & 0xff)
             block[ptr + 1] = ((v >> 8) & 0xff)
@@ -63,6 +60,42 @@ namespace ts.pxtc {
             let res = ""
             for (let b of f.blocks)
                 res += Util.uint8ArrayToString(b)
+            return res
+        }
+
+        function hasAddr(b: Block, a: number) {
+            if (!b) return false
+            return b.targetAddr <= a && a < b.targetAddr + b.payloadSize
+        }
+
+        export function readBytesFromFile(f: BlockFile, addr: number, length: number): Uint8Array {
+            //console.log(`read @${addr} len=${length}`)
+            let needAddr = addr >> 8
+            let bl: Uint8Array
+            if (needAddr == f.currPtr)
+                bl = f.currBlock
+            else {
+                for (let i = 0; i < f.ptrs.length; ++i) {
+                    if (f.ptrs[i] == needAddr) {
+                        bl = f.blocks[i]
+                        break
+                    }
+                }
+                if (bl) {
+                    f.currPtr = needAddr
+                    f.currBlock = bl
+                }
+            }
+            if (!bl)
+                return null
+            let res = new Uint8Array(length)
+            let toRead = Math.min(length, 256 - (addr & 0xff))
+            U.memcpy(res, 0, bl, (addr & 0xff) + 32, toRead)
+            let leftOver = length - toRead
+            if (leftOver > 0) {
+                let le = readBytesFromFile(f, addr + toRead, leftOver)
+                U.memcpy(res, toRead, le)
+            }
             return res
         }
 
@@ -134,7 +167,7 @@ namespace ts.pxtc {
 
     // TODO should be internal
     export namespace hex {
-        let funcInfo: Map<FuncInfo>;
+        let funcInfo: Map<FuncInfo> = {};
         let hex: string[];
         let jmpStartAddr: number;
         let jmpStartIdx: number;
@@ -217,6 +250,8 @@ namespace ts.pxtc {
                 throw oops("bad bytes " + bytes)
         }
 
+        let currentSetup: string = null;
+
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function flashCodeAlign(opts: CompileTarget) {
             return opts.flashCodeAlign || defaultPageSize
@@ -234,6 +269,13 @@ namespace ts.pxtc {
                     hex[i] = hexBytes([0x02, 0x00, 0x00, 0x04, 0x00, upaddr >> 16])
                 }
             }
+        }
+
+        export function encodeVTPtr(ptr: number) {
+            let vv = ptr >> vtableShift
+            assert(vv < 0xffff)
+            assert(vv << vtableShift == ptr)
+            return vv
         }
 
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
@@ -332,23 +374,24 @@ namespace ts.pxtc {
                 let s = hex[i].slice(9)
                 let step = opts.shortPointers ? 4 : 8
                 while (s.length >= step) {
+                    let hexb = s.slice(0, step)
+                    let value = parseInt(swapBytes(hexb), 16)
+                    s = s.slice(step)
                     let inf = funs.shift()
                     if (!inf) return;
                     funcInfo[inf.name] = inf;
-                    let hexb = s.slice(0, step)
-                    //console.log(inf.name, hexb)
-                    inf.value = parseInt(swapBytes(hexb), 16)
-                    if (!inf.value) {
+                    if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
-                    s = s.slice(step)
+                    inf.value = value
                 }
             }
 
             oops();
         }
 
-        export function validateShim(funname: string, shimName: string, hasRet: boolean, numArgs: number) {
+        export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
+            hasRet: boolean, argIsNumber: boolean[]) {
             if (shimName == "TD_ID" || shimName == "TD_NOOP")
                 return
             if (U.lookup(asmLabels, shimName))
@@ -357,14 +400,28 @@ namespace ts.pxtc {
             let inf = lookupFunc(shimName)
             if (inf) {
                 if (!hasRet) {
-                    if (inf.type != "P")
+                    if (inf.argsFmt[0] != "V")
                         U.userError("expecting procedure for " + nm);
                 } else {
-                    if (inf.type != "F")
+                    if (inf.argsFmt[0] == "V")
                         U.userError("expecting function for " + nm);
                 }
-                if (numArgs != inf.args)
-                    U.userError("argument number mismatch: " + numArgs + " vs " + inf.args + " in C++")
+                for (let i = 0; i < argIsNumber.length; ++i) {
+                    let spec = inf.argsFmt[i + 1]
+                    if (!spec)
+                        U.userError("excessive parameters passed to " + nm)
+                    if (target.taggedInts) {
+                        let needNum = spec == "I" || spec == "N" || spec == "F"
+                        if (spec == "T") {
+                            // OK, both number and non-number allowed
+                        } else if (needNum && !argIsNumber[i])
+                            U.userError("expecting number at parameter " + (i + 1) + " of " + nm)
+                        else if (!needNum && argIsNumber[i])
+                            U.userError("expecting non-number at parameter " + (i + 1) + " of " + nm + " / " + inf.argsFmt)
+                    }
+                }
+                if (argIsNumber.length != inf.argsFmt.length - 1)
+                    U.userError("not enough arguments for " + nm)
             } else {
                 U.userError("function not found: " + nm)
             }
@@ -400,10 +457,44 @@ namespace ts.pxtc {
             return r.toUpperCase();
         }
 
+        function applyPatches(f: UF2.BlockFile) {
+            // constant strings in the binary are 4-byte aligned, and marked 
+            // with "@PXT@:" at the beginning - this 6 byte string needs to be
+            // replaced with proper reference count (0xffff to indicate read-only
+            // flash location), string virtual table, and the length of the string
+            let stringVT = [0xff, 0xff, 0x01, 0x00]
+            assert(stringVT.length == 4)
+            for (let bidx = 0; bidx < f.blocks.length; ++bidx) {
+                let b = f.blocks[bidx]
+                let upper = f.ptrs[bidx] << 8
+                for (let i = 32; i < 32 + 256; i += 4) {
+                    // @PXT
+                    if (b[i] == 0x40 && b[i + 1] == 0x50 && b[i + 2] == 0x58 && b[i + 3] == 0x54) {
+                        let addr = upper + i - 32
+                        let bytes = UF2.readBytesFromFile(f, addr, 200)
+                        // @:
+                        if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
+                            let len = 0
+                            while (6 + len < bytes.length) {
+                                if (bytes[6 + len] == 0)
+                                    break
+                                len++
+                            }
+                            if (6 + len >= bytes.length)
+                                U.oops("constant string too long!")
+                            let patchV = stringVT.concat([len & 0xff, len >> 8])
+                            //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
+                            UF2.writeBytes(f, addr, patchV)
+                        }
+                    }
+                }
+            }
+        }
+
         export function patchHex(bin: Binary, buf: number[], shortForm: boolean, useuf2: boolean) {
             let myhex = hex.slice(0, bytecodeStartIdx)
 
-            assert(buf.length < 32000)
+            assert(buf.length < 64000, "program too large, words: " + buf.length)
 
             // store the size of the program (in 16 bit words)
             buf[17] = buf.length
@@ -435,6 +526,7 @@ namespace ts.pxtc {
 
             if (uf2) {
                 UF2.writeHex(uf2, myhex)
+                applyPatches(uf2)
                 UF2.writeBytes(uf2, jmpStartAddr, nextLine(hd, jmpStartIdx).slice(4))
                 if (bin.checksumBlock) {
                     let bytes: number[] = []
@@ -515,8 +607,18 @@ namespace ts.pxtc {
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
-${lbl}meta: .short 0xffff, ${s.length}
+${lbl}meta: .short 0xffff, ${target.taggedInts ? "1," : ""} ${s.length}
 ${lbl}: .string ${stringLiteral(s)}
+`)
+        }
+
+        for (let data of Object.keys(bin.doubles)) {
+            let lbl = bin.doubles[data]
+            // this is REF_TAG_NUMBER in pxt.h
+            bin.otherLiterals.push(`
+.balign 4
+${lbl}: .short 0xffff, 32
+        .hex ${data}
 `)
         }
     }
@@ -546,7 +648,7 @@ ${info.id}_VT:
         // VTable for interface method is just linear. If we ever have lots of interface
         // methods and lots of classes this could become a problem. We could use a table
         // of (iface-member-id, function-addr) pairs and binary search.
-        // See https://codethemicrobit.com/nymuaedeou for Thumb binary search.
+        // See https://pxt.microbit.org/15593-01779-41046-40599 for Thumb binary search.
         s += `
         .balign 4
 ${info.id}_IfaceVT:
@@ -589,6 +691,7 @@ ${hex.hexPrelude()}
         U.iterMap(bin.codeHelpers, (code, lbl) => {
             asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
+        asmsource += snippets.arithmetic()
 
         asmsource += hex.asmTotalSource
 

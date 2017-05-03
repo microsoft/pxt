@@ -189,6 +189,12 @@ namespace ts.pxtc.Util {
         return str.slice(0, prefix.length) == prefix
     }
 
+    export function contains(str: string, contains: string) {
+        if (str.length < contains.length) return false
+        if (contains.length == 0) return true
+        return str.indexOf(contains) > -1
+    }
+
     export function replaceAll(str: string, old: string, new_: string): string {
         if (!old) return str;
         return str.split(old).join(new_);
@@ -485,7 +491,7 @@ namespace ts.pxtc.Util {
         return res;
     }
 
-    export function toHex(bytes: Uint8Array) {
+    export function toHex(bytes: ArrayLike<number>) {
         let r = ""
         for (let i = 0; i < bytes.length; ++i)
             r += ("0" + bytes[i].toString(16)).slice(-2)

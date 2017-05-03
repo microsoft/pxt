@@ -48,10 +48,12 @@ export class Editor extends srceditor.Editor {
     saveToTypeScript(): Promise<string> {
         if (!this.typeScriptSaveable) return Promise.resolve('');
         try {
-            return pxt.blocks.compileAsync(this.editor, this.blockInfo).then((compilationResult) => {
-                this.compilationResult = compilationResult;
-                return this.compilationResult.source;
-            });
+            return pxt.blocks.compileAsync(this.editor, this.blockInfo)
+                .then((compilationResult) => {
+                    this.compilationResult = compilationResult;
+                    pxt.tickActivity("blocks.compile");
+                    return this.compilationResult.source;
+                });
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
@@ -328,6 +330,23 @@ export class Editor extends srceditor.Editor {
     }
 
     prepare() {
+        pxt.blocks.openHelpUrl = (url: string) => {
+            pxt.tickEvent("blocks.help", { url });
+            const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
+            if (m) {
+                const dep = pkg.mainPkg.deps[m[1]];
+                if (dep && dep.verProtocol() == "github") {
+                    // rewrite url to point to current endpoint
+                    url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
+                    window.open(url, m[1]);
+                    return; // TODO support serving package docs in docs frame.
+                }
+            };
+            if (/^\//.test(url))
+                this.parent.setSideDoc(url);
+            else window.open(url, 'docs');
+        }
+
         this.prepareBlockly();
 
         this.isReady = true
@@ -354,7 +373,7 @@ export class Editor extends srceditor.Editor {
                         : 'unknown')
                     : 'flyout';
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickEvent("blocks.create", { category: lastCategory, block: blockId });
+                pxt.tickActivity("blocks.create", "blocks.create." + blockId);
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
             }

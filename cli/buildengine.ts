@@ -109,7 +109,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     }
 
     if (buildCache.sha == extInfo.sha) {
-        pxt.debug("skipping build")
+        pxt.debug("Skipping C++ build.")
         return tasks
     }
 
@@ -142,7 +142,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 buildDalConst(buildEngine, mainPkg, true);
             })
     } else {
-        pxt.debug("skipping build update")
+        pxt.debug("Skipping C++ build update.")
     }
 
     tasks = tasks

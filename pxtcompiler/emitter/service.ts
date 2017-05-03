@@ -166,11 +166,11 @@ namespace ts.pxtc {
                 pkg,
                 extendsTypes,
                 retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : (decl.parameters || []).map(p => {
+                parameters: !hasParams ? null : (decl.parameters || []).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
-                    let minVal = attributes.paramMin ? attributes.paramMin[n] : undefined
-                    let maxVal = attributes.paramMax ? attributes.paramMax[n] : undefined
+                    let minVal = attributes.paramMin && attributes.paramMin[n];
+                    let maxVal = attributes.paramMax && attributes.paramMax[n];
                     let m = /\beg\.?:\s*(.+)/.exec(desc)
                     let props: PropertyDesc[];
                     if (attributes.mutate && p.type.kind === SK.FunctionType) {
@@ -184,6 +184,17 @@ namespace ts.pxtc {
                     let options: Map<PropertyOption> = {};
                     const paramType = typechecker.getTypeAtLocation(p);
                     let isEnum = paramType && !!(paramType.flags & TypeFlags.Enum);
+
+                    if (attributes.block && attributes.paramShadowOptions) {
+                        const argNames: string[] = []
+                        attributes.block.replace(/%(\w+)/g, (f, n) => {
+                            argNames.push(n)
+                            return ""
+                        });
+                        if (attributes.paramShadowOptions[argNames[i]]) {
+                            options['fieldEditorOptions'] = {value: attributes.paramShadowOptions[argNames[i]] }
+                        }
+                    }
                     if (minVal) options['min'] = {value: minVal};
                     if (maxVal) options['max'] = {value: maxVal};
                     return {
@@ -645,6 +656,10 @@ namespace ts.pxtc.service {
         },
         decompile: v => {
             return decompile(v.options, v.fileName);
+        },
+        compileTd: v => {
+            let res = compile(v.options);
+            return getApiInfo(res.ast, true);
         },
 
         assemble: v => {

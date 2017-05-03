@@ -172,6 +172,7 @@ namespace pxsim {
         max: number = 5;
         events: T[] = [];
         private mHandler: RefAction;
+        private lock: boolean;
 
         constructor(public runtime: Runtime) { }
 
@@ -181,17 +182,22 @@ namespace pxsim {
             this.events.push(e)
 
             // if this is the first event pushed - start processing
-            if (this.events.length == 1)
+            if (this.events.length == 1 && !this.lock)
                 this.poke();
         }
 
         private poke() {
+            this.lock = true;
             let top = this.events.shift()
             this.runtime.runFiberAsync(this.handler, top)
                 .done(() => {
                     // we're done processing the current event, if there is still something left to do, do it
-                    if (this.events.length > 0)
+                    if (this.events.length > 0) {
                         this.poke();
+                    }
+                    else {
+                        this.lock = false;
+                    }
                 })
         }
 

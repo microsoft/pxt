@@ -693,7 +693,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     {this.props.helpUrl ?
                         <a className={`ui button icon-and-text right floated labeled`} href={this.props.helpUrl} target="_docs">
                             <i className="help icon"></i>
-                            {lf("Help") }</a>
+                        </a>
                         : undefined}
                 </div> : undefined }
                 <div id={this.id + 'desc'} className="content">

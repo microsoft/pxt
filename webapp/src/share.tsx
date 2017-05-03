@@ -109,7 +109,7 @@ pxt extract ${url}`;
                         embed = editUrl;
                         break;
                     default:
-                        if (isBlocks) {
+                        if (isBlocks && pxt.blocks.layout.screenshotEnabled()) {
                             // Render screenshot
                             if (this.state.screenshotId == currentPubId) {
                                 if (this.state.screenshotUri)
@@ -176,7 +176,7 @@ pxt extract ${url}`;
                         <img src={header.icon} className={"ui medium image centered"} /> : undefined
                     }
                     { action ?
-                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") +
+                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
                             lf("You acknowledge having consent to publish this project.") }</p>
                         : undefined }
                     { url && ready ? <div>

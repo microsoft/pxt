@@ -697,6 +697,7 @@ namespace pxt.blocks {
     // whenever a block was actually missing).
     export function compileExpression(e: Environment, b: B.Block, comments: string[]): JsNode {
         assert(b != null);
+        e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         let expr: JsNode;
         if (b.disabled || b.type == "placeholder")
@@ -764,6 +765,7 @@ namespace pxt.blocks {
         stdCallTable: pxt.Map<StdFunc>;
         errors: B.Block[];
         renames: RenameMap;
+        stats: pxt.Map<number>;
     }
 
     export interface RenameMap {
@@ -796,7 +798,8 @@ namespace pxt.blocks {
             bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
             stdCallTable: e.stdCallTable,
             errors: e.errors,
-            renames: e.renames
+            renames: e.renames,
+            stats: e.stats
         };
     }
 
@@ -824,7 +827,8 @@ namespace pxt.blocks {
             renames: {
                 oldToNew: {},
                 takenNames: {}
-            }
+            },
+            stats: {}
         }
     };
 
@@ -1155,6 +1159,7 @@ namespace pxt.blocks {
     function compileStatementBlock(e: Environment, b: B.Block): JsNode[] {
         let r: JsNode[];
         const comments: string[] = [];
+        e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         switch (b.type) {
             case 'controls_if':
@@ -1192,6 +1197,12 @@ namespace pxt.blocks {
                 break;
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
+
+        r.forEach(l => {
+            if (l.type === NT.Block) {
+                l.id = b.id
+            }
+        });
 
         if (comments.length) {
             addCommentNodes(comments, r)
@@ -1358,12 +1369,11 @@ namespace pxt.blocks {
         infer(e, w);
         const compiled = compileStatementBlock(e, b)
         removeAllPlaceholders();
-        return tdASTtoTS(compiled);
+        return tdASTtoTS(e, compiled);
     }
 
-    function compileWorkspace(w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
+    function compileWorkspace(e: Environment, w: B.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
         try {
-            const e = mkEnv(w, blockInfo);
             infer(e, w);
 
             const stmtsMain: JsNode[] = [];
@@ -1478,20 +1488,31 @@ namespace pxt.blocks {
     export interface BlockCompilationResult {
         source: string;
         sourceMap: SourceInterval[];
+        stats: pxt.Map<number>;
     }
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
+        let bestChunk: SourceInterval;
+        let bestChunkLength: number;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length)
-                return chunk.id;
+            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
+                bestChunk = chunk;
+                bestChunkLength = chunk.end - chunk.start;
+            }
+        }
+        if (bestChunk) {
+            return bestChunk.id;
         }
         return undefined;
     }
 
     export function compileAsync(b: B.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
-        return tdASTtoTS(compileWorkspace(b, blockInfo));
+        const e = mkEnv(b, blockInfo);
+        const nodes = compileWorkspace(e, b, blockInfo);
+        const result = tdASTtoTS(e, nodes);
+        return result;
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
@@ -1532,8 +1553,9 @@ namespace pxt.blocks {
         ".": 18,
     }
 
-    function tdASTtoTS(app: JsNode[]): Promise<BlockCompilationResult> {
+    function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
         let sourceMap: SourceInterval[] = [];
+        let sourceMapById: pxt.Map<SourceInterval> = {};
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
@@ -1608,7 +1630,8 @@ namespace pxt.blocks {
         return workerOpAsync("format", { format: {input: output, pos: 1} }).then(() => {
             return {
                 source: output,
-                sourceMap: sourceMap
+                sourceMap: sourceMap,
+                stats: env.stats
             };
         })
 
@@ -1644,7 +1667,16 @@ namespace pxt.blocks {
             let end = getCurrentLine();
 
             if (n.id && start != end) {
-                sourceMap.push({ id: n.id, start: start, end: end })
+                if (sourceMapById[n.id]) {
+                    const node = sourceMapById[n.id];
+                    node.start = Math.min(node.start, start);
+                    node.end = Math.max(node.end, end);
+                }
+                else {
+                    const interval = { id: n.id, start: start, end: end }
+                    sourceMapById[n.id] = interval;
+                    sourceMap.push(interval)
+                }
             }
         }
 

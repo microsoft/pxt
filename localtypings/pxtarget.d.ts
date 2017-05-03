@@ -6,6 +6,7 @@ declare namespace pxt {
     // targetconfig.json
     interface TargetConfig {
         packages?: PackagesConfig;
+        languages?: string[];
     }
 
     interface PackagesConfig {
@@ -100,6 +101,7 @@ declare namespace pxt {
         instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
+        trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
     }
 
     interface TargetCompileService {
@@ -112,13 +114,6 @@ declare namespace pxt {
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
-    }
-
-    interface SpecializedResource {
-        name: string,
-        browser?: string,
-        os?: string,
-        path: string
     }
 
     interface AppTheme {
@@ -138,7 +133,7 @@ declare namespace pxt {
         organizationLogo?: string;
         organizationWideLogo?: string;
         homeUrl?: string;
-        shareUrl?: string; 
+        shareUrl?: string;
         embedUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
@@ -160,7 +155,6 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
-        browserSupport?: SpecializedResource[];
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -188,9 +182,12 @@ declare namespace pxt {
         sounds?: {
             tutorialStep?: string;
             tutorialNext?: string;
-            dialogClick?: string;            
+            dialogClick?: string;
         },
         disableLiveTranslations?: boolean; // don't load translations from crowdin
+        extendEditor?: boolean; // whether a target specific editor.js is loaded
+        highContrast?: boolean; // simulator has a high contrast mode
+        selectLanguage?: boolean; // add language picker to settings menu
     }
 
     interface DocMenuEntry {
@@ -230,6 +227,8 @@ declare namespace ts.pxtc {
         driveName?: string;
         jsRefCounting?: boolean;
         floatingPoint?: boolean;
+        taggedInts?: boolean; // implies floatingPoint
+        boxDebug?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
@@ -266,8 +265,7 @@ declare namespace ts.pxtc {
 
     interface FuncInfo {
         name: string;
-        type: string;
-        args: number;
+        argsFmt: string;
         value: number;
     }
 
