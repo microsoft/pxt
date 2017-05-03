@@ -138,8 +138,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         <div className="right aligned column">
                             {showZoomControls ?
                                 <div className="ui icon small buttons">
-                                    <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('mobile') } />
-                                    <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('mobile') } />
+                                    <sui.Button icon='plus circle' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('mobile') } />
+                                    <sui.Button icon='minus circle' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('mobile') } />
                                 </div> : undefined }
                         </div>
                     </div> :
@@ -208,8 +208,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div> : undefined }
                             {showZoomControls ?
                                 <div className="ui icon small buttons">
-                                    <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('tablet') } />
-                                    <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('tablet') } />
+                                    <sui.Button icon='plus circle' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('tablet') } />
+                                    <sui.Button icon='minus circle' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('tablet') } />
                                 </div> : undefined }
                         </div>
                     </div>
@@ -262,8 +262,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         </div> : undefined }
                                     {showZoomControls ?
                                         <div className="ui icon large buttons">
-                                            <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn() } />
-                                            <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut() } />
+                                            <sui.Button icon='plus circle' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn() } />
+                                            <sui.Button icon='minus circle' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut() } />
                                         </div> : undefined }
                                     </div>
                                 </div> : undefined }
@@ -315,8 +315,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div> : undefined }
                         {showZoomControls ?
                             <div className="ui icon small buttons">
-                                <sui.Button icon='zoom' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('computer') } />
-                                <sui.Button icon='zoom out' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('computer') } />
+                                <sui.Button icon='plus circle' class="editortools-btn zoomin-editortools-btn" title={lf("Zoom In") } onClick={() => this.zoomIn('computer') } />
+                                <sui.Button icon='minus circle' class="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out") } onClick={() => this.zoomOut('computer') } />
                             </div> : undefined }
                     </div>
                 </div>
