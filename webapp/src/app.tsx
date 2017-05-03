@@ -2110,6 +2110,10 @@ $(document).ready(() => {
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
+                lang.setCookieLang(mlang[2]);
+                window.location.hash = window.location.hash.replace(mlang[0], "");
+            }
             const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
