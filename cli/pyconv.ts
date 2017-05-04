@@ -1234,6 +1234,10 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     Yield: (n: py.Yield) => exprTODO(n),
     YieldFrom: (n: py.YieldFrom) => exprTODO(n),
     Compare: (n: py.Compare) => {
+        if (n.ops.length == 1 && (n.ops[0] == "In" || n.ops[0] == "NotIn")) {
+            let idx = B.mkInfix(expr(n.comparators[0]), ".", B.H.mkCall("indexOf", [expr(n.left)]))
+            return B.mkInfix(idx, n.ops[0] == "In" ? ">=" : "<", B.mkText("0"))
+        }
         let r = binop(expr(n.left), n.ops[0], expr(n.comparators[0]))
         for (let i = 1; i < n.ops.length; ++i) {
             r = binop(r, "And", binop(expr(n.comparators[i - 1]), n.ops[i], expr(n.comparators[i])))
