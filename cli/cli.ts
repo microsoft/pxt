@@ -1569,6 +1569,10 @@ function buildTargetCoreAsync() {
     return forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
+        const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
+        if (config && config.additionalFilePath) {
+            dirsToWatch.push(path.resolve(config.additionalFilePath));
+        }
 
         if (isPrj) {
             forceCloudBuild = true;
