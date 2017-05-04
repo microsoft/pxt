@@ -75,7 +75,7 @@ module py {
         is_async: int;
     }
 
-    export interface Module extends Symbol {
+    export interface Module extends Symbol, ScopeDef {
         kind: "Module";
         body: Stmt[];
     }
@@ -119,10 +119,11 @@ module py {
     }
 
     export interface ScopeDef extends Stmt {
-        scope?: Map<VarDesc>;
+        vars?: Map<VarDesc>;
+        parent?: ScopeDef;
     }
 
-    export interface FunctionDef extends Symbol {
+    export interface FunctionDef extends Symbol, ScopeDef {
         kind: "FunctionDef";
         name: identifier;
         args: Arguments;
@@ -138,7 +139,7 @@ module py {
         decorator_list: Expr[];
         returns?: Expr;
     }
-    export interface ClassDef extends Symbol {
+    export interface ClassDef extends Symbol, ScopeDef {
         kind: "ClassDef";
         name: identifier;
         bases: Expr[];
@@ -399,6 +400,7 @@ module py {
         kind: "Name";
         id: identifier;
         ctx: expr_context;
+        isdef?: boolean;
     }
     export interface List extends AssignmentExpr {
         kind: "List";
@@ -522,9 +524,9 @@ interface VarDesc extends VarDescOptions {
 }
 
 interface Ctx {
+    currModule: py.Module;
     currClass: py.ClassDef;
     currFun: py.FunctionDef;
-    vars: Map<VarDesc>;
 }
 
 let ctx: Ctx
@@ -537,10 +539,15 @@ function mkType(o: TypeOptions = {}) {
     return r
 }
 
+function currentScope(): py.ScopeDef {
+    return ctx.currFun || ctx.currClass || ctx.currModule
+}
+
 function defvar(n: string, opts: VarDescOptions) {
-    let v = ctx.vars[n]
+    let scopeDef = currentScope()
+    let v = scopeDef.vars[n]
     if (!v) {
-        v = ctx.vars[n] = { type: mkType() }
+        v = scopeDef.vars[n] = { type: mkType() }
     }
     for (let k of Object.keys(opts)) {
         (v as any)[k] = (opts as any)[k]
@@ -626,10 +633,23 @@ function getTypeField(t: Type, n: string) {
     return null
 }
 
+function lookupVar(n: string) {
+    let s = currentScope()
+    while (s) {
+        let v = U.lookup(s.vars, n)
+        if (v) return v
+        // go to parent, excluding class scopes
+        do {
+            s = s.parent
+        } while (s && s.kind == "ClassDef")
+    }
+    return null
+}
+
 function getFunDef(e: py.Expr): py.FunctionDef {
     switch (e.kind) {
         case "Name": {
-            let v = U.lookup(ctx.vars, getName(e))
+            let v = lookupVar(getName(e))
             if (v)
                 return v.fundef
             break
@@ -646,7 +666,7 @@ function getFunDef(e: py.Expr): py.FunctionDef {
 function getClassDef(e: py.Expr) {
     switch (e.kind) {
         case "Name": {
-            let v = U.lookup(ctx.vars, getName(e))
+            let v = lookupVar(getName(e))
             if (v)
                 return v.classdef
             break
@@ -667,7 +687,7 @@ function inferType(e: py.Expr): Type {
             let n = getName(e)
             if (n == "self" && ctx.currClass)
                 return (e.tsType = mkType({ classType: ctx.currClass }))
-            let v = U.lookup(ctx.vars, n)
+            let v = lookupVar(n)
             if (v)
                 return v.type
             break
@@ -682,17 +702,16 @@ function inferType(e: py.Expr): Type {
     return e.tsType
 }
 
-function resetCtx() {
+function resetCtx(m: py.Module) {
     ctx = {
         currClass: null,
         currFun: null,
-        vars: {}
+        currModule: m
     }
 }
 
 function scope(f: () => B.JsNode) {
     let prevCtx = U.flatClone(ctx)
-    prevCtx.vars = U.flatClone(ctx.vars)
     let r = f()
     ctx = prevCtx
     return r
@@ -796,77 +815,83 @@ function exprs0(ee: py.Expr[]) {
     return ee.map(expr)
 }
 
+function setupScope(n: py.ScopeDef) {
+    if (!n.vars) {
+        n.vars = {}
+        n.parent = currentScope()
+    }
+}
+
 const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
-    FunctionDef: (n: py.FunctionDef) => {
+    FunctionDef: (n: py.FunctionDef) => scope(() => {
         let isMethod = !!ctx.currClass && !ctx.currFun
         if (!isMethod)
             defvar(n.name, { fundef: n })
-        return scope(() => {
-            ctx.currFun = n
-            let prefix = ""
-            let funname = n.name
-            let decs = n.decorator_list.filter(d => {
-                if (getName(d) == "property") {
-                    prefix = "get"
-                    return false
-                }
-                if (d.kind == "Attribute" && (d as py.Attribute).attr == "setter" &&
-                    (d as py.Attribute).value.kind == "Name") {
-                    funname = ((d as py.Attribute).value as py.Name).id
-                    prefix = "set"
-                    return false
-                }
-                return true
-            })
-            let nodes = [
-                todoComment("decorators", decs.map(expr))
-            ]
-            if (isMethod) {
-                if (n.name == "__init__")
-                    nodes.push(B.mkText("constructor"))
-                else {
-                    if (!prefix) {
-                        prefix = n.name[0] == "_" ? "private" : "public"
-                    }
-                    nodes.push(B.mkText(prefix + " "), quote(funname))
-                    let fd = getClassField(ctx.currClass, funname)
-                    fd.fundef = n
-                }
-            } else {
-                U.assert(!prefix)
-                if (n.name[0] == "_")
-                    nodes.push(B.mkText("function "), quote(funname))
-                else
-                    nodes.push(B.mkText("export function "), quote(funname))
-            }
-            nodes.push(
-                doArgs(n.args, isMethod),
-                todoComment("returns", n.returns ? [expr(n.returns)] : []),
-                stmts(n.body)
-            )
-            return B.mkStmt(B.mkGroup(nodes))
-        })
-    },
 
-    ClassDef: (n: py.ClassDef) => {
-        defvar(n.name, { classdef: n })
-        return scope(() => {
-            U.assert(!ctx.currClass)
-            ctx.currClass = n
-            let nodes = [
-                todoComment("keywords", n.keywords.map(doKeyword)),
-                todoComment("decorators", n.decorator_list.map(expr)),
-                B.mkText("export class "),
-                quote(n.name)
-            ]
-            if (n.bases.length > 0) {
-                nodes.push(B.mkText(" extends "))
-                nodes.push(B.mkCommaSep(n.bases.map(expr)))
+        setupScope(n)
+        ctx.currFun = n
+        let prefix = ""
+        let funname = n.name
+        let decs = n.decorator_list.filter(d => {
+            if (getName(d) == "property") {
+                prefix = "get"
+                return false
             }
-            nodes.push(stmts(n.body))
-            return B.mkStmt(B.mkGroup(nodes))
+            if (d.kind == "Attribute" && (d as py.Attribute).attr == "setter" &&
+                (d as py.Attribute).value.kind == "Name") {
+                funname = ((d as py.Attribute).value as py.Name).id
+                prefix = "set"
+                return false
+            }
+            return true
         })
-    },
+        let nodes = [
+            todoComment("decorators", decs.map(expr))
+        ]
+        if (isMethod) {
+            if (n.name == "__init__")
+                nodes.push(B.mkText("constructor"))
+            else {
+                if (!prefix) {
+                    prefix = n.name[0] == "_" ? "private" : "public"
+                }
+                nodes.push(B.mkText(prefix + " "), quote(funname))
+                let fd = getClassField(ctx.currClass, funname)
+                fd.fundef = n
+            }
+        } else {
+            U.assert(!prefix)
+            if (n.name[0] == "_")
+                nodes.push(B.mkText("function "), quote(funname))
+            else
+                nodes.push(B.mkText("export function "), quote(funname))
+        }
+        nodes.push(
+            doArgs(n.args, isMethod),
+            todoComment("returns", n.returns ? [expr(n.returns)] : []),
+            stmts(n.body)
+        )
+        return B.mkStmt(B.mkGroup(nodes))
+    }),
+
+    ClassDef: (n: py.ClassDef) => scope(() => {
+        setupScope(n)
+        defvar(n.name, { classdef: n })
+        U.assert(!ctx.currClass)
+        ctx.currClass = n
+        let nodes = [
+            todoComment("keywords", n.keywords.map(doKeyword)),
+            todoComment("decorators", n.decorator_list.map(expr)),
+            B.mkText("export class "),
+            quote(n.name)
+        ]
+        if (n.bases.length > 0) {
+            nodes.push(B.mkText(" extends "))
+            nodes.push(B.mkCommaSep(n.bases.map(expr)))
+        }
+        nodes.push(stmts(n.body))
+        return B.mkStmt(B.mkGroup(nodes))
+    }),
 
     Return: (n: py.Return) =>
         n.value ?
@@ -1055,13 +1080,27 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         B.mkStmt(B.mkText("TODO: nonlocal: "), B.mkGroup(n.names.map(B.mkText))),
 }
 
-function possibleDef(id: py.identifier) {
-    let curr = U.lookup(ctx.vars, id)
-    if (curr) return quote(id)
-    if (ctx.currClass && !ctx.currFun)
-        return quote(id) // field
-    defvar(id, { isLocal: true })
-    return B.mkGroup([B.mkText("let "), quote(id)])
+function possibleDef(n: py.Name) {
+    let id = n.id
+    if (n.isdef === undefined) {
+        let curr = lookupVar(id)
+        if (!curr) {
+            if (ctx.currClass && !ctx.currFun) {
+                n.isdef = false // field
+                defvar(id, {})
+            } else {
+                n.isdef = true
+                defvar(id, { isLocal: true })
+            }
+        } else {
+            n.isdef = false
+        }
+    }
+
+    if (n.isdef)
+        return B.mkGroup([B.mkText("let "), quote(id)])
+    else
+        return quote(id)
 }
 
 function quoteStr(id: string) {
@@ -1219,7 +1258,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         if (n.ctx.indexOf("Load") >= 0)
             return quote(n.id)
         else
-            return possibleDef(n.id)
+            return possibleDef(n)
     },
     List: (n: py.List) => B.mkGroup([
         B.mkText("["),
@@ -1251,12 +1290,11 @@ function stmt(e: py.Stmt): B.JsNode {
 
 // TODO based on lineno/col_offset mark which numbers are written in hex
 
-function toTS(js: py.AST) {
-    U.assert(js.kind == "Module")
-    resetCtx()
-    let nodes = (js as any).body.map(stmt)
-    let res = B.flattenNode(nodes)
-    return res.output
+function toTS(mod: py.Module) {
+    U.assert(mod.kind == "Module")
+    resetCtx(mod)
+    if (!mod.vars) mod.vars = {}
+    return mod.body.map(stmt)
 }
 
 export function convertAsync(fns: string[]) {
@@ -1319,12 +1357,20 @@ export function convertAsync(fns: string[]) {
                 moduleAst[pkgFiles[fn]] = js
             })
 
+            // first pass
+            U.iterMap(js, (fn: string, js: any) => {
+                toTS(js)
+            })
+
             U.iterMap(js, (fn: string, js: any) => {
                 if (primFiles[fn]) {
                     console.log("\n//")
                     console.log("// *** " + fn + " ***")
                     console.log("//\n")
-                    console.log(toTS(js))
+
+                    let nodes = toTS(js)
+                    let res = B.flattenNode(nodes)
+                    console.log(res.output)
                 }
             })
         })
