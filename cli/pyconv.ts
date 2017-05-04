@@ -738,6 +738,7 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
         if (didx >= 0) {
             res.push(B.mkText(" = "))
             res.push(expr(args.defaults[didx]))
+            unify(a.type, typeOf(args.defaults[didx]))
         }
         didx++
         return B.mkGroup(res)
@@ -1242,12 +1243,40 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         let over = U.lookup(funMap, nm)
 
         if (n.keywords.length > 0) {
-            let kwargs = n.keywords.map(kk => B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
-            allargs.push(B.mkGroup([
-                B.mkText("{"),
-                B.mkCommaSep(kwargs),
-                B.mkText("}")
-            ]))
+            if (fd) {
+                let formals = fdargs.slice(n.args.length)
+                let defls = fd.args.defaults.slice()
+                while (formals.length > 0) {
+                    let last = formals[formals.length - 1]
+                    if (n.keywords.some(k => k.arg == last.arg))
+                        break
+                    formals.pop()
+                    defls.pop()
+                }
+                while (defls.length > formals.length)
+                    defls.shift()
+                while (defls.length < formals.length)
+                    defls.unshift(null)
+
+                let actual = U.toDictionary(n.keywords, k => k.arg)
+                let idx = 0
+                for (let formal of formals) {
+                    let ex = U.lookup(actual, formal.arg)
+                    if(ex)
+                        allargs.push(expr(ex.value))
+                    else {
+                        allargs.push(expr(defls[idx]))
+                    }
+                    idx++
+                }
+            } else {
+                let kwargs = n.keywords.map(kk => B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
+                allargs.push(B.mkGroup([
+                    B.mkText("{"),
+                    B.mkCommaSep(kwargs),
+                    B.mkText("}")
+                ]))
+            }
         }
 
         if (over != null) {
