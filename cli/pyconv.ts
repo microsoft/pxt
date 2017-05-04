@@ -13,6 +13,7 @@ interface FieldDesc {
     name: string;
     type: Type;
     fundef?: py.FunctionDef;
+    isStatic?: boolean;
 }
 
 type Map<T> = pxt.Map<T>;
@@ -150,6 +151,7 @@ module py {
         body: Stmt[];
         decorator_list: Expr[];
         fields?: Map<FieldDesc>;
+        baseClass?: ClassDef;
     }
     export interface Return extends Stmt {
         kind: "Return";
@@ -583,8 +585,10 @@ function t2s(t: Type): string {
         return "?" + t.tid
 }
 
+let currErrs = ""
+
 function error(t0: Type, t1: Type) {
-    U.userError("types not compatible: " + t2s(t0) + " and " + t2s(t1))
+    currErrs += "types not compatible: " + t2s(t0) + " and " + t2s(t1) + "; "
 }
 
 function typeCtor(t: Type): any {
@@ -620,8 +624,10 @@ function unify(t0: Type, t1: Type): void {
     t1 = find(t1)
     if (t0 === t1)
         return
-    if (!canUnify(t0, t1))
+    if (!canUnify(t0, t1)) {
         error(t0, t1)
+        return
+    }
     if (typeCtor(t0) && !typeCtor(t1))
         return unify(t1, t0)
     numUnifies++
@@ -634,6 +640,10 @@ function getClassField(ct: py.ClassDef, n: string) {
     if (!ct.fields)
         ct.fields = {}
     if (!ct.fields[n]) {
+        for (let par = ct.baseClass; par; par = par.baseClass) {
+            if (par.fields[n])
+                return par.fields[n]
+        }
         ct.fields[n] = {
             name: n,
             type: mkType()
@@ -664,14 +674,13 @@ function lookupVar(n: string) {
 }
 
 function getClassDef(e: py.Expr) {
-    switch (e.kind) {
-        case "Name": {
-            let v = lookupVar(getName(e))
-            if (v)
-                return v.classdef
-            break
-        }
-    }
+    let n = getName(e)
+    let v = lookupVar(n)
+    if (v)
+        return v.classdef
+    let s = lookupSymbol(n)
+    if (s && s.kind == "ClassDef")
+        return s as py.ClassDef
     return null
 }
 
@@ -896,12 +905,15 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         if (n.bases.length > 0) {
             nodes.push(B.mkText(" extends "))
             nodes.push(B.mkCommaSep(n.bases.map(expr)))
+            let b = getClassDef(n.bases[0])
+            if (b)
+                n.baseClass = b
         }
         let body = stmts(n.body)
         nodes.push(body)
 
         let fieldDefs = U.values(n.fields)
-            .filter(f => !f.fundef)
+            .filter(f => !f.fundef && !f.isStatic)
             .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.type)))
         body.children = fieldDefs.concat(body.children)
 
@@ -942,6 +954,12 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         let isUpperCase = nm && !/[a-z]/.test(nm)
         if (!ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
+        if (nm && ctx.currClass && !ctx.currFun) {
+            let fd = getClassField(ctx.currClass, nm)
+            unify(fd.type, typeOf(n.targets[0]))
+            fd.isStatic = true
+            pref = "static "
+        }
         unify(typeOf(n.targets[0]), typeOf(n.value))
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
@@ -1137,8 +1155,12 @@ function quoteStr(id: string) {
 }
 
 function getName(e: py.Expr): string {
-    if (e.kind == "Name")
-        return (e as py.Name).id
+    if (e.kind == "Name") {
+        let s = (e as py.Name).id
+        let v = lookupVar(s)
+        if (v && v.expandsTo) return v.expandsTo
+        else return s
+    }
     if (e.kind == "Attribute") {
         let pref = getName((e as py.Attribute).value)
         if (pref)
@@ -1226,9 +1248,11 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         let fd: py.FunctionDef
 
         if (cd) {
-            let ff = cd.fields["__init__"]
-            if (ff)
-                fd = ff.fundef
+            if (cd.fields) {
+                let ff = cd.fields["__init__"]
+                if (ff)
+                    fd = ff.fundef
+            }
         } else {
             if (n.func.kind == "Attribute") {
                 let attr = n.func as py.Attribute
@@ -1266,6 +1290,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         // TODO keywords
 
         let nm = getName(n.func)
+
         let over = U.lookup(funMap, nm)
 
         if (n.keywords.length > 0) {
@@ -1303,6 +1328,12 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                     B.mkText("}")
                 ]))
             }
+        }
+
+        if (nm == "super" && allargs.length == 0) {
+            if (ctx.currClass && ctx.currClass.baseClass)
+                unify(n.tsType, mkType({ classType: ctx.currClass.baseClass }))
+            return B.mkText("super")
         }
 
         if (over != null) {
@@ -1394,9 +1425,10 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                 unify(n.tsType, v.type)
         }
 
-        if (n.ctx.indexOf("Load") >= 0)
-            return quote(n.id)
-        else
+        if (n.ctx.indexOf("Load") >= 0) {
+            let nm = getName(n)
+            return quote(nm)
+        } else
             return possibleDef(n)
     },
     List: mkArrayExpr,
@@ -1426,7 +1458,12 @@ function stmt(e: py.Stmt): B.JsNode {
     if (!f) {
         U.oops(e.kind + " - unknown stmt")
     }
-    return f(e)
+    let r = f(e)
+    if (currErrs) {
+        r = B.mkGroup([B.H.mkComment("TODO: (below) " + currErrs), r])
+        currErrs = ""
+    }
+    return r
 }
 
 // TODO based on lineno/col_offset mark which numbers are written in hex
