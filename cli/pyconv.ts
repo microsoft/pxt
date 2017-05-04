@@ -752,6 +752,19 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
     return B.H.mkParenthesizedExpression(B.mkCommaSep(lst))
 }
 
+const numOps: Map<number> = {
+    Sub: 1,
+    Div: 1,
+    Pow: 1,
+    LShift: 1,
+    RShift: 1,
+    BitOr: 1,
+    BitXor: 1,
+    BitAnd: 1,
+    FloorDiv: 1,
+    Mult: 1, // this can be also used on strings and arrays, but let's ignore that for now
+}
+
 const opMapping: Map<string> = {
     Add: "+",
     Sub: "-",
@@ -862,7 +875,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         }
         nodes.push(
             doArgs(n.args, isMethod),
-            typeAnnot(n.retType),
+            n.name == "__init__" ? B.mkText("") : typeAnnot(n.retType),
             todoComment("returns", n.returns ? [expr(n.returns)] : []),
             stmts(n.body)
         )
@@ -923,39 +936,42 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
     Assign: (n: py.Assign) => {
         if (n.targets.length != 1)
             return stmtTODO(n)
-        let trg = expr(n.targets[0])
         let pref = ""
-        if (!ctx.currClass && !ctx.currFun)
-            pref = "export "
         let isConstCall = isCallTo(n.value, "const")
-        let isUpperCase = getName(n.targets[0]) && !/[a-z]/.test(getName(n.targets[0]))
+        let nm = getName(n.targets[0]) || ""
+        let isUpperCase = nm && !/[a-z]/.test(nm)
+        if (!ctx.currClass && !ctx.currFun && nm[0] != "_")
+            pref = "export "
         unify(typeOf(n.targets[0]), typeOf(n.value))
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
-            trg = expr(n.targets[0])
-            return B.mkStmt(B.mkText("const "), B.mkInfix(trg, "=", expr(n.value)))
+            defvar(getName(n.targets[0]), {})
+            return B.mkStmt(B.mkText(pref + "const "), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
         }
-        return B.mkStmt(B.mkText(pref), B.mkInfix(trg, "=", expr(n.value)))
+        return B.mkStmt(B.mkText(pref), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
     },
     For: (n: py.For) => {
         U.assert(n.orelse.length == 0)
         if (isCallTo(n.iter, "range")) {
             let r = n.iter as py.Call
             let def = expr(n.target)
+            let ref = quote(getName(n.target))
+            unify(typeOf(n.target), tpNumber)
             let start = r.args.length == 1 ? B.mkText("0") : expr(r.args[0])
             let stop = expr(r.args[r.args.length == 1 ? 0 : 1])
             return B.mkStmt(
                 B.mkText("for ("),
                 B.mkInfix(def, "=", start),
                 B.mkText("; "),
-                B.mkInfix(expr(n.target), "<", stop),
+                B.mkInfix(ref, "<", stop),
                 B.mkText("; "),
                 r.args.length >= 3 ?
-                    B.mkInfix(expr(n.target), "+=", expr(r.args[2])) :
-                    B.mkInfix(null, "++", expr(n.target)),
+                    B.mkInfix(ref, "+=", expr(r.args[2])) :
+                    B.mkInfix(null, "++", ref),
                 B.mkText(")"),
                 stmts(n.body))
         }
+        unify(typeOf(n.iter), mkType({ arrayType: typeOf(n.target) }))
         return B.mkStmt(
             B.mkText("for ("),
             expr(n.target),
@@ -1157,6 +1173,8 @@ let funMap: Map<string> = {
     "const": "",
     "int": "Math.floor",
     "len": ".length",
+    "min": "Math.min",
+    "max": "Math.max",
 }
 
 const exprMap: Map<(v: py.Expr) => B.JsNode> = {
@@ -1167,7 +1185,15 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         }
         return r
     },
-    BinOp: (n: py.BinOp) => binop(expr(n.left), n.op, expr(n.right)),
+    BinOp: (n: py.BinOp) => {
+        let r = binop(expr(n.left), n.op, expr(n.right))
+        if (numOps[n.op]) {
+            unify(typeOf(n.left), tpNumber)
+            unify(typeOf(n.right), tpNumber)
+            unify(n.tsType, tpNumber)
+        }
+        return r
+    },
     UnaryOp: (n: py.UnaryOp) => {
         let op = prefixOps[n.op]
         U.assert(!!op)
@@ -1262,7 +1288,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                 let idx = 0
                 for (let formal of formals) {
                     let ex = U.lookup(actual, formal.arg)
-                    if(ex)
+                    if (ex)
                         allargs.push(expr(ex.value))
                     else {
                         allargs.push(expr(defls[idx]))
