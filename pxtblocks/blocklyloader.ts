@@ -196,7 +196,7 @@ namespace pxt.blocks {
                     pxt.debug('toolbox: adding category ' + ns)
 
                     const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-                    const locCatName = (nsn ? nsn.attributes.block : "") || catName;
+                    const locCatName = Util.capitalize((nsn ? nsn.attributes.block : "") || catName);
                     category = createCategoryElement(locCatName, catName, nsWeight);
 
                     if (nsn && nsn.attributes.color) {
