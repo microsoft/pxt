@@ -26,9 +26,11 @@ namespace pxt.HF2 {
         onSerial?: (v: Uint8Array, isErr: boolean) => void;
     }
 
-    const HF2_CMD_BININFO = 0x0001 // no arguments
-    const HF2_MODE_BOOTLOADER = 0x01
-    const HF2_MODE_USERSPACE = 0x02
+    // see https://github.com/Microsoft/uf2/blob/master/hf2.md for full spec
+
+    export const HF2_CMD_BININFO = 0x0001 // no arguments
+    export const HF2_MODE_BOOTLOADER = 0x01
+    export const HF2_MODE_USERSPACE = 0x02
     /*
     struct HF2_BININFO_Result {
         uint32_t mode;
@@ -38,17 +40,17 @@ namespace pxt.HF2 {
     };
     */
 
-    const HF2_CMD_INFO = 0x0002
+    export const HF2_CMD_INFO = 0x0002
     // no arguments
     // results is utf8 character array
 
-    const HF2_CMD_RESET_INTO_APP = 0x0003// no arguments, no result
+    export const HF2_CMD_RESET_INTO_APP = 0x0003// no arguments, no result
 
-    const HF2_CMD_RESET_INTO_BOOTLOADER = 0x0004  // no arguments, no result
+    export const HF2_CMD_RESET_INTO_BOOTLOADER = 0x0004  // no arguments, no result
 
-    const HF2_CMD_START_FLASH = 0x0005   // no arguments, no result
+    export const HF2_CMD_START_FLASH = 0x0005   // no arguments, no result
 
-    const HF2_CMD_WRITE_FLASH_PAGE = 0x0006
+    export const HF2_CMD_WRITE_FLASH_PAGE = 0x0006
     /*
     struct HF2_WRITE_FLASH_PAGE_Command {
         uint32_t target_addr;
@@ -57,7 +59,7 @@ namespace pxt.HF2 {
     */
     // no result
 
-    const HF2_CMD_CHKSUM_PAGES = 0x0007
+    export const HF2_CMD_CHKSUM_PAGES = 0x0007
     /*
     struct HF2_CHKSUM_PAGES_Command {
         uint32_t target_addr;
@@ -68,7 +70,7 @@ namespace pxt.HF2 {
     };
     */
 
-    const HF2_CMD_READ_WORDS = 0x0008
+    export const HF2_CMD_READ_WORDS = 0x0008
     /*
     struct HF2_READ_WORDS_Command {
         uint32_t target_addr;
@@ -79,7 +81,7 @@ namespace pxt.HF2 {
     };
     */
 
-    const HF2_CMD_WRITE_WORDS = 0x0009
+    export const HF2_CMD_WRITE_WORDS = 0x0009
     /*
     struct HF2_WRITE_WORDS_Command {
         uint32_t target_addr;
@@ -88,6 +90,10 @@ namespace pxt.HF2 {
     };
     */
     // no result
+
+    export const HF2_CMD_DMESG = 0x0010
+    // no arguments
+    // results is utf8 character array
 
     const HF2_FLAG_SERIAL_OUT = 0x80
     const HF2_FLAG_SERIAL_ERR = 0xC0

@@ -1516,6 +1516,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                             newProject.config.dependencies[k] = "*";
                         }
                     });
+                    if (newProject.config.icon)
+                        newProject.config.icon = uploadArtFile(newProject.config.icon);
                 } else {
                     newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
                 }
@@ -1567,6 +1569,10 @@ function buildTargetCoreAsync() {
     return forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
+        const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
+        if (config && config.additionalFilePath) {
+            dirsToWatch.push(path.resolve(config.additionalFilePath));
+        }
 
         if (isPrj) {
             forceCloudBuild = true;
@@ -1763,11 +1769,10 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     } else if (parsed.flags["pkg"]) {
         justServe = true
         packaged = true
-    } else if (parsed.flags["noBrowser"]) {
-        justServe = true
+    }
+    if (parsed.flags["noBrowser"]) {
         globalConfig.noAutoStart = true
     }
-
     if (parsed.flags["sourceMaps"]) {
         includeSourceMaps = true;
     }
@@ -2472,8 +2477,11 @@ function runCoreAsync(res: pxtc.CompileResult) {
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
         let r = new pxsim.Runtime(f)
         pxsim.Runtime.messagePosted = (msg) => {
-            if (msg.type == "serial")
-                console.log("SERIAL:", (msg as any).data)
+            if (msg.type == "serial") {
+                let d = (msg as any).data
+                if (typeof d == "string") d = d.replace(/\n$/, "")
+                console.log("SERIAL:", d)
+            }
         }
         r.errorHandler = (e) => {
             throw e;
@@ -3609,14 +3617,20 @@ export function runAsync() {
         .then((compileOpts) => { });
 }
 
+function runFloatAsync() {
+    pxt.appTarget.compile.floatingPoint = true
+    return runAsync()
+}
+
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
         .then((compileOpts) => { });
 }
 
 export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    let buf: string = "";
     serial.monitorSerial((info, buffer) => {
-        console.log(buffer.toString('utf8'));
+        process.stdout.write(buffer);
     })
     return Promise.resolve();
 }
@@ -4118,6 +4132,7 @@ function initCommands() {
         onlineHelp: true
     }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
+    advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
@@ -4330,6 +4345,7 @@ function initCommands() {
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+    advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
 
@@ -4456,7 +4472,8 @@ function loadPkgAsync() {
 
 function errorHandler(reason: any) {
     if (reason.isUserError) {
-        console.error("ERROR:", reason.message)
+        console.error(reason.stack)
+        console.error("USER ERROR:", reason.message)
         process.exit(1)
     }
 

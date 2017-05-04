@@ -15,9 +15,14 @@ namespace pxsim {
     let stringLiterals: any;
     let stringRefCounts: any = {};
     let refCounting = true;
+    let floatingPoint = false;
 
     export function noRefCounting() {
         refCounting = false;
+    }
+
+    export function enableFloatingPoint() {
+        floatingPoint = true
     }
 
     export class RefObject {
@@ -197,7 +202,7 @@ namespace pxsim {
 
 
     function num(v: any) {
-        if (v === undefined) return 0;
+        if (!floatingPoint && v === undefined) return 0;
         return v;
     }
 
@@ -223,8 +228,10 @@ namespace pxsim {
             // OK (null)
         } else if (typeof v == "function") {
             // OK (function literal)
+        } else if (typeof v == "number" || v === true) {
+            // OK (number)
         } else {
-            throw new Error("bad decr")
+            throw new Error("bad decr: " + typeof v)
         }
     }
 
@@ -237,6 +244,8 @@ namespace pxsim {
         strings[""] = 1
         strings["true"] = 1
         strings["false"] = 1
+        strings["null"] = 1
+        strings["undefined"] = 1
 
         // comment out next line to disable string ref counting
         // stringLiterals = strings
@@ -282,6 +291,28 @@ namespace pxsim {
             let n = stringRefCounts[k]
             console.log("Live String:", JSON.stringify(k), "refcnt=", n)
         })
+    }
+
+    export namespace numops {
+        export function toString(v: any) {
+            if (v === null) return "null"
+            else if (v === undefined) return "undefined"
+            return initString(v.toString())
+        }
+        export function toBoolDecr(v: any) {
+            decr(v)
+            return !!v
+        }
+        export function toBool(v: any) {
+            return !!v
+        }
+    }
+
+    export namespace langsupp {
+        export function toInt(v: number) { return (v | 0) } // TODO
+        export function toFloat(v: number) { return v }
+
+        export function ignore(v: any) { return v; }
     }
 
     export namespace pxtcore {
@@ -495,6 +526,14 @@ namespace pxsim {
             decr(map)
         }
 
+        export function switch_eq(a: any, b: any) {
+            if (a == b) {
+                decr(b)
+                return true
+            }
+            return false
+        }
+
         // these are never used in simulator; silence the warnings
         export var getGlobalsPtr: any;
     }
@@ -508,7 +547,7 @@ namespace pxsim {
             r.vtable = vtable
             let len = vtable.refmask.length
             for (let i = 0; i < len; ++i)
-                r.fields.push(0)
+                r.fields.push(floatingPoint ? undefined : 0)
             return r
         }
 

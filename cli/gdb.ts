@@ -75,7 +75,15 @@ export function startAsync(c: commandParser.ParsedCommand) {
     let oargs = getOpenOcdPath()
 
     fs.writeFileSync("built/openocd.gdb",
-        `target extended-remote localhost:3333\n`)
+        `
+target extended-remote localhost:3333
+define rst
+  set {int}(0x20008000-4) = 0xf02669ef
+  monitor reset halt
+  continue
+end
+echo Use 'rst' command to re-run program from start (set your breakpoints first!).\\n
+`)
 
     pxt.log("starting openocd: " + oargs.join(" "))
 

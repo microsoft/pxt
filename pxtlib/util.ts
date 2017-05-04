@@ -315,17 +315,6 @@ namespace ts.pxtc.Util {
         return arr[randomUint32() % arr.length];
     }
 
-    let awesomeAdj: string[];
-    export function getAwesomeAdj(): string {
-        if (!awesomeAdj)
-            awesomeAdj = (
-                lf("amazing, astonishing, astounding, awe-inspiring, awesome, breathtaking, classic, cool, curious, distinct, exceptional, exclusive, extraordinary, fabulous, fantastic, glorious, great, ") +
-                lf("incredible, magical, marvellous, marvelous, mind-blowing, mind-boggling, miraculous, peculiar, phenomenal, rad, rockin', special, spectacular, startling, stunning, super-cool, ") +
-                lf("superior, supernatural, terrific, unbelievable, unearthly, unique, unprecedented, unusual, weird, wonderful, wondrous")
-            ).split(/\s*[,،、]\s*/)
-        return randomPick(awesomeAdj)
-    }
-
     export function isoTime(time: number) {
         let d = new Date(time * 1000)
         return Util.fmt("{0}-{1:f02.0}-{2:f02.0} {3:f02.0}:{4:f02.0}:{5:f02.0}",
@@ -491,7 +480,7 @@ namespace ts.pxtc.Util {
         return res;
     }
 
-    export function toHex(bytes: Uint8Array) {
+    export function toHex(bytes: ArrayLike<number>) {
         let r = ""
         for (let i = 0; i < bytes.length; ++i)
             r += ("0" + bytes[i].toString(16)).slice(-2)

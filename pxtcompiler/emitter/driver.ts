@@ -87,6 +87,12 @@ namespace ts.pxtc {
             times: {},
         }
 
+        if (opts.target.taggedInts)
+            opts.target.floatingPoint = true
+
+        if (!opts.target.isNative)
+            opts.target.taggedInts = false
+
         let fileText: { [index: string]: string } = {};
         for (let fileName in opts.fileSystem) {
             fileText[normalizePath(fileName)] = opts.fileSystem[fileName];
