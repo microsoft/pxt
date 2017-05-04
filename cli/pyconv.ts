@@ -2,6 +2,7 @@ interface TypeOptions {
     union?: Type;
     classType?: py.ClassDef;
     primType?: string;
+    arrayType?: Type;
 }
 
 interface Type extends TypeOptions {
@@ -570,12 +571,14 @@ function find(t: Type) {
     return t
 }
 
-function t2s(t: Type) {
+function t2s(t: Type): string {
     t = find(t)
     if (t.primType)
         return t.primType
     else if (t.classType)
         return t.classType.name
+    else if (t.arrayType)
+        return t2s(t.arrayType) + "[]"
     else
         return "?" + t.tid
 }
@@ -584,19 +587,30 @@ function error(t0: Type, t1: Type) {
     U.userError("types not compatible: " + t2s(t0) + " and " + t2s(t1))
 }
 
-function canUnify(t0: Type, t1: Type) {
+function typeCtor(t: Type): any {
+    if (t.primType) return t.primType
+    else if (t.classType) return t.classType
+    else if (t.arrayType) return "array"
+    return null
+}
+
+function canUnify(t0: Type, t1: Type): boolean {
     t0 = find(t0)
     t1 = find(t1)
 
     if (t0 === t1)
         return true
 
-    if (t0.primType) {
-        return !t1.classType && !t1.primType
-    } else if (t1.primType) {
-        return !t0.classType && !t0.primType
-    } else if (t0.classType) {
-        return !t1.classType || t0.classType === t1.classType
+    let c0 = typeCtor(t0)
+    let c1 = typeCtor(t1)
+
+    if (!c0 || !c1)
+        return true
+    if (c0 !== c1)
+        return false
+
+    if (c0 == "array") {
+        return canUnify(t0.arrayType, t1.arrayType)
     }
     return true
 }
@@ -608,12 +622,12 @@ function unify(t0: Type, t1: Type): void {
         return
     if (!canUnify(t0, t1))
         error(t0, t1)
-    if (t0.classType && !t1.classType)
-        return unify(t1, t0)
-    if (t0.primType && !t1.primType)
+    if (typeCtor(t0) && !typeCtor(t1))
         return unify(t1, t0)
     numUnifies++
     t0.union = t1
+    if (t0.arrayType && t1.arrayType)
+        unify(t0.arrayType, t1.arrayType)
 }
 
 function getClassField(ct: py.ClassDef, n: string) {
@@ -649,24 +663,6 @@ function lookupVar(n: string) {
     return null
 }
 
-function getFunDef(e: py.Expr): py.FunctionDef {
-    switch (e.kind) {
-        case "Name": {
-            let v = lookupVar(getName(e))
-            if (v)
-                return v.fundef
-            break
-        }
-        case "Attribute": {
-            let part = inferType((e as py.Attribute).value)
-            console.log("PART", t2s(part), (e as py.Attribute).attr)
-            let fd = getTypeField(part, (e as py.Attribute).attr)
-            if (fd) return fd.fundef
-        }
-    }
-    return null
-}
-
 function getClassDef(e: py.Expr) {
     switch (e.kind) {
         case "Name": {
@@ -679,40 +675,11 @@ function getClassDef(e: py.Expr) {
     return null
 }
 
-function inferTypeCore(e: py.Expr): Type {
-    switch (e.kind) {
-        case "Str": return tpString
-        case "Num": return tpNumber
-        case "NameConstant":
-            if ((e as py.NameConstant).value != null)
-                return tpBoolean
-            break
-        case "Name": {
-            let n = getName(e)
-            if (n == "self" && ctx.currClass)
-                return mkType({ classType: ctx.currClass })
-            let v = lookupVar(n)
-            if (v)
-                return v.type
-            break
-        }
-        case "Attribute": {
-            let part = inferType((e as py.Attribute).value)
-            let fd = getTypeField(part, (e as py.Attribute).attr)
-            if (fd) return fd.type
-            break
-        }
-    }
-    return null
-}
-
-function inferType(e: py.Expr): Type {
-    let c = inferTypeCore(e)
+function typeOf(e: py.Expr): Type {
     if (e.tsType) {
-        if (c) unify(e.tsType, c)
         return find(e.tsType)
     } else {
-        e.tsType = c || mkType()
+        e.tsType = mkType()
         return e.tsType
     }
 }
@@ -930,7 +897,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
     Return: (n: py.Return) => {
         if (n.value) {
             let f = ctx.currFun
-            if (f) unify(f.retType, inferType(n.value))
+            if (f) unify(f.retType, typeOf(n.value))
             return B.mkStmt(B.mkText("return "), expr(n.value))
         } else {
             return B.mkStmt(B.mkText("return"))
@@ -961,7 +928,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             pref = "export "
         let isConstCall = isCallTo(n.value, "const")
         let isUpperCase = getName(n.targets[0]) && !/[a-z]/.test(getName(n.targets[0]))
-        unify(inferType(n.targets[0]), inferType(n.value))
+        unify(typeOf(n.targets[0]), typeOf(n.value))
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             trg = expr(n.targets[0])
@@ -1128,14 +1095,15 @@ function possibleDef(n: py.Name) {
         if (!curr) {
             if (ctx.currClass && !ctx.currFun) {
                 n.isdef = false // field
-                defvar(id, {})
+                curr = defvar(id, {})
             } else {
                 n.isdef = true
-                defvar(id, { isLocal: true })
+                curr = defvar(id, { isLocal: true })
             }
         } else {
             n.isdef = false
         }
+        unify(n.tsType, curr.type)
     }
 
     if (n.isdef)
@@ -1187,7 +1155,7 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
 let funMap: Map<string> = {
     "const": "",
     "int": "Math.floor",
-    "len": ".length"
+    "len": ".length",
 }
 
 const exprMap: Map<(v: py.Expr) => B.JsNode> = {
@@ -1225,15 +1193,32 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     },
     Call: (n: py.Call) => {
         let cd = getClassDef(n.func)
-        let fd = getFunDef(n.func)
+        let recvTp: Type
+        let recv: py.Expr
+        let methName: string
+        let fd: py.FunctionDef
 
         if (cd) {
             let ff = cd.fields["__init__"]
             if (ff)
                 fd = ff.fundef
+        } else {
+            if (n.func.kind == "Attribute") {
+                let attr = n.func as py.Attribute
+                recv = attr.value
+                recvTp = typeOf(recv)
+                methName = attr.attr
+                let field = getTypeField(recvTp, methName)
+                if (field && field.fundef)
+                    fd = field.fundef
+            }
+            if (!fd) {
+                let name = getName(n.func)
+                let v = lookupVar(name)
+                if (v)
+                    fd = v.fundef
+            }
         }
-
-        //console.log("call to: ", fd)
 
         let allargs: B.JsNode[] = []
         let fdargs = fd ? fd.args.args : []
@@ -1243,12 +1228,12 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             let e = n.args[i]
             allargs.push(expr(e))
             if (fdargs[i] && fdargs[i].type) {
-                unify(inferType(e), fdargs[i].type)
+                unify(typeOf(e), fdargs[i].type)
             }
         }
 
         if (fd) {
-            unify(inferType(n), fd.retType)
+            unify(typeOf(n), fd.retType)
         }
 
         // TODO keywords
@@ -1278,8 +1263,18 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
 
         let sym = lookupSymbol(nm)
 
+        let fn = expr(n.func)
+
+        if (recvTp && recvTp.arrayType) {
+            if (methName == "append") {
+                methName = "push"
+                unify(typeOf(n.args[0]), recvTp.arrayType)
+            }
+            fn = B.mkInfix(expr(recv), ".", B.mkText(methName))
+        }
+
         let nodes = [
-            expr(n.func),
+            fn,
             B.mkText("("),
             B.mkCommaSep(allargs),
             B.mkText(")")
@@ -1289,18 +1284,33 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
 
         return B.mkGroup(nodes)
     },
-    Num: (n: py.Num) => B.mkText(n.n + ""),
-    Str: (n: py.Str) => B.mkText(B.stringLit(n.s)),
+    Num: (n: py.Num) => {
+        unify(n.tsType, tpNumber)
+        return B.mkText(n.n + "")
+    },
+    Str: (n: py.Str) => {
+        unify(n.tsType, tpString)
+        return B.mkText(B.stringLit(n.s))
+    },
     FormattedValue: (n: py.FormattedValue) => exprTODO(n),
     JoinedStr: (n: py.JoinedStr) => exprTODO(n),
     Bytes: (n: py.Bytes) => {
         let hex = B.stringLit(U.toHex(new Uint8Array(n.s)))
         return B.H.mkCall("pins.createBufferFromHex", [B.mkText(hex)])
     },
-    NameConstant: (n: py.NameConstant) => B.mkText(JSON.stringify(n.value)),
+    NameConstant: (n: py.NameConstant) => {
+        if (n.value != null)
+            unify(n.tsType, tpBoolean)
+        return B.mkText(JSON.stringify(n.value))
+    },
     Ellipsis: (n: py.Ellipsis) => exprTODO(n),
     Constant: (n: py.Constant) => exprTODO(n),
-    Attribute: (n: py.Attribute) => B.mkInfix(expr(n.value), ".", B.mkText(n.attr)),
+    Attribute: (n: py.Attribute) => {
+        let part = typeOf(n.value)
+        let fd = getTypeField(part, n.attr)
+        if (fd) unify(n.tsType, fd.type)
+        return B.mkInfix(expr(n.value), ".", B.mkText(n.attr))
+    },
     Subscript: (n: py.Subscript) => {
         if (n.slice.kind == "Index")
             return B.mkGroup([
@@ -1321,21 +1331,30 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     },
     Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
     Name: (n: py.Name) => {
+        if (n.id == "self" && ctx.currClass) {
+            unify(n.tsType, mkType({ classType: ctx.currClass }))
+        } else {
+            let v = lookupVar(n.id)
+            if (v)
+                unify(n.tsType, v.type)
+        }
+
         if (n.ctx.indexOf("Load") >= 0)
             return quote(n.id)
         else
             return possibleDef(n)
     },
-    List: (n: py.List) => B.mkGroup([
+    List: mkArrayExpr,
+    Tuple: mkArrayExpr,
+}
+
+function mkArrayExpr(n: py.List | py.Tuple) {
+    unify(n.tsType, mkType({ arrayType: n.elts[0] ? typeOf(n.elts[0]) : mkType() }))
+    return B.mkGroup([
         B.mkText("["),
         B.mkCommaSep(n.elts.map(expr)),
         B.mkText("]"),
-    ]),
-    Tuple: (n: py.Tuple) => B.mkGroup([
-        B.mkText("["),
-        B.mkCommaSep(n.elts.map(expr)),
-        B.mkText("]"),
-    ]),
+    ])
 }
 
 function expr(e: py.Expr): B.JsNode {
@@ -1343,7 +1362,7 @@ function expr(e: py.Expr): B.JsNode {
     if (!f) {
         U.oops(e.kind + " - unknown expr")
     }
-    inferType(e)
+    typeOf(e)
     return f(e)
 }
 
