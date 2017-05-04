@@ -1191,12 +1191,16 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
         return B.mkInfix(left, op, right)
 }
 
+// TODO include return type
 let funMap: Map<string> = {
     "const": "",
-    "int": "Math.floor",
+    "int": "Math.trunc",
     "len": ".length",
     "min": "Math.min",
     "max": "Math.max",
+    "string.lower": ".toLowerCase()",
+    "ord": ".charCodeAt(0)",
+    "bytearray": "pins.createBuffer",
 }
 
 const exprMap: Map<(v: py.Expr) => B.JsNode> = {
@@ -1235,6 +1239,8 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     YieldFrom: (n: py.YieldFrom) => exprTODO(n),
     Compare: (n: py.Compare) => {
         if (n.ops.length == 1 && (n.ops[0] == "In" || n.ops[0] == "NotIn")) {
+            if (find(typeOf(n.comparators[0])) == tpString)
+                unify(typeOf(n.left), tpString)
             let idx = B.mkInfix(expr(n.comparators[0]), ".", B.H.mkCall("indexOf", [expr(n.left)]))
             return B.mkInfix(idx, n.ops[0] == "In" ? ">=" : "<", B.mkText("0"))
         }
@@ -1295,6 +1301,9 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
 
         let nm = getName(n.func)
 
+        if (methName)
+            nm = t2s(recvTp) + "." + methName
+
         let over = U.lookup(funMap, nm)
 
         if (n.keywords.length > 0) {
@@ -1341,11 +1350,16 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         }
 
         if (over != null) {
+            if (recv)
+                allargs.unshift(expr(recv))
             if (over == "") {
                 if (allargs.length == 1)
                     return allargs[0]
             } else if (over[0] == ".") {
-                return B.mkInfix(allargs[0], ".", B.H.mkCall(over.slice(1), allargs.slice(1)))
+                if (allargs.length == 1)
+                    return B.mkInfix(allargs[0], ".", B.mkText(over.slice(1)))
+                else
+                    return B.mkInfix(allargs[0], ".", B.H.mkCall(over.slice(1), allargs.slice(1)))
             } else {
                 return B.H.mkCall(over, allargs)
             }
@@ -1471,6 +1485,8 @@ function stmt(e: py.Stmt): B.JsNode {
 }
 
 // TODO based on lineno/col_offset mark which numbers are written in hex
+// TODO look at scopes of let
+// TODO emit proper namespaces
 
 function toTS(mod: py.Module) {
     U.assert(mod.kind == "Module")
