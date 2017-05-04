@@ -48,6 +48,7 @@ module py {
         kind: "Arg";
         arg: identifier;
         annotation?: Expr;
+        type?: Type;
     }
 
     export interface Arguments extends AST {
@@ -130,6 +131,7 @@ module py {
         body: Stmt[];
         decorator_list: Expr[];
         returns?: Expr;
+        retType?: Type;
     }
     export interface AsyncFunctionDef extends Stmt {
         kind: "AsyncFunctionDef";
@@ -569,12 +571,13 @@ function find(t: Type) {
 }
 
 function t2s(t: Type) {
+    t = find(t)
     if (t.primType)
         return t.primType
     else if (t.classType)
         return t.classType.name
     else
-        return "?"
+        return "?" + t.tid
 }
 
 function error(t0: Type, t1: Type) {
@@ -656,6 +659,7 @@ function getFunDef(e: py.Expr): py.FunctionDef {
         }
         case "Attribute": {
             let part = inferType((e as py.Attribute).value)
+            console.log("PART", t2s(part), (e as py.Attribute).attr)
             let fd = getTypeField(part, (e as py.Attribute).attr)
             if (fd) return fd.fundef
         }
@@ -675,18 +679,18 @@ function getClassDef(e: py.Expr) {
     return null
 }
 
-function inferType(e: py.Expr): Type {
-    if (e.tsType) return find(e.tsType)
+function inferTypeCore(e: py.Expr): Type {
     switch (e.kind) {
         case "Str": return tpString
         case "Num": return tpNumber
         case "NameConstant":
             if ((e as py.NameConstant).value != null)
                 return tpBoolean
+            break
         case "Name": {
             let n = getName(e)
             if (n == "self" && ctx.currClass)
-                return (e.tsType = mkType({ classType: ctx.currClass }))
+                return mkType({ classType: ctx.currClass })
             let v = lookupVar(n)
             if (v)
                 return v.type
@@ -696,10 +700,21 @@ function inferType(e: py.Expr): Type {
             let part = inferType((e as py.Attribute).value)
             let fd = getTypeField(part, (e as py.Attribute).attr)
             if (fd) return fd.type
+            break
         }
     }
-    e.tsType = mkType()
-    return e.tsType
+    return null
+}
+
+function inferType(e: py.Expr): Type {
+    let c = inferTypeCore(e)
+    if (e.tsType) {
+        if (c) unify(e.tsType, c)
+        return find(e.tsType)
+    } else {
+        e.tsType = c || mkType()
+        return e.tsType
+    }
 }
 
 function resetCtx(m: py.Module) {
@@ -748,8 +763,9 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
     }
     let didx = args.defaults.length - nargs.length
     let lst = nargs.map(a => {
-        defvar(a.arg, { isParam: true })
-        let res = [quote(a.arg)]
+        let v = defvar(a.arg, { isParam: true })
+        if (!a.type) a.type = v.type
+        let res = [quote(a.arg), typeAnnot(v.type)]
         if (a.annotation)
             res.push(todoExpr("annotation", expr(a.annotation)))
         if (didx >= 0) {
@@ -822,6 +838,14 @@ function setupScope(n: py.ScopeDef) {
     }
 }
 
+function typeAnnot(t: Type) {
+    let s = t2s(t)
+    if (s[0] == "?")
+        return B.mkText("")
+    return B.mkText(": " + t2s(t))
+}
+
+
 const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
     FunctionDef: (n: py.FunctionDef) => scope(() => {
         let isMethod = !!ctx.currClass && !ctx.currFun
@@ -830,6 +854,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
 
         setupScope(n)
         ctx.currFun = n
+        if (!n.retType) n.retType = mkType()
         let prefix = ""
         let funname = n.name
         let decs = n.decorator_list.filter(d => {
@@ -849,16 +874,17 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             todoComment("decorators", decs.map(expr))
         ]
         if (isMethod) {
-            if (n.name == "__init__")
+            if (n.name == "__init__") {
                 nodes.push(B.mkText("constructor"))
-            else {
+                unify(n.retType, mkType({ classType: ctx.currClass }))
+            } else {
                 if (!prefix) {
                     prefix = n.name[0] == "_" ? "private" : "public"
                 }
                 nodes.push(B.mkText(prefix + " "), quote(funname))
-                let fd = getClassField(ctx.currClass, funname)
-                fd.fundef = n
             }
+            let fd = getClassField(ctx.currClass, funname)
+            fd.fundef = n
         } else {
             U.assert(!prefix)
             if (n.name[0] == "_")
@@ -868,6 +894,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         }
         nodes.push(
             doArgs(n.args, isMethod),
+            typeAnnot(n.retType),
             todoComment("returns", n.returns ? [expr(n.returns)] : []),
             stmts(n.body)
         )
@@ -889,14 +916,27 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             nodes.push(B.mkText(" extends "))
             nodes.push(B.mkCommaSep(n.bases.map(expr)))
         }
-        nodes.push(stmts(n.body))
+        let body = stmts(n.body)
+        nodes.push(body)
+
+        let fieldDefs = U.values(n.fields)
+            .filter(f => !f.fundef)
+            .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.type)))
+        body.children = fieldDefs.concat(body.children)
+
         return B.mkStmt(B.mkGroup(nodes))
     }),
 
-    Return: (n: py.Return) =>
-        n.value ?
-            B.mkStmt(B.mkText("return "), expr(n.value)) :
-            B.mkStmt(B.mkText("return")),
+    Return: (n: py.Return) => {
+        if (n.value) {
+            let f = ctx.currFun
+            if (f) unify(f.retType, inferType(n.value))
+            return B.mkStmt(B.mkText("return "), expr(n.value))
+        } else {
+            return B.mkStmt(B.mkText("return"))
+
+        }
+    },
     AugAssign: (n: py.AugAssign) => {
         let op = opMapping[n.op]
         if (op.length > 3)
@@ -921,6 +961,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             pref = "export "
         let isConstCall = isCallTo(n.value, "const")
         let isUpperCase = getName(n.targets[0]) && !/[a-z]/.test(getName(n.targets[0]))
+        unify(inferType(n.targets[0]), inferType(n.value))
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             trg = expr(n.targets[0])
@@ -1186,8 +1227,33 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         let cd = getClassDef(n.func)
         let fd = getFunDef(n.func)
 
+        if (cd) {
+            let ff = cd.fields["__init__"]
+            if (ff)
+                fd = ff.fundef
+        }
+
+        //console.log("call to: ", fd)
+
+        let allargs: B.JsNode[] = []
+        let fdargs = fd ? fd.args.args : []
+        if (fdargs[0] && fdargs[0].arg == "self")
+            fdargs = fdargs.slice(1)
+        for (let i = 0; i < n.args.length; ++i) {
+            let e = n.args[i]
+            allargs.push(expr(e))
+            if (fdargs[i] && fdargs[i].type) {
+                unify(inferType(e), fdargs[i].type)
+            }
+        }
+
+        if (fd) {
+            unify(inferType(n), fd.retType)
+        }
+
+        // TODO keywords
+
         let nm = getName(n.func)
-        let allargs = n.args.map(expr)
         let over = U.lookup(funMap, nm)
 
         if (n.keywords.length > 0) {
@@ -1277,6 +1343,7 @@ function expr(e: py.Expr): B.JsNode {
     if (!f) {
         U.oops(e.kind + " - unknown expr")
     }
+    inferType(e)
     return f(e)
 }
 
@@ -1357,10 +1424,11 @@ export function convertAsync(fns: string[]) {
                 moduleAst[pkgFiles[fn]] = js
             })
 
-            // first pass
-            U.iterMap(js, (fn: string, js: any) => {
-                toTS(js)
-            })
+            for (let i = 0; i < 5; ++i) {
+                U.iterMap(js, (fn: string, js: any) => {
+                    toTS(js)
+                })
+            }
 
             U.iterMap(js, (fn: string, js: any) => {
                 if (primFiles[fn]) {
