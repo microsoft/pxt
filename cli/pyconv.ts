@@ -1,20 +1,22 @@
-export interface TypeOptions {
+interface TypeOptions {
     union?: Type;
     classType?: py.ClassDef;
     primType?: string;
 }
 
-export interface Type extends TypeOptions {
+interface Type extends TypeOptions {
     tid: number;
 }
 
-export interface FieldDesc {
+interface FieldDesc {
     name: string;
     type: Type;
     fundef?: py.FunctionDef;
 }
 
-export module py {
+type Map<T> = pxt.Map<T>;
+
+module py {
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
         lineno: number;
@@ -116,6 +118,10 @@ export module py {
         value: Expr;
     }
 
+    export interface ScopeDef extends Stmt {
+        scope?: Map<VarDesc>;
+    }
+
     export interface FunctionDef extends Symbol {
         kind: "FunctionDef";
         name: identifier;
@@ -139,7 +145,7 @@ export module py {
         keywords: Keyword[];
         body: Stmt[];
         decorator_list: Expr[];
-        fields?: pxt.Map<FieldDesc>;
+        fields?: Map<FieldDesc>;
     }
     export interface Return extends Stmt {
         kind: "Return";
@@ -438,7 +444,7 @@ for fn in @files@:
 print(json.dumps(js))
 `
 
-const nameMap: pxt.Map<string> = {
+const nameMap: Map<string> = {
     "Expr": "ExprStmt",
     "arg": "Arg",
     "arguments": "Arguments",
@@ -448,7 +454,7 @@ const nameMap: pxt.Map<string> = {
     "withitem": "WithItem"
 }
 
-const simpleNames: pxt.Map<boolean> = {
+const simpleNames: Map<boolean> = {
     "Load": true, "Store": true, "Del": true, "AugLoad": true, "AugStore": true, "Param": true, "And": true,
     "Or": true, "Add": true, "Sub": true, "Mult": true, "MatMult": true, "Div": true, "Mod": true, "Pow": true,
     "LShift": true, "RShift": true, "BitOr": true, "BitXor": true, "BitAnd": true, "FloorDiv": true,
@@ -472,7 +478,7 @@ function docComment(cmt: string) {
     return B.mkStmt(B.mkText("/** " + cmt + " */"))
 }
 
-let moduleAst: pxt.Map<py.Module> = {}
+let moduleAst: Map<py.Module> = {}
 
 function lookupSymbol(name: string): py.Symbol {
     if (!name) return null
@@ -518,7 +524,7 @@ interface VarDesc extends VarDescOptions {
 interface Ctx {
     currClass: py.ClassDef;
     currFun: py.FunctionDef;
-    vars: pxt.Map<VarDesc>;
+    vars: Map<VarDesc>;
 }
 
 let ctx: Ctx
@@ -743,7 +749,7 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
     return B.H.mkParenthesizedExpression(B.mkCommaSep(lst))
 }
 
-const opMapping: pxt.Map<string> = {
+const opMapping: Map<string> = {
     Add: "+",
     Sub: "-",
     Mult: "*",
@@ -774,7 +780,7 @@ const opMapping: pxt.Map<string> = {
     NotIn: "py.NotIn",
 }
 
-const prefixOps: pxt.Map<string> = {
+const prefixOps: Map<string> = {
     Invert: "~",
     Not: "!",
     UAdd: "P+",
@@ -790,7 +796,7 @@ function exprs0(ee: py.Expr[]) {
     return ee.map(expr)
 }
 
-const stmtMap: pxt.Map<(v: py.Stmt) => B.JsNode> = {
+const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
     FunctionDef: (n: py.FunctionDef) => {
         let isMethod = !!ctx.currClass && !ctx.currFun
         if (!isMethod)
@@ -1098,13 +1104,13 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
         return B.mkInfix(left, op, right)
 }
 
-let funMap: pxt.Map<string> = {
+let funMap: Map<string> = {
     "const": "",
     "int": "Math.floor",
     "len": ".length"
 }
 
-const exprMap: pxt.Map<(v: py.Expr) => B.JsNode> = {
+const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     BoolOp: (n: py.BoolOp) => {
         let r = expr(n.values[0])
         for (let i = 1; i < n.values.length; ++i) {
@@ -1256,7 +1262,7 @@ function toTS(js: py.AST) {
 export function convertAsync(fns: string[]) {
     let primFiles = U.toDictionary(nodeutil.allFiles(fns[0]), s => s)
     let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
-    let dirs: pxt.Map<number> = {}
+    let dirs: Map<number> = {}
     for (let f of files) {
         for (let suff of ["/docs/conf.py", "/conf.py", "/setup.py", "/README.md", "/README.rst"]) {
             if (U.endsWith(f, suff)) {
@@ -1264,7 +1270,7 @@ export function convertAsync(fns: string[]) {
             }
         }
     }
-    let pkgFiles: pxt.Map<string> = {}
+    let pkgFiles: Map<string> = {}
     for (let f of files) {
         if (U.endsWith(f, ".py") && !U.endsWith(f, "/setup.py") && !U.endsWith(f, "/conf.py")) {
             let par = f
