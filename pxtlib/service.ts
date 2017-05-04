@@ -286,15 +286,18 @@ namespace ts.pxtc {
                     if (fn.parameters)
                         fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
                 }
-                if (fn.attributes.block) {
-                    const locBlock = loc[`${fn.qName}|block`];
-                    if (locBlock) {
-                        fn.attributes.block = locBlock;
+                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
+                const locBlock = loc[`${fn.qName}|block`];
+                if (nsDoc) {
+                    // Check for "friendly namespace"
+                    if (fn.attributes.block) {
+                        fn.attributes.block = locBlock || fn.attributes.block;
+                    } else {
+                        fn.attributes.block = nsDoc;
                     }
                 }
-                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                if (nsDoc) {
-                    fn.attributes.block = nsDoc;
+                else if (fn.attributes.block && locBlock) {
+                    fn.attributes.block = locBlock;
                 }
             }))
             .then(() => apis);
