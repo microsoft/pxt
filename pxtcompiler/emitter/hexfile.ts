@@ -250,8 +250,6 @@ namespace ts.pxtc {
                 throw oops("bad bytes " + bytes)
         }
 
-        let currentSetup: string = null;
-
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function flashCodeAlign(opts: CompileTarget) {
             return opts.flashCodeAlign || defaultPageSize
@@ -281,7 +279,7 @@ namespace ts.pxtc {
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
-
+            
             currentSetup = extInfo.sha;
             currentHexInfo = hexinfo;
 
