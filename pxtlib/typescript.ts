@@ -229,4 +229,10 @@ namespace ts.pxtc {
 
         return false;
     }
+
+    export enum DiagnosticCategory {
+        Warning = 0,
+        Error = 1,
+        Message = 2,
+    }
 }
