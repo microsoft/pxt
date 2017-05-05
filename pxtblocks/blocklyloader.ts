@@ -1582,7 +1582,6 @@ namespace pxt.blocks {
 
             if (a === null) {
                 collapseSubcategories(that.selectedItem_);
-                editor.lastInvertedCategory = that.selectedItem_;
             }
 
             oldSetSelectedItem.call(that, a);
