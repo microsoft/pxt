@@ -331,7 +331,20 @@ export class Editor extends srceditor.Editor {
 
     prepare() {
         pxt.blocks.openHelpUrl = (url: string) => {
-            /^\//.test(url) ? this.parent.setSideDoc(url) : window.open(url, 'docs');
+            pxt.tickEvent("blocks.help", { url });
+            const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
+            if (m) {
+                const dep = pkg.mainPkg.deps[m[1]];
+                if (dep && dep.verProtocol() == "github") {
+                    // rewrite url to point to current endpoint
+                    url = `/pkg/${dep.verArgument().replace(/#.*$/, '')}#${m[2]}`;
+                    window.open(url, m[1]);
+                    return; // TODO support serving package docs in docs frame.
+                }
+            };
+            if (/^\//.test(url))
+                this.parent.setSideDoc(url);
+            else window.open(url, 'docs');
         }
 
         this.prepareBlockly();

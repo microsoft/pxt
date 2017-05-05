@@ -7,20 +7,16 @@ namespace pxsim {
         //default values of boolean, string, number & object arrays are respectively, false, null, 0, null
         //All of the default values are implemented by mapping undefined\null to zero.
 
-        // 1 - collection of refs (need decr)
-        // 2 - collection of strings (in fact we always have 3, never 2 alone)
-
-        constructor(public flags: number) {
+        constructor() {
             super();
         }
 
         destroy() {
             let data = this.data
-            if (this.flags & 1)
-                for (let i = 0; i < data.length; ++i) {
-                    decr(data[i]);
-                    data[i] = 0;
-                }
+            for (let i = 0; i < data.length; ++i) {
+                decr(data[i]);
+                data[i] = 0;
+            }
             this.data = [];
         }
 
@@ -92,70 +88,78 @@ namespace pxsim {
         }
 
         print() {
-            console.log(`RefCollection id:${this.id} refs:${this.refcnt} len:${this.data.length} flags:${this.flags} d0:${this.data[0]}`)
+            console.log(`RefCollection id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
         }
     }
 
     export namespace Array_ {
-        export function mk(f: number) {
-            return new RefCollection(f);
+        export function mk() {
+            return new RefCollection();
         }
 
         export function length(c: RefCollection) {
+            pxtrt.nullCheck(c)
             return c.getLength();
         }
 
         export function setLength(c: RefCollection, x: number) {
+            pxtrt.nullCheck(c)
             c.setLength(x);
         }
 
 
         export function push(c: RefCollection, x: any) {
-            if (c.flags & 1) incr(x);
+            pxtrt.nullCheck(c)
+            incr(x);
             c.push(x);
         }
 
         export function pop(c: RefCollection, x: any) {
+            pxtrt.nullCheck(c)
             let ret = c.pop();
-            if (c.flags & 1) decr(ret);
+            decr(ret);
             return ret;
         }
 
         export function getAt(c: RefCollection, x: number) {
+            pxtrt.nullCheck(c)
             let tmp = c.getAt(x);
-            if (c.flags & 1) incr(tmp);
+            incr(tmp);
             return tmp;
         }
 
         export function removeAt(c: RefCollection, x: number) {
+            pxtrt.nullCheck(c)
             if (!c.isValidIndex(x))
                 return;
 
-            if (c.flags & 1) {
-                decr(c.getAt(x));
-            }
+            decr(c.getAt(x));
             return c.removeAt(x);
         }
 
         export function insertAt(c: RefCollection, x: number, y: number) {
-            if (c.flags & 1) incr(y);
+            pxtrt.nullCheck(c)
+            incr(y);
             c.insertAt(x, y);
         }
 
         export function setAt(c: RefCollection, x: number, y: any) {
-            if (c.isValidIndex(x) && (c.flags & 1)) {
+            pxtrt.nullCheck(c)
+            if (c.isValidIndex(x)) {
                 //if there is an existing element handle refcount
                 decr(c.getAt(x));
-                incr(y);
             }
+            incr(y);
             c.setAt(x, y);
         }
 
         export function indexOf(c: RefCollection, x: any, start: number) {
+            pxtrt.nullCheck(c)
             return c.indexOf(x, start)
         }
 
         export function removeElement(c: RefCollection, x: any) {
+            pxtrt.nullCheck(c)
             let idx = indexOf(c, x, 0);
             if (idx >= 0) {
                 removeAt(c, idx);
@@ -214,13 +218,6 @@ namespace pxsim {
         export function lsrs(x: number, y: number) { return x >>> y; }
         export function asrs(x: number, y: number) { return x >> y; }
 
-        export function cmp_lt(x: number, y: number) { return x < y; }
-        export function cmp_le(x: number, y: number) { return x <= y; }
-        export function cmp_ne(x: number, y: number) { return !cmp_eq(x, y); }
-        export function cmp_eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
-        export function cmp_gt(x: number, y: number) { return x > y; }
-        export function cmp_ge(x: number, y: number) { return x >= y; }
-
         export function ignore(v: any) { return v; }
     }
 
@@ -244,6 +241,7 @@ namespace pxsim {
         }
 
         export function substring(s: string, i: number, j: number) {
+            pxtrt.nullCheck(s)
             return initString(s.slice(i, i + j));
         }
 
@@ -258,6 +256,7 @@ namespace pxsim {
         }
 
         export function length(s: string) {
+            pxtrt.nullCheck(s)
             return s.length
         }
 
@@ -269,13 +268,18 @@ namespace pxsim {
             return initString(s.substr(start, length));
         }
 
-        function inRange(s: string, i: number) { return 0 <= i && i < s.length }
+        function inRange(s: string, i: number) {
+            pxtrt.nullCheck(s)
+            return 0 <= i && i < s.length
+        }
 
         export function charAt(s: string, i: number) {
+            pxtrt.nullCheck(s)
             return inRange(s, i) ? initString(s.charAt(i)) : null;
         }
 
         export function charCodeAt(s: string, i: number) {
+            pxtrt.nullCheck(s)
             return inRange(s, i) ? s.charCodeAt(i) : 0;
         }
     }

@@ -51,6 +51,8 @@ namespace pxt.editor {
         mute?: boolean;
         embedSimView?: boolean;
         tracing?: boolean;
+
+        highContrast?: boolean;
     }
 
     export interface ProjectCreationOptions {
@@ -174,6 +176,13 @@ namespace pxt.editor {
         visible?: boolean;
     }
 
+    export interface IFieldCustomOptions {
+        selector: string;
+        editor: Blockly.FieldCustomConstructor;
+        text?: string;
+        validator?: any;
+    }
+
 
     export interface ExtensionOptions {
 
@@ -181,6 +190,7 @@ namespace pxt.editor {
 
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
+        fieldEditors?: IFieldCustomOptions[];
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;

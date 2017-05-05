@@ -19,6 +19,8 @@ declare namespace pxt {
         name: string;
         version?: string;
         installedVersion?: string;
+        // url to icon -- support for built-in packages only
+        icon?: string;
         // semver description for support target version
         documentation?: string; // doc page to open when loading project
         targetVersions?: TargetVersions; // versions of the target/pxt the package was compiled against
@@ -65,6 +67,7 @@ declare namespace pxt {
         name?: string;
         shortName?: string;
         title?: string;
+        label?: string;
 
         color?: string; // one of semantic ui colors
         description?: string;

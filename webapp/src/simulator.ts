@@ -99,7 +99,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     break;
                 case "modal":
                     stop();
-                    if (!tutorialMode) {
+                    if (!tutorialMode && !pxt.shell.isSandboxMode()) {
                         const modalOpts: core.ConfirmOptions = {
                             header: msg.header,
                             body: msg.body,
@@ -151,7 +151,7 @@ export function isDirty(): boolean { // in need of a restart?
     return /sepia/.test(driver.container.className);
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean) {
+export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean) {
     pxsim.U.removeClass(driver.container, "sepia");
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
@@ -161,10 +161,11 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
-        mute: mute,
-        parts: parts,
-        debug: debug,
-        fnArgs: fnArgs,
+        mute,
+        parts,
+        debug,
+        fnArgs,
+        highContrast,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts)
     }

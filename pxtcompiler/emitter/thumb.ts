@@ -56,6 +56,7 @@ namespace ts.pxtc.thumb {
             this.addEnc("$i5", "#0-124", v => this.inrange(31, v / 4, (v >> 2) << 6))
             this.addEnc("$i6", "#1-32", v => v == 0 ? null : v == 32 ? 0 : this.inrange(31, v, v << 6))
             this.addEnc("$i7", "#0-62", v => this.inrange(31, v / 2, (v >> 1) << 6))
+            this.addEnc("$i32", "#0-2^32", v => 1)
 
             this.addEnc("$rl0", "{R0-7,...}", v => this.inrange(255, v, v))
             this.addEnc("$rl1", "{LR,R0-7,...}", v => (v & 0x4000) ? this.inrange(255, (v & ~0x4000), 0x100 | (v & 0xff)) : this.inrange(255, v, v))
@@ -69,14 +70,14 @@ namespace ts.pxtc.thumb {
             //this.addInst("nop",                   0xbf00, 0xffff);  // we use mov r8,r8 as gcc
 
             this.addInst("adcs  $r0, $r1", 0x4140, 0xffc0);
-            this.addInst("add   $r2, $r3", 0x4400, 0xff00, "$r2 += $r3");
+            this.addInst("add   $r2, $r3", 0x4400, 0xff00);
             this.addInst("add   $r5, pc, $i1", 0xa000, 0xf800);
             this.addInst("add   $r5, sp, $i1", 0xa800, 0xf800);
-            this.addInst("add   sp, $i2", 0xb000, 0xff80);
+            this.addInst("add   sp, $i2", 0xb000, 0xff80).canBeShared = true;
             this.addInst("adds  $r0, $r1, $i3", 0x1c00, 0xfe00);
             this.addInst("adds  $r0, $r1, $r4", 0x1800, 0xfe00);
             this.addInst("adds  $r01, $r4", 0x1800, 0xfe00);
-            this.addInst("adds  $r5, $i0", 0x3000, 0xf800, "$r5 += $i0");
+            this.addInst("adds  $r5, $i0", 0x3000, 0xf800);
             this.addInst("adr   $r5, $la", 0xa000, 0xf800);
             this.addInst("ands  $r0, $r1", 0x4000, 0xffc0);
             this.addInst("asrs  $r0, $r1", 0x4100, 0xffc0);
@@ -92,28 +93,28 @@ namespace ts.pxtc.thumb {
             this.addInst("eors  $r0, $r1", 0x4040, 0xffc0);
             this.addInst("ldmia $r5!, $rl0", 0xc800, 0xf800);
             this.addInst("ldmia $r5, $rl0", 0xc800, 0xf800);
-            this.addInst("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800);
+            this.addInst("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800).canBeShared = true;
             this.addInst("ldr   $r0, [$r1, $r4]", 0x5800, 0xfe00);
             this.addInst("ldr   $r5, [pc, $i1]", 0x4800, 0xf800);
             this.addInst("ldr   $r5, $la", 0x4800, 0xf800);
-            this.addInst("ldr   $r5, [sp, $i1]", 0x9800, 0xf800);
+            this.addInst("ldr   $r5, [sp, $i1]", 0x9800, 0xf800).canBeShared = true;
             this.addInst("ldrb  $r0, [$r1, $i4]", 0x7800, 0xf800);
             this.addInst("ldrb  $r0, [$r1, $r4]", 0x5c00, 0xfe00);
             this.addInst("ldrh  $r0, [$r1, $i7]", 0x8800, 0xf800);
             this.addInst("ldrh  $r0, [$r1, $r4]", 0x5a00, 0xfe00);
             this.addInst("ldrsb $r0, [$r1, $r4]", 0x5600, 0xfe00);
             this.addInst("ldrsh $r0, [$r1, $r4]", 0x5e00, 0xfe00);
-            this.addInst("lsls  $r0, $r1", 0x4080, 0xffc0, "$r0 = $r0 << $r1");
-            this.addInst("lsls  $r0, $r1, $i4", 0x0000, 0xf800, "$r0 = $r1 << $i4");
+            this.addInst("lsls  $r0, $r1", 0x4080, 0xffc0);
+            this.addInst("lsls  $r0, $r1, $i4", 0x0000, 0xf800);
             this.addInst("lsrs  $r0, $r1", 0x40c0, 0xffc0);
             this.addInst("lsrs  $r0, $r1, $i6", 0x0800, 0xf800);
-            this.addInst("mov   $r0, $r1", 0x4600, 0xffc0, "$r0 = $r1");
-            //this.addInst("mov   $r2, $r3",        0x4600, 0xff00);
-            this.addInst("movs  $r0, $r1", 0x0000, 0xffc0, "$r0 = $r1");
-            this.addInst("movs  $r5, $i0", 0x2000, 0xf800, "$r5 = $i0");
+            //this.addInst("mov   $r0, $r1", 0x4600, 0xffc0);
+            this.addInst("mov   $r2, $r3", 0x4600, 0xff00);
+            this.addInst("movs  $r0, $r1", 0x0000, 0xffc0);
+            this.addInst("movs  $r5, $i0", 0x2000, 0xf800);
             this.addInst("muls  $r0, $r1", 0x4340, 0xffc0);
             this.addInst("mvns  $r0, $r1", 0x43c0, 0xffc0);
-            this.addInst("negs  $r0, $r1", 0x4240, 0xffc0, "$r0 = -$r1");
+            this.addInst("negs  $r0, $r1", 0x4240, 0xffc0);
             this.addInst("nop", 0x46c0, 0xffff); // mov r8, r8
             this.addInst("orrs  $r0, $r1", 0x4300, 0xffc0);
             this.addInst("pop   $rl2", 0xbc00, 0xfe00);
@@ -125,9 +126,9 @@ namespace ts.pxtc.thumb {
             this.addInst("sbcs  $r0, $r1", 0x4180, 0xffc0);
             this.addInst("sev", 0xbf40, 0xffff);
             this.addInst("stmia $r5!, $rl0", 0xc000, 0xf800);
-            this.addInst("str   $r0, [$r1, $i5]", 0x6000, 0xf800);
+            this.addInst("str   $r0, [$r1, $i5]", 0x6000, 0xf800).canBeShared = true;
             this.addInst("str   $r0, [$r1, $r4]", 0x5000, 0xfe00);
-            this.addInst("str   $r5, [sp, $i1]", 0x9000, 0xf800);
+            this.addInst("str   $r5, [sp, $i1]", 0x9000, 0xf800).canBeShared = true;
             this.addInst("strb  $r0, [$r1, $i4]", 0x7000, 0xf800);
             this.addInst("strb  $r0, [$r1, $r4]", 0x5400, 0xfe00);
             this.addInst("strh  $r0, [$r1, $i7]", 0x8000, 0xf800);
@@ -168,13 +169,16 @@ namespace ts.pxtc.thumb {
             this.addInst("bhs   $lb", 0xd200, 0xff00); // cs
             this.addInst("blo   $lb", 0xd300, 0xff00); // cc
 
-            this.addInst("b     $lb11", 0xe000, 0xf800, "B");
-            this.addInst("bal   $lb11", 0xe000, 0xf800, "B");
+            this.addInst("b     $lb11", 0xe000, 0xf800);
+            this.addInst("bal   $lb11", 0xe000, 0xf800);
 
             // handled specially - 32 bit instruction
-            this.addInst("bl    $lb", 0xf000, 0xf800, "BL");
+            this.addInst("bl    $lb", 0xf000, 0xf800, true);
             // this is normally emitted as 'b' but will be emitted as 'bl' if needed
-            this.addInst("bb    $lb", 0xe000, 0xf800, "B");
+            this.addInst("bb    $lb", 0xe000, 0xf800, true);
+
+            // this will emit as PC-relative LDR or ADDS
+            this.addInst("ldlit   $r5, $i32", 0x4800, 0xf800);
         }
 
 
@@ -212,6 +216,220 @@ namespace ts.pxtc.thumb {
                 numArgs: [v],
                 labelName: actual
             }
+        }
+
+        public commonalize(file: assembler.File): void {
+            // this is a heuristic - we could allow more instructions
+            // to be shared, but it seems to result in less sharing
+            let canBeShared = (l: assembler.Line) => {
+                if (l.type == "empty") return true
+                if (l.type == "instruction") {
+                    let inst = l.instruction
+                    if (inst && inst.canBeShared)
+                        return true
+                    switch (l.words[0]) {
+                        case "pop":
+                        case "push":
+                            if (l.numArgs[0] & ~0xf)
+                                return false // we only allow r0-r3
+                            return true
+                        case "bl":
+                            switch (l.words[1]) {
+                                case "pxt::incr":
+                                case "pxt::decr":
+                                case "pxt::fromInt":
+                                    return true
+                                default:
+                                    return false
+                            }
+                        default:
+                            return false
+                    }
+                }
+                return false
+            }
+
+            let frag: assembler.Line[] = []
+            let frags: pxt.Map<assembler.Line[][]> = {}
+            let lastLine = -1
+            for (let i = 0; i < file.lines.length; ++i) {
+                let l = file.lines[i]
+                //console.log(i, l.text)
+                if (l.type == "empty")
+                    continue
+                if (canBeShared(l)) {
+                    frag.push(l)
+                } else {
+                    if (l.words[0] == "_js_end")
+                        lastLine = i
+                    if (frag.length > 2) {
+                        let key = ""
+                        for (let ll of frag) {
+                            if (ll.type == "empty") continue
+                            assert(!!ll.instruction);
+                            assert(!!ll.opcode);
+                            if (key) key += ","
+                            if (ll.words[0] == "bl") {
+                                key += "BL " + ll.words[1]
+                            } else {
+                                key += ll.opcode
+                            }
+                        }
+                        if (frags[key])
+                            frags[key].push(frag)
+                        else
+                            frags[key] = [frag]
+                    }
+                    frag = []
+                }
+            }
+
+            if (lastLine < 0)
+                return // testing?
+
+            for (let k of Object.keys(frags)) {
+                let f = frags[k]
+                if (f.length == 1) {
+                    if (f[0].length > 3) {
+                        //console.log(k)
+                        let kleft = k.split(",")
+                        let kright = kleft.slice()
+                        let left = f[0].slice()
+                        let right = f[0].slice()
+                        let res: assembler.Line[] = null
+                        let reskey = ""
+                        while (left.length >= 3) {
+                            kleft.pop()
+                            left.pop()
+                            right.shift()
+                            kright.shift()
+
+                            reskey = kleft.join(",")
+                            let other = frags[reskey]
+                            if (other && other.length) {
+                                res = left
+                                break
+                            }
+                            reskey = kright.join(",")
+                            other = frags[reskey]
+                            if (other && other.length) {
+                                res = right
+                                break
+                            }
+                        }
+                        if (res) {
+                            frags[k] = []
+                            frags[reskey].push(res)
+                        }
+                    }
+                }
+            }
+
+            let addLines: assembler.Line[] = []
+            let seq = 0
+            for (let k of Object.keys(frags)) {
+                let f = frags[k]
+                if (f.length <= 1)
+                    continue
+                if (addLines.length == 0) {
+                    file.buildLine("; shared assembly fragments", addLines)
+                    file.buildLine("@nostackcheck", addLines)
+                    file.buildLine("_frag_start:", addLines)
+                }
+                let hasBL = k.indexOf("BL") >= 0
+                let lbl = "_frag_" + ++seq
+                file.buildLine(`; num.uses: ${f.length}`, addLines)
+                file.buildLine(lbl + ":", addLines)
+                if (hasBL)
+                    file.buildLine("mov r7, lr", addLines)
+                let stack = 0
+                for (let l of f[0]) {
+                    let tx = l.text.replace(/;.*/, "")
+                    if (/@\d/.test(tx))
+                        tx = ".short " + l.opcode + " ; " + tx
+                    file.buildLine(tx, addLines)
+                    stack += l.stack
+                }
+                file.buildLine(hasBL ? "bx r7" : "bx lr", addLines)
+                for (let frag of f) {
+                    frag[0].update("bl " + lbl)
+                    frag[1].update("@dummystack " + stack)
+                    for (let ii = 2; ii < frag.length; ++ii)
+                        frag[ii].update("")
+                }
+            }
+
+
+            if (addLines.length > 0) {
+                file.lines = file.lines.slice(0, lastLine).concat(addLines).concat(file.lines.slice(lastLine))
+            }
+        }
+
+        public expandLdlit(f: assembler.File): void {
+            let nextGoodSpot: assembler.Line
+            let needsJumpOver = false
+            let outlines: assembler.Line[] = []
+            let values: pxt.Map<string> = {}
+            let seq = 1
+
+            for (let i = 0; i < f.lines.length; ++i) {
+                let line = f.lines[i]
+                outlines.push(line)
+                if (line.type == "instruction" && line.instruction && line.instruction.name == "ldlit") {
+                    if (!nextGoodSpot) {
+                        let limit = line.location + 900 // leave some space - real limit is 1020
+                        let j = i + 1
+                        for (; j < f.lines.length; ++j) {
+                            if (f.lines[j].location > limit)
+                                break
+                            let op = f.lines[j].getOp()
+                            if (op == "b" || op == "bb" || (op == "pop" && f.lines[j].words[2] == "pc"))
+                                nextGoodSpot = f.lines[j]
+                        }
+                        if (nextGoodSpot) {
+                            needsJumpOver = false
+                        } else {
+                            needsJumpOver = true
+                            while (--j > i) {
+                                if (f.lines[j].type == "instruction") {
+                                    nextGoodSpot = f.lines[j]
+                                    break
+                                }
+                            }
+                        }
+                    }
+                    let reg = line.words[1]
+                    let v = line.words[3]
+                    let lbl = U.lookup(values, v)
+                    if (!lbl) {
+                        lbl = "_ldlit_" + ++seq
+                        values[v] = lbl
+                    }
+                    line.update(`ldr ${reg}, ${lbl}`)
+                }
+                if (line === nextGoodSpot) {
+                    nextGoodSpot = null
+                    let txtLines: string[] = []
+                    let jmplbl = "_jmpwords_" + ++seq
+                    if (needsJumpOver)
+                        txtLines.push("bb " + jmplbl)
+                    txtLines.push(".balign 4")
+                    for (let v of Object.keys(values)) {
+                        let lbl = values[v]
+                        txtLines.push(lbl + ": .word " + v)
+                    }
+                    if (needsJumpOver)
+                        txtLines.push(jmplbl + ":")
+                    for (let t of txtLines) {
+                        f.buildLine(t, outlines)
+                        let ll = outlines[outlines.length - 1]
+                        ll.scope = line.scope
+                        ll.lineNo = line.lineNo
+                    }
+                    values = {}
+                }
+            }
+            f.lines = outlines
         }
 
         public getAddressFromLabel(f: assembler.File, i: assembler.Instruction, s: string, wordAligned = false): number {
@@ -403,7 +621,7 @@ namespace ts.pxtc.thumb {
                 "bc08      pop {r3}\n" +
                 "bd20      pop {r5, pc}\n" +
                 "9003      str r0, [sp, #4*3]\n")
-            }
+        }
     }
 
 

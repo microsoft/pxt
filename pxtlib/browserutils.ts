@@ -175,6 +175,12 @@ namespace pxt.BrowserUtils {
         if (!navigator) {
             return true; //All browsers define this, but we can't make any predictions if it isn't defined, so assume the best
         }
+
+        // allow bots in general
+        if (/bot|crawler|spider|crawling/i.test(navigator.userAgent))
+            return true;
+
+        // testing browser versions
         const versionString = browserVersion();
         const v = parseInt(versionString || "0")
 

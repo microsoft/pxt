@@ -73,7 +73,7 @@ namespace pxt.github {
                 if (!current) current = { sha: "", files: {} }
                 if (current.sha === sha) return Promise.resolve(current)
                 else {
-                    console.log(`Downloading ${repoWithTag} -> ${sha}`)
+                    pxt.log(`Downloading ${repoWithTag} -> ${sha}`)
                     return U.httpGetTextAsync(pref + pxt.CONFIG_NAME)
                         .then(pkg => {
                             current.files = {}
