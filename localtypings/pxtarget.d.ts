@@ -193,7 +193,7 @@ declare namespace pxt {
         disableLiveTranslations?: boolean; // don't load translations from crowdin
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
-        blocksVersion?: number; 
+        blocksVersion?: number; // nothing or 2 
         selectLanguage?: boolean; // add language picker to settings menu
     }
 

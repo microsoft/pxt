@@ -6,8 +6,6 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
 
-    const newBlocks = /newblocks=1/i.test(window.location.href);
-
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
             field: "TEXT",
@@ -1130,10 +1128,12 @@ namespace pxt.blocks {
     }
 
     let blocklyInitialized = false;
+    let newBlocks: boolean = undefined;
     function init() {
         if (blocklyInitialized) return;
         blocklyInitialized = true;
 
+        newBlocks = pxt.appTarget.appTheme && pxt.appTarget.appTheme.blocksVersion === 2;
         Object.keys(Blockly.Blocks)
             .forEach(k => builtinBlocks[k] = { block: Blockly.Blocks[k] });
 

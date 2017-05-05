@@ -347,42 +347,9 @@ export class Editor extends srceditor.Editor {
             else window.open(url, 'docs');
         }
 
+        this.prepareBlockly();
+
         this.isReady = true
-    }
-
-    loadBlocklyScripts(): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            if (typeof ((window as any).Blockly) === 'object') {
-                // blockly is already loaded
-                resolve();
-                return;
-            }
-
-            let blocklyPromises: Promise<void>[] = [];
-            if (pxt.appTarget.appTheme.blocksVersion == 2) {
-                return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blockly_compressed.js').then(() => {
-                    return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/blocks_compressed.js').then(() => {
-                        return pxt.BrowserUtils.loadScriptAsync('/blb/newblockly/msg/js/en.js').then(() => {
-                            return pxt.BrowserUtils.loadScriptAsync('/blb/pxtblocks.js').then(() => {
-                                resolve();
-                            });
-                        })
-                    })
-                })
-            } else {
-                return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/blockly_compressed.js').then(() => {
-                    return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/blocks_compressed.js').then(() => {
-                        return pxt.BrowserUtils.loadScriptAsync('/blb/blockly/msg/js/en.js').then(() => {
-                            return pxt.BrowserUtils.loadScriptAsync('/blb/pxtblocks.js').then(() => {
-                                resolve();
-                            });
-                        })
-                    })
-                })
-            }
-        }).then(() => {
-            this.prepareBlockly();
-        })
     }
 
     private prepareBlockly(showCategories = this.showToolboxCategories) {
@@ -538,22 +505,22 @@ export class Editor extends srceditor.Editor {
     loadFileAsync(file: pkg.File): Promise<void> {
         this.currSource = file.content;
         this.typeScriptSaveable = false;
-        return this.loadBlocklyScripts().then(() => {
 
-            this.setDiagnostics(file)
-            this.delayLoadXml = file.content;
-            this.editor.clearUndo();
+        this.setDiagnostics(file)
+        this.delayLoadXml = file.content;
+        this.editor.clearUndo();
 
-            if (this.currFile && this.currFile != file) {
-                this.filterToolbox(null);
-            }
-            if (this.parent.state.filters) {
-                this.filterToolbox(this.parent.state.filters);
-            } else {
-                this.filters = null;
-            }
-            this.currFile = file;
-        })
+        if (this.currFile && this.currFile != file) {
+            this.filterToolbox(null);
+        }
+        if (this.parent.state.filters) {
+            this.filterToolbox(this.parent.state.filters);
+        } else {
+            this.filters = null;
+        }
+        this.currFile = file;
+
+        return Promise.resolve();
     }
 
     public switchToTypeScript() {
@@ -620,7 +587,7 @@ export class Editor extends srceditor.Editor {
         const blocklyOptions: Blockly.ExtendedOptions = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
-            media: pxt.webConfig.commitCdnUrl + (pxt.appTarget.appTheme.blocksVersion == 2 ? "newblockly/media/" : "blockly/media/"),
+            media: pxt.webConfig.commitCdnUrl + "blockly/media/",
             sound: true,
             trashcan: false,
             collapse: false,

@@ -752,6 +752,15 @@ export function serveAsync(options: ServeOptions) {
 
         let pathname = decodeURI(url.parse(req.url).pathname);
 
+        // rewrite blockly file location
+        // based on target docs. Typically the /blb/ trick is enough but not for blockly
+        const blbblocklyRx = /^\/blbblockly\//;
+        if (blbblocklyRx.test(pathname)) {
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.blocksVersion == 2)
+                pathname = pathname.replace(blbblocklyRx, "/blb/newblockly/");
+            else pathname = pathname.replace(blbblocklyRx, "/blb/blockly/");
+        }
+
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
             res.end()

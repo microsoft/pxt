@@ -24,13 +24,13 @@ CACHE:
 @targetEditorJs@
 
 # blockly
-/blb/blockly/blockly_compressed.js
-/blb/blockly/blocks_compressed.js
-/blb/blockly/msg/js/en.js
-/cdn/blockly/media/sprites.png
-/cdn/blockly/media/click.mp3
-/cdn/blockly/media/disconnect.wav
-/cdn/blockly/media/delete.mp3
+/blbblockly/blockly_compressed.js
+/blbblockly/blocks_compressed.js
+/blbblockly/msg/js/en.js
+/blbblockly/media/sprites.png
+/blbblockly/media/click.mp3
+/blbblockly/media/disconnect.wav
+/blbblockly/media/delete.mp3
 
 # monaco; keep in sync with webapp/public/index.html
 /blb/vs/loader.js
