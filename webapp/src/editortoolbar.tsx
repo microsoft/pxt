@@ -288,12 +288,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     {run ? <sui.Button role="menuitem" class={`large play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('computer') } /> : undefined }
                                     {restart ? <sui.Button key='restartbtn' class={`large restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('computer') } /> : undefined }
                                     {trace ? <sui.Button key='tracebtn' class={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('computer') } /> : undefined }
-                                    {compileBtn ? <sui.Button icon='icon download' class={`primary large download-button ${compileLoading ? 'loading' : ''}`} title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
+                                    {compileBtn ? <sui.Button icon={downloadIcon} class={`primary large download-button ${compileLoading ? 'loading' : ''}`} title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
                                 </div>
                             </div> :
                             <div className="ui item">
                                 <sui.Button icon={`${collapseEditorTools ? 'toggle right' : 'toggle left'}`} class={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onClick={() => this.toggleCollapse('computer') } />
-                                {compileBtn ? <sui.Button icon='icon download' class={`primary huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={downloadText} title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
+                                {compileBtn ? <sui.Button icon={downloadIcon} class={`primary huge fluid download-button ${compileLoading ? 'loading' : ''}`} text={downloadText} title={compileTooltip} onClick={() => this.compile('computer') } /> : undefined }
                             </div>
                         }
                     </div>
