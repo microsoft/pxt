@@ -114,7 +114,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const trace = run && simOpts.enableTrace;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
-        const downloadIcon = pxt.appTarget.appTheme.useUploadMessage ? "upload" : "download";
+        const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
         const downloadText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download");
 
         return <div className="ui equal width grid right aligned padded">

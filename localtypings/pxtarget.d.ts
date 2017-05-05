@@ -189,6 +189,7 @@ declare namespace pxt {
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
         useUploadMessage?: boolean; // change "Download" text to "Upload"
+        downloadIcon?: string; // which icon io use for download
     }
 
     interface DocMenuEntry {
