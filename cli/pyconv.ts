@@ -1487,6 +1487,8 @@ function stmt(e: py.Stmt): B.JsNode {
 // TODO based on lineno/col_offset mark which numbers are written in hex
 // TODO look at scopes of let
 // TODO emit proper namespaces
+// TODO I2C support
+// TODO fetch comments
 
 function toTS(mod: py.Module) {
     U.assert(mod.kind == "Module")
