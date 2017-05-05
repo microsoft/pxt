@@ -21,7 +21,12 @@ declare namespace goog {
         function createDom(tagName: string, opt_attributes?: Object, ...var_args: Object[]): Element;
         function createDom(name: string, ns?: string, children?: any): HTMLElement;
         function removeChildren(el: Element): void;
+        function removeNode(node: Node): void;
         function getViewportSize(): any;
+
+        namespace classlist {
+            function add(el: Element, className: string): void;
+        }
     }
 
     namespace math {
@@ -126,6 +131,16 @@ declare namespace goog {
             setRightToLeft(rightToLeft: boolean): void;
             setValue(value: number): void;
         }
+        class ColorPicker extends Component {
+            static SIMPLE_GRID_COLORS: Array<string>;
+            setSize(value: goog.math.Size | number): void;
+            setColors(colurs: Array<string>): void;
+            setSelectedColor(color: string): void;
+        }
+        class ColorPalette extends Control {
+            constructor(opt_colors?: Array<string>);
+            setSize(value: goog.math.Size | number): void;
+        }
     }
 
     namespace style {
@@ -138,6 +153,7 @@ declare namespace goog {
         function scrollIntoContainerView(element: Element, opt_container?: Element, opt_center?: boolean): void;
         function setHeight(element: Element, height: number | string): void;
         function setWidth(element: Element, width: number | string): void;
+        function getPageOffset(element: Element): math.Coordinate;
     }
 
     namespace events {
@@ -315,6 +331,7 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
+    function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean): void;
     function terminateDrag_(): void;
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
@@ -329,6 +346,8 @@ declare namespace Blockly {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
         function mouseToSvg(e: Event, svg: Element): any;
+
+        function createSvgElement(tag: string, options: any, fg: any): any;
     }
 
     class FieldImage {
@@ -350,9 +369,14 @@ declare namespace Blockly {
     class Field {
         name: string;
         EDITABLE: boolean;
-        borderRect_: any;
         sourceBlock_: Block;
-        init(block: Block): void;
+        fieldGroup_: Element;
+        textElement_: Element;
+        borderRect_: Element;
+        visible_: boolean;
+        text_: string;
+        size_: goog.math.Size;
+        init(): void;
         static superClass_: Field;
         constructor(text: string, opt_validator?: Function);
         callValidator(text: string): string;
@@ -432,6 +456,7 @@ declare namespace Blockly {
         type: string;
         id: string;
         isShadow_: boolean;
+        rendered: boolean;
         nextConnection: Connection;
         outputConnection: Connection;
         previousConnection: Connection;
@@ -498,6 +523,9 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+
+        render(): void;
+        bumpNeighbours_(): void;
     }
 
     class Comment extends Icon {
@@ -704,8 +732,6 @@ declare namespace Blockly {
 
     function inject(elt: Element, options?: Options): Workspace;
 
-    function createSvgElement(tag: string, options: any, fg: any): any;
-
     namespace Names {
         function equals(old: string, n: any): boolean;
     }
@@ -743,6 +769,7 @@ declare namespace Blockly {
 
     namespace BlockSvg {
         let START_HAT: boolean;
+        let SEP_SPACE_X: number;
     }
 
     namespace Events {
