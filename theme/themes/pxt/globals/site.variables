@@ -71,6 +71,7 @@
 --------------------*/
 
 @sideBarWidth: 20rem;
+@sideBarWidthSmall: 18rem;
 @simulatorWidth: 23rem;
 @simulatorWidthSmall: 20rem;
 
@@ -103,3 +104,9 @@
 @blocklyToolboxColor: rgba(0, 0, 0, 0.05);
 @trashIconColor: @primaryColor;
 
+/*-------------------
+   Blockly
+--------------------*/
+
+@blocklyRowWidthWide: 200px;
+@blocklyRowWidthComputer: 180px;

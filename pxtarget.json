@@ -15,8 +15,8 @@
         "docsLogo": "./static/logo.svg",
         "portraitLogo": "./static/logo.svg",
         "homeUrl": "https://makecode.com/",
-        "cardLogo": "./static/images/blocks.png",
-        "appLogo": "./static/images/blocks.png",
+        "cardLogo": "./static/logo.svg",
+        "appLogo": "./static/logo.svg",
         "crowdinProject": "kindscript",
         "docMenu": [
             {

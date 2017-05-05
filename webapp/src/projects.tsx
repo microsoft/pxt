@@ -42,8 +42,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.setState({ visible: false });
     }
 
-    showOpenProject() {
-        this.setState({ visible: true, tab: MYSTUFF })
+    showOpenProject(tab?: string) {
+        const gals = pxt.appTarget.appTheme.galleries || {};
+        tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
+        this.setState({ visible: true, tab: tab || MYSTUFF })
+    }
+
+    showOpenTutorials() {
+        const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
+        this.setState({ visible: true, tab: gals[0] || MYSTUFF})
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
@@ -115,7 +122,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr); break;
-                case "tutorial": this.props.parent.startTutorial(scr.url);
+                case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
                     if (m) this.props.parent.startTutorial(m[1]);
@@ -160,11 +167,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             pxt.tickEvent("projects.new");
             this.hide();
             this.props.parent.newProject();
-        }
-        const saveProject = () => {
-            pxt.tickEvent("projects.save");
-            this.hide();
-            this.props.parent.saveAndCompile();
         }
         const renameProject = () => {
             pxt.tickEvent("projects.rename");
@@ -250,7 +252,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
                                     key={'importurl'}
-                                    icon="upload"
+                                    icon="cloud download"
                                     iconColor="secondary"
                                     name={lf("Import URL...") }
                                     description={lf("Open a shared project URL") }
@@ -295,7 +297,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards">
+                    <div className="ui cards centered">
                         {gals[tab].map(scr => <codecard.CodeCardView
                             key={tab + scr.name}
                             name={scr.name}

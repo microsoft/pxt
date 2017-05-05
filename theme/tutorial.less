@@ -37,11 +37,10 @@
     height: 100%;
 }
 
-#tutorialhint #tutorialcontent {
-    display: block;
-    width: 100%;
-    height: 100%;
-    border:none;
+#tutorialcontent {
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 body#docs.tutorial {
@@ -73,6 +72,7 @@ body#docs.tutorial {
     left: 0.7rem;
     width: 3rem;
     height: 3rem;
+    background-repeat: no-repeat;
     background-size: contain;
     background-image: @avatarUrl;
     cursor:pointer;
@@ -139,6 +139,12 @@ body#docs.tutorial {
     border-radius: 0.28571429rem;
 }
 
+i.icon.avatar-image {
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-image: @avatarUrl;
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -179,13 +185,6 @@ body#docs.tutorial {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .tutorial #maineditor .full-abs {
-        bottom: 0rem;
-    }
-    /* Hide the editor toolbar */
-    .tutorial #editortools {
-        background: transparent !important;
-    }
 }
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */

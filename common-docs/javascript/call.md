@@ -20,8 +20,7 @@ followed by `.` and a list of all the functions will appear.
 
 Whenever you want to call a function, you give the name of the function
 followed by `(` and ending with `)`. Inbetween the left and right
-parentheses go the function arguments.  If a function has zero arguments, you still
-need the parentheses in order to call the function. For example
+parentheses go the function arguments:
 
 ```typescript
 Math.min(1, 2)
@@ -29,6 +28,13 @@ Math.min(1, 2)
 
 It's a syntax error to have a left parenthesis without the "closing" right parenthesis:
 
-```
+```typescript
 Math.min(
+```
+
+If a function has zero arguments, you still
+need the parentheses in order to call the function. For example
+
+```typescript
+Math.randomBoolean()
 ```

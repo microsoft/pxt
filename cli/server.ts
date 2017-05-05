@@ -371,7 +371,7 @@ let electronSocket: WebSocket = null;
 let webappReady = false;
 let electronPendingMessages: ElectronMessage[] = [];
 
-function initSocketServer(wsPort: number) {
+function initSocketServer(wsPort: number, hostname: string) {
     console.log(`starting local ws server at ${wsPort}...`)
     const WebSocket = require('faye-websocket');
 
@@ -582,7 +582,7 @@ function initSocketServer(wsPort: number) {
 
     return new Promise<void>((resolve, reject) => {
         wsserver.on("Error", reject);
-        wsserver.listen(wsPort, "127.0.0.1", () => resolve());
+        wsserver.listen(wsPort, hostname, () => resolve());
     });
 }
 
@@ -621,6 +621,7 @@ export interface ServeOptions {
     browser?: string;
     electronHandlers?: pxt.Map<ElectronHandler>;
     port?: number;
+    hostname?: string;
     wsPort?: number;
     serial?: boolean;
 }
@@ -704,8 +705,9 @@ export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
     if (!serveOptions.wsPort) serveOptions.wsPort = 3233;
+    if (!serveOptions.hostname) serveOptions.hostname = "localhost";
     setupRootDir();
-    const wsServerPromise = initSocketServer(serveOptions.wsPort);
+    const wsServerPromise = initSocketServer(serveOptions.wsPort, serveOptions.hostname);
     if (serveOptions.serial)
         initSerialMonitor();
     if (serveOptions.electronHandlers) {
@@ -903,12 +905,12 @@ export function serveAsync(options: ServeOptions) {
 
     const serverPromise = new Promise<void>((resolve, reject) => {
         server.on("error", reject);
-        server.listen(serveOptions.port, "127.0.0.1", () => resolve());
+        server.listen(serveOptions.port, serveOptions.hostname, () => resolve());
     });
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            let start = `http://localhost:${serveOptions.port}/#ws=${serveOptions.wsPort}&local_token=${options.localToken}`;
+            const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

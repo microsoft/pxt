@@ -8,6 +8,11 @@
 
     <!-- @include appmeta.html -->
 
+    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">    
+    <style type="text/css">
+        @import "/blb/custom.css";
+        @import "/blb/icons.css";
+    </style>
 </head>
 
 <body class="main">
@@ -25,13 +30,6 @@
         <div id='compilemsg' class="ui ignored info message"></div>
     </div>
 
-    <link rel="stylesheet" data-name="vs/editor/editor.main" href="/blb/vs/editor/editor.main.css">
-    <style type="text/css">
-        @import "/blb/semantic.css";
-        @import "/blb/custom.css";
-        @import "/blb/icons.css";
-    </style>
-
     <script>
         // This line gets patched up by the cloud
         var pxtConfig = null;
@@ -39,9 +37,7 @@
     <!-- @include apptracking.html -->
     <!-- patch to load JS in electron -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
-    <script type="text/javascript" src="/blb/lzma/lzma_worker-min.js"></script>
     <script type="text/javascript" src="/blb/jquery.js"></script>
-    <script type="text/javascript" src="/blb/typescript.js"></script>
     <script type="text/javascript" src="/blb/blockly/blockly_compressed.js"></script>
     <script type="text/javascript" src="/blb/blockly/blocks_compressed.js"></script>
     <script type="text/javascript" src="/blb/blockly/msg/js/en.js"></script>
@@ -89,6 +85,7 @@
             "vs/language/typescript/lib/typescriptServices": "/blb/vs/language/typescript/lib/typescriptServices.js",
             "vs/language/typescript/src/mode": "/blb/vs/language/typescript/src/mode.js",
             "vs/language/typescript/src/worker": "/blb/vs/language/typescript/src/worker.js",
+            "lzma/lzma_worker-min.js": "/blb/lzma/lzma_worker-min.js"
         }
     </script>
 </body>

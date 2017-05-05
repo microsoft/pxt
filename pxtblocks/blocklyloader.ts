@@ -133,15 +133,21 @@ namespace pxt.blocks {
                 .forEach(pr => {
                     let attr = attrNames[pr.name];
                     let shadowValue: Element;
+                    let container: HTMLElement;
                     if (pr.options && pr.options['min'] && pr.options['max']) {
                         shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, 'math_number_minmax');
-                        let container = document.createElement('mutation');
+                        container = document.createElement('mutation');
                         container.setAttribute('min', pr.options['min'].value);
                         container.setAttribute('max', pr.options['max'].value);
-                        shadowValue.firstChild.appendChild(container);
                     } else {
                         shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
                     }
+                    if (pr.options && pr.options['fieldEditorOptions']) {
+                        if (!container) container = document.createElement('mutation');
+                        container.setAttribute(`customfield`, JSON.stringify(pr.options['fieldEditorOptions'].value));
+                    }
+                    if (shadowValue && container)
+                        shadowValue.firstChild.appendChild(container);
                     block.appendChild(shadowValue);
                 })
         }
@@ -177,6 +183,9 @@ namespace pxt.blocks {
 
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
+            if (nsn && nsn.name)
+                catName = Util.capitalize(nsn.name);
+
             let category = categoryElement(tb, catName);
 
             if (showCategories === CategoryMode.All || showCategories == CategoryMode.Basic && !isAdvanced) {
@@ -187,7 +196,7 @@ namespace pxt.blocks {
                     pxt.debug('toolbox: adding category ' + ns)
 
                     const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-                    const locCatName = (nsn ? nsn.attributes.block : "") || catName;
+                    const locCatName = Util.capitalize((nsn ? nsn.attributes.block : "") || catName);
                     category = createCategoryElement(locCatName, catName, nsWeight);
 
                     if (nsn && nsn.attributes.color) {
@@ -472,7 +481,7 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (ni == 0) {
+        if (ni == 0 && !pxt.appTarget.appTheme.disableBlockIcons) {
             const icon = ns && ns.attributes.icon ? ns.attributes.icon : null;
             if (icon)
                 i.appendField(iconToFieldImage(icon));
@@ -522,6 +531,11 @@ namespace pxt.blocks {
 
         if (fn.attributes.help)
             block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
+        else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
+            let anchor = fn.qName.toLowerCase().split('.');
+            if (anchor[0] == fn.pkg) anchor.shift();
+            block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
+        }
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color);
@@ -544,6 +558,7 @@ namespace pxt.blocks {
 
                 let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                 let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances
+                let customField = (fn.attributes.paramFieldEditor && fn.attributes.paramFieldEditor[p]);
 
                 if (isEnum || isFixed) {
                     const syms = Util.values(info.apis.byQName)
@@ -572,30 +587,26 @@ namespace pxt.blocks {
                     if (pr.shadowValue)
                         dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
 
-                    const noteValidator = (text: string): string => {
-                        if (text === null) {
-                            return null;
-                        }
-                        text = String(text);
-
-                        let n = parseFloat(text || '0');
-                        if (isNaN(n) || n < 0) {
-                            // Invalid number.
-                            return null;
-                        }
-                        // Get the value in range.
-                        return String(Math.round(Number(text)));
-                    };
-
-                    if (fn.attributes.blockFieldEditor == "note_editor")
-                        i.appendField(new Blockly.FieldNote("262", color, noteValidator), attrNames[n].name);
-                    else if (fn.attributes.blockFieldEditor == "FieldGridPicker") {
-                        const params = fn.attributes.blockFieldEditorParams;
-                        i.appendField(new Blockly.FieldGridPicker(dd, color, params), attrNames[n].name);
+                    if (customField) {
+                        let defl = fn.attributes.paramDefl[pr.name] || "";
+                        const options = {
+                            data: dd,
+                            colour: color
+                        } as Blockly.FieldCustomDropdownOptions;
+                        Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
+                        i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
                     }
                     else
                         i.appendField(new Blockly.FieldDropdown(dd), attrNames[n].name);
 
+                } else if (customField) {
+                    i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
+                    const defl = fn.attributes.paramDefl[pr.name] || "";
+                    const options = {
+                        colour: color
+                    } as Blockly.FieldCustomOptions;
+                    Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.name] || {});
+                    i.appendField(createFieldEditor(customField, defl, options), attrNames[n].name);
                 } else if (instance && n == "this") {
                     if (!fn.attributes.defaultInstance) {
                         i = initField(block.appendValueInput(p), field.ni, fn, nsinfo, pre, true, pr.type);
@@ -623,6 +634,32 @@ namespace pxt.blocks {
         }
         else if (fn.attributes.defaultInstance) {
             addMutation(block as MutatingBlock, fn, MutatorTypes.DefaultInstanceMutator);
+        }
+
+        const oldMutationToDom = (block as MutatingBlock).mutationToDom;
+        const oldDomToMutation = (block as MutatingBlock).domToMutation;
+        (block as MutatingBlock).mutationToDom = () => {
+            let retVal = oldMutationToDom ? oldMutationToDom.call(this) : document.createElement('mutation');
+            block.inputList.forEach(input => {
+                input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
+                    if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
+                        const getOptions = fieldRow.saveOptions();
+                        retVal.setAttribute(`customfield`, JSON.stringify(getOptions));
+                    }
+                })
+            })
+            return retVal;
+        }
+        (block as MutatingBlock).domToMutation = (mutation) => {
+            if (oldDomToMutation) oldDomToMutation.call(this, mutation);
+            block.inputList.forEach(input => {
+                input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
+                    if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
+                        const options = JSON.parse(mutation.getAttribute(`customfield`));
+                        fieldRow.restoreOptions(options);
+                    }
+                })
+            })
         }
 
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
@@ -926,6 +963,9 @@ namespace pxt.blocks {
                 let categories = tb.querySelectorAll(`category:not([nameid="advanced"])`);
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
+                    let catName = cat.getAttribute("nameid");
+                    // Don't do this for special blockly categories
+                    if (catName == "variables" || catName == "functions") continue;
                     let blockCount = cat.querySelectorAll(`block`);
                     if (blockCount.length == 0) {
                         if (cat.parentNode) cat.parentNode.removeChild(cat);
@@ -1113,6 +1153,7 @@ namespace pxt.blocks {
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
         Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
 
+        initFieldEditors();
         initContextMenu();
         initOnStart();
         initMath();
@@ -1161,6 +1202,8 @@ namespace pxt.blocks {
             setHelpResources(this, id, name, tooltip, url, colour);
         }
     }
+
+    export let openHelpUrl: (url: string) => void;
 
     function initLoops() {
         let msg: any = Blockly.Msg;
@@ -1270,7 +1313,7 @@ namespace pxt.blocks {
                     option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
-                    let xmlBlock = goog.dom.createDom('block', null, xmlField);
+                    let xmlBlock = goog.dom.createDom('block', null, xmlField) as HTMLElement;
                     xmlBlock.setAttribute('type', 'variables_get');
                     option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
                     options.push(option);
@@ -1345,6 +1388,12 @@ namespace pxt.blocks {
         msg.DELETE_BLOCK = lf("Delete Block");
         msg.DELETE_X_BLOCKS = lf("Delete %1 Blocks");
         msg.HELP = lf("Help");
+
+        // inject hook to handle openings docs
+        (<any>Blockly).BlockSvg.prototype.showHelp_ = function () {
+            const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
+            if (url) (pxt.blocks.openHelpUrl || window.open)(url);
+        };
 
         /**
          * Show the context menu for the workspace.
@@ -1467,33 +1516,24 @@ namespace pxt.blocks {
             }
             menuOptions.push(formatCodeOption);
 
-            const shuffleOption = {
-                text: lf("Shuffle Blocks"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.shuffle");
-                    pxt.blocks.layout.shuffle(this, 1);
-                }
-            };
-            // TODO: temporarily removing shuffle blocks option until we have a better way of surfacing it to content creators
-            //menuOptions.push(shuffleOption);
-
-            const screenshotOption = {
-                text: lf("Download Screenshot"),
-                enabled: topBlocks.length > 0,
-                callback: () => {
-                    pxt.tickEvent("blocks.context.screenshot");
-                    pxt.blocks.layout.screenshotAsync(this)
-                        .done((uri) => {
-                            if (pxt.BrowserUtils.isSafari())
-                                uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
-                            BrowserUtils.browserDownloadDataUri(
-                                uri,
-                                `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
-                        });
-                }
-            };
-            menuOptions.push(screenshotOption);
+            if (pxt.blocks.layout.screenshotEnabled()) {
+                const screenshotOption = {
+                    text: lf("Download Screenshot"),
+                    enabled: topBlocks.length > 0,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.screenshot");
+                        pxt.blocks.layout.screenshotAsync(this)
+                            .done((uri) => {
+                                if (pxt.BrowserUtils.isSafari())
+                                    uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
+                                BrowserUtils.browserDownloadDataUri(
+                                    uri,
+                                    `${pxt.appTarget.nickname || pxt.appTarget.id}-${lf("screenshot")}.png`);
+                            });
+                    }
+                };
+                menuOptions.push(screenshotOption);
+            }
 
             // custom options...
             if (onShowContextMenu)
@@ -1847,7 +1887,7 @@ namespace pxt.blocks {
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button: Blockly.FlyoutButton) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
-            xmlList.push(button);
+            xmlList.push(button as HTMLElement);
 
             let variableList = Blockly.Variables.allVariables(workspace);
             variableList.sort(goog.string.caseInsensitiveCompare);
@@ -1869,7 +1909,7 @@ namespace pxt.blocks {
                 let field = goog.dom.createDom('field', null, variableList[i]);
                 field.setAttribute('name', 'VAR');
                 block.appendChild(field);
-                xmlList.push(block);
+                xmlList.push(block as HTMLElement);
             }
             xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
@@ -1899,7 +1939,7 @@ namespace pxt.blocks {
                         block.appendChild(value);
                     }
 
-                    xmlList.push(block);
+                    xmlList.push(block as HTMLElement);
                 }
                 {
                     // <block type="variables_get" gap="24">
@@ -1919,7 +1959,7 @@ namespace pxt.blocks {
                     shadow.appendChild(field);
                     block.appendChild(value);
 
-                    xmlList.push(block);
+                    xmlList.push(block as HTMLElement);
                 }
             }
             return xmlList;
@@ -2043,14 +2083,54 @@ namespace pxt.blocks {
             goog.dom.removeChildren(/** @type {!Element} */(Blockly.Tooltip.DIV));
             // Get the new text.
             const card = Blockly.Tooltip.element_.codeCard as pxt.CodeCard;
+
+            function render() {
+                let rtl = Blockly.Tooltip.element_.RTL;
+                let windowSize = goog.dom.getViewportSize();
+                // Display the tooltip.
+                Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
+                Blockly.Tooltip.DIV.style.display = 'block';
+                Blockly.Tooltip.visible = true;
+                // Move the tooltip to just below the cursor.
+                let anchorX = Blockly.Tooltip.lastX_;
+                if (rtl) {
+                    anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
+                } else {
+                    anchorX += Blockly.Tooltip.OFFSET_X;
+                }
+                let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
+
+                if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
+                    windowSize.height + window.scrollY) {
+                    // Falling off the bottom of the screen; shift the tooltip up.
+                    anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+                }
+                if (rtl) {
+                    // Prevent falling off left edge in RTL mode.
+                    anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
+                } else {
+                    if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
+                        windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
+                        // Falling off the right edge of the screen;
+                        // clamp the tooltip on the edge.
+                        anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
+                            2 * Blockly.Tooltip.MARGINS;
+                    }
+                }
+                Blockly.Tooltip.DIV.style.top = anchorY + 'px';
+                Blockly.Tooltip.DIV.style.left = anchorX + 'px';
+            }
             if (card) {
-                const cardEl = pxt.docs.codeCard.render({
-                    header: renderTip(Blockly.Tooltip.element_),
-                    typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
-                        ? undefined
-                        : pxt.blocks.compileBlock(Blockly.Tooltip.element_, blockInfo).source
+                pxt.blocks.compileBlockAsync(Blockly.Tooltip.element_, blockInfo).then((compileResult) => {
+                    const cardEl = pxt.docs.codeCard.render({
+                        header: renderTip(Blockly.Tooltip.element_),
+                        typeScript: Blockly.Tooltip.element_.disabled || pxt.appTarget.appTheme.hideBlocklyJavascriptHint
+                            ? undefined
+                            : compileResult.source
+                    })
+                    Blockly.Tooltip.DIV.appendChild(cardEl);
+                    render();
                 })
-                Blockly.Tooltip.DIV.appendChild(cardEl);
             } else {
                 let tip = renderTip(Blockly.Tooltip.element_);
                 tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
@@ -2061,41 +2141,8 @@ namespace pxt.blocks {
                     div.appendChild(document.createTextNode(lines[i]));
                     Blockly.Tooltip.DIV.appendChild(div);
                 }
+                render();
             }
-            let rtl = Blockly.Tooltip.element_.RTL;
-            let windowSize = goog.dom.getViewportSize();
-            // Display the tooltip.
-            Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
-            Blockly.Tooltip.DIV.style.display = 'block';
-            Blockly.Tooltip.visible = true;
-            // Move the tooltip to just below the cursor.
-            let anchorX = Blockly.Tooltip.lastX_;
-            if (rtl) {
-                anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
-            } else {
-                anchorX += Blockly.Tooltip.OFFSET_X;
-            }
-            let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
-
-            if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
-                windowSize.height + window.scrollY) {
-                // Falling off the bottom of the screen; shift the tooltip up.
-                anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
-            }
-            if (rtl) {
-                // Prevent falling off left edge in RTL mode.
-                anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
-            } else {
-                if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
-                    windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
-                    // Falling off the right edge of the screen;
-                    // clamp the tooltip on the edge.
-                    anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
-                        2 * Blockly.Tooltip.MARGINS;
-                }
-            }
-            Blockly.Tooltip.DIV.style.top = anchorY + 'px';
-            Blockly.Tooltip.DIV.style.left = anchorX + 'px';
         }
     }
 }

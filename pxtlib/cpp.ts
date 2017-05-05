@@ -1,17 +1,22 @@
 /// <reference path="../localtypings/pxtarget.d.ts"/>
-/// <reference path="emitter/util.ts"/>
 
 namespace pxt {
     declare var require: any;
 
-    function getLzma() {
-        if (U.isNodeJS) return require("lzma");
-        else return (<any>window).LZMA;
+    function getLzmaAsync() {
+        if (U.isNodeJS) return Promise.resolve(require("lzma"));
+        else {
+            let lz = (<any>window).LZMA;
+            if (lz) return Promise.resolve(lz);
+            const monacoPaths: Map<string> = (window as any).MonacoPaths
+            return BrowserUtils.loadScriptAsync(monacoPaths['lzma/lzma_worker-min.js'])
+                .then(() => (<any>window).LZMA);
+        }
     }
 
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
-        let lzma = getLzma()
-        return new Promise<string>((resolve, reject) => {
+        return getLzmaAsync()
+            .then(lzma => new Promise<string>((resolve, reject) => {
             try {
                 lzma.decompress(buf, (res: string, error: any) => {
                     resolve(error ? undefined : res);
@@ -20,12 +25,12 @@ namespace pxt {
             catch (e) {
                 resolve(undefined);
             }
-        })
+        }));
     }
 
     export function lzmaCompressAsync(text: string): Promise<Uint8Array> {
-        let lzma = getLzma()
-        return new Promise<Uint8Array>((resolve, reject) => {
+        return getLzmaAsync()
+            .then(lzma => new Promise<Uint8Array>((resolve, reject) => {
             try {
                 lzma.compress(text, 7, (res: any, error: any) => {
                     resolve(error ? undefined : new Uint8Array(res));
@@ -34,7 +39,7 @@ namespace pxt {
             catch (e) {
                 resolve(undefined);
             }
-        })
+        }));
     }
 }
 
@@ -144,6 +149,7 @@ namespace pxt.cpp {
         if (isPlatformio)
             sourcePath = "/src/"
 
+        let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
@@ -155,6 +161,7 @@ namespace pxt.cpp {
         let shimsDTS = nsWriter("declare namespace")
         let enumsDTS = nsWriter("declare namespace")
         let allErrors = ""
+        let knownEnums: Map<boolean> = {}
 
         let compileService = appTarget.compileService;
         if (!compileService)
@@ -212,6 +219,7 @@ namespace pxt.cpp {
                 switch (tp.replace(/\s+/g, "")) {
                     case "void": return "void";
                     // TODO: need int16_t
+                    case "TNumber":
                     case "int32_t":
                     case "uint32_t":
                     case "unsigned":
@@ -232,10 +240,42 @@ namespace pxt.cpp {
                     case "StringData*": return "string";
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
+
+                    case "TValue": return "any";
                     default:
                         return toJs(tp);
                     //err("Don't know how to map type: " + tp)
                     //return "any"
+                }
+            }
+
+            function mapRunTimeType(tp: string) {
+                tp = tp.replace(/\s+/g, "")
+                switch (tp) {
+                    case "int32_t":
+                    case "uint32_t":
+                    case "unsigned":
+                    case "uint16_t":
+                    case "int16_t":
+                    case "short":
+                    case "uint8_t":
+                    case "byte":
+                    case "int8_t":
+                    case "sbyte":
+                    case "int":
+                        return "I";
+
+                    case "void": return "V";
+                    case "float": return "F";
+                    case "TNumber": return "N";
+                    case "TValue": return "T";
+                    case "bool": return "B";
+                    case "double": return "D"
+
+                    default:
+                        if (U.lookup(knownEnums, tp))
+                            return "I"
+                        return "_";
                 }
             }
 
@@ -300,6 +340,8 @@ namespace pxt.cpp {
                         protos.setNs(currNs)
                         protos.write(`enum ${enM[2]} : int;`)
                     }
+
+                    knownEnums[enM[2]] = true
                 }
 
                 if (inEnum) {
@@ -376,6 +418,7 @@ namespace pxt.cpp {
                     let funName = m[3]
                     let origArgs = m[4]
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
+                    let argsFmt = mapRunTimeType(retTp)
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         s = s.trim()
                         let m = /(.*)=\s*(-?\w+)$/.exec(s)
@@ -393,6 +436,8 @@ namespace pxt.cpp {
                         }
 
                         let argName = m[2]
+
+                        argsFmt += mapRunTimeType(m[1])
 
                         if (parsedAttrs.paramDefl[argName]) {
                             defl = parsedAttrs.paramDefl[argName]
@@ -414,10 +459,10 @@ namespace pxt.cpp {
                     let numArgs = args.length
                     let fi: pxtc.FuncInfo = {
                         name: currNs + "::" + funName,
-                        type: retTp == "void" ? "P" : "F",
-                        args: numArgs,
+                        argsFmt,
                         value: null
                     }
+                    //console.log(`${ln.trim()} : ${argsFmt}`)
                     if (currDocComment) {
                         shimsDTS.setNs(toJs(currNs))
                         shimsDTS.write("")
@@ -625,7 +670,13 @@ namespace pxt.cpp {
             res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
         }
 
+        if (pxt.appTarget.compile && pxt.appTarget.compile.boxDebug) {
+            pxtConfig += "#define PXT_BOX_DEBUG 1\n"
+            pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
+        }
+
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
+        res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
         res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
         res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"

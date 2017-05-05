@@ -32,7 +32,7 @@ namespace pxt.blocks {
         snippetMode?: boolean;
     }
 
-    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Flow }): HTMLElement {
+    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Flow }): SVGSVGElement {
         if (!workspace) {
             blocklyDiv = document.createElement("div");
             blocklyDiv.style.position = "absolute";
@@ -47,7 +47,7 @@ namespace pxt.blocks {
                 zoom: false,
                 sound: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
-                rtl: Util.userLanguageRtl()
+                rtl: Util.isUserLanguageRtl()
             });
         }
 
@@ -87,7 +87,7 @@ namespace pxt.blocks {
                 svg[0].style.height = (metrics.contentHeight / options.emPixels) + 'em';
             }
 
-            return svg[0];
+            return svg[0] as any;
 
         } catch (e) {
             pxt.reportException(e);
