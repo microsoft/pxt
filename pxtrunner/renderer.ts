@@ -445,8 +445,8 @@ namespace pxt.runner {
                                     url: "blocks/loops" + (ns ? "" : "/for"),
                                      description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
                                      blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
-                                });    
-                            } else { 
+                                });
+                            } else {
                                 addItem({
                                     name: ns ? "Loops" : "repeat",
                                     url: "blocks/loops" + (ns ? "" : "/repeat"),
