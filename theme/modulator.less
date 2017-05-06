@@ -1,26 +1,36 @@
 
 #modulator {
     position: absolute;
-    min-width: @simulatorWidth;
-    max-width: @simulatorWidth;
-    left: 0;
-    bottom: @editorToolsCollapsedHeight;
-    background:orange;
-    padding:0;
-    z-index:7;
-    height:100px;
-    display:none;
+    top: calc(@mainMenuHeight - 0.5);
+    left: 50px;
+    width: 120px;
+    height: 56px;
+    background: @bubbleUrl no-repeat;
+    z-index: 110;
+    display: none;
+}
+
+#modulatorbubble {
+    position: absolute;
+    margin: 0px;
+    left: 5px;
+    top: 18px;
+    width: 110px;
+    height: 34px;
+    overflow: hidden;
+    -webkit-border-radius: 25px;
 }
 
 #wavStrip {
-    border:0;
-    width:100%;
-    height:50px;
-    margin:0;
-    padding:0
+    border: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0
 }
 
 #audio_output {
+    display: none;
     width: 100%;
 }
 
@@ -36,11 +46,6 @@
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-    #modulator {
-        min-width: @simulatorWidthSmall;
-        max-width: @simulatorWidthSmall;
-    }
-
 }
 
 /* Tablet */

@@ -1594,6 +1594,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
         return (
             <div id='root' className={rootClasses}>
+                {useModulator ? <audio id="audio_output" controls></audio> : undefined }
+                {useModulator ? <div id="modulator"><div id="modulatorbubble"><canvas id="wavStrip"></canvas></div></div> : undefined }
                 {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
@@ -1686,11 +1688,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
                     </div>
-                    {useModulator ?
-                        <div id="modulator" className="ui items">
-                            <audio id="audio_output" controls></audio>
-                            <canvas id="wavStrip"></canvas>
-                        </div> : undefined }
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }

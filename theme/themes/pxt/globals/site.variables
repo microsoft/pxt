@@ -50,6 +50,8 @@
 
 @avatarUrl: data-uri("../docs/static/avatar.svg");
 
+@bubbleUrl: data-uri("../docs/static/bubble.svg");
+
 /*-------------------
    Menu
 --------------------*/
