@@ -137,7 +137,8 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             canvas: getCanvas(),
             lbr: lbrEnable,
             endCallback: function () {
-                getWaveFooter().style.display = 'none';
+                getWaveFooter().style.visibility = 'hidden';
+                getWaveFooter().style.opacity = '0';
                 console.log("Completed");
             }
         });
@@ -151,7 +152,8 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         resp.saveOnly = true;
 
         audio.ontimeupdate = renderWave;
-        getWaveFooter().style.display = 'block';
+        getWaveFooter().style.visibility = 'visible';
+        getWaveFooter().style.opacity = '1';
     } else {
         let hex = resp.outfiles[pxtc.BINARY_HEX]
         fn = pkg.genFileName(".hex");

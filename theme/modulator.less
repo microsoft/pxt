@@ -1,13 +1,16 @@
 
 #modulator {
     position: absolute;
+    display: block;
     top: calc(@mainMenuHeight - 0.5);
     left: 50px;
     width: 120px;
     height: 56px;
     background: @bubbleUrl no-repeat;
     z-index: 110;
-    display: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s linear 300ms, opacity 300ms;
 }
 
 #modulatorbubble {
