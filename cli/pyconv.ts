@@ -422,6 +422,7 @@ module py {
 
 
 import * as nodeutil from './nodeutil';
+import * as fs from 'fs';
 import U = pxt.Util;
 import B = pxt.blocks;
 
@@ -587,12 +588,16 @@ function getFullName(n: py.AST): string {
     else return pref + "?" + n.kind
 }
 
+function applyTypeMap(s: string) {
+    return U.lookup(typeMap, s) || s
+}
+
 function t2s(t: Type): string {
     t = find(t)
     if (t.primType)
         return t.primType
     else if (t.classType)
-        return getFullName(t.classType)
+        return applyTypeMap(getFullName(t.classType))
     else if (t.arrayType)
         return t2s(t.arrayType) + "[]"
     else
@@ -835,6 +840,10 @@ const prefixOps: Map<string> = {
     USub: "P-",
 }
 
+const typeMap: pxt.Map<string> = {
+    "adafruit_bus_device.i2c_device.I2CDevice": "pins.I2CDevice"
+}
+
 function stmts(ss: py.Stmt[]) {
     return B.mkBlock(ss.map(stmt))
 }
@@ -1052,7 +1061,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         return B.mkStmt(B.mkGroup(innerIf(n)))
     },
     With: (n: py.With) => {
-        if (n.items.length == 1 && isOfType(n.items[0].context_expr, "adafruit_bus_device.i2c_device.I2CDevice")) {
+        if (n.items.length == 1 && isOfType(n.items[0].context_expr, "pins.I2CDevice")) {
             let it = n.items[0]
             let id = getName(it.optional_vars)
             let res: B.JsNode[] = []
@@ -1061,15 +1070,11 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
                 id = quoteStr(id)
                 res.push(B.mkStmt(B.mkText("const " + id + " = "), expr(it.context_expr)))
             }
-            if (n.body.length > 1) {
-                res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
-                    ".", B.mkText("begin()"))))
-            }
+            res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
+                ".", B.mkText("begin()"))))
             U.pushRange(res, n.body.map(stmt))
-            if (n.body.length > 1) {
-                res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
-                    ".", B.mkText("end()"))))
-            }
+            res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
+                ".", B.mkText("end()"))))
             return B.mkGroup(res)
         }
 
@@ -1104,7 +1109,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         // didn't find string - just compile and quote; and hope for the best
         if (!msg)
             msg = B.mkGroup([B.mkText("`"), expr(ex), B.mkText("`")])
-        return B.mkStmt(B.H.mkCall("control.assert", [B.mkText("false"), msg]))
+        return B.mkStmt(B.H.mkCall("control.fail", [msg]))
     },
     Assert: (n: py.Assert) => B.mkStmt(B.H.mkCall("control.assert", exprs0([n.test, n.msg]))),
     Import: (n: py.Import) => {
@@ -1144,13 +1149,13 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
     Try: (n: py.Try) => {
         let r = [
             B.mkText("try"),
-            stmts(n.body),
+            stmts(n.body.concat(n.orelse)),
         ]
         for (let e of n.handlers) {
             r.push(B.mkText("catch ("), e.name ? quote(e.name) : B.mkText("_"))
             // This isn't JS syntax, but PXT doesn't support try at all anyway
             if (e.type)
-                r.push(B.mkText(" instanceof "), expr(e.type))
+                r.push(B.mkText("/* instanceof "), expr(e.type), B.mkText(" */"))
             r.push(B.mkText(")"), stmts(e.body))
         }
         if (n.finalbody.length)
@@ -1198,7 +1203,7 @@ function quoteStr(id: string) {
         return id
     else
         return id
-        //return id.replace(/([a-z0-9])_([a-zA-Z0-9])/g, (f: string, x: string, y: string) => x + y.toUpperCase())
+    //return id.replace(/([a-z0-9])_([a-zA-Z0-9])/g, (f: string, x: string, y: string) => x + y.toUpperCase())
 }
 
 function getName(e: py.Expr): string {
@@ -1413,8 +1418,6 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             }
         }
 
-        let sym = lookupSymbol(nm)
-
         let fn = expr(n.func)
 
         if (recvTp && recvTp.arrayType) {
@@ -1432,7 +1435,10 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             B.mkText(")")
         ]
 
-        if (cd) nodes.unshift(B.mkText("new "))
+        if (cd) {
+            nodes[0] = B.mkText(applyTypeMap(getFullName(cd)))
+            nodes.unshift(B.mkText("new "))
+        }
 
         return B.mkGroup(nodes)
     },
@@ -1614,16 +1620,22 @@ export function convertAsync(fns: string[]) {
                 })
             }
 
-            U.iterMap(js, (fn: string, js: any) => {
-                if (primFiles[fn]) {
-                    console.log("\n//")
-                    console.log("// *** " + fn + " ***")
-                    console.log("//\n")
+            let files: pxt.Map<string> = {}
 
+            U.iterMap(js, (fn: string, js: py.Module) => {
+                if (primFiles[fn]) {
+                    let s = "//\n// *** " + fn + " ***\n//\n\n"
                     let nodes = toTS(js)
                     let res = B.flattenNode(nodes)
-                    console.log(res.output)
+                    s += res.output
+                    let fn2 = js.name + ".ts"
+                    files[fn2] = (files[fn2] || "") + s
                 }
+            })
+
+            U.iterMap(files, (fn, s) => {
+                console.log("*** write " + fn)
+                fs.writeFileSync(fn, s)
             })
         })
 }
