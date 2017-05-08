@@ -1194,8 +1194,11 @@ function possibleDef(n: py.Name) {
 function quoteStr(id: string) {
     if (B.isReservedWord(id))
         return id + "_"
+    else if (!id)
+        return id
     else
         return id
+        //return id.replace(/([a-z0-9])_([a-zA-Z0-9])/g, (f: string, x: string, y: string) => x + y.toUpperCase())
 }
 
 function getName(e: py.Expr): string {
@@ -1458,7 +1461,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         let part = typeOf(n.value)
         let fd = getTypeField(part, n.attr)
         if (fd) unify(n.tsType, fd.type)
-        return B.mkInfix(expr(n.value), ".", B.mkText(n.attr))
+        return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
     },
     Subscript: (n: py.Subscript) => {
         if (n.slice.kind == "Index")
@@ -1531,15 +1534,16 @@ function stmt(e: py.Stmt): B.JsNode {
 
 // TODO based on lineno/col_offset mark which numbers are written in hex
 // TODO look at scopes of let
-// TODO emit proper namespaces
-// TODO I2C support
 // TODO fetch comments
 
 function toTS(mod: py.Module) {
     U.assert(mod.kind == "Module")
     resetCtx(mod)
     if (!mod.vars) mod.vars = {}
-    return mod.body.map(stmt)
+    return [
+        B.mkText("namespace " + mod.name + " "),
+        B.mkBlock(mod.body.map(stmt))
+    ]
 }
 
 export function convertAsync(fns: string[]) {
