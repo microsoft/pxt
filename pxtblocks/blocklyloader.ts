@@ -12,7 +12,7 @@ namespace pxt.blocks {
         images: '#5C2D91',
         variables: '#A80000',
         text: '#996600',
-        lists: '#D83B01'
+        lists: '#66672C'
     }
 
     export enum CategoryMode {
@@ -36,6 +36,11 @@ namespace pxt.blocks {
             field: "BOOL",
             block: "logic_boolean",
             defaultValue: "false"
+        },
+        "Array": {
+            field: "VAR",
+            block: "variables_get",
+            defaultValue: "list"
         }
     }
 
@@ -687,7 +692,7 @@ namespace pxt.blocks {
             case "boolean": block.setOutput(true, "Boolean"); break;
             case "void": break; // do nothing
             //TODO
-            default: block.setOutput(true, fn.retType);
+            default: block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
         }
 
         // hook up/down if return value is void
@@ -839,6 +844,10 @@ namespace pxt.blocks {
 
             if (!config.listsBlocks) {
                 removeCategory(tb, "Lists");
+                if (config.loopsBlocks) {
+                    const cat = categoryElement(tb, "Loops");
+                    cat.removeChild(cat.querySelector('block[type="controls_for_of"]'))
+                }
             }
             else {
                 showAdvanced = true;
@@ -1158,6 +1167,7 @@ namespace pxt.blocks {
         initOnStart();
         initMath();
         initVariables();
+        initLists();
         initLoops();
         initLogic();
         initText();
@@ -1204,6 +1214,17 @@ namespace pxt.blocks {
     }
 
     export let openHelpUrl: (url: string) => void;
+
+    function initLists() {
+        let msg: any = Blockly.Msg;
+        msg.LISTS_CREATE_EMPTY_TITLE = lf("create empty list");
+        msg.LISTS_CREATE_WITH_INPUT_WITH = lf("create list with");
+        msg.LISTS_CREATE_WITH_CONTAINER_TITLE_ADD = lf("list");
+        msg.LISTS_CREATE_WITH_ITEM_TITLE = lf("value");
+
+        installBuiltinHelpInfo("lists_create_with");
+        installBuiltinHelpInfo("lists_length");
+    }
 
     function initLoops() {
         let msg: any = Blockly.Msg;
@@ -1732,6 +1753,96 @@ namespace pxt.blocks {
                     '/blocks/javascript-blocks',
                     "#717171"
                 );
+            }
+        };
+
+        Blockly.Blocks["controls_for_of"] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": lf("for element %1 of %2"),
+                    "args0": [
+                        {
+                            "type": "field_variable",
+                            "name": "VAR",
+                            "variable": lf("{id:var}value")
+                            // Please note that most multilingual characters
+                            // cannot be used as variable name at this point.
+                            // Translate or decide the default variable name
+                            // with care.
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "LIST",
+                            "check": "Array"
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": blockColors['loops'],
+                    "inputsInline": true
+                });
+
+                this.appendStatementInput('DO')
+                    .appendField(lf("{id:for_of}do"));
+
+                setBuiltinHelpInfo(this, "controls_for_of");
+            }
+        };
+
+        Blockly.Blocks["lists_index_get"] = {
+            init: function() {
+                this.jsonInit({
+                    "message0": lf("%1 get value at %2"),
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "LIST",
+                            "check": "Array"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "INDEX",
+                            "check": "Number"
+                        }
+                    ],
+                    "colour": blockColors['lists'],
+                    "inputsInline": true
+                });
+
+                this.setPreviousStatement(false);
+                this.setNextStatement(false);
+                this.setOutput(true);
+                setBuiltinHelpInfo(this, "lists_index_get");
+            }
+        };
+
+        Blockly.Blocks["lists_index_set"] = {
+            init: function() {
+                this.jsonInit({
+                    "message0": lf("%1 set value at %2 to %3"),
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "LIST",
+                            "check": "Array"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "INDEX",
+                            "check": "Number"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "VALUE",
+                            "check": null
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": blockColors['lists'],
+                    "inputsInline": true
+                });
+                setBuiltinHelpInfo(this, "lists_index_set");
             }
         };
     }

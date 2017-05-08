@@ -500,6 +500,10 @@ ${output}</xml>`;
                         return getPrefixUnaryExpression(n as ts.PrefixUnaryExpression);
                     case SK.PropertyAccessExpression:
                         return getPropertyAccessExpression(n as ts.PropertyAccessExpression);
+                    case SK.ArrayLiteralExpression:
+                        return getArrayLiteralExpression(n as ts.ArrayLiteralExpression);
+                    case SK.ElementAccessExpression:
+                        return getElementAccessExpression(n as ts.ElementAccessExpression);
                     case SK.CallExpression:
                         return getStatementBlock(n, undefined, undefined, true) as any;
                     default:
@@ -728,6 +732,25 @@ ${output}</xml>`;
             }
         }
 
+        function getArrayLiteralExpression(n: ts.ArrayLiteralExpression): ExpressionNode {
+            return {
+                kind: "expr",
+                type: "lists_create_with",
+                inputs: n.elements.map((e, i) => getValue("ADD" + i, e)),
+                mutation: {
+                    "items": n.elements.length.toString()
+                }
+            };
+        }
+
+        function getElementAccessExpression(n: ts.ElementAccessExpression): ExpressionNode {
+            return {
+                kind: "expr",
+                type: "lists_index_get",
+                inputs: [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression)]
+            };
+        }
+
         function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false): StatementNode {
             const node = n as ts.Node;
             let stmt: StatementNode;
@@ -772,6 +795,9 @@ ${output}</xml>`;
                         break;
                     case SK.ForStatement:
                         stmt = getForStatement(node as ts.ForStatement);
+                        break;
+                    case SK.ForOfStatement:
+                        stmt = getForOfStatement(node as ts.ForOfStatement);
                         break;
                     case SK.CallExpression:
                         stmt = getCallStatement(node as ts.CallExpression);
@@ -879,16 +905,16 @@ ${output}</xml>`;
         }
 
         function getBinaryExpressionStatement(n: ts.BinaryExpression): StatementNode {
-            if (n.left.kind !== SK.Identifier) {
-                error(n, Util.lf("Only variable names may be assigned to"));
-                return;
-            }
-
             const name = (n.left as ts.Identifier).text;
 
             switch (n.operatorToken.kind) {
                 case SK.EqualsToken:
-                    return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
+                    if (n.left.kind === SK.Identifier) {
+                        return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
+                    }
+                    else {
+                        return getArraySetBlock(n.left as ts.ElementAccessExpression, n.right);
+                    }
                 case SK.PlusEqualsToken:
                     return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
@@ -1004,6 +1030,20 @@ ${output}</xml>`;
             }
         }
 
+        function getForOfStatement(n: ts.ForOfStatement): StatementNode {
+            const initializer = n.initializer as ts.VariableDeclarationList;
+            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
+            const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
+
+            return {
+                kind: "statement",
+                type: "controls_for_of",
+                inputs: [getValue("LIST", n.expression)],
+                fields: [getField("VAR", renamed)],
+                handlers: [{ name: "DO", statement: getStatementBlock(n.statement) }]
+            };
+        }
+
         function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
             const renamed = getVariableName(name);
             varUsages[renamed] = true;
@@ -1013,6 +1053,18 @@ ${output}</xml>`;
                 type: changed ? "variables_change" : "variables_set",
                 inputs: [getValue("VALUE", value, ShadowType.Number)],
                 fields: [getField("VAR", renamed)]
+            };
+        }
+
+        function getArraySetBlock(left: ts.ElementAccessExpression, right: ts.Expression): StatementNode {
+            return {
+                kind: "statement",
+                type: "lists_index_set",
+                inputs: [
+                    getValue("LIST", left.expression),
+                    getValue("INDEX", left.argumentExpression, ShadowType.Number),
+                    getValue("VALUE", right)
+                ]
             };
         }
 
@@ -1422,6 +1474,8 @@ ${output}</xml>`;
                 return checkBinaryExpression(node as ts.BinaryExpression, blocksInfo);
             case SK.ForStatement:
                 return checkForStatement(node as ts.ForStatement);
+            case SK.ForOfStatement:
+                return checkForOfStatement(node as ts.ForOfStatement);
         }
 
         return Util.lf("Unsupported statement in block: {0}", SK[node.kind]);
@@ -1475,20 +1529,37 @@ ${output}</xml>`;
             }
         }
 
+        function checkForOfStatement(n: ts.ForOfStatement) {
+            if (n.initializer.kind !== SK.VariableDeclarationList) {
+                return Util.lf("only variable declarations are permitted in for of loop initializers");
+            }
+
+            // VariableDeclarationList in ForOfStatements are guranteed to have one declaration
+            return undefined;
+        }
+
         function checkBinaryExpression(n: ts.BinaryExpression, blocksInfo: BlocksInfo) {
-            if (n.left.kind !== SK.Identifier) {
+            if (n.left.kind !== SK.Identifier && n.left.kind !== SK.ElementAccessExpression) {
                 return Util.lf("Only variable names may be assigned to")
             }
 
-            switch (n.operatorToken.kind) {
-                case SK.EqualsToken:
-                    return checkExpression(n.right, blocksInfo);
-                case SK.PlusEqualsToken:
-                case SK.MinusEqualsToken:
-                    return undefined;
-                default:
-                    return Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]);
+            if (n.left.kind === SK.ElementAccessExpression) {
+                if (n.operatorToken.kind !== SK.EqualsToken) {
+                    return Util.lf("Element access expresions may only be assigned to using =");
+                } 
             }
+            else {
+                switch (n.operatorToken.kind) {
+                    case SK.EqualsToken:
+                        return checkExpression(n.right, blocksInfo);
+                    case SK.PlusEqualsToken:
+                    case SK.MinusEqualsToken:
+                        return undefined;
+                    default:
+                        return Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]);
+                }
+            }
+            return undefined;
         }
 
         function checkArrowFunction(n: ts.ArrowFunction) {
@@ -1732,6 +1803,8 @@ ${output}</xml>`;
             case SK.TrueKeyword:
             case SK.FalseKeyword:
             case SK.ExpressionStatement:
+            case SK.ArrayLiteralExpression:
+            case SK.ElementAccessExpression:
                 return undefined;
             case SK.ParenthesizedExpression:
                 return checkExpression((n as ts.ParenthesizedExpression).expression, blocksInfo);

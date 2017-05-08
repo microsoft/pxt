@@ -19,6 +19,13 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
+            <block type="controls_for_of">
+                <value name="LIST">
+                    <shadow type="variables_get">
+                        <field name="VAR">myList</field>
+                    </shadow>
+                </value>
+            </block>
         </category>
         <category name="Logic" nameid="logic" colour="#006970" category="49" iconclass="blocklyTreeIconlogic">
             <block type="controls_if" gap="8">
@@ -182,7 +189,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </block>
             </category>
         </category>
-        <category colour="#D83B01" name="Lists" nameid="lists" category="45" iconclass="blocklyTreeIconlists" advanced="true">
+        <category colour="#66672C" name="Lists" nameid="lists" category="45" iconclass="blocklyTreeIconlists" expandedclass="blocklyTreeIconlists" advanced="true">
             <block type="lists_create_with">
                 <mutation items="1"></mutation>
                 <value name="ADD0">
@@ -191,9 +198,46 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
+            <block type="lists_create_with">
+                <mutation items="2"></mutation>
+                <value name="ADD0">
+                    <shadow type="text">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+                <value name="ADD1">
+                    <shadow type="text">
+                        <field name="TEXT"></field>
+                    </shadow>
+                </value>
+            </block>
             <block type="lists_length"></block>
+            <block type="lists_index_get">
+                <value name="LIST">
+                    <block type="variables_get">
+                        <field name="VAR">myList</field>
+                    </block>
+                </value>
+                <value name="INDEX">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="lists_index_set">
+                <value name="LIST">
+                    <block type="variables_get">
+                        <field name="VAR">myList</field>
+                    </block>
+                </value>
+                <value name="INDEX">
+                    <shadow type="math_number">
+                        <field name="NUM">0</field>
+                    </shadow>
+                </value>
+            </block>
         </category>
-        <category colour="#996600" name="Text" nameid="text" category="46" iconclass="blocklyTreeIcontext" advanced="true">
+        <category colour="#996600" name="Text" nameid="text" category="46" iconclass="blocklyTreeIcontext" expandedclass="blocklyTreeIcontext" advanced="true">
             <block type="text"></block>
             <block type="text_length">
                 <value name="VALUE">

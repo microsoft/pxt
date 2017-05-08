@@ -96,6 +96,11 @@ namespace pxt.blocks {
                 url: 'blocks/loops/for',
                 category: 'loops'
             },
+            'controls_for_of': {
+                name: Util.lf("a loop that repeats for each value in an array"),
+                url: 'blocks/loops/for_of',
+                category: 'loops'
+            },
             'math_op2': {
                 name: Util.lf("minimum or maximum of 2 numbers"),
                 url: '/blocks/math',
@@ -169,6 +174,30 @@ namespace pxt.blocks {
                 tooltip: Util.lf("If a value is true, then do some statements."),
                 url: '/blocks/logic/if',
                 category: 'logic'
+            },
+            'lists_create_with': {
+                name: Util.lf("create a list"),
+                tooltip: Util.lf("Creates a new list."),
+                url: '/blocks/lists/create',
+                category: 'lists'
+            },
+            'lists_length': {
+                name: Util.lf("list length"),
+                tooltip: Util.lf("Returns the number of items in a list."),
+                url: '/blocks/lists/length',
+                category: 'lists'
+            },
+            'lists_index_get': {
+                name: Util.lf("get a value in a list"),
+                tooltip: Util.lf("Returns the value at the given index in a list."),
+                url: '/blocks/lists/get',
+                category: 'lists'
+            },
+            'lists_index_set': {
+                name: Util.lf("set a value in a list"),
+                tooltip: Util.lf("Sets the value at the given index in a list"),
+                url: '/blocks/lists/set',
+                category: 'lists'
             },
             'logic_compare': {
                 name: Util.lf("comparing two numbers"),

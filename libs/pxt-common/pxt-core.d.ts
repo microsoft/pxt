@@ -12,37 +12,42 @@ interface Array<T> {
       * Appends new elements to an array.
       * @param items New elements of the Array.
       */
+    //% help=lists/push
     //% shim=Array_::push weight=75
-    //% blockId="array_push" block="push into %this|with last item %item" blockNamespace="lists"
+    //% blockId="array_push" block="%myList| add value %value| to end" blockNamespace="lists"
     push(item: T): void;
 
     /**
       * Removes the last element from an array and returns it.
       */
+    //% help=lists/pop
     //% shim=Array_::pop weight=74
-    //% blockId="array_pop" block="pop last item from %this" blockNamespace="lists"
+    //% blockId="array_pop" block="get and remove last value from %myList" blockNamespace="lists"
     pop(): T;
 
     /**
       * Reverses the elements in an Array. The first array element becomes the last, and the last array element becomes the first.
       */
-    //% helper=arrayReverse weight=10
-    //% blockId="array_reverse" block="reverse %this" blockNamespace="lists"
+    //% help=lists/reverse
+    //% helper=arrayReverse weight=10 advanced=true
+    //% blockId="array_reverse" block="reverse %myList" blockNamespace="lists"
     reverse(): void;
 
     /**
       * Removes the first element from an array and returns that element. This method changes the length of the array.
       */
-    //% helper=arrayShift weight=70
-    //% blockId="array_shift" block="shift first item from %this" blockNamespace="lists"
+    //% help=lists/shift
+    //% helper=arrayShift weight=70 advanced=true
+    //% blockId="array_shift" block="get and remove first value from %myList" blockNamespace="lists"
     shift(): T;
 
     /**
       * Adds one element to the beginning of an array and returns the new length of the array.
       * @param element to insert at the start of the Array.
       */
-    //% helper=arrayUnshift weight=69
-    //% blockId="array_unshift" block="unshift into %this|with first item %item" blockNamespace="lists"
+    //% help=lists/unshift
+    //% helper=arrayUnshift weight=69 advanced=true
+    //% blockId="array_unshift" block="%myList| insert %value| at beginning" blockNamespace="lists"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value:T): number;
 
@@ -51,8 +56,8 @@ interface Array<T> {
       * @param start The beginning of the specified portion of the array. eg: 0
       * @param end The end of the specified portion of the array. eg: 0
       */
-    //% helper=arraySlice weight=41
-    //% blockId="array_slice" block="slice %this|from %start|to %end" blockNamespace="lists"
+    //% help=lists/slice
+    //% helper=arraySlice weight=41 advanced=true blockNamespace="lists"
     slice(start: number, end: number): T[];
 
     /**
@@ -98,8 +103,9 @@ interface Array<T> {
     removeElement(element:T) : boolean;
 
     /** Removes the object at position index. */
-    //% shim=Array_::removeAt weight=49
-    //% blockId="array_removeat" block="remove from %this|at %index" blockNamespace="lists"
+    //% help=lists/removeat
+    //% shim=Array_::removeAt weight=49 advanced=true
+    //% blockId="array_removeat" block="%myList| remove value at %index" blockNamespace="lists"
     removeAt(index:number) : T;
 
     /**
@@ -107,8 +113,9 @@ interface Array<T> {
      * @param index the zero-based position in the list to insert the value, eg: 0
      * @param the value to insert, eg: 0
      */
-    //% shim=Array_::insertAt weight=84
-    //% blockId="array_insertAt" block="insert in %this|at %index|with value %value" blockNamespace="lists"
+    //% help=lists/insertat
+    //% shim=Array_::insertAt weight=84 advanced=true
+    //% blockId="array_insertAt" block="%myList| insert at %index| value %value" blockNamespace="lists"
     insertAt(index:number, value: T) : void;
 
     /**
@@ -116,16 +123,17 @@ interface Array<T> {
       * @param item The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
-    //% shim=Array_::indexOf weight=50
-    //% blockId="array_indexof" block="index in %this|of %item" blockNamespace="lists"
+    //% help=lists/indexof
+    //% shim=Array_::indexOf weight=50 advanced=true
+    //% blockId="array_indexof" block="%myList| find index of %value" blockNamespace="lists"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
      * Gets the value at a particular index
      * @param index the zero-based position in the list of the item, eg: 0
      */
+    //% help=lists/get
     //% shim=Array_::getAt weight=85
-    //% blockId="array_get" block="get from %this|at %index" blockNamespace="lists"
     get(index: number): T;
 
     /**
@@ -133,8 +141,8 @@ interface Array<T> {
      * @param index the zero-based position in the list to store the value, eg: 0
      * @param the value to insert, eg: 0
      */
+    //% help=lists/set
     //% shim=Array_::setAt weight=84
-    //% blockId="array_set" block="set in %this|at %index|with value %value" blockNamespace="lists"
     set(index: number, value : T) : void;
 
     [n: number]: T;
@@ -149,7 +157,7 @@ declare interface String {
      */
     //% shim=String_::concat weight=80
     //% blockId="string_concat" blockNamespace="text"
-    // block="join %this=text|%other"
+    // block="join %myList=text|%other"
     concat(other: string): string;
 
     /**
@@ -157,7 +165,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=77
-    //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
+    //% blockId="string_get" block="char from %myList=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -177,7 +185,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
-    //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
+    //% blockId="string_compare" block="compare %myList=text| to %that" blockNamespace="text"
     compare(that: string): number;
 
     /**
@@ -186,7 +194,7 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
-    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    //% blockId="string_substr" block="substring of %myList=text|from %start|of length %length" blockNamespace="text"
     substr(start:number, length?:number): string;
 
     // This block is currently disabled, as it does not compile in some targets
@@ -194,7 +202,7 @@ declare interface String {
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
     //% blockId="string_isempty" blockNamespace="text"
-    // block="%this=text| is empty"
+    // block="%myList=text| is empty"
     isEmpty() : boolean;
 
     [index: number]: string;
