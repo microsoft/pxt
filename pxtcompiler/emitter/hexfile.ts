@@ -279,7 +279,7 @@ namespace ts.pxtc {
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
-            
+
             currentSetup = extInfo.sha;
             currentHexInfo = hexinfo;
 
