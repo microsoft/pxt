@@ -703,6 +703,15 @@ ${output}</xml>`;
                 error(n);
                 return;
             }
+
+            if (callInfo.attrs.blockId === "lists_length") {
+                return {
+                    kind: "expr",
+                    type: U.htmlEscape(callInfo.attrs.blockId),
+                    inputs: [getValue("VALUE", n.expression)]
+                };
+            }
+
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
             const parentCallInfo: pxtc.CallInfo = n.parent && (n.parent as any).callInfo;
@@ -1546,7 +1555,7 @@ ${output}</xml>`;
             if (n.left.kind === SK.ElementAccessExpression) {
                 if (n.operatorToken.kind !== SK.EqualsToken) {
                     return Util.lf("Element access expresions may only be assigned to using =");
-                } 
+                }
             }
             else {
                 switch (n.operatorToken.kind) {
@@ -1828,7 +1837,7 @@ ${output}</xml>`;
         function checkPropertyAccessExpression(n: ts.PropertyAccessExpression) {
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
             if (callInfo) {
-                if (callInfo.attrs.blockIdentity || callInfo.decl.kind === SK.EnumMember) {
+                if (callInfo.attrs.blockIdentity || callInfo.decl.kind === SK.EnumMember || callInfo.attrs.blockId === "lists_length") {
                     return undefined;
                 }
                 else if (callInfo.attrs.fixedInstance && n.parent && n.parent.parent &&
