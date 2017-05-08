@@ -1012,6 +1012,12 @@ namespace pxt.blocks {
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
 
+        r.forEach(l => {
+            if (l.type === NT.Block) {
+                l.id = b.id
+            }
+        });
+
         if (comments.length) {
             addCommentNodes(comments, r)
         }
@@ -1295,10 +1301,17 @@ namespace pxt.blocks {
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
+        let bestChunk: SourceInterval;
+        let bestChunkLength: number;
         for (let i = 0; i < sourceMap.length; ++i) {
             let chunk = sourceMap[i];
-            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length)
-                return chunk.id;
+            if (chunk.start <= loc.start && chunk.end > loc.start + loc.length && (!bestChunk || bestChunkLength > chunk.end - chunk.start)) {
+                bestChunk = chunk;
+                bestChunkLength = chunk.end - chunk.start;
+            }
+        }
+        if (bestChunk) {
+            return bestChunk.id;
         }
         return undefined;
     }

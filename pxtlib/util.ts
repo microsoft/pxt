@@ -189,6 +189,12 @@ namespace ts.pxtc.Util {
         return str.slice(0, prefix.length) == prefix
     }
 
+    export function contains(str: string, contains: string) {
+        if (str.length < contains.length) return false
+        if (contains.length == 0) return true
+        return str.indexOf(contains) > -1
+    }
+
     export function replaceAll(str: string, old: string, new_: string): string {
         if (!old) return str;
         return str.split(old).join(new_);
@@ -307,17 +313,6 @@ namespace ts.pxtc.Util {
     export function randomPick<T>(arr: T[]): T {
         if (arr.length == 0) return null;
         return arr[randomUint32() % arr.length];
-    }
-
-    let awesomeAdj: string[];
-    export function getAwesomeAdj(): string {
-        if (!awesomeAdj)
-            awesomeAdj = (
-                lf("amazing, astonishing, astounding, awe-inspiring, awesome, breathtaking, classic, cool, curious, distinct, exceptional, exclusive, extraordinary, fabulous, fantastic, glorious, great, ") +
-                lf("incredible, magical, marvellous, marvelous, mind-blowing, mind-boggling, miraculous, peculiar, phenomenal, rad, rockin', special, spectacular, startling, stunning, super-cool, ") +
-                lf("superior, supernatural, terrific, unbelievable, unearthly, unique, unprecedented, unusual, weird, wonderful, wondrous")
-            ).split(/\s*[,،、]\s*/)
-        return randomPick(awesomeAdj)
     }
 
     export function isoTime(time: number) {
@@ -485,7 +480,7 @@ namespace ts.pxtc.Util {
         return res;
     }
 
-    export function toHex(bytes: Uint8Array) {
+    export function toHex(bytes: ArrayLike<number>) {
         let r = ""
         for (let i = 0; i < bytes.length; ++i)
             r += ("0" + bytes[i].toString(16)).slice(-2)

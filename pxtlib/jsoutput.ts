@@ -245,6 +245,7 @@ namespace pxt.blocks {
 
     export function flattenNode(app: JsNode[]) {
         let sourceMap: SourceInterval[] = [];
+        let sourceMapById: pxt.Map<SourceInterval> = {};
         let output = ""
         let indent = ""
         let variables: Map<string>[] = [{}];
@@ -340,7 +341,16 @@ namespace pxt.blocks {
             let end = getCurrentLine();
 
             if (n.id && start != end) {
-                sourceMap.push({ id: n.id, start: start, end: end })
+                if (sourceMapById[n.id]) {
+                    const node = sourceMapById[n.id];
+                    node.start = Math.min(node.start, start);
+                    node.end = Math.max(node.end, end);
+                }
+                else {
+                    const interval = { id: n.id, start: start, end: end }
+                    sourceMapById[n.id] = interval;
+                    sourceMap.push(interval)
+                }
             }
         }
 

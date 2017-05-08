@@ -39,9 +39,9 @@ namespace ts.pxtc.assembler {
         public friendlyFmt: string;
         public code: string;
         private ei: AbstractProcessor;
-        public is32bit: boolean;
+        public canBeShared = false;
 
-        constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public jsFormat: string) {
+        constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public is32bit: boolean) {
             assert((opcode & mask) == opcode)
 
             this.ei = ei;
@@ -56,8 +56,6 @@ namespace ts.pxtc.assembler {
             let words = tokenize(format)
             this.name = words[0]
             this.args = words.slice(1)
-            // a bit of a hack here...
-            this.is32bit = (jsFormat != undefined)
         }
 
         emit(ln: Line): EmitResult {
@@ -190,6 +188,8 @@ namespace ts.pxtc.assembler {
         public location: number;
         public instruction: Instruction;
         public numArgs: number[];
+        public opcode: number;
+        public stack: number;
 
         constructor(public bin: File, public text: string) {
         }
@@ -216,6 +216,8 @@ namespace ts.pxtc.assembler {
             this.words = tokenize(s) || [];
             if (this.words.length == 0)
                 this.type = "empty";
+            else if (this.words[0][0] == "@")
+                this.type = "directive";
         }
     }
 
@@ -237,7 +239,7 @@ namespace ts.pxtc.assembler {
         public lookupExternalLabel: (name: string) => number;
         public normalizeExternalLabel = (n: string) => n;
         private ei: AbstractProcessor;
-        private lines: Line[];
+        public lines: Line[];
         private currLineNo: number = 0;
         private realCurrLineNo: number;
         private currLine: Line;
@@ -617,7 +619,7 @@ namespace ts.pxtc.assembler {
                 // push {...}
                 // @stackmark locals   ; locals := sp
                 // ... some push/pops ...
-                // ldr r0, [pc, locals@3] ; load local number 3
+                // ldr r0, [sp, locals@3] ; load local number 3
                 // ... some push/pops ...
                 // @stackempty locals ; expect an empty stack here
                 case "@stackmark":
@@ -684,6 +686,8 @@ namespace ts.pxtc.assembler {
                 if (this.checkStack && this.stack < 0)
                     this.pushError(lf("stack underflow"))
                 ln.location = this.location()
+                ln.opcode = op.opcode
+                ln.stack = op.stack
                 this.emitShort(op.opcode);
                 if (op.opcode2 != null)
                     this.emitShort(op.opcode2);
@@ -725,12 +729,49 @@ namespace ts.pxtc.assembler {
             this.pushError(lf("assembly error"), hints);
         }
 
-        private mkLine(tx: string) {
-            let l = new Line(this, tx);
-            l.scope = this.scope;
-            l.lineNo = this.currLineNo;
-            this.lines.push(l);
-            return l;
+        public buildLine(tx: string, lst: Line[]) {
+            let mkLine = (tx: string) => {
+                let l = new Line(this, tx);
+                l.scope = this.scope;
+                l.lineNo = this.currLineNo;
+                lst.push(l)
+                return l;
+            }
+
+            let l = mkLine(tx);
+            let words = tokenize(l.text) || [];
+            l.words = words;
+
+            let w0 = words[0] || ""
+
+            if (w0.charAt(w0.length - 1) == ":") {
+                let m = /^([\.\w]+):$/.exec(words[0])
+                if (m) {
+                    l.type = "label";
+                    l.text = m[1] + ":"
+                    l.words = [m[1]]
+                    if (words.length > 1) {
+                        words.shift()
+                        l = mkLine(tx.replace(/^[^:]*:/, ""))
+                        l.words = words
+                        w0 = words[0] || ""
+                    } else {
+                        return;
+                    }
+                }
+            }
+
+            let c0 = w0.charAt(0)
+            if (c0 == "." || c0 == "@") {
+                l.type = "directive";
+                if (l.words[0] == "@scope")
+                    this.handleDirective(l);
+            } else {
+                if (l.words.length == 0)
+                    l.type = "empty";
+                else
+                    l.type = "instruction";
+            }
         }
 
         private prepLines(text: string) {
@@ -744,41 +785,7 @@ namespace ts.pxtc.assembler {
 
                 this.currLineNo++;
                 this.realCurrLineNo++;
-
-                let l = this.mkLine(tx);
-                let words = tokenize(l.text) || [];
-                l.words = words;
-
-                let w0 = words[0] || ""
-
-                if (w0.charAt(w0.length - 1) == ":") {
-                    let m = /^([\.\w]+):$/.exec(words[0])
-                    if (m) {
-                        l.type = "label";
-                        l.text = m[1] + ":"
-                        l.words = [m[1]]
-                        if (words.length > 1) {
-                            words.shift()
-                            l = this.mkLine(tx.replace(/^[^:]*:/, ""))
-                            l.words = words
-                            w0 = words[0] || ""
-                        } else {
-                            return;
-                        }
-                    }
-                }
-
-                let c0 = w0.charAt(0)
-                if (c0 == "." || c0 == "@") {
-                    l.type = "directive";
-                    if (l.words[0] == "@scope")
-                        this.handleDirective(l);
-                } else {
-                    if (l.words.length == 0)
-                        l.type = "empty";
-                    else
-                        l.type = "instruction";
-                }
+                this.buildLine(tx, this.lines)
             })
         }
 
@@ -832,9 +839,14 @@ namespace ts.pxtc.assembler {
         public getSource(clean: boolean) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
+            let lenFrag = this.labels["_frag_start"] || 0
+            if (lenFrag) lenFrag = this.labels["_js_end"] - lenFrag
+            let lenLit = this.labels["_program_end"]
+            if (lenLit) lenLit -= this.labels["_js_end"]
             let res =
                 // ARM-specific
-                lf("; thumb size: {0} bytes; src size {1} bytes\n", lenThumb, lenTotal - lenThumb) +
+                lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
+                    lenThumb, lenFrag, lenLit, lenTotal - lenThumb) +
                 lf("; assembly: {0} lines\n", this.lines.length) +
                 this.stats + "\n\n"
 
@@ -925,6 +937,11 @@ namespace ts.pxtc.assembler {
 
             if (this.errors.length > 0)
                 return;
+
+            this.ei.expandLdlit(this);
+            this.ei.commonalize(this);
+            this.labels = {};
+            this.iterLines();
 
             this.finalEmit = true;
             this.reallyFinalEmit = this.disablePeepHole;
@@ -1025,6 +1042,11 @@ namespace ts.pxtc.assembler {
             assert(false)
         }
 
+        public commonalize(file: assembler.File): void {
+        }
+        public expandLdlit(f: File): void {
+        }
+
         protected addEnc = (n: string, p: string, e: (v: number) => number) => {
             let ee: Encoder = {
                 name: n,
@@ -1068,11 +1090,12 @@ namespace ts.pxtc.assembler {
         }
 
 
-        protected addInst = (name: string, code: number, mask: number, jsFormat?: string) => {
-            let ins = new Instruction(this, name, code, mask, jsFormat)
+        protected addInst = (name: string, code: number, mask: number, is32Bit?: boolean) => {
+            let ins = new Instruction(this, name, code, mask, is32Bit)
             if (!this.instructions.hasOwnProperty(ins.name))
                 this.instructions[ins.name] = [];
             this.instructions[ins.name].push(ins)
+            return ins
         }
     }
 

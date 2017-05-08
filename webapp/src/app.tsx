@@ -21,6 +21,7 @@ import * as appcache from "./appcache";
 import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
 import * as share from "./share";
+import * as lang from "./lang";
 import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as filelist from "./filelist";
@@ -93,6 +94,7 @@ export class ProjectView
     scriptSearch: scriptsearch.ScriptSearch;
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
+    languagePicker: lang.LanguagePicker;
     tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
 
@@ -796,6 +798,7 @@ export class ProjectView
     }
 
     newEmptyProject(name?: string, documentation?: string) {
+        this.setState({ tutorialOptions: {} });
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name, documentation
@@ -814,7 +817,7 @@ export class ProjectView
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
-        cfg.name = options.name || lf("Untitled") // pxt.U.fmt(cfg.name, Util.getAwesomeAdj());
+        cfg.name = options.name || lf("Untitled");
         cfg.documentation = options.documentation;
         let files: pxt.workspace.ScriptText = Util.clone(options.prj.files)
         if (options.filesOverride)
@@ -1388,6 +1391,10 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.shareEditor.show(header);
     }
 
+    selectLang() {
+        this.languagePicker.show();
+    }
+
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<string> {
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
@@ -1550,6 +1557,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
         const traceTooltip = this.state.tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo");
+        const selectLanguage = targetTheme.selectLanguage;
 
         const consentCookie = () => {
             pxt.storage.setLocal(cookieKey, "1");
@@ -1598,8 +1606,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
                                 {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             <div className="right menu">
@@ -1611,6 +1619,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } /> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } /> : undefined}
                                         <div className="ui divider"></div>
+                                        {selectLanguage ? <sui.Item icon="xicon globe" role="menuitem" text={lf("Language") } onClick={() => this.selectLang() } /> : undefined }
                                         {targetTheme.highContrast ? <sui.Item role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() } /> : undefined }
                                         {
                                             // we always need a way to clear local storage, regardless if signed in or not
@@ -1683,6 +1692,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
@@ -2050,6 +2060,10 @@ function initExtensionsAsync(): Promise<void> {
                     pxt.debug(`\tadded hex importer ${fi.id}`);
                     theEditor.hexFileImporters.push(fi);
                 });
+            if (res.fieldEditors)
+                res.fieldEditors.forEach(fi => {
+                    pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                })
         });
 }
 
@@ -2096,10 +2110,15 @@ $(document).ready(() => {
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            const lang = mlang ? mlang[2] : (pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
+            if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
+                lang.setCookieLang(mlang[2]);
+                window.location.hash = window.location.hash.replace(mlang[0], "");
+            }
+            const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-            if (lang) pxt.tickEvent("locale." + lang + (live ? ".live" : ""));
-            return Util.updateLocalizationAsync(config.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live);
+            if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));
+            lang.initialLang = useLang;
+            return Util.updateLocalizationAsync(config.commitCdnUrl, useLang, pxt.appTarget.versions.pxtCrowdinBranch, live);
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())

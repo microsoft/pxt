@@ -40,6 +40,8 @@
     * [Functions](/javascript/functions)
     * [Types](/javascript/types)
     * [Classes](/javascript/classes)
+    * [Interfaces](/javascript/interfaces)
+    * [Generics](/javascript/generics)
 
 ## Types #types
 

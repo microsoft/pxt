@@ -26,8 +26,6 @@ import * as gdb from './gdb';
 import * as pyconv from './pyconv';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
-const rtlcss = require('rtlcss');
-const autoprefixer = require('autoprefixer');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
@@ -885,7 +883,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
-        "@targetEditorJs@" : targetEditorJs
+        "@targetEditorJs@": targetEditorJs
     }
 
     if (opts.localDir) {
@@ -1376,6 +1374,9 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
+    const rtlcss = require('rtlcss');
+    const autoprefixer = require('autoprefixer');
+
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1516,6 +1517,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                             newProject.config.dependencies[k] = "*";
                         }
                     });
+                    if (newProject.config.icon)
+                        newProject.config.icon = uploadArtFile(newProject.config.icon);
                 } else {
                     newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
                 }
@@ -1567,6 +1570,10 @@ function buildTargetCoreAsync() {
     return forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
+        const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
+        if (config && config.additionalFilePath) {
+            dirsToWatch.push(path.resolve(config.additionalFilePath));
+        }
 
         if (isPrj) {
             forceCloudBuild = true;
@@ -1763,11 +1770,10 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     } else if (parsed.flags["pkg"]) {
         justServe = true
         packaged = true
-    } else if (parsed.flags["noBrowser"]) {
-        justServe = true
+    }
+    if (parsed.flags["noBrowser"]) {
         globalConfig.noAutoStart = true
     }
-
     if (parsed.flags["sourceMaps"]) {
         includeSourceMaps = true;
     }
@@ -1802,6 +1808,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             electronHandlers,
             port: parsed.flags["port"] as number || 0,
             wsPort: parsed.flags["wsport"] as number || 0,
+            hostname: parsed.flags["hostname"] as string || "",
             browser: parsed.flags["browser"] as string,
             serial: !parsed.flags["noSerial"]
         }))
@@ -2471,8 +2478,11 @@ function runCoreAsync(res: pxtc.CompileResult) {
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
         let r = new pxsim.Runtime(f)
         pxsim.Runtime.messagePosted = (msg) => {
-            if (msg.type == "serial")
-                console.log("SERIAL:", (msg as any).data)
+            if (msg.type == "serial") {
+                let d = (msg as any).data
+                if (typeof d == "string") d = d.replace(/\n$/, "")
+                console.log("SERIAL:", d)
+            }
         }
         r.errorHandler = (e) => {
             throw e;
@@ -3608,14 +3618,20 @@ export function runAsync() {
         .then((compileOpts) => { });
 }
 
+function runFloatAsync() {
+    pxt.appTarget.compile.floatingPoint = true
+    return runAsync()
+}
+
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
         .then((compileOpts) => { });
 }
 
 export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    let buf: string = "";
     serial.monitorSerial((info, buffer) => {
-        console.log(buffer.toString('utf8'));
+        process.stdout.write(buffer);
     })
     return Promise.resolve();
 }
@@ -4117,6 +4133,7 @@ function initCommands() {
         onlineHelp: true
     }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
+    advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
@@ -4217,6 +4234,12 @@ function initCommands() {
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
+            hostname: {
+                description: "hostname to run serve, default localhost",
+                aliases: ["h"],
+                type: "string",
+                argument: "hostname"
+            },
             port: {
                 description: "port to bind server, default 3232",
                 aliases: ["p"],
@@ -4323,6 +4346,7 @@ function initCommands() {
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+    advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
     p.defineCommand({
@@ -4456,7 +4480,8 @@ function loadPkgAsync() {
 
 function errorHandler(reason: any) {
     if (reason.isUserError) {
-        console.error("ERROR:", reason.message)
+        console.error(reason.stack)
+        console.error("USER ERROR:", reason.message)
         process.exit(1)
     }
 
