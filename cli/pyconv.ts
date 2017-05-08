@@ -80,6 +80,7 @@ module py {
 
     export interface Module extends Symbol, ScopeDef {
         kind: "Module";
+        name?: string;
         body: Stmt[];
     }
 
@@ -573,12 +574,25 @@ function find(t: Type) {
     return t
 }
 
+function getFullName(n: py.AST): string {
+    let s = n as py.ScopeDef
+    let pref = ""
+    if (s.parent) {
+        pref = getFullName(s.parent)
+        if (!pref) pref = ""
+        else pref += "."
+    }
+    let nn = n as py.FunctionDef
+    if (nn.name) return pref + nn.name
+    else return pref + "?" + n.kind
+}
+
 function t2s(t: Type): string {
     t = find(t)
     if (t.primType)
         return t.primType
     else if (t.classType)
-        return t.classType.name
+        return getFullName(t.classType)
     else if (t.arrayType)
         return t2s(t.arrayType) + "[]"
     else
@@ -691,6 +705,15 @@ function typeOf(e: py.Expr): Type {
         e.tsType = mkType()
         return e.tsType
     }
+}
+
+function isOfType(e: py.Expr, name: string) {
+    let t = typeOf(e)
+    if (t.classType && t.classType.name == name)
+        return true
+    if (t2s(t) == name)
+        return true
+    return false
 }
 
 function resetCtx(m: py.Module) {
@@ -1029,6 +1052,27 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         return B.mkStmt(B.mkGroup(innerIf(n)))
     },
     With: (n: py.With) => {
+        if (n.items.length == 1 && isOfType(n.items[0].context_expr, "adafruit_bus_device.i2c_device.I2CDevice")) {
+            let it = n.items[0]
+            let id = getName(it.optional_vars)
+            let res: B.JsNode[] = []
+            if (id) {
+                defvar(id, { isLocal: true })
+                id = quoteStr(id)
+                res.push(B.mkStmt(B.mkText("const " + id + " = "), expr(it.context_expr)))
+            }
+            if (n.body.length > 1) {
+                res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
+                    ".", B.mkText("begin()"))))
+            }
+            U.pushRange(res, n.body.map(stmt))
+            if (n.body.length > 1) {
+                res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
+                    ".", B.mkText("end()"))))
+            }
+            return B.mkGroup(res)
+        }
+
         let cleanup: B.JsNode[] = []
         let stmts = n.items.map((it, idx) => {
             let varName = "with" + idx
@@ -1194,6 +1238,7 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
 // TODO include return type
 let funMap: Map<string> = {
     "const": "",
+    "micropython.const": "",
     "int": "Math.trunc",
     "len": ".length",
     "min": "Math.min",
@@ -1554,7 +1599,9 @@ export function convertAsync(fns: string[]) {
 
             moduleAst = {}
             U.iterMap(js, (fn: string, js: py.Module) => {
-                moduleAst[pkgFiles[fn]] = js
+                let mname = pkgFiles[fn]
+                js.name = mname
+                moduleAst[mname] = js
             })
 
             for (let i = 0; i < 5; ++i) {
