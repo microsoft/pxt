@@ -11,7 +11,7 @@ Use this event to initialize your program.
 
 ## #exstart
 
-## What about JavaScript? 
+## What about JavaScript?
 
 Where is ``on start``...?
 ```typescript
@@ -20,9 +20,8 @@ function onStart(){} // I don't exist
 ``on start`` **only** exists in the block editor. In JavaScript, all code executes sequentially starting
 at the first line.
 
-## Hey, my events moved!
+## Hey, my events moved! #eventsmoved
 
-## #eventsmoved
 When we transform the blocks into JavaScript, we always place all the event registrations (buttons, shake, ...) 
 before launching the ``on start`` code.
 
