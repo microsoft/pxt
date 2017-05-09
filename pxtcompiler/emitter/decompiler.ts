@@ -1176,17 +1176,10 @@ ${output}</xml>`;
                                     }
                                 }
                             } else if (info.attrs && info.attrs.paramFieldEditor && info.attrs.paramFieldEditorOptions) {
-                                let onBlockFieldName = '';
-                                info.attrs.block.replace(/%(\w+)/g, (f, n) => {
-                                    onBlockFieldName = n;
-                                    return "";
-                                });
-                                if (onBlockFieldName) {
-                                    if (info.attrs.paramFieldEditorOptions[onBlockFieldName]['onParentBlock']) {
-                                        (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
-                                    }
-                                    return;
+                                if (info.attrs.paramFieldEditorOptions[vName] && info.attrs.paramFieldEditorOptions[vName]['onParentBlock']) {
+                                    (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
                                 }
+                                return;
                             }
                         }
                         if (defaultV) {
