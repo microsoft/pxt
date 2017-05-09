@@ -1662,6 +1662,15 @@ function stmt(e: py.Stmt): B.JsNode {
     return r
 }
 
+function isEmpty(b: B.JsNode): boolean {
+    if (!b) return true
+    if (b.type == B.NT.Prefix && b.op == "")
+        return b.children.every(isEmpty)
+    if (b.type == B.NT.NewLine)
+        return true
+    return false
+}
+
 // TODO based on lineno/col_offset mark which numbers are written in hex
 // TODO look at scopes of let
 // TODO fetch comments
@@ -1670,9 +1679,11 @@ function toTS(mod: py.Module) {
     U.assert(mod.kind == "Module")
     resetCtx(mod)
     if (!mod.vars) mod.vars = {}
+    let res = mod.body.map(stmt)
+    if (res.every(isEmpty)) return null
     return [
         B.mkText("namespace " + mod.name + " "),
-        B.mkBlock(mod.body.map(stmt))
+        B.mkBlock(res)
     ]
 }
 
@@ -1750,6 +1761,7 @@ export function convertAsync(fns: string[]) {
                 if (primFiles[fn]) {
                     let s = "//\n// *** " + fn + " ***\n//\n\n"
                     let nodes = toTS(js)
+                    if (!nodes) return
                     let res = B.flattenNode(nodes)
                     s += res.output
                     let fn2 = js.name + ".ts"
