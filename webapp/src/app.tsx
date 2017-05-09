@@ -929,18 +929,14 @@ export class ProjectView
             });
     }
 
+    beforeCompile() { }
+
     compile(saveOnly = false) {
         // the USB init has to be called from an event handler
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
-        // if the audio modulator is used, play silence first
-        if (pxt.appTarget.compile.useModulator) {
-            // Play silence, in order to unblock audio.
-            let audioTag = document.getElementById("audio_output") as HTMLAudioElement;
-            audioTag.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
-            audioTag.play();
-        }
+        this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
             userContextWindow = window.open("");
@@ -2073,6 +2069,9 @@ function initExtensionsAsync(): Promise<void> {
             if (res.deployCoreAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
                 pxt.commands.deployCoreAsync = res.deployCoreAsync;
+            }
+            if (res.beforeCompile) {
+                theEditor.beforeCompile = res.beforeCompile;
             }
             if (res.fieldEditors)
                 res.fieldEditors.forEach(fi => {

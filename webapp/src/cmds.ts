@@ -143,7 +143,7 @@ export function initCommandsAsync(): Promise<void> {
     } else if (pxt.winrt.isWinRT()) { // window app
         pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload && !pxt.appTarget.compile.useModulator) { // local node.js
+    } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;

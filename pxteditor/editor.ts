@@ -190,6 +190,7 @@ namespace pxt.editor {
 
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
+        beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
     }
