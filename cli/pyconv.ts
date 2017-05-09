@@ -574,6 +574,8 @@ function defvar(n: string, opts: VarDescOptions) {
 let tpString: Type = mkType({ primType: "string" })
 let tpNumber: Type = mkType({ primType: "number" })
 let tpBoolean: Type = mkType({ primType: "boolean" })
+let tpBuffer: Type = mkType({ primType: "Buffer" })
+let tpVoid: Type = mkType({ primType: "void" })
 
 
 function find(t: Type) {
@@ -1229,6 +1231,8 @@ function quoteStr(id: string) {
 }
 
 function getName(e: py.Expr): string {
+    if (e == null)
+        return null
     if (e.kind == "Name") {
         let s = (e as py.Name).id
         let v = lookupVar(s)
@@ -1265,20 +1269,25 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
         return B.mkInfix(left, op, right)
 }
 
+interface FunOverride {
+    n: string;
+    t: Type;
+}
 // TODO include return type
-let funMap: Map<string> = {
-    "const": "",
-    "micropython.const": "",
-    "int": "Math.trunc",
-    "len": ".length",
-    "min": "Math.min",
-    "max": "Math.max",
-    "string.lower": ".toLowerCase()",
-    "ord": ".charCodeAt(0)",
-    "bytearray": "pins.createBuffer",
-    "ustruct.pack": "pins.packBuffer",
-    "ustruct.unpack": "pins.unpackBuffer",
-    "pins.I2CDevice.read_into": ".readInto",
+let funMap: Map<FunOverride> = {
+    "const": { n: "", t: tpNumber },
+    "micropython.const": { n: "", t: tpNumber },
+    "int": { n: "Math.trunc", t: tpNumber },
+    "len": { n: ".length", t: tpNumber },
+    "min": { n: "Math.min", t: tpNumber },
+    "max": { n: "Math.max", t: tpNumber },
+    "string.lower": { n: ".toLowerCase()", t: tpString },
+    "ord": { n: ".charCodeAt(0)", t: tpNumber },
+    "bytearray": { n: "pins.createBuffer", t: tpBuffer },
+    "ustruct.pack": { n: "pins.packBuffer", t: tpBuffer },
+    "ustruct.unpack": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
+    "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
+    "bool": { n: "!!", t: tpBoolean },
 }
 
 const exprMap: Map<(v: py.Expr) => B.JsNode> = {
@@ -1460,16 +1469,19 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         if (over != null) {
             if (recv)
                 allargs.unshift(expr(recv))
-            if (over == "") {
+            let overName = over.n
+            if (over.t)
+                unify(typeOf(n), over.t)
+            if (overName == "") {
                 if (allargs.length == 1)
                     return allargs[0]
-            } else if (over[0] == ".") {
+            } else if (overName[0] == ".") {
                 if (allargs.length == 1)
-                    return B.mkInfix(allargs[0], ".", B.mkText(over.slice(1)))
+                    return B.mkInfix(allargs[0], ".", B.mkText(overName.slice(1)))
                 else
-                    return B.mkInfix(allargs[0], ".", B.H.mkCall(over.slice(1), allargs.slice(1)))
+                    return B.mkInfix(allargs[0], ".", B.H.mkCall(overName.slice(1), allargs.slice(1)))
             } else {
-                return B.H.mkCall(over, allargs)
+                return B.H.mkCall(overName, allargs)
             }
         }
 
