@@ -21,8 +21,10 @@ interface Type extends TypeOptions {
 interface FieldDesc {
     name: string;
     type: Type;
+    inClass: py.ClassDef;
     fundef?: py.FunctionDef;
     isStatic?: boolean;
+    isProtected?: boolean;
 }
 
 type Map<T> = pxt.Map<T>;
@@ -675,6 +677,7 @@ function getClassField(ct: py.ClassDef, n: string) {
                 return par.fields[n]
         }
         ct.fields[n] = {
+            inClass: ct,
             name: n,
             type: mkType()
         }
@@ -907,16 +910,16 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             todoComment("decorators", decs.map(expr))
         ]
         if (isMethod) {
+            let fd = getClassField(ctx.currClass, funname)
             if (n.name == "__init__") {
                 nodes.push(B.mkText("constructor"))
                 unify(n.retType, mkType({ classType: ctx.currClass }))
             } else {
                 if (!prefix) {
-                    prefix = n.name[0] == "_" ? "private" : "public"
+                    prefix = n.name[0] == "_" ? (fd.isProtected ? "protected" : "private") : "public"
                 }
                 nodes.push(B.mkText(prefix + " "), quote(funname))
             }
-            let fd = getClassField(ctx.currClass, funname)
             fd.fundef = n
         } else {
             U.assert(!prefix)
@@ -1290,6 +1293,14 @@ let funMap: Map<FunOverride> = {
     "bool": { n: "!!", t: tpBoolean },
 }
 
+function isSuper(v: py.Expr) {
+    return isCallTo(v, "super") && (v as py.Call).args.length == 0
+}
+
+function isThis(v: py.Expr) {
+    return v.kind == "Name" && (v as py.Name).id == "self"
+}
+
 const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     BoolOp: (n: py.BoolOp) => {
         let r = expr(n.values[0])
@@ -1377,6 +1388,11 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                 recvTp = typeOf(recv)
                 methName = attr.attr
                 let field = getTypeField(recvTp, methName)
+                if (field) {
+                    if (isSuper(recv) || (isThis(recv) && field.inClass != ctx.currClass)) {
+                        field.isProtected = true
+                    }
+                }
                 if (field && field.fundef)
                     fd = field.fundef
             }
