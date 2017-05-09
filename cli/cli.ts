@@ -1216,7 +1216,7 @@ export function buildTargetAsync(): Promise<void> {
         .then(() => {
             if (fs.existsSync(path.join("editor","tsconfig.json"))) {
                 const tsConfig = JSON.parse(fs.readFileSync(path.join("editor","tsconfig.json"), "utf8"));
-                if (tsConfig.module)
+                if (tsConfig.compilerOptions.module)
                     buildFolderAndBrowserifyAsync('editor', true, 'editor');
                 else
                     buildFolderAsync('editor', true, 'editor');
