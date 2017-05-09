@@ -1009,7 +1009,7 @@ namespace pxt.blocks {
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         let f = b.getFieldValue(p.field);
-        if (f)
+        if (f != null)
             return mkText(f);
         else
             return compileExpression(e, getInputTargetBlock(b, p.field), comments)

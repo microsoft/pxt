@@ -161,6 +161,10 @@ namespace testNamespace {
     //% value.shadowOptions.test=0
     export function customFieldEditorWithMutation(value: number): void { }
 
+    //% blockId=test_customFieldEditorOnParentBlock block="%value"
+    //% value.fieldEditor="note" value.fieldOptions.onParentBlock=true
+    export function customFieldEditorOnParentBlock(value: number): void { }
+
     //% blockId=test_customShadowField block="%value"
     //% value.fieldEditor="note"
     export function customShadowField(value: number): number { return value; }
