@@ -1287,6 +1287,7 @@ let funMap: Map<FunOverride> = {
     "string.lower": { n: ".toLowerCase()", t: tpString },
     "ord": { n: ".charCodeAt(0)", t: tpNumber },
     "bytearray": { n: "pins.createBuffer", t: tpBuffer },
+    "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
     "ustruct.pack": { n: "pins.packBuffer", t: tpBuffer },
     "ustruct.unpack": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
     "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
@@ -1484,22 +1485,24 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                         } else if (kw.arg == "start") {
                             startArg = expr(kw.value)
                             return false
-                        } else if (kw.arg == "end" && methName != "read_into") {
+                        } else if (kw.arg == "end") {
                             endArg = expr(kw.value)
                             return false
                         }
                         return true
                     })
 
+                    if (endArg && !startArg) startArg = B.mkText("0")
+
                     if (methName == "read_into") {
                         if (startArg) {
                             allargs.push(stopArg || B.mkText("false"))
                             allargs.push(startArg)
                         }
+                        if (endArg) allargs.push(endArg)
                     } else {
                         if (stopArg) allargs.push(stopArg)
                         if (startArg || endArg) {
-                            if (!startArg) startArg = B.mkText("0")
                             allargs[0] = B.mkInfix(allargs[0], ".", B.H.mkCall("slice",
                                 endArg ? [startArg, endArg] : [startArg]))
                         }
