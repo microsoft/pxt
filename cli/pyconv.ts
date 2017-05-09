@@ -1,3 +1,12 @@
+/*
+
+## What to avoid?
+* `__get__`, `__set__` (for example, defining class instances with getters as static fields 
+  instead of just plain methods)
+* best avoid `try`/`catch`, at least until PXT supports it
+
+*/
+
 interface TypeOptions {
     union?: Type;
     classType?: py.ClassDef;
@@ -1079,9 +1088,10 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             let res: B.JsNode[] = []
             let devRef = expr(it.context_expr)
             if (id) {
-                defvar(id, { isLocal: true })
+                let v = defvar(id, { isLocal: true })
                 id = quoteStr(id)
                 res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
+                unify(typeOf(it.context_expr), v.type)
                 devRef = B.mkText(id)
             }
             res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("begin()"))))
@@ -1266,6 +1276,9 @@ let funMap: Map<string> = {
     "string.lower": ".toLowerCase()",
     "ord": ".charCodeAt(0)",
     "bytearray": "pins.createBuffer",
+    "ustruct.pack": "pins.packBuffer",
+    "ustruct.unpack": "pins.unpackBuffer",
+    "pins.I2CDevice.read_into": ".readInto",
 }
 
 const exprMap: Map<(v: py.Expr) => B.JsNode> = {
@@ -1277,6 +1290,26 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         return r
     },
     BinOp: (n: py.BinOp) => {
+        if (n.op == "Mod" && n.left.kind == "Str" &&
+            (n.right.kind == "Tuple" || n.right.kind == "List")) {
+            let fmt = (n.left as py.Str).s
+            let elts = (n.right as py.List).elts
+            elts = elts.slice()
+            let res = [B.mkText("`")]
+            fmt.replace(/([^%]+)|(%[\d\.]*([a-zA-Z%]))/g,
+                (f: string, reg: string, f2: string, flet: string) => {
+                    if (reg)
+                        res.push(B.mkText(reg.replace(/[`\\$]/g, f => "\\" + f)))
+                    else {
+                        let ee = elts.shift()
+                        let et = ee ? expr(ee) : B.mkText("???")
+                        res.push(B.mkText("${"), et, B.mkText("}"))
+                    }
+                    return ""
+                })
+            res.push(B.mkText("`"))
+            return B.mkGroup(res)
+        }
         let r = binop(expr(n.left), n.op, expr(n.right))
         if (numOps[n.op]) {
             unify(typeOf(n.left), tpNumber)
@@ -1365,14 +1398,19 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         // TODO keywords
 
         let nm = getName(n.func)
-
-        if (methName)
-            nm = t2s(recvTp) + "." + methName
-
         let over = U.lookup(funMap, nm)
+        if (over) {
+            methName = ""
+            recv = null
+        }
+
+        if (methName) {
+            nm = t2s(recvTp) + "." + methName
+            over = U.lookup(funMap, nm)
+        }
 
         if (n.keywords.length > 0) {
-            if (fd) {
+            if (fd && !fd.args.kwarg) {
                 let formals = fdargs.slice(n.args.length)
                 let defls = fd.args.defaults.slice()
                 while (formals.length > 0) {
@@ -1398,6 +1436,11 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                     }
                     idx++
                 }
+            } else if (n.keywords.length == 1 && n.keywords[0].arg == "stop" &&
+                n.keywords[0].value.kind == "NameConstant" &&
+                (n.keywords[0].value as py.NameConstant).value === false &&
+                recv && isOfType(recv, "pins.I2CDevice")) {
+                allargs.push(B.mkText("true"))
             } else {
                 let kwargs = n.keywords.map(kk => B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
                 allargs.push(B.mkGroup([
