@@ -491,7 +491,7 @@ ${baseLabel}:
                     if (isSet)
                         this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
                     this.emitHelper(this.t.vcall(procid.mapMethod, isSet, vtableShift))
-                    this.write(lbl + ":") 
+                    this.write(lbl + ":")
                 } else {
                     this.write(this.t.prologue_vtable(topExpr.args.length - 1, vtableShift))
 
