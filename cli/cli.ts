@@ -1213,7 +1213,15 @@ export function buildTargetAsync(): Promise<void> {
         .then(buildTargetCoreAsync)
         .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAndBrowserifyAsync('editor', true, 'editor'))
+        .then(() => {
+            if (fs.existsSync(p + "/tsconfig.json")) {
+                const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+                if (tsConfig.module)
+                    buildFolderAndBrowserifyAsync('editor', true, 'editor');
+                else
+                    buildFolderAsync('editor', true, 'editor');
+            }
+        })
         .then(() => buildFolderAsync('server', true, 'server'))
 }
 
