@@ -1214,8 +1214,8 @@ export function buildTargetAsync(): Promise<void> {
         .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(() => {
-            if (fs.existsSync(p + "/tsconfig.json")) {
-                const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+            if (fs.existsSync(path.join(p,"tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join(p,"tsconfig.json"), "utf8"));
                 if (tsConfig.module)
                     buildFolderAndBrowserifyAsync('editor', true, 'editor');
                 else
@@ -1226,12 +1226,12 @@ export function buildTargetAsync(): Promise<void> {
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(p + "/tsconfig.json")) {
+    if (!fs.existsSync(path.join(p,"tsconfig.json"))) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p,"tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
         U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
     }
@@ -1250,12 +1250,12 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
 }
 
 function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(p + "/tsconfig.json")) {
+    if (!fs.existsSync(path.join(p,"tsconfig.json"))) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p,"tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
         U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
     }

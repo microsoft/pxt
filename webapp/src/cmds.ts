@@ -1,5 +1,4 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
-/// <reference path="../../localtypings/modulator.d.ts"/>
 import * as core from "./core";
 import * as pkg from "./package";
 import * as hwdbg from "./hwdbg";
