@@ -934,6 +934,13 @@ export class ProjectView
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
+        // if the audio modulator is used, play silence first
+        if (pxt.appTarget.compile.useModulator) {
+            // Play silence, in order to unblock audio.
+            let audioTag = document.getElementById("audio_output") as HTMLAudioElement;
+            audioTag.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+            audioTag.play();
+        }
         let userContextWindow: Window = undefined;
         if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
             userContextWindow = window.open("");
@@ -1549,6 +1556,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
+        const useModulator = pxt.appTarget.compile.useModulator;
         const { hideMenuBar, hideEditorToolbar} = targetTheme;
         const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
@@ -1586,6 +1594,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
         return (
             <div id='root' className={rootClasses}>
+                {useModulator ? <audio id="audio_output" controls></audio> : undefined }
+                {useModulator ? <div id="modulator"><div id="modulatorbubble"><canvas id="wavStrip"></canvas></div></div> : undefined }
                 {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
@@ -1698,7 +1708,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
+                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className={`icon ${pxt.appTarget.appTheme.downloadIcon  || 'download'}`}/>{ pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>

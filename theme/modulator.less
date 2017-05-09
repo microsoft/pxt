@@ -1,0 +1,82 @@
+
+#modulator {
+    position: absolute;
+    display: block;
+    top: calc(@mainMenuHeight - 0.5);
+    left: 50px;
+    width: 120px;
+    height: 56px;
+    background: @bubbleUrl no-repeat;
+    z-index: 110;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s linear 300ms, opacity 300ms;
+}
+
+#modulatorbubble {
+    position: absolute;
+    margin: 0px;
+    left: 5px;
+    top: 18px;
+    width: 110px;
+    height: 34px;
+    overflow: hidden;
+    -webkit-border-radius: 25px;
+}
+
+#wavStrip {
+    border: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0
+}
+
+#audio_output {
+    display: none;
+    width: 100%;
+}
+
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Large Monitor */
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+
+}
+
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+}
+
+/* Tablet */
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+
+}
+
+/* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
+@media only screen and (min-width: @computerBreakpoint) {
+
+}
+
+/* <= Small Monitor (Mobile + Tablet + Small Monitor) */
+@media only screen and (max-width: @largestSmallMonitor) {
+
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+
+}
