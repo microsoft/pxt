@@ -4336,7 +4336,7 @@ function initCommands() {
     p.defineCommand({
         name: "pyconv",
         help: "convert from python",
-        argString: "<filename...>",
+        argString: "<package-directory> <support-directory>...",
         anyArgs: true,
         advanced: true,
     }, c => pyconv.convertAsync(c.arguments))
