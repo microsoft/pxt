@@ -1461,18 +1461,59 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                     }
                     idx++
                 }
-            } else if (n.keywords.length == 1 && n.keywords[0].arg == "stop" &&
-                n.keywords[0].value.kind == "NameConstant" &&
-                (n.keywords[0].value as py.NameConstant).value === false &&
-                recv && isOfType(recv, "pins.I2CDevice")) {
-                allargs.push(B.mkText("true"))
             } else {
-                let kwargs = n.keywords.map(kk => B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
-                allargs.push(B.mkGroup([
-                    B.mkText("{"),
-                    B.mkCommaSep(kwargs),
-                    B.mkText("}")
-                ]))
+                let keywords = n.keywords.slice()
+
+                if (recv && isOfType(recv, "pins.I2CDevice")) {
+                    let stopArg: B.JsNode = null
+                    let startArg: B.JsNode = null
+                    let endArg: B.JsNode = null
+
+                    keywords = keywords.filter(kw => {
+                        if (kw.arg == "stop") {
+                            if (kw.value.kind == "NameConstant") {
+                                let vv = (kw.value as py.NameConstant).value
+                                if (vv === false)
+                                    stopArg = B.mkText("true")
+                                else
+                                    stopArg = B.mkText("false")
+                            } else {
+                                stopArg = B.mkInfix(null, "!", expr(kw.value))
+                            }
+                            return false
+                        } else if (kw.arg == "start") {
+                            startArg = expr(kw.value)
+                            return false
+                        } else if (kw.arg == "end" && methName != "read_into") {
+                            endArg = expr(kw.value)
+                            return false
+                        }
+                        return true
+                    })
+
+                    if (methName == "read_into") {
+                        if (startArg) {
+                            allargs.push(stopArg || B.mkText("false"))
+                            allargs.push(startArg)
+                        }
+                    } else {
+                        if (stopArg) allargs.push(stopArg)
+                        if (startArg || endArg) {
+                            if (!startArg) startArg = B.mkText("0")
+                            allargs[0] = B.mkInfix(allargs[0], ".", B.H.mkCall("slice",
+                                endArg ? [startArg, endArg] : [startArg]))
+                        }
+                    }
+                }
+                if (keywords.length) {
+                    let kwargs = keywords.map(kk =>
+                        B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
+                    allargs.push(B.mkGroup([
+                        B.mkText("{"),
+                        B.mkCommaSep(kwargs),
+                        B.mkText("}")
+                    ]))
+                }
             }
         }
 
