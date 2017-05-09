@@ -26,7 +26,6 @@ point for a PXT module.
   getters as static fields instead of just plain methods)
 * `__getitem__`, `__setitem__` (indexers) are also not supported
 * comments are not converted (doc-comments - ``""" ... """` - are)
-* all numbers are converted to decimal notation (including ones written with `0x` or `0b`)
 * scopes of variables can get confused - you might need to pull out variables by hand
 
 `try`/`catch` is converted by not supported by PXT yet.

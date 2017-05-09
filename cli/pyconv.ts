@@ -82,8 +82,9 @@ module py {
 
     export interface Module extends Symbol, ScopeDef {
         kind: "Module";
-        name?: string;
         body: Stmt[];
+        name?: string;
+        source?: string[];
     }
 
     export interface ExceptHandler extends AST {
@@ -1293,6 +1294,10 @@ function isThis(v: py.Expr) {
     return v.kind == "Name" && (v as py.Name).id == "self"
 }
 
+function sourceAt(e: py.AST) {
+    return (ctx.currModule.source[e.lineno - 1] || "").slice(e.col_offset)
+}
+
 const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     BoolOp: (n: py.BoolOp) => {
         let r = expr(n.values[0])
@@ -1562,6 +1567,10 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     },
     Num: (n: py.Num) => {
         unify(n.tsType, tpNumber)
+        let src = sourceAt(n)
+        let m = /^(0[box][0-9a-f]+)/i.exec(src)
+        if (m)
+            return B.mkText(m[1])
         return B.mkText(n.n + "")
     },
     Str: (n: py.Str) => {
@@ -1665,7 +1674,6 @@ function isEmpty(b: B.JsNode): boolean {
     return false
 }
 
-// TODO based on lineno/col_offset mark which numbers are written in hex
 // TODO look at scopes of let
 // TODO fetch comments
 
@@ -1740,6 +1748,7 @@ export function convertAsync(fns: string[]) {
             U.iterMap(js, (fn: string, js: py.Module) => {
                 let mname = pkgFiles[fn]
                 js.name = mname
+                js.source = fs.readFileSync(fn, "utf8").split(/\r?\n/)
                 moduleAst[mname] = js
             })
 
