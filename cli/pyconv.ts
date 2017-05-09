@@ -998,6 +998,18 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             defvar(getName(n.targets[0]), {})
             return B.mkStmt(B.mkText(pref + "const "), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
         }
+        if (!pref && n.targets[0].kind == "Tuple") {
+            let res = [
+                B.mkStmt(B.mkText("const tmp = "), expr(n.value))
+            ]
+            let tup = n.targets[0] as py.Tuple
+            tup.elts.forEach((e, i) => {
+                res.push(
+                    B.mkStmt(B.mkInfix(expr(e), "=", B.mkText("tmp[" + i + "]")))
+                )
+            })
+            return B.mkGroup(res)
+        }
         return B.mkStmt(B.mkText(pref), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
     },
     For: (n: py.For) => {
