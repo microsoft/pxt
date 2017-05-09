@@ -1,12 +1,3 @@
-/*
-
-## What to avoid?
-* `__get__`, `__set__` (for example, defining class instances with getters as static fields 
-  instead of just plain methods)
-* `__getitem__`, `__setitem__` (indexers)
-* best avoid `try`/`catch`, at least until PXT supports it (but this is easy to workaround)
-*/
-
 interface TypeOptions {
     union?: Type;
     classType?: py.ClassDef;
