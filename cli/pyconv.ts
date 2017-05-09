@@ -673,7 +673,7 @@ function getClassField(ct: py.ClassDef, n: string) {
         ct.fields = {}
     if (!ct.fields[n]) {
         for (let par = ct.baseClass; par; par = par.baseClass) {
-            if (par.fields[n])
+            if (par.fields && par.fields[n])
                 return par.fields[n]
         }
         ct.fields[n] = {
