@@ -1150,29 +1150,42 @@ ${output}</xml>`;
                             || (e.kind == SK.PrefixUnaryExpression
                                 && ((e as PrefixUnaryExpression).operator == SK.PlusToken
                                     || (e as PrefixUnaryExpression).operator == SK.MinusToken)
-                                && ((e as PrefixUnaryExpression).operand.kind == SK.NumericLiteral)))
-                            && argNames[i][1]) {
+                                && ((e as PrefixUnaryExpression).operand.kind == SK.NumericLiteral)))) {
                             // Literal
                             const shadowName = argNames[i][0];
                             const shadowType = argNames[i][1];
-                            const shadowBlock = blocksInfo.blocksById[shadowType];
-                            if (shadowBlock) {
-                                let fieldName = '';
-                                blocksInfo.blocksById[shadowType].attributes.block.replace(/%(\w+)/g, (f, n) => {
-                                    fieldName = n;
+                            if (shadowName && shadowType) {
+                                const shadowBlock = blocksInfo.blocksById[shadowType];
+                                if (shadowBlock) {
+                                    let fieldName = '';
+                                    blocksInfo.blocksById[shadowType].attributes.block.replace(/%(\w+)/g, (f, n) => {
+                                        fieldName = n;
+                                        return "";
+                                    });
+                                    if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
+                                        let fieldBlock = getFieldBlock(shadowType, fieldName, e.getText(), true);
+                                        if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[shadowName]) {
+                                            fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(info.attrs.paramShadowOptions[shadowName]))}
+                                        }
+                                        v = {
+                                            kind: "value",
+                                            name: vName,
+                                            value: fieldBlock
+                                        };
+                                        defaultV = false;
+                                    }
+                                }
+                            } else if (info.attrs && info.attrs.paramFieldEditor && info.attrs.paramFieldEditorOptions) {
+                                let onBlockFieldName = '';
+                                info.attrs.block.replace(/%(\w+)/g, (f, n) => {
+                                    onBlockFieldName = n;
                                     return "";
                                 });
-                                if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
-                                    let fieldBlock = getFieldBlock(shadowType, fieldName, e.getText(), true);
-                                    if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[shadowName]) {
-                                        fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(info.attrs.paramShadowOptions[shadowName]))}
+                                if (onBlockFieldName) {
+                                    if (info.attrs.paramFieldEditorOptions[onBlockFieldName]['onParentBlock']) {
+                                        (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
                                     }
-                                    v = {
-                                        kind: "value",
-                                        name: vName,
-                                        value: fieldBlock
-                                    };
-                                    defaultV = false;
+                                    return;
                                 }
                             }
                         }
