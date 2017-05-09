@@ -1540,7 +1540,6 @@ function updateTOC(cfg: pxt.TargetBundle) {
 }
 
 function buildTargetCoreAsync() {
-    let previousForceCloudBuild = forceCloudBuild;
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1570,12 +1569,6 @@ function buildTargetCoreAsync() {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
 
-        if (isPrj) {
-            forceCloudBuild = true;
-        } else {
-            forceCloudBuild = previousForceCloudBuild;
-        }
-
         return pkg.filesToBePublishedAsync(true)
             .then(res => {
                 cfg.bundledpkgs[path.basename(dirname)] = res
@@ -1603,9 +1596,6 @@ function buildTargetCoreAsync() {
                 }
             })
     }, /*includeProjects*/ true)
-        .finally(() => {
-            forceCloudBuild = previousForceCloudBuild;
-        })
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
