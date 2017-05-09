@@ -1212,19 +1212,27 @@ export function buildTargetAsync(): Promise<void> {
     return simshimAsync()
         .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(buildTargetCoreAsync)
-        .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('editor', true, 'editor'))
+        .then(buildSemanticUIAsync)
+        .then(() => {
+            if (fs.existsSync(path.join("editor","tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor","tsconfig.json"), "utf8"));
+                if (tsConfig.compilerOptions.module)
+                    buildFolderAndBrowserifyAsync('editor', true, 'editor');
+                else
+                    buildFolderAsync('editor', true, 'editor');
+            }
+        })
         .then(() => buildFolderAsync('server', true, 'server'))
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(p + "/tsconfig.json")) {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
         U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
     }
@@ -1239,6 +1247,36 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
+    })
+}
+
+function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
+        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+        return Promise.resolve()
+    }
+
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
+        U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
+    }
+
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
+    pxt.log(`building ${p}...`)
+    dirsToWatch.push(p)
+    return nodeutil.spawnAsync({
+        cmd: "node",
+        args: ["../node_modules/typescript/bin/tsc"],
+        cwd: p
+    }).then(() => {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["../node_modules/pxt-core/node_modules/browserify/bin/cmd", `${outputName}/${outputName}.js`, `-o`, `${outputName}.js`],
+            cwd: `built`
+        })
     })
 }
 
@@ -1374,9 +1412,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
-    const rtlcss = require('rtlcss');
-    const autoprefixer = require('autoprefixer');
-
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1396,25 +1431,23 @@ function buildSemanticUIAsync() {
         cmd: "node",
         args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
-        let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
+        let fontFile = fs.readFileSync("node_modules/pxt-core/node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
         let url = "url(data:application/font-woff;charset=utf-8;base64,"
             + fontFile.toString("base64") + ") format('woff')"
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
         return semCss;
-    }).then((semCss) => {
-        // run autoprefixer
-        pxt.debug("running autoprefixer");
-        return autoprefixer.process(semCss).then((result: any) => {
-            fs.writeFileSync('built/web/semantic.css', result.css);
-            return result.css;
-        });
-    }).then((semCss) => {
-        // convert to rtl
-        let rtlCss = rtlcss.process(semCss);
-        pxt.debug("converting semantic css to rtl");
-        fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
+    }).then(() => {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/postcss-cli/bin/postcss", "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
+        })
+    }).then(() => {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/pxt-core/node_modules/rtlcss/bin/rtlcss", "built/web/semantic.css", "built/web/rtlsemantic.css"]
+        })
     })
 }
 
