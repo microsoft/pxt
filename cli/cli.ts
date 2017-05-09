@@ -1265,7 +1265,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
     }).then(() => {
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: ["../node_modules/browserify/bin/cmd", `${outputName}/${outputName}.js`, `-o`, `${outputName}.js`],
+            args: ["../node_modules/pxt-core/node_modules/browserify/bin/cmd", `${outputName}/${outputName}.js`, `-o`, `${outputName}.js`],
             cwd: `built`
         })
     })
@@ -1403,9 +1403,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
-    const rtlcss = require('rtlcss');
-    const autoprefixer = require('autoprefixer');
-
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1432,18 +1429,21 @@ function buildSemanticUIAsync() {
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
         return semCss;
-    }).then((semCss) => {
-        // run autoprefixer
-        pxt.debug("running autoprefixer");
-        return autoprefixer.process(semCss).then((result: any) => {
-            fs.writeFileSync('built/web/semantic.css', result.css);
-            return result.css;
-        });
-    }).then((semCss) => {
-        // convert to rtl
-        let rtlCss = rtlcss.process(semCss);
-        pxt.debug("converting semantic css to rtl");
-        fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
+    }).then(() => {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/postcss-cli/bin/postcss", "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
+        })
+    }).then(() => {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/clean-css-cli/bin/cleancss", "-o", "built/web/semantic.css", "built/web/semantic.css"]
+        })
+    }).then(() => {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/rtlcss/bin/rtlcss", "built/web/semantic.css", "built/web/rtlsemantic.css"]
+        })
     })
 }
 

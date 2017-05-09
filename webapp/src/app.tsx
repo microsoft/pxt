@@ -1590,8 +1590,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
         return (
             <div id='root' className={rootClasses}>
-                {useModulator ? <audio id="audio_output" controls></audio> : undefined }
-                {useModulator ? <div id="modulator"><div id="modulatorbubble"><canvas id="wavStrip"></canvas></div></div> : undefined }
+                {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined }
+                {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined }
                 {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
