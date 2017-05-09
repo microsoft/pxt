@@ -1065,16 +1065,16 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             let it = n.items[0]
             let id = getName(it.optional_vars)
             let res: B.JsNode[] = []
+            let devRef = expr(it.context_expr)
             if (id) {
                 defvar(id, { isLocal: true })
                 id = quoteStr(id)
-                res.push(B.mkStmt(B.mkText("const " + id + " = "), expr(it.context_expr)))
+                res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
+                devRef = B.mkText(id)
             }
-            res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
-                ".", B.mkText("begin()"))))
+            res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("begin()"))))
             U.pushRange(res, n.body.map(stmt))
-            res.push(B.mkStmt(B.mkInfix(id ? B.mkText(id) : expr(it.context_expr),
-                ".", B.mkText("end()"))))
+            res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("end()"))))
             return B.mkGroup(res)
         }
 
