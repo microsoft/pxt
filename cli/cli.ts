@@ -23,6 +23,7 @@ import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
+import * as pyconv from './pyconv';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 
@@ -4332,6 +4333,13 @@ function initCommands() {
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
+    p.defineCommand({
+        name: "pyconv",
+        help: "convert from python",
+        argString: "<package-directory> <support-directory>...",
+        anyArgs: true,
+        advanced: true,
+    }, c => pyconv.convertAsync(c.arguments))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({
