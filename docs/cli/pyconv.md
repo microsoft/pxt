@@ -25,7 +25,6 @@ point for a PXT module.
 * `__get__`, `__set__` are unsupported (for example, defining class instances with 
   getters as static fields instead of just plain methods)
 * `__getitem__`, `__setitem__` (indexers) are also not supported
-* comments are not converted (doc-comments - ``""" ... """` - are)
 * scopes of variables can get confused - you might need to pull out variables by hand
 
 `try`/`catch` is converted by not supported by PXT yet.

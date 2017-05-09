@@ -85,6 +85,7 @@ module py {
         body: Stmt[];
         name?: string;
         source?: string[];
+        comments?: string[];
     }
 
     export interface ExceptHandler extends AST {
@@ -1657,10 +1658,25 @@ function stmt(e: py.Stmt): B.JsNode {
     if (!f) {
         U.oops(e.kind + " - unknown stmt")
     }
+
+    let cmts: string[] = []
+    let scmts = ctx.currModule.comments
+    if (scmts) {
+        for (let i = 0; i < e.lineno; ++i) {
+            if (scmts[i]) {
+                cmts.push(scmts[i])
+                scmts[i] = null
+            }
+        }
+    }
+
     let r = f(e)
     if (currErrs) {
-        r = B.mkGroup([B.H.mkComment("TODO: (below) " + currErrs), r])
+        cmts.push("TODO: (below) " + currErrs)
         currErrs = ""
+    }
+    if (cmts.length) {
+        r = B.mkGroup(cmts.map(c => B.H.mkComment(c)).concat(r))
     }
     return r
 }
@@ -1675,7 +1691,6 @@ function isEmpty(b: B.JsNode): boolean {
 }
 
 // TODO look at scopes of let
-// TODO fetch comments
 
 function toTS(mod: py.Module) {
     U.assert(mod.kind == "Module")
@@ -1687,6 +1702,14 @@ function toTS(mod: py.Module) {
         B.mkText("namespace " + mod.name + " "),
         B.mkBlock(res)
     ]
+}
+
+function parseComments(mod: py.Module) {
+    mod.comments = mod.source.map(l => {
+        let m = /(\s|^)#\s*(.*)/.exec(l)
+        if (m) return m[2]
+        return null
+    })
 }
 
 export function convertAsync(fns: string[]) {
@@ -1763,6 +1786,7 @@ export function convertAsync(fns: string[]) {
             U.iterMap(js, (fn: string, js: py.Module) => {
                 if (primFiles[fn]) {
                     let s = "//\n// *** " + fn + " ***\n//\n\n"
+                    parseComments(js)
                     let nodes = toTS(js)
                     if (!nodes) return
                     let res = B.flattenNode(nodes)
