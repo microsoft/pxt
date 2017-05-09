@@ -1748,16 +1748,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !globalConfig.localBuild
+    forceCloudBuild = false; // always use yotta
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["yt"]) {
-        forceCloudBuild = false
-    } else if (parsed.flags["cloud"]) {
+    if (parsed.flags["cloud"]) {
         forceCloudBuild = true
     }
     if (parsed.flags["just"]) {
@@ -4212,10 +4210,6 @@ function initCommands() {
             sourceMaps: {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
-            },
-            yt: {
-                description: "use local yotta build",
-                aliases: ["yotta"]
             },
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
