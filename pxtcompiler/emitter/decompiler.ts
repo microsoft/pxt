@@ -1178,8 +1178,8 @@ ${output}</xml>`;
                             } else if (info.attrs && info.attrs.paramFieldEditor && info.attrs.paramFieldEditorOptions) {
                                 if (info.attrs.paramFieldEditorOptions[vName] && info.attrs.paramFieldEditorOptions[vName]['onParentBlock']) {
                                     (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
+                                    return;
                                 }
-                                return;
                             }
                         }
                         if (defaultV) {
