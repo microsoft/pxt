@@ -20,7 +20,7 @@ interface FieldDesc {
 
 type Map<T> = pxt.Map<T>;
 
-module py {
+namespace py {
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
         lineno: number;
