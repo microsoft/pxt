@@ -23,6 +23,7 @@ import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
+import * as pyconv from './pyconv';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 
@@ -1578,7 +1579,6 @@ function updateTOC(cfg: pxt.TargetBundle) {
 }
 
 function buildTargetCoreAsync() {
-    let previousForceCloudBuild = forceCloudBuild;
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1612,12 +1612,6 @@ function buildTargetCoreAsync() {
             dirsToWatch.push(path.resolve(config.additionalFilePath));
         }
 
-        if (isPrj) {
-            forceCloudBuild = true;
-        } else {
-            forceCloudBuild = previousForceCloudBuild;
-        }
-
         return pkg.filesToBePublishedAsync(true)
             .then(res => {
                 cfg.bundledpkgs[path.basename(dirname)] = res
@@ -1645,9 +1639,6 @@ function buildTargetCoreAsync() {
                 }
             })
     }, /*includeProjects*/ true)
-        .finally(() => {
-            forceCloudBuild = previousForceCloudBuild;
-        })
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -1790,16 +1781,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !globalConfig.localBuild
+    forceCloudBuild = false; // always use yotta
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["yt"]) {
-        forceCloudBuild = false
-    } else if (parsed.flags["cloud"]) {
+    if (parsed.flags["cloud"]) {
         forceCloudBuild = true
     }
     if (parsed.flags["just"]) {
@@ -4264,10 +4253,6 @@ function initCommands() {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
             },
-            yt: {
-                description: "use local yotta build",
-                aliases: ["yotta"]
-            },
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
@@ -4386,6 +4371,13 @@ function initCommands() {
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
+    p.defineCommand({
+        name: "pyconv",
+        help: "convert from python",
+        argString: "<package-directory> <support-directory>...",
+        anyArgs: true,
+        advanced: true,
+    }, c => pyconv.convertAsync(c.arguments))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({

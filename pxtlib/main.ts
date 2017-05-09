@@ -295,7 +295,7 @@ namespace pxt {
             if (getEmbeddedScript(this.id)) {
                 this.resolvedVersion = v = "embed:" + this.id
             } else if (!v || v == "*") {
-                U.userError(lf("version not specified for {0}", v))
+                U.userError(lf("version not specified for {0}", this.id))
             }
             return Promise.resolve(v)
         }
