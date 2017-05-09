@@ -2070,6 +2070,10 @@ function initExtensionsAsync(): Promise<void> {
                     pxt.debug(`\tadded hex importer ${fi.id}`);
                     theEditor.hexFileImporters.push(fi);
                 });
+            if (res.deployCoreAsync) {
+                pxt.debug(`\tadded custom deploy core async`);
+                pxt.commands.deployCoreAsync = res.deployCoreAsync;
+            }
             if (res.fieldEditors)
                 res.fieldEditors.forEach(fi => {
                     pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);

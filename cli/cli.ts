@@ -1213,7 +1213,7 @@ export function buildTargetAsync(): Promise<void> {
         .then(buildTargetCoreAsync)
         .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('editor', true, 'editor'))
+        .then(() => buildFolderAndBrowserifyAsync('editor', true, 'editor'))
         .then(() => buildFolderAsync('server', true, 'server'))
 }
 
@@ -1238,6 +1238,36 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
+    })
+}
+
+function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
+    if (!fs.existsSync(p + "/tsconfig.json")) {
+        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+        return Promise.resolve()
+    }
+
+    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
+        U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
+    }
+
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
+    pxt.log(`building ${p}...`)
+    dirsToWatch.push(p)
+    return nodeutil.spawnAsync({
+        cmd: "node",
+        args: ["../node_modules/typescript/bin/tsc"],
+        cwd: p
+    }).then(() => {
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["../node_modules/browserify/bin/cmd", `${outputName}/${outputName}.js`, `-o`, `${outputName}.js`],
+            cwd: `built`
+        })
     })
 }
 
