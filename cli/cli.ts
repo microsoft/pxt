@@ -1218,10 +1218,11 @@ export function buildTargetAsync(): Promise<void> {
             if (fs.existsSync(path.join("editor","tsconfig.json"))) {
                 const tsConfig = JSON.parse(fs.readFileSync(path.join("editor","tsconfig.json"), "utf8"));
                 if (tsConfig.compilerOptions.module)
-                    buildFolderAndBrowserifyAsync('editor', true, 'editor');
+                    return buildFolderAndBrowserifyAsync('editor', true, 'editor');
                 else
-                    buildFolderAsync('editor', true, 'editor');
+                    return buildFolderAsync('editor', true, 'editor');
             }
+            return Promise.resolve();
         })
         .then(() => buildFolderAsync('server', true, 'server'))
 }
@@ -1272,11 +1273,23 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     }).then(() => {
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: ["../node_modules/pxt-core/node_modules/browserify/bin/cmd", `${outputName}/${outputName}.js`, `-o`, `${outputName}.js`],
-            cwd: `built`
-        })
+        const browserify = require('browserify');
+        let b = browserify();
+        nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
+            b.add(f);
+        });
+
+        let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
+        b.bundle().pipe(outFile);
+
+        return new Promise<void>((resolve, reject) => {
+            outFile.on('finish', () => {
+                resolve();
+            });
+            outFile.on('error', (err: any) => {
+                reject(err);
+            });
+        });
     })
 }
 
@@ -1426,8 +1439,6 @@ function buildSemanticUIAsync() {
 
     if (!dirty) return Promise.resolve();
 
-    const node_modules = pxt.appTarget.id == "core" ? "node_modules" : "node_modules/pxt-core/node_modules";
-
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -1439,17 +1450,13 @@ function buildSemanticUIAsync() {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+        fs.writeFileSync('built/web/semantic.css', semCss)
         return semCss;
-    }).then(() => {
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: [`${node_modules}/postcss-cli/bin/postcss`, "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
-        })
-    }).then(() => {
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: [`${node_modules}/rtlcss/bin/rtlcss`, "built/web/semantic.css", "built/web/rtlsemantic.css"]
-        })
+    }).then((semCss) => {
+        const rtlcss = require('rtlcss');
+        const rtlCss = rtlcss.process(semCss);
+        pxt.debug("converting semantic css to rtl");
+        fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
 }
 
