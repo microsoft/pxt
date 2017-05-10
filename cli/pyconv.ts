@@ -16,6 +16,7 @@ interface FieldDesc {
     fundef?: py.FunctionDef;
     isStatic?: boolean;
     isProtected?: boolean;
+    alwaysThrows?: boolean;
 }
 
 type Map<T> = pxt.Map<T>;
@@ -644,6 +645,16 @@ function canUnify(t0: Type, t1: Type): boolean {
     return true
 }
 
+function unifyClass(t: Type, cd: py.ClassDef) {
+    t = find(t)
+    if (t.classType == cd) return
+    if (!typeCtor(t)) {
+        t.classType = cd
+        return
+    }
+    unify(t, mkType({ classType: cd }))
+}
+
 function unify(t0: Type, t1: Type): void {
     t0 = find(t0)
     t1 = find(t1)
@@ -904,12 +915,52 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         ]
         if (isMethod) {
             let fd = getClassField(ctx.currClass, funname)
+            if (n.body.length == 1 && n.body[0].kind == "Raise")
+                fd.alwaysThrows = true
             if (n.name == "__init__") {
                 nodes.push(B.mkText("constructor"))
-                unify(n.retType, mkType({ classType: ctx.currClass }))
+                unifyClass(n.retType, ctx.currClass)
             } else {
+                if (funname == "__get__" || funname == "__set__") {
+                    let i2cArg = "i2cDev"
+                    let vv = n.vars[i2cArg]
+                    if (vv) {
+                        let i2cDevClass =
+                            lookupSymbol("adafruit_bus_device.i2c_device.I2CDevice") as py.ClassDef
+                        if (i2cDevClass)
+                            unifyClass(vv.type, i2cDevClass)
+                    }
+                    vv = n.vars["value"]
+                    if (funname == "__set__" && vv) {
+                        let cf = getClassField(ctx.currClass, "__get__")
+                        if (cf.fundef)
+                            unify(vv.type, cf.fundef.retType)
+                    }
+                    let nargs = n.args.args
+                    if (nargs[1].arg == "obj") {
+                        // rewrite
+                        nargs[1].arg = i2cArg
+                        if (nargs[nargs.length - 1].arg == "objtype") {
+                            nargs.pop()
+                            n.args.defaults.pop()
+                        }
+                        iterPy(n, e => {
+                            if (e.kind == "Attribute") {
+                                let a = e as py.Attribute
+                                if (a.attr == "i2c_device" && getName(a.value) == "obj") {
+                                    let nm = e as py.Name
+                                    nm.kind = "Name"
+                                    nm.id = i2cArg
+                                    delete a.attr
+                                    delete a.value
+                                }
+                            }
+                        })
+                    }
+                    funname = funname.replace(/_/g, "")
+                }
                 if (!prefix) {
-                    prefix = n.name[0] == "_" ? (fd.isProtected ? "protected" : "private") : "public"
+                    prefix = funname[0] == "_" ? (fd.isProtected ? "protected" : "private") : "public"
                 }
                 nodes.push(B.mkText(prefix + " "), quote(funname))
             }
@@ -1269,7 +1320,7 @@ interface FunOverride {
     n: string;
     t: Type;
 }
-// TODO include return type
+
 let funMap: Map<FunOverride> = {
     "const": { n: "", t: tpNumber },
     "micropython.const": { n: "", t: tpNumber },
@@ -1519,7 +1570,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
 
         if (nm == "super" && allargs.length == 0) {
             if (ctx.currClass && ctx.currClass.baseClass)
-                unify(n.tsType, mkType({ classType: ctx.currClass.baseClass }))
+                unifyClass(n.tsType, ctx.currClass.baseClass)
             return B.mkText("super")
         }
 
@@ -1618,7 +1669,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
     Name: (n: py.Name) => {
         if (n.id == "self" && ctx.currClass) {
-            unify(n.tsType, mkType({ classType: ctx.currClass }))
+            unifyClass(n.tsType, ctx.currClass)
         } else {
             let v = lookupVar(n.id)
             if (v)
@@ -1709,6 +1760,18 @@ function parseComments(mod: py.Module) {
         let m = /(\s|^)#\s*(.*)/.exec(l)
         if (m) return m[2]
         return null
+    })
+}
+
+function iterPy(e: py.AST, f: (v: py.AST) => void) {
+    if (!e) return
+    f(e)
+    U.iterMap(e as any, (k: string, v: any) => {
+        if (!v || k == "parent")
+            return
+        if (v && v.kind) iterPy(v, f)
+        else if (Array.isArray(v))
+            v.forEach((x: any) => iterPy(x, f))
     })
 }
 
