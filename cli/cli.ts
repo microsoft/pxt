@@ -1282,7 +1282,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         b.bundle().pipe(fs.createWriteStream(`built/${outputName}.js`))
 
         let editorFile = fs.readFileSync(`built/${outputName}.js`)
-        console.log(editorFile);
+        console.log(editorFile.toString("base64"));
         return Promise.resolve();
     })
 }
