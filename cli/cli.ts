@@ -1426,6 +1426,8 @@ function buildSemanticUIAsync() {
 
     if (!dirty) return Promise.resolve();
 
+    const node_modules = pxt.appTarget.id == "core" ? "node_modules" : "node_modules/pxt-core/node_modules";
+
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -1441,12 +1443,12 @@ function buildSemanticUIAsync() {
     }).then(() => {
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: ["node_modules/pxt-core/node_modules/postcss-cli/bin/postcss", "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
+            args: [`${node_modules}/postcss-cli/bin/postcss`, "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
         })
     }).then(() => {
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: ["node_modules/pxt-core/node_modules/rtlcss/bin/rtlcss", "built/web/semantic.css", "built/web/rtlsemantic.css"]
+            args: [`${node_modules}/rtlcss/bin/rtlcss`, "built/web/semantic.css", "built/web/rtlsemantic.css"]
         })
     })
 }
