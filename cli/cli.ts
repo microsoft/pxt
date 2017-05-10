@@ -1277,7 +1277,7 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         nodeutil.allFiles(`./built/${outputName}`).forEach((f) => {
             b.add(f);
         });
-        b.bundle().pipe(fs.createWriteStream(`./built/${outputName}.js`));
+        return b.bundle().pipe(fs.createWriteStream(`./built/${outputName}.js`));
     })
 }
 

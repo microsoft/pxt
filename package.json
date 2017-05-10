@@ -46,7 +46,6 @@
     "built/server.js",
     "built/electron.js",
     "built/pyconv.js",
-    "built/editor.js",
     "built/web/fonts",
     "built/web/*.js",
     "built/web/*.css",
