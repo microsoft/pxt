@@ -1272,11 +1272,12 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     }).then(() => {
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: ["../node_modules/pxt-core/node_modules/browserify/bin/cmd", `${outputName}/${outputName}.js`, `-o`, `${outputName}.js`],
-            cwd: `built`
-        })
+        const browserify = require('browserify');
+        let b = browserify();
+        nodeutil.allFiles(`./built/${outputName}`).forEach((f) => {
+            b.add(f);
+        });
+        b.bundle().pipe(fs.createWriteStream(`./built/${outputName}.js`));
     })
 }
 
@@ -1426,8 +1427,6 @@ function buildSemanticUIAsync() {
 
     if (!dirty) return Promise.resolve();
 
-    const node_modules = pxt.appTarget.id == "core" ? "node_modules" : "node_modules/pxt-core/node_modules";
-
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
         cmd: "node",
@@ -1440,16 +1439,11 @@ function buildSemanticUIAsync() {
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
         return semCss;
-    }).then(() => {
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: [`${node_modules}/postcss-cli/bin/postcss`, "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
-        })
-    }).then(() => {
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: [`${node_modules}/rtlcss/bin/rtlcss`, "built/web/semantic.css", "built/web/rtlsemantic.css"]
-        })
+    }).then((semCss) => {
+        const rtlcss = require('rtlcss');
+        const rtlCss = rtlcss.process(semCss);
+        pxt.debug("converting semantic css to rtl");
+        fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
 }
 

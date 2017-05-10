@@ -77,9 +77,7 @@
     "rimraf": "2.5.4",
     "request": "^2.79.0",
     "browserify": "^13.0.0",
-    "rtlcss": "^2.1.2",
-    "postcss-cli": "^3.2.0",
-    "autoprefixer": "^7.0.1"
+    "rtlcss": "^2.1.2"
   },
   "optionalDependencies": {
     "keytar": "^3.0.2",
