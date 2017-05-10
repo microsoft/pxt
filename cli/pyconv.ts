@@ -14,8 +14,10 @@ interface FieldDesc {
     type: Type;
     inClass: py.ClassDef;
     fundef?: py.FunctionDef;
+    isGetSet?: boolean;
     isStatic?: boolean;
     isProtected?: boolean;
+    initializer?: py.Expr;
 }
 
 type Map<T> = pxt.Map<T>;
@@ -139,6 +141,7 @@ namespace py {
         decorator_list: Expr[];
         returns?: Expr;
         retType?: Type;
+        alwaysThrows?: boolean;
     }
     export interface AsyncFunctionDef extends Stmt {
         kind: "AsyncFunctionDef";
@@ -528,10 +531,12 @@ interface VarDescOptions {
     isParam?: boolean;
     fundef?: py.FunctionDef;
     classdef?: py.ClassDef;
+    isImport?: py.Module;
 }
 
 interface VarDesc extends VarDescOptions {
     type: Type;
+    name: string;
 }
 
 interface Ctx {
@@ -541,6 +546,7 @@ interface Ctx {
 }
 
 let ctx: Ctx
+let currIteration = 0
 
 let typeId = 0
 let numUnifies = 0
@@ -558,7 +564,7 @@ function defvar(n: string, opts: VarDescOptions) {
     let scopeDef = currentScope()
     let v = scopeDef.vars[n]
     if (!v) {
-        v = scopeDef.vars[n] = { type: mkType() }
+        v = scopeDef.vars[n] = { type: mkType(), name: n }
     }
     for (let k of Object.keys(opts)) {
         (v as any)[k] = (opts as any)[k]
@@ -595,7 +601,17 @@ function getFullName(n: py.AST): string {
 }
 
 function applyTypeMap(s: string) {
-    return U.lookup(typeMap, s) || s
+    let over = U.lookup(typeMap, s)
+    if (over) return over
+    for (let v of U.values(ctx.currModule.vars)) {
+        if (!v.isImport)
+            continue
+        if (v.expandsTo == s) return v.name
+        if (v.isImport && U.startsWith(s, v.expandsTo + ".")) {
+            return v.name + s.slice(v.expandsTo.length)
+        }
+    }
+    return s
 }
 
 function t2s(t: Type): string {
@@ -623,6 +639,10 @@ function typeCtor(t: Type): any {
     return null
 }
 
+function isFree(t: Type) {
+    return !typeCtor(find(t))
+}
+
 function canUnify(t0: Type, t1: Type): boolean {
     t0 = find(t0)
     t1 = find(t1)
@@ -644,6 +664,16 @@ function canUnify(t0: Type, t1: Type): boolean {
     return true
 }
 
+function unifyClass(t: Type, cd: py.ClassDef) {
+    t = find(t)
+    if (t.classType == cd) return
+    if (isFree(t)) {
+        t.classType = cd
+        return
+    }
+    unify(t, mkType({ classType: cd }))
+}
+
 function unify(t0: Type, t1: Type): void {
     t0 = find(t0)
     t1 = find(t1)
@@ -661,14 +691,16 @@ function unify(t0: Type, t1: Type): void {
         unify(t0.arrayType, t1.arrayType)
 }
 
-function getClassField(ct: py.ClassDef, n: string) {
+function getClassField(ct: py.ClassDef, n: string, checkOnly = false, skipBases = false) {
     if (!ct.fields)
         ct.fields = {}
     if (!ct.fields[n]) {
-        for (let par = ct.baseClass; par; par = par.baseClass) {
-            if (par.fields && par.fields[n])
-                return par.fields[n]
-        }
+        if (!skipBases)
+            for (let par = ct.baseClass; par; par = par.baseClass) {
+                if (par.fields && par.fields[n])
+                    return par.fields[n]
+            }
+        if (checkOnly) return null
         ct.fields[n] = {
             inClass: ct,
             name: n,
@@ -678,11 +710,11 @@ function getClassField(ct: py.ClassDef, n: string) {
     return ct.fields[n]
 }
 
-function getTypeField(t: Type, n: string) {
+function getTypeField(t: Type, n: string, checkOnly = false) {
     t = find(t)
     let ct = t.classType
     if (ct)
-        return getClassField(ct, n)
+        return getClassField(ct, n, checkOnly)
     return null
 }
 
@@ -903,13 +935,53 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             todoComment("decorators", decs.map(expr))
         ]
         if (isMethod) {
-            let fd = getClassField(ctx.currClass, funname)
+            let fd = getClassField(ctx.currClass, funname, false, true)
+            if (n.body.length == 1 && n.body[0].kind == "Raise")
+                n.alwaysThrows = true
             if (n.name == "__init__") {
                 nodes.push(B.mkText("constructor"))
-                unify(n.retType, mkType({ classType: ctx.currClass }))
+                unifyClass(n.retType, ctx.currClass)
             } else {
+                if (funname == "__get__" || funname == "__set__") {
+                    let i2cArg = "i2cDev"
+                    let vv = n.vars[i2cArg]
+                    if (vv) {
+                        let i2cDevClass =
+                            lookupSymbol("adafruit_bus_device.i2c_device.I2CDevice") as py.ClassDef
+                        if (i2cDevClass)
+                            unifyClass(vv.type, i2cDevClass)
+                    }
+                    vv = n.vars["value"]
+                    if (funname == "__set__" && vv) {
+                        let cf = getClassField(ctx.currClass, "__get__")
+                        if (cf.fundef)
+                            unify(vv.type, cf.fundef.retType)
+                    }
+                    let nargs = n.args.args
+                    if (nargs[1].arg == "obj") {
+                        // rewrite
+                        nargs[1].arg = i2cArg
+                        if (nargs[nargs.length - 1].arg == "objtype") {
+                            nargs.pop()
+                            n.args.defaults.pop()
+                        }
+                        iterPy(n, e => {
+                            if (e.kind == "Attribute") {
+                                let a = e as py.Attribute
+                                if (a.attr == "i2c_device" && getName(a.value) == "obj") {
+                                    let nm = e as py.Name
+                                    nm.kind = "Name"
+                                    nm.id = i2cArg
+                                    delete a.attr
+                                    delete a.value
+                                }
+                            }
+                        })
+                    }
+                    funname = funname.replace(/_/g, "")
+                }
                 if (!prefix) {
-                    prefix = n.name[0] == "_" ? (fd.isProtected ? "protected" : "private") : "public"
+                    prefix = funname[0] == "_" ? (fd.isProtected ? "protected" : "private") : "public"
                 }
                 nodes.push(B.mkText(prefix + " "), quote(funname))
             }
@@ -924,9 +996,21 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         nodes.push(
             doArgs(n.args, isMethod),
             n.name == "__init__" ? B.mkText("") : typeAnnot(n.retType),
-            todoComment("returns", n.returns ? [expr(n.returns)] : []),
-            stmts(n.body)
-        )
+            todoComment("returns", n.returns ? [expr(n.returns)] : []))
+
+        let body = n.body.map(stmt)
+        if (n.name == "__init__") {
+            for (let f of U.values(ctx.currClass.fields)) {
+                if (f.initializer) {
+                    body.push(
+                        B.mkStmt(B.mkText(`this.${quoteStr(f.name)} = `), expr(f.initializer))
+                    )
+                }
+            }
+        }
+
+        nodes.push(B.mkBlock(body))
+
         return B.mkStmt(B.mkGroup(nodes))
     }),
 
@@ -952,7 +1036,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         nodes.push(body)
 
         let fieldDefs = U.values(n.fields)
-            .filter(f => !f.fundef && !f.isStatic)
+            .filter(f => !f.fundef && !f.isStatic && !f.isGetSet)
             .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.type)))
         body.children = fieldDefs.concat(body.children)
 
@@ -994,7 +1078,38 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         if (!ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
+            let src = expr(n.value)
             let fd = getClassField(ctx.currClass, nm)
+            let attrTp = typeOf(n.value)
+            let getter = getTypeField(attrTp, "__get__", true)
+            if (getter) {
+                unify(fd.type, getter.fundef.retType)
+                let implNm = "_" + nm
+                let fdBack = getClassField(ctx.currClass, implNm)
+                unify(fdBack.type, attrTp)
+                let setter = getTypeField(attrTp, "__set__", true)
+                let res = [
+                    B.mkNewLine(),
+                    B.mkStmt(B.mkText("private "), quote(implNm), typeAnnot(attrTp))
+                ]
+                if (!getter.fundef.alwaysThrows)
+                    res.push(B.mkStmt(B.mkText(`get ${quoteStr(nm)}()`), typeAnnot(fd.type), B.mkBlock([
+                        B.mkText(`return this.${quoteStr(implNm)}.get(this.i2c_device)`),
+                        B.mkNewLine()
+                    ])))
+                if (!setter.fundef.alwaysThrows)
+                    res.push(B.mkStmt(B.mkText(`set ${quoteStr(nm)}(value`), typeAnnot(fd.type),
+                        B.mkText(`) `), B.mkBlock([
+                            B.mkText(`this.${quoteStr(implNm)}.set(this.i2c_device, value)`),
+                            B.mkNewLine()
+                        ])))
+                fdBack.initializer = n.value
+                fd.isGetSet = true
+                fdBack.isGetSet = true
+                return B.mkGroup(res)
+            } else if (currIteration < 2) {
+                return B.mkText("/* skip for now */")
+            }
             unify(fd.type, typeOf(n.targets[0]))
             fd.isStatic = true
             pref = "static "
@@ -1145,17 +1260,30 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         return B.mkText("")
     },
     ImportFrom: (n: py.ImportFrom) => {
+        let res: B.JsNode[] = []
         for (let nn of n.names) {
             if (nn.name == "*")
                 defvar(n.module, {
                     isImportStar: true
                 })
-            else
-                defvar(nn.asname || nn.name, {
-                    expandsTo: n.module + "." + nn.name
-                })
+            else {
+                let fullname = n.module + "." + nn.name
+                let sym = lookupSymbol(fullname)
+                let currname = nn.asname || nn.name
+                if (sym && sym.kind == "Module") {
+                    defvar(currname, {
+                        isImport: sym as py.Module,
+                        expandsTo: fullname
+                    })
+                    res.push(B.mkStmt(B.mkText(`import ${quoteStr(currname)} = ${fullname}`)))
+                } else {
+                    defvar(currname, {
+                        expandsTo: fullname
+                    })
+                }
+            }
         }
-        return B.mkText("")
+        return B.mkGroup(res)
     },
     ExprStmt: (n: py.ExprStmt) =>
         n.value.kind == "Str" ?
@@ -1268,9 +1396,11 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
 interface FunOverride {
     n: string;
     t: Type;
+    scale?: number;
 }
-// TODO include return type
+
 let funMap: Map<FunOverride> = {
+    "memoryview": { n: "", t: tpBuffer },
     "const": { n: "", t: tpNumber },
     "micropython.const": { n: "", t: tpNumber },
     "int": { n: "Math.trunc", t: tpNumber },
@@ -1282,9 +1412,14 @@ let funMap: Map<FunOverride> = {
     "bytearray": { n: "pins.createBuffer", t: tpBuffer },
     "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
     "ustruct.pack": { n: "pins.packBuffer", t: tpBuffer },
+    "ustruct.pack_into": { n: "pins.packIntoBuffer", t: tpVoid },
     "ustruct.unpack": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
+    "ustruct.unpack_from": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
+    "ustruct.calcsize": { n: "pins.packedSize", t: tpNumber },
     "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
     "bool": { n: "!!", t: tpBoolean },
+    "Array.index": { n: ".indexOf", t: tpNumber },
+    "time.sleep": { n: "loops.pause", t: tpVoid, scale: 1000 }
 }
 
 function isSuper(v: py.Expr) {
@@ -1349,7 +1484,21 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     ListComp: (n: py.ListComp) => exprTODO(n),
     SetComp: (n: py.SetComp) => exprTODO(n),
     DictComp: (n: py.DictComp) => exprTODO(n),
-    GeneratorExp: (n: py.GeneratorExp) => exprTODO(n),
+    GeneratorExp: (n: py.GeneratorExp) => {
+        if (n.generators.length == 1 && n.generators[0].kind == "Comprehension") {
+            let comp = n.generators[0] as py.Comprehension
+            if (comp.ifs.length == 0) {
+                return scope(() => {
+                    let v = getName(comp.target)
+                    defvar(v, { isParam: true }) // TODO this leaks the scope...
+                    return B.mkInfix(expr(comp.iter), ".", B.H.mkCall("map", [
+                        B.mkGroup([ quote(v), B.mkText(" => "), expr(n.elt) ])
+                    ]))
+                })
+            }
+        }
+        return exprTODO(n)
+    },
     Await: (n: py.Await) => exprTODO(n),
     Yield: (n: py.Yield) => exprTODO(n),
     YieldFrom: (n: py.YieldFrom) => exprTODO(n),
@@ -1418,8 +1567,6 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             unify(typeOf(n), fd.retType)
         }
 
-        // TODO keywords
-
         let nm = getName(n.func)
         let over = U.lookup(funMap, nm)
         if (over) {
@@ -1430,6 +1577,10 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         if (methName) {
             nm = t2s(recvTp) + "." + methName
             over = U.lookup(funMap, nm)
+            if (!over && find(recvTp).arrayType) {
+                nm = "Array." + methName
+                over = U.lookup(funMap, nm)
+            }
         }
 
         if (n.keywords.length > 0) {
@@ -1519,7 +1670,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
 
         if (nm == "super" && allargs.length == 0) {
             if (ctx.currClass && ctx.currClass.baseClass)
-                unify(n.tsType, mkType({ classType: ctx.currClass.baseClass }))
+                unifyClass(n.tsType, ctx.currClass.baseClass)
             return B.mkText("super")
         }
 
@@ -1529,6 +1680,19 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             let overName = over.n
             if (over.t)
                 unify(typeOf(n), over.t)
+            if (over.scale) {
+                allargs = allargs.map(a => {
+                    let s = "?"
+                    if (a.type == B.NT.Prefix && a.children.length == 0)
+                        s = a.op
+                    let n = parseFloat(s)
+                    if (!isNaN(n)) {
+                        return B.mkText((over.scale * n) + "")
+                    } else {
+                        return B.mkInfix(a, "*", B.mkText(over.scale + ""))
+                    }
+                })
+            }
             if (overName == "") {
                 if (allargs.length == 1)
                     return allargs[0]
@@ -1598,14 +1762,18 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
     },
     Subscript: (n: py.Subscript) => {
-        if (n.slice.kind == "Index")
+        if (n.slice.kind == "Index") {
+            let idx = (n.slice as py.Index).value
+            if (currIteration > 2 && isFree(typeOf(idx))) {
+                unify(typeOf(idx), tpNumber)
+            }
             return B.mkGroup([
                 expr(n.value),
                 B.mkText("["),
-                expr((n.slice as py.Index).value),
+                expr(idx),
                 B.mkText("]"),
             ])
-        else if (n.slice.kind == "Slice") {
+        } else if (n.slice.kind == "Slice") {
             let s = n.slice as py.Slice
             return B.mkInfix(expr(n.value), ".",
                 B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
@@ -1618,11 +1786,14 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
     Name: (n: py.Name) => {
         if (n.id == "self" && ctx.currClass) {
-            unify(n.tsType, mkType({ classType: ctx.currClass }))
+            unifyClass(n.tsType, ctx.currClass)
         } else {
             let v = lookupVar(n.id)
-            if (v)
+            if (v) {
                 unify(n.tsType, v.type)
+                if (v.isImport)
+                    return quote(n.id) // it's import X = Y.Z.X, use X not Y.Z.X
+            }
         }
 
         if (n.ctx.indexOf("Load") >= 0) {
@@ -1712,6 +1883,18 @@ function parseComments(mod: py.Module) {
     })
 }
 
+function iterPy(e: py.AST, f: (v: py.AST) => void) {
+    if (!e) return
+    f(e)
+    U.iterMap(e as any, (k: string, v: any) => {
+        if (!v || k == "parent")
+            return
+        if (v && v.kind) iterPy(v, f)
+        else if (Array.isArray(v))
+            v.forEach((x: any) => iterPy(x, f))
+    })
+}
+
 export function convertAsync(fns: string[]) {
     let primFiles = U.toDictionary(nodeutil.allFiles(fns[0]), s => s.replace(/\\/g, "/"))
     let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
@@ -1740,7 +1923,7 @@ export function convertAsync(fns: string[]) {
     }
 
     const pkgFilesKeys = Object.keys(pkgFiles);
-    pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('    \n')}`);
+    pxt.debug(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
 
     return nodeutil.spawnWithPipeAsync({
         cmd: /^win/i.test(process.platform) ? "py" : "python3",
@@ -1780,6 +1963,7 @@ export function convertAsync(fns: string[]) {
             })
 
             for (let i = 0; i < 5; ++i) {
+                currIteration = i
                 U.iterMap(js, (fn: string, js: any) => {
                     toTS(js)
                 })
@@ -1787,6 +1971,7 @@ export function convertAsync(fns: string[]) {
 
             let files: pxt.Map<string> = {}
 
+            currIteration = 1000
             U.iterMap(js, (fn: string, js: py.Module) => {
                 if (primFiles[fn]) {
                     pxt.debug(`converting ${fn}`)
@@ -1796,7 +1981,7 @@ export function convertAsync(fns: string[]) {
                     if (!nodes) return
                     let res = B.flattenNode(nodes)
                     s += res.output
-                    let fn2 = js.name + ".ts"
+                    let fn2 = js.name.replace(/\..*/, "") + ".ts"
                     files[fn2] = (files[fn2] || "") + s
                 } else {
                     pxt.debug(`skipping ${fn}`)
