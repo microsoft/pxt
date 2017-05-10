@@ -537,10 +537,10 @@ export class Editor extends srceditor.Editor {
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
-        let diags = tsfile.diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error);
+        let diags = tsfile.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
-        diags.filter(diag => diag.category == ts.DiagnosticCategory.Error).forEach(diag => {
+        diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
             let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
             if (bid) {
                 let b = this.editor.getBlockById(bid)

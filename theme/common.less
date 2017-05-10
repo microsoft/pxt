@@ -716,6 +716,12 @@ Avatar
     width: 0;
 }
 
+/* Modulator */
+
+#modulatorWrapper, #modulatorAudioOutput {
+    display: none;
+}
+
 /*******************************
         Layout Variables
 *******************************/
@@ -806,7 +812,7 @@ Avatar
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     /* Blockly */
     div.blocklyTreeRow {
-        min-width: 200px;
+        min-width: @blocklyRowWidthWide;
     }
 }
 
@@ -814,7 +820,7 @@ Avatar
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     /* Blockly row */
     div.blocklyTreeRow {
-        min-width: 180px;
+        min-width: @blocklyRowWidthComputer;
     }
 }
 

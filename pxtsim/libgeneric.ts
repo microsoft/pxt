@@ -320,7 +320,12 @@ namespace pxsim {
             Int16BE,
             UInt16BE,
             Int32BE,
-            // UInt32,
+            UInt32LE,
+            UInt32BE,
+            Float32LE,
+            Float64LE,
+            Float32BE,
+            Float64BE,
         };
 
         function fmtInfoCore(fmt: NumberFormat) {
@@ -330,11 +335,18 @@ namespace pxsim {
                 case NumberFormat.Int16LE: return -2;
                 case NumberFormat.UInt16LE: return 2;
                 case NumberFormat.Int32LE: return -4;
+                case NumberFormat.UInt32LE: return 4;
                 case NumberFormat.Int8BE: return -10;
                 case NumberFormat.UInt8BE: return 10;
                 case NumberFormat.Int16BE: return -20;
                 case NumberFormat.UInt16BE: return 20;
                 case NumberFormat.Int32BE: return -40;
+                case NumberFormat.UInt32BE: return 40;
+
+                case NumberFormat.Float32LE: return 4;
+                case NumberFormat.Float32BE: return 40;
+                case NumberFormat.Float64LE: return 8;
+                case NumberFormat.Float64BE: return 80;
                 default: throw U.userError("bad format");
             }
         }
@@ -351,11 +363,22 @@ namespace pxsim {
                 swap = true
                 size /= 10
             }
-            return { size, signed, swap }
+            let isFloat = fmt >= NumberFormat.Float32LE
+            return { size, signed, swap, isFloat }
         }
 
         export function getNumber(buf: RefBuffer, fmt: NumberFormat, offset: number) {
             let inf = fmtInfo(fmt)
+            if (inf.isFloat) {
+                let subarray = buf.data.buffer.slice(offset, offset + inf.size)
+                if (inf.swap) {
+                    let u8 = new Uint8Array(subarray)
+                    u8.reverse()
+                }
+                if (inf.size == 4) return new Float32Array(subarray)[0]
+                else return new Float64Array(subarray)[0]
+            }
+
             let r = 0
             for (let i = 0; i < inf.size; ++i) {
                 r <<= 8
@@ -365,12 +388,28 @@ namespace pxsim {
             if (inf.signed) {
                 let missingBits = 32 - (inf.size * 8)
                 r = (r << missingBits) >> missingBits;
+            } else {
+                r = r >>> 0;
             }
             return r
         }
 
         export function setNumber(buf: RefBuffer, fmt: NumberFormat, offset: number, r: number) {
             let inf = fmtInfo(fmt)
+            if (inf.isFloat) {
+                let arr = new Uint8Array(inf.size)
+                if (inf.size == 4)
+                    new Float32Array(arr.buffer)[0] = r
+                else
+                    new Float64Array(arr.buffer)[0] = r
+                if (inf.swap)
+                    arr.reverse()
+                for (let i = 0; i < inf.size; ++i) {
+                    buf.data[offset + i] = arr[i]
+                }
+                return
+            }
+
             for (let i = 0; i < inf.size; ++i) {
                 let off = !inf.swap ? offset + i : offset + inf.size - i - 1
                 buf.data[off] = (r & 0xff)

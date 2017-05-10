@@ -929,11 +929,14 @@ export class ProjectView
             });
     }
 
+    beforeCompile() { }
+
     compile(saveOnly = false) {
         // the USB init has to be called from an event handler
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
+        this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
             userContextWindow = window.open("");
@@ -1549,6 +1552,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
+        const useModulator = compile.useModulator;
         const { hideMenuBar, hideEditorToolbar} = targetTheme;
         const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
@@ -1586,6 +1590,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
         return (
             <div id='root' className={rootClasses}>
+                {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined }
+                {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined }
                 {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
@@ -1606,8 +1612,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
                                 {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="puzzle" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="align left" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             <div className="right menu">
@@ -1698,7 +1704,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
+                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className={`icon ${pxt.appTarget.appTheme.downloadIcon  || 'download'}`}/>{ pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>
@@ -2060,6 +2066,13 @@ function initExtensionsAsync(): Promise<void> {
                     pxt.debug(`\tadded hex importer ${fi.id}`);
                     theEditor.hexFileImporters.push(fi);
                 });
+            if (res.deployCoreAsync) {
+                pxt.debug(`\tadded custom deploy core async`);
+                pxt.commands.deployCoreAsync = res.deployCoreAsync;
+            }
+            if (res.beforeCompile) {
+                theEditor.beforeCompile = res.beforeCompile;
+            }
             if (res.fieldEditors)
                 res.fieldEditors.forEach(fi => {
                     pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
@@ -2110,6 +2123,10 @@ $(document).ready(() => {
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
+                lang.setCookieLang(mlang[2]);
+                window.location.hash = window.location.hash.replace(mlang[0], "");
+            }
             const useLang = mlang ? mlang[2] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
             const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
             if (useLang) pxt.tickEvent("locale." + useLang + (live ? ".live" : ""));

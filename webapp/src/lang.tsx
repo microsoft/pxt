@@ -62,6 +62,19 @@ export function getCookieLang() {
     return cookieValue && cookieValue[1] || null;
 }
 
+export function setCookieLang(langId: string) {
+    if (!allLanguages[langId]) {
+        return;
+    }
+
+    if (langId !== getCookieLang()) {
+        pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
+        const expiration = new Date();
+        expiration.setTime(expiration.getTime() + (langCookieExpirationDays * 24 * 60 * 60 * 1000));
+        document.cookie = `${pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
+    }
+}
+
 export class LanguagePicker extends React.Component<ISettingsProps, LanguagesState> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -93,12 +106,7 @@ export class LanguagePicker extends React.Component<ISettingsProps, LanguagesSta
             return;
         }
 
-        if (langId !== getCookieLang()) {
-            pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
-            const expiration = new Date();
-            expiration.setTime(expiration.getTime() + (langCookieExpirationDays * 24 * 60 * 60 * 1000));
-            document.cookie = `${pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
-        }
+        setCookieLang(langId);
 
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang.${langId}`);
