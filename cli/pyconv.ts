@@ -1484,7 +1484,21 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     ListComp: (n: py.ListComp) => exprTODO(n),
     SetComp: (n: py.SetComp) => exprTODO(n),
     DictComp: (n: py.DictComp) => exprTODO(n),
-    GeneratorExp: (n: py.GeneratorExp) => exprTODO(n),
+    GeneratorExp: (n: py.GeneratorExp) => {
+        if (n.generators.length == 1 && n.generators[0].kind == "Comprehension") {
+            let comp = n.generators[0] as py.Comprehension
+            if (comp.ifs.length == 0) {
+                return scope(() => {
+                    let v = getName(comp.target)
+                    defvar(v, { isParam: true }) // TODO this leaks the scope...
+                    return B.mkInfix(expr(comp.iter), ".", B.H.mkCall("map", [
+                        B.mkGroup([ quote(v), B.mkText(" => "), expr(n.elt) ])
+                    ]))
+                })
+            }
+        }
+        return exprTODO(n)
+    },
     Await: (n: py.Await) => exprTODO(n),
     Yield: (n: py.Yield) => exprTODO(n),
     YieldFrom: (n: py.YieldFrom) => exprTODO(n),
