@@ -1322,6 +1322,7 @@ interface FunOverride {
 }
 
 let funMap: Map<FunOverride> = {
+    "memoryview": { n: "", t: tpBuffer },
     "const": { n: "", t: tpNumber },
     "micropython.const": { n: "", t: tpNumber },
     "int": { n: "Math.trunc", t: tpNumber },
@@ -1333,9 +1334,13 @@ let funMap: Map<FunOverride> = {
     "bytearray": { n: "pins.createBuffer", t: tpBuffer },
     "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
     "ustruct.pack": { n: "pins.packBuffer", t: tpBuffer },
+    "ustruct.pack_into": { n: "pins.packIntoBuffer", t: tpVoid },
     "ustruct.unpack": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
+    "ustruct.unpack_from": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
+    "ustruct.calcsize": { n: "pins.packedSize", t: tpNumber },
     "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
     "bool": { n: "!!", t: tpBoolean },
+    "Array.index": { n: ".indexOf", t: tpNumber },
 }
 
 function isSuper(v: py.Expr) {
@@ -1481,6 +1486,10 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         if (methName) {
             nm = t2s(recvTp) + "." + methName
             over = U.lookup(funMap, nm)
+            if (!over && find(recvTp).arrayType) {
+                nm = "Array." + methName
+                over = U.lookup(funMap, nm)
+            }
         }
 
         if (n.keywords.length > 0) {
