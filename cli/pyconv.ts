@@ -1712,7 +1712,7 @@ function parseComments(mod: py.Module) {
     })
 }
 
-export function convertAsync(fns: string[], cmd?: string) {
+export function convertAsync(fns: string[]) {
     let primFiles = U.toDictionary(nodeutil.allFiles(fns[0]), s => s)
     let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
     let dirs: Map<number> = {}
@@ -1740,7 +1740,7 @@ export function convertAsync(fns: string[], cmd?: string) {
     }
 
     return nodeutil.spawnWithPipeAsync({
-        cmd: cmd || "python3",
+        cmd: /^win/i.test(process.platform) ? "py" : "python3",
         args: [],
         input: convPy.replace("@files@", JSON.stringify(Object.keys(pkgFiles))),
         silent: true
