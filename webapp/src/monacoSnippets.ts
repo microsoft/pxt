@@ -18,7 +18,7 @@ export const loops: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["loops"].toString(),
+        color: pxt.blocks.getNamespaceColor("loops"),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         icon: "loops",
         weight: 50.09,
@@ -58,7 +58,7 @@ export const logic: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["logic"].toString(),
+        color: pxt.blocks.getNamespaceColor("logic"),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.08,
         icon: "logic",
@@ -95,7 +95,7 @@ export const variables: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["variables"].toString(),
+        color: pxt.blocks.getNamespaceColor("variables"),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.07,
         icon: "variables",
@@ -183,7 +183,7 @@ export const maths: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["math"].toString(),
+        color: pxt.blocks.getNamespaceColor("math"),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.06,
         icon: "math",
@@ -241,7 +241,7 @@ export const text: BuiltinCategoryDefinition = {
     ],
     attributes: {
         advanced: true,
-        color: pxt.blocks.blockColors["text"].toString(),
+        color: pxt.blocks.getNamespaceColor("text"),
         icon: "text",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}

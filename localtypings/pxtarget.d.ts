@@ -190,6 +190,7 @@ declare namespace pxt {
         selectLanguage?: boolean; // add language picker to settings menu
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
+        blockColors?: Map<string>; // block namespace colors, used for build in categories
     }
 
     interface DocMenuEntry {
