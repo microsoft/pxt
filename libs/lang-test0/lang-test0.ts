@@ -1571,7 +1571,7 @@ namespace ObjectDestructuring {
 function testFloat() {
     if (!hasFloat)
         return
-    let v = 13/32
+    let v = 13 / 32
     v *= 32
     assert(v == 13, "/")
     for (let i = 0; i < 20; ++i) {
@@ -1592,21 +1592,20 @@ function clean() {
 
 namespace Generics {
 
-    function swap<T>(arr: T[], i : number, j: number) : void {
-        let temp : T = arr[i];
+    function swap<T>(arr: T[], i: number, j: number): void {
+        let temp: T = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
     }
 
-    function sortHelper<T>(arr: T[], callbackfn ?: (value1: T, value2: T) => number) : T[] {
+    function sortHelper<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
         if (arr.length <= 0 || !callbackfn) {
             return arr;
         }
-        let len = arr.length; 
+        let len = arr.length;
         // simple selection sort.     
         for (let i = 0; i < len - 1; ++i) {
-            for (let j = i + 1; j < len; ++j)
-            {
+            for (let j = i + 1; j < len; ++j) {
                 if (callbackfn(arr[i], arr[j]) > 0) {
                     swap(arr, i, j);
                 }
@@ -1622,10 +1621,10 @@ namespace Generics {
 
 function testGenerics() {
     msg("testGenerics")
-    let inArray = [4,3,4593,23,43,-1]
+    let inArray = [4, 3, 4593, 23, 43, -1]
     Generics.arraySort(inArray, (x: number, y: number) => { return x - y })
-    let expectedArray = [-1,3,4,23,43,4593]
-    for(let i = 0 ; i < expectedArray.length; i++) {
+    let expectedArray = [-1, 3, 4, 23, 43, 4593]
+    for (let i = 0; i < expectedArray.length; i++) {
         assert(inArray[i] == expectedArray[i])
     }
 }
@@ -1636,14 +1635,14 @@ namespace AnonymousTypes {
         a: number;
         private b: number;
         bar() { return this.b; }
-        constructor(inp: number){
+        constructor(inp: number) {
             this.a = inp
             this.b = inp + 1
         }
     }
 
     function foo(f: { a: number }) {
-       return f.a + 1
+        return f.a + 1
     }
     export function test() {
         msg("AnonymousTypes")
@@ -1651,7 +1650,7 @@ namespace AnonymousTypes {
         let nested = { a: { b: { c: 3 } } }
 
         let bar = new Foo(42)
-        let baz: {a: number} = bar
+        let baz: { a: number } = bar
         assert(nested.a.b.c == 3)
         assert(x.a == 2);
         assert(x.b == "bar");
@@ -1669,7 +1668,7 @@ namespace LambdaProperty {
         y: number;
         z: number;
         bar: () => number;
-        baz: (i:number) => number;
+        baz: (i: number) => number;
     }
 
     let x: IFoo = {
@@ -1688,6 +1687,27 @@ namespace LambdaProperty {
     }
 }
 
+namespace fooX.bar.baz {
+    export class A {
+        foo() {
+            glb1++
+        }
+    }
+    export function b() {
+        glb1++
+        glb1++
+    }
+}
+
+import bz = fooX.bar.baz
+import AA = fooX.bar.baz.A
+function testImports() {
+    glb1 = 0
+    bz.b()
+    let x = new AA()
+    x.foo()
+    assert(glb1 == 3, "imports")
+}
 
 // ---------------------------------------------------------------------------
 // Driver starts
@@ -1742,10 +1762,11 @@ testFloat()
 testGenerics()
 AnonymousTypes.test()
 LambdaProperty.test()
+testImports()
 
 msg("test top level code")
 let xsum = 0;
-let forclean = () => {}
+let forclean = () => { }
 for (let i = 0; i < 11; ++i) {
     xsum = xsum + i;
     forclean = () => { i = 0 }
