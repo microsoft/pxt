@@ -531,10 +531,12 @@ interface VarDescOptions {
     isParam?: boolean;
     fundef?: py.FunctionDef;
     classdef?: py.ClassDef;
+    isImport?: py.Module;
 }
 
 interface VarDesc extends VarDescOptions {
     type: Type;
+    name: string;
 }
 
 interface Ctx {
@@ -562,7 +564,7 @@ function defvar(n: string, opts: VarDescOptions) {
     let scopeDef = currentScope()
     let v = scopeDef.vars[n]
     if (!v) {
-        v = scopeDef.vars[n] = { type: mkType() }
+        v = scopeDef.vars[n] = { type: mkType(), name: n }
     }
     for (let k of Object.keys(opts)) {
         (v as any)[k] = (opts as any)[k]
@@ -599,7 +601,17 @@ function getFullName(n: py.AST): string {
 }
 
 function applyTypeMap(s: string) {
-    return U.lookup(typeMap, s) || s
+    let over = U.lookup(typeMap, s)
+    if (over) return over
+    for (let v of U.values(ctx.currModule.vars)) {
+        if (!v.isImport)
+            continue
+        if (v.expandsTo == s) return v.name
+        if (v.isImport && U.startsWith(s, v.expandsTo + ".")) {
+            return v.name + s.slice(v.expandsTo.length)
+        }
+    }
+    return s
 }
 
 function t2s(t: Type): string {
@@ -1248,17 +1260,30 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         return B.mkText("")
     },
     ImportFrom: (n: py.ImportFrom) => {
+        let res: B.JsNode[] = []
         for (let nn of n.names) {
             if (nn.name == "*")
                 defvar(n.module, {
                     isImportStar: true
                 })
-            else
-                defvar(nn.asname || nn.name, {
-                    expandsTo: n.module + "." + nn.name
-                })
+            else {
+                let fullname = n.module + "." + nn.name
+                let sym = lookupSymbol(fullname)
+                let currname = nn.asname || nn.name
+                if (sym && sym.kind == "Module") {
+                    defvar(currname, {
+                        isImport: sym as py.Module,
+                        expandsTo: fullname
+                    })
+                    res.push(B.mkStmt(B.mkText(`import ${quoteStr(currname)} = ${fullname}`)))
+                } else {
+                    defvar(currname, {
+                        expandsTo: fullname
+                    })
+                }
+            }
         }
-        return B.mkText("")
+        return B.mkGroup(res)
     },
     ExprStmt: (n: py.ExprStmt) =>
         n.value.kind == "Str" ?
@@ -1735,8 +1760,11 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             unifyClass(n.tsType, ctx.currClass)
         } else {
             let v = lookupVar(n.id)
-            if (v)
+            if (v) {
                 unify(n.tsType, v.type)
+                if (v.isImport)
+                    return quote(n.id) // it's import X = Y.Z.X, use X not Y.Z.X
+            }
         }
 
         if (n.ctx.indexOf("Load") >= 0) {
