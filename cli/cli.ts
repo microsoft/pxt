@@ -1275,10 +1275,10 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
     }).then(() => {
         const browserify = require('browserify');
         let b = browserify();
-        nodeutil.allFiles(`./built/${outputName}`).forEach((f) => {
+        nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
             b.add(f);
         });
-        return b.bundle().pipe(fs.createWriteStream(`./built/${outputName}.js`));
+        return b.bundle().pipe(fs.createWriteStream(`built/${outputName}.js`));
     })
 }
 
