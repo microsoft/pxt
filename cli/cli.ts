@@ -4374,7 +4374,7 @@ function initCommands() {
         argString: "<package-directory> <support-directory>...",
         anyArgs: true,
         advanced: true,
-    }, c => pyconv.convertAsync(c.arguments))
+    }, c => pyconv.convertAsync(c.arguments, /^win/i.test(os.platform()) ? "py" : "python"))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({
