@@ -24,6 +24,7 @@ import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
 import * as clidbg from './clidbg';
+import * as pyconv from './pyconv';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 
@@ -1212,19 +1213,28 @@ export function buildTargetAsync(): Promise<void> {
     return simshimAsync()
         .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(buildTargetCoreAsync)
-        .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('editor', true, 'editor'))
+        .then(buildSemanticUIAsync)
+        .then(() => {
+            if (fs.existsSync(path.join("editor","tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor","tsconfig.json"), "utf8"));
+                if (tsConfig.compilerOptions.module)
+                    return buildFolderAndBrowserifyAsync('editor', true, 'editor');
+                else
+                    return buildFolderAsync('editor', true, 'editor');
+            }
+            return Promise.resolve();
+        })
         .then(() => buildFolderAsync('server', true, 'server'))
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(p + "/tsconfig.json")) {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
         U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
     }
@@ -1239,6 +1249,48 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
+    })
+}
+
+function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
+        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+        return Promise.resolve()
+    }
+
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
+        U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
+    }
+
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
+    pxt.log(`building ${p}...`)
+    dirsToWatch.push(p)
+    return nodeutil.spawnAsync({
+        cmd: "node",
+        args: ["../node_modules/typescript/bin/tsc"],
+        cwd: p
+    }).then(() => {
+        const browserify = require('browserify');
+        let b = browserify();
+        nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
+            b.add(f);
+        });
+
+        let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
+        b.bundle().pipe(outFile);
+
+        return new Promise<void>((resolve, reject) => {
+            outFile.on('finish', () => {
+                resolve();
+            });
+            outFile.on('error', (err: any) => {
+                reject(err);
+            });
+        });
     })
 }
 
@@ -1374,9 +1426,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
-    const rtlcss = require('rtlcss');
-    const autoprefixer = require('autoprefixer');
-
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1402,17 +1451,11 @@ function buildSemanticUIAsync() {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+        fs.writeFileSync('built/web/semantic.css', semCss)
         return semCss;
     }).then((semCss) => {
-        // run autoprefixer
-        pxt.debug("running autoprefixer");
-        return autoprefixer.process(semCss).then((result: any) => {
-            fs.writeFileSync('built/web/semantic.css', result.css);
-            return result.css;
-        });
-    }).then((semCss) => {
-        // convert to rtl
-        let rtlCss = rtlcss.process(semCss);
+        const rtlcss = require('rtlcss');
+        const rtlCss = rtlcss.process(semCss);
         pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
@@ -1517,6 +1560,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                             newProject.config.dependencies[k] = "*";
                         }
                     });
+                    if (newProject.config.icon)
+                        newProject.config.icon = uploadArtFile(newProject.config.icon);
                 } else {
                     newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
                 }
@@ -1539,7 +1584,6 @@ function updateTOC(cfg: pxt.TargetBundle) {
 }
 
 function buildTargetCoreAsync() {
-    let previousForceCloudBuild = forceCloudBuild;
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1568,11 +1612,9 @@ function buildTargetCoreAsync() {
     return forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
-
-        if (isPrj) {
-            forceCloudBuild = true;
-        } else {
-            forceCloudBuild = previousForceCloudBuild;
+        const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
+        if (config && config.additionalFilePath) {
+            dirsToWatch.push(path.resolve(config.additionalFilePath));
         }
 
         return pkg.filesToBePublishedAsync(true)
@@ -1602,9 +1644,6 @@ function buildTargetCoreAsync() {
                 }
             })
     }, /*includeProjects*/ true)
-        .finally(() => {
-            forceCloudBuild = previousForceCloudBuild;
-        })
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -1747,16 +1786,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !globalConfig.localBuild
+    forceCloudBuild = false; // always use yotta
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["yt"]) {
-        forceCloudBuild = false
-    } else if (parsed.flags["cloud"]) {
+    if (parsed.flags["cloud"]) {
         forceCloudBuild = true
     }
     if (parsed.flags["just"]) {
@@ -1764,11 +1801,10 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     } else if (parsed.flags["pkg"]) {
         justServe = true
         packaged = true
-    } else if (parsed.flags["noBrowser"]) {
-        justServe = true
+    }
+    if (parsed.flags["noBrowser"]) {
         globalConfig.noAutoStart = true
     }
-
     if (parsed.flags["sourceMaps"]) {
         includeSourceMaps = true;
     }
@@ -4247,10 +4283,6 @@ function initCommands() {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
             },
-            yt: {
-                description: "use local yotta build",
-                aliases: ["yotta"]
-            },
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
@@ -4370,6 +4402,13 @@ function initCommands() {
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
+    p.defineCommand({
+        name: "pyconv",
+        help: "convert from python",
+        argString: "<package-directory> <support-directory>...",
+        anyArgs: true,
+        advanced: true,
+    }, c => pyconv.convertAsync(c.arguments))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({

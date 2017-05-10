@@ -127,6 +127,10 @@ function setupSemantic() {
         }).appendTo(outer);
     });
 
+    $('#printbtn').on("click", function() {
+        window.print();
+    })
+
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }

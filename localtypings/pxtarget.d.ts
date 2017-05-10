@@ -159,6 +159,7 @@ declare namespace pxt {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        disableBlockIcons?: boolean; // Disable icons in blocks
         hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
@@ -187,6 +188,8 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
         selectLanguage?: boolean; // add language picker to settings menu
+        useUploadMessage?: boolean; // change "Download" text to "Upload"
+        downloadIcon?: string; // which icon io use for download
     }
 
     interface DocMenuEntry {
@@ -222,6 +225,7 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
+        useModulator?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;

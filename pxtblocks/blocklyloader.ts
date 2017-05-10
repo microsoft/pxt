@@ -183,8 +183,8 @@ namespace pxt.blocks {
 
             if (nsn) ns = nsn.attributes.block || ns;
             let catName = ts.pxtc.blocksCategory(fn);
-            if (nsn && nsn.attributes.block)
-                catName = nsn.attributes.block
+            if (nsn && nsn.name)
+                catName = Util.capitalize(nsn.name);
 
             let category = categoryElement(tb, catName);
 
@@ -196,7 +196,7 @@ namespace pxt.blocks {
                     pxt.debug('toolbox: adding category ' + ns)
 
                     const nsWeight = (nsn ? nsn.attributes.weight : 50) || 50;
-                    const locCatName = (nsn ? nsn.attributes.block : "") || catName;
+                    const locCatName = Util.capitalize((nsn ? nsn.attributes.block : "") || catName);
                     category = createCategoryElement(locCatName, catName, nsWeight);
 
                     if (nsn && nsn.attributes.color) {
@@ -481,7 +481,7 @@ namespace pxt.blocks {
     }
 
     function initField(i: any, ni: number, fn: pxtc.SymbolInfo, ns: pxtc.SymbolInfo, pre: string, right?: boolean, type?: string, nsinfo?: pxtc.SymbolInfo): any {
-        if (ni == 0) {
+        if (ni == 0 && !pxt.appTarget.appTheme.disableBlockIcons) {
             const icon = ns && ns.attributes.icon ? ns.attributes.icon : null;
             if (icon)
                 i.appendField(iconToFieldImage(icon));
@@ -1390,7 +1390,7 @@ namespace pxt.blocks {
         msg.HELP = lf("Help");
 
         // inject hook to handle openings docs
-        (<any>Blockly).BlockSvg.prototype.showHelp_ = function() {
+        (<any>Blockly).BlockSvg.prototype.showHelp_ = function () {
             const url = goog.isFunction(this.helpUrl) ? this.helpUrl() : this.helpUrl;
             if (url) (pxt.blocks.openHelpUrl || window.open)(url);
         };
