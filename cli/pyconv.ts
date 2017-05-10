@@ -1803,7 +1803,7 @@ export function convertAsync(fns: string[]) {
     }
 
     const pkgFilesKeys = Object.keys(pkgFiles);
-    pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('    \n')}`);
+    pxt.debug(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
 
     return nodeutil.spawnWithPipeAsync({
         cmd: /^win/i.test(process.platform) ? "py" : "python3",
