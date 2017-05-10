@@ -1748,7 +1748,18 @@ ${lbl}: .short 0xffff
         function getDecl(node: Node): Declaration {
             if (!node) return null
             let sym = checker.getSymbolAtLocation(node)
-            let decl: Declaration = sym ? sym.valueDeclaration : null
+            let decl: Declaration
+            if (sym) {
+                decl = sym.valueDeclaration
+                if (!decl && sym.declarations) {
+                    let decl0 = sym.declarations[0]
+                    if (decl0 && decl0.kind == SyntaxKind.ImportEqualsDeclaration) {
+                        sym = checker.getSymbolAtLocation((decl0 as ImportEqualsDeclaration).moduleReference)
+                        if (sym)
+                            decl = sym.valueDeclaration
+                    }
+                }
+            }
             markUsed(decl)
             return decl
         }
