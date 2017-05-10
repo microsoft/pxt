@@ -1278,7 +1278,12 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
             b.add(f);
         });
-        return b.bundle().pipe(fs.createWriteStream(`built/${outputName}.js`));
+        console.log(b);
+        return b.bundle().pipe(fs.createWriteStream(`built/${outputName}.js`))
+        .then(() => {
+            let editorFile = fs.readFileSync(`built/${outputName}.js`)
+            console.log(editorFile);
+        });
     })
 }
 
