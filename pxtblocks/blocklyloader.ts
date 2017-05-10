@@ -863,7 +863,7 @@ namespace pxt.blocks {
             }
 
             // update category colors
-            let topCats = tb.querySelectorAll(':scope > category');
+            let topCats = tb.querySelectorAll(`#${tb.id} > category`);
             for (let i = 0; i < topCats.length; i++) {
                 const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
                 if (nsColor && nsColor != "") {
