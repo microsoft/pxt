@@ -29,6 +29,7 @@ import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
 import * as sounds from "./sounds";
+import * as make from "./make";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1088,28 +1089,12 @@ export class ProjectView
 
     openInstructions() {
         pxt.tickEvent("simulator.make");
-        compiler.compileAsync({ native: true })
-            .done(resp => {
-                let p = pkg.mainEditorPkg();
-                let code = p.files["main.ts"];
-                let data: any = {
-                    name: p.header.name || lf("Untitled"),
-                    code: code ? code.content : `basic.showString("Hi!");`,
-                    board: JSON.stringify(pxt.appTarget.simulator.boardDefinition)
-                };
-                let parts = ts.pxtc.computeUsedParts(resp);
-                if (parts.length) {
-                    data.parts = parts.join(" ");
-                    data.partdefs = JSON.stringify(pkg.mainPkg.computePartDefinitions(parts));
-                }
-                let fnArgs = resp.usedArguments;
-                if (fnArgs)
-                    data.fnArgs = JSON.stringify(fnArgs);
-                data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
-                let urlData = Object.keys(data).map(k => `${k}=${encodeURIComponent(data[k])}`).join('&');
-                let url = `${pxt.webConfig.partsUrl}?${urlData}`
-                window.open(url, '_blank')
-            });
+        const running = this.state.running;
+        if (running) this.stopSimulator();
+        make.makeAsync()
+            .finally(() => {
+                if (running) this.startSimulator()
+            })
     }
 
     clearLog() {
