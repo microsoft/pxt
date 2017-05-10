@@ -1739,10 +1739,13 @@ export function convertAsync(fns: string[]) {
         }
     }
 
+    const pkgFilesKeys = Object.keys(pkgFiles);
+    pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('    \n')}`);
+
     return nodeutil.spawnWithPipeAsync({
         cmd: /^win/i.test(process.platform) ? "py" : "python3",
         args: [],
-        input: convPy.replace("@files@", JSON.stringify(Object.keys(pkgFiles))),
+        input: convPy.replace("@files@", JSON.stringify(pkgFilesKeys)),
         silent: true
     })
         .then(buf => {
