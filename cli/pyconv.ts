@@ -14,9 +14,10 @@ interface FieldDesc {
     type: Type;
     inClass: py.ClassDef;
     fundef?: py.FunctionDef;
+    isGetSet?: boolean;
     isStatic?: boolean;
     isProtected?: boolean;
-    alwaysThrows?: boolean;
+    initializer?: py.Expr;
 }
 
 type Map<T> = pxt.Map<T>;
@@ -140,6 +141,7 @@ namespace py {
         decorator_list: Expr[];
         returns?: Expr;
         retType?: Type;
+        alwaysThrows?: boolean;
     }
     export interface AsyncFunctionDef extends Stmt {
         kind: "AsyncFunctionDef";
@@ -542,6 +544,7 @@ interface Ctx {
 }
 
 let ctx: Ctx
+let currIteration = 0
 
 let typeId = 0
 let numUnifies = 0
@@ -624,6 +627,10 @@ function typeCtor(t: Type): any {
     return null
 }
 
+function isFree(t: Type) {
+    return !typeCtor(find(t))
+}
+
 function canUnify(t0: Type, t1: Type): boolean {
     t0 = find(t0)
     t1 = find(t1)
@@ -648,7 +655,7 @@ function canUnify(t0: Type, t1: Type): boolean {
 function unifyClass(t: Type, cd: py.ClassDef) {
     t = find(t)
     if (t.classType == cd) return
-    if (!typeCtor(t)) {
+    if (isFree(t)) {
         t.classType = cd
         return
     }
@@ -672,14 +679,16 @@ function unify(t0: Type, t1: Type): void {
         unify(t0.arrayType, t1.arrayType)
 }
 
-function getClassField(ct: py.ClassDef, n: string) {
+function getClassField(ct: py.ClassDef, n: string, checkOnly = false, skipBases = false) {
     if (!ct.fields)
         ct.fields = {}
     if (!ct.fields[n]) {
-        for (let par = ct.baseClass; par; par = par.baseClass) {
-            if (par.fields && par.fields[n])
-                return par.fields[n]
-        }
+        if (!skipBases)
+            for (let par = ct.baseClass; par; par = par.baseClass) {
+                if (par.fields && par.fields[n])
+                    return par.fields[n]
+            }
+        if (checkOnly) return null
         ct.fields[n] = {
             inClass: ct,
             name: n,
@@ -689,11 +698,11 @@ function getClassField(ct: py.ClassDef, n: string) {
     return ct.fields[n]
 }
 
-function getTypeField(t: Type, n: string) {
+function getTypeField(t: Type, n: string, checkOnly = false) {
     t = find(t)
     let ct = t.classType
     if (ct)
-        return getClassField(ct, n)
+        return getClassField(ct, n, checkOnly)
     return null
 }
 
@@ -914,9 +923,9 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             todoComment("decorators", decs.map(expr))
         ]
         if (isMethod) {
-            let fd = getClassField(ctx.currClass, funname)
+            let fd = getClassField(ctx.currClass, funname, false, true)
             if (n.body.length == 1 && n.body[0].kind == "Raise")
-                fd.alwaysThrows = true
+                n.alwaysThrows = true
             if (n.name == "__init__") {
                 nodes.push(B.mkText("constructor"))
                 unifyClass(n.retType, ctx.currClass)
@@ -975,9 +984,21 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         nodes.push(
             doArgs(n.args, isMethod),
             n.name == "__init__" ? B.mkText("") : typeAnnot(n.retType),
-            todoComment("returns", n.returns ? [expr(n.returns)] : []),
-            stmts(n.body)
-        )
+            todoComment("returns", n.returns ? [expr(n.returns)] : []))
+
+        let body = n.body.map(stmt)
+        if (n.name == "__init__") {
+            for (let f of U.values(ctx.currClass.fields)) {
+                if (f.initializer) {
+                    body.push(
+                        B.mkStmt(B.mkText(`this.${quoteStr(f.name)} = `), expr(f.initializer))
+                    )
+                }
+            }
+        }
+
+        nodes.push(B.mkBlock(body))
+
         return B.mkStmt(B.mkGroup(nodes))
     }),
 
@@ -1003,7 +1024,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         nodes.push(body)
 
         let fieldDefs = U.values(n.fields)
-            .filter(f => !f.fundef && !f.isStatic)
+            .filter(f => !f.fundef && !f.isStatic && !f.isGetSet)
             .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.type)))
         body.children = fieldDefs.concat(body.children)
 
@@ -1045,7 +1066,38 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         if (!ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
+            let src = expr(n.value)
             let fd = getClassField(ctx.currClass, nm)
+            let attrTp = typeOf(n.value)
+            let getter = getTypeField(attrTp, "__get__", true)
+            if (getter) {
+                unify(fd.type, getter.fundef.retType)
+                let implNm = "_" + nm
+                let fdBack = getClassField(ctx.currClass, implNm)
+                unify(fdBack.type, attrTp)
+                let setter = getTypeField(attrTp, "__set__", true)
+                let res = [
+                    B.mkNewLine(),
+                    B.mkStmt(B.mkText("private "), quote(implNm), typeAnnot(attrTp))
+                ]
+                if (!getter.fundef.alwaysThrows)
+                    res.push(B.mkStmt(B.mkText(`get ${quoteStr(nm)}()`), typeAnnot(fd.type), B.mkBlock([
+                        B.mkText(`return this.${quoteStr(implNm)}.get(this.i2c_device)`),
+                        B.mkNewLine()
+                    ])))
+                if (!setter.fundef.alwaysThrows)
+                    res.push(B.mkStmt(B.mkText(`set ${quoteStr(nm)}(value`), typeAnnot(fd.type),
+                        B.mkText(`) `), B.mkBlock([
+                            B.mkText(`this.${quoteStr(implNm)}.set(this.i2c_device, value)`),
+                            B.mkNewLine()
+                        ])))
+                fdBack.initializer = n.value
+                fd.isGetSet = true
+                fdBack.isGetSet = true
+                return B.mkGroup(res)
+            } else if (currIteration < 2) {
+                return B.mkText("/* skip for now */")
+            }
             unify(fd.type, typeOf(n.targets[0]))
             fd.isStatic = true
             pref = "static "
@@ -1474,8 +1526,6 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             unify(typeOf(n), fd.retType)
         }
 
-        // TODO keywords
-
         let nm = getName(n.func)
         let over = U.lookup(funMap, nm)
         if (over) {
@@ -1658,14 +1708,18 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
     },
     Subscript: (n: py.Subscript) => {
-        if (n.slice.kind == "Index")
+        if (n.slice.kind == "Index") {
+            let idx = (n.slice as py.Index).value
+            if (currIteration > 2 && isFree(typeOf(idx))) {
+                unify(typeOf(idx), tpNumber)
+            }
             return B.mkGroup([
                 expr(n.value),
                 B.mkText("["),
-                expr((n.slice as py.Index).value),
+                expr(idx),
                 B.mkText("]"),
             ])
-        else if (n.slice.kind == "Slice") {
+        } else if (n.slice.kind == "Slice") {
             let s = n.slice as py.Slice
             return B.mkInfix(expr(n.value), ".",
                 B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
@@ -1852,6 +1906,7 @@ export function convertAsync(fns: string[]) {
             })
 
             for (let i = 0; i < 5; ++i) {
+                currIteration = i
                 U.iterMap(js, (fn: string, js: any) => {
                     toTS(js)
                 })
@@ -1859,6 +1914,7 @@ export function convertAsync(fns: string[]) {
 
             let files: pxt.Map<string> = {}
 
+            currIteration = 1000
             U.iterMap(js, (fn: string, js: py.Module) => {
                 if (primFiles[fn]) {
                     pxt.debug(`converting ${fn}`)
