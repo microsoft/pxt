@@ -1396,6 +1396,7 @@ function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
 interface FunOverride {
     n: string;
     t: Type;
+    scale?: number;
 }
 
 let funMap: Map<FunOverride> = {
@@ -1418,6 +1419,7 @@ let funMap: Map<FunOverride> = {
     "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
     "bool": { n: "!!", t: tpBoolean },
     "Array.index": { n: ".indexOf", t: tpNumber },
+    "time.sleep": { n: "loops.pause", t: tpVoid, scale: 1000 }
 }
 
 function isSuper(v: py.Expr) {
@@ -1664,6 +1666,19 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             let overName = over.n
             if (over.t)
                 unify(typeOf(n), over.t)
+            if (over.scale) {
+                allargs = allargs.map(a => {
+                    let s = "?"
+                    if (a.type == B.NT.Prefix && a.children.length == 0)
+                        s = a.op
+                    let n = parseFloat(s)
+                    if (!isNaN(n)) {
+                        return B.mkText((over.scale * n) + "")
+                    } else {
+                        return B.mkInfix(a, "*", B.mkText(over.scale + ""))
+                    }
+                })
+            }
             if (overName == "") {
                 if (allargs.length == 1)
                     return allargs[0]
