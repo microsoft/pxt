@@ -41,7 +41,8 @@ export interface MonacoBlockDefinition {
 
 export interface BuiltinCategoryDefinition {
     name: string;
-    blocks: MonacoBlockDefinition[]
+    blocks: MonacoBlockDefinition[];
+    nameid: string;
     attributes: pxtc.CommentAttrs;
 }
 
@@ -605,6 +606,7 @@ export class Editor extends srceditor.Editor {
     getNamespaceAttrs(ns: string) {
         const builtin = snippets.getBuiltinCategory(ns);
         if (builtin) {
+            builtin.attributes.color = pxt.blocks.getNamespaceColor(builtin.nameid);
             return builtin.attributes;
         }
 

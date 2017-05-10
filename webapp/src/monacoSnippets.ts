@@ -1,6 +1,7 @@
 import { BuiltinCategoryDefinition } from "./monaco";
 export const loops: BuiltinCategoryDefinition = {
     name: lf("{id:category}Loops"),
+    nameid: 'loops',
     blocks: [
         {
             name: "while",
@@ -18,7 +19,6 @@ export const loops: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["loops"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         icon: "loops",
         weight: 50.09,
@@ -28,6 +28,7 @@ export const loops: BuiltinCategoryDefinition = {
 
 export const logic: BuiltinCategoryDefinition = {
     name: lf("{id:category}Logic"),
+    nameid: 'logic',
     blocks: [
         {
             name: "if",
@@ -58,7 +59,6 @@ export const logic: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["logic"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.08,
         icon: "logic",
@@ -68,6 +68,7 @@ export const logic: BuiltinCategoryDefinition = {
 
 export const variables: BuiltinCategoryDefinition = {
     name: lf("{id:category}Variables"),
+    nameid: 'variables',
     blocks: [
         {
             name: "let",
@@ -95,7 +96,6 @@ export const variables: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["variables"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.07,
         icon: "variables",
@@ -105,6 +105,7 @@ export const variables: BuiltinCategoryDefinition = {
 
 export const maths: BuiltinCategoryDefinition = {
     name: lf("{id:category}Math"),
+    nameid: 'math',
     blocks: [
         {
             name: "plus",
@@ -183,7 +184,6 @@ export const maths: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["math"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.06,
         icon: "math",
@@ -193,6 +193,7 @@ export const maths: BuiltinCategoryDefinition = {
 
 export const text: BuiltinCategoryDefinition = {
     name: lf("{id:category}Text"),
+    nameid: 'text',
     blocks: [
         {
             name: "length",
@@ -241,7 +242,6 @@ export const text: BuiltinCategoryDefinition = {
     ],
     attributes: {
         advanced: true,
-        color: pxt.blocks.blockColors["text"].toString(),
         icon: "text",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}
