@@ -1713,7 +1713,7 @@ function parseComments(mod: py.Module) {
 }
 
 export function convertAsync(fns: string[]) {
-    let primFiles = U.toDictionary(nodeutil.allFiles(fns[0]), s => s)
+    let primFiles = U.toDictionary(nodeutil.allFiles(fns[0]), s => s.replace(/\\/g, "/"))
     let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
     let dirs: Map<number> = {}
     for (let f of files) {
@@ -1739,15 +1739,19 @@ export function convertAsync(fns: string[]) {
         }
     }
 
+    const pkgFilesKeys = Object.keys(pkgFiles);
+    pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('    \n')}`);
+
     return nodeutil.spawnWithPipeAsync({
-        cmd: "python3",
+        cmd: /^win/i.test(process.platform) ? "py" : "python3",
         args: [],
-        input: convPy.replace("@files@", JSON.stringify(Object.keys(pkgFiles))),
+        input: convPy.replace("@files@", JSON.stringify(pkgFilesKeys)),
         silent: true
     })
         .then(buf => {
+            pxt.debug(`analyzing python AST (${buf.length} bytes)`)
             let js = JSON.parse(buf.toString("utf8"))
-            let rec = (v: any): any => {
+            const rec = (v: any): any => {
                 if (Array.isArray(v)) {
                     for (let i = 0; i < v.length; ++i)
                         v[i] = rec(v[i])
@@ -1785,6 +1789,7 @@ export function convertAsync(fns: string[]) {
 
             U.iterMap(js, (fn: string, js: py.Module) => {
                 if (primFiles[fn]) {
+                    pxt.debug(`converting ${fn}`)
                     let s = "//\n// *** " + fn + " ***\n//\n\n"
                     parseComments(js)
                     let nodes = toTS(js)
@@ -1793,11 +1798,13 @@ export function convertAsync(fns: string[]) {
                     s += res.output
                     let fn2 = js.name + ".ts"
                     files[fn2] = (files[fn2] || "") + s
+                } else {
+                    pxt.debug(`skipping ${fn}`)
                 }
             })
 
             U.iterMap(files, (fn, s) => {
-                console.log("*** write " + fn)
+                pxt.log("*** write " + fn)
                 fs.writeFileSync(fn, s)
             })
         })
