@@ -1859,7 +1859,7 @@ export function convertAsync(fns: string[]) {
                     if (!nodes) return
                     let res = B.flattenNode(nodes)
                     s += res.output
-                    let fn2 = js.name + ".ts"
+                    let fn2 = js.name.replace(/\..*/, "") + ".ts"
                     files[fn2] = (files[fn2] || "") + s
                 } else {
                     pxt.debug(`skipping ${fn}`)
