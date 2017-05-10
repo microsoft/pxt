@@ -1278,12 +1278,18 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
             b.add(f);
         });
-        console.log(b);
-        b.bundle().pipe(fs.createWriteStream(`built/${outputName}.js`))
 
-        let editorFile = fs.readFileSync(`built/${outputName}.js`)
-        console.log(editorFile.toString("base64"));
-        return Promise.resolve();
+        let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
+        b.bundle().pipe(outFile);
+
+        return new Promise<void>((resolve, reject) => {
+            outFile.on('finish', () => {
+                resolve();
+            });
+            outFile.on('error', (err: any) => {
+                reject(err);
+            });
+        });
     })
 }
 
