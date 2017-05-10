@@ -1431,7 +1431,7 @@ function buildSemanticUIAsync() {
         cmd: "node",
         args: ["node_modules/less/bin/lessc", "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
-        let fontFile = fs.readFileSync("node_modules/pxt-core/node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
+        let fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
         let url = "url(data:application/font-woff;charset=utf-8;base64,"
             + fontFile.toString("base64") + ") format('woff')"
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
@@ -1441,7 +1441,7 @@ function buildSemanticUIAsync() {
     }).then(() => {
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: ["node_modules/postcss-cli/bin/postcss", "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
+            args: ["node_modules/pxt-core/node_modules/postcss-cli/bin/postcss", "--use", "autoprefixer", "-o", "built/web/semantic.css", "built/web/semantic.css"]
         })
     }).then(() => {
         return nodeutil.spawnAsync({
