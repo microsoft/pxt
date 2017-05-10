@@ -1279,11 +1279,11 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
             b.add(f);
         });
         console.log(b);
-        return b.bundle().pipe(fs.createWriteStream(`built/${outputName}.js`))
-        .then(() => {
-            let editorFile = fs.readFileSync(`built/${outputName}.js`)
-            console.log(editorFile);
-        });
+        b.bundle().pipe(fs.createWriteStream(`built/${outputName}.js`))
+
+        let editorFile = fs.readFileSync(`built/${outputName}.js`)
+        console.log(editorFile);
+        return Promise.resolve();
     })
 }
 
