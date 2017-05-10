@@ -1222,7 +1222,7 @@ export function buildTargetAsync(): Promise<void> {
                 else
                     return buildFolderAsync('editor', true, 'editor');
             }
-            return;
+            return Promise.resolve();
         })
         .then(() => buildFolderAsync('server', true, 'server'))
 }
