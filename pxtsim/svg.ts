@@ -84,8 +84,39 @@ namespace pxsim.svg {
         els.forEach(el => (<SVGStylable><any>el).style.fill = c);
     }
 
+    export function isTouchEnabled(): boolean {
+        return typeof window !== "undefined" &&
+            ('ontouchstart' in window               // works on most browsers 
+                || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
+    }
+
+    export const touchEvents = isTouchEnabled() ? {
+        "mousedown": ["mousedown", "touchstart"],
+        "mouseup": ["mouseup", "touchend"],
+        "mousemove": ["touchmove", "touchmove"],
+        "mouseleave": ["mouseleave", "touchcancel"]
+    } : {
+            "mousedown": ["mousedown"],
+            "mouseup": ["mouseup"],
+            "mousemove": ["mousemove"],
+            "mouseleave": ["mouseleave"]
+        };
+
     export function onClick(el: Element, click: (ev: MouseEvent) => void) {
-        el.addEventListener('click', click, false);
+        let captured = false;
+        touchEvents.mousedown.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+            captured = true;
+            return true;
+        }, false));
+        touchEvents.mouseup.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
+            if (captured) {
+                captured = false;
+                click(ev);
+                ev.preventDefault();
+                return false;
+            }
+            return true;
+        }, false));
     }
 
     export function buttonEvents(el: Element,
@@ -93,27 +124,27 @@ namespace pxsim.svg {
         start?: (ev: MouseEvent) => void,
         stop?: (ev: MouseEvent) => void) {
         let captured = false;
-        el.addEventListener('mousedown', (ev: MouseEvent) => {
+        touchEvents.mousedown.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
             captured = true;
             if (start) start(ev)
             return true;
-        }, false);
-        el.addEventListener('mousemove', (ev: MouseEvent) => {
+        }, false));
+        touchEvents.mousemove.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
             if (captured) {
                 if (move) move(ev);
                 ev.preventDefault();
                 return false;
             }
             return true;
-        }, false);
-        el.addEventListener('mouseup', (ev: MouseEvent) => {
+        }, false));
+        touchEvents.mouseup.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
-        }, false);
-        el.addEventListener('mouseleave', (ev: MouseEvent) => {
+        }, false));
+        touchEvents.mouseleave.forEach(evname => el.addEventListener(evname, (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
-        }, false);
+        }, false))
     }
 
     export function mkLinearGradient(id: string): SVGLinearGradientElement {
