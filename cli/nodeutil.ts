@@ -425,6 +425,8 @@ export function fileExistsSync(p: string): boolean {
     }
 }
 
+export let lastResolveMdDirs: string[] = []
+
 // returns undefined if not found
 export function resolveMd(root: string, pathname: string): string {
 
@@ -445,10 +447,15 @@ export function resolveMd(root: string, pathname: string): string {
     let dirs = [
         path.join(root, "/node_modules/pxt-core/common-docs/"),
     ]
+    lastResolveMdDirs = dirs
     for (let pkg of pxt.appTarget.bundleddirs) {
         let d = path.join(pkg, "docs");
         if (!path.isAbsolute(d)) d = path.join(root, d);
         dirs.push(d)
+
+        let cfg: pxt.PackageConfig = readJson(path.join(d, "..", pxt.CONFIG_NAME))
+        if (cfg.additionalFilePath)
+            dirs.push(path.join(d, "..", cfg.additionalFilePath, "docs"))
     }
     for (let d of dirs) {
         let template = tryRead(d + pathname)
