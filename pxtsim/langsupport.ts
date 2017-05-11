@@ -356,6 +356,10 @@ namespace pxsim {
             return v | 0
         }
 
+        export function toUInt32(v: number) {
+            return v >>> 0
+        }
+
         export function toUInt8(v: number) {
             return v & 0xff
         }

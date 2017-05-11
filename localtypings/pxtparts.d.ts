@@ -118,4 +118,60 @@ declare namespace pxsim {
         part?: boolean, // if true, the part itself should be assembled during this step
         pinIndices?: number[], // the indices (ranging from 0 to "numberOfPins") of pins that should be wired for this step 
     }
+
+    export interface SimulatorMessage {
+        type: string;
+    }
+
+    // type=debugger
+    export interface DebuggerMessage extends SimulatorMessage {
+        subtype: string;
+    }
+
+    // subtype=config
+    export interface DebuggerConfigMessage extends DebuggerMessage {
+        setBreakpoints?: number[];
+    }
+
+    // subtype=resume
+    // subtype=stepover
+    // subtype=stepinto
+
+    //
+    // Responses from simulator
+    //
+
+    // subtype=breakpoint
+    export interface DebuggerBreakpointMessage extends DebuggerMessage {
+        breakpointId: number;
+        globals: Variables;
+        stackframes: {
+            locals: Variables;
+            funcInfo: any; // pxtc.FunctionLocationInfo
+            breakpointId: number;
+        }[];
+        exceptionMessage?: string;
+        exceptionStack?: string;
+    }
+
+    // subtype=trace
+    export interface TraceMessage extends DebuggerMessage {
+        breakpointId: number;
+    }
+
+    // subtype=traceConfig
+    export interface TraceConfigMessage extends DebuggerMessage {
+        interval: number;
+    }
+
+    export interface DebuggerWarningMessage extends DebuggerMessage {
+        message: string;
+        breakpointIds: number[];
+    }
+
+    export interface Variables {
+        [name: string]: any;
+    }
+
+
 }

@@ -108,6 +108,18 @@ namespace ts.pxtc.Util {
             trg[trgOff + i] = src[srcOff + i]
     }
 
+    export function uint8ArrayConcat(chunks: Uint8Array[]) {
+        let numbytes = 0
+        for (let c of chunks) numbytes += c.length
+        let r = new Uint8Array(numbytes)
+        let ptr = 0
+        for (let c of chunks) {
+            memcpy(r, ptr, c)
+            ptr += c.length
+        }
+        return r
+    }
+
     export function jsonMergeFrom(trg: any, src: any) {
         if (!src) return;
         Object.keys(src).forEach(k => {
@@ -883,7 +895,7 @@ namespace ts.pxtc.BrowserImpl {
 
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
-               client.responseType = "arraybuffer";
+                client.responseType = "arraybuffer";
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 

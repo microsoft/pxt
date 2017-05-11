@@ -39,9 +39,9 @@ namespace ts.pxtc {
         pop_fixed(reg: string[]) { return "TBD" }
         pop_locals(n: number) { return "TBD" }
         proc_return() { return "TBD" }
-        debugger_hook(lbl: string) { return "TBD" }
+        debugger_stmt(lbl: string) { return "TBD" }
         debugger_bkpt(lbl: string) { return "TBD" }
-        breakpoint() { return "TBD" }
+        debugger_proc(lbl: string) { return "TBD" }
         unconditional_branch(lbl: string) { return "TBD" }
         beq(lbl: string) { return "TBD" }
         bne(lbl: string) { return "TBD" }
@@ -112,10 +112,8 @@ namespace ts.pxtc {
             let baseLabel = this.proc.label()
             let bkptLabel = baseLabel + "_bkpt"
             let locLabel = baseLabel + "_locals"
-            this.write(`
-.section code
-${bkptLabel}:`)
-            this.write(this.t.breakpoint())
+            let endLabel = baseLabel + "_end"
+            this.write(`.section code`)
             this.write(`
 ${baseLabel}:
     @stackmark func
@@ -129,7 +127,8 @@ ${baseLabel}:
                     locals: (this.proc.seqNo == 1 ? this.bin.globals : this.proc.locals).map(l => l.getDebugInfo()),
                     args: this.proc.args.map(l => l.getDebugInfo()),
                     name: this.proc.getName(),
-                    codeStartLoc: U.lookup(labels, bkptLabel + "_after"),
+                    codeStartLoc: U.lookup(labels, locLabel),
+                    codeEndLoc: U.lookup(labels, endLabel),
                     bkptLoc: U.lookup(labels, bkptLabel),
                     localsMark: U.lookup(th.stackAtLabel, locLabel),
                     idx: this.proc.seqNo,
@@ -146,11 +145,16 @@ ${baseLabel}:
                     let bi = this.proc.body[i].breakpointInfo
                     if (bi) {
                         let off = U.lookup(th.stackAtLabel, `__brkp_${bi.id}`)
-                        assert(off === this.proc.debugInfo.localsMark)
+                        if (off !== this.proc.debugInfo.localsMark) {
+                            console.log(bi)
+                            console.log(th.stackAtLabel)
+                            U.oops(`offset doesn't match: ${off} != ${this.proc.debugInfo.localsMark}`)
+                        }
                     }
                 }
             }
 
+            this.write(this.t.debugger_proc(bkptLabel))
             this.write(this.t.proc_setup(true))
             // initialize the locals
             let numlocals = this.proc.locals.length
@@ -167,10 +171,6 @@ ${baseLabel}:
             //console.log(proc.toString())
             this.proc.resolve()
             //console.log("OPT", proc.toString())
-
-            // debugger hook - bit #1 of global #0 determines break on function entry
-            // we could have put the 'bkpt' inline, and used `bpl`, but that would be 2 cycles slower
-            this.write(this.t.debugger_hook(bkptLabel))
 
             for (let i = 0; i < this.proc.body.length; ++i) {
                 let s = this.proc.body[i]
@@ -196,13 +196,13 @@ ${baseLabel}:
                         this.write(s.lblName + ":")
                         break;
                     case ir.SK.Breakpoint:
-                        this.write(`__brkp_${s.breakpointInfo.id}:`)
-                        if (s.breakpointInfo.isDebuggerStmt) {
-                            let lbl = this.mkLbl("debugger")
-                            // bit #0 of debugger register is set when debugger is attached
-                            this.t.debugger_bkpt(lbl)
-                        } else {
-                            // do nothing
+                        if (this.bin.options.breakpoints) {
+                            let lbl = `__brkp_${s.breakpointInfo.id}`
+                            if (s.breakpointInfo.isDebuggerStmt) {
+                                this.write(this.t.debugger_stmt(lbl))
+                            } else {
+                                this.write(this.t.debugger_bkpt(lbl))
+                            }
                         }
                         break;
                     default: oops();
@@ -212,13 +212,16 @@ ${baseLabel}:
             assert(0 <= numlocals && numlocals < 127);
             if (numlocals > 0)
                 this.write(this.t.pop_locals(numlocals))
+            this.write(`${endLabel}:`)
             this.write(this.t.proc_return())
             this.write("@stackempty func");
             this.write("@stackempty args")
         }
 
         private mkLbl(root: string) {
-            return "." + root + this.bin.lblNo++
+            let l = root + this.bin.lblNo++
+            if (l[0] != "_") l = "." + l
+            return l
         }
 
         private terminate(expr: ir.Expr) {
@@ -475,8 +478,7 @@ ${baseLabel}:
                 }
             }
 
-            let lbl = this.mkLbl("proccall")
-            let afterall = this.mkLbl("afterall")
+            let lbl = this.mkLbl("_proccall")
 
             let procid = topExpr.data as ir.ProcId
             let procIdx = -1
@@ -488,8 +490,8 @@ ${baseLabel}:
                     this.write(this.t.emit_int(procid.mapIdx, "r1"))
                     if (isSet)
                         this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
-                    this.write(lbl + ":")
                     this.emitHelper(this.t.vcall(procid.mapMethod, isSet, vtableShift))
+                    this.write(lbl + ":")
                 } else {
                     this.write(this.t.prologue_vtable(topExpr.args.length - 1, vtableShift))
 
@@ -505,15 +507,14 @@ ${baseLabel}:
                         this.write(this.t.load_reg_src_off("r0", "r0", "r1") + " ; ld-method")
                     }
 
-                    this.write(lbl + ":")
                     this.write(this.t.call_reg("r0"))
-                    this.write(afterall + ":")
+                    this.write(lbl + ":")
                 }
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo
-                this.write(lbl + ":")
                 this.write(this.t.call_lbl(proc.label()))
+                this.write(lbl + ":")
             }
             this.calls.push({
                 procIndex: procIdx,

@@ -251,6 +251,7 @@ namespace ts.pxtc.ir {
         _isRef = false;
         _isLocal = false;
         _isGlobal = false;
+        _debugType = "?";
         bitSize = BitSize.None;
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
@@ -266,7 +267,8 @@ namespace ts.pxtc.ir {
         getDebugInfo(): CellInfo {
             return {
                 name: this.getName(),
-                type: "TODO"
+                type: this._debugType,
+                index: this.index,
             }
         }
 
@@ -302,6 +304,8 @@ namespace ts.pxtc.ir {
             let r = this.loadCore()
 
             if (target.taggedInts && this.bitSize != BitSize.None) {
+                if (this.bitSize == BitSize.UInt32)
+                    return rtcall("pxt::fromUInt", [r])
                 return rtcall("pxt::fromInt", [r])
             }
 
@@ -332,7 +336,8 @@ namespace ts.pxtc.ir {
             } else {
                 if (target.taggedInts && this.bitSize != BitSize.None) {
                     src = shared(src)
-                    let iv = shared(rtcall("pxt::toInt", [src]))
+                    let cnv = this.bitSize == BitSize.UInt32 ? "pxt::toUInt" : "pxt::toInt"
+                    let iv = shared(rtcall(cnv, [src]))
                     return op(EK.Sequence, [
                         iv,
                         op(EK.Decr, [src]),
@@ -665,40 +670,10 @@ namespace ts.pxtc.ir {
                 }
             }
 
-            let findIdx = 1
-            let findNext = (i: number) => {
-                let res: Breakpoint[] = []
-                let loop = (i: number) => {
-                    while (i < this.body.length) {
-                        let s = this.body[i]
-                        if (s.findIdx === findIdx)
-                            return
-                        s.findIdx = findIdx
-                        switch (s.stmtKind) {
-                            case ir.SK.Jmp:
-                                if (s.jmpMode == ir.JmpMode.Always)
-                                    i = s.lbl.stmtNo - 1
-                                else
-                                    loop(s.lbl.stmtNo) // fork
-                                break;
-                            case ir.SK.Breakpoint:
-                                res.push(s.breakpointInfo)
-                                return
-                        }
-                        i++;
-                    }
-                }
-
-                findIdx++
-                loop(i)
-                return res
-            }
-
             let allBrkp: Breakpoint[] = []
 
             for (let s of this.body) {
                 if (s.stmtKind == ir.SK.Breakpoint) {
-                    s.breakpointInfo.successors = findNext(s.stmtNo + 1).map(b => b.id)
                     allBrkp[s.breakpointInfo.id] = s.breakpointInfo
                 }
             }
@@ -712,10 +687,6 @@ namespace ts.pxtc.ir {
 
                     s += `${b.line + 1}: `
                     let n = allBrkp[i + 1]
-                    if (n && b.successors.length == 1 && b.successors[0] == n.id)
-                        s += "."
-                    else
-                        s += b.successors.map(b => `${allBrkp[b].line + 1}`).join(", ")
                     s += "\n"
                 }
                 console.log(s)
