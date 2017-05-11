@@ -1595,6 +1595,8 @@ function buildTargetCoreAsync() {
             dirsToWatch.push("theme"); // simulator
             dirsToWatch.push(path.join("theme", "site", "globals")); // simulator
         }
+        if (fs.existsSync("editor"))
+            dirsToWatch.push("editor");
         if (fs.existsSync("sim")) {
             dirsToWatch.push("sim"); // simulator
             dirsToWatch = dirsToWatch.concat(
