@@ -1216,8 +1216,8 @@ export function buildTargetAsync(): Promise<void> {
         .then(() => buildFolderAsync('cmds', true))
         .then(buildSemanticUIAsync)
         .then(() => {
-            if (fs.existsSync(path.join("editor","tsconfig.json"))) {
-                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor","tsconfig.json"), "utf8"));
+            if (fs.existsSync(path.join("editor", "tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
                 if (tsConfig.compilerOptions.module)
                     return buildFolderAndBrowserifyAsync('editor', true, 'editor');
                 else
@@ -1569,6 +1569,16 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 
             (<any>cfg)[projectId] = newProject;
         });
+
+    if (!cfg.tsprj && cfg.blocksprj) {
+        let notBlock = (s: string) => !U.endsWith(s, ".blocks")
+        cfg.tsprj = U.clone(cfg.blocksprj)
+        cfg.tsprj.id = "tsprj"
+        cfg.tsprj.config.files = cfg.tsprj.config.files.filter(notBlock)
+        for (let k of Object.keys(cfg.tsprj.files)) {
+            if (!notBlock(k)) delete cfg.tsprj.files[k]
+        }
+    }
 }
 
 function updateTOC(cfg: pxt.TargetBundle) {
@@ -1621,7 +1631,8 @@ function buildTargetCoreAsync() {
 
         return pkg.filesToBePublishedAsync(true)
             .then(res => {
-                cfg.bundledpkgs[path.basename(dirname)] = res
+                if (!isPrj)
+                    cfg.bundledpkgs[path.basename(dirname)] = res
             })
             .then(() => testForBuildTargetAsync(isPrj))
             .then((compileOpts) => {
