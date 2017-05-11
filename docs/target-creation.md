@@ -67,9 +67,7 @@ Graphical assets are located under ``/docs/static``.
 
 Templates are the default projects for your target. There is one default blocks project, and one default JavaScript project.
 The initial templates are empty projects.
-
-* To change the default blocks project, modify the package under ``libs/blocksprj``
-* To change the default JavaScript project, modify the package under ``libs/tsprj``
+To change the default project, modify the package under ``libs/blocksprj``
 
 ### Testing the target locally
 
