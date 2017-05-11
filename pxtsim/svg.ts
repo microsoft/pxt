@@ -21,6 +21,11 @@ namespace pxsim.svg {
         );
     }
 
+    export function hasClass(el: SVGElement, cls: string): boolean {
+        if (el.classList) return el.classList.contains(cls);
+        else return el.className.baseVal.indexOf(cls) > -1;
+    }
+
     export function addClass(el: SVGElement, cls: string) {
         if (el.classList) el.classList.add(cls);
         else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
@@ -79,8 +84,12 @@ namespace pxsim.svg {
         els.forEach(el => (<SVGStylable><any>el).style.fill = c);
     }
 
+    export function onClick(el: Element, click: (ev: MouseEvent) => void) {
+        el.addEventListener('click', click, false);
+    }
+
     export function buttonEvents(el: Element,
-        move: (ev: MouseEvent) => void,
+        move?: (ev: MouseEvent) => void,
         start?: (ev: MouseEvent) => void,
         stop?: (ev: MouseEvent) => void) {
         let captured = false;
@@ -88,23 +97,23 @@ namespace pxsim.svg {
             captured = true;
             if (start) start(ev)
             return true;
-        });
+        }, false);
         el.addEventListener('mousemove', (ev: MouseEvent) => {
             if (captured) {
-                move(ev);
+                if (move) move(ev);
                 ev.preventDefault();
                 return false;
             }
             return true;
-        });
+        }, false);
         el.addEventListener('mouseup', (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
-        });
+        }, false);
         el.addEventListener('mouseleave', (ev: MouseEvent) => {
             captured = false;
             if (stop) stop(ev);
-        });
+        }, false);
     }
 
     export function mkLinearGradient(id: string): SVGLinearGradientElement {
