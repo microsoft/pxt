@@ -3314,8 +3314,17 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
-            if (target.hasHex && mode != BuildOption.Run && mode != BuildOption.DebugSim)
+            if (target.hasHex)
                 target.isNative = true
+            switch (mode) {
+                case BuildOption.Run:
+                case BuildOption.DebugSim:
+                case BuildOption.GenDocs:
+                    target.isNative = false
+                    break
+                default:
+                    break
+            }
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(opts => {
@@ -3659,7 +3668,7 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
     // from target location?
     if (fs.existsSync("pxtarget.json"))
         return forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building in ${dirname}`);
+            pxt.log(`building docs in ${dirname}`);
             return build();
         });
     else return build();
