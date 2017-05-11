@@ -27,7 +27,7 @@ namespace pxt.HWDBG {
 
     let isHalted = false
     let lastCompileResult: pxtc.CompileResult;
-    let onHalted = Promise.resolve();
+    let onHalted: Promise<void>;
     let haltHandler: () => void;
     let cachedStaticState: StateInfo
     let currBreakpoint: pxtc.Breakpoint;
@@ -358,6 +358,7 @@ namespace pxt.HWDBG {
     }
 
     export function waitForHaltAsync() {
+        if (!onHalted) onHalted = Promise.resolve();
         return onHalted
     }
 
