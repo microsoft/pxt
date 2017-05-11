@@ -3,7 +3,6 @@
 namespace pxtblockly {
 
     export interface FieldGridPickerToolTipConfig {
-        enabled: boolean;
         yOffset?: number;
         xOffset?: number;
     }
@@ -49,7 +48,6 @@ namespace pxtblockly {
             this.borderColour_ = Blockly.PXTUtils.fadeColour(this.backgroundColour_, 0.4, false);
 
             let tooltipCfg: FieldGridPickerToolTipConfig = {
-                enabled: options.tooltips == 'true' || true,
                 xOffset: parseInt(options.tooltipsXOffset) || 15,
                 yOffset: parseInt(options.tooltipsYOffset) || -10
             }
@@ -133,8 +131,9 @@ namespace pxtblockly {
                 elem.style.backgroundColor = this.itemColour_;
                 elem.parentElement.className = 'blocklyGridPickerRow';
 
-                if (this.tooltipConfig_.enabled) {
-                    const tooltip = new goog.ui.Tooltip(elem, (options[i] as any)[0].alt || (options[i] as any)[0]);
+                const tooltipText = (options[i] as any)[0].alt;
+                if (tooltipText) {
+                    const tooltip = new goog.ui.Tooltip(elem, tooltipText);
                     const onShowOld = tooltip.onShow;
                     tooltip.onShow = () => {
                         onShowOld.call(tooltip);
