@@ -189,6 +189,7 @@ namespace ts.pxtc {
         // client options
         saveOnly?: boolean;
         userContextWindow?: Window;
+        downloadFileBaseName?: string;
     }
 
     export interface Breakpoint extends LocationInfo {
