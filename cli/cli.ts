@@ -23,6 +23,8 @@ import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
+import * as clidbg from './clidbg';
+import * as pyconv from './pyconv';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 
@@ -1211,19 +1213,28 @@ export function buildTargetAsync(): Promise<void> {
     return simshimAsync()
         .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(buildTargetCoreAsync)
-        .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('editor', true, 'editor'))
+        .then(buildSemanticUIAsync)
+        .then(() => {
+            if (fs.existsSync(path.join("editor", "tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
+                if (tsConfig.compilerOptions.module)
+                    return buildFolderAndBrowserifyAsync('editor', true, 'editor');
+                else
+                    return buildFolderAsync('editor', true, 'editor');
+            }
+            return Promise.resolve();
+        })
         .then(() => buildFolderAsync('server', true, 'server'))
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(p + "/tsconfig.json")) {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
         U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
     }
@@ -1238,6 +1249,48 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
+    })
+}
+
+function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
+        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+        return Promise.resolve()
+    }
+
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
+        U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
+    }
+
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
+    pxt.log(`building ${p}...`)
+    dirsToWatch.push(p)
+    return nodeutil.spawnAsync({
+        cmd: "node",
+        args: ["../node_modules/typescript/bin/tsc"],
+        cwd: p
+    }).then(() => {
+        const browserify = require('browserify');
+        let b = browserify();
+        nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
+            b.add(f);
+        });
+
+        let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
+        b.bundle().pipe(outFile);
+
+        return new Promise<void>((resolve, reject) => {
+            outFile.on('finish', () => {
+                resolve();
+            });
+            outFile.on('error', (err: any) => {
+                reject(err);
+            });
+        });
     })
 }
 
@@ -1373,9 +1426,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
-    const rtlcss = require('rtlcss');
-    const autoprefixer = require('autoprefixer');
-
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1401,17 +1451,11 @@ function buildSemanticUIAsync() {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+        fs.writeFileSync('built/web/semantic.css', semCss)
         return semCss;
     }).then((semCss) => {
-        // run autoprefixer
-        pxt.debug("running autoprefixer");
-        return autoprefixer.process(semCss).then((result: any) => {
-            fs.writeFileSync('built/web/semantic.css', result.css);
-            return result.css;
-        });
-    }).then((semCss) => {
-        // convert to rtl
-        let rtlCss = rtlcss.process(semCss);
+        const rtlcss = require('rtlcss');
+        const rtlCss = rtlcss.process(semCss);
         pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
@@ -1525,6 +1569,16 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 
             (<any>cfg)[projectId] = newProject;
         });
+
+    if (!cfg.tsprj && cfg.blocksprj) {
+        let notBlock = (s: string) => !U.endsWith(s, ".blocks")
+        cfg.tsprj = U.clone(cfg.blocksprj)
+        cfg.tsprj.id = "tsprj"
+        cfg.tsprj.config.files = cfg.tsprj.config.files.filter(notBlock)
+        for (let k of Object.keys(cfg.tsprj.files)) {
+            if (!notBlock(k)) delete cfg.tsprj.files[k]
+        }
+    }
 }
 
 function updateTOC(cfg: pxt.TargetBundle) {
@@ -1540,7 +1594,6 @@ function updateTOC(cfg: pxt.TargetBundle) {
 }
 
 function buildTargetCoreAsync() {
-    let previousForceCloudBuild = forceCloudBuild;
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1553,6 +1606,8 @@ function buildTargetCoreAsync() {
             dirsToWatch.push("theme"); // simulator
             dirsToWatch.push(path.join("theme", "site", "globals")); // simulator
         }
+        if (fs.existsSync("editor"))
+            dirsToWatch.push("editor");
         if (fs.existsSync("sim")) {
             dirsToWatch.push("sim"); // simulator
             dirsToWatch = dirsToWatch.concat(
@@ -1574,17 +1629,12 @@ function buildTargetCoreAsync() {
             dirsToWatch.push(path.resolve(config.additionalFilePath));
         }
 
-        if (isPrj) {
-            forceCloudBuild = true;
-        } else {
-            forceCloudBuild = previousForceCloudBuild;
-        }
-
         return pkg.filesToBePublishedAsync(true)
             .then(res => {
-                cfg.bundledpkgs[path.basename(dirname)] = res
+                if (!isPrj)
+                    cfg.bundledpkgs[path.basename(dirname)] = res
             })
-            .then(testForBuildTargetAsync)
+            .then(() => testForBuildTargetAsync(isPrj))
             .then((compileOpts) => {
                 // For the projects, we need to save the base HEX file to the offline HEX cache
                 if (isPrj && pxt.appTarget.compile.hasHex) {
@@ -1607,9 +1657,6 @@ function buildTargetCoreAsync() {
                 }
             })
     }, /*includeProjects*/ true)
-        .finally(() => {
-            forceCloudBuild = previousForceCloudBuild;
-        })
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -1752,16 +1799,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !globalConfig.localBuild
+    forceCloudBuild = false; // always use yotta
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["yt"]) {
-        forceCloudBuild = false
-    } else if (parsed.flags["cloud"]) {
+    if (parsed.flags["cloud"]) {
         forceCloudBuild = true
     }
     if (parsed.flags["just"]) {
@@ -2520,11 +2565,14 @@ function runCoreAsync(res: pxtc.CompileResult) {
 }
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
+    process.chdir("../..")
     if (!nodeutil.existsDirSync("sim")) return;
 
     let decls: Map<ts.Symbol> = {}
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
+
+    pxt.log("checking for missing sim implementations...")
 
     let opts: pxtc.CompileOptions = {
         fileSystem: {},
@@ -2534,6 +2582,8 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         noEmit: true,
         hexinfo: null
     }
+
+    opts.target.isNative = false
 
     for (let fn of opts.sourceFiles) {
         opts.fileSystem[fn] = fs.readFileSync(path.join(nodeutil.targetDir, fn), "utf8")
@@ -2561,10 +2611,12 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
+        if (pxtc.isBuiltinSimOp(shim))
+            continue
         let simName = pxtc.shimToJs(shim)
         let sym = U.lookup(decls, simName)
         if (!sym) {
-            console.log("missing in sim:", simName)
+            pxt.log("missing in sim: " + simName)
         }
     }
 
@@ -2596,7 +2648,7 @@ function testAssemblers(): Promise<void> {
 }
 
 
-function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
+function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOptions> {
     let opts: pxtc.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
@@ -2604,18 +2656,27 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
             let target = mainPkg.getTargetOptions()
             if (target.hasHex)
                 target.isNative = true
+            if (!useNative)
+                target.isNative = false
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(o => {
             opts = o
             opts.testMode = true
             opts.ast = true
-            return pxtc.compile(opts)
+            if (useNative)
+                return pxtc.compile(opts)
+            else {
+                pxt.log("  skip native build of non-project")
+                return null
+            }
         })
         .then(res => {
-            reportDiagnostics(res.diagnostics);
-            if (!res.success) U.userError("Compiler test failed")
-            simulatorCoverage(res, opts)
+            if (res) {
+                reportDiagnostics(res.diagnostics);
+                if (!res.success) U.userError("Compiler test failed")
+                simulatorCoverage(res, opts)
+            }
         })
         .then(() => opts);
 }
@@ -3296,8 +3357,17 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
-            if (target.hasHex && mode != BuildOption.Run && mode != BuildOption.DebugSim)
+            if (target.hasHex)
                 target.isNative = true
+            switch (mode) {
+                case BuildOption.Run:
+                case BuildOption.DebugSim:
+                case BuildOption.GenDocs:
+                    target.isNative = false
+                    break
+                default:
+                    break
+            }
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(opts => {
@@ -3309,8 +3379,18 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
         })
 }
 
+function dbgTestAsync() {
+    return buildCoreAsync({
+        mode: BuildOption.JustBuild,
+        debug: true
+    })
+        .then(clidbg.startAsync)
+}
+
 interface BuildCoreOptions {
     mode: BuildOption;
+
+    debug?: boolean;
 
     // docs
     locs?: boolean;
@@ -3319,16 +3399,22 @@ interface BuildCoreOptions {
     createOnly?: boolean;
 }
 
-function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOptions> {
+function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
+    let compileResult: pxtc.CompileResult;
     ensurePkgDir();
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
             opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
+            if (buildOpts.debug) {
+                opts.breakpoints = true
+                opts.justMyCode = true
+            }
             return pxtc.compile(opts);
         })
         .then((res): Promise<void | pxtc.CompileOptions> => {
+            compileResult = res
             U.iterMap(res.outfiles, (fn, c) => {
                 if (fn !== pxtc.BINARY_JS) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
@@ -3395,7 +3481,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
             }
         })
         .then(() => {
-            return compileOptions;
+            return compileResult;
         });
 }
 
@@ -3625,7 +3711,7 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
     // from target location?
     if (fs.existsSync("pxtarget.json"))
         return forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building in ${dirname}`);
+            pxt.log(`building docs in ${dirname}`);
             return build();
         });
     else return build();
@@ -4251,10 +4337,6 @@ function initCommands() {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
             },
-            yt: {
-                description: "use local yotta build",
-                aliases: ["yotta"]
-            },
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
@@ -4339,6 +4421,7 @@ function initCommands() {
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
     advancedCommand("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
+    advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 
     advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
@@ -4373,6 +4456,13 @@ function initCommands() {
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
+    p.defineCommand({
+        name: "pyconv",
+        help: "convert from python",
+        argString: "<package-directory> <support-directory>...",
+        anyArgs: true,
+        advanced: true,
+    }, c => pyconv.convertAsync(c.arguments))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({

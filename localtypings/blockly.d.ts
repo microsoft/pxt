@@ -676,6 +676,7 @@ declare namespace Blockly {
             viewWidth: number;
         }
         variableIndexOf(name: string): number;
+        playAudio(name: string): void;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
 

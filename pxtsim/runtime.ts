@@ -168,12 +168,17 @@ namespace pxsim {
     export class EventQueue<T> {
         max: number = 5;
         events: T[] = [];
+        private awaiters: ((v?: any) => void)[] = [];
         private mHandler: RefAction;
         private lock: boolean;
 
         constructor(public runtime: Runtime) { }
 
         public push(e: T) {
+            if (this.awaiters.length > 0) {
+                const aws = this.awaiters.shift();
+                if (aws) aws();
+            }
             if (!this.handler || this.events.length > this.max) return;
 
             this.events.push(e)
@@ -212,6 +217,10 @@ namespace pxsim {
             if (this.mHandler) {
                 pxtcore.incr(this.mHandler);
             }
+        }
+
+        addAwaiter(awaiter: (v?: any) => void) {
+            this.awaiters.push(awaiter);
         }
     }
 

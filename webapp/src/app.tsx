@@ -29,6 +29,7 @@ import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
 import * as sounds from "./sounds";
+import * as make from "./make";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -36,7 +37,6 @@ import * as blocks from "./blocks"
 import * as codecard from "./codecard"
 import * as logview from "./logview"
 import * as draganddrop from "./draganddrop";
-import * as hwdbg from "./hwdbg"
 import * as electron from "./electron";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -929,11 +929,14 @@ export class ProjectView
             });
     }
 
+    beforeCompile() { }
+
     compile(saveOnly = false) {
         // the USB init has to be called from an event handler
         if (/webusb=1/i.test(window.location.href)) {
             pxt.usb.initAsync().catch(e => { })
         }
+        this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
             userContextWindow = window.open("");
@@ -1085,28 +1088,12 @@ export class ProjectView
 
     openInstructions() {
         pxt.tickEvent("simulator.make");
-        compiler.compileAsync({ native: true })
-            .done(resp => {
-                let p = pkg.mainEditorPkg();
-                let code = p.files["main.ts"];
-                let data: any = {
-                    name: p.header.name || lf("Untitled"),
-                    code: code ? code.content : `basic.showString("Hi!");`,
-                    board: JSON.stringify(pxt.appTarget.simulator.boardDefinition)
-                };
-                let parts = ts.pxtc.computeUsedParts(resp);
-                if (parts.length) {
-                    data.parts = parts.join(" ");
-                    data.partdefs = JSON.stringify(pkg.mainPkg.computePartDefinitions(parts));
-                }
-                let fnArgs = resp.usedArguments;
-                if (fnArgs)
-                    data.fnArgs = JSON.stringify(fnArgs);
-                data.package = Util.values(pkg.mainPkg.deps).filter(p => p.id != "this").map(p => `${p.id}=${p._verspec}`).join('\n')
-                let urlData = Object.keys(data).map(k => `${k}=${encodeURIComponent(data[k])}`).join('&');
-                let url = `${pxt.webConfig.partsUrl}?${urlData}`
-                window.open(url, '_blank')
-            });
+        const running = this.state.running;
+        if (running) this.stopSimulator();
+        make.makeAsync()
+            .finally(() => {
+                if (running) this.startSimulator()
+            })
     }
 
     clearLog() {
@@ -1121,11 +1108,14 @@ export class ProjectView
         return start.then(() => {
             simulator.driver.setHwDebugger({
                 postMessage: (msg) => {
-                    hwdbg.handleMessage(msg as pxsim.DebuggerMessage)
+                    pxt.HWDBG.handleMessage(msg as pxsim.DebuggerMessage)
                 }
             })
-            hwdbg.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
-            return hwdbg.startDebugAsync()
+            pxt.HWDBG.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
+            return Promise.join<any>(
+                compiler.compileAsync({ debug: true, native: true }),
+                hidbridge.initAsync()
+            ).then(vals => pxt.HWDBG.startDebugAsync(vals[0], vals[1]))
         })
     }
 
@@ -1380,7 +1370,7 @@ export class ProjectView
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
 <p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
 <p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
-${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
+${compileService && compileService.githubCorePackage && compileService.gittag ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
         }).done();
     }
@@ -1549,6 +1539,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const trace = run && simOpts.enableTrace;
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
+        const useModulator = compile.useModulator;
         const { hideMenuBar, hideEditorToolbar} = targetTheme;
         const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
@@ -1586,6 +1577,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
         return (
             <div id='root' className={rootClasses}>
+                {useModulator ? <audio id="modulatorAudioOutput" controls></audio> : undefined }
+                {useModulator ? <div id="modulatorWrapper"><div id="modulatorBubble"><canvas id="modulatorWavStrip"></canvas></div></div> : undefined }
                 {hideMenuBar ? undefined :
                     <div id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
@@ -1698,7 +1691,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
+                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className={`icon ${pxt.appTarget.appTheme.downloadIcon  || 'download'}`}/>{ pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>
@@ -1903,7 +1896,6 @@ let myexports: any = {
     sim: simulator,
     apiAsync: core.apiAsync,
     showIcons,
-    hwdbg,
     assembleCurrent,
     log
 };
@@ -2060,6 +2052,13 @@ function initExtensionsAsync(): Promise<void> {
                     pxt.debug(`\tadded hex importer ${fi.id}`);
                     theEditor.hexFileImporters.push(fi);
                 });
+            if (res.deployCoreAsync) {
+                pxt.debug(`\tadded custom deploy core async`);
+                pxt.commands.deployCoreAsync = res.deployCoreAsync;
+            }
+            if (res.beforeCompile) {
+                theEditor.beforeCompile = res.beforeCompile;
+            }
             if (res.fieldEditors)
                 res.fieldEditors.forEach(fi => {
                     pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);

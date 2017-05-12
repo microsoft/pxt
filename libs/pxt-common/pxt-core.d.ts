@@ -49,7 +49,7 @@ interface Array<T> {
     //% helper=arrayUnshift weight=69 advanced=true
     //% blockId="array_unshift" block="%myList| insert %value| at beginning" blockNamespace="lists"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
-    unshift(value:T): number;
+    unshift(value: T): number;
 
     /**
       * Returns a section of an array.
@@ -100,13 +100,13 @@ interface Array<T> {
 
     /** Removes the first occurence of an object. Returns true if removed. */
     //% shim=Array_::removeElement weight=48
-    removeElement(element:T) : boolean;
+    removeElement(element: T): boolean;
 
     /** Removes the object at position index. */
     //% help=lists/removeat
     //% shim=Array_::removeAt weight=49 advanced=true
     //% blockId="array_removeat" block="%myList| remove value at %index" blockNamespace="lists"
-    removeAt(index:number) : T;
+    removeAt(index: number): T;
 
     /**
      * Insert the value at a particular index, increases length by 1
@@ -116,7 +116,7 @@ interface Array<T> {
     //% help=lists/insertat
     //% shim=Array_::insertAt weight=84 advanced=true
     //% blockId="array_insertAt" block="%myList| insert at %index| value %value" blockNamespace="lists"
-    insertAt(index:number, value: T) : void;
+    insertAt(index: number, value: T): void;
 
     /**
       * Returns the index of the first occurrence of a value in an array.
@@ -143,7 +143,7 @@ interface Array<T> {
      */
     //% help=lists/set
     //% shim=Array_::setAt weight=84
-    set(index: number, value : T) : void;
+    set(index: number, value: T): void;
 
     [n: number]: T;
 }
@@ -195,7 +195,7 @@ declare interface String {
      */
     //% shim=String_::substr length.defl=1000000
     //% blockId="string_substr" block="substring of %myList=text|from %start|of length %length" blockNamespace="text"
-    substr(start:number, length?:number): string;
+    substr(start: number, length?: number): string;
 
     // This block is currently disabled, as it does not compile in some targets
     // Add % sign back to the block annotation to re-enable
@@ -203,7 +203,7 @@ declare interface String {
     //% shim=String_::isEmpty
     //% blockId="string_isempty" blockNamespace="text"
     // block="%myList=text| is empty"
-    isEmpty() : boolean;
+    isEmpty(): boolean;
 
     [index: number]: string;
 }
@@ -216,14 +216,14 @@ declare interface String {
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
 declare function parseInt(text: string): number;
 
-interface Object {}
-interface Function {}
-interface IArguments {}
-interface RegExp {}
+interface Object { }
+interface Function { }
+interface IArguments { }
+interface RegExp { }
 
 type uint8 = number;
 type uint16 = number;
-//type uint32 = number;
+type uint32 = number;
 type int8 = number;
 type int16 = number;
 type int32 = number;
@@ -259,7 +259,6 @@ declare interface Number {
 }
 
 declare namespace Math {
-
     /**
      * Returns the value of a base expression taken to a specified power.
      * @param x The base value of the expression.
@@ -280,4 +279,48 @@ declare namespace Math {
      */
     //% shim=Math_::sqrt
     function sqrt(x: number): number;
+
+    /**
+     * Returns the smallest number greater than or equal to its numeric argument. 
+     * @param x A numeric expression.
+     */
+    //% shim=Math_::ceil
+    function ceil(x: number): number;
+
+    /**
+      * Returns the greatest number less than or equal to its numeric argument. 
+      * @param x A numeric expression.
+      */
+    //% shim=Math_::floor
+    function floor(x: number): number;
+
+    /**
+      * Returns the number with the decimal part truncated.
+      * @param x A numeric expression.
+      */
+    //% shim=Math_::trunc
+    function trunc(x: number): number;
+    
+    /** 
+      * Returns a supplied numeric expression rounded to the nearest number.
+      * @param x The value to be rounded to the nearest number.
+      */
+    //% shim=Math_::round
+    function round(x: number): number;
+
+    /**
+     * Returns the value of integer signed 32 bit multiplication of two numbers.
+     * @param x The first number
+     * @param y The second number
+     */
+    //% shim=Math_::imul
+    function imul(x: number, y: number): number;
+
+    /**
+     * Returns the value of integer signed 32 bit division of two numbers.
+     * @param x The first number
+     * @param y The second number
+     */
+    //% shim=Math_::idiv
+    function idiv(x: number, y: number): number;
 }

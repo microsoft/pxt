@@ -12,7 +12,8 @@ namespace pxt.blocks {
         images: '#5C2D91',
         variables: '#A80000',
         text: '#996600',
-        lists: '#66672C'
+        lists: '#A94400',
+        advanced: '#3c3c3c'
     }
 
     export enum CategoryMode {
@@ -207,8 +208,8 @@ namespace pxt.blocks {
                     if (nsn && nsn.attributes.color) {
                         category.setAttribute("colour", nsn.attributes.color);
                     }
-                    else if (blockColors[ns]) {
-                        category.setAttribute("colour", blockColors[ns].toString());
+                    else if (getNamespaceColor(ns)) {
+                        category.setAttribute("colour", getNamespaceColor(ns));
                     }
                     if (nsn && nsn.attributes.icon) {
                         const nsnIconClassName = `blocklyTreeIcon${nsn.name.toLowerCase()}`.replace(/\s/g, '');
@@ -531,7 +532,7 @@ namespace pxt.blocks {
         const color =
             fn.attributes.color
             || (nsinfo ? nsinfo.attributes.color : undefined)
-            || blockColors[ns.toLowerCase()]
+            || getNamespaceColor(ns.toLowerCase())
             || 255;
 
         if (fn.attributes.help)
@@ -870,6 +871,20 @@ namespace pxt.blocks {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
             }
+
+            // update category colors
+            let topCats = tb.querySelectorAll(`#${tb.id} > category`);
+            for (let i = 0; i < topCats.length; i++) {
+                const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
+                if (nsColor && nsColor != "") {
+                    topCats[i].setAttribute('colour', nsColor);
+                    // update children colors
+                    const childCats = topCats[i].querySelectorAll('category');
+                    for (let j = 0; j < childCats.length; j++) {
+                        childCats[j].setAttribute('colour', nsColor);
+                    }
+                }
+            }
         }
 
         // Do not remove this comment.
@@ -894,7 +909,7 @@ namespace pxt.blocks {
 
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== CategoryMode.None) {
-            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, "#3c3c3c", showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
+            const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
             insertTopLevelCategory(document.createElement("sep"), tb, 1.5, false);
             insertTopLevelCategory(cat, tb, 1, false);
         }
@@ -1176,12 +1191,12 @@ namespace pxt.blocks {
 
     function setBuiltinHelpInfo(block: any, id: string) {
         const info = pxt.blocks.helpResources()[id];
-        setHelpResources(block, id, info.name, info.tooltip, info.url, String(blockColors[info.category]));
+        setHelpResources(block, id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
     }
 
     function installBuiltinHelpInfo(id: string) {
         const info = pxt.blocks.helpResources()[id];
-        installHelpResources(id, info.name, info.tooltip, info.url, String(blockColors[info.category]))
+        installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category))
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string) {
@@ -1248,7 +1263,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['loops']
+                    "colour": getNamespaceColor('loops')
                 });
                 this.appendStatementInput("DO")
                     .appendField(lf("{id:while}do"));
@@ -1284,7 +1299,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['loops'],
+                    "colour": getNamespaceColor('loops'),
                     "inputsInline": true
                 });
                 this.appendStatementInput('DO')
@@ -1299,7 +1314,7 @@ namespace pxt.blocks {
                         return lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks.", thisBlock.getFieldValue('VAR'));
                     },
                     info.url,
-                    String(blockColors['loops'])
+                    String(getNamespaceColor('loops'))
                 );
             },
             /**
@@ -1665,7 +1680,7 @@ namespace pxt.blocks {
                             "name": "HANDLER"
                         }
                     ],
-                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops']
+                    "colour": (pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')
                 });
 
                 setHelpResources(this,
@@ -1673,7 +1688,7 @@ namespace pxt.blocks {
                     lf("on start event"),
                     lf("Run code when the program starts"),
                     '/blocks/on-start',
-                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || blockColors['loops'])
+                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops'))
                 );
             }
         };
@@ -1875,7 +1890,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": blockColors['math']
+                    "colour": getNamespaceColor('math')
                 });
 
                 let thisBlock = this;
@@ -1887,7 +1902,7 @@ namespace pxt.blocks {
                         return thisBlock.getFieldValue('op') == 'min' ? lf("smaller value of 2 numbers") : lf("larger value of 2 numbers");
                     },
                     info.url,
-                    String(blockColors[info.category])
+                    getNamespaceColor(info.category)
                 );
             }
         };
@@ -1906,7 +1921,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": blockColors['math']
+                    "colour": getNamespaceColor('math')
                 });
 
                 setBuiltinHelpInfo(this, 'math_op3');
@@ -1927,7 +1942,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "colour": blockColors['math']
+                    "colour": getNamespaceColor('math')
                 });
 
                 setBuiltinHelpInfo(this, 'device_random');
@@ -1942,7 +1957,7 @@ namespace pxt.blocks {
             mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url,
-            String(blockColors[mInfo.category])
+            getNamespaceColor(mInfo.category)
         );
 
         // builtin math_number_minmax
@@ -1953,7 +1968,7 @@ namespace pxt.blocks {
             mMInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mMInfo.url,
-            String(blockColors[mMInfo.category])
+            getNamespaceColor(mMInfo.category)
         );
 
         // builtin math_arithmetic
@@ -1979,12 +1994,20 @@ namespace pxt.blocks {
                 return TOOLTIPS[block.getFieldValue('OP')];
             },
             aInfo.url,
-            String(blockColors[aInfo.category])
+            getNamespaceColor(aInfo.category)
         );
 
         // builtin math_modulo
         msg.MATH_MODULO_TITLE = lf("remainder of %1 ÷ %2");
         installBuiltinHelpInfo('math_modulo');
+    }
+
+    export function getNamespaceColor(ns: string): string {
+        if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
+            return pxt.appTarget.appTheme.blockColors[ns] as string;
+        if (blockColors[ns])
+            return blockColors[ns] as string;
+        return "";
     }
 
     function initVariables() {
@@ -2016,7 +2039,7 @@ namespace pxt.blocks {
                 let block = goog.dom.createDom('block');
                 block.setAttribute('type', 'variables_get');
                 block.setAttribute('gap', '8');
-                block.setAttribute('colour', String(blockColors['variables']));
+                block.setAttribute('colour', getNamespaceColor('variables'));
                 let field = goog.dom.createDom('field', null, variableList[i]);
                 field.setAttribute('name', 'VAR');
                 block.appendChild(field);
@@ -2109,7 +2132,7 @@ namespace pxt.blocks {
                     "inputsInline": true,
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['variables']
+                    "colour": getNamespaceColor('variables')
                 });
 
                 setBuiltinHelpInfo(this, 'variables_change');

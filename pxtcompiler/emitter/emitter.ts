@@ -124,8 +124,15 @@ namespace ts.pxtc {
         return true
     }
 
-    function isRefDecl(def: Declaration) {
+    function isSyntheticThis(def: Declaration) {
         if ((<any>def).isThisParameter)
+            return true;
+        else
+            return false;
+    }
+
+    function isRefDecl(def: Declaration) {
+        if (isSyntheticThis(def))
             return true;
         //let tp = checker.getDeclaredTypeOfSymbol(def.symbol)
         let tp = typeOf(def)
@@ -165,6 +172,7 @@ namespace ts.pxtc {
             case "int32": return BitSize.Int32
             case "uint8": return BitSize.UInt8
             case "uint16": return BitSize.UInt16
+            case "uint32": return BitSize.UInt32
             default: return BitSize.None
         }
     }
@@ -177,6 +185,21 @@ namespace ts.pxtc {
             case BitSize.Int32: return 4
             case BitSize.UInt8: return 1
             case BitSize.UInt16: return 2
+            case BitSize.UInt32: return 4
+            default: throw oops()
+        }
+    }
+
+    export function isBitSizeSigned(b: BitSize) {
+        switch (b) {
+            case BitSize.Int8:
+            case BitSize.Int16:
+            case BitSize.Int32:
+                return true
+            case BitSize.UInt8:
+            case BitSize.UInt16:
+            case BitSize.UInt32:
+                return false
             default: throw oops()
         }
     }
@@ -185,10 +208,20 @@ namespace ts.pxtc {
         l._isRef = isRefDecl(l.def)
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
-        if (!l.isRef() && typeOf(l.def).flags & TypeFlags.Void) {
-            oops("void-typed variable, " + l.toString())
+        if (!isSyntheticThis(l.def)) {
+            let tp = typeOf(l.def)
+            if (tp.flags & TypeFlags.Void) {
+                oops("void-typed variable, " + l.toString())
+            }
+            l.bitSize = getBitSize(l.def)
+            if (l.bitSize != BitSize.None) {
+                l._debugType = (isBitSizeSigned(l.bitSize) ? "int" : "uint") + (8 * sizeOfBitSize(l.bitSize))
+            } else if (tp.flags & TypeFlags.String) {
+                l._debugType = "string"
+            } else if (tp.flags & TypeFlags.NumberLike) {
+                l._debugType = "number"
+            }
         }
-        l.bitSize = getBitSize(l.def)
         if (l.isLocal() && l.bitSize != BitSize.None) {
             l.bitSize = BitSize.None
             userError(9256, lf("bit sizes are not supported for locals and parameters"))
@@ -307,15 +340,6 @@ namespace ts.pxtc {
             default:
                 return true;
         }
-    }
-
-    export const enum BitSize {
-        None,
-        Int8,
-        UInt8,
-        Int16,
-        UInt16,
-        Int32,
     }
 
     export interface CallInfo {
@@ -874,8 +898,6 @@ namespace ts.pxtc {
 
             hex.setupFor(opts.target, opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
-
-            opts.breakpoints = true
         }
 
         let bin = new Binary()
@@ -895,7 +917,6 @@ namespace ts.pxtc {
                 length: 0,
                 line: 0,
                 column: 0,
-                successors: null
             }]
         }
 
@@ -1748,7 +1769,18 @@ ${lbl}: .short 0xffff
         function getDecl(node: Node): Declaration {
             if (!node) return null
             let sym = checker.getSymbolAtLocation(node)
-            let decl: Declaration = sym ? sym.valueDeclaration : null
+            let decl: Declaration
+            if (sym) {
+                decl = sym.valueDeclaration
+                if (!decl && sym.declarations) {
+                    let decl0 = sym.declarations[0]
+                    if (decl0 && decl0.kind == SyntaxKind.ImportEqualsDeclaration) {
+                        sym = checker.getSymbolAtLocation((decl0 as ImportEqualsDeclaration).moduleReference)
+                        if (sym)
+                            decl = sym.valueDeclaration
+                    }
+                }
+            }
             markUsed(decl)
             return decl
         }
@@ -2873,6 +2905,8 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
+            if (!opts.breakpoints)
+                return
             let src = getSourceFileOfNode(node)
             if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
                 return;
@@ -2891,7 +2925,6 @@ ${lbl}: .short 0xffff
                 endLine: e.line,
                 column: p.character,
                 endColumn: e.character,
-                successors: null
             }
             res.breakpoints.push(brk)
             let st = ir.stmt(ir.SK.Breakpoint, null)
@@ -3800,6 +3833,7 @@ ${lbl}: .short 0xffff
         usedClassInfos: ClassInfo[] = [];
         sourceHash = "";
         checksumBlock: number[];
+        numStmts = 1;
 
         strings: Map<string> = {};
         doubles: Map<string> = {};

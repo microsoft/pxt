@@ -1,7 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 import * as core from "./core";
 import * as pkg from "./package";
-import * as hwdbg from "./hwdbg";
 import * as hidbridge from "./hidbridge";
 import Cloud = pxt.Cloud;
 
