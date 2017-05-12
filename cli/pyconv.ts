@@ -1745,8 +1745,8 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     FormattedValue: (n: py.FormattedValue) => exprTODO(n),
     JoinedStr: (n: py.JoinedStr) => exprTODO(n),
     Bytes: (n: py.Bytes) => {
-        let hex = B.stringLit(U.toHex(new Uint8Array(n.s)))
-        return B.H.mkCall("pins.createBufferFromHex", [B.mkText(hex)])
+        let hex = B.stringLit()
+        return B.mkText(`hex \`${U.toHex(new Uint8Array(n.s))}\``)
     },
     NameConstant: (n: py.NameConstant) => {
         if (n.value != null)
