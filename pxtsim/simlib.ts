@@ -32,6 +32,8 @@ namespace pxsim {
     export class EventBus {
         private queues: Map<EventQueue<number>> = {};
 
+        public nextNotifyEvent = 1024;
+
         constructor(private runtime: Runtime) { }
 
         private start(id: number | string, evid: number | string, create: boolean) {

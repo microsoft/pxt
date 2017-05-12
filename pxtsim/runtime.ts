@@ -176,9 +176,8 @@ namespace pxsim {
 
         public push(e: T) {
             if (this.awaiters.length > 0) {
-                const aws = this.awaiters.slice(0);
-                this.awaiters = [];
-                aws.forEach(aw => aw());
+                const aws = this.awaiters.shift();
+                if (aws) aws();
             }
             if (!this.handler || this.events.length > this.max) return;
 
