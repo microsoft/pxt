@@ -34,17 +34,26 @@ namespace pxsim {
 
         constructor(private runtime: Runtime) { }
 
-        listen(id: number | string, evid: number | string, handler: RefAction) {
+        private start(id: number | string, evid: number | string, create: boolean) {
             let k = id + ":" + evid;
             let queue = this.queues[k];
             if (!queue) queue = this.queues[k] = new EventQueue<number>(this.runtime);
-            queue.handler = handler;
+            return queue;
+        }
+
+        listen(id: number | string, evid: number | string, handler: RefAction) {
+            let q = this.start(id, evid, true);
+            q.handler = handler;
         }
 
         queue(id: number | string, evid: number | string, value: number = 0) {
-            let k = id + ":" + evid;
-            let queue = this.queues[k];
-            if (queue) queue.push(value);
+            let q = this.start(id, evid, false);
+            if (q) q.push(value);
+        }
+
+        wait(id: number | string, evid: number | string, cb: (v?: any) => void) {
+            let q = this.start(id, evid, true);
+            q.addAwaiter(cb);
         }
     }
 
@@ -102,7 +111,7 @@ namespace pxsim {
                 if (top.setTimeoutHandle) {
                     clearTimeout(top.setTimeoutHandle);
                 }
-             }
+            }
         }
 
         public enqueue(anim: AnimationOptions) {
