@@ -174,10 +174,16 @@ namespace pxsim {
 
         constructor(public runtime: Runtime) { }
 
-        public push(e: T) {
+        public push(e: T, notifyOne: boolean) {
             if (this.awaiters.length > 0) {
-                const aws = this.awaiters.shift();
-                if (aws) aws();
+                if (notifyOne) {
+                    const aw = this.awaiters.shift();
+                    if (aw) aw();
+                } else {
+                    const aws = this.awaiters.slice();
+                    this.awaiters = [];
+                    aws.forEach(aw => aw());
+                }
             }
             if (!this.handler || this.events.length > this.max) return;
 
