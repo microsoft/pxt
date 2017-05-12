@@ -250,22 +250,22 @@ export const text: BuiltinCategoryDefinition = {
 
 export function getBuiltinCategory(ns: string) {
         switch (ns) {
-            case loops.name: return loops;
-            case logic.name: return logic;
-            case variables.name: return variables;
-            case maths.name: return maths;
-            case text.name: return text;
+            case loops.nameid: return loops;
+            case logic.nameid: return logic;
+            case variables.nameid: return variables;
+            case maths.nameid: return maths;
+            case text.nameid: return text;
         }
     return undefined;
 }
 
 export function isBuiltin(ns: string) {
     switch (ns) {
-        case loops.name:
-        case logic.name:
-        case variables.name:
-        case maths.name:
-        case text.name:
+        case loops.nameid:
+        case logic.nameid:
+        case variables.nameid:
+        case maths.nameid:
+        case text.nameid:
             return true;
     }
     return false;
