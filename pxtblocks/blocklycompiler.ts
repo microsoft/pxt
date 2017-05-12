@@ -270,42 +270,51 @@ namespace pxt.blocks {
         constructor(
             public link: Point,
             public type: string,
-            public genericOf?: Point
+            public parentType?: Point,
+            public childType?: Point
+
         ) { }
     }
 
     function find(p: Point): Point {
         if (p.link)
             return find(p.link);
-        else if (p.genericOf) {
-            // FIXME Arrays only
-            const parent = find(p.genericOf);
-            if (isArrayType(parent.type)) {
-                return ground(parent.type.substr(0, parent.type.length - 2));
-            }
-            return p;
-        }
-        else
-            return p;
+        return p;
     }
 
     function union(p1: Point, p2: Point) {
         let _p1 = find(p1);
         let _p2 = find(p2);
         assert(_p1.link == null && _p2.link == null);
-        
-        if (p1.genericOf && p2.genericOf) {
-            union(p1.genericOf, p2.genericOf);   
-        }
 
         if (_p1 == _p2)
             return;
 
+        if (_p1.childType && _p2.childType) {
+            const ct = _p1.childType;
+            _p1.childType = null;
+            union(ct, _p2.childType);
+        }
+        else if (_p1.childType && !_p2.childType) {
+            _p2.childType = _p1.childType;
+        }
+
+        if (_p1.parentType && _p2.parentType) {
+            const pt = _p1.parentType;
+            _p1.parentType = null;
+            union(pt, _p2.parentType);
+        }
+        else if (_p1.parentType && !_p2.parentType) {
+            _p2.parentType = _p1.parentType;
+        }
+
+
         let t = unify(_p1.type, _p2.type);
+
         p1.link = _p2;
+        _p1.link = _p2;
         p1.type = null;
         p2.type = t;
-        
     }
 
     // Ground types.
@@ -364,6 +373,9 @@ namespace pxt.blocks {
                     if (input.connection && input.connection.targetBlock()) {
                         let t = returnType(e, input.connection.targetBlock())
                         if (t) {
+                            if (t.parentType) {
+                                return t.parentType;
+                            }
                             itemType = t.type;
                             break;
                         }
@@ -373,8 +385,6 @@ namespace pxt.blocks {
             return ground(itemType + "[]");
         }
         else if (check === "T") {
-            // FIXME: This is a very specific hack that only works for arrays
-            // because we don't really support generics in the blocks
             const func = e.stdCallTable[b.type];
             const isArrayGet = b.type === "lists_index_get";
             if (isArrayGet || func && func.args.length) {
@@ -389,8 +399,11 @@ namespace pxt.blocks {
 
                 if (parentInput.connection && parentInput.connection.targetBlock()) {
                     const parentType = returnType(e, parentInput.connection.targetBlock());
+                    if (parentType.childType) {
+                        return parentType.childType;
+                    }
                     const p = mkPoint(null);
-                    p.genericOf = parentType;
+                    genericLink(parentType, p);
                     return p;
                 }
             }
@@ -434,7 +447,9 @@ namespace pxt.blocks {
                 placeholders[b.id] = {};
             }
 
-            placeholders[b.id][n] = mkPlaceholderBlock(e, type);
+            if (!placeholders[b.id][n]) {
+                placeholders[b.id][n] = mkPlaceholderBlock(e, type);
+            }
         }
         else if (target.type === pxtc.TS_OUTPUT_TYPE && !((target as any).p)) {
             (target as any).p = mkPoint(null);
@@ -553,15 +568,14 @@ namespace pxt.blocks {
                     case "lists_index_get":
                         unionParam(e, b, "LIST", ground("Array"));
                         unionParam(e, b, "INDEX", ground(pNumber.type));
+                        const listType = returnType(e, getInputTargetBlock(b, "LIST"));
+                        const ret = returnType(e, b);
+                        genericLink(listType, ret);
                         break;
                     case "lists_index_set":
                         attachPlaceholderIf(e, b, "VALUE");
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
-                        const type = returnType(e, getInputTargetBlock(b, "VALUE"));
-                        if (type.genericOf) {
-                            union(type.genericOf, returnType(e, getInputTargetBlock(b, "LIST")));
-                        }
                         break;
                     default:
                         if (b.type in e.stdCallTable) {
@@ -605,7 +619,7 @@ namespace pxt.blocks {
         // Last pass: if some variable has no type (because it was never used or
         // assigned to), just unify it with int...
         e.bindings.forEach((b: Binding) => {
-            if (find(b.type).type == null)
+            if (getConcreteType(b.type).type == null)
                 union(b.type, ground(pNumber.type));
         });
 
@@ -615,20 +629,59 @@ namespace pxt.blocks {
 
         function handleGenericType(b: B.Block, name: string) {
             let genericArgs = b.inputList.filter((input: B.Input) => connectionCheck(input) === "T");
-            if (genericArgs.length) { 
+            if (genericArgs.length) {
                 const gen = getInputTargetBlock(b, genericArgs[0].name);
                 if (gen) {
                     const arg = returnType(e, gen);
-                    if (arg.type) {
-                        const arrayType = ground(returnType(e, gen).type + "[]");
-                        arg.genericOf = arrayType;
-                        unionParam(e, b, name, arrayType);
-                    }
+                    const arrayType = arg.type ? ground(returnType(e, gen).type + "[]") : ground(null);
+                    genericLink(arrayType, arg);
+                    unionParam(e, b, name, arrayType);
                     return true;
                 }
             }
             return false;
         }
+    }
+
+    function genericLink(parent: Point, child: Point) {
+        const p = find(parent);
+        const c = find(child);
+        if (p.childType) {
+            union(p.childType, c);
+        }
+        else {
+            p.childType = c;
+        }
+
+        if (c.parentType) {
+            union(c.parentType, p);
+        }
+        else {
+            c.parentType = p;
+        }
+    }
+
+    function getConcreteType(point: Point) {
+        const t = find(point);
+        if (!t.type || t.type === "Array") {
+            if (t.parentType) {
+                const parent = getConcreteType(t.parentType);
+                if (parent.type && parent.type !== "Array") {
+                    t.type = parent.type.substr(0, parent.type.length - 2);
+                    return t;
+                }
+            }
+
+            if (t.childType) {
+                const child = getConcreteType(t.childType);
+                if (child.type) {
+                    t.type = child.type + "[]";
+                    return t;
+                }
+
+            }
+        }
+        return t;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -843,8 +896,18 @@ namespace pxt.blocks {
         e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         let expr: JsNode;
-        if (b.disabled || b.type == "placeholder")
-            expr = defaultValueForType(returnType(e, b));
+        if (b.disabled || b.type == "placeholder") {
+            const ret = find(returnType(e, b));
+            if (ret.type === "Array") {
+                // FIXME: Can't use default type here because TS complains about
+                // the array having an implicit any type. However, forcing this
+                // to be a number array may cause type issues. Also, semicolon issues
+                expr = mkText("[0]");
+            }
+            else {
+                expr = defaultValueForType(returnType(e, b));
+            }
+        }
         else switch (b.type) {
             case "math_number":
                 expr = compileNumber(e, b, comments); break;
@@ -1167,7 +1230,7 @@ namespace pxt.blocks {
             return mkStmt(compileStdCall(e, b, call, comments))
     }
 
-    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[], isInstance = false): JsNode {
+    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[], beginningOfStatement = false): JsNode {
         let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
@@ -1177,7 +1240,7 @@ namespace pxt.blocks {
         else {
             attachPlaceholderIf(e, b, p.field);
             const target = getInputTargetBlock(b, p.field);
-            if (isInstance && target.type === "lists_create_with") {
+            if (beginningOfStatement && target.type === "lists_create_with") {
                 // We have to be careful of array literals at the beginning of a statement
                 // because they can cause errors (i.e. they get parsed as an index). Add a
                 // semicolon to the previous statement just in case.
@@ -1194,7 +1257,7 @@ namespace pxt.blocks {
             args = b.mutation.compileMutation(e, comments).children;
         }
         else {
-            args = func.args.map((p: StdArg, i: number) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0));
+            args = func.args.map((p: StdArg, i: number) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
         const externalInputs = !b.getInputsInline();
@@ -1322,6 +1385,7 @@ namespace pxt.blocks {
         args: StdArg[];
         attrs: ts.pxtc.CommentAttrs;
         isExtensionMethod?: boolean;
+        isExpression?: boolean;
         imageLiteral?: number;
         hasHandler?: boolean;
         property?: boolean;
@@ -1478,6 +1542,7 @@ namespace pxt.blocks {
                         args: args,
                         attrs: fn.attributes,
                         isExtensionMethod: instance,
+                        isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
                         hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
@@ -1581,9 +1646,9 @@ namespace pxt.blocks {
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
-                    const t = find(b.type);
+                    const t = getConcreteType(b.type);
                     let defl: JsNode;
-                    
+
                     if (t.type === "Array") {
                         defl = mkText("[]");
                     }
