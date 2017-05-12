@@ -3,5 +3,5 @@
 Gets the value at a particular index.
 
 ```block
-["hello"].get(0)
+["hello"][0]
 ```

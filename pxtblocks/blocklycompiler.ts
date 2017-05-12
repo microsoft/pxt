@@ -430,12 +430,13 @@ namespace pxt.blocks {
         return type && type.indexOf("[]") !== -1;
     }
 
-    function mkPlaceholderBlock(e: Environment, type?: string): B.Block {
+    function mkPlaceholderBlock(e: Environment, parent: B.Block, type?: string): B.Block {
         // XXX define a proper placeholder block type
         return <any>{
             type: "placeholder",
             p: mkPoint(type || null),
             workspace: e.workspace,
+            parentBlock_: parent
         };
     }
 
@@ -448,7 +449,7 @@ namespace pxt.blocks {
             }
 
             if (!placeholders[b.id][n]) {
-                placeholders[b.id][n] = mkPlaceholderBlock(e, type);
+                placeholders[b.id][n] = mkPlaceholderBlock(e, b, type);
             }
         }
         else if (target.type === pxtc.TS_OUTPUT_TYPE && !((target as any).p)) {
@@ -573,6 +574,7 @@ namespace pxt.blocks {
                         genericLink(listType, ret);
                         break;
                     case "lists_index_set":
+                        unionParam(e, b, "LIST", ground("Array"));
                         attachPlaceholderIf(e, b, "VALUE");
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
@@ -860,7 +862,7 @@ namespace pxt.blocks {
         const listExpr = compileExpression(e, listBlock, comments);
         const index = compileExpression(e, getInputTargetBlock(b, "INDEX"), comments);
         const value = compileExpression(e, getInputTargetBlock(b, "VALUE"), comments);
-        const res =  mkStmt(listExpr, mkText("["), index, mkText("] = "), value);
+        const res =  mkGroup([listExpr, mkText("["), index, mkText("] = "), value]);
 
         return listBlock.type === "lists_create_with" ? prefixWithSemicolon(res) : res;
 
@@ -901,8 +903,15 @@ namespace pxt.blocks {
             if (ret.type === "Array") {
                 // FIXME: Can't use default type here because TS complains about
                 // the array having an implicit any type. However, forcing this
-                // to be a number array may cause type issues. Also, semicolon issues
-                expr = mkText("[0]");
+                // to be a number array may cause type issues. Also, potential semicolon
+                // issues if we ever have a block where the array is not the first argument...
+                let isExpression = b.parentBlock_.type === "lists_index_get";
+                if (!isExpression) {
+                    const call = e.stdCallTable[b.parentBlock_.type];
+                    isExpression = call && call.isExpression;
+                }
+                const arrayNode = mkText("[0]");
+                expr = isExpression ? arrayNode : prefixWithSemicolon(arrayNode);
             }
             else {
                 expr = defaultValueForType(returnType(e, b));
