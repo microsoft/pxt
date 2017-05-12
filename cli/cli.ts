@@ -2540,11 +2540,14 @@ function runCoreAsync(res: pxtc.CompileResult) {
 }
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
+    process.chdir("../..")
     if (!nodeutil.existsDirSync("sim")) return;
 
     let decls: Map<ts.Symbol> = {}
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
+
+    pxt.log("checking for missing sim implementations...")
 
     let opts: pxtc.CompileOptions = {
         fileSystem: {},
@@ -2554,6 +2557,8 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         noEmit: true,
         hexinfo: null
     }
+
+    opts.target.isNative = false
 
     for (let fn of opts.sourceFiles) {
         opts.fileSystem[fn] = fs.readFileSync(path.join(nodeutil.targetDir, fn), "utf8")
@@ -2581,10 +2586,12 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
+        if (pxtc.isBuiltinSimOp(shim))
+            continue
         let simName = pxtc.shimToJs(shim)
         let sym = U.lookup(decls, simName)
         if (!sym) {
-            console.log("missing in sim:", simName)
+            pxt.log("missing in sim: " + simName)
         }
     }
 
