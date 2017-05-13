@@ -269,7 +269,6 @@ namespace pxsim {
         }
 
         export function length(s: string) {
-            pxtrt.nullCheck(s)
             return s.length
         }
 
@@ -288,7 +287,7 @@ namespace pxsim {
 
         export function charAt(s: string, i: number) {
             pxtrt.nullCheck(s)
-            return inRange(s, i) ? initString(s.charAt(i)) : null;
+            return inRange(s, i) ? initString(s.charAt(i)) : "";
         }
 
         export function charCodeAt(s: string, i: number) {
