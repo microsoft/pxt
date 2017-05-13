@@ -342,8 +342,8 @@ namespace pxsim {
         }
 
         export function nullCheck(v: any) {
-            if (!v)
-                U.userError("Dereferencing null value.")
+            if (v === null || v === undefined)
+                U.userError("Dereferencing null/undefined value.")
         }
 
         export function panic(code: number) {
