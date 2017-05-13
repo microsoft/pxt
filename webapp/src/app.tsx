@@ -968,7 +968,7 @@ export class ProjectView
                 resp.confirmAsync = core.confirmAsync;
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
-                        core.warningNotification(pxt.appTarget.compile.useModulator ? lf("Upload failed, please try again.") : lf(".hex file upload failed, please try again."));
+                        core.warningNotification(lf("Upload failed, please try again."));
                         pxt.reportException(e);
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
