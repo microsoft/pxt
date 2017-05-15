@@ -360,6 +360,7 @@ export const arrays: BuiltinCategoryDefinition = {
     ],
     attributes: {
         advanced: true,
+        weight: 51,
         color: pxt.blocks.blockColors["arrays"].toString(),
         icon: "arrays",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,

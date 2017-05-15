@@ -189,7 +189,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </block>
             </category>
         </category>
-        <category colour="#66672C" name="Arrays" nameid="arrays" category="45" iconclass="blocklyTreeIconarrays" expandedclass="blocklyTreeIconarrays" advanced="true">
+        <category colour="#A94400" name="Arrays" nameid="arrays" category="45" iconclass="blocklyTreeIconarrays" expandedclass="blocklyTreeIconarrays" advanced="true">
             <block type="lists_create_with">
                 <mutation items="1"></mutation>
                 <value name="ADD0">
