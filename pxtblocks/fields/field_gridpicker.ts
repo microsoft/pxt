@@ -239,6 +239,7 @@ namespace pxtblockly {
 
             Blockly.WidgetDiv.position(xy.x, xy.y, windowSize, scrollOffset,
                 this.sourceBlock_.RTL);
+            goog.style.setHeight(div, "auto");
 
             (<any>tableContainerDom).focus();
         }
