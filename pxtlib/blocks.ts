@@ -176,26 +176,26 @@ namespace pxt.blocks {
                 category: 'logic'
             },
             'lists_create_with': {
-                name: Util.lf("create a list"),
-                tooltip: Util.lf("Creates a new list."),
+                name: Util.lf("create an array"),
+                tooltip: Util.lf("Creates a new array."),
                 url: '/blocks/arrays/create',
                 category: 'arrays'
             },
             'lists_length': {
-                name: Util.lf("list length"),
-                tooltip: Util.lf("Returns the number of items in a list."),
+                name: Util.lf("array length"),
+                tooltip: Util.lf("Returns the number of items in an array."),
                 url: '/blocks/arrays/length',
                 category: 'arrays'
             },
             'lists_index_get': {
-                name: Util.lf("get a value in a list"),
-                tooltip: Util.lf("Returns the value at the given index in a list."),
+                name: Util.lf("get a value in an array"),
+                tooltip: Util.lf("Returns the value at the given index in an array."),
                 url: '/blocks/arrays/get',
                 category: 'arrays'
             },
             'lists_index_set': {
-                name: Util.lf("set a value in a list"),
-                tooltip: Util.lf("Sets the value at the given index in a list"),
+                name: Util.lf("set a value in an array"),
+                tooltip: Util.lf("Sets the value at the given index in an array"),
                 url: '/blocks/arrays/set',
                 category: 'arrays'
             },
