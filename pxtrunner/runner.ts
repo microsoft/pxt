@@ -1,4 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts" />
+/// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
@@ -386,6 +387,17 @@ namespace pxt.runner {
                     m[5]) : Promise.resolve();
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
+        }
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+            const opts: pxt.editor.ExtensionOptions = {};
+             pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+                .then(() => pxt.editor.initExtensionsAsync(opts))
+                .then(res => {
+                    if (res.fieldEditors)
+                        res.fieldEditors.forEach(fi => {
+                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                        })
+                })
         }
 
         window.addEventListener("message", receiveDocMessage, false);
