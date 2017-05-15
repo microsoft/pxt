@@ -1,4 +1,5 @@
 /// <reference path="../built/pxtlib.d.ts" />
+/// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
@@ -387,16 +388,29 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
+        let promise = Promise.resolve();
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+            const opts: pxt.editor.ExtensionOptions = {};
+            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
+                .then(() => pxt.editor.initExtensionsAsync(opts))
+                .then(res => {
+                    if (res.fieldEditors)
+                        res.fieldEditors.forEach(fi => {
+                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                        })
+                })
+        }
+        promise.done(() => {
+            window.addEventListener("message", receiveDocMessage, false);
+            window.addEventListener("hashchange", () => {
+                renderHash();
+            }, false);
 
-        window.addEventListener("message", receiveDocMessage, false);
-        window.addEventListener("hashchange", () => {
-            renderHash();
-        }, false);
+            parent.postMessage({ type: "sidedocready" }, "*");
 
-        parent.postMessage({ type: "sidedocready" }, "*");
-
-        // delay load doc page to allow simulator to load first
-        setTimeout(() => renderHash(), 1);
+            // delay load doc page to allow simulator to load first
+            setTimeout(() => renderHash(), 1);
+        })
     }
 
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {

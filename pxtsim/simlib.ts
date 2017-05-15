@@ -31,8 +31,14 @@ namespace pxsim {
 
     export class EventBus {
         private queues: Map<EventQueue<number>> = {};
+        private notifyID: number;
+        private notifyOneID: number;
 
         public nextNotifyEvent = 1024;
+        public setNotify(notifyID: number, notifyOneID: number) {
+            this.notifyID = notifyID;
+            this.notifyOneID = notifyOneID;
+        }
 
         constructor(private runtime: Runtime) { }
 
@@ -49,8 +55,14 @@ namespace pxsim {
         }
 
         queue(id: number | string, evid: number | string, value: number = 0) {
+            // special handling for notify one
+            const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
+            if (notifyOne)
+                id = this.notifyID;
+
+            // grab queue and handle
             let q = this.start(id, evid, false);
-            if (q) q.push(value);
+            if (q) q.push(value, notifyOne);
         }
 
         wait(id: number | string, evid: number | string, cb: (v?: any) => void) {
