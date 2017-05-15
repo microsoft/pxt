@@ -5,49 +5,49 @@ interface Array<T> {
       * Gets or sets the length of the array. This is a number one higher than the highest element defined in an array.
       */
     //% shim=Array_::length weight=84
-    //% blockId="lists_length" block="length of %VALUE" blockBuiltin=true blockNamespace="lists"
+    //% blockId="lists_length" block="length of %VALUE" blockBuiltin=true blockNamespace="arrays"
     length: number;
 
     /**
       * Appends new elements to an array.
       * @param items New elements of the Array.
       */
-    //% help=lists/push
+    //% help=arrays/push
     //% shim=Array_::push weight=75
-    //% blockId="array_push" block="%myList| add value %value| to end" blockNamespace="lists"
+    //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
     push(item: T): void;
 
     /**
       * Removes the last element from an array and returns it.
       */
-    //% help=lists/pop
+    //% help=arrays/pop
     //% shim=Array_::pop weight=74
-    //% blockId="array_pop" block="get and remove last value from %myList" blockNamespace="lists"
+    //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
     pop(): T;
 
     /**
       * Reverses the elements in an Array. The first array element becomes the last, and the last array element becomes the first.
       */
-    //% help=lists/reverse
+    //% help=arrays/reverse
     //% helper=arrayReverse weight=10 advanced=true
-    //% blockId="array_reverse" block="reverse %myList" blockNamespace="lists"
+    //% blockId="array_reverse" block="reverse %list" blockNamespace="arrays"
     reverse(): void;
 
     /**
       * Removes the first element from an array and returns that element. This method changes the length of the array.
       */
-    //% help=lists/shift
+    //% help=arrays/shift
     //% helper=arrayShift weight=70 advanced=true
-    //% blockId="array_shift" block="get and remove first value from %myList" blockNamespace="lists"
+    //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
     shift(): T;
 
     /**
       * Adds one element to the beginning of an array and returns the new length of the array.
       * @param element to insert at the start of the Array.
       */
-    //% help=lists/unshift
+    //% help=arrays/unshift
     //% helper=arrayUnshift weight=69 advanced=true
-    //% blockId="array_unshift" block="%myList| insert %value| at beginning" blockNamespace="lists"
+    //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
 
@@ -56,8 +56,8 @@ interface Array<T> {
       * @param start The beginning of the specified portion of the array. eg: 0
       * @param end The end of the specified portion of the array. eg: 0
       */
-    //% help=lists/slice
-    //% helper=arraySlice weight=41 advanced=true blockNamespace="lists"
+    //% help=arrays/slice
+    //% helper=arraySlice weight=41 advanced=true blockNamespace="arrays"
     slice(start: number, end: number): T[];
 
     /**
@@ -103,9 +103,9 @@ interface Array<T> {
     removeElement(element: T): boolean;
 
     /** Removes the object at position index. */
-    //% help=lists/removeat
+    //% help=arrays/removeat
     //% shim=Array_::removeAt weight=49 advanced=true
-    //% blockId="array_removeat" block="%myList| remove value at %index" blockNamespace="lists"
+    //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
     removeAt(index: number): T;
 
     /**
@@ -113,9 +113,9 @@ interface Array<T> {
      * @param index the zero-based position in the list to insert the value, eg: 0
      * @param the value to insert, eg: 0
      */
-    //% help=lists/insertat
+    //% help=arrays/insertat
     //% shim=Array_::insertAt weight=84 advanced=true
-    //% blockId="array_insertAt" block="%myList| insert at %index| value %value" blockNamespace="lists"
+    //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
     insertAt(index: number, value: T): void;
 
     /**
@@ -123,16 +123,16 @@ interface Array<T> {
       * @param item The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
-    //% help=lists/indexof
+    //% help=arrays/indexof
     //% shim=Array_::indexOf weight=50 advanced=true
-    //% blockId="array_indexof" block="%myList| find index of %value" blockNamespace="lists"
+    //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
      * Gets the value at a particular index
      * @param index the zero-based position in the list of the item, eg: 0
      */
-    //% help=lists/get
+    //% help=arrays/get
     //% shim=Array_::getAt weight=85
     get(index: number): T;
 
@@ -141,7 +141,7 @@ interface Array<T> {
      * @param index the zero-based position in the list to store the value, eg: 0
      * @param the value to insert, eg: 0
      */
-    //% help=lists/set
+    //% help=arrays/set
     //% shim=Array_::setAt weight=84
     set(index: number, value: T): void;
 
@@ -157,7 +157,7 @@ declare interface String {
      */
     //% shim=String_::concat weight=80
     //% blockId="string_concat" blockNamespace="text"
-    // block="join %myList=text|%other"
+    // block="join %list=text|%other"
     concat(other: string): string;
 
     /**
@@ -165,7 +165,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=77
-    //% blockId="string_get" block="char from %myList=text|at %pos" blockNamespace="text"
+    //% blockId="string_get" block="char from %list=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -185,7 +185,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
-    //% blockId="string_compare" block="compare %myList=text| to %that" blockNamespace="text"
+    //% blockId="string_compare" block="compare %list=text| to %that" blockNamespace="text"
     compare(that: string): number;
 
     /**
@@ -194,7 +194,7 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
-    //% blockId="string_substr" block="substring of %myList=text|from %start|of length %length" blockNamespace="text"
+    //% blockId="string_substr" block="substring of %list=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
 
     // This block is currently disabled, as it does not compile in some targets
@@ -202,7 +202,7 @@ declare interface String {
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
     //% blockId="string_isempty" blockNamespace="text"
-    // block="%myList=text| is empty"
+    // block="%list=text| is empty"
     isEmpty(): boolean;
 
     [index: number]: string;
@@ -281,14 +281,14 @@ declare namespace Math {
     function sqrt(x: number): number;
 
     /**
-     * Returns the smallest number greater than or equal to its numeric argument. 
+     * Returns the smallest number greater than or equal to its numeric argument.
      * @param x A numeric expression.
      */
     //% shim=Math_::ceil
     function ceil(x: number): number;
 
     /**
-      * Returns the greatest number less than or equal to its numeric argument. 
+      * Returns the greatest number less than or equal to its numeric argument.
       * @param x A numeric expression.
       */
     //% shim=Math_::floor
@@ -300,8 +300,8 @@ declare namespace Math {
       */
     //% shim=Math_::trunc
     function trunc(x: number): number;
-    
-    /** 
+
+    /**
       * Returns a supplied numeric expression rounded to the nearest number.
       * @param x The value to be rounded to the nearest number.
       */

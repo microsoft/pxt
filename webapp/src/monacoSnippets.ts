@@ -248,13 +248,13 @@ export const text: BuiltinCategoryDefinition = {
     }
 }
 
-export const lists: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Lists"),
-    nameid: "lists",
+export const arrays: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Arrays"),
+    nameid: "arrays",
     blocks: [
         {
             name: "create",
-            snippet: `[0];`,
+            snippet: `let ${lf("{id:snippets}list")} = [1, 2, 3];`,
             snippetOnly: true,
             attributes: {
                 weight: 100,
@@ -263,7 +263,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "length",
-            snippet: `[0].length;`,
+            snippet: `${lf("{id:snippets}list")}.length`,
             snippetOnly: true,
             attributes: {
                 weight: 99,
@@ -272,7 +272,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "get",
-            snippet: `[""][0];`,
+            snippet: `${lf("{id:snippets}list")}[0]`,
             snippetOnly: true,
             attributes: {
                 weight: 98,
@@ -281,7 +281,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "set",
-            snippet: `[true][0] = false;`,
+            snippet: `${lf("{id:snippets}list")}[0] = 1`,
             snippetOnly: true,
             attributes: {
                 weight: 97,
@@ -290,7 +290,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "push",
-            snippet: `[0].push(0);`,
+            snippet: `${lf("{id:snippets}list")}.push(1)`,
             attributes: {
                 weight: 96,
                 jsDoc: lf("Adds a value to the end of an Array")
@@ -298,7 +298,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "pop",
-            snippet: `[0].pop();`,
+            snippet: `${lf("{id:snippets}list")}.pop()`,
             attributes: {
                 weight: 95,
                 jsDoc: lf("Removes and returns the value at the end of an Array")
@@ -306,7 +306,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "insertAt",
-            snippet: `[0].insertAt(0, 0);`,
+            snippet: `${lf("{id:snippets}list")}.insertAt(0, 0)`,
             attributes: {
                 weight: 50,
                 jsDoc: lf("Inserts a value into the Array at the given index"),
@@ -315,7 +315,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "removeAt",
-            snippet: `[0].removeAt(0);`,
+            snippet: `${lf("{id:snippets}list")}.removeAt(0)`,
             attributes: {
                 weight: 49,
                 jsDoc: lf("Removes a value from the Array at the given index and returns it"),
@@ -324,7 +324,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "shift",
-            snippet: `[0].shift();`,
+            snippet: `${lf("{id:snippets}list")}.shift()`,
             attributes: {
                 weight: 48,
                 jsDoc: lf("Removes and returns the value at the front of an Array"),
@@ -333,7 +333,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "unshift",
-            snippet: `[0].unshift(0);`,
+            snippet: `${lf("{id:snippets}list")}.unshift(0)`,
             attributes: {
                 weight: 47,
                 jsDoc: lf("Inserts a value at the beginning of an Array"),
@@ -342,7 +342,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "indexOf",
-            snippet: `["A", "B", "C"].indexOf("B");`,
+            snippet: `["A", "B", "C"].indexOf("B")`,
             attributes: {
                 weight: 46,
                 jsDoc: lf("Returns the first index in the Array that contains the given value or -1 if it does not exist in the Array"),
@@ -351,7 +351,7 @@ export const lists: BuiltinCategoryDefinition = {
         },
         {
             name: "reverse",
-            snippet: `["A", "B", "C"].reverse();`,
+            snippet: `${lf("{id:snippets}list")}.reverse()`,
             attributes: {
                 weight: 45,
                 jsDoc: lf("Reverses the contents of an Array"),
@@ -361,8 +361,8 @@ export const lists: BuiltinCategoryDefinition = {
     ],
     attributes: {
         advanced: true,
-        color: pxt.blocks.blockColors["lists"].toString(),
-        icon: "lists",
+        color: pxt.blocks.blockColors["arrays"].toString(),
+        icon: "arrays",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}
     }
@@ -375,7 +375,7 @@ export function getBuiltinCategory(ns: string) {
             case variables.nameid: return variables;
             case maths.nameid: return maths;
             case text.nameid: return text;
-            case lists.nameid: return lists;
+            case arrays.nameid: return arrays;
         }
     return undefined;
 }
@@ -387,7 +387,7 @@ export function isBuiltin(ns: string) {
         case variables.nameid:
         case maths.nameid:
         case text.nameid:
-        case lists.nameid:
+        case arrays.nameid:
             return true;
     }
     return false;

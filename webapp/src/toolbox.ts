@@ -22,7 +22,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="controls_for_of">
                 <value name="LIST">
                     <shadow type="variables_get">
-                        <field name="VAR">myList</field>
+                        <field name="VAR">list</field>
                     </shadow>
                 </value>
             </block>
@@ -189,7 +189,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                 </block>
             </category>
         </category>
-        <category colour="#66672C" name="Lists" nameid="lists" category="45" iconclass="blocklyTreeIconlists" expandedclass="blocklyTreeIconlists" advanced="true">
+        <category colour="#66672C" name="Arrays" nameid="arrays" category="45" iconclass="blocklyTreeIconarrays" expandedclass="blocklyTreeIconarrays" advanced="true">
             <block type="lists_create_with">
                 <mutation items="1"></mutation>
                 <value name="ADD0">
@@ -215,7 +215,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="lists_index_get">
                 <value name="LIST">
                     <block type="variables_get">
-                        <field name="VAR">myList</field>
+                        <field name="VAR">list</field>
                     </block>
                 </value>
                 <value name="INDEX">
@@ -227,7 +227,7 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
             <block type="lists_index_set">
                 <value name="LIST">
                     <block type="variables_get">
-                        <field name="VAR">myList</field>
+                        <field name="VAR">list</field>
                     </block>
                 </value>
                 <value name="INDEX">

@@ -12,7 +12,7 @@ namespace pxt.blocks {
         images: '#5C2D91',
         variables: '#A80000',
         text: '#996600',
-        lists: '#A94400',
+        arrays: '#A94400',
         advanced: '#3c3c3c'
     }
 
@@ -844,7 +844,7 @@ namespace pxt.blocks {
             }
 
             if (!config.listsBlocks) {
-                removeCategory(tb, "Lists");
+                removeCategory(tb, "Arrays");
                 if (config.loopsBlocks) {
                     const cat = categoryElement(tb, "Loops");
                     cat.removeChild(cat.querySelector('block[type="controls_for_of"]'))
@@ -852,7 +852,7 @@ namespace pxt.blocks {
             }
             else {
                 showAdvanced = true;
-                const cat = categoryElement(tb, "Lists");
+                const cat = categoryElement(tb, "Arrays");
                 if (cat) {
                     const blockElements = cat.querySelectorAll("block");
                     for (let i = 0; i < blockElements.length; i++) {
@@ -861,7 +861,11 @@ namespace pxt.blocks {
                     }
                 }
                 if (showCategories === CategoryMode.Basic) {
-                    removeCategory(tb, "Lists");
+                    removeCategory(tb, "Arrays");
+                    if (config.loopsBlocks) {
+                        const cat = categoryElement(tb, "Loops");
+                        cat.removeChild(cat.querySelector('block[type="controls_for_of"]'))
+                    }
                 }
             }
 
@@ -892,7 +896,7 @@ namespace pxt.blocks {
         // lf("{id:category}Loops")
         // lf("{id:category}Logic")
         // lf("{id:category}Variables")
-        // lf("{id:category}Lists")
+        // lf("{id:category}Arrays")
         // lf("{id:category}Text")
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
@@ -1232,9 +1236,9 @@ namespace pxt.blocks {
 
     function initLists() {
         let msg: any = Blockly.Msg;
-        msg.LISTS_CREATE_EMPTY_TITLE = lf("create empty list");
-        msg.LISTS_CREATE_WITH_INPUT_WITH = lf("create list with");
-        msg.LISTS_CREATE_WITH_CONTAINER_TITLE_ADD = lf("list");
+        msg.LISTS_CREATE_EMPTY_TITLE = lf("create empty array");
+        msg.LISTS_CREATE_WITH_INPUT_WITH = lf("create array with");
+        msg.LISTS_CREATE_WITH_CONTAINER_TITLE_ADD = lf("array");
         msg.LISTS_CREATE_WITH_ITEM_TITLE = lf("value");
 
         installBuiltinHelpInfo("lists_create_with");
@@ -1820,7 +1824,7 @@ namespace pxt.blocks {
                             "check": "Number"
                         }
                     ],
-                    "colour": blockColors['lists'],
+                    "colour": blockColors['arrays'],
                     "inputsInline": true
                 });
 
@@ -1854,7 +1858,7 @@ namespace pxt.blocks {
                     ],
                     "previousStatement": null,
                     "nextStatement": null,
-                    "colour": blockColors['lists'],
+                    "colour": blockColors['arrays'],
                     "inputsInline": true
                 });
                 setBuiltinHelpInfo(this, "lists_index_set");

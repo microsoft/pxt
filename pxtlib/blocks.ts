@@ -178,26 +178,26 @@ namespace pxt.blocks {
             'lists_create_with': {
                 name: Util.lf("create a list"),
                 tooltip: Util.lf("Creates a new list."),
-                url: '/blocks/lists/create',
-                category: 'lists'
+                url: '/blocks/arrays/create',
+                category: 'arrays'
             },
             'lists_length': {
                 name: Util.lf("list length"),
                 tooltip: Util.lf("Returns the number of items in a list."),
-                url: '/blocks/lists/length',
-                category: 'lists'
+                url: '/blocks/arrays/length',
+                category: 'arrays'
             },
             'lists_index_get': {
                 name: Util.lf("get a value in a list"),
                 tooltip: Util.lf("Returns the value at the given index in a list."),
-                url: '/blocks/lists/get',
-                category: 'lists'
+                url: '/blocks/arrays/get',
+                category: 'arrays'
             },
             'lists_index_set': {
                 name: Util.lf("set a value in a list"),
                 tooltip: Util.lf("Sets the value at the given index in a list"),
-                url: '/blocks/lists/set',
-                category: 'lists'
+                url: '/blocks/arrays/set',
+                category: 'arrays'
             },
             'logic_compare': {
                 name: Util.lf("comparing two numbers"),
