@@ -284,8 +284,7 @@ namespace pxsim {
         }
 
         export function charAt(s: string, i: number) {
-            pxtrt.nullCheck(s)
-            return inRange(s, i) ? initString(s.charAt(i)) : "";
+            return initString(s.charAt(i));
         }
 
         export function charCodeAt(s: string, i: number) {
