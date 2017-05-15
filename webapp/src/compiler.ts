@@ -78,6 +78,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.justMyCode = true
             }
             if (options.trace) {
+                opts.breakpoints = true
                 opts.trace = true;
             }
             opts.computeUsedSymbols = true
