@@ -388,21 +388,19 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
-        Promise.resolve()
-        .then(() => {
-            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-                const opts: pxt.editor.ExtensionOptions = {};
-                return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
-                    .then(() => pxt.editor.initExtensionsAsync(opts))
-                    .then(res => {
-                        if (res.fieldEditors)
-                            res.fieldEditors.forEach(fi => {
-                                pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                            })
-                    })
-            }
-            return Promise.resolve();
-        }).then(() => {
+        let promise = Promise.resolve();
+        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+            const opts: pxt.editor.ExtensionOptions = {};
+            promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
+                .then(() => pxt.editor.initExtensionsAsync(opts))
+                .then(res => {
+                    if (res.fieldEditors)
+                        res.fieldEditors.forEach(fi => {
+                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                        })
+                })
+        }
+        promise.done(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
                 renderHash();
