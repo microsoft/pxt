@@ -388,27 +388,31 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-            const opts: pxt.editor.ExtensionOptions = {};
-             pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
-                .then(() => pxt.editor.initExtensionsAsync(opts))
-                .then(res => {
-                    if (res.fieldEditors)
-                        res.fieldEditors.forEach(fi => {
-                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                        })
-                })
-        }
+        Promise.resolve()
+        .then(() => {
+            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+                const opts: pxt.editor.ExtensionOptions = {};
+                return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+                    .then(() => pxt.editor.initExtensionsAsync(opts))
+                    .then(res => {
+                        if (res.fieldEditors)
+                            res.fieldEditors.forEach(fi => {
+                                pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                            })
+                    })
+            }
+            return Promise.resolve();
+        }).then(() => {
+            window.addEventListener("message", receiveDocMessage, false);
+            window.addEventListener("hashchange", () => {
+                renderHash();
+            }, false);
 
-        window.addEventListener("message", receiveDocMessage, false);
-        window.addEventListener("hashchange", () => {
-            renderHash();
-        }, false);
+            parent.postMessage({ type: "sidedocready" }, "*");
 
-        parent.postMessage({ type: "sidedocready" }, "*");
-
-        // delay load doc page to allow simulator to load first
-        setTimeout(() => renderHash(), 1);
+            // delay load doc page to allow simulator to load first
+            setTimeout(() => renderHash(), 1);
+        })
     }
 
     export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
