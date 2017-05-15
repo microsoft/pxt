@@ -1,0 +1,74 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" y="350" x="-350">
+    <statement name="HANDLER">
+      <block id="?3SX5fhov.3W3/lIM{vt" type="variables_set">
+        <field name="VAR">my variable</field>
+        <value name="VALUE">
+          <shadow id="#Yg*3gu]DXBhAipFxca]" type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+        </value>
+        <next>
+          <block id="Kq3wo8putQE02M*rpa9k" type="variables_set">
+            <field name="VAR">my_variable</field>
+            <value name="VALUE">
+              <shadow id="?3P~G5lHHnRZHI2VbdXk" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+            <next>
+              <block id="mBmi/pi))M1fn?Y-F[zI" type="variables_set">
+                <field name="VAR">1variable</field>
+                <value name="VALUE">
+                  <shadow id="+R@MPB~zw}u+iSwd1}f/" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+                <next>
+                  <block id="*[Gwo81(U#TJD0GN;NEy" type="variables_set">
+                    <field name="VAR">---hello---</field>
+                    <value name="VALUE">
+                      <shadow id="x8j88*!yuH-,;eI:vDgx" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                    <next>
+                      <block id="x@3MdgR$Q{SN9K_vaAWw" type="variables_set">
+                        <field name="VAR">+</field>
+                        <value name="VALUE">
+                          <shadow id="P+{bVIm#(c^QOUay5}1P" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <next>
+                          <block id="Q=Bo+;oNtAfkY)p^~]:j" type="variables_set">
+                            <field name="VAR">-</field>
+                            <value name="VALUE">
+                              <shadow id="Lk[i8/dyRlt[.1{KK/|k" type="math_number">
+                                <field name="NUM">0</field>
+                              </shadow>
+                            </value>
+                            <next>
+                              <block id="cfe|9)Qr?41n$SXL=B7%" type="variables_set">
+                                <field name="VAR">共有</field>
+                                <value name="VALUE">
+                                  <shadow id="khbz.@I[*26dr}@L/OjC" type="math_number">
+                                    <field name="NUM">0</field>
+                                  </shadow>
+                                </value>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
