@@ -1560,7 +1560,7 @@ ${output}</xml>`;
 
             if (n.left.kind === SK.ElementAccessExpression) {
                 if (n.operatorToken.kind !== SK.EqualsToken) {
-                    return Util.lf("Element access expresions may only be assigned to using =");
+                    return Util.lf("Element access expressions may only be assigned to using the equals operator");
                 }
             }
             else {
