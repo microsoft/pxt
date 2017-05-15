@@ -99,11 +99,11 @@ namespace helpers {
         const res: T[] = [];
 
         if (start < 0) {
-            start = 0;
+            start = Math.max(arr.length + start, 0);
         }
 
         if (end < 0) {
-            end = 0;
+            end = arr.length + end;
         }
 
         const length = end - start;

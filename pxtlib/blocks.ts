@@ -98,7 +98,7 @@ namespace pxt.blocks {
             },
             'controls_for_of': {
                 name: Util.lf("a loop that repeats for each value in an array"),
-                url: 'blocks/loops/for_of',
+                url: 'blocks/loops/for-of',
                 category: 'loops'
             },
             'math_op2': {
