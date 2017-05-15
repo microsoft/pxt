@@ -11,9 +11,15 @@ namespace pxt.blocks {
         children: JsNode[];
         op: string;
         id?: string;
-        glueToBlock?: boolean;
+        glueToBlock?: GlueMode;
         canIndentInside?: boolean;
         noFinalNewline?: boolean;
+    }
+
+    export enum GlueMode {
+        None = 0,
+        WithSpace = 1,
+        NoSpace = 2
     }
 
 
@@ -312,7 +318,9 @@ namespace pxt.blocks {
         function emit(n: JsNode) {
             if (n.glueToBlock) {
                 removeLastIndent()
-                output += " "
+                if (n.glueToBlock == GlueMode.WithSpace) {
+                    output += " "
+                }
             }
 
             let start = getCurrentLine();
