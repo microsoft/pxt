@@ -585,8 +585,20 @@ namespace pxt.blocks {
                     });
                     i = initField(block.appendDummyInput(), field.ni, fn, nsinfo, pre, true);
                     // if a value is provided, move it first
-                    if (pr.shadowValue)
-                        dd.sort((v1, v2) => v1[1] == pr.shadowValue ? -1 : v2[1] == pr.shadowValue ? 1 : 0);
+                    if (pr.shadowValue) {
+                        let shadowValueIndex = -1;
+                        dd.some((v, i) => {
+                            if (v[1] === pr.shadowValue) {
+                                shadowValueIndex = i;
+                                return true;
+                            }
+                            return false;
+                        });
+                        if (shadowValueIndex > -1) {
+                            const shadowValue = dd.splice(shadowValueIndex, 1)[0];
+                            dd.unshift(shadowValue);
+                        }
+                    }
 
                     if (customField) {
                         let defl = fn.attributes.paramDefl[pr.name] || "";
