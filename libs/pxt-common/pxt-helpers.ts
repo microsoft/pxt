@@ -97,20 +97,21 @@ namespace helpers {
 
     export function arraySlice<T>(arr: T[], start: number, end: number): T[] {
         const res: T[] = [];
+        const len = arr.length;
 
         if (start < 0) {
-            start = Math.max(arr.length + start, 0);
+            start = Math.max(len + start, 0);
         }
 
         if (end < 0) {
-            end = arr.length + end;
+            end = len + end;
         }
 
-        const length = end - start;
+        const sliceLength = end - start;
 
-        for (let i = 0; i < length; ++i) {
+        for (let i = 0; i < sliceLength; ++i) {
             const index = i + start;
-            if (index >= arr.length) {
+            if (index >= len) {
                 break;
             }
             res.push(arr[index]);
