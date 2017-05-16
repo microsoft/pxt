@@ -31,6 +31,7 @@ namespace pxtblockly {
 
         private backgroundColour_: string;
         private itemColour_: string;
+        private borderColour_: string;
 
         private tooltipConfig_: FieldGridPickerToolTipConfig;
 
@@ -44,8 +45,9 @@ namespace pxtblockly {
             this.width_ = parseInt(options.width) || 400;
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
+            this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
+            this.borderColour_ = Blockly.PXTUtils.fadeColour(this.backgroundColour_, 0.4, false);
 
-            this.itemColour_ = options.itemColour || '#fff';
             let tooltipCfg: FieldGridPickerToolTipConfig = {
                 enabled: options.tooltips == 'true' || true,
                 xOffset: parseInt(options.tooltipsXOffset) || 15,
@@ -102,6 +104,7 @@ namespace pxtblockly {
             scrollContainer.addChild(tableContainer, true);
             paddingContainer.addChild(scrollContainer, true);
             paddingContainer.render(div);
+            (paddingContainer.getElement() as HTMLElement).style.border = `solid 1px ${this.borderColour_}`;
 
             const paddingContainerDom = paddingContainer.getElement() as HTMLElement;
             const scrollContainerDom = scrollContainer.getElement() as HTMLElement;
@@ -120,14 +123,14 @@ namespace pxtblockly {
             scrollContainerDom.className = 'blocklyGridPickerScroller';
             paddingContainerDom.className = 'blocklyGridPickerPadder';
 
-            // Add the tooltips
+            // Add the tooltips and style the items
             const menuItemsDom = tableContainerDom.getElementsByClassName('goog-menuitem');
+            let largestTextItem = -1;
 
             for (let i = 0; i < menuItemsDom.length; ++i) {
                 const elem = menuItemsDom[i] as HTMLElement;
                 elem.style.borderColor = this.backgroundColour_;
                 elem.style.backgroundColor = this.itemColour_;
-
                 elem.parentElement.className = 'blocklyGridPickerRow';
 
                 if (this.tooltipConfig_.enabled) {
@@ -147,6 +150,19 @@ namespace pxtblockly {
                         tooltip.setPosition(newPos);
                     });
                     this.tooltips_.push(tooltip);
+                } else {
+                    const elemWidth = goog.style.getSize(elem).width;
+                    if (elemWidth > largestTextItem) {
+                        largestTextItem = elemWidth;
+                    }
+                }
+            }
+
+            // Resize text items so they have a uniform width
+            if (largestTextItem > -1) {
+                for (let i = 0; i < menuItemsDom.length; ++i) {
+                    const elem = menuItemsDom[i] as HTMLElement;
+                    goog.style.setWidth(elem, largestTextItem);
                 }
             }
 
