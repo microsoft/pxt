@@ -52,12 +52,12 @@
                         <field name="NUM">0</field>
                       </shadow>
                       <block id="p|_LRRk*]T2Ra,@3R_^C" type="string_substr">
-                        <value name="myList">
+                        <value name="list">
                           <shadow id="f][0TO-)l7j5#bznFxdF" type="text">
                             <field name="TEXT"></field>
                           </shadow>
                           <block id="i,.Sg8HTIHw;FJ4e:vzj" type="string_get">
-                            <value name="myList">
+                            <value name="list">
                               <shadow id=")|_G6LOk9D{OFlPRNox}" type="text">
                                 <field name="TEXT">2</field>
                               </shadow>
@@ -104,7 +104,7 @@
                                 <field name="NUM">0</field>
                               </shadow>
                               <block id="9nH5|%FYW(,?WhuW68`T" type="string_compare">
-                                <value name="myList">
+                                <value name="list">
                                   <shadow id="W]o?aRN?H]@$qhPev4TK" type="text">
                                     <field name="TEXT">a</field>
                                   </shadow>

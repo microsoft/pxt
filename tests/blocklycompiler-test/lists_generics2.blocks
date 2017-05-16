@@ -2,7 +2,7 @@
   <block type="pxt-on-start" id="q#:z$@}s.9hgO(*%6aI7" x="-203" y="157">
     <statement name="HANDLER">
       <block type="array_push" id="W@~#qBIOefv.,m/-H=b}">
-        <value name="myList">
+        <value name="list">
           <block type="variables_get" id="Za=Z9NFEis!Z5$f1=1Tq">
             <field name="VAR">myList</field>
           </block>

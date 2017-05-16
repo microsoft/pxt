@@ -29,7 +29,7 @@
                 <field name="NUM">0</field>
               </shadow>
               <block type="array_pop" id="Q_#GARm;FwB$8cy9C{c=">
-                <value name="myList">
+                <value name="list">
                   <block type="variables_get" id="sWJ2ddt%xwr3-5Em!WfD">
                     <field name="VAR">myList</field>
                   </block>
