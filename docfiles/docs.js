@@ -135,6 +135,20 @@ function setupSemantic() {
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
 
+function setupBlockly() {
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+        let opts = {};
+        pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+            .then(() => pxt.editor.initExtensionsAsync(opts))
+            .then(res => {
+                if (res.fieldEditors)
+                    res.fieldEditors.forEach(fi => {
+                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                    })
+            })
+    }
+}
+
 function renderSnippets() {
     var codeElems = $('code')
     for (var i = 0; i < codeElems.length; i++) {
@@ -146,6 +160,7 @@ function renderSnippets() {
     ksRunnerReady(function () {
         setupSidebar();
         setupSemantic();
+        setupBlockly();
         pxt.runner.renderAsync({
             snippetClass: 'lang-blocks',
             signatureClass: 'lang-sig',
