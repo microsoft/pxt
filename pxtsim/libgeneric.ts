@@ -427,6 +427,13 @@ namespace pxsim {
             return new RefBuffer(new Uint8Array(size));
         }
 
+        export function createBufferFromHex(hex: string) {
+            let r = createBuffer(hex.length >> 1)
+            for (let i = 0; i < hex.length; i += 2)
+                r.data[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
+            return r
+        }
+
         export function getBytes(buf: RefBuffer) {
             // not sure if this is any useful...
             return buf.data;

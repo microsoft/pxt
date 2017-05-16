@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9265
+    // next free error 9266
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -2268,7 +2268,45 @@ ${lbl}: .short 0xffff
                 throw unhandled(node, lf("unknown type for new"), 9243)
             }
         }
-        function emitTaggedTemplateExpression(node: TaggedTemplateExpression) { }
+        /* Requires the following to be declared in global scope:
+            //% shim=@hex
+            function hex(lits: any, ...args: any[]): Buffer { return null }
+        */
+        function emitTaggedTemplateExpression(node: TaggedTemplateExpression): ir.Expr {
+            function isHexDigit(c: string) {
+                return /^[0-9a-f]$/i.test(c)
+            }
+            function parseHexLiteral(s: string) {
+                let res = ""
+                for (let i = 0; i < s.length; ++i) {
+                    let c = s[i]
+                    if (isHexDigit(c)) {
+                        if (isHexDigit(s[i + 1])) {
+                            res += c + s[i + 1]
+                            i++
+                        }
+                    } else if (/^[\s\.]$/.test(c))
+                        continue
+                    else
+                        throw unhandled(node, lf("invalid character in hex literal '{0}'", c), 9265)
+                }
+                let lbl = bin.emitHexLiteral(res.toLowerCase())
+                return ir.ptrlit(lbl, lbl, true)
+            }
+            let decl = getDecl(node.tag) as FunctionLikeDeclaration
+            if (!decl)
+                throw unhandled(node, lf("invalid tagged template"), 9265)
+            let attrs = parseComments(decl)
+            switch (attrs.shim) {
+                case "@hex":
+                    if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
+                        throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
+                    return parseHexLiteral((node.template as ts.LiteralExpression).text)
+
+                default:
+                    throw unhandled(node, lf("invalid shim '{0}' on tagged template", attrs.shim), 9265)
+            }
+        }
         function emitTypeAssertion(node: TypeAssertion) {
             typeCheckSrcFlowstoTrg(node.expression, node)
             return emitExpr(node.expression)
@@ -2467,6 +2505,8 @@ ${lbl}: .short 0xffff
 
             let attrs = parseComments(node)
             if (attrs.shim != null) {
+                if (attrs.shim[0] == "@")
+                    return
                 if (opts.target.isNative) {
                     hex.validateShim(getDeclName(node),
                         attrs.shim,
@@ -3701,6 +3741,8 @@ ${lbl}: .short 0xffff
                 case SK.NoSubstitutionTemplateLiteral:
                     //case SyntaxKind.RegularExpressionLiteral:
                     return emitLiteral(<LiteralExpression>node);
+                case SK.TaggedTemplateExpression:
+                    return emitTaggedTemplateExpression(<TaggedTemplateExpression>node);
                 case SK.PropertyAccessExpression:
                     return emitPropertyAccess(<PropertyAccessExpression>node);
                 case SK.BinaryExpression:
@@ -3836,6 +3878,7 @@ ${lbl}: .short 0xffff
         numStmts = 1;
 
         strings: Map<string> = {};
+        hexlits: Map<string> = {};
         doubles: Map<string> = {};
         otherLiterals: string[] = [];
         codeHelpers: Map<string> = {};
@@ -3845,6 +3888,8 @@ ${lbl}: .short 0xffff
             this.lblNo = 0
             this.otherLiterals = []
             this.strings = {}
+            this.hexlits = {}
+            this.doubles = {}
         }
 
         addProc(proc: ir.Procedure) {
@@ -3869,6 +3914,10 @@ ${lbl}: .short 0xffff
 
         emitString(s: string): string {
             return this.emitLabelled(s, this.strings, "_str")
+        }
+
+        emitHexLiteral(s: string): string {
+            return this.emitLabelled(s, this.hexlits, "_hexlit")
         }
     }
 }

@@ -76,6 +76,9 @@ namespace ts.pxtc {
         jssource += "\npxsim.setupStringLiterals(" +
             JSON.stringify(U.mapMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
+        U.iterMap(bin.hexlits, (k, v) => {
+            jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
+        })
         bin.writeFile(BINARY_JS, jssource)
     }
 
