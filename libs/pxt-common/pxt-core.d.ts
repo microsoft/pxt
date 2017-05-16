@@ -165,7 +165,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=77
-    //% blockId="string_get" block="char from %list=text|at %pos" blockNamespace="text"
+    //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
@@ -185,7 +185,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
-    //% blockId="string_compare" block="compare %list=text| to %that" blockNamespace="text"
+    //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
     compare(that: string): number;
 
     /**
@@ -194,16 +194,17 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
-    //% blockId="string_substr" block="substring of %list=text|from %start|of length %length" blockNamespace="text"
-    substr(start:number, length?:number): string;
+    //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
+    substr(start: number, length?: number): string;
 
     // This block is currently disabled, as it does not compile in some targets
     // Add % sign back to the block annotation to re-enable
     /** Returns a value indicating if the string is empty */
     //% shim=String_::isEmpty
     //% blockId="string_isempty" blockNamespace="text"
-    // block="%list=text| is empty"
-    isEmpty() : boolean;
+    // block="%this=text| is empty"
+    isEmpty(): boolean;
+
 
     [index: number]: string;
 }
@@ -280,5 +281,5 @@ declare namespace Math {
      */
     //% shim=Math_::sqrt
     function sqrt(x: number): number;
-    
+
 }
