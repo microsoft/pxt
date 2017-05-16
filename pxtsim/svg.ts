@@ -93,7 +93,7 @@ namespace pxsim.svg {
     export const touchEvents = isTouchEnabled() ? {
         "mousedown": ["mousedown", "touchstart"],
         "mouseup": ["mouseup", "touchend"],
-        "mousemove": ["touchmove", "touchmove"],
+        "mousemove": ["mousemove", "touchmove"],
         "mouseleave": ["mouseleave", "touchcancel"]
     } : {
             "mousedown": ["mousedown"],

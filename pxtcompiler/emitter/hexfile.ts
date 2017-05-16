@@ -618,6 +618,15 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         .hex ${data}
 `)
         }
+
+        for (let data of Object.keys(bin.hexlits)) {
+            let lbl = bin.hexlits[data]
+            bin.otherLiterals.push(`
+.balign 4
+${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}
+        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+`)
+        }
     }
 
     function vtableToAsm(info: ClassInfo) {
