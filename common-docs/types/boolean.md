@@ -7,8 +7,7 @@ A Boolean has one of two possible values: `true`; `false`.  Boolean (logical) op
 The following blocks represent the true and false Boolean values, which can be plugged in anywhere a Boolean value is expected:
 
 ```blocks
-true;
-false;
+let on = true;
 ```
 
 ### See Also
