@@ -75,6 +75,7 @@ namespace pxsim {
 
     export interface SimulatorRadioPacketPayload {
         type: number;
+        groupId: number;
         stringData?: string;
         numberData?: number;
     }
