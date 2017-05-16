@@ -1,6 +1,4 @@
-# Unsupported configuration
-
-Your browser is currently not supported. The following configurations are supported:
+# Supported Browsers
 
 ## Windows
 
@@ -33,7 +31,7 @@ here](/raspberry-pi).
 You need to be running a Linux distribution recent enough to run the most recent
 version of one of the following:
 
-* Google Chrome, or Chromium
+* Google Chrome, or Chromium (default in pixel)
 * Mozilla Firefox, Iceweasel, or Seamonkey
 
 ## How to check your OS or browser
