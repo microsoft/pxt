@@ -1,0 +1,120 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" y="490" x="-950">
+    <statement name="HANDLER">
+      <block id=":232I+`NyV*Ah{lw8RfA" type="variables_set">
+        <field name="VAR">item</field>
+        <value name="VALUE">
+          <shadow id="jmP^WgSn9seB8mR?P=_z" type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+          <block id="#EO93}bi[4b[$~R[Mc%G" type="text_join">
+            <mutation items="0"></mutation>
+          </block>
+        </value>
+        <next>
+          <block id="|O0[sFbbaH11l8e0WeI%" type="variables_set">
+            <field name="VAR">item</field>
+            <value name="VALUE">
+              <shadow id="jmP^WgSn9seB8mR?P=_z" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+              <block id="k|p=*3RO[6HY)%_1K@W4" type="text_join">
+                <mutation items="1"></mutation>
+              </block>
+            </value>
+            <next>
+              <block id="v]9Q=l|Va*0Fl}z9i.#G" type="variables_set">
+                <field name="VAR">item</field>
+                <value name="VALUE">
+                  <shadow id="jmP^WgSn9seB8mR?P=_z" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block id="OPfTbg`u{vT7b5.b7P,," type="text_join">
+                    <mutation items="2"></mutation>
+                    <value name="ADD0">
+                      <block id="gzapvTV8!*E,zWeq:m^6" type="text">
+                        <field name="TEXT">a</field>
+                      </block>
+                    </value>
+                    <value name="ADD1">
+                      <block id="a~DYtY}725/bu9+#U[:Q" type="math_arithmetic">
+                        <field name="OP">ADD</field>
+                        <value name="A">
+                          <shadow id="9K.Eyz!1HX7KSdVgkbUh" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="B">
+                          <shadow id="WnQk0Al*k/FTAin3s61K" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+                  <block id="fT~ih+sP__._)JYr/aoe" type="variables_set">
+                    <field name="VAR">item</field>
+                    <value name="VALUE">
+                      <shadow id="[miy|fgw:9{QRD5^6JVX" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                      <block id="N}6cKV:5zj3IZ;EE$QV2" type="text_join">
+                        <mutation items="2"></mutation>
+                        <value name="ADD0">
+                          <shadow id="%4c6yX23v,pScPJDYe{^" type="text">
+                            <field name="TEXT"></field>
+                          </shadow>
+                          <block id="0JAQaA^`6[mt5R}y`9L1" type="math_number">
+                            <field name="NUM">0</field>
+                          </block>
+                        </value>
+                        <value name="ADD1">
+                          <shadow id="e/H+(RlS$Nd}}yj%2ENh" type="text">
+                            <field name="TEXT">b</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <next>
+                      <block id="icm,Yc}q7wO@=u_e^Rkt" type="variables_set">
+                        <field name="VAR">item</field>
+                        <value name="VALUE">
+                          <shadow id="[miy|fgw:9{QRD5^6JVX" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                          <block id="#L)~:*Ns[Z!.!zXn`!(J" type="text_join">
+                            <mutation items="5"></mutation>
+                            <value name="ADD0">
+                              <shadow id="%4c6yX23v,pScPJDYe{^" type="text">
+                                <field name="TEXT"></field>
+                              </shadow>
+                              <block id="-0bnA~_z0Uag4x0|Lfk," type="math_number">
+                                <field name="NUM">0</field>
+                              </block>
+                            </value>
+                            <value name="ADD1">
+                              <shadow id="6goNuK(oCxf$-s[qen@," type="text">
+                                <field name="TEXT">b</field>
+                              </shadow>
+                            </value>
+                            <value name="ADD4">
+                              <shadow id="(o;BTD:YyQ9!NKb*j#=$" type="text">
+                                <field name="TEXT">b</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

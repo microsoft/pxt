@@ -1,0 +1,104 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" y="430" x="-130">
+    <statement name="HANDLER">
+      <block id="nAp=C^QJf;;9MCM~ubDE" type="controls_if">
+        <value name="IF0">
+          <shadow id="0bS_!p,sWF:g+8Q_|__|" type="logic_boolean">
+            <field name="BOOL">TRUE</field>
+          </shadow>
+          <block id="`Z#EiyxnOE[q@HImQkmy" type="logic_operation">
+            <field name="OP">AND</field>
+            <value name="A">
+              <block id="vOKav@-Z=g653@!9A1;w" type="logic_negate"></block>
+            </value>
+          </block>
+        </value>
+        <statement name="DO0">
+          <block id="%Jz%FD2/BF`~#A#Mar-s" type="variables_set">
+            <field name="VAR">item</field>
+            <value name="VALUE">
+              <shadow id=",Eaxd71wDaS*~7uj1ylK" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+          </block>
+        </statement>
+        <next>
+          <block id="@CnM_:IhP+Hj5Oof4Tlb" type="controls_if">
+            <mutation else="1"></mutation>
+            <value name="IF0">
+              <shadow id=";XfhOEia|K*gT3i5/59o" type="logic_boolean">
+                <field name="BOOL">TRUE</field>
+              </shadow>
+              <block id="d;aT406PUKcF+#o~~hRV" type="logic_compare">
+                <field name="OP">EQ</field>
+                <value name="A">
+                  <shadow id="Rjb9=TX3VvJ71?1it;2G" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block id="*)YqQY:(q:Il.nTB3$Bo" type="math_arithmetic">
+                    <field name="OP">ADD</field>
+                    <value name="A">
+                      <shadow id="]xkMoy/*wVReD{Z*,7hi" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                    <value name="B">
+                      <shadow id="ZJrUP^H}1~j5uy^f/[/-" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <shadow id="23V[m-N+*h_{:jX5}:z`" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+              </block>
+            </value>
+            <statement name="ELSE">
+              <block id=".XEb;!cjI+aJ135KFe,C" type="variables_set">
+                <field name="VAR">item</field>
+                <value name="VALUE">
+                  <shadow id="H}nUB~}4pOY}SGS;c)k@" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+              </block>
+            </statement>
+            <next>
+              <block id="CI]c}tSaLQgFOEaW)ax(" type="controls_if">
+                <mutation else="1" elseif="2"></mutation>
+                <value name="IF0">
+                  <shadow id="-:Wnz[Xj~Nr-(sHfU$P-" type="logic_boolean">
+                    <field name="BOOL">TRUE</field>
+                  </shadow>
+                </value>
+                <value name="IF1">
+                  <block id="mcN%HdOd0/J:f~LHs7d-" type="logic_negate">
+                    <value name="BOOL">
+                      <block id="r/:ogffkYn:Vq1:x#ylZ" type="logic_boolean">
+                        <field name="BOOL">FALSE</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <statement name="DO2">
+                  <block id="-QLd!?#*9K|g3};6orCk" type="variables_set">
+                    <field name="VAR">item</field>
+                    <value name="VALUE">
+                      <shadow id="`(:O+d[Wwm4i;:;xG??a" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </statement>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
