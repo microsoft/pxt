@@ -523,6 +523,7 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+        isEditable(): boolean;
 
         render(): void;
         bumpNeighbours_(): void;
