@@ -1640,8 +1640,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
-                                    {betaUrl ? <a href={`${betaUrl}`} className="ui orange mini top right attached label">{lf("Beta")}</a> : undefined }
                                 </a> : undefined }
+                                {betaUrl ? <a href={`${betaUrl}`} className="ui orange mini top right attached label">{lf("Beta")}</a> : undefined }
                             </div>
                         </div>
                     </div> }
