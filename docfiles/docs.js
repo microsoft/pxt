@@ -135,7 +135,7 @@ function setupSemantic() {
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
 
-function setupBlockly() {
+function setupBlocklyAsync() {
     let promise = Promise.resolve();
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
         let opts = {};
@@ -162,7 +162,7 @@ function renderSnippets() {
     ksRunnerReady(function () {
         setupSidebar();
         setupSemantic();
-        setupBlockly()
+        setupBlocklyAsync()
         .then(() => {
             return pxt.runner.renderAsync({
                 snippetClass: 'lang-blocks',
