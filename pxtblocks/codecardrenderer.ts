@@ -82,6 +82,13 @@ namespace pxt.docs.codeCard {
             img.appendChild(image)
         }
 
+        if (card.youTubeId) {
+            let screenshot = document.createElement("img") as HTMLImageElement;
+            screenshot.className = "ui image";
+            screenshot.src = `https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg`;
+            img.appendChild(screenshot)
+        }
+
         const name = (options.shortName ? card.shortName : '') || card.name;
         if (name || card.description) {
             let ct = div(r, "ui content");

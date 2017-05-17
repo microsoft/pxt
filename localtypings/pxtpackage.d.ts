@@ -74,6 +74,7 @@ declare namespace pxt {
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;
+        youTubeId?: string;
         time?: number;
         url?: string;
         responsive?: boolean;

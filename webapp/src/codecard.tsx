@@ -46,9 +46,10 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                 </div> : null }
             <div className={"ui image"}>
                 {card.label ? <label className="ui orange right ribbon label">{card.label}</label> : undefined }
-                {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : null}
-                {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : null}
-                {card.imageUrl ? <div className="ui cardimage" style={ { backgroundImage: `url("${card.imageUrl}")` } } /> : null}
+                {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
+                {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
+                {card.imageUrl ? <div className="ui cardimage" style={ { backgroundImage: `url("${card.imageUrl}")` } } /> : undefined}
+                {card.youTubeId ? <div className="ui cardimage" style={ { backgroundImage: `url("https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg")` } } /> : undefined }
             </div>
             {card.icon ?
                 <div className={`${'ui button massive ' + card.iconColor}`}> <i className={`${'icon ' + card.icon}`}></i> </div> : null}
