@@ -136,9 +136,10 @@ function setupSemantic() {
 }
 
 function setupBlockly() {
+    let promise = Promise.resolve();
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
         let opts = {};
-        pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+        promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
             .then(() => pxt.editor.initExtensionsAsync(opts))
             .then(res => {
                 if (res.fieldEditors)
@@ -147,6 +148,7 @@ function setupBlockly() {
                     })
             })
     }
+    return promise;
 }
 
 function renderSnippets() {
@@ -160,23 +162,25 @@ function renderSnippets() {
     ksRunnerReady(function () {
         setupSidebar();
         setupSemantic();
-        setupBlockly();
-        pxt.runner.renderAsync({
-            snippetClass: 'lang-blocks',
-            signatureClass: 'lang-sig',
-            blocksClass: 'lang-block',
-            shuffleClass: 'lang-shuffle',
-            simulatorClass: 'lang-sim',
-            linksClass: 'lang-cards',
-            namespacesClass: 'lang-namespaces',
-            codeCardClass: 'lang-codecard',
-            packageClass: 'lang-package',
-            projectClass: 'lang-project',
-            snippetReplaceParent: true,
-            simulator: true,
-            hex: true,
-            hexName: path,
-            downloadScreenshots: downloadScreenshots
+        setupBlockly()
+        .then(() => {
+            return pxt.runner.renderAsync({
+                snippetClass: 'lang-blocks',
+                signatureClass: 'lang-sig',
+                blocksClass: 'lang-block',
+                shuffleClass: 'lang-shuffle',
+                simulatorClass: 'lang-sim',
+                linksClass: 'lang-cards',
+                namespacesClass: 'lang-namespaces',
+                codeCardClass: 'lang-codecard',
+                packageClass: 'lang-package',
+                projectClass: 'lang-project',
+                snippetReplaceParent: true,
+                simulator: true,
+                hex: true,
+                hexName: path,
+                downloadScreenshots: downloadScreenshots
+            });
         }).done();
     });
 }
