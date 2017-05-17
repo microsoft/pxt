@@ -135,6 +135,22 @@ function setupSemantic() {
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
 
+function setupBlocklyAsync() {
+    let promise = Promise.resolve();
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
+        let opts = {};
+        promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
+            .then(() => pxt.editor.initExtensionsAsync(opts))
+            .then(res => {
+                if (res.fieldEditors)
+                    res.fieldEditors.forEach(fi => {
+                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                    })
+            })
+    }
+    return promise;
+}
+
 function renderSnippets() {
     var codeElems = $('code')
     for (var i = 0; i < codeElems.length; i++) {
@@ -146,22 +162,25 @@ function renderSnippets() {
     ksRunnerReady(function () {
         setupSidebar();
         setupSemantic();
-        pxt.runner.renderAsync({
-            snippetClass: 'lang-blocks',
-            signatureClass: 'lang-sig',
-            blocksClass: 'lang-block',
-            shuffleClass: 'lang-shuffle',
-            simulatorClass: 'lang-sim',
-            linksClass: 'lang-cards',
-            namespacesClass: 'lang-namespaces',
-            codeCardClass: 'lang-codecard',
-            packageClass: 'lang-package',
-            projectClass: 'lang-project',
-            snippetReplaceParent: true,
-            simulator: true,
-            hex: true,
-            hexName: path,
-            downloadScreenshots: downloadScreenshots
+        setupBlocklyAsync()
+        .then(() => {
+            return pxt.runner.renderAsync({
+                snippetClass: 'lang-blocks',
+                signatureClass: 'lang-sig',
+                blocksClass: 'lang-block',
+                shuffleClass: 'lang-shuffle',
+                simulatorClass: 'lang-sim',
+                linksClass: 'lang-cards',
+                namespacesClass: 'lang-namespaces',
+                codeCardClass: 'lang-codecard',
+                packageClass: 'lang-package',
+                projectClass: 'lang-project',
+                snippetReplaceParent: true,
+                simulator: true,
+                hex: true,
+                hexName: path,
+                downloadScreenshots: downloadScreenshots
+            });
         }).done();
     });
 }
