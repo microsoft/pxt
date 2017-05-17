@@ -1811,7 +1811,7 @@ class SnippetHost implements pxt.Host {
     //Global cache of module files
     static files: Map<Map<string>> = {}
 
-    constructor(public name: string, public main: string, public extraDependencies: string[]) { }
+    constructor(public name: string, public main: string, public extraDependencies: string[], private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
         return ""
@@ -1827,9 +1827,14 @@ class SnippetHost implements pxt.Host {
                     "name": this.name,
                     "dependencies": this.dependencies,
                     "description": "",
-                    "files": [
+                    "files": this.includeCommon ? [
                         "main.blocks", //TODO: Probably don't want this
-                        "main.ts"
+                        "main.ts",
+                        "pxt-core.d.ts",
+                        "pxt-helpers.ts"
+                    ] : [
+                        "main.blocks", //TODO: Probably don't want this
+                        "main.ts",
                     ]
                 })
             }
@@ -1868,7 +1873,27 @@ class SnippetHost implements pxt.Host {
                 return contents
             }
         }
+
+        if (module.id === "this") {
+            if (filename === "pxt-core.d.ts") {
+                const contents = fs.readFileSync(path.join(this.getRepoDir(), "libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
+                this.writeFile(module, filename, contents);
+                return contents;
+            }
+            else if (filename === "pxt-helpers.ts") {
+                const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+                this.writeFile(module, filename, contents);
+                return contents;
+            }
+        }
+
         return ""
+    }
+
+    private getRepoDir() {
+        const cwd = process.cwd();
+        const i = cwd.lastIndexOf(path.sep + "pxt" + path.sep);
+        return cwd.substr(0, i + 5);
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string) {
@@ -3158,7 +3183,7 @@ function decompileAsync(parsed: commandParser.ParsedCommand) {
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const input = fs.readFileSync(f, "utf8")
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : []));
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : [], true));
 
         pkg.getCompileOptionsAsync()
             .then(opts => {

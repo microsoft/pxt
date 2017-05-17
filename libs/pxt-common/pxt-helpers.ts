@@ -28,7 +28,7 @@ namespace helpers {
             arr.insertAt(0, values[i - 1]);
         }
         return arr.length;
-    } 
+    }
 */
     export function arrayUnshift<T>(arr: T[], value: T) : number {
         arr.insertAt(0, value);
@@ -45,8 +45,8 @@ namespace helpers {
         if (arr.length <= 0 || !callbackfn) {
             return arr;
         }
-        let len = arr.length; 
-        // simple selection sort.     
+        let len = arr.length;
+        // simple selection sort.
         for (let i = 0; i < len - 1; ++i) {
             for (let j = i + 1; j < len; ++j)
             {
@@ -94,6 +94,30 @@ namespace helpers {
         }
         return initialValue
     }
+
+    export function arraySlice<T>(arr: T[], start: number, end: number): T[] {
+        const res: T[] = [];
+        const len = arr.length;
+
+        if (start < 0) {
+            start = Math.max(len + start, 0);
+        }
+
+        if (end < 0) {
+            end = len + end;
+        }
+
+        const sliceLength = end - start;
+
+        for (let i = 0; i < sliceLength; ++i) {
+            const index = i + start;
+            if (index >= len) {
+                break;
+            }
+            res.push(arr[index]);
+        }
+        return res;
+    }
 }
 
 namespace Math {
@@ -102,7 +126,7 @@ namespace Math {
     }
 
     /**
-      * Returns the absolute value of a number (the value without regard to whether it is positive or negative). 
+      * Returns the absolute value of a number (the value without regard to whether it is positive or negative).
       * For example, the absolute value of -5 is the same as the absolute value of 5.
       * @param x A numeric expression for which the absolute value is needed.
       */
@@ -121,7 +145,7 @@ namespace Math {
     }
 
     /**
-      * Returns the larger of two supplied numeric expressions. 
+      * Returns the larger of two supplied numeric expressions.
       */
     export function max(a: number, b: number): number {
         if (a >= b) return a;
@@ -129,7 +153,7 @@ namespace Math {
     }
 
     /**
-      * Returns the smaller of two supplied numeric expressions. 
+      * Returns the smaller of two supplied numeric expressions.
       */
     export function min(a: number, b: number): number {
         if (a <= b) return a;
