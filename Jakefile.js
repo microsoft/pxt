@@ -57,9 +57,32 @@ task('testlangfloat', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js runfloat')
 })
 
-task('testdecompiler', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "tests/decompile-test", 'node ../../built/pxt.js testdecompiler .')
+task('testdecompiler', ['built/tests/decompile-test/decompiler.js'], { async: true }, function () {
+    const args = " built/tests/decompile-test/decompiler.js --reporter dot";
+    if (os.platform() === "win32") {
+        cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
+    }
+    else {
+        cmdIn(this, ".", "./" + path.resolve("node_modules/.bin/mocha.cmd") + args)
+    }
 })
+
+file("built/tests/decompile-test/decompilerunner.js", ['default'], { async: true }, function () {
+    cmdIn(this, "tests/decompile-test", 'node ../../node_modules/typescript/bin/tsc')
+});
+
+ju.catFiles('built/tests/decompile-test/decompiler.js', [
+    "node_modules/typescript/lib/typescript.js",
+    "built/pxtlib.js",
+    "built/pxtcompiler.js",
+    "built/tests/decompile-test/decompilerunner.js",
+],
+    `
+"use strict";
+// make sure TypeScript doesn't overwrite our module.exports
+global.savedModuleExports = module.exports;
+module.exports = null;
+`, ['built/pxt-common.json']);
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
