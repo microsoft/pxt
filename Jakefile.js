@@ -63,7 +63,7 @@ task('testdecompiler', ['built/tests/decompile-test/decompiler.js'], { async: tr
         cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
     }
     else {
-        cmdIn(this, ".", "./" + path.resolve("node_modules/.bin/mocha.cmd") + args)
+        cmdIn(this, ".", "./" + path.resolve("node_modules/.bin/mocha") + args)
     }
 })
 
