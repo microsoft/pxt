@@ -367,22 +367,23 @@ namespace pxt.blocks {
         if (check === "Array") {
             // The only block that hits this case should be lists_create_with, so we
             // can safely infer the type from the first input that has a return type
-            let itemType = "number";
+            let tp: Point;
             if (b.inputList && b.inputList.length) {
                 for (const input of b.inputList) {
                     if (input.connection && input.connection.targetBlock()) {
-                        let t = returnType(e, input.connection.targetBlock())
+                        let t = find(returnType(e, input.connection.targetBlock()))
                         if (t) {
                             if (t.parentType) {
                                 return t.parentType;
                             }
-                            itemType = t.type;
+                            tp = ground(t.type + "[]");
+                            genericLink(tp, t);
                             break;
                         }
                     }
                 }
             }
-            return ground(itemType + "[]");
+            return tp || ground("number[]");
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
@@ -402,7 +403,7 @@ namespace pxt.blocks {
                     if (parentType.childType) {
                         return parentType.childType;
                     }
-                    const p = mkPoint(null);
+                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(-2)) : mkPoint(null);
                     genericLink(parentType, p);
                     return p;
                 }
@@ -543,6 +544,9 @@ namespace pxt.blocks {
                         break;
                     case "controls_for_of":
                         unionParam(e, b, "LIST", ground("Array"));
+                        const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
+                        const elementTp = lookup(e, escapeVarName(b.getFieldValue("VAR"), e)).type;
+                        genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
                     case "variables_change":
@@ -663,17 +667,13 @@ namespace pxt.blocks {
         }
     }
 
-    function getConcreteType(point: Point, prev: Point[] = []) {
-        const t = find(point);
-
-        // We need to check if we've already seen this type
-        // in case both the parent and child types are not concrete
-        // or else we'll infinitely recurse
-        if (prev.indexOf(t) === -1) {
-            prev.push(t);
+    function getConcreteType(point: Point, found: Point[] = []) {
+        const t = find(point)
+        if (found.indexOf(t)  === -1) {
+            found.push(t);
             if (!t.type || t.type === "Array") {
                 if (t.parentType) {
-                    const parent = getConcreteType(t.parentType, prev);
+                    const parent = getConcreteType(t.parentType, found);
                     if (parent.type && parent.type !== "Array") {
                         t.type = parent.type.substr(0, parent.type.length - 2);
                         return t;
@@ -681,7 +681,7 @@ namespace pxt.blocks {
                 }
 
                 if (t.childType) {
-                    const child = getConcreteType(t.childType, prev);
+                    const child = getConcreteType(t.childType, found);
                     if (child.type) {
                         t.type = child.type + "[]";
                         return t;
@@ -861,7 +861,7 @@ namespace pxt.blocks {
         const index = compileExpression(e, getInputTargetBlock(b, "INDEX"), comments);
         const res = mkGroup([listExpr, mkText("["), index, mkText("]")]);
 
-        return listBlock.type === "lists_create_with" ? prefixWithSemicolon(res) : res;
+        return res;
     }
 
     function compileListSet(e: Environment, b: B.Block, comments: string[]): JsNode {
@@ -1596,7 +1596,12 @@ namespace pxt.blocks {
         w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
-                trackLocalDeclaration(x, pNumber.type);
+                if (b.type == "controls_for_of") {
+                    trackLocalDeclaration(x, null);
+                }
+                else {
+                    trackLocalDeclaration(x, pNumber.type);
+                }
             }
             else if (isMutatingBlock(b)) {
                 const declarations = b.mutation.getDeclaredVariables();
@@ -1916,7 +1921,6 @@ namespace pxt.blocks {
                 if (n.glueToBlock === GlueMode.WithSpace) {
                     output += " ";
                 }
-                output += " "
             }
 
             let start = getCurrentLine();

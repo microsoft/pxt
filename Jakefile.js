@@ -2,6 +2,7 @@
 
 var fs = require("fs");
 var ju = require("./jakeutil")
+var os = require("os")
 var path = require("path")
 var expand = ju.expand;
 var cmdIn = ju.cmdIn;
@@ -27,7 +28,7 @@ function loadText(filename) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'karma'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -101,6 +102,21 @@ compileDir("pxtsim", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblocks.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
+
+task("karma", ["blocklycompilertest"], function() {
+    var command;
+    if (os.platform() === 'win32') {
+        command = "karma.cmd start ../../karma.conf.js";
+    }
+    else {
+        command = "./karma start ../../karma.conf.js";
+    }
+    cmdIn(this, "node_modules/.bin", command);
+});
+
+task("blocklycompilertest", ["default"], { async: true }, function() {
+    cmdIn(this, "tests/blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
+})
 
 task("travis", ["lint", "test", "upload"])
 
@@ -356,8 +372,8 @@ file('built/web/main.js', ["built/webapp/src/app.js"], { async: true }, function
     cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
 })
 
-file('built/web/worker.js', ["built/webapp/src/app.js"], function () {		
-    jake.cpR("built/webapp/src/worker.js", "built/web/")		
+file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
+    jake.cpR("built/webapp/src/worker.js", "built/web/")
 })
 
 file('built/web/fonts/icons.woff2', [], function () {

@@ -1,0 +1,132 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" y="390" x="-910">
+    <statement name="HANDLER">
+      <block id="}5uB+$2Xm+k(0]pU2h#2" type="variables_set">
+        <field name="VAR">item</field>
+        <value name="VALUE">
+          <shadow id="+4e6fu3cQZV!tJ94*]n;" type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+          <block id="6jc{h/xXhxX!B1SHv+dV" type="text">
+            <field name="TEXT">okay</field>
+          </block>
+        </value>
+        <next>
+          <block id="neJ?3]0j=8s09m=LSr`C" type="variables_set">
+            <field name="VAR">item2</field>
+            <value name="VALUE">
+              <shadow id="^kdHX5jdaN0uPa(G@en9" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+              <block id="ZCqAQ%h.3{!g9cI@;q*p" type="text_length">
+                <value name="VALUE">
+                  <shadow id="F!Es%~Pm|L=Xpr|~EP1Z" type="text">
+                    <field name="TEXT">abc</field>
+                  </shadow>
+                </value>
+              </block>
+            </value>
+            <next>
+              <block id="~(=+R^%CJ}-?.o-|Y4v0" type="variables_set">
+                <field name="VAR">item2</field>
+                <value name="VALUE">
+                  <shadow id="^kdHX5jdaN0uPa(G@en9" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block id="~:zZg*cL*c+,tB/*,#UA" type="text_length">
+                    <value name="VALUE">
+                      <shadow id="D}w7rd/k:_gf~EiJ[,Hr" type="text">
+                        <field name="TEXT">abc</field>
+                      </shadow>
+                      <block id="QtUeP`qmBrzhM:Q#73KE" type="variables_get">
+                        <field name="VAR">item</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+                  <block id="g2v-(/RV.P3sa!KqtwaF" type="variables_set">
+                    <field name="VAR">item</field>
+                    <value name="VALUE">
+                      <shadow id="1lf^]-Q8Q3.KdP,O.w9q" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                      <block id="p|_LRRk*]T2Ra,@3R_^C" type="string_substr">
+                        <value name="this">
+                          <shadow id="f][0TO-)l7j5#bznFxdF" type="text">
+                            <field name="TEXT"></field>
+                          </shadow>
+                          <block id="i,.Sg8HTIHw;FJ4e:vzj" type="string_get">
+                            <value name="this">
+                              <shadow id=")|_G6LOk9D{OFlPRNox}" type="text">
+                                <field name="TEXT">2</field>
+                              </shadow>
+                            </value>
+                            <value name="pos">
+                              <shadow id="J|Y]FIxbBpefRp:ElIZd" type="math_number">
+                                <field name="NUM">0</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </value>
+                        <value name="start">
+                          <shadow id="l.bt@[oq/~]XYsLT/7pj" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="length">
+                          <shadow id="Or]9D]rI^tL/:l*F_;Qf" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <next>
+                      <block id="q#3[d%v,uTC3(sx.6;Nh" type="variables_set">
+                        <field name="VAR">item2</field>
+                        <value name="VALUE">
+                          <shadow id="6B:R3BdMa^iPJQ}mPu+Q" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                          <block id="nQE)g!NtZIH/_c/b69ub" type="string_parseint">
+                            <value name="text">
+                              <shadow id="A!/UZq!3AiUQ}/X;yftZ" type="text">
+                                <field name="TEXT">12</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </value>
+                        <next>
+                          <block id="}=YelR~x4|C:xYPkYW9g" type="variables_set">
+                            <field name="VAR">item2</field>
+                            <value name="VALUE">
+                              <shadow id="6B:R3BdMa^iPJQ}mPu+Q" type="math_number">
+                                <field name="NUM">0</field>
+                              </shadow>
+                              <block id="9nH5|%FYW(,?WhuW68`T" type="string_compare">
+                                <value name="this">
+                                  <shadow id="W]o?aRN?H]@$qhPev4TK" type="text">
+                                    <field name="TEXT">a</field>
+                                  </shadow>
+                                </value>
+                                <value name="that">
+                                  <shadow id="WC$Y0H/u@i@]fRCWz[+F" type="text">
+                                    <field name="TEXT">b</field>
+                                  </shadow>
+                                </value>
+                              </block>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
