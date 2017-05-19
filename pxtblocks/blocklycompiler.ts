@@ -1925,7 +1925,6 @@ namespace pxt.blocks {
                 if (n.glueToBlock === GlueMode.WithSpace) {
                     output += " ";
                 }
-                output += " "
             }
 
             let start = getCurrentLine();
