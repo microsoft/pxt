@@ -174,7 +174,7 @@ namespace pxsim {
         constructor(public runtime: Runtime) { }
 
         public push(e: T) {
-            if (!this.handler || this.events.length > this.max) return;
+            if (this.runtime.inMaybeYield || !this.handler || this.events.length > this.max) return;
 
             this.events.push(e)
 
@@ -233,6 +233,7 @@ namespace pxsim {
         globals: any = {};
         currFrame: StackFrame;
         entry: LabelFn;
+        inMaybeYield: boolean = false;
 
         overwriteResume: (retPC: number) => void;
         getResume: () => ResumeFn;
@@ -341,11 +342,13 @@ namespace pxsim {
                     s.pc = pc;
                     s.r0 = r0;
                     let cont = () => {
+                        this.inMaybeYield = false;
                         if (__this.dead) return;
                         U.assert(s.pc == pc);
                         return loop(s)
                     }
                     //U.nextTick(cont)
+                    this.inMaybeYield = true;
                     setTimeout(cont, 5)
                     return true
                 }
