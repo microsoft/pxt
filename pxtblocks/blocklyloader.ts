@@ -874,10 +874,6 @@ namespace pxt.blocks {
                 }
                 if (showCategories === CategoryMode.Basic) {
                     removeCategory(tb, "Arrays");
-                    if (config.loopsBlocks) {
-                        const cat = categoryElement(tb, "Loops");
-                        cat.removeChild(cat.querySelector('block[type="controls_for_of"]'))
-                    }
                 }
             }
 
