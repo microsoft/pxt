@@ -14,4 +14,4 @@ Microsoft MakeCode is based on the open source project [Microsoft Programming Ex
 * [custom targets](/target-creation), create your own targets
 * [writing docs](/writing-docs), leverage the markdown-based documentation system
 * [translations](/translate)
-* technical docs about flash format and [embedding source code](/source-embedding) and [partial flashing](/partial-flashing)
+* [embedding source code](/source-embedding) and [partial flashing](/partial-flashing)
