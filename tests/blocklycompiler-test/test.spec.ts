@@ -231,6 +231,10 @@ describe("blockly compiler", () => {
         it("should not infinitely recurse if both parent and child types are not concrete", done => {
             blockTestAsync("lists_infinite").then(done, done);
         });
+
+        it("should not infinitely recurse for unininitialized arrays used in a for of loop", done => {
+            blockTestAsync("lists_infinite2").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {

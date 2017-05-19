@@ -667,17 +667,13 @@ namespace pxt.blocks {
         }
     }
 
-    function getConcreteType(point: Point, prev: Point[] = []) {
-        const t = find(point);
-
-        // We need to check if we've already seen this type
-        // in case both the parent and child types are not concrete
-        // or else we'll infinitely recurse
-        if (prev.indexOf(t) === -1) {
-            prev.push(t);
+    function getConcreteType(point: Point, found: Point[] = []) {
+        const t = find(point)
+        if (found.indexOf(t)  === -1) {
+            found.push(t);
             if (!t.type || t.type === "Array") {
                 if (t.parentType) {
-                    const parent = getConcreteType(t.parentType, prev);
+                    const parent = getConcreteType(t.parentType, found);
                     if (parent.type && parent.type !== "Array") {
                         t.type = parent.type.substr(0, parent.type.length - 2);
                         return t;
@@ -685,7 +681,7 @@ namespace pxt.blocks {
                 }
 
                 if (t.childType) {
-                    const child = getConcreteType(t.childType, prev);
+                    const child = getConcreteType(t.childType, found);
                     if (child.type) {
                         t.type = child.type + "[]";
                         return t;
