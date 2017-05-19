@@ -2083,7 +2083,7 @@ const defaultFiles: Map<string> = {
 }
 `,
 
-    "tests.ts": `// tests go here; this will not be compiled when this package is used as a library
+    "test.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
 
     "Makefile": `all: deploy
