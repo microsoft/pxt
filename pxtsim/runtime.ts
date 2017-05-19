@@ -406,6 +406,7 @@ namespace pxsim {
                 return null;
             }
 
+            // TODO: in generated code, we see "return trace(...)"
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
@@ -420,6 +421,7 @@ namespace pxsim {
                     thread.pause(0)
                 }
                 checkResumeConsumed();
+                return s;
             }
 
             function handleDebuggerMsg(msg: DebuggerMessage) {
