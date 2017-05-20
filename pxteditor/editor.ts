@@ -85,6 +85,7 @@ namespace pxt.editor {
         tutorialReady?: boolean; // current tutorial page
         tutorialHeaderContent?: string; // current tutorial header content
         tutorialHint?: string; // current tutorial content, shown in hints
+        tutorialFullscreen?: boolean; // full screen mode of a tutorial step
     }
 
     export interface IProjectView {

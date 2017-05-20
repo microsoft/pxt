@@ -508,8 +508,10 @@ export class ProjectView
                         tutorialOptions.tutorialReady = true;
                         tutorialOptions.tutorialHeaderContent = tt.headercontent;
                         tutorialOptions.tutorialHint = tt.content;
+                        tutorialOptions.tutorialFullscreen = tt.fullscreen;
                         this.setState({ tutorialOptions: tutorialOptions });
-                        tutorial.TutorialContent.refresh();
+                        if (tt.fullscreen) this.showTutorialHint();
+                        else tutorial.TutorialContent.refresh();
                         core.hideLoading();
                         break;
                 }

@@ -94,7 +94,7 @@ body#docs.tutorial {
 #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 1.2rem;
-    line-height: 1.5rem;
+    line-height: 1.7rem;
     height: 3.5rem;
     margin-bottom: 1rem;
     overflow: auto;
@@ -107,6 +107,10 @@ body#docs.tutorial {
     padding-left: 5rem;
     height: 4.5rem;
     margin-bottom: 1rem;
+}
+
+#root.dimmable.dimmed #tutorialcard .ui.message {
+    border-radius: 3px;
 }
 
 #root.dimmable.dimmed #tutorialcard .tutorialmessage {
@@ -124,6 +128,10 @@ body#docs.tutorial {
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady .ui.hidelightbox {
     display: none;
+}
+
+#root.dimmable.dimmed #tutorialcard.tutorialReady .ui.prevbutton, #root.dimmable.dimmed #tutorialcard.tutorialReady .ui.nextbutton {
+    opacity: 0 !important;
 }
 
 #tutorialcard .ui.button.hintbutton {

@@ -549,6 +549,15 @@ ${files["main.ts"]}
         return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^###[^#].*$/gmi);
+                let stepInfo: {fullscreen: boolean}[] = [];
+                tutorialmd.replace(/###[^#](.*)/g, (f, s) => {
+                    let info = {
+                        fullscreen: s.indexOf('@fullscreen') > -1
+                    }
+                    stepInfo.push(info);
+                    return ""
+                });
+
                 if (steps.length < 1) return;
                 let options = steps[0];
                 steps = steps.slice(1, steps.length);
@@ -591,6 +600,7 @@ ${files["main.ts"]}
                                     tutorial: tutorialid,
                                     subtype: "steploaded",
                                     data: toolboxSubset,
+                                    fullscreen: stepInfo[step].fullscreen,
                                     headercontent: content.firstElementChild.firstElementChild.innerHTML,
                                     content: content.innerHTML
                                 }, "*");
