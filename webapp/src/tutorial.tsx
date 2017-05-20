@@ -239,7 +239,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
     exitTutorial() {
         pxt.tickEvent(`tutorial.completed.exit`);
         this.hide();
-        this.props.parent.exitTutorial();
+        this.props.parent.exitTutorial(true);
     }
 
     renderCore() {
