@@ -91,7 +91,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
             class: "lightgrey",
             url: docUrl
         } : undefined],
-        timeout: 7000
+        timeout: 10000
     }).then(() => { });
 }
 
