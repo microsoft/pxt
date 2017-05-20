@@ -342,13 +342,13 @@ namespace pxsim {
                     s.pc = pc;
                     s.r0 = r0;
                     let cont = () => {
-                        this.inMaybeYield = false;
+                        __this.inMaybeYield = false;
                         if (__this.dead) return;
                         U.assert(s.pc == pc);
                         return loop(s)
                     }
                     //U.nextTick(cont)
-                    this.inMaybeYield = true;
+                    __this.inMaybeYield = true;
                     setTimeout(cont, 5)
                     return true
                 }
@@ -406,7 +406,6 @@ namespace pxsim {
                 return null;
             }
 
-            // TODO: in generated code, we see "return trace(...)"
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
