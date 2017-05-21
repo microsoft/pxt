@@ -435,7 +435,6 @@ namespace pxsim {
                     thread.pause(0)
                 }
                 checkResumeConsumed();
-                return s;
             }
 
             function handleDebuggerMsg(msg: DebuggerMessage) {
