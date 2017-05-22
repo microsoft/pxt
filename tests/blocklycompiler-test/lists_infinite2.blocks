@@ -1,0 +1,14 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="K~j*^9uwjL#-+=:XP`-b" type="pxt-on-start" y="70" x="-230">
+    <statement name="HANDLER">
+      <block id="8$tWUAl_`dz.#u6-:;p5" type="controls_for_of">
+        <field name="VAR">value</field>
+        <value name="LIST">
+          <shadow id="fJ[Iqc5vWP!=~+!]h=2c" type="variables_get">
+            <field name="VAR">list</field>
+          </shadow>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>

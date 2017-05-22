@@ -11,10 +11,7 @@ Microsoft MakeCode is based on the open source project [Microsoft Programming Ex
 * [async functions and threads](/async)
 * [auto-generation of library files](/simshim), from either C++ or TypeScript simulator sources
 * [JavaScript Editor features](/js/editor) -- a comprehensive list of features supported by the JavaScript Editor
-
 * [custom targets](/target-creation), create your own targets
-
 * [writing docs](/writing-docs), leverage the markdown-based documentation system
 * [translations](/translate)
-
-* technical docs about flash format and [embedding source code](/source-embedding) and [partial flashing](/partial-flashing)
+* [embedding source code](/source-embedding) and [partial flashing](/partial-flashing)
