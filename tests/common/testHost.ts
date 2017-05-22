@@ -71,17 +71,15 @@ export class TestHost implements pxt.Host {
             }
         }
 
-        if (module.id === "this") {
-            if (filename === "pxt-core.d.ts") {
-                const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
-                this.writeFile(module, filename, contents);
-                return contents;
-            }
-            else if (filename === "pxt-helpers.ts") {
-                const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
-                this.writeFile(module, filename, contents);
-                return contents;
-            }
+        if (filename === "pxt-core.d.ts") {
+            const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
+            this.writeFile(module, filename, contents);
+            return contents;
+        }
+        else if (filename === "pxt-helpers.ts") {
+            const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+            this.writeFile(module, filename, contents);
+            return contents;
         }
 
         return ""

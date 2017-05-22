@@ -26,6 +26,36 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
+function setupTest(taskName, testFolder, testFile) {
+    task(taskName, ['built/tests/'+ testFolder + '/runner.js'], { async: true }, function () {
+        const args = " built/tests/" + testFolder + "/runner.js --reporter dot";
+        if (os.platform() === "win32") {
+            cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
+        }
+        else {
+            cmdIn(this, ".", "./" + path.resolve("node_modules/.bin/mocha") + args)
+        }
+    })
+
+    file("built/tests/" + testFolder + "/" + testFile, ['default'], { async: true }, function () {
+        cmdIn(this, "tests/" + testFolder, 'node ../../node_modules/typescript/bin/tsc')
+    });
+
+    ju.catFiles('built/tests/' + testFolder + '/runner.js', [
+        "node_modules/typescript/lib/typescript.js",
+        "built/pxtlib.js",
+        "built/pxtcompiler.js",
+        "built/pxtsim.js",
+        "built/tests/" + testFolder + "/" + testFile,
+    ],
+        `
+    "use strict";
+    // make sure TypeScript doesn't overwrite our module.exports
+    global.savedModuleExports = module.exports;
+    module.exports = null;
+    `, ['built/pxt-common.json']);
+}
+
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testlangfloat', 'testdecompiler', 'karma'])
@@ -57,32 +87,9 @@ task('testlangfloat', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js runfloat')
 })
 
-task('testdecompiler', ['built/tests/decompile-test/decompiler.js'], { async: true }, function () {
-    const args = " built/tests/decompile-test/decompiler.js --reporter dot";
-    if (os.platform() === "win32") {
-        cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
-    }
-    else {
-        cmdIn(this, ".", "./" + path.resolve("node_modules/.bin/mocha") + args)
-    }
-})
+setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
+setupTest('testcompiler', 'compile-test', 'compilerunner.js')
 
-file("built/tests/decompile-test/decompilerunner.js", ['default'], { async: true }, function () {
-    cmdIn(this, "tests/decompile-test", 'node ../../node_modules/typescript/bin/tsc')
-});
-
-ju.catFiles('built/tests/decompile-test/decompiler.js', [
-    "node_modules/typescript/lib/typescript.js",
-    "built/pxtlib.js",
-    "built/pxtcompiler.js",
-    "built/tests/decompile-test/decompilerunner.js",
-],
-    `
-"use strict";
-// make sure TypeScript doesn't overwrite our module.exports
-global.savedModuleExports = module.exports;
-module.exports = null;
-`, ['built/pxt-common.json']);
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
