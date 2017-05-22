@@ -33,7 +33,7 @@ function setupTest(taskName, testFolder, testFile) {
             cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
         }
         else {
-            cmdIn(this, ".", "./" + path.resolve("node_modules/.bin/mocha") + args)
+            cmdIn(this, ".", "./node_modules/.bin/mocha" + args)
         }
     })
 
@@ -58,7 +58,7 @@ function setupTest(taskName, testFolder, testFile) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'karma'])
+task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
