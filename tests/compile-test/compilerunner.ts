@@ -109,7 +109,7 @@ describe("ts compiler", () => {
         }
     };
 
-    describe("non floating point", () => {
+    describe("without floating point", () => {
         filenames.forEach(filename => {
             it("should compile and run " + path.basename(filename), function() {
                 this.timeout(10000)
@@ -118,7 +118,7 @@ describe("ts compiler", () => {
         });
     });
 
-    describe("floating point", () => {
+    describe("with floating point", () => {
         before(() => {
             pxt.appTarget.compile.floatingPoint = true
         });

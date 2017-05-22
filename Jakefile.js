@@ -58,7 +58,7 @@ function setupTest(taskName, testFolder, testFile) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testlangfloat', 'testdecompiler', 'karma'])
+task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testdecompiler', 'karma'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -71,25 +71,10 @@ task('clean', function () {
     jake.rmRf("built")
 })
 
-task('testfmt', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "libs/format-test", 'node ../../built/pxt.js format -t')
-})
-
-task('testerr', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "test-errors", 'node ../built/pxt.js testdir')
-})
-
-task('testlang', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js run')
-})
-
-task('testlangfloat', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js runfloat')
-})
-
 setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
-setupTest('testcompiler', 'compile-test', 'compilerunner.js')
-setupTest('testerrors', 'errors-test', 'errorrunner.js')
+setupTest('testlang', 'compile-test', 'compilerunner.js')
+setupTest('testerr', 'errors-test', 'errorrunner.js')
+setupTest('testfmt', 'format-test', 'formatrunner.js')
 
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
