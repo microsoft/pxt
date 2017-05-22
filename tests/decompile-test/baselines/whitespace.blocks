@@ -1,0 +1,49 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="x" numlines="1" line0="let x &#61; &#34;&#92;r&#34;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="x &#61; &#34;hello&#92;n&#34;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="x &#61; &#34;&#92;tgoodbye&#34;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="x &#61; &#34;&#92;f&#34;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="x &#61; &#34;&#92;v&#34;" />
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="text">
+<field name="TEXT"> </field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="text">
+<field name="TEXT"></field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>
