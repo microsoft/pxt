@@ -89,6 +89,7 @@ task('testlangfloat', ['built/pxt.js'], { async: true }, function () {
 
 setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
 setupTest('testcompiler', 'compile-test', 'compilerunner.js')
+setupTest('testerrors', 'errors-test', 'errorrunner.js')
 
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
