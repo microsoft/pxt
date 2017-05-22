@@ -249,10 +249,10 @@ namespace pxt.blocks {
             if (fn.attributes.mutateDefaults) {
                 const mutationValues = fn.attributes.mutateDefaults.split(";");
                 mutationValues.forEach(mutation => {
-                    const mutatedBlock = block.cloneNode(true);
+                    const mutatedBlock = block.cloneNode(true) as HTMLElement;
                     mutateToolboxBlock(mutatedBlock, fn.attributes.mutate, mutation);
                     if (showCategories !== CategoryMode.None) {
-                        category.appendChild(mutatedBlock);
+                        insertBlock(mutatedBlock, category, fn.attributes.weight);
                     } else {
                         tb.appendChild(mutatedBlock);
                     }
@@ -260,12 +260,39 @@ namespace pxt.blocks {
             }
             else {
                 if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
-                    category.appendChild(block);
+                    insertBlock(block, category, fn.attributes.weight);
                     injectToolboxIconCss();
                 } else if (showCategories === CategoryMode.None) {
                     tb.appendChild(block);
                 }
             }
+        }
+
+    }
+
+    function insertBlock(bl: Element, cat: Element, weight?: number) {
+        const isBuiltin = !!blockColors[cat.getAttribute("nameid")];
+        if (isBuiltin && weight > 50) {
+            bl.setAttribute("loaded", "true")
+
+            let first: Element;
+            for (let i = 0; i < cat.childNodes.length; i++) {
+                const n = cat.childNodes.item(i) as Element;
+                if (n.tagName === "block" && !n.getAttribute("loaded")) {
+                    first = n;
+                    break;
+                }
+            }
+
+            if (first) {
+                cat.insertBefore(bl, first);
+            }
+            else {
+                cat.appendChild(bl);
+            }
+        }
+        else {
+            cat.appendChild(bl)
         }
     }
 
@@ -818,7 +845,7 @@ namespace pxt.blocks {
                 if (showCategories !== CategoryMode.None) {
                     let cat = categoryElement(tb, eb.namespace);
                     if (cat) {
-                        cat.appendChild(el);
+                        insertBlock(el, cat, eb.weight)
                     } else {
                         console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
                     }
