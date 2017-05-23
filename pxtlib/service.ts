@@ -586,6 +586,8 @@ namespace ts.pxtc.service {
     export interface SearchOptions {
         subset?: pxt.Map<boolean>;
         term: string;
+        localizedApis?: ApisInfo;
+        localizedStrings?: pxt.Map<string>;
     }
 
     export interface FormatOptions {
