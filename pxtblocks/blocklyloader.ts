@@ -1214,7 +1214,7 @@ namespace pxt.blocks {
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string) {
-        if (tooltip && typeof tooltip === "string") block.setTooltip(tooltip);
+        if (tooltip && (typeof tooltip === "string" || typeof tooltip === "function")) block.setTooltip(tooltip);
         if (url) block.setHelpUrl(url);
         if (colour) block.setColour(colour);
 
