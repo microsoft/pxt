@@ -1042,7 +1042,8 @@ namespace pxt.blocks {
     }
 
     export let cachedSearchTb: Element;
-    export function initSearch(workspace: Blockly.Workspace, tb: Element,
+    export let cachedSearchTbAll: Element;
+    export function initSearch(workspace: Blockly.Workspace, tb: Element, tbAll: Element,
         searchAsync: (searchFor: pxtc.service.SearchOptions) => Promise<pxtc.service.SearchInfo[]>,
         updateToolbox: (tb: Element) => void) {
 
@@ -1075,6 +1076,7 @@ namespace pxt.blocks {
         }
 
         pxt.blocks.cachedSearchTb = tb;
+        pxt.blocks.cachedSearchTbAll = tbAll;
         const searchHandler = Util.debounce(() => {
             let searchField = $('.blocklySearchInputField');
             let searchFor = searchField.val().toLowerCase();
@@ -1122,13 +1124,13 @@ namespace pxt.blocks {
                         return;
                     }
                     blocks.forEach(info => {
-                        if (tb) {
+                        if (pxt.blocks.cachedSearchTbAll) {
                             const type = info.id;
 
                             let block = searchElementCache[type];
                             if (!block) {
                                 // Catches built-in blocks that aren't loaded dynamically
-                                const existing = getFirstChildWithAttr(tb, "block", "type", type);
+                                const existing = getFirstChildWithAttr(pxt.blocks.cachedSearchTbAll, "block", "type", type);
                                 if (existing) {
                                     block = (searchElementCache[type] = existing.cloneNode(true));
                                 }
@@ -1151,7 +1153,7 @@ namespace pxt.blocks {
                 blocklySearchInput.className = origClassName;
             }
             // Search
-        }, 700, false);
+        }, 1000, false);
 
         blocklySearchInputField.oninput = searchHandler;
         blocklySearchInputField.onchange = searchHandler;
@@ -1209,17 +1211,17 @@ namespace pxt.blocks {
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
-        const info = pxt.blocks.helpResources()[id];
+        const info = pxt.blocks.getBlockDefinition(id);
         setHelpResources(block, id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
     }
 
     function installBuiltinHelpInfo(id: string) {
-        const info = pxt.blocks.helpResources()[id];
-        installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category))
+        const info = pxt.blocks.getBlockDefinition(id);
+        installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
     }
 
     function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string) {
-        if (tooltip) block.setTooltip(tooltip);
+        if (tooltip && (typeof tooltip === "string" || typeof tooltip === "function")) block.setTooltip(tooltip);
         if (url) block.setHelpUrl(url);
         if (colour) block.setColour(colour);
 
@@ -1250,29 +1252,41 @@ namespace pxt.blocks {
     export let openHelpUrl: (url: string) => void;
 
     function initLists() {
-        let msg: any = Blockly.Msg;
-        msg.LISTS_CREATE_EMPTY_TITLE = lf("create empty array");
-        msg.LISTS_CREATE_WITH_INPUT_WITH = lf("create array with");
-        msg.LISTS_CREATE_WITH_CONTAINER_TITLE_ADD = lf("array");
-        msg.LISTS_CREATE_WITH_ITEM_TITLE = lf("value");
+        const msg: any = Blockly.Msg;
 
-        installBuiltinHelpInfo("lists_create_with");
-        installBuiltinHelpInfo("lists_length");
+        // lists_create_with
+        const listsCreateWithId = "lists_create_with";
+        const listsCreateWithDef = pxt.blocks.getBlockDefinition(listsCreateWithId);
+        msg.LISTS_CREATE_EMPTY_TITLE = listsCreateWithDef.block["LISTS_CREATE_EMPTY_TITLE"];
+        msg.LISTS_CREATE_WITH_INPUT_WITH = listsCreateWithDef.block["LISTS_CREATE_WITH_INPUT_WITH"];
+        msg.LISTS_CREATE_WITH_CONTAINER_TITLE_ADD = listsCreateWithDef.block["LISTS_CREATE_WITH_CONTAINER_TITLE_ADD"];
+        msg.LISTS_CREATE_WITH_ITEM_TITLE = listsCreateWithDef.block["LISTS_CREATE_WITH_ITEM_TITLE"];
+        installBuiltinHelpInfo(listsCreateWithId);
+
+        // lists_length
+        const listsLengthId = "lists_length";
+        const listsLengthDef = pxt.blocks.getBlockDefinition(listsLengthId);
+        msg.LISTS_LENGTH_TITLE = listsLengthDef.block["LISTS_LENGTH_TITLE"];
+        installBuiltinHelpInfo(listsLengthId);
     }
 
     function initLoops() {
-        let msg: any = Blockly.Msg;
+        const msg: any = Blockly.Msg;
 
-        // builtin controls_repeat_ext
-        msg.CONTROLS_REPEAT_TITLE = lf("repeat %1 times");
-        msg.CONTROLS_REPEAT_INPUT_DO = lf("{id:repeat}do");
-        installBuiltinHelpInfo('controls_repeat_ext');
+        // controls_repeat_ext
+        const controlsRepeatExtId = "controls_repeat_ext";
+        const controlsRepeatExtDef = pxt.blocks.getBlockDefinition(controlsRepeatExtId);
+        msg.CONTROLS_REPEAT_TITLE = controlsRepeatExtDef.block["CONTROLS_REPEAT_TITLE"];
+        msg.CONTROLS_REPEAT_INPUT_DO = controlsRepeatExtDef.block["CONTROLS_REPEAT_INPUT_DO"];
+        installBuiltinHelpInfo(controlsRepeatExtId);
 
-        // pxt device_while
-        Blockly.Blocks['device_while'] = {
+        // device_while
+        const deviceWhileId = "device_while";
+        const deviceWhileDef = pxt.blocks.getBlockDefinition(deviceWhileId);
+        Blockly.Blocks[deviceWhileId] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("while %1"),
+                    "message0": deviceWhileDef.block["message0"],
                     "args0": [
                         {
                             "type": "input_value",
@@ -1285,26 +1299,28 @@ namespace pxt.blocks {
                     "colour": getNamespaceColor('loops')
                 });
                 this.appendStatementInput("DO")
-                    .appendField(lf("{id:while}do"));
+                    .appendField(deviceWhileDef.block["appendField"]);
 
-                setBuiltinHelpInfo(this, 'device_while');
+                setBuiltinHelpInfo(this, deviceWhileId);
             }
         };
 
-        // pxt controls_simple_for
-        Blockly.Blocks['controls_simple_for'] = {
+        // controls_simple_for
+        const controlsSimpleForId = "controls_simple_for";
+        const controlsSimpleForDef = pxt.blocks.getBlockDefinition(controlsSimpleForId);
+        Blockly.Blocks[controlsSimpleForId] = {
             /**
              * Block for 'for' loop.
              * @this Blockly.Block
              */
             init: function () {
                 this.jsonInit({
-                    "message0": lf("for %1 from 0 to %2"),
+                    "message0": controlsSimpleForDef.block["message0"],
                     "args0": [
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": lf("{id:var}index")
+                            "variable": controlsSimpleForDef.block["variable"]
                             // Please note that most multilingual characters
                             // cannot be used as variable name at this point.
                             // Translate or decide the default variable name
@@ -1322,17 +1338,16 @@ namespace pxt.blocks {
                     "inputsInline": true
                 });
                 this.appendStatementInput('DO')
-                    .appendField(lf("{id:for}do"));
+                    .appendField(controlsSimpleForDef.block["appendField"]);
 
-                const info = pxt.blocks.helpResources()['controls_simple_for'];
                 let thisBlock = this;
                 setHelpResources(this,
-                    'controls_simple_for',
-                    info.name,
+                    controlsSimpleForId,
+                    controlsSimpleForDef.name,
                     function () {
-                        return lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks.", thisBlock.getFieldValue('VAR'));
+                        return U.rlf(<string>controlsSimpleForDef.tooltip, thisBlock.getFieldValue('VAR'));
                     },
-                    info.url,
+                    controlsSimpleForDef.url,
                     String(getNamespaceColor('loops'))
                 );
             },
@@ -1685,11 +1700,12 @@ namespace pxt.blocks {
     }
 
     function initOnStart() {
-        // pxt math_op2
+        // on_start
+        const onStartDef = pxt.blocks.getBlockDefinition(ts.pxtc.ON_START_TYPE);
         Blockly.Blocks[ts.pxtc.ON_START_TYPE] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("on start %1 %2"),
+                    "message0": onStartDef.block["message0"],
                     "args0": [
                         {
                             "type": "input_dummy"
@@ -1704,9 +1720,9 @@ namespace pxt.blocks {
 
                 setHelpResources(this,
                     ts.pxtc.ON_START_TYPE,
-                    lf("on start event"),
-                    lf("Run code when the program starts"),
-                    '/blocks/on-start',
+                    onStartDef.name,
+                    onStartDef.tooltip,
+                    onStartDef.url,
                     String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops'))
                 );
             }
@@ -1790,15 +1806,18 @@ namespace pxt.blocks {
             }
         };
 
-        Blockly.Blocks["controls_for_of"] = {
+        // controls_for_of
+        const controlsForOfId = "controls_for_of";
+        const controlsForOfDef = pxt.blocks.getBlockDefinition(controlsForOfId);
+        Blockly.Blocks[controlsForOfId] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("for element %1 of %2"),
+                    "message0": controlsForOfDef.block["message0"],
                     "args0": [
                         {
                             "type": "field_variable",
                             "name": "VAR",
-                            "variable": lf("{id:var}value")
+                            "variable": controlsForOfDef.block["variable"]
                             // Please note that most multilingual characters
                             // cannot be used as variable name at this point.
                             // Translate or decide the default variable name
@@ -1817,16 +1836,28 @@ namespace pxt.blocks {
                 });
 
                 this.appendStatementInput('DO')
-                    .appendField(lf("{id:for_of}do"));
+                    .appendField(controlsForOfDef.block["appendField"]);
 
-                setBuiltinHelpInfo(this, "controls_for_of");
+                let thisBlock = this;
+                setHelpResources(this,
+                    controlsForOfId,
+                    controlsForOfDef.name,
+                    function () {
+                        return U.rlf(<string>controlsForOfDef.tooltip, thisBlock.getFieldValue('VAR'));
+                    },
+                    controlsForOfDef.url,
+                    String(getNamespaceColor('loops'))
+                );
             }
         };
 
+        // lists_index_get
+        const listsIndexGetId = "lists_index_get";
+        const listsIndexGetDef = pxt.blocks.getBlockDefinition(listsIndexGetId);
         Blockly.Blocks["lists_index_get"] = {
-            init: function() {
+            init: function () {
                 this.jsonInit({
-                    "message0": lf("%1 get value at %2"),
+                    "message0": listsIndexGetDef.block["message0"],
                     "args0": [
                         {
                             "type": "input_value",
@@ -1846,14 +1877,17 @@ namespace pxt.blocks {
                 this.setPreviousStatement(false);
                 this.setNextStatement(false);
                 this.setOutput(true);
-                setBuiltinHelpInfo(this, "lists_index_get");
+                setBuiltinHelpInfo(this, listsIndexGetId);
             }
         };
 
-        Blockly.Blocks["lists_index_set"] = {
-            init: function() {
+        // lists_index_set
+        const listsIndexSetId = "lists_index_set";
+        const listsIndexSetDef = pxt.blocks.getBlockDefinition(listsIndexSetId);
+        Blockly.Blocks[listsIndexSetId] = {
+            init: function () {
                 this.jsonInit({
-                    "message0": lf("%1 set value at %2 to %3"),
+                    "message0": listsIndexSetDef.block["message0"],
                     "args0": [
                         {
                             "type": "input_value",
@@ -1876,14 +1910,17 @@ namespace pxt.blocks {
                     "colour": blockColors['arrays'],
                     "inputsInline": true
                 });
-                setBuiltinHelpInfo(this, "lists_index_set");
+                setBuiltinHelpInfo(this, listsIndexSetId);
             }
         };
     }
 
     function initMath() {
-        // pxt math_op2
-        Blockly.Blocks['math_op2'] = {
+        // math_op2
+        const mathOp2Id = "math_op2";
+        const mathOp2Def = pxt.blocks.getBlockDefinition(mathOp2Id);
+        const mathOp2Tooltips = <Map<string>>mathOp2Def.tooltip;
+        Blockly.Blocks[mathOp2Id] = {
             init: function () {
                 this.jsonInit({
                     "message0": lf("%1 of %2 and %3"),
@@ -1913,24 +1950,25 @@ namespace pxt.blocks {
                 });
 
                 let thisBlock = this;
-                const info = pxt.blocks.helpResources()['math_op2'];
                 setHelpResources(this,
-                    'math_op2',
-                    info.name,
-                    function () {
-                        return thisBlock.getFieldValue('op') == 'min' ? lf("smaller value of 2 numbers") : lf("larger value of 2 numbers");
+                    mathOp2Id,
+                    mathOp2Def.name,
+                    function (block: any) {
+                        return mathOp2Tooltips[block.getFieldValue('op')];
                     },
-                    info.url,
-                    getNamespaceColor(info.category)
+                    mathOp2Def.url,
+                    getNamespaceColor(mathOp2Def.category)
                 );
             }
         };
 
-        // pxt math_op3
-        Blockly.Blocks['math_op3'] = {
+        // math_op3
+        const mathOp3Id = "math_op3";
+        const mathOp3Def = pxt.blocks.getBlockDefinition(mathOp3Id);
+        Blockly.Blocks[mathOp3Id] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("absolute of %1"),
+                    "message0": mathOp3Def.block["message0"],
                     "args0": [
                         {
                             "type": "input_value",
@@ -1943,15 +1981,17 @@ namespace pxt.blocks {
                     "colour": getNamespaceColor('math')
                 });
 
-                setBuiltinHelpInfo(this, 'math_op3');
+                setBuiltinHelpInfo(this, mathOp3Id);
             }
         };
 
-        // pxt device_random
-        Blockly.Blocks['device_random'] = {
+        // device_random
+        const deviceRandomId = "device_random";
+        const deviceRandomDef = pxt.blocks.getBlockDefinition(deviceRandomId);
+        Blockly.Blocks[deviceRandomId] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("pick random 0 to %1"),
+                    "message0": deviceRandomDef.block["message0"],
                     "args0": [
                         {
                             "type": "input_value",
@@ -1964,13 +2004,13 @@ namespace pxt.blocks {
                     "colour": getNamespaceColor('math')
                 });
 
-                setBuiltinHelpInfo(this, 'device_random');
+                setBuiltinHelpInfo(this, deviceRandomId);
             }
         };
 
         // builtin math_number
         //XXX Integer validation needed.
-        const mInfo = pxt.blocks.helpResources()['math_number'];
+        const mInfo = pxt.blocks.getBlockDefinition("math_number");
         installHelpResources(
             'math_number',
             mInfo.name,
@@ -1981,7 +2021,7 @@ namespace pxt.blocks {
 
         // builtin math_number_minmax
         //XXX Integer validation needed.
-        const mMInfo = helpResources()['math_number_minmax'];
+        const mMInfo = pxt.blocks.getBlockDefinition("math_number_minmax");
         installHelpResources(
             'math_number_minmax',
             mMInfo.name,
@@ -1991,34 +2031,31 @@ namespace pxt.blocks {
         );
 
         // builtin math_arithmetic
-        let msg: any = Blockly.Msg;
-        msg.MATH_ADDITION_SYMBOL = lf("{id:op}+");
-        msg.MATH_SUBTRACTION_SYMBOL = lf("{id:op}-");
-        msg.MATH_MULTIPLICATION_SYMBOL = lf("{id:op}×");
-        msg.MATH_DIVISION_SYMBOL = lf("{id:op}÷");
-        msg.MATH_POWER_SYMBOL = lf("{id:op}^");
+        const msg: any = Blockly.Msg;
+        const mathArithmeticId = "math_arithmetic";
+        const mathArithmeticDef = pxt.blocks.getBlockDefinition(mathArithmeticId);
+        const mathArithmeticTooltips = <Map<string>>mathArithmeticDef.tooltip;
+        msg.MATH_ADDITION_SYMBOL = mathArithmeticDef.block["MATH_ADDITION_SYMBOL"];
+        msg.MATH_SUBTRACTION_SYMBOL = mathArithmeticDef.block["MATH_SUBTRACTION_SYMBOL"];
+        msg.MATH_MULTIPLICATION_SYMBOL = mathArithmeticDef.block["MATH_MULTIPLICATION_SYMBOL"];
+        msg.MATH_DIVISION_SYMBOL = mathArithmeticDef.block["MATH_DIVISION_SYMBOL"];
+        msg.MATH_POWER_SYMBOL = mathArithmeticDef.block["MATH_POWER_SYMBOL"];
 
-        let TOOLTIPS: any = {
-            'ADD': lf("Return the sum of the two numbers."),
-            'MINUS': lf("Return the difference of the two numbers."),
-            'MULTIPLY': lf("Return the product of the two numbers."),
-            'DIVIDE': lf("Return the quotient of the two numbers."),
-            'POWER': lf("Return the first number raised to the power of the second number."),
-        };
-        const aInfo = pxt.blocks.helpResources()['math_arithmetic'];
         installHelpResources(
-            'math_arithmetic',
-            aInfo.name,
+            mathArithmeticId,
+            mathArithmeticDef.name,
             function (block: any) {
-                return TOOLTIPS[block.getFieldValue('OP')];
+                return mathArithmeticTooltips[block.getFieldValue('OP')];
             },
-            aInfo.url,
-            getNamespaceColor(aInfo.category)
+            mathArithmeticDef.url,
+            getNamespaceColor(mathArithmeticDef.category)
         );
 
         // builtin math_modulo
-        msg.MATH_MODULO_TITLE = lf("remainder of %1 ÷ %2");
-        installBuiltinHelpInfo('math_modulo');
+        const mathModuloId = "math_modulo";
+        const mathModuloDef = pxt.blocks.getBlockDefinition(mathModuloId);
+        msg.MATH_MODULO_TITLE = mathModuloDef.block["MATH_MODULO_TITLE"];
+        installBuiltinHelpInfo(mathModuloId);
     }
 
     export function getNamespaceColor(ns: string): string {
@@ -2119,23 +2156,29 @@ namespace pxt.blocks {
         };
 
         // builtin variables_get
-        let msg: any = Blockly.Msg;
-        msg.VARIABLES_GET_CREATE_SET = lf("Create 'set %1'");
-        installBuiltinHelpInfo('variables_get');
+        const msg: any = Blockly.Msg;
+        const variablesGetId = "variables_get";
+        const variablesGetDef = pxt.blocks.getBlockDefinition(variablesGetId);
+        msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
+        installBuiltinHelpInfo(variablesGetId);
 
         // builtin variables_set
-        msg.VARIABLES_SET = lf("set %1 to %2");
+        const variablesSetId = "variables_set";
+        const variablesSetDef = pxt.blocks.getBlockDefinition(variablesSetId);
+        msg.VARIABLES_SET = variablesSetDef.block["VARIABLES_SET"];
         msg.VARIABLES_DEFAULT_NAME = varname;
         //XXX Do not translate the default variable name.
         //XXX Variable names with Unicode character are harmful at this point.
         msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
-        installBuiltinHelpInfo('variables_set');
+        installBuiltinHelpInfo(variablesSetId);
 
         // pxt variables_change
-        Blockly.Blocks['variables_change'] = {
+        const variablesChangeId = "variables_change";
+        const variablesChangeDef = pxt.blocks.getBlockDefinition(variablesChangeId);
+        Blockly.Blocks[variablesChangeId] = {
             init: function () {
                 this.jsonInit({
-                    "message0": lf("change %1 by %2"),
+                    "message0": variablesChangeDef.block["message0"],
                     "args0": [
                         {
                             "type": "field_variable",
@@ -2154,61 +2197,80 @@ namespace pxt.blocks {
                     "colour": getNamespaceColor('variables')
                 });
 
-                setBuiltinHelpInfo(this, 'variables_change');
+                setBuiltinHelpInfo(this, variablesChangeId);
             }
         };
     }
 
     function initLogic() {
-        let msg: any = Blockly.Msg;
+        const msg: any = Blockly.Msg;
 
         // builtin controls_if
-        msg.CONTROLS_IF_MSG_IF = lf("{id:logic}if");
-        msg.CONTROLS_IF_MSG_THEN = lf("{id:logic}then");
-        msg.CONTROLS_IF_MSG_ELSE = lf("{id:logic}else");
-        msg.CONTROLS_IF_MSG_ELSEIF = lf("{id:logic}else if");
-        msg.CONTROLS_IF_TOOLTIP_1 = lf("If a value is true, then do some statements.");
-        msg.CONTROLS_IF_TOOLTIP_2 = lf("If a value is true, then do the first block of statements. Otherwise, do the second block of statements.");
-        msg.CONTROLS_IF_TOOLTIP_3 = lf("If the first value is true, then do the first block of statements. Otherwise, if the second value is true, do the second block of statements.");
-        msg.CONTROLS_IF_TOOLTIP_4 = lf("If the first value is true, then do the first block of statements. Otherwise, if the second value is true, do the second block of statements. If none of the values are true, do the last block of statements.");
-        installBuiltinHelpInfo('controls_if');
+        const controlsIfId = "controls_if";
+        const controlsIfDef = pxt.blocks.getBlockDefinition(controlsIfId);
+        const controlsIfTooltips = <Map<string>>controlsIfDef.tooltip;
+        msg.CONTROLS_IF_MSG_IF = controlsIfDef.block["CONTROLS_IF_MSG_IF"];
+        msg.CONTROLS_IF_MSG_THEN = controlsIfDef.block["CONTROLS_IF_MSG_THEN"];
+        msg.CONTROLS_IF_MSG_ELSE = controlsIfDef.block["CONTROLS_IF_MSG_ELSE"];
+        msg.CONTROLS_IF_MSG_ELSEIF = controlsIfDef.block["CONTROLS_IF_MSG_ELSEIF"];
+        msg.CONTROLS_IF_TOOLTIP_1 = controlsIfTooltips["CONTROLS_IF_TOOLTIP_1"];
+        msg.CONTROLS_IF_TOOLTIP_2 = controlsIfTooltips["CONTROLS_IF_TOOLTIP_2"];
+        msg.CONTROLS_IF_TOOLTIP_3 = controlsIfTooltips["CONTROLS_IF_TOOLTIP_3"];
+        msg.CONTROLS_IF_TOOLTIP_4 = controlsIfTooltips["CONTROLS_IF_TOOLTIP_4"];
+        installBuiltinHelpInfo(controlsIfId);
 
         // builtin logic_compare
-        msg.LOGIC_COMPARE_TOOLTIP_EQ = lf("Return true if both inputs equal each other.");
-        msg.LOGIC_COMPARE_TOOLTIP_NEQ = lf("Return true if both inputs are not equal to each other.");
-        msg.LOGIC_COMPARE_TOOLTIP_LT = lf("Return true if the first input is smaller than the second input.");
-        msg.LOGIC_COMPARE_TOOLTIP_LTE = lf("Return true if the first input is smaller than or equal to the second input.");
-        msg.LOGIC_COMPARE_TOOLTIP_GT = lf("Return true if the first input is greater than the second input.");
-        msg.LOGIC_COMPARE_TOOLTIP_GTE = lf("Return true if the first input is greater than or equal to the second input.");
-        installBuiltinHelpInfo('logic_compare');
+        const logicCompareId = "logic_compare";
+        const logicCompareDef = pxt.blocks.getBlockDefinition(logicCompareId);
+        const logicCompareTooltips = <Map<string>>logicCompareDef.tooltip;
+        msg.LOGIC_COMPARE_TOOLTIP_EQ = logicCompareTooltips["LOGIC_COMPARE_TOOLTIP_EQ"];
+        msg.LOGIC_COMPARE_TOOLTIP_NEQ = logicCompareTooltips["LOGIC_COMPARE_TOOLTIP_NEQ"];
+        msg.LOGIC_COMPARE_TOOLTIP_LT = logicCompareTooltips["LOGIC_COMPARE_TOOLTIP_LT"];
+        msg.LOGIC_COMPARE_TOOLTIP_LTE = logicCompareTooltips["LOGIC_COMPARE_TOOLTIP_LTE"];
+        msg.LOGIC_COMPARE_TOOLTIP_GT = logicCompareTooltips["LOGIC_COMPARE_TOOLTIP_GT"];
+        msg.LOGIC_COMPARE_TOOLTIP_GTE = logicCompareTooltips["LOGIC_COMPARE_TOOLTIP_GTE"];
+        installBuiltinHelpInfo(logicCompareId);
 
         // builtin logic_operation
-        msg.LOGIC_OPERATION_AND = lf("{id:op}and");
-        msg.LOGIC_OPERATION_OR = lf("{id:op}or");
-        msg.LOGIC_OPERATION_TOOLTIP_AND = lf("Return true if both inputs are true."),
-            msg.LOGIC_OPERATION_TOOLTIP_OR = lf("Return true if at least one of the inputs is true."),
-            installBuiltinHelpInfo('logic_operation');
+        const logicOperationId = "logic_operation";
+        const logicOperationDef = pxt.blocks.getBlockDefinition(logicOperationId);
+        const logicOperationTooltips = <Map<string>>logicOperationDef.tooltip;
+        msg.LOGIC_OPERATION_AND = logicOperationDef.block["LOGIC_OPERATION_AND"];
+        msg.LOGIC_OPERATION_OR = logicOperationDef.block["LOGIC_OPERATION_OR"];
+        msg.LOGIC_OPERATION_TOOLTIP_AND = logicOperationTooltips["LOGIC_OPERATION_TOOLTIP_AND"];
+        msg.LOGIC_OPERATION_TOOLTIP_OR = logicOperationTooltips["LOGIC_OPERATION_TOOLTIP_OR"];
+        installBuiltinHelpInfo(logicOperationId);
 
         // builtin logic_negate
-        msg.LOGIC_NEGATE_TITLE = lf("not %1");
-        installBuiltinHelpInfo('logic_negate');
+        const logicNegateId = "logic_negate";
+        const logicNegateDef = pxt.blocks.getBlockDefinition(logicNegateId);
+        msg.LOGIC_NEGATE_TITLE = logicNegateDef.block["LOGIC_NEGATE_TITLE"];
+        installBuiltinHelpInfo(logicNegateId);
 
         // builtin logic_boolean
-        msg.LOGIC_BOOLEAN_TRUE = lf("{id:boolean}true");
-        msg.LOGIC_BOOLEAN_FALSE = lf("{id:boolean}false");
-        installBuiltinHelpInfo('logic_boolean');
+        const logicBooleanId = "logic_boolean";
+        const logicBooleanDef = pxt.blocks.getBlockDefinition(logicBooleanId);
+        msg.LOGIC_BOOLEAN_TRUE = logicBooleanDef.block["LOGIC_BOOLEAN_TRUE"];
+        msg.LOGIC_BOOLEAN_FALSE = logicBooleanDef.block["LOGIC_BOOLEAN_FALSE"];
+        installBuiltinHelpInfo(logicBooleanId);
     }
 
     function initText() {
         // builtin text
         installBuiltinHelpInfo('text');
 
-        // builtin text_length and text_join
-        let msg: any = Blockly.Msg;
-        msg.TEXT_LENGTH_TITLE = lf("length of %1");
-        msg.TEXT_JOIN_TITLE_CREATEWITH = lf("join");
-        installBuiltinHelpInfo('text_length');
-        installBuiltinHelpInfo('text_join');
+        // builtin text_length
+        const msg: any = Blockly.Msg;
+        const textLengthId = "text_length";
+        const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
+        msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
+        installBuiltinHelpInfo(textLengthId);
+
+        // builtin text_join
+        const textJoinId = "text_join";
+        const textJoinDef = pxt.blocks.getBlockDefinition(textJoinId);
+        msg.TEXT_JOIN_TITLE_CREATEWITH = textJoinDef.block["TEXT_JOIN_TITLE_CREATEWITH"];
+        installBuiltinHelpInfo(textJoinId);
     }
 
     function initTooltip(blockInfo: pxtc.BlocksInfo) {
