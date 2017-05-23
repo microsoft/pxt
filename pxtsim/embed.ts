@@ -102,6 +102,7 @@ namespace pxsim {
         showCategories?: boolean;
         headercontent: string;
         content: string;
+        fullscreen: boolean;
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {

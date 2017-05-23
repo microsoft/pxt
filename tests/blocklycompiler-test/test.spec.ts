@@ -219,6 +219,22 @@ describe("blockly compiler", () => {
         it("should properly place semicolons when necessary", done => {
             blockTestAsync("lists_semicolons").then(done, done);
         });
+
+        it("should properly handle type declaration for double arrays", done => {
+            blockTestAsync("lists_double_arrays").then(done, done);
+        });
+
+        it("should not place semicolons in expressions", done => {
+            blockTestAsync("lists_semicolons2").then(done, done);
+        });
+
+        it("should not infinitely recurse if both parent and child types are not concrete", done => {
+            blockTestAsync("lists_infinite").then(done, done);
+        });
+
+        it("should not infinitely recurse for unininitialized arrays used in a for of loop", done => {
+            blockTestAsync("lists_infinite2").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {

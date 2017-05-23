@@ -66,17 +66,19 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const downloadAgain = !pxt.BrowserUtils.isIE() && !pxt.BrowserUtils.isEdge();
     const docUrl = pxt.appTarget.appTheme.usbDocs;
     const saveAs = pxt.BrowserUtils.hasSaveAs();
-    const body = saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
-            pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
+    const useUF2 = pxt.appTarget.compile.useUF2;
+    let body = saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
+            useUF2 ? ".uf2" : ".hex",
             boardDriveName, boardName)
         : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
             pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
-            boardDriveName, boardName)
+            boardDriveName, boardName);
+    if (useUF2) body = lf("Press the `reset` button once on the {0}.", boardName) + " " + body;
     return core.confirmAsync({
         header: lf("Download completed..."),
         body,
         hideCancel: true,
-        agreeLbl: lf("Done!"),
+        hideAgree: true,
         buttons: [downloadAgain ? {
             label: fn,
             icon: "download",
@@ -89,7 +91,7 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
             class: "lightgrey",
             url: docUrl
         } : undefined],
-        timeout: 7000
+        timeout: 10000
     }).then(() => { });
 }
 

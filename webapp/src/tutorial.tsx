@@ -111,14 +111,20 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     renderCore() {
         const {visible} = this.state;
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialHint } = options;
+        const { tutorialReady, tutorialHint, tutorialName, tutorialFullscreen} = options;
         if (!tutorialHint) return <div />;
 
-        return <sui.Modal open={visible} className="hintdialog" size="large" header={lf("Hint") } closeIcon={true}
+        // TODO: Use step name instead of tutorial Name in full screen mode.
+        const header = tutorialFullscreen ? tutorialName : lf("Hint");
+
+        return <sui.Modal open={visible} className="hintdialog" size="large" header={header} closeIcon={true}
                 onClose={() => this.setState({ visible: false })} dimmer={true}
                 closeOnDimmerClick closeOnDocumentClick>
                     <div className="content">
                         <div dangerouslySetInnerHTML={{__html: tutorialHint}} />
+                    </div>
+                    <div className="actions">
+                        <sui.Button class="labeled green" icon={`chevron`} text={lf("Ok") } onClick={() => this.setState({ visible: false }) } />
                     </div>
             </sui.Modal>;
     }
@@ -239,7 +245,7 @@ export class TutorialComplete extends data.Component<ISettingsProps, TutorialCom
     exitTutorial() {
         pxt.tickEvent(`tutorial.completed.exit`);
         this.hide();
-        this.props.parent.exitTutorial();
+        this.props.parent.exitTutorial(true);
     }
 
     renderCore() {
