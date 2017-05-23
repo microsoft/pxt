@@ -673,6 +673,14 @@ namespace ts.pxtc.Util {
         return Util.httpGetJsonAsync(url);
     }
 
+    export function getLocalizedStrings() {
+        return _localizeStrings;
+    }
+
+    export function setLocalizedStrings(strs: pxt.Map<string>) {
+        _localizeStrings = strs;
+    }
+
     export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
