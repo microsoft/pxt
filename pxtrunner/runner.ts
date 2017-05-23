@@ -333,6 +333,7 @@ namespace pxt.runner {
                 if (dm && dm.localToken) {
                     Cloud.localToken = dm.localToken;
                     pendingLocalToken.forEach(p => p());
+                    pendingLocalToken = [];
                 }
                 break;
         }
@@ -662,7 +663,7 @@ ${files["main.ts"]}
             });
     }
 
-    const pendingLocalToken: (() => void)[] = [];
+    let pendingLocalToken: (() => void)[] = [];
 
     function waitForLocalTokenAsync() {
         if (pxt.Cloud.localToken) {
