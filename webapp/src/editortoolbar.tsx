@@ -85,7 +85,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const sandbox = pxt.shell.isSandboxMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
-        const collapsed = hideEditorFloats || collapseEditorTools;
+        const collapsed = (hideEditorFloats || collapseEditorTools) && !tutorial;
         const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
         if (!isEditor) return <div />;
 

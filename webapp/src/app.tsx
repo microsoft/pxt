@@ -1566,8 +1566,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-            this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
-            this.state.collapseEditorTools ? " collapsedEditorTools" : '',
+            (this.state.hideEditorFloats || this.state.collapseEditorTools) && !inTutorial ? " hideEditorFloats" : '',
+            this.state.collapseEditorTools && !inTutorial ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
