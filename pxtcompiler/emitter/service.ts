@@ -819,7 +819,6 @@ namespace ts.pxtc.service {
                 searchSet = searchSet.concat(builtinSearchSet);
 
                 const fuseOptions = {
-                    includeScore: true,
                     shouldSort: true,
                     threshold: 0.6,
                     location: 0,
