@@ -13,7 +13,7 @@ interface Array<T> {
       * @param items New elements of the Array.
       */
     //% help=arrays/push
-    //% shim=Array_::push weight=75
+    //% shim=Array_::push weight=49
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
     push(item: T): void;
 
@@ -21,7 +21,7 @@ interface Array<T> {
       * Removes the last element from an array and returns it.
       */
     //% help=arrays/pop
-    //% shim=Array_::pop weight=74
+    //% shim=Array_::pop weight=48
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
     pop(): T;
 
@@ -155,7 +155,7 @@ declare interface String {
      * Returns a string that contains the concatenation of two or more strings.
      * @param other The string to append to the end of the string.
      */
-    //% shim=String_::concat weight=80
+    //% shim=String_::concat weight=49
     //% blockId="string_concat" blockNamespace="text"
     // block="join %list=text|%other"
     concat(other: string): string;
@@ -164,12 +164,12 @@ declare interface String {
      * Returns the character at the specified index.
      * @param index The zero-based index of the desired character.
      */
-    //% shim=String_::charAt weight=77
+    //% shim=String_::charAt weight=48
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
-    //% property shim=String_::length weight=75
+    //% property shim=String_::length weight=47
     //% blockId="text_length" block="length of %VALUE" blockBuiltin=true blockNamespace="text"
     length: number;
 
