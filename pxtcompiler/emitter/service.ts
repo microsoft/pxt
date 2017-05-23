@@ -719,7 +719,7 @@ namespace ts.pxtc.service {
             const search = v.search;
             const blockInfo = blocksInfoOp(search.localizedApis); // cache
 
-            if(search.localizedStrings) {
+            if (search.localizedStrings) {
                 pxt.Util.setLocalizedStrings(search.localizedStrings);
             }
 
