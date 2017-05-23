@@ -332,6 +332,8 @@ namespace pxt.runner {
                 let dm = m as pxsim.SimulatorDocMessage;
                 if (dm && dm.localToken) {
                     Cloud.localToken = dm.localToken;
+                    pendingLocalToken.forEach(p => p());
+                    pendingLocalToken = [];
                 }
                 break;
         }
@@ -546,7 +548,13 @@ ${files["main.ts"]}
 
     export function renderTutorialAsync(content: HTMLElement, tutorialid: string, step: number): Promise<void> {
         tutorialid = tutorialid.replace(/^\//, "");
-        return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
+
+        let initPromise = Promise.resolve();
+        if (pxt.Cloud.isLocalHost()) {
+            initPromise = waitForLocalTokenAsync();
+        }
+
+        return initPromise.then(() => pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive))
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^###[^#].*$/gmi);
                 let stepInfo: {fullscreen: boolean}[] = [];
@@ -653,6 +661,17 @@ ${files["main.ts"]}
                         };
                     })
             });
+    }
+
+    let pendingLocalToken: (() => void)[] = [];
+
+    function waitForLocalTokenAsync() {
+        if (pxt.Cloud.localToken) {
+            return Promise.resolve();
+        }
+        return new Promise<void>((resolve, reject) => {
+            pendingLocalToken.push(resolve);
+        });
     }
 
     export var initCallbacks: (() => void)[] = [];
