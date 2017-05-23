@@ -3,7 +3,7 @@
 
 namespace ts.pxtc {
 
-    // in tagged mode, 
+    // in tagged mode,
     // * the lowest bit set means 31 bit signed integer
     // * the lowest bit clear, and second lowest set means special constant
     // "undefined" is represented by 0
@@ -627,10 +627,10 @@ namespace ts.pxtc {
         return val
     }
 
-    // this function works assuming that the program has passed the 
+    // this function works assuming that the program has passed the
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
-    // pairs that the TS checker compared. 
+    // pairs that the TS checker compared.
 
     // we are checking that subType is a subtype of supType, so that
     // an assignment of the form trg <- src is safe, where supType is the
@@ -2075,7 +2075,7 @@ ${lbl}: .short 0xffff
                 } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                     if (node == funcExpr) {
                         // in this special base case, we have property access recv.foo
-                        // where recv is a map obejct 
+                        // where recv is a map obejct
                         let name = getName(decl)
                         let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
                         if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
@@ -2096,7 +2096,7 @@ ${lbl}: .short 0xffff
                         return res
                     } else {
                         // in this case, recv.foo represents a function/lambda
-                        // so the receiver is not needed, as we have already done 
+                        // so the receiver is not needed, as we have already done
                         // the property lookup to get the lambda
                         args.shift()
                         callInfo.args.shift()
@@ -2117,7 +2117,7 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda 
+            // otherwise we assume a lambda
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
@@ -3218,6 +3218,7 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
             emit(node.statement)
+            emitBrk(node.expression);
             proc.emitJmpZ(l.brk, emitCondition(node.expression));
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
@@ -3227,6 +3228,7 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
+            emitBrk(node.expression);
             proc.emitJmpZ(l.brk, emitCondition(node.expression));
             emit(node.statement)
             proc.emitJmp(l.cont);
@@ -3275,8 +3277,10 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.fortop);
-            if (node.condition)
+            if (node.condition) {
+                emitBrk(node.condition);
                 proc.emitJmpZ(l.brk, emitCondition(node.condition));
+            }
             emit(node.statement)
             proc.emitLblDirect(l.cont);
             emitExprAsStmt(node.incrementor);
