@@ -346,7 +346,7 @@ declare namespace Blockly {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
         function mouseToSvg(e: Event, svg: Element): any;
-
+        function isRightButton(e: Event): boolean;
         function createSvgElement(tag: string, options: any, fg: any): any;
     }
 
