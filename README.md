@@ -89,6 +89,11 @@ npm install -g svgo
 svgo svgicons/myicon.svg
 ```
 
+## Tests
+
+The tests are located in the `tests/` subdirectory and are a combination of node and
+browser tests. To execute them, run `jake test` in the root directory.
+
 ## License
 
 MIT

@@ -1,4 +1,4 @@
-/// <reference path="..\..\localtypings\mocha.d.ts" />
+/// <reference path="..\..\typings\globals\mocha\index.d.ts" />
 /// <reference path="..\..\localtypings\chai.d.ts" />
 /// <reference path="..\..\localtypings\blockly.d.ts" />
 /// <reference path="..\..\built\pxtblocks.d.ts" />

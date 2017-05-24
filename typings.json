@@ -9,9 +9,11 @@
     "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#7fffbd3e040a93c244777e3be04cd6223ac69301",
     "react": "github:DefinitelyTyped/DefinitelyTyped/react/react.d.ts#717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf",
     "react-dom": "github:DefinitelyTyped/DefinitelyTyped/react/react-dom.d.ts#717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf",
+    "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#717a5fdb079f8dd7c19f1b22f7f656dd990f0ccf",
     "winrt": "github:DefinitelyTyped/DefinitelyTyped/winrt/winrt.d.ts#ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
   },
   "dependencies": {
+    "chai": "registry:npm/chai#3.5.0+20160723033700",
     "request": "registry:npm/request#2.69.0+20160428223725"
   }
 }
