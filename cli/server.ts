@@ -425,6 +425,9 @@ function initSocketServer(wsPort: number, hostname: string) {
                     })
                     .then(hio => {
                         switch (msg.op) {
+                            case "disconnect":
+                                return hio.disconnectAsync()
+                                    .then(() => ({}))
                             case "init":
                                 return hio.reconnectAsync()
                                     .then(() => {
