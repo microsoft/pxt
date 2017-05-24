@@ -173,21 +173,7 @@ namespace pxsim {
 
         constructor(public runtime: Runtime) { }
 
-<<<<<<< HEAD
         public push(e: T) {
-=======
-        public push(e: T, notifyOne: boolean) {
-            if (this.awaiters.length > 0) {
-                if (notifyOne) {
-                    const aw = this.awaiters.shift();
-                    if (aw) aw();
-                } else {
-                    const aws = this.awaiters.slice();
-                    this.awaiters = [];
-                    aws.forEach(aw => aw());
-                }
-            }
->>>>>>> 75bfbb09... Revert "don't allow events during a maybeYield phase (#2128)"
             if (!this.handler || this.events.length > this.max) return;
 
             this.events.push(e)
