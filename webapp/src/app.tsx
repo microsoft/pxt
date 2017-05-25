@@ -1920,8 +1920,7 @@ function initTheme() {
         document.body.style.direction = "rtl";
 
         // replace semantic.css with rtlsemantic.css
-        const links = Util.toArray(document.head.getElementsByTagName("link"));
-        const semanticLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
+        const semanticLink = document.head.querySelector('link[href$="semantic.css"]');
         const semanticHref = semanticLink.getAttribute("data-rtl");
         if (semanticHref) {
             pxt.debug(`swapping to ${semanticHref}`)

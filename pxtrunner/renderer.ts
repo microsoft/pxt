@@ -146,7 +146,7 @@ namespace pxt.runner {
         if (options.downloadScreenshots && woptions.hexname) {
             pxt.debug("Downloading screenshot for: " + woptions.hexname);
             let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
-            let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
+            let fontSize = window.getComputedStyle($svg.get(0).querySelector(".blocklyText")).getPropertyValue("font-size");
             const customCss = `
 .blocklyMainBackground {
     stroke:none !important;

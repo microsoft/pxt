@@ -8,30 +8,6 @@ namespace pxt.blocks {
         return text;
     }
 
-    export function getDirectChildren(parent: Element, tag: string) {
-        const res: Element[] = [];
-        for (let i = 0; i < parent.childNodes.length; i++) {
-            const n = parent.childNodes.item(i) as Element;
-            if (n.tagName === tag) {
-                res.push(n);
-            }
-        }
-        return res;
-    }
-
-    export function getBlocksWithType(parent: Document | Element, type: string) {
-        return getChildrenWithAttr(parent, "block", "type", type);
-    }
-
-    export function getChildrenWithAttr(parent:  Document | Element, tag: string, attr: string, value: string) {
-        return Util.toArray(parent.getElementsByTagName(tag)).filter(b => b.getAttribute(attr) === value);
-    }
-
-    export function getFirstChildWithAttr(parent:  Document | Element, tag: string, attr: string, value: string) {
-        const res = getChildrenWithAttr(parent, tag, attr, value);
-        return res.length ? res[0] : undefined;
-    }
-
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
@@ -49,8 +25,7 @@ namespace pxt.blocks {
     }
 
     function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
-        const onstarts = getBlocksWithType(dom, ts.pxtc.ON_START_TYPE);
-        let onstart = onstarts.length ? onstarts[0] : undefined;
+        let onstart = dom.querySelector(`block[type=${ts.pxtc.ON_START_TYPE}]`)
         if (onstart) { // nothing to do
             onstart.removeAttribute("deletable");
             return;
@@ -68,7 +43,7 @@ namespace pxt.blocks {
             const nextNode = node.nextElementSibling;
             // does this block is disable or have s nested statement block?
             const nodeType = node.getAttribute("type");
-            if (!node.getAttribute("disabled") && !node.getElementsByTagName("statement").length
+            if (!node.getAttribute("disabled") && !node.querySelector("statement")
                 && (pxt.blocks.buildinBlockStatements[nodeType] ||
                     (blocks[nodeType] && blocks[nodeType].retType == "void" && !hasArrowFunction(blocks[nodeType])))
             ) {
@@ -113,7 +88,7 @@ namespace pxt.blocks {
                 // patch block types
                 upgrades.filter(up => up.type == "blockId")
                     .forEach(up => Object.keys(up.map).forEach(type => {
-                        getBlocksWithType(doc, type)
+                        Util.toArray(doc.querySelectorAll(`block[type=${type}]`))
                             .forEach(blockNode => {
                                 blockNode.setAttribute("type", up.map[type]);
                                 pxt.debug(`patched block ${type} -> ${up.map[type]}`);
@@ -126,8 +101,7 @@ namespace pxt.blocks {
                         const m = k.split('.');
                         const type = m[0];
                         const name = m[1];
-                        getBlocksWithType(doc, type)
-                            .reduce<Element[]>((prev, current) => prev.concat(getDirectChildren(current, "value")), [])
+                        Util.toArray(doc.querySelectorAll(`block[type=${type}]>value[name=${name}]`))
                             .forEach(blockNode => {
                                 blockNode.setAttribute("name", up.map[k]);
                                 pxt.debug(`patched block value ${k} -> ${up.map[k]}`);
@@ -172,7 +146,7 @@ namespace pxt.blocks {
         symbol.parameters.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];
             if (ptype && ptype.kind == pxtc.SymbolKind.Enum) {
-                let field = getFirstChildWithAttr(block, "field", "name", params[p.name].name);
+                let field = block.querySelector(`field[name=${params[p.name].name}]`);
                 if (field) {
                     let en = enums[ptype.name + '.' + field.textContent];
                     if (en) field.textContent = en;

@@ -1,6 +1,6 @@
 namespace pxsim.svg {
     export function parseString(xml: string): SVGSVGElement {
-        return new DOMParser().parseFromString(xml, "image/svg+xml").getElementsByTagName("svg").item(0) as SVGSVGElement;
+        return new DOMParser().parseFromString(xml, "image/svg+xml").querySelector("svg") as SVGSVGElement;
     }
 
     export function toDataUri(xml: string): string {
@@ -86,7 +86,7 @@ namespace pxsim.svg {
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-            ('ontouchstart' in window               // works on most browsers
+            ('ontouchstart' in window               // works on most browsers 
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 

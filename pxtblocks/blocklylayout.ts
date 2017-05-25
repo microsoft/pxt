@@ -51,7 +51,7 @@ namespace pxt.blocks.layout {
         blocks.forEach(block => {
             block.moveBy(0, y)
             y += block.getHeightWidth().height
-            y += emPixels; //buffer
+            y += emPixels; //buffer            
         })
     };
 
@@ -121,7 +121,7 @@ namespace pxt.blocks.layout {
 }
 
 .blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;   
 }
 
 .rtl .blocklyText {
@@ -187,7 +187,7 @@ namespace pxt.blocks.layout {
     function expandImagesAsync(xsg: Document): Promise<void> {
         if (!imageXLinkCache) imageXLinkCache = {};
 
-        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
+        const images = xsg.querySelectorAll("image");
         const p = pxt.Util.toArray(images)
             .filter(image => !/^data:/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
             .map((image: HTMLImageElement) => {

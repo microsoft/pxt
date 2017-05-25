@@ -239,7 +239,7 @@ namespace pxsim {
             this.scheduleFrameCleanup();
 
             // first frame
-            let frame = this.container.getElementsByTagName("iframe").item(0) as HTMLIFrameElement;
+            let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
                 let wrapper = this.createFrame();

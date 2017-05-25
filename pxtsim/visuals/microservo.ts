@@ -47,7 +47,7 @@ namespace pxsim.visuals {
       <circle id="path8216" cx="56.661" cy="899.475" r="8.972" fill="gray" stroke-width="2"/>
     </g>
   </g>
-</svg>
+</svg>            
             `).firstElementChild as SVGGElement;
             this.crankEl = this.element.querySelector("#crank") as SVGGElement;
             this.crankTransform = this.crankEl.getAttribute("transform");
