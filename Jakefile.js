@@ -350,6 +350,9 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     // Remove certain actions from the context menu
     monacoeditor = monacoeditor.replace(/((GoToDefinitionAction|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
     monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
+    // Fix for android keyboard issues:
+    monacoeditor = monacoeditor.replace(/this\.textArea\.setAttribute\('autocorrect', 'off'\);/gi,
+                `this.textArea.setAttribute('autocorrect', 'off');\n            this.textArea.setAttribute('autocomplete', 'off');`)
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")
