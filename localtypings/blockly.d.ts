@@ -510,6 +510,7 @@ declare namespace Blockly {
         setConnectionsHidden(hidden: boolean): void;
         setDisabled(disabled: boolean): void;
         setEditable(editable: boolean): void;
+        setDeletable(deletable: boolean): void;
         setFieldValue(newValue: string, name: string): void;
         setHelpUrl(url: string | Function): void;
         setInputsInline(newBoolean: boolean): void;
