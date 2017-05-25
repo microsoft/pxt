@@ -574,7 +574,7 @@ namespace pxt.blocks {
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color);
         if (fn.attributes.undeletable)
-            block.setDeletable(true);
+            block.setDeletable(false);
 
         parseFields(fn.attributes.block).map(field => {
             let i: any;
