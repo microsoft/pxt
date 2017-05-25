@@ -489,6 +489,9 @@ export class ProjectView
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             this.setState({tutorialOptions: tutorialOptions});
+            const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
+            if (fullscreen) this.showTutorialHint();
+            else tutorial.TutorialContent.refresh();
         }
     }
 
