@@ -120,7 +120,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         // TODO: Use step name instead of tutorial Name in full screen mode.
         const header = tutorialFullscreen ? tutorialName : lf("Hint");
 
-        return <sui.Modal open={visible} className="hintdialog" size="large" header={header} closeIcon={true}
+        return <sui.Modal open={visible} className="hintdialog" size="small" header={header} closeIcon={true}
                 onClose={() => this.setState({ visible: false })} dimmer={true}
                 closeOnDimmerClick closeOnDocumentClick>
                     <div className="content">
