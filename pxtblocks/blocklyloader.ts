@@ -361,7 +361,7 @@ namespace pxt.blocks {
     }
 
     function getChildCategories(parent: Element) {
-        const elements = parent.querySelectorAll("category");
+        const elements = parent.getElementsByTagName("category");
         const result: Element[] = [];
 
         for (let i = 0; i < elements.length; i++) {
@@ -405,13 +405,14 @@ namespace pxt.blocks {
     }
 
     function getOrAddSubcategoryByWeight(parent: Element, name: string, nameid: string, weight: number, colour?: string, iconClass?: string) {
-        const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
+        const existing = getFirstChildWithAttr(parent, "category", "nameid", nameid.toLowerCase())
+
         if (existing) {
             return existing;
         }
 
         const newCategory = createCategoryElement(name, nameid, weight, colour, iconClass);
-        const siblings = parent.querySelectorAll("category");
+        const siblings = parent.getElementsByTagName("category");
 
         let ci = 0;
         for (ci = 0; ci < siblings.length; ++ci) {
@@ -428,14 +429,14 @@ namespace pxt.blocks {
     }
 
     function getOrAddSubcategoryByName(parent: Element, name: string, nameid: string, colour?: string, iconClass?: string) {
-        const existing = parent.querySelector(`category[nameid="${nameid.toLowerCase()}"]`);
+        const existing = getFirstChildWithAttr(parent, "category", "nameid", nameid.toLowerCase())
         if (existing) {
             return existing;
         }
 
         const newCategory = createCategoryElement(name, nameid, 100, colour, iconClass);
 
-        const siblings = parent.querySelectorAll("category");
+        const siblings = parent.getElementsByTagName("category");
         const filtered: Element[] = [];
 
         let ci = 0;
@@ -795,7 +796,7 @@ namespace pxt.blocks {
         const dbg = pxt.options.debug;
         // create new toolbox and update block definitions
         blockInfo.blocks
-            .filter(fn => !tb || !tb.querySelector(`block[type='${fn.attributes.blockId}']`))
+            .filter(fn => !tb || !getFirstChildWithAttr(tb, "block", "type", fn.attributes.blockId))
             .forEach(fn => {
                 if (fn.attributes.blockBuiltin) {
                     Util.assert(!!builtinBlocks[fn.attributes.blockId]);
@@ -871,7 +872,7 @@ namespace pxt.blocks {
                 showAdvanced = true;
                 const cat = categoryElement(tb, "Text");
                 if (cat) {
-                    const blockElements = cat.querySelectorAll("block");
+                    const blockElements = cat.getElementsByTagName("block");
                     for (let i = 0; i < blockElements.length; i++) {
                         const b = blockElements.item(i);
                         usedBlocks[b.getAttribute("type")] = true;
@@ -886,14 +887,14 @@ namespace pxt.blocks {
                 removeCategory(tb, "Arrays");
                 if (config.loopsBlocks) {
                     const cat = categoryElement(tb, "Loops");
-                    cat.removeChild(cat.querySelector('block[type="controls_for_of"]'))
+                    cat.removeChild(getFirstChildWithAttr(cat, "block", "type", "controls_for_of"))
                 }
             }
             else {
                 showAdvanced = true;
                 const cat = categoryElement(tb, "Arrays");
                 if (cat) {
-                    const blockElements = cat.querySelectorAll("block");
+                    const blockElements = cat.getElementsByTagName("block");
                     for (let i = 0; i < blockElements.length; i++) {
                         const b = blockElements.item(i);
                         usedBlocks[b.getAttribute("type")] = true;
@@ -905,20 +906,21 @@ namespace pxt.blocks {
             }
 
             // Load localized names for default categories
-            let cats = tb.querySelectorAll('category');
+            let cats = tb.getElementsByTagName('category');
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
             }
 
             // update category colors
-            let topCats = tb.querySelectorAll(`#${tb.id} > category`);
+            let topCats = getDirectChildren(tb, "category")
+
             for (let i = 0; i < topCats.length; i++) {
                 const nsColor = getNamespaceColor(topCats[i].getAttribute('nameid'));
                 if (nsColor && nsColor != "") {
                     topCats[i].setAttribute('colour', nsColor);
                     // update children colors
-                    const childCats = topCats[i].querySelectorAll('category');
+                    const childCats = topCats[i].getElementsByTagName('category');
                     for (let j = 0; j < childCats.length; j++) {
                         childCats[j].setAttribute('colour', nsColor);
                     }
@@ -962,7 +964,7 @@ namespace pxt.blocks {
         }
 
         if (tb) {
-            const blocks = tb.querySelectorAll("block");
+            const blocks = tb.getElementsByTagName("block");
 
             for (let i = 0; i < blocks.length; i++) {
                 usedBlocks[blocks.item(i).getAttribute("type")] = true;
@@ -993,12 +995,17 @@ namespace pxt.blocks {
 
             if (showCategories !== CategoryMode.None) {
                 // Go through namespaces and keep the ones with an override
-                let categories = tb.querySelectorAll(`category:not([nameid="more"]):not([nameid="advanced"])`);
+                let categories = tb.getElementsByTagName(`category`);
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
                     let catName = cat.getAttribute("nameid");
+
+                    if (catName === "more" || catName === "advanced") {
+                        continue;
+                    }
+
                     let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
-                    let blocks = cat.querySelectorAll(`block`);
+                    let blocks = cat.getElementsByTagName(`block`);
 
                     let hasVisibleChildren = filterBlocks(blocks, categoryState);
                     switch (categoryState) {
@@ -1006,7 +1013,7 @@ namespace pxt.blocks {
                             if (!hasVisibleChildren) {
                                 cat.setAttribute("disabled", "true");
                                 // disable sub categories
-                                let subcategories = cat.querySelectorAll(`category`);
+                                let subcategories = cat.getElementsByTagName(`category`);
                                 for (let si = 0; si < subcategories.length; ++si) {
                                     subcategories.item(si).setAttribute("disabled", "true");
                                 }
@@ -1017,19 +1024,19 @@ namespace pxt.blocks {
                     }
                 }
             } else {
-                let blocks = tb.querySelectorAll(`block`);
+                let blocks = tb.getElementsByTagName(`block`);
                 filterBlocks(blocks);
             }
 
             if (showCategories !== CategoryMode.None) {
                 // Go through all categories, hide the ones that have no blocks inside
-                let categories = tb.querySelectorAll(`category:not([nameid="advanced"])`);
+                let categories = tb.getElementsByTagName(`category`);
                 for (let ci = 0; ci < categories.length; ++ci) {
                     let cat = categories.item(ci);
                     let catName = cat.getAttribute("nameid");
                     // Don't do this for special blockly categories
-                    if (catName == "variables" || catName == "functions") continue;
-                    let blockCount = cat.querySelectorAll(`block`);
+                    if (catName == "variables" || catName == "functions" || catName == "advanced") continue;
+                    let blockCount = cat.getElementsByTagName(`block`);
                     if (blockCount.length == 0) {
                         if (cat.parentNode) cat.parentNode.removeChild(cat);
                     }
@@ -1150,7 +1157,7 @@ namespace pxt.blocks {
                             let block = searchElementCache[type];
                             if (!block) {
                                 // Catches built-in blocks that aren't loaded dynamically
-                                const existing = pxt.blocks.cachedSearchTbAll.querySelector(`block[type="${type}"]`);
+                                const existing = getFirstChildWithAttr(pxt.blocks.cachedSearchTbAll, "block", "type", type);
                                 if (existing) {
                                     block = (searchElementCache[type] = existing.cloneNode(true));
                                 }
@@ -1184,7 +1191,7 @@ namespace pxt.blocks {
     }
 
     function categoryElement(tb: Element, nameid: string): Element {
-        return tb ? tb.querySelector(`category[nameid="${nameid.toLowerCase()}"]`) : undefined;
+        return tb ? getFirstChildWithAttr(tb, "category", "nameid", nameid.toLowerCase()) : undefined;
     }
 
     export function cleanBlocks() {
@@ -1246,7 +1253,7 @@ namespace pxt.blocks {
         if (colour) block.setColour(colour);
 
         let tb = document.getElementById('blocklyToolboxDefinition');
-        let xml: HTMLElement = tb ? tb.querySelector(`category block[type~='${id}']`) as HTMLElement : undefined;
+        let xml: HTMLElement = tb ? getFirstChildWithAttr(tb, "block", "type", id) as HTMLElement : undefined;
         block.codeCard = <pxt.CodeCard>{
             header: name,
             name: name,
