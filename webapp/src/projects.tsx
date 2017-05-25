@@ -224,7 +224,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         <div className="right menu">
                             <sui.Button
                                 icon='close'
-                                class={`clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
+                                class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
                                 onClick={() => this.setState({ visible: false }) } />
                         </div>
                     </sui.Menu>
