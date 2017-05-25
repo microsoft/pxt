@@ -348,6 +348,7 @@ declare namespace Blockly {
         function mouseToSvg(e: Event, svg: Element): any;
         function isRightButton(e: Event): boolean;
         function createSvgElement(tag: string, options: any, fg: any): any;
+        function isRightButton(e: Event): boolean;
     }
 
     class FieldImage {
