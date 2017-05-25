@@ -160,7 +160,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         <div className="three wide column">
                         </div>
                         <div className="ui grid column">
-                            {readOnly ? undefined :
+                            {readOnly || !showUndoRedo ? undefined :
                                 <div className="row">
                                     <div className="column">
                                         <div className="ui icon large buttons">
@@ -168,7 +168,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         </div>
                                     </div>
                                 </div>}
-                            <div className="row" style={readOnly ? undefined : { paddingTop: 0 }}>
+                            <div className="row" style={readOnly || !showUndoRedo ? undefined : { paddingTop: 0 }}>
                                 <div className="column">
                                     <div className="ui icon large buttons">
                                         {trace ? <sui.Button key='tracebtn' class={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={() => this.toggleTrace('mobile') } /> : undefined }
