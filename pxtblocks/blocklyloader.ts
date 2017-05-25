@@ -1769,7 +1769,7 @@ namespace pxt.blocks {
                     onStartDef.tooltip,
                     onStartDef.url,
                     String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')),
-                    pxt.appTarget.runtime.onStartUnDeletable
+                    pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartUnDeletable : false
                 );
             }
         };
