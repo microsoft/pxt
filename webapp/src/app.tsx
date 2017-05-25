@@ -1638,7 +1638,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
-                                {betaUrl ? <a href={`${betaUrl}`} className="ui orange mini top right attached label">{lf("Beta")}</a> : undefined }
+                                {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel">{lf("Beta")}</a> : undefined }
                             </div>
                         </div>
                     </div> }
