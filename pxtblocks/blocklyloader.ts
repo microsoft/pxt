@@ -1031,6 +1031,9 @@ namespace pxt.blocks {
                     let catName = cat.getAttribute("nameid");
                     if (catName == "advanced" && cat.childNodes.length == 0) {
                         cat.parentNode.removeChild(cat); --ci;
+                        // Remove separator
+                        const sep = tb.getElementsByTagName(`sep`)[0];
+                        sep.parentNode.removeChild(sep);
                     } else {
                         continue;
                     }
