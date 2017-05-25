@@ -214,7 +214,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         ]);
 
         return (
-            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={true}
+            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
                 onClose={() => this.setState({ visible: false }) } dimmer={true}
                 closeOnDimmerClick closeOnDocumentClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">

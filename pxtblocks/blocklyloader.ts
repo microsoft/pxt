@@ -941,7 +941,7 @@ namespace pxt.blocks {
                     let blockState = filters.blocks && filters.blocks[type] != undefined ? filters.blocks[type] : (defaultState != undefined ? defaultState : filters.defaultState);
                     switch (blockState) {
                         case FilterState.Hidden:
-                            blk.parentNode.removeChild(blk); break;
+                            blk.parentNode.removeChild(blk); --bi; break;
                         case FilterState.Disabled:
                             blk.setAttribute("disabled", "true"); break;
                         case FilterState.Visible:
@@ -978,7 +978,22 @@ namespace pxt.blocks {
                             } break;
                         case FilterState.Visible:
                         case FilterState.Hidden:
-                            if (!hasVisibleChildren) cat.parentNode.removeChild(cat); break;
+                            if (!hasVisibleChildren) {
+                                cat.parentNode.removeChild(cat); --ci;
+                            } break;
+                    }
+                }
+                // If advanced has no children, remove the category
+                for (let ci = 0; ci < categories.length; ++ci) {
+                    let cat = categories.item(ci);
+                    let catName = cat.getAttribute("nameid");
+                    if (catName == "advanced" && cat.childNodes.length == 0) {
+                        cat.parentNode.removeChild(cat); --ci;
+                        // Remove separator
+                        const sep = tb.getElementsByTagName(`sep`)[0];
+                        sep.parentNode.removeChild(sep);
+                    } else {
+                        continue;
                     }
                 }
             } else {
