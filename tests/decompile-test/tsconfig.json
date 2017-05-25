@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "outDir": "../../built/tests",
+        "newLine": "LF",
+        "module": "commonjs",
+        "sourceMap": false
+    },
+    "files": [
+        "decompilerunner.ts"
+    ]
+}

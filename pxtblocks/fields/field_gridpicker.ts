@@ -236,15 +236,14 @@ namespace pxtblockly {
             }
 
             if (this.sourceBlock_.RTL) {
-                xy.x += borderBBox.width;
-                xy.x += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+                xy.x += paddingContainerSize.width / 2 - borderBBox.width / 2;
 
                 // Don't go offscreen left.
                 if (xy.x < scrollOffset.x + paddingContainerSize.width) {
                     xy.x = scrollOffset.x + paddingContainerSize.width;
                 }
             } else {
-                xy.x -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+                xy.x += borderBBox.width / 2 - paddingContainerSize.width / 2;
 
                 // Don't go offscreen right.
                 if (xy.x > windowSize.width + scrollOffset.x - paddingContainerSize.width) {
