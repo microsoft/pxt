@@ -13,6 +13,20 @@
     top: 5.5rem;
 }
 /* Tutorial Mode */
+#menubar .ui.menu .item.tutorial-menuitem {
+    background: rgba(27, 28, 29, 0.3) !important;
+    margin: calc(0.45rem);
+    padding: calc(0.45rem);
+    border-radius: 0.5rem !important;
+}
+#menubar .ui.menu .item.tutorial-menuitem > .step-label {
+    margin-left: 0.4em;
+    margin-right: 0.4em;
+}
+#menubar .ui.menu .item.tutorial-menuitem > .label {
+    background: white;
+    margin-left: 0em;
+}
 .tutorial-menuitem > .selected {
     background-color: @tutorialSelectedMenuColor !important;
     padding: 1.0rem !important;
@@ -64,14 +78,16 @@ body#docs.tutorial {
     width: 100%;
     position: relative;
     padding: 0;
+    border: 0;
+    border-radius: 5px 0px 0px 5px;
 }
 
 #tutorialcard .ui.message .avatar-image {
     position: absolute;
     top: 0.7rem;
     left: 0.7rem;
-    width: 3rem;
-    height: 3rem;
+    width: 2rem;
+    height: 2rem;
     background-repeat: no-repeat;
     background-size: contain;
     background-image: @avatarUrl;
@@ -94,11 +110,13 @@ body#docs.tutorial {
 #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 16px;
-    line-height: 25px;
     height: 3.5rem;
     margin-bottom: 1rem;
     overflow: auto;
     cursor:pointer;
+}
+#tutorialcard .tutorialmessage .content p {
+    line-height: 25px !important;
 }
 
 #tutorialcard .tutorialmessage {
@@ -137,9 +155,9 @@ body#docs.tutorial {
 #tutorialcard .ui.button.hintbutton {
     position: absolute;
     bottom: 0.4rem; 
-    right: 0.4rem;
+    left: 0.4rem;
 
-    font-size: 0.78rem;
+    font-size: 0.5rem;
     border-radius: 0.28571429rem;
 }
 
@@ -153,6 +171,7 @@ i.icon.avatar-image {
     background-image: @avatarUrl;
 }
 
+
 /******************************
     Inline Blocks and Buttons
 ******************************/
@@ -162,7 +181,7 @@ span.docs.inlinebutton {
     border-radius: 0.3rem;
     white-space: nowrap;
     background-color: @primaryColor;
-    border: 1px solid darken(@primaryColor, 20%);
+    border: 1px solid lighten(@primaryColor, 20%);
     color: @white;
 }
 
@@ -170,9 +189,17 @@ span.docs.inlineblock {
     padding: 0.15rem 0.3rem;
     border-radius: 0.4rem 0 0 0.4rem;
     white-space: nowrap;
-    background-color: darken(@orange, 10%);
+    background-color: lighten(@orange, 10%);
     border: 1px solid @orange;
     color: @white;
+}
+
+code, kbd, pre, samp {
+    font-weight: bold;
+}
+
+code.lang-filterblocks {
+    display: none;
 }
 
 
