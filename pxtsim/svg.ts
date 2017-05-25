@@ -1,6 +1,6 @@
 namespace pxsim.svg {
     export function parseString(xml: string): SVGSVGElement {
-        return new DOMParser().parseFromString(xml, "image/svg+xml").querySelector("svg") as SVGSVGElement;
+        return new DOMParser().parseFromString(xml, "image/svg+xml").getElementsByTagName("svg").item(0) as SVGSVGElement;
     }
 
     export function toDataUri(xml: string): string {
