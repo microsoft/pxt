@@ -95,6 +95,7 @@ namespace ts.pxtc {
         async?: boolean;
         promise?: boolean;
         hidden?: boolean;
+        undeletable?: boolean;
         callingConvention: ir.CallingConvention;
         block?: string; // format of the block, used at namespace level for category name
         blockId?: string; // unique id of the block

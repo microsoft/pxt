@@ -573,6 +573,8 @@ namespace pxt.blocks {
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color);
+        if (fn.attributes.undeletable)
+            block.setDeletable(true);
 
         parseFields(fn.attributes.block).map(field => {
             let i: any;
@@ -1262,10 +1264,11 @@ namespace pxt.blocks {
         installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
     }
 
-    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string) {
+    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, undeletable?: boolean) {
         if (tooltip && (typeof tooltip === "string" || typeof tooltip === "function")) block.setTooltip(tooltip);
         if (url) block.setHelpUrl(url);
         if (colour) block.setColour(colour);
+        if (undeletable) block.setDeletable(false);
 
         let tb = document.getElementById('blocklyToolboxDefinition');
         let xml: HTMLElement = tb ? getFirstChildWithAttr(tb, "block", "type", id) as HTMLElement : undefined;
@@ -1765,7 +1768,8 @@ namespace pxt.blocks {
                     onStartDef.name,
                     onStartDef.tooltip,
                     onStartDef.url,
-                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops'))
+                    String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')),
+                    pxt.appTarget.runtime.onStartUnDeletable
                 );
             }
         };

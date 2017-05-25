@@ -62,6 +62,7 @@ declare namespace pxt {
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
         onStartWeight?: number;
+        onStartUnDeletable?: boolean;
     }
 
     interface AppAnalytics {
