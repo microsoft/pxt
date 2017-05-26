@@ -438,11 +438,6 @@ function travisAsync() {
     const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
         && /^false$/.test(process.env.TRAVIS_PULL_REQUEST);
 
-    // <TEMP> change to test Jenkins credentials, will undo in a separate commit
-    let testCred = process.env["TEST_CRED_"];
-    console.log(`TEST_CRED_: type: ${typeof testCred}    value: ${testCred}`);
-    // </TEMP>
-
     console.log("TRAVIS_TAG:", rel);
     console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
     console.log("TRAVIS_PULL_REQUEST:", process.env.TRAVIS_PULL_REQUEST);
