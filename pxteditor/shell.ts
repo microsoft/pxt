@@ -46,8 +46,4 @@ namespace pxt.shell {
         return isSandboxMode()
             && !/[?&]edit=1/i.test(window.location.href);
     }
-
-    export function inExperiment(key: string) {
-        return (new RegExp(`${key}=1`, "i")).test(window.location.href);
-    }
 }

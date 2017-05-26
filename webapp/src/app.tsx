@@ -1949,14 +1949,6 @@ function initTheme() {
             if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
         }
     }
-
-    if (pxt.appTarget.experiments) {
-        Object.keys(pxt.appTarget.experiments).forEach((key) => {
-            if (pxt.shell.inExperiment(key)) {
-                Util.jsonMergeFrom(theme, pxt.appTarget.experiments[key].appTheme);
-            }
-        })
-    }
 }
 
 function parseHash(): { cmd: string; arg: string } {

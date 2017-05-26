@@ -35,13 +35,6 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         analytics?: AppAnalytics;
-        experiments?: pxt.Map<AppExperiment>;
-    }
-
-    interface AppExperiment {
-        name: string;
-        description?: string;
-        appTheme: AppTheme;
     }
 
     interface ProjectTemplate {

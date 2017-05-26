@@ -435,12 +435,12 @@ namespace pxt.blocks {
                 union(b.type, ground(pNumber.type));
         });
 
-        function connectionCheck(i: B.Input) {
+        function connectionCheck(i: Blockly.Input) {
             return i.name ? i.connection && i.connection.check_ && i.connection.check_.length ? i.connection.check_[0] : "T" : undefined;
         }
 
-        function handleGenericType(b: B.Block, name: string) {
-            let genericArgs = b.inputList.filter((input: B.Input) => connectionCheck(input) === "T");
+        function handleGenericType(b: Blockly.Block, name: string) {
+            let genericArgs = b.inputList.filter((input: Blockly.Input) => connectionCheck(input) === "T");
             if (genericArgs.length) {
                 const gen = getInputTargetBlock(b, genericArgs[0].name);
                 if (gen) {
@@ -661,7 +661,7 @@ namespace pxt.blocks {
         return H.mkArrayLiteral(args);
     }
 
-    function compileListGet(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileListGet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const listBlock = getInputTargetBlock(b, "LIST");
         const listExpr = compileExpression(e, listBlock, comments);
         const index = compileExpression(e, getInputTargetBlock(b, "INDEX"), comments);
@@ -670,7 +670,7 @@ namespace pxt.blocks {
         return res;
     }
 
-    function compileListSet(e: Environment, b: B.Block, comments: string[]): JsNode {
+    function compileListSet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const listBlock = getInputTargetBlock(b, "LIST");
         const listExpr = compileExpression(e, listBlock, comments);
         const index = compileExpression(e, getInputTargetBlock(b, "INDEX"), comments);
