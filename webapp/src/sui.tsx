@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 
 import Util = pxt.Util;
-let lf = Util.lf;
+const lf = Util.lf;
 
 export interface UiProps {
     icon?: string;

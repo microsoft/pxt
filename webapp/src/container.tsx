@@ -8,7 +8,6 @@ import * as data from "./data";
 import * as sui from "./sui";
 
 import Util = pxt.Util;
-
 const lf = Util.lf;
 
 type ISettingsProps = pxt.editor.ISettingsProps;
