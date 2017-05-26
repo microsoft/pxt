@@ -729,8 +729,16 @@ declare namespace Blockly {
         rtl?: boolean;
     }
 
+    interface ToolboxOptions {
+        colour?: boolean;
+        border?: boolean;
+        inverted?: boolean;
+        invertedMultiplier?: number;
+        disabledOpacity?: number;
+    }
+
     interface ExtendedOptions extends Options {
-        toolboxType?: string;
+        toolboxOptions?: ToolboxOptions;
     }
 
     // tslint:disable-next-line
