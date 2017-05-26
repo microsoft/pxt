@@ -1,12 +1,19 @@
 # Microsoft MakeCode Blog
 
+## [Circuit Playground Express](/blog/adafruit-cplay-express)
+
+May 19, 2017 by [Jaqster](https://github.com/Jaqster)
+
+The Microsoft MakeCode team is proud to announce a great partnership
+with our good friends over at Adafruit Industries.
+[Read more](/blog/adafruit-cplay-express)
+
 ## [Minecraft Code Builder](/blog/minecraft-code-builder)
 
-May 2nd, 2017 by [Jaqster](https://github.com/Jaqster)
+May 2, 2017 by [Jaqster](https://github.com/Jaqster)
 
 Learn to code using Microsoft MakeCode and Minecraft Education!
 [Read more](/blog/minecraft-code-builder)
-
 
 ## [Programming the micro:bit on the Apple II](/blog/appleII)
 
@@ -18,7 +25,7 @@ for the micro:bit to everyone...
 
 ## [Microbit Editor v0.9.77](/blog/microbit/v0.9.77)
 
-March 30th, 2017
+March 30, 2017
 
 Release notes for the micro:bit editor...
 [Read more](/blog/microbit/v0.9.77)
@@ -32,7 +39,7 @@ Overview of the main features of the Microsoft MakeCode web app...
 
 ## [One chip to flash them all](/blog/one-chip-to-flash-them-all)
 
-March 29th, 2017 by [mmoskal](https://github.com/mmoskal)
+March 29, 2017 by [mmoskal](https://github.com/mmoskal)
 
 MakeCode team introduces driver-less flashing of boards without an interface chip
 using file format dubbed UF2...
@@ -40,7 +47,7 @@ using file format dubbed UF2...
 
 ## [Hello World](/blog/hello-world)
 
-March 29th, 2017
+March 29, 2017
 
 Welcome to the official release and developer blog of Microsoft MakeCode, also known as PXT...
 [Read more](/blog/hello-world)

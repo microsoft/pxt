@@ -1,0 +1,130 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" y="610" x="-450">
+    <statement name="HANDLER">
+      <block id="mJc[6^XWbFw/=}ov4zCf" type="controls_if">
+        <value name="IF0">
+          <shadow id="%MkZ=VC7xxeR;~fgc`^~" type="logic_boolean">
+            <field name="BOOL">TRUE</field>
+          </shadow>
+          <block id="s/C}t!xxwkHE-}XjW=-J" type="logic_operation">
+            <field name="OP">AND</field>
+            <value name="A">
+              <block id=";P:^nOY)2I`yy3G(coc?" type="logic_negate">
+                <value name="BOOL">
+                  <block id="n:GU4u^V,sg9H(mBu#.q" type="logic_operation">
+                    <field name="OP">OR</field>
+                    <value name="A">
+                      <block id="}XbT_/F^0nzwgog[#N~c" type="logic_compare">
+                        <field name="OP">EQ</field>
+                        <value name="A">
+                          <shadow id="D%tg[~DC3zP#EPA]`#!r" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="B">
+                          <shadow id="qg#)WWi)fkI:),oXL(^]" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block id="?7`HhkF0Kid(1a;g#VI." type="logic_compare">
+                        <field name="OP">LT</field>
+                        <value name="A">
+                          <shadow id="ap.z;Blic?A16ox{;KjD" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="B">
+                          <shadow id="BNo`W$l.r1z]PC0Xmwf#" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <value name="B">
+              <block id="PGQ!v~SzXICu`0:/9vgf" type="logic_operation">
+                <field name="OP">AND</field>
+                <value name="A">
+                  <block id="XJ4i5Y]IJ9ze*V!455%I" type="logic_operation">
+                    <field name="OP">OR</field>
+                    <value name="A">
+                      <block id="JF?Qlp2TA.l`pzb:y/UV" type="logic_compare">
+                        <field name="OP">LTE</field>
+                        <value name="A">
+                          <shadow id="fLz)cULM3#S!a{fVGd.x" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="B">
+                          <shadow id="a`*mcw3icnuI{X^,AU7z" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block id="SYf3Oj/AMfhRJvjd{0]_" type="logic_compare">
+                        <field name="OP">GT</field>
+                        <value name="A">
+                          <shadow id="*4U(~fgM_xJ9Be_~J4dA" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="B">
+                          <shadow id="I?doqU/l*rVqtXuVh;1V" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <block id="I/=,vSYFJ{@jL=*8kYQU" type="logic_operation">
+                    <field name="OP">OR</field>
+                    <value name="A">
+                      <block id="N2Dg?G2k|HHJH.-VThs_" type="logic_compare">
+                        <field name="OP">GTE</field>
+                        <value name="A">
+                          <shadow id=":s76p$8Sx~:aqX7~FcBY" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="B">
+                          <shadow id=":Z0!*Y?b$^+L;oW~y_;?" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block id="8ZA4EC1On}`4dzl}ZU2," type="logic_compare">
+                        <field name="OP">NEQ</field>
+                        <value name="A">
+                          <shadow id="g*+=.wD:V}s_v)?Zmxeq" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="B">
+                          <shadow id="Ea(v8ktd~Q58;qb^F8Rh" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </value>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>

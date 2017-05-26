@@ -425,9 +425,22 @@ function initSocketServer(wsPort: number, hostname: string) {
                     })
                     .then(hio => {
                         switch (msg.op) {
+                            case "disconnect":
+                                return hio.disconnectAsync()
+                                    .then(() => ({}))
                             case "init":
                                 return hio.reconnectAsync()
                                     .then(() => {
+                                        hio.io.onEvent = v => {
+                                            if (!ws) return
+                                            ws.send(JSON.stringify({
+                                                op: "event",
+                                                result: {
+                                                    path: msg.arg.path,
+                                                    data: U.toHex(v),
+                                                }
+                                            }))
+                                        }
                                         hio.onSerial = (v, isErr) => {
                                             if (!ws) return
                                             ws.send(JSON.stringify({
@@ -697,7 +710,7 @@ function pkgPageTestAsync(id: string) {
 function readMd(pathname: string): string {
     const content = nodeutil.resolveMd(root, pathname);
     if (content) return content;
-    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).map(s => "* ``" + s + "``\n").join("")
+    return "# Not found\nChecked:\n" + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
 }
 
 let serveOptions: ServeOptions;

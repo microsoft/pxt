@@ -26,7 +26,7 @@ Now, you're ready to develop your package. You can do it with [VSCode](https://c
 or from the web editor served from `pxt serve`.
 
 * put the contents of your package in `main.ts`
-* add sample program using the package in `tests.ts`
+* add sample program using the package in `test.ts`
 * use `pxt` to build and deploy the package with tests; use the web editor to test in the simulator
 
 ### ~ hint

@@ -338,6 +338,26 @@ namespace pxsim {
         export function programHash() {
             return 0;
         }
+
+        export function programSize() {
+            return 0;
+        }
+
+        export function afterProgramPage() {
+            return 0;
+        }
+
+        // these shouldn't generally be called when compiled for simulator
+        // provide implementation to silence warnings and as future-proofing
+        export function toInt(n: number) { return n >> 0 }
+        export function toUInt(n: number) { return n >>> 0 }
+        export function toDouble(n: number) { return n }
+        export function toFloat(n: number) { return n }
+        export function fromInt(n: number) { return n }
+        export function fromUInt(n: number) { return n }
+        export function fromDouble(n: number) { return n }
+        export function fromFloat(n: number) { return n }
+        export function fromBool(n: any) { return !!n }
     }
 
     export namespace pxtrt {
@@ -354,6 +374,10 @@ namespace pxsim {
 
         export function toInt32(v: number) {
             return v | 0
+        }
+
+        export function toUInt32(v: number) {
+            return v >>> 0
         }
 
         export function toUInt8(v: number) {
@@ -373,8 +397,8 @@ namespace pxsim {
         }
 
         export function nullCheck(v: any) {
-            if (!v)
-                U.userError("Dereferencing null value.")
+            if (v === null || v === undefined)
+                U.userError("Dereferencing null/undefined value.")
         }
 
         export function panic(code: number) {
@@ -555,6 +579,13 @@ namespace pxsim {
         export var getNumGlobals: any;
         export var RefRecord_destroy: any;
         export var RefRecord_print: any;
+        export var anyPrint: any;
+        export var dumpDmesg: any;
+        export var getVTable: any;
+        export var switch_eq: any;
+        export var valType: any;
+        export var typeOf: any;
+        export var lookupPin: any;
     }
 
     export namespace thread {

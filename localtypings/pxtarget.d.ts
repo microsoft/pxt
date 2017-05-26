@@ -69,6 +69,7 @@ declare namespace pxt {
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
         onStartWeight?: number;
+        onStartUnDeletable?: boolean;
     }
 
     interface AppAnalytics {
@@ -141,6 +142,7 @@ declare namespace pxt {
         homeUrl?: string;
         shareUrl?: string;
         embedUrl?: string;
+        betaUrl?: string;
         legacyDomain?: string;
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
@@ -196,6 +198,9 @@ declare namespace pxt {
         highContrast?: boolean; // simulator has a high contrast mode
         blocksVersion?: number; // nothing or 2 
         selectLanguage?: boolean; // add language picker to settings menu
+        useUploadMessage?: boolean; // change "Download" text to "Upload"
+        downloadIcon?: string; // which icon io use for download
+        blockColors?: Map<string>; // block namespace colors, used for build in categories
     }
 
     interface DocMenuEntry {
@@ -231,6 +236,7 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
+        useModulator?: boolean;
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;

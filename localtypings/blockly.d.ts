@@ -351,8 +351,9 @@ declare namespace Blockly {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
         function mouseToSvg(e: Event, svg: Element): any;
-
+        function isRightButton(e: Event): boolean;
         function createSvgElement(tag: string, options: any, fg: any): any;
+        function isRightButton(e: Event): boolean;
     }
 
     class FieldImage {
@@ -518,6 +519,7 @@ declare namespace Blockly {
         setConnectionsHidden(hidden: boolean): void;
         setDisabled(disabled: boolean): void;
         setEditable(editable: boolean): void;
+        setDeletable(deletable: boolean): void;
         setFieldValue(newValue: string, name: string): void;
         setHelpUrl(url: string | Function): void;
         setInputsInline(newBoolean: boolean): void;
@@ -532,6 +534,7 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+        isEditable(): boolean;
 
         render(): void;
         bumpNeighbours_(): void;
@@ -685,6 +688,7 @@ declare namespace Blockly {
             viewWidth: number;
         }
         variableIndexOf(name: string): number;
+        playAudio(name: string): void;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
 

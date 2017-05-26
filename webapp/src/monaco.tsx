@@ -41,7 +41,8 @@ export interface MonacoBlockDefinition {
 
 export interface BuiltinCategoryDefinition {
     name: string;
-    blocks: MonacoBlockDefinition[]
+    blocks: MonacoBlockDefinition[];
+    nameid: string;
     attributes: pxtc.CommentAttrs;
 }
 
@@ -551,7 +552,7 @@ export class Editor extends srceditor.Editor {
             group.appendChild(Editor.createTreeSeperator());
 
             // Advanced toggle
-            group.appendChild(this.createCategoryElement("", "#3c3c3c", this.showAdvanced ? 'advancedexpanded' : 'advancedcollapsed',
+            group.appendChild(this.createCategoryElement("", pxt.blocks.getNamespaceColor('advanced'), this.showAdvanced ? 'advancedexpanded' : 'advancedcollapsed',
             false, null, () => {
                 this.showAdvanced = !this.showAdvanced;
                 this.updateToolbox();
@@ -595,7 +596,9 @@ export class Editor extends srceditor.Editor {
                     el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks, undefined, categoryName);
                 }
                 else {
-                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, snippets.getBuiltinCategory(ns).blocks, null, ns);
+                    let blocks = snippets.getBuiltinCategory(ns).blocks;
+                    if (monacoEditor.nsMap[ns.toLowerCase()]) blocks = blocks.concat(monacoEditor.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
+                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, blocks, null, ns);
                 }
                 group.appendChild(el);
             });
@@ -605,6 +608,7 @@ export class Editor extends srceditor.Editor {
     getNamespaceAttrs(ns: string) {
         const builtin = snippets.getBuiltinCategory(ns);
         if (builtin) {
+            builtin.attributes.color = pxt.blocks.getNamespaceColor(builtin.nameid);
             return builtin.attributes;
         }
 
@@ -620,11 +624,12 @@ export class Editor extends srceditor.Editor {
         const namespaces = Object.keys(this.nsMap).filter(ns => !snippets.isBuiltin(ns) && !!this.getNamespaceAttrs(ns));
 
         let config = pxt.appTarget.runtime || {};
-        if (config.loopsBlocks) namespaces.push(snippets.loops.name);
-        if (config.logicBlocks) namespaces.push(snippets.logic.name);
-        if (config.variablesBlocks) namespaces.push(snippets.variables.name);
-        if (config.mathBlocks) namespaces.push(snippets.maths.name);
-        if (config.textBlocks) namespaces.push(snippets.text.name);
+        if (config.loopsBlocks) namespaces.push(snippets.loops.nameid);
+        if (config.logicBlocks) namespaces.push(snippets.logic.nameid);
+        if (config.variablesBlocks) namespaces.push(snippets.variables.nameid);
+        if (config.mathBlocks) namespaces.push(snippets.maths.nameid);
+        if (config.textBlocks) namespaces.push(snippets.text.nameid);
+        if (config.listsBlocks) namespaces.push(snippets.arrays.nameid);
 
         return namespaces;
     }

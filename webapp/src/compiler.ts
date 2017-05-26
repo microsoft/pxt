@@ -25,13 +25,13 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 
     for (let diagnostic of diagnostics) {
         if (diagnostic.fileName) {
-            output += `${diagnostic.category == ts.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
+            output += `${diagnostic.category == ts.pxtc.DiagnosticCategory.Error ? lf("error") : diagnostic.category == ts.pxtc.DiagnosticCategory.Warning ? lf("warning") : lf("message")}: ${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
             let f = mainPkg.filterFiles(f => f.getTypeScriptName() == diagnostic.fileName)[0]
             if (f)
                 f.diagnostics.push(diagnostic)
         }
 
-        const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
+        const category = ts.pxtc.DiagnosticCategory[diagnostic.category].toLowerCase();
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
@@ -41,7 +41,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 
     let f = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
-    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error).length
+    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error).length
 }
 
 let hang = new Promise<any>(() => { })
@@ -78,6 +78,8 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 opts.justMyCode = true
             }
             if (options.trace) {
+                opts.breakpoints = true
+                opts.justMyCode = true
                 opts.trace = true;
             }
             opts.computeUsedSymbols = true
@@ -202,7 +204,11 @@ function ensureApisInfoAsync(): Promise<void> {
 
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
-        .then(() => workerOpAsync("apiSearch", { search: searchFor }));
+        .then(() => {
+            searchFor.localizedApis = cachedApis;
+            searchFor.localizedStrings = Util.getLocalizedStrings();
+            return workerOpAsync("apiSearch", { search: searchFor })
+        });
 }
 
 export function formatAsync(input: string, pos: number) {

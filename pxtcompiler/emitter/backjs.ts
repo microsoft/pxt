@@ -28,6 +28,10 @@ namespace ts.pxtc {
         "langsupp::ptrneq": "!=",
     }
 
+    export function isBuiltinSimOp(name: string) {
+        return !!U.lookup(jsOpMap, name.replace(/\./g, "::"))
+    }
+
     export function shimToJs(shimName: string) {
         shimName = shimName.replace(/::/g, ".")
         if (shimName.slice(0, 4) == "pxt.")
@@ -72,6 +76,9 @@ namespace ts.pxtc {
         jssource += "\npxsim.setupStringLiterals(" +
             JSON.stringify(U.mapMap(bin.strings, (k, v) => 1), null, 1) +
             ")\n"
+        U.iterMap(bin.hexlits, (k, v) => {
+            jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
+        })
         bin.writeFile(BINARY_JS, jssource)
     }
 
@@ -357,14 +364,14 @@ switch (step) {
                     write(`  ${frameRef}.fn = doNothing;`)
                     write(`} else {`)
                 }
-                write (`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
+                write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface[${procid.ifaceIndex}];`)
                 if (procid.mapMethod) {
                     write(`}`)
                 }
             } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
-                write (`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
+                write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             }
             write(`return actionCall(${frameRef})`)
@@ -382,6 +389,7 @@ switch (step) {
                 case BitSize.Int32: return "pxsim.pxtrt.toInt32"
                 case BitSize.UInt8: return "pxsim.pxtrt.toUInt8"
                 case BitSize.UInt16: return "pxsim.pxtrt.toUInt16"
+                case BitSize.UInt32: return "pxsim.pxtrt.toUInt32"
                 default: throw oops()
             }
         }

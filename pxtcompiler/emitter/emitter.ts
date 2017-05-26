@@ -3,7 +3,7 @@
 
 namespace ts.pxtc {
 
-    // in tagged mode, 
+    // in tagged mode,
     // * the lowest bit set means 31 bit signed integer
     // * the lowest bit clear, and second lowest set means special constant
     // "undefined" is represented by 0
@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9265
+    // next free error 9266
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -124,8 +124,15 @@ namespace ts.pxtc {
         return true
     }
 
-    function isRefDecl(def: Declaration) {
+    function isSyntheticThis(def: Declaration) {
         if ((<any>def).isThisParameter)
+            return true;
+        else
+            return false;
+    }
+
+    function isRefDecl(def: Declaration) {
+        if (isSyntheticThis(def))
             return true;
         //let tp = checker.getDeclaredTypeOfSymbol(def.symbol)
         let tp = typeOf(def)
@@ -165,6 +172,7 @@ namespace ts.pxtc {
             case "int32": return BitSize.Int32
             case "uint8": return BitSize.UInt8
             case "uint16": return BitSize.UInt16
+            case "uint32": return BitSize.UInt32
             default: return BitSize.None
         }
     }
@@ -177,6 +185,21 @@ namespace ts.pxtc {
             case BitSize.Int32: return 4
             case BitSize.UInt8: return 1
             case BitSize.UInt16: return 2
+            case BitSize.UInt32: return 4
+            default: throw oops()
+        }
+    }
+
+    export function isBitSizeSigned(b: BitSize) {
+        switch (b) {
+            case BitSize.Int8:
+            case BitSize.Int16:
+            case BitSize.Int32:
+                return true
+            case BitSize.UInt8:
+            case BitSize.UInt16:
+            case BitSize.UInt32:
+                return false
             default: throw oops()
         }
     }
@@ -185,10 +208,20 @@ namespace ts.pxtc {
         l._isRef = isRefDecl(l.def)
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
-        if (!l.isRef() && typeOf(l.def).flags & TypeFlags.Void) {
-            oops("void-typed variable, " + l.toString())
+        if (!isSyntheticThis(l.def)) {
+            let tp = typeOf(l.def)
+            if (tp.flags & TypeFlags.Void) {
+                oops("void-typed variable, " + l.toString())
+            }
+            l.bitSize = getBitSize(l.def)
+            if (l.bitSize != BitSize.None) {
+                l._debugType = (isBitSizeSigned(l.bitSize) ? "int" : "uint") + (8 * sizeOfBitSize(l.bitSize))
+            } else if (tp.flags & TypeFlags.String) {
+                l._debugType = "string"
+            } else if (tp.flags & TypeFlags.NumberLike) {
+                l._debugType = "number"
+            }
         }
-        l.bitSize = getBitSize(l.def)
         if (l.isLocal() && l.bitSize != BitSize.None) {
             l.bitSize = BitSize.None
             userError(9256, lf("bit sizes are not supported for locals and parameters"))
@@ -307,15 +340,6 @@ namespace ts.pxtc {
             default:
                 return true;
         }
-    }
-
-    export const enum BitSize {
-        None,
-        Int8,
-        UInt8,
-        Int16,
-        UInt16,
-        Int32,
     }
 
     export interface CallInfo {
@@ -603,10 +627,10 @@ namespace ts.pxtc {
         return val
     }
 
-    // this function works assuming that the program has passed the 
+    // this function works assuming that the program has passed the
     // TypeScript type checker. We are going to simply rule out some
     // cases that pass the TS checker. We only compare type
-    // pairs that the TS checker compared. 
+    // pairs that the TS checker compared.
 
     // we are checking that subType is a subtype of supType, so that
     // an assignment of the form trg <- src is safe, where supType is the
@@ -874,8 +898,6 @@ namespace ts.pxtc {
 
             hex.setupFor(opts.target, opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
-
-            opts.breakpoints = true
         }
 
         let bin = new Binary()
@@ -895,7 +917,6 @@ namespace ts.pxtc {
                 length: 0,
                 line: 0,
                 column: 0,
-                successors: null
             }]
         }
 
@@ -1748,7 +1769,18 @@ ${lbl}: .short 0xffff
         function getDecl(node: Node): Declaration {
             if (!node) return null
             let sym = checker.getSymbolAtLocation(node)
-            let decl: Declaration = sym ? sym.valueDeclaration : null
+            let decl: Declaration
+            if (sym) {
+                decl = sym.valueDeclaration
+                if (!decl && sym.declarations) {
+                    let decl0 = sym.declarations[0]
+                    if (decl0 && decl0.kind == SyntaxKind.ImportEqualsDeclaration) {
+                        sym = checker.getSymbolAtLocation((decl0 as ImportEqualsDeclaration).moduleReference)
+                        if (sym)
+                            decl = sym.valueDeclaration
+                    }
+                }
+            }
             markUsed(decl)
             return decl
         }
@@ -2043,7 +2075,7 @@ ${lbl}: .short 0xffff
                 } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                     if (node == funcExpr) {
                         // in this special base case, we have property access recv.foo
-                        // where recv is a map obejct 
+                        // where recv is a map obejct
                         let name = getName(decl)
                         let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
                         if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
@@ -2064,7 +2096,7 @@ ${lbl}: .short 0xffff
                         return res
                     } else {
                         // in this case, recv.foo represents a function/lambda
-                        // so the receiver is not needed, as we have already done 
+                        // so the receiver is not needed, as we have already done
                         // the property lookup to get the lambda
                         args.shift()
                         callInfo.args.shift()
@@ -2085,7 +2117,7 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda 
+            // otherwise we assume a lambda
             if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
@@ -2236,7 +2268,45 @@ ${lbl}: .short 0xffff
                 throw unhandled(node, lf("unknown type for new"), 9243)
             }
         }
-        function emitTaggedTemplateExpression(node: TaggedTemplateExpression) { }
+        /* Requires the following to be declared in global scope:
+            //% shim=@hex
+            function hex(lits: any, ...args: any[]): Buffer { return null }
+        */
+        function emitTaggedTemplateExpression(node: TaggedTemplateExpression): ir.Expr {
+            function isHexDigit(c: string) {
+                return /^[0-9a-f]$/i.test(c)
+            }
+            function parseHexLiteral(s: string) {
+                let res = ""
+                for (let i = 0; i < s.length; ++i) {
+                    let c = s[i]
+                    if (isHexDigit(c)) {
+                        if (isHexDigit(s[i + 1])) {
+                            res += c + s[i + 1]
+                            i++
+                        }
+                    } else if (/^[\s\.]$/.test(c))
+                        continue
+                    else
+                        throw unhandled(node, lf("invalid character in hex literal '{0}'", c), 9265)
+                }
+                let lbl = bin.emitHexLiteral(res.toLowerCase())
+                return ir.ptrlit(lbl, lbl, true)
+            }
+            let decl = getDecl(node.tag) as FunctionLikeDeclaration
+            if (!decl)
+                throw unhandled(node, lf("invalid tagged template"), 9265)
+            let attrs = parseComments(decl)
+            switch (attrs.shim) {
+                case "@hex":
+                    if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
+                        throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
+                    return parseHexLiteral((node.template as ts.LiteralExpression).text)
+
+                default:
+                    throw unhandled(node, lf("invalid shim '{0}' on tagged template", attrs.shim), 9265)
+            }
+        }
         function emitTypeAssertion(node: TypeAssertion) {
             typeCheckSrcFlowstoTrg(node.expression, node)
             return emitExpr(node.expression)
@@ -2435,6 +2505,8 @@ ${lbl}: .short 0xffff
 
             let attrs = parseComments(node)
             if (attrs.shim != null) {
+                if (attrs.shim[0] == "@")
+                    return
                 if (opts.target.isNative) {
                     hex.validateShim(getDeclName(node),
                         attrs.shim,
@@ -2873,6 +2945,8 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
+            if (!opts.breakpoints)
+                return
             let src = getSourceFileOfNode(node)
             if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
                 return;
@@ -2891,7 +2965,6 @@ ${lbl}: .short 0xffff
                 endLine: e.line,
                 column: p.character,
                 endColumn: e.character,
-                successors: null
             }
             res.breakpoints.push(brk)
             let st = ir.stmt(ir.SK.Breakpoint, null)
@@ -3145,6 +3218,7 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
             emit(node.statement)
+            emitBrk(node.expression);
             proc.emitJmpZ(l.brk, emitCondition(node.expression));
             proc.emitJmp(l.cont);
             proc.emitLblDirect(l.brk);
@@ -3154,6 +3228,7 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.cont);
+            emitBrk(node.expression);
             proc.emitJmpZ(l.brk, emitCondition(node.expression));
             emit(node.statement)
             proc.emitJmp(l.cont);
@@ -3202,8 +3277,10 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let l = getLabels(node)
             proc.emitLblDirect(l.fortop);
-            if (node.condition)
+            if (node.condition) {
+                emitBrk(node.condition);
                 proc.emitJmpZ(l.brk, emitCondition(node.condition));
+            }
             emit(node.statement)
             proc.emitLblDirect(l.cont);
             emitExprAsStmt(node.incrementor);
@@ -3668,6 +3745,8 @@ ${lbl}: .short 0xffff
                 case SK.NoSubstitutionTemplateLiteral:
                     //case SyntaxKind.RegularExpressionLiteral:
                     return emitLiteral(<LiteralExpression>node);
+                case SK.TaggedTemplateExpression:
+                    return emitTaggedTemplateExpression(<TaggedTemplateExpression>node);
                 case SK.PropertyAccessExpression:
                     return emitPropertyAccess(<PropertyAccessExpression>node);
                 case SK.BinaryExpression:
@@ -3800,8 +3879,10 @@ ${lbl}: .short 0xffff
         usedClassInfos: ClassInfo[] = [];
         sourceHash = "";
         checksumBlock: number[];
+        numStmts = 1;
 
         strings: Map<string> = {};
+        hexlits: Map<string> = {};
         doubles: Map<string> = {};
         otherLiterals: string[] = [];
         codeHelpers: Map<string> = {};
@@ -3811,6 +3892,8 @@ ${lbl}: .short 0xffff
             this.lblNo = 0
             this.otherLiterals = []
             this.strings = {}
+            this.hexlits = {}
+            this.doubles = {}
         }
 
         addProc(proc: ir.Procedure) {
@@ -3835,6 +3918,10 @@ ${lbl}: .short 0xffff
 
         emitString(s: string): string {
             return this.emitLabelled(s, this.strings, "_str")
+        }
+
+        emitHexLiteral(s: string): string {
+            return this.emitLabelled(s, this.hexlits, "_hexlit")
         }
     }
 }

@@ -250,8 +250,6 @@ namespace ts.pxtc {
                 throw oops("bad bytes " + bytes)
         }
 
-        let currentSetup: string = null;
-
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function flashCodeAlign(opts: CompileTarget) {
             return opts.flashCodeAlign || defaultPageSize
@@ -367,11 +365,10 @@ namespace ts.pxtc {
             let funs: FuncInfo[] = extInfo.functions;
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
-                let m = /^:10(....)00(.{16})/.exec(hex[i])
-
+                let m = /^:..(....)00(.{4,})/.exec(hex[i]);
                 if (!m) continue;
 
-                let s = hex[i].slice(9)
+                let s = m[2]
                 let step = opts.shortPointers ? 4 : 8
                 while (s.length >= step) {
                     let hexb = s.slice(0, step)
@@ -387,7 +384,8 @@ namespace ts.pxtc {
                 }
             }
 
-            oops();
+            if (funs.length)
+                oops("premature EOF in hex file; missing: " + funs.map(f => f.name).join(", "));
         }
 
         export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
@@ -607,18 +605,26 @@ namespace ts.pxtc {
             // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(`
 .balign 4
-${lbl}meta: .short 0xffff, ${target.taggedInts ? "1," : ""} ${s.length}
+${lbl}meta: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_STRING + "," : ""} ${s.length}
 ${lbl}: .string ${stringLiteral(s)}
 `)
         }
 
         for (let data of Object.keys(bin.doubles)) {
             let lbl = bin.doubles[data]
-            // this is REF_TAG_NUMBER in pxt.h
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short 0xffff, 32
+${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         .hex ${data}
+`)
+        }
+
+        for (let data of Object.keys(bin.hexlits)) {
+            let lbl = bin.hexlits[data]
+            bin.otherLiterals.push(`
+.balign 4
+${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}
+        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
 `)
         }
     }
@@ -773,7 +779,7 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(nativeType)
         b.emit(src);
 
-        src = b.getSource(!peepDbg);
+        src = b.getSource(!peepDbg, bin.numStmts);
 
         throwAssemblerErrors(b)
 
@@ -859,6 +865,7 @@ __flash_checksums:
 `
         }
         bin.writeFile(pxtc.BINARY_ASM, src)
+        bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target.nativeType, bin, src)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
