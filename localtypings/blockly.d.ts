@@ -341,6 +341,8 @@ declare namespace Blockly {
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
     let ALIGN_RIGHT: number;
+    
+    let VARIABLE_CATEGORY_NAME: string;
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
@@ -348,7 +350,7 @@ declare namespace Blockly {
         function mouseToSvg(e: Event, svg: Element): any;
         function isRightButton(e: Event): boolean;
         function createSvgElement(tag: string, options: any, fg: any): any;
-        function isRightButton(e: Event): boolean;
+        function noEvent(e: Event): void;
     }
 
     class FieldImage {
@@ -682,7 +684,7 @@ declare namespace Blockly {
         playAudio(name: string): void;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
-
+        registerToolboxCategoryCallback(a: string, b: Function): void;
     }
 
     class WorkspaceSvg {
