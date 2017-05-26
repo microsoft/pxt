@@ -418,7 +418,7 @@ declare namespace Blockly {
         static CHECKMARK_OVERHANG: number;
         protected value_: any;
         constructor(val: (string[] | Object)[]);
-        protected getOptions_(): (string[] | Object)[];
+        protected getOptions(): (string[] | Object)[];
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
     }
 
