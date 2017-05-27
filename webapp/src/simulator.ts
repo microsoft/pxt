@@ -2,7 +2,8 @@
 /// <reference path="../../localtypings/pxtparts.d.ts" />
 
 import * as core from "./core";
-import U = pxt.U
+import U = pxt.U;
+const lf = U.lf;
 
 interface SimulatorConfig {
     highlightStatement(stmt: pxtc.LocationInfo): void;

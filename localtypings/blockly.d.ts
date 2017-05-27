@@ -340,7 +340,12 @@ declare namespace Blockly {
     function confirm(message: string, callback: (response: boolean) => void): void;
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
+    let ALIGN_LEFT: number;
     let ALIGN_RIGHT: number;
+    
+    const OUTPUT_SHAPE_HEXAGONAL: number;
+    const OUTPUT_SHAPE_ROUND: number;
+    const OUTPUT_SHAPE_SQUARE: number;
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
@@ -428,6 +433,9 @@ declare namespace Blockly {
     class FieldGridPicker extends FieldDropdown {
         constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> ); 
     }
+    class FieldIconDropdown extends FieldDropdown {
+        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], params?: pxt.Map<string> ); 
+    }
     
     class FieldSlider extends FieldNumber {
     }
@@ -505,7 +513,8 @@ declare namespace Blockly {
         removeInput(name: string, opt_quiet?: boolean): void;
         dispose(healGap: boolean): void;
         setCollapsed(collapsed: boolean): void;
-        setColour(colour: number | string): void;
+        setColour(colour: number | string, secondaryColour?: string, tertiaryColour?: string): void;
+        setOutputShape(shape: number): void;
         setCommentText(text: string): void;
         setConnectionsHidden(hidden: boolean): void;
         setDisabled(disabled: boolean): void;
@@ -721,14 +730,25 @@ declare namespace Blockly {
             wheel?: boolean;
             maxScale?: number;
             minScale?: number;
+            startScale?: number;
             scaleSpeed?: number;
         };
         enableRealTime?: boolean;
         rtl?: boolean;
     }
 
+    interface ToolboxOptions {
+        colour?: boolean;
+        colourIcons?: boolean;
+        invertedIcons?: boolean;
+        border?: boolean;
+        inverted?: boolean;
+        invertedMultiplier?: number;
+    }
+
     interface ExtendedOptions extends Options {
-        toolboxType?: string;
+        toolboxType?: string; // TODO Remove when removed from pxt blockly fork
+        toolboxOptions?: ToolboxOptions;
     }
 
     // tslint:disable-next-line

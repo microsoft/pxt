@@ -16,6 +16,8 @@ import * as gallery from "./gallery";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
+import Util = pxt.Util;
+let lf = Util.lf;
 
 interface ProjectsState {
     searchFor?: string;

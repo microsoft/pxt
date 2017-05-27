@@ -859,6 +859,9 @@ function uploadCoreAsync(opts: UploadOptions) {
     let defaultLocale = targetConfig.appTheme.defaultLocale;
     let hexCache = path.join("built", "hexcache");
     let hexFiles: string[] = [];
+    const blocklyPrefix = targetConfig.appTheme
+        && targetConfig.appTheme.blocksVersion === 2 ?
+        "newblockly" : "blockly";
 
     if (fs.existsSync(hexCache)) {
         hexFiles = fs.readdirSync(hexCache)
@@ -880,6 +883,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/doccdn/": "@commitCdnUrl@",
         "/sim/": "@commitCdnUrl@",
         "/blb/": "@blobCdnUrl@",
+        "/blbblockly/": `@blobCdnUrl@${blocklyPrefix}/`,
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
@@ -915,6 +919,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
             "/blb/": opts.localDir,
+            "/blbblockly/": opts.localDir + blocklyPrefix + "/",
             "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
             //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),

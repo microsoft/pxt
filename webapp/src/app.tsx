@@ -526,7 +526,7 @@ export class ProjectView
             return Promise.resolve()
 
         this.stopSimulator(true);
-        pxt.blocks.cleanBlocks();
+        if (pxt.blocks.cleanBlocks) pxt.blocks.cleanBlocks();
         let logs = this.refs["logs"] as logview.LogView;
         logs.clear();
         this.setState({

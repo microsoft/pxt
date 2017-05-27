@@ -3,10 +3,10 @@
 /// <reference path="../typings/globals/jquery/index.d.ts" />
 
 namespace pxt.blocks {
-    let workspace: B.Workspace;
+    let workspace: Blockly.Workspace;
     let blocklyDiv: HTMLElement;
 
-    function align(ws: B.Workspace, emPixels: number) {
+    function align(ws: Blockly.Workspace, emPixels: number) {
         let blocks = ws.getTopBlocks(true);
         let y = 0
         blocks.forEach(block => {

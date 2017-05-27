@@ -13,6 +13,9 @@ import * as core from "./core";
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
 
+import Util = pxt.Util;
+const lf = Util.lf;
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;

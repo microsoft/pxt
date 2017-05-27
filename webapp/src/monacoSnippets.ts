@@ -1,4 +1,8 @@
 import { BuiltinCategoryDefinition } from "./monaco";
+
+import Util = pxt.Util;
+let lf = Util.lf;
+
 export const loops: BuiltinCategoryDefinition = {
     name: lf("{id:category}Loops"),
     nameid: 'loops',

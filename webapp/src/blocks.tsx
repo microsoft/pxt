@@ -12,7 +12,7 @@ import defaultToolbox from "./toolbox"
 
 import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
-let lf = Util.lf
+const lf = Util.lf
 
 let iface: pxt.worker.Iface
 
@@ -26,7 +26,7 @@ export class Editor extends srceditor.Editor {
     blockInfo: pxtc.BlocksInfo;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
-    currentCommentOrWarning: B.Comment | B.Warning;
+    currentCommentOrWarning: Blockly.Comment | Blockly.Warning;
     selectedEventGroup: string;
     currentHelpCardType: string;
     showToolboxCategories: CategoryMode = CategoryMode.Basic;
@@ -512,6 +512,7 @@ export class Editor extends srceditor.Editor {
     loadFileAsync(file: pkg.File): Promise<void> {
         this.currSource = file.content;
         this.typeScriptSaveable = false;
+
         this.setDiagnostics(file)
         this.delayLoadXml = file.content;
         this.editor.clearUndo();
@@ -525,6 +526,7 @@ export class Editor extends srceditor.Editor {
             this.filters = null;
         }
         this.currFile = file;
+
         return Promise.resolve();
     }
 
@@ -589,17 +591,18 @@ export class Editor extends srceditor.Editor {
         const toolbox = showCategories !== CategoryMode.None ?
             document.getElementById('blocklyToolboxDefinitionCategory')
             : document.getElementById('blocklyToolboxDefinitionFlyout');
+        const mediaUrl = pxt.webConfig.commitCdnUrl + `${pxt.appTarget.appTheme.blocksVersion == 2 ? 
+             "newblockly" : "blockly"}/media/`;
         const blocklyOptions: Blockly.ExtendedOptions = {
             toolbox: readOnly ? undefined : toolbox,
             scrollbars: true,
-            media: pxt.webConfig.commitCdnUrl + "blockly/media/",
+            media: mediaUrl,
             sound: true,
             trashcan: false,
             collapse: false,
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxType: pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal',
             zoom: {
                 enabled: false,
                 controls: false,
@@ -610,6 +613,16 @@ export class Editor extends srceditor.Editor {
             },
             rtl: Util.isUserLanguageRtl()
         };
+        if (pxt.appTarget.appTheme.blocksVersion == 2) {
+            blocklyOptions.toolboxOptions = {
+                border: true,
+                colour: pxt.appTarget.appTheme.coloredToolbox,
+                inverted: pxt.appTarget.appTheme.invertedToolbox
+            };
+            blocklyOptions.zoom.startScale = 0.75;
+        } else {
+            blocklyOptions.toolboxType = pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal';
+        }
         return blocklyOptions;
     }
 
