@@ -1704,16 +1704,23 @@ namespace pxt.blocks {
             oldSetSelectedItem.call(that, a);
         };
 
+        // TODO: look into porting this code over to pxt-blockly
         // Fix highlighting bug in edge
         (<any>Blockly).Flyout.prototype.addBlockListeners_ = function (root: any, block: any, rect: any) {
-            this.listeners_.push((<any>Blockly).bindEventWithChecks_(root, 'mousedown', null,
+            this.listeners_.push(Blockly.bindEventWithChecks_(root, 'mousedown', null,
                 this.blockMouseDown_(block)));
-            this.listeners_.push((<any>Blockly).bindEventWithChecks_(rect, 'mousedown', null,
+            this.listeners_.push(Blockly.bindEventWithChecks_(rect, 'mousedown', null,
                 this.blockMouseDown_(block)));
             this.listeners_.push(Blockly.bindEvent_(root, 'mouseover', block,
-                select));
+                block.addSelect));
+            this.listeners_.push(Blockly.bindEvent_(root, 'mouseout', block,
+                block.removeSelect));
             this.listeners_.push(Blockly.bindEvent_(rect, 'mouseover', block,
-                select));
+                block.addSelect));
+            this.listeners_.push(Blockly.bindEvent_(rect, 'mouseout', block,
+                block.removeSelect));
+            // pxtblockly: don't show context menu on right click
+            this.listeners_.push(Blockly.bindEventWithChecks_(root, 'contextmenu', null, Blockly.utils.noEvent));
 
             const that = this;
             function select() {
@@ -2110,6 +2117,10 @@ namespace pxt.blocks {
         if (blockColors[ns])
             return blockColors[ns] as string;
         return "";
+    }
+
+    export function initFlyouts(workspace: Blockly.Workspace) {
+        workspace.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME, Blockly.Variables.flyoutCategory);
     }
 
     function initVariables() {
