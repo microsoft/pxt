@@ -37,6 +37,10 @@ namespace pxsim {
         frameid: string;
     }
 
+    export interface SimulatorTopLevelCodeFinishedMessage extends SimulatorMessage {
+        type: "toplevelcodefinished";
+    }
+
     export interface SimulatorDocsReadyMessage extends SimulatorMessage {
     }
 
@@ -170,6 +174,7 @@ namespace pxsim {
                 .done(() => {
                     runtime.run((v) => {
                         pxsim.dumpLivePointers();
+                        Runtime.postMessage({ type: "toplevelcodefinished" })
                     })
                 })
         }

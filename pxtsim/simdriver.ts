@@ -9,6 +9,7 @@ namespace pxsim {
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
+        onTopLevelCodeEnd?: () => void;
         simUrl?: string;
     }
 
@@ -290,6 +291,7 @@ namespace pxsim {
                 case 'custom':
                     break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
+                case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 default:
                     if (msg.type == 'radiopacket') {
                         // assign rssi noisy?

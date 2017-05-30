@@ -69,6 +69,12 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             if (brk.exceptionMessage) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             }
+            pxt.editor.postHostMessageAsync({
+                type: "pxthost",
+                action: "simevent",
+                subtype: "stopped",
+                exception: brk.exceptionMessage
+            } as pxt.editor.EditorSimulatorStoppedEvent);
         },
         onTraceMessage: function (msg) {
             let brkInfo = lastCompileResult.breakpoints[msg.breakpointId]
@@ -86,6 +92,11 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             }
         },
         onDebuggerResume: function () {
+            pxt.editor.postHostMessageAsync({
+                type: "pxthost",
+                action: "simevent",
+                subtype: "resumed"
+            } as pxt.editor.EditorSimulatorEvent)
             config.highlightStatement(null)
             updateDebuggerButtons()
         },
@@ -126,6 +137,13 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                     }
                     break;
             }
+        },
+        onTopLevelCodeEnd: () => {
+            pxt.editor.postHostMessageAsync({
+                type: "pxthost",
+                action: "simevent",
+                subtype: "toplevelfinished"
+            } as pxt.editor.EditorSimulatorEvent)
         }
     };
     driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
