@@ -1268,9 +1268,8 @@ function buildCommonSim() {
             cwd: p
         })
         .then(() => {
-            if (fs.existsSync("built")) {
-                nodeutil.cpR(path.join(p, "built"), "built");
-            }
+            nodeutil.cp(path.join(p, "built", "common-sim.js"), "built");
+            nodeutil.cp(path.join(p, "built", "common-sim.d.ts"), "built");
         })
     }
     else {
