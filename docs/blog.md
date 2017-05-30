@@ -1,5 +1,10 @@
 # Microsoft MakeCode Blog
 
+## [Microbit Editor v0.12.22](/blog/microbit/v0.12.22)
+May 30th, 2017
+Release notes for the micro:bit editor...
+[Read more](/blog/microbit/v0.12.22)
+
 ## [Programming the micro:bit on the Apple II](/blog/appleII)
 April 1, 2017 by [tballmsft](https://github.com/tballmsft)
 The Microsoft MakeCode team has worked hard to bring a beginning programming experience
