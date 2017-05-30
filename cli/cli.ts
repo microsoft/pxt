@@ -1210,7 +1210,8 @@ function maxMTimeAsync(dirs: string[]) {
 export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
-    return simshimAsync()
+    return buildCommonSim()
+        .then(simshimAsync)
         .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(buildTargetCoreAsync)
         .then(() => buildFolderAsync('cmds', true))
@@ -1250,6 +1251,31 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     })
+}
+
+function buildCommonSim() {
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
+    const p = "node_modules/pxt-common-packages";
+    if (fs.existsSync(p)) {
+        pxt.log(`building common-sim...`)
+        dirsToWatch.push(p)
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["../typescript/bin/tsc"],
+            cwd: p
+        })
+        .then(() => {
+            if (fs.existsSync("built")) {
+                nodeutil.cpR(path.join(p, "built"), "built");
+            }
+        })
+    }
+    else {
+        return Promise.resolve();
+    }
 }
 
 function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
@@ -2574,9 +2600,14 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     pxt.log("checking for missing sim implementations...")
 
+    const sources = ["built/sim.d.ts", "node_modules/pxt-core/built/pxtsim.d.ts"];
+    if (fs.existsSync("built/common-sim.d.ts")) {
+        sources.push("built/common-sim.d.ts")
+    }
+
     let opts: pxtc.CompileOptions = {
         fileSystem: {},
-        sourceFiles: ["built/sim.d.ts", "node_modules/pxt-core/built/pxtsim.d.ts"],
+        sourceFiles: sources,
         target: mainPkg.getTargetOptions(),
         ast: true,
         noEmit: true,
