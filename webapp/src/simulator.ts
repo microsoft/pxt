@@ -188,6 +188,13 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         partDefinitions: pkg.computePartDefinitions(parts)
     }
 
+
+    pxt.editor.postHostMessageAsync({
+        type: "pxthost",
+        action: "simevent",
+        subtype: "started",
+    } as pxt.editor.EditorSimulatorEvent);
+
     driver.run(js, opts);
 }
 
