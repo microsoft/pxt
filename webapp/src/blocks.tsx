@@ -217,7 +217,7 @@ export class Editor extends srceditor.Editor {
                 disagreeIcon: "checkmark",
                 size: "small"
             }).then(b => {
-                callback(b == 0);
+                callback(b == 1);
             })
         };
 
