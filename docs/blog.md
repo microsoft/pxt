@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [Microbit Editor v0.12.23](/blog/microbit/v0.12.23)
+
+May 30th, 2017
+
+Release notes for the micro:bit editor...
+[Read more](/blog/microbit/v0.12.23)
+
 ## [Circuit Playground Express](/blog/adafruit-cplay-express)
 
 May 19, 2017 by [Jaqster](https://github.com/Jaqster)
