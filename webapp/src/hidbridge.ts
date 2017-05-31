@@ -104,6 +104,12 @@ class BridgeIO implements pxt.HF2.PacketIO {
         return this.initAsync()
     }
 
+    disconnectAsync() {
+        return iface.opAsync("disconnect", {
+            path: this.dev.path
+        })
+    }
+
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
         throw new Error("should use talksAsync()!")
     }

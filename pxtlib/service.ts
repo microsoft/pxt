@@ -95,6 +95,7 @@ namespace ts.pxtc {
         async?: boolean;
         promise?: boolean;
         hidden?: boolean;
+        undeletable?: boolean;
         callingConvention: ir.CallingConvention;
         block?: string; // format of the block, used at namespace level for category name
         blockId?: string; // unique id of the block
@@ -604,6 +605,8 @@ namespace ts.pxtc.service {
     export interface SearchOptions {
         subset?: pxt.Map<boolean>;
         term: string;
+        localizedApis?: ApisInfo;
+        localizedStrings?: pxt.Map<string>;
     }
 
     export interface FormatOptions {

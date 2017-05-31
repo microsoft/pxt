@@ -9,6 +9,7 @@ namespace pxsim {
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
+        onTopLevelCodeEnd?: () => void;
         simUrl?: string;
     }
 
@@ -239,7 +240,7 @@ namespace pxsim {
             this.scheduleFrameCleanup();
 
             // first frame
-            let frame = this.container.querySelector("iframe") as HTMLIFrameElement;
+            let frame = this.container.getElementsByTagName("iframe").item(0) as HTMLIFrameElement;
             // lazy allocate iframe
             if (!frame) {
                 let wrapper = this.createFrame();
@@ -290,6 +291,7 @@ namespace pxsim {
                 case 'custom':
                     break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
+                case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 default:
                     if (msg.type == 'radiopacket') {
                         // assign rssi noisy?

@@ -37,6 +37,10 @@ namespace pxsim {
         frameid: string;
     }
 
+    export interface SimulatorTopLevelCodeFinishedMessage extends SimulatorMessage {
+        type: "toplevelcodefinished";
+    }
+
     export interface SimulatorDocsReadyMessage extends SimulatorMessage {
     }
 
@@ -96,13 +100,18 @@ namespace pxsim {
         subtype: string;
     }
 
-    export interface TutorialStepLoadedMessage extends TutorialMessage {
-        subtype: "steploaded";
-        data: {[index: string]: number };
+    export interface TutorialStepInfo {
+        fullscreen?: boolean;
+        hasHint?: boolean;
+        content?: string;
+        headerContent?: string;
+    }
+
+    export interface TutorialLoadedMessage extends TutorialMessage {
+        subtype: "loaded";
         showCategories?: boolean;
-        headercontent: string;
-        content: string;
-        fullscreen: boolean;
+        stepInfo: TutorialStepInfo[];
+        toolboxSubset?: {[index: string]: number };
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
@@ -165,6 +174,7 @@ namespace pxsim {
                 .done(() => {
                     runtime.run((v) => {
                         pxsim.dumpLivePointers();
+                        Runtime.postMessage({ type: "toplevelcodefinished" })
                     })
                 })
         }

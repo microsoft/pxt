@@ -20,6 +20,7 @@ namespace pxt.HF2 {
         onEvent: (v: Uint8Array) => void;
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
+        disconnectAsync(): Promise<void>;
 
         // these are implemneted by HID-bridge
         talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
@@ -257,6 +258,10 @@ namespace pxt.HF2 {
                         throw e
                     }
                 })
+        }
+
+        disconnectAsync() {
+            return this.io.disconnectAsync()
         }
 
         error(m: string) {

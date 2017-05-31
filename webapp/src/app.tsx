@@ -486,12 +486,12 @@ export class ProjectView
         let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            tutorial.TutorialContent.notify({
-                type: "tutorial",
-                tutorial: this.state.tutorialOptions.tutorial,
-                subtype: "stepchange",
-                step: step
-            } as pxsim.TutorialStepChangeMessage)
+            let tutorialOptions = this.state.tutorialOptions;
+            tutorialOptions.tutorialStep = step;
+            this.setState({tutorialOptions: tutorialOptions});
+            const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
+            if (fullscreen) this.showTutorialHint();
+            else tutorial.TutorialContent.refresh();
         }
     }
 
@@ -500,17 +500,15 @@ export class ProjectView
             case "tutorial":
                 let t = msg as pxsim.TutorialMessage;
                 switch (t.subtype) {
-                    case 'steploaded':
-                        let tt = msg as pxsim.TutorialStepLoadedMessage;
-                        let showCategories = CategoryMode.Basic;
-                        this.editor.filterToolbox({ blocks: tt.data, defaultState: pxt.editor.FilterState.Disabled }, showCategories);
+                    case 'loaded':
+                        let tt = msg as pxsim.TutorialLoadedMessage;
+                        this.editor.filterToolbox({ blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }, CategoryMode.Basic);
                         let tutorialOptions = this.state.tutorialOptions;
                         tutorialOptions.tutorialReady = true;
-                        tutorialOptions.tutorialHeaderContent = tt.headercontent;
-                        tutorialOptions.tutorialHint = tt.content;
-                        tutorialOptions.tutorialFullscreen = tt.fullscreen;
+                        tutorialOptions.tutorialStepInfo = tt.stepInfo;
                         this.setState({ tutorialOptions: tutorialOptions });
-                        if (tt.fullscreen) this.showTutorialHint();
+                        const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
+                        if (fullscreen) this.showTutorialHint();
                         else tutorial.TutorialContent.refresh();
                         core.hideLoading();
                         break;
@@ -1566,8 +1564,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         document.title = this.state.header ? `${this.state.header.name} - ${pxt.appTarget.name}` : pxt.appTarget.name;
 
         const rootClasses = sui.cx([
-            this.state.hideEditorFloats || this.state.collapseEditorTools ? " hideEditorFloats" : '',
-            this.state.collapseEditorTools ? " collapsedEditorTools" : '',
+            (this.state.hideEditorFloats || this.state.collapseEditorTools) && !inTutorial ? " hideEditorFloats" : '',
+            this.state.collapseEditorTools && !inTutorial ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
@@ -1635,7 +1633,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
                                 {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
 
-                                {inTutorial ? <sui.Item role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial(true) } /> : undefined}
+                                {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial(true) } /> : undefined}
 
                                 {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
@@ -1643,7 +1641,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
-                                {betaUrl ? <a href={`${betaUrl}`} className="ui orange mini top right attached label">{lf("Beta")}</a> : undefined }
+                                {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel">{lf("Beta")}</a> : undefined }
                             </div>
                         </div>
                     </div> }
@@ -1925,7 +1923,8 @@ function initTheme() {
         document.body.style.direction = "rtl";
 
         // replace semantic.css with rtlsemantic.css
-        const semanticLink = document.head.querySelector('link[href$="semantic.css"]');
+        const links = Util.toArray(document.head.getElementsByTagName("link"));
+        const semanticLink = links.filter(l => Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
         const semanticHref = semanticLink.getAttribute("data-rtl");
         if (semanticHref) {
             pxt.debug(`swapping to ${semanticHref}`)

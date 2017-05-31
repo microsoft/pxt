@@ -311,27 +311,12 @@ namespace pxt.runner {
                     window.open(url, "_blank");
                 }
                 break;
-            case "tutorial":
-                let t = m as pxsim.TutorialMessage;
-                switch (t.subtype) {
-                    case "stepchange":
-                        let ts = t as pxsim.TutorialStepChangeMessage;
-                        let loading = document.getElementById('loading');
-                        let content = document.getElementById('content');
-                        $(content).hide()
-                        $(loading).show()
-                        renderTutorialAsync(content, ts.tutorial, ts.step)
-                            .finally(() => {
-                                $(loading).hide();
-                                $(content).show();
-                            });
-                        break;
-                }
-                break;
             case "localtoken":
                 let dm = m as pxsim.SimulatorDocMessage;
                 if (dm && dm.localToken) {
                     Cloud.localToken = dm.localToken;
+                    pendingLocalToken.forEach(p => p());
+                    pendingLocalToken = [];
                 }
                 break;
         }
@@ -350,7 +335,7 @@ namespace pxt.runner {
                         case "tutorial":
                             let body = $('body');
                             body.addClass('tutorial');
-                            return renderTutorialAsync(content, src, 0);
+                            return renderTutorialAsync(content, src);
                         default:
                             return renderMarkdownAsync(content, src);
                     }
@@ -544,15 +529,22 @@ ${files["main.ts"]}
         });
     }
 
-    export function renderTutorialAsync(content: HTMLElement, tutorialid: string, step: number): Promise<void> {
+    export function renderTutorialAsync(content: HTMLElement, tutorialid: string): Promise<void> {
         tutorialid = tutorialid.replace(/^\//, "");
-        return pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive)
+
+        let initPromise = Promise.resolve();
+        if (pxt.Cloud.isLocalHost()) {
+            initPromise = waitForLocalTokenAsync();
+        }
+
+        return initPromise.then(() => pxt.Cloud.downloadMarkdownAsync(tutorialid, editorLocale, pxt.Util.localizeLive))
             .then(tutorialmd => {
                 let steps = tutorialmd.split(/^###[^#].*$/gmi);
-                let stepInfo: {fullscreen: boolean}[] = [];
+                let stepInfo: editor.TutorialStepInfo[] = [];
                 tutorialmd.replace(/###[^#](.*)/g, (f, s) => {
-                    let info = {
-                        fullscreen: s.indexOf('@fullscreen') > -1
+                    let info: editor.TutorialStepInfo = {
+                        fullscreen: s.indexOf('@fullscreen') > -1,
+                        hasHint: s.indexOf('@nohint') < 0
                     }
                     stepInfo.push(info);
                     return ""
@@ -560,52 +552,56 @@ ${files["main.ts"]}
 
                 if (steps.length < 1) return;
                 let options = steps[0];
-                steps = steps.slice(1, steps.length);
+                steps = steps.slice(1, steps.length); // Remove tutorial title
 
                 // Extract toolbox block ids
-                let uptoSteps = steps.slice(0, step + 1).join();
-                uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
-
-                let header = steps[step].split('###')[0];
-
-                let regex = /```(sim|block|blocks|shuffle)\n([\s\S]*?)\n```/gmi;
-                let match: RegExpExecArray;
-                let code = '';
-                while ((match = regex.exec(uptoSteps)) != null) {
-                    code += match[2] + "\n";
-                }
-                // Render current step
-                return renderMarkdownAsync(content, steps[step], { tutorial: true })
+                let toolboxSubset: { [index: string]: number } = {};
+                return Promise.resolve()
                     .then(() => {
-                        if (code == '') return;
-                        // Convert all blocks to blocks
-                        return pxt.runner.decompileToBlocksAsync(code, {
-                            emPixels: 14,
-                            layout: pxt.blocks.BlockLayout.Flow,
-                            package: undefined
-                        }).then((r) => {
-                            let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
-                            let toolboxSubset: { [index: string]: number } = {};
-                            if (blocksxml) {
-                                let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
-                                let allblocks = headless.getAllBlocks();
-                                for (let bi = 0; bi < allblocks.length; ++bi) {
-                                    let blk = allblocks[bi];
-                                    toolboxSubset[blk.type] = 1;
+                        let uptoSteps = steps.join();
+                        uptoSteps = uptoSteps.replace(/((?!.)\s)+/g, "\n");
+
+                        let regex = /```(sim|block|blocks|shuffle|filterblocks)\n([\s\S]*?)\n```/gmi;
+                        let match: RegExpExecArray;
+                        let code = '';
+                        while ((match = regex.exec(uptoSteps)) != null) {
+                            code += match[2] + "\n";
+                        }
+                        if (code != '') {
+                            return pxt.runner.decompileToBlocksAsync(code, {
+                                emPixels: 14,
+                                layout: pxt.blocks.BlockLayout.Flow,
+                                package: undefined
+                            }).then((r) => {
+                                let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];
+                                if (blocksxml) {
+                                    let headless = pxt.blocks.loadWorkspaceXml(blocksxml);
+                                    let allblocks = headless.getAllBlocks();
+                                    for (let bi = 0; bi < allblocks.length; ++bi) {
+                                        let blk = allblocks[bi];
+                                        toolboxSubset[blk.type] = 1;
+                                    }
                                 }
-                            }
-                            if (toolboxSubset != {}) {
-                                window.parent.postMessage(<pxsim.TutorialStepLoadedMessage>{
-                                    type: "tutorial",
-                                    tutorial: tutorialid,
-                                    subtype: "steploaded",
-                                    data: toolboxSubset,
-                                    fullscreen: stepInfo[step].fullscreen,
-                                    headercontent: content.firstElementChild.firstElementChild.innerHTML,
-                                    content: content.innerHTML
-                                }, "*");
-                            }
-                        })
+                            })
+                        }
+                        return;
+                    })
+                    .then(() => renderMarkdownAsync(content, tutorialmd, { tutorial: true }))
+                    .then(() => {
+                        // Split the steps
+                        let stepcontent = content.innerHTML.split(/<h3.*\/h3>/gi);
+                        for (let i = 0; i < stepcontent.length - 1; i++) {
+                            stepInfo[i].headerContent = stepcontent[i + 1].split(/(<.*?>.*<\/.*?>)/i)[1];
+                            stepInfo[i].content = stepcontent[i + 1];
+                        }
+                        // return the result
+                        window.parent.postMessage(<pxsim.TutorialLoadedMessage>{
+                            type: "tutorial",
+                            tutorial: tutorialid,
+                            subtype: "loaded",
+                            stepInfo: stepInfo,
+                            toolboxSubset: toolboxSubset
+                        }, "*");
                     });
             })
     }
@@ -653,6 +649,17 @@ ${files["main.ts"]}
                         };
                     })
             });
+    }
+
+    let pendingLocalToken: (() => void)[] = [];
+
+    function waitForLocalTokenAsync() {
+        if (pxt.Cloud.localToken) {
+            return Promise.resolve();
+        }
+        return new Promise<void>((resolve, reject) => {
+            pendingLocalToken.push(resolve);
+        });
     }
 
     export var initCallbacks: (() => void)[] = [];

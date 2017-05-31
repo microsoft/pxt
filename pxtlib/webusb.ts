@@ -111,10 +111,18 @@ namespace pxt.usb {
             throw new USBError(U.lf("USB error on device {0} ({1})", this.dev.productName, msg))
         }
 
-        reconnectAsync() {
+        disconnectAsync() {
+            if (!this.dev) return Promise.resolve()
             this.ready = false
             return this.dev.close()
-                .then(() => Promise.delay(500))
+                .then(() => {
+                    this.dev = null
+                    return Promise.delay(500)
+                })
+        }
+
+        reconnectAsync() {
+            return this.disconnectAsync()
                 .then(requestDeviceAsync)
                 .then(dev => {
                     this.dev = dev

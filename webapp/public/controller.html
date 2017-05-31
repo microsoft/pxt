@@ -8,7 +8,7 @@
 <style type="text/css">
     @import "/blb/semantic.css";
 </style>
-<style>    
+<style>
     #logs {
         position: absolute;
         left: 0;
@@ -18,7 +18,7 @@
         border: 0;
         font-size: 0.6rem;
     }
-    
+
     #logs img {
         max-width:18rem;
     }
@@ -51,11 +51,11 @@
     let filter = false;
 
     function toggleFilters() {
-        filter = !filter;        
+        filter = !filter;
         var logs = document.getElementById("logs");
         logs.innerText += "filter: " + filter + "\n";
     }
-    
+
     var pendingMsgs = {};
     function sendMessage(action) {
         console.log('send ' + action)
@@ -87,7 +87,12 @@
         console.log('received...')
         console.log(msg)
         var logs = document.getElementById("logs");
-        logs.innerText += "< " + msg.type +(msg.action ? " " + msg.action : "" ) + "\n";
+        if (msg.action === "simevent") {
+            logs.innerText += "< " + msg.type + " " + msg.action + " (" + msg.subtype + ")\n";
+        }
+        else {
+            logs.innerText += "< " + msg.type +(msg.action ? " " + msg.action : "" ) + "\n";
+        }
         if(msg.resp)
             console.log(JSON.stringify(msg.resp, null, 2))
 

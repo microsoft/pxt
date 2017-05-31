@@ -26,9 +26,39 @@ function loadText(filename) {
     return fs.readFileSync(filename, "utf8");
 }
 
+function setupTest(taskName, testFolder, testFile) {
+    task(taskName, ['built/tests/'+ testFolder + '/runner.js'], { async: true }, function () {
+        const args = " built/tests/" + testFolder + "/runner.js --reporter dot";
+        if (os.platform() === "win32") {
+            cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
+        }
+        else {
+            cmdIn(this, ".", "./node_modules/.bin/mocha" + args)
+        }
+    })
+
+    file("built/tests/" + testFolder + "/" + testFile, ['default'], { async: true }, function () {
+        cmdIn(this, "tests/" + testFolder, 'node ../../node_modules/typescript/bin/tsc')
+    });
+
+    ju.catFiles('built/tests/' + testFolder + '/runner.js', [
+        "node_modules/typescript/lib/typescript.js",
+        "built/pxtlib.js",
+        "built/pxtcompiler.js",
+        "built/pxtsim.js",
+        "built/tests/" + testFolder + "/" + testFile,
+    ],
+        `
+    "use strict";
+    // make sure TypeScript doesn't overwrite our module.exports
+    global.savedModuleExports = module.exports;
+    module.exports = null;
+    `, ['built/pxt-common.json']);
+}
+
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testlang', 'testlangfloat', 'testdecompiler', 'karma'])
+task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
 
 task('clean', function () {
     expand(["built"]).forEach(f => {
@@ -41,25 +71,11 @@ task('clean', function () {
     jake.rmRf("built")
 })
 
-task('testfmt', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "libs/format-test", 'node ../../built/pxt.js format -t')
-})
+setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
+setupTest('testlang', 'compile-test', 'compilerunner.js')
+setupTest('testerr', 'errors-test', 'errorrunner.js')
+setupTest('testfmt', 'format-test', 'formatrunner.js')
 
-task('testerr', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "test-errors", 'node ../built/pxt.js testdir')
-})
-
-task('testlang', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js run')
-})
-
-task('testlangfloat', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "libs/lang-test0", 'node ../../built/pxt.js runfloat')
-})
-
-task('testdecompiler', ['built/pxt.js'], { async: true }, function () {
-    cmdIn(this, "tests/decompile-test", 'node ../../built/pxt.js testdecompiler .')
-})
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
@@ -334,6 +350,9 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     // Remove certain actions from the context menu
     monacoeditor = monacoeditor.replace(/((GoToDefinitionAction|'editor.action.(changeAll|quickOutline|previewDeclaration|referenceSearch.trigger)')[.\s\S]*?)(menuOpts:[.\s\S]*?})/gi, '$1')
     monacoeditor = monacoeditor.replace(/.*define\(\"vs\/language\/typescript\/src\/monaco.contribution\",.*/gi, `${monacotypescriptcontribution}`)
+    // Fix for android keyboard issues:
+    monacoeditor = monacoeditor.replace(/this\.textArea\.setAttribute\('autocorrect', 'off'\);/gi,
+                `this.textArea.setAttribute('autocorrect', 'off');\n            this.textArea.setAttribute('autocomplete', 'off');`)
     fs.writeFileSync("built/web/vs/editor/editor.main.js", monacoeditor)
 
     jake.mkdirP("webapp/public/vs")

@@ -341,13 +341,16 @@ declare namespace Blockly {
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
     let ALIGN_RIGHT: number;
+    
+    let VARIABLE_CATEGORY_NAME: string;
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
         function mouseToSvg(e: Event, svg: Element): any;
-
+        function isRightButton(e: Event): boolean;
         function createSvgElement(tag: string, options: any, fg: any): any;
+        function noEvent(e: Event): void;
     }
 
     class FieldImage {
@@ -415,7 +418,7 @@ declare namespace Blockly {
         static CHECKMARK_OVERHANG: number;
         protected value_: any;
         constructor(val: (string[] | Object)[]);
-        protected getOptions_(): (string[] | Object)[];
+        protected getOptions(): (string[] | Object)[];
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
     }
 
@@ -509,6 +512,7 @@ declare namespace Blockly {
         setConnectionsHidden(hidden: boolean): void;
         setDisabled(disabled: boolean): void;
         setEditable(editable: boolean): void;
+        setDeletable(deletable: boolean): void;
         setFieldValue(newValue: string, name: string): void;
         setHelpUrl(url: string | Function): void;
         setInputsInline(newBoolean: boolean): void;
@@ -680,7 +684,7 @@ declare namespace Blockly {
         playAudio(name: string): void;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
-
+        registerToolboxCategoryCallback(a: string, b: Function): void;
     }
 
     class WorkspaceSvg {
@@ -725,8 +729,16 @@ declare namespace Blockly {
         rtl?: boolean;
     }
 
+    interface ToolboxOptions {
+        colour?: boolean;
+        border?: boolean;
+        inverted?: boolean;
+        invertedMultiplier?: number;
+        disabledOpacity?: number;
+    }
+
     interface ExtendedOptions extends Options {
-        toolboxType?: string;
+        toolboxOptions?: ToolboxOptions;
     }
 
     // tslint:disable-next-line

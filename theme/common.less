@@ -332,6 +332,11 @@ div.simframe > iframe {
     margin-left: -2px;
 }
 
+/* Beta */
+.ui.label.betalabel {
+    padding: 0.3em;
+}
+
 /*******************************
              Docs
 *******************************/
@@ -347,24 +352,6 @@ div.simframe > iframe {
 #docs span.block {
     display:inline-block;
     vertical-align: middle;
-}
-
-span.docs.inlinebutton {
-    padding: 0.15rem 0.3rem;
-    border-radius: 0.3rem;
-    white-space: nowrap;
-    background-color: @primaryColor;
-    border: 1px solid darken(@primaryColor, 20%);
-    color: @white;
-}
-
-span.docs.inlineblock {
-    padding: 0.15rem 0.3rem;
-    border-radius: 0.4rem 0 0 0.4rem;
-    white-space: nowrap;
-    background-color: darken(@orange, 10%);
-    border: 1px solid @orange;
-    color: @white;
 }
 
 /*******************************
@@ -404,6 +391,10 @@ span.docs.inlineblock {
 
 .blocklyGridPickerTooltip {
     z-index: 106;
+}
+
+.blocklyGridPickerPadder {
+    box-shadow: 0px 0px 8px 1px;
 }
 
 /* Set Z index of the Blockly scrollbars to be beneath the BlocklyWidgetDiv */
@@ -469,6 +460,10 @@ span.blocklyTreeLabel {
 /* Opacity of blockly flyout background */
 .blocklyFlyoutBackground {
     fill-opacity: 0.9 !important;
+}
+
+div.blocklyTreeRow, span.blocklyTreeLabel {
+    cursor: pointer;
 }
 
 /* This horrendous selector and the next are for subcategories in the Blockly toolbox */

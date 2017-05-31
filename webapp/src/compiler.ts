@@ -204,7 +204,11 @@ function ensureApisInfoAsync(): Promise<void> {
 
 export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
     return ensureApisInfoAsync()
-        .then(() => workerOpAsync("apiSearch", { search: searchFor }));
+        .then(() => {
+            searchFor.localizedApis = cachedApis;
+            searchFor.localizedStrings = Util.getLocalizedStrings();
+            return workerOpAsync("apiSearch", { search: searchFor })
+        });
 }
 
 export function formatAsync(input: string, pos: number) {

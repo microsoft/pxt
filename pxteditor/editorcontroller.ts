@@ -52,6 +52,7 @@ namespace pxt.editor {
         | "workspacesave" // EditorWorkspaceSaveRequest
 
         | "event"
+        | "simevent"
         ;
     }
 
@@ -96,7 +97,7 @@ namespace pxt.editor {
 
     export interface EditorWorkspaceSyncRequest extends EditorMessageRequest {
         /**
-         * Synching projects from host into 
+         * Synching projects from host into
          */
         action: "workspacesync" | "workspacereset";
     }
@@ -143,16 +144,26 @@ namespace pxt.editor {
         data: string;
     }
 
+    export interface EditorSimulatorEvent extends EditorMessageRequest {
+        action: "simevent";
+        subtype: "toplevelfinished" | "started" | "stopped" | "resumed"
+    }
+
+    export interface EditorSimulatorStoppedEvent extends EditorSimulatorEvent {
+        subtype: "stopped";
+        exception?: string;
+    }
+
     const pendingRequests: pxt.Map<{
         resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
         reject: (err: any) => void;
     }> = {};
     /**
-     * Binds incoming window messages to the project view. 
+     * Binds incoming window messages to the project view.
      * Requires the "allowParentController" flag in the pxtarget.json/appTheme object.
-     * 
-     * When the project view receives a request (EditorMessageRequest), 
-     * it starts the command and returns the result upon completion. 
+     *
+     * When the project view receives a request (EditorMessageRequest),
+     * it starts the command and returns the result upon completion.
      * The response (EditorMessageResponse) contains the request id and result.
      * Some commands may be async, use the ``id`` field to correlate to the original request.
      */

@@ -311,6 +311,13 @@ export function cpR(src: string, dst: string, maxDepth = 8) {
     }
 }
 
+export function cp(srcFile: string, destDirectory: string) {
+    mkdirP(destDirectory);
+    let dest = path.resolve(destDirectory, path.basename(srcFile));
+    let buf = fs.readFileSync(path.resolve(srcFile));
+    fs.writeFileSync(dest, buf);
+}
+
 export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false): string[] {
     let res: string[] = []
     if (allowMissing && !fs.existsSync(top)) return res

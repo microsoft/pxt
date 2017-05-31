@@ -77,15 +77,20 @@ namespace pxt.editor {
         Disabled = 2
     }
 
+    export interface TutorialStepInfo {
+        fullscreen?: boolean;
+        hasHint?: boolean;
+        content?: string;
+        headerContent?: string;
+    }
+
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
         tutorialSteps?: string[]; // tutorial steps
+        tutorialStepInfo?: TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
-        tutorialHeaderContent?: string; // current tutorial header content
-        tutorialHint?: string; // current tutorial content, shown in hints
-        tutorialFullscreen?: boolean; // full screen mode of a tutorial step
     }
 
     export interface IProjectView {

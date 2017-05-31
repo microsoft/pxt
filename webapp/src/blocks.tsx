@@ -83,14 +83,22 @@ export class Editor extends srceditor.Editor {
                     this.blockInfo = bi;
                     let showSearch = true;
                     let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
+
+                    // Search needs a toolbox with ALL blocks
+                    let tbAll: Element;
+                    if (this.showToolboxCategories !== CategoryMode.All) {
+                        tbAll = pxt.blocks.initBlocks(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+                    }
+
                     let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
                     this.updateToolbox(tb, this.showToolboxCategories);
                     if (this.showToolboxCategories !== CategoryMode.None && showSearch) {
-                        pxt.blocks.initSearch(this.editor, tb,
+                        pxt.blocks.initSearch(this.editor, tb, tbAll || tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
                     }
+                    pxt.blocks.initFlyouts(this.editor);
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -209,7 +217,7 @@ export class Editor extends srceditor.Editor {
                 disagreeIcon: "checkmark",
                 size: "small"
             }).then(b => {
-                callback(b == 0);
+                callback(b == 1);
             })
         };
 
@@ -592,7 +600,10 @@ export class Editor extends srceditor.Editor {
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxType: pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal',
+            toolboxOptions: {
+                colour: pxt.appTarget.appTheme.coloredToolbox,
+                inverted: pxt.appTarget.appTheme.invertedToolbox
+            },
             zoom: {
                 enabled: false,
                 controls: false,
@@ -622,10 +633,16 @@ export class Editor extends srceditor.Editor {
         if (!this.blockInfo) return undefined;
 
         let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
+        let tbAll: Element;
+
+        if (this.showToolboxCategories !== CategoryMode.All) {
+            tbAll = pxt.blocks.createToolbox(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+        }
         let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
         this.updateToolbox(tb, this.showToolboxCategories);
 
         pxt.blocks.cachedSearchTb = tb;
+        pxt.blocks.cachedSearchTbAll = tbAll || tb;
         return tb;
     }
 
