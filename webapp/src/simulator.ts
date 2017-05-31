@@ -69,12 +69,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             if (brk.exceptionMessage) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             }
-            pxt.editor.postHostMessageAsync({
-                type: "pxthost",
-                action: "simevent",
-                subtype: "stopped",
-                exception: brk.exceptionMessage
-            } as pxt.editor.EditorSimulatorStoppedEvent);
+            postSimEditorEvent("stopped", brk.exceptionMessage);
         },
         onTraceMessage: function (msg) {
             let brkInfo = lastCompileResult.breakpoints[msg.breakpointId]
@@ -92,11 +87,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             }
         },
         onDebuggerResume: function () {
-            pxt.editor.postHostMessageAsync({
-                type: "pxthost",
-                action: "simevent",
-                subtype: "resumed"
-            } as pxt.editor.EditorSimulatorEvent)
+            postSimEditorEvent("resumed");
             config.highlightStatement(null)
             updateDebuggerButtons()
         },
@@ -139,16 +130,23 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             }
         },
         onTopLevelCodeEnd: () => {
-            pxt.editor.postHostMessageAsync({
-                type: "pxthost",
-                action: "simevent",
-                subtype: "toplevelfinished"
-            } as pxt.editor.EditorSimulatorEvent)
+            postSimEditorEvent("toplevelfinished");
         }
     };
     driver = new pxsim.SimulatorDriver($('#simulators')[0], options);
     config = cfg
     updateDebuggerButtons();
+}
+
+function postSimEditorEvent(subtype: string, exception?: string) {
+    if (pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame()) {
+        pxt.editor.postHostMessageAsync({
+            type: "pxthost",
+            action: "simevent",
+            subtype: subtype as any,
+            exception: exception
+        } as pxt.editor.EditorSimulatorStoppedEvent);
+    }
 }
 
 export function setState(editor: string, tutMode?: boolean) {
@@ -187,13 +185,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
         partDefinitions: pkg.computePartDefinitions(parts)
     }
-
-
-    pxt.editor.postHostMessageAsync({
-        type: "pxthost",
-        action: "simevent",
-        subtype: "started",
-    } as pxt.editor.EditorSimulatorEvent);
+    postSimEditorEvent("started");
 
     driver.run(js, opts);
 }
