@@ -1210,9 +1210,9 @@ function maxMTimeAsync(dirs: string[]) {
 export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
-    return buildCommonSim()
-        .then(simshimAsync)
-        .then(() => buildFolderAsync('sim', true, 'sim'))
+    copyCommonSim();
+    return simshimAsync()
+        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(buildTargetCoreAsync)
         .then(() => buildFolderAsync('cmds', true))
         .then(buildSemanticUIAsync)
@@ -1253,27 +1253,12 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     })
 }
 
-function buildCommonSim() {
-    if (!fs.existsSync("node_modules/typescript")) {
-        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
-    }
-
-    const p = "node_modules/pxt-common-packages";
+function copyCommonSim() {
+    const p = "node_modules/pxt-common-packages/built";
     if (fs.existsSync(p)) {
-        pxt.log(`building common-sim...`)
-        dirsToWatch.push(p)
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: ["../typescript/bin/tsc"],
-            cwd: p
-        })
-        .then(() => {
-            nodeutil.cp(path.join(p, "built", "common-sim.js"), "built");
-            nodeutil.cp(path.join(p, "built", "common-sim.d.ts"), "built");
-        })
-    }
-    else {
-        return Promise.resolve();
+        pxt.log(`copying common-sim...`)
+        nodeutil.cp(path.join(p, "common-sim.js"), "built");
+        nodeutil.cp(path.join(p, "common-sim.d.ts"), "built");
     }
 }
 
