@@ -141,7 +141,8 @@ export function initCommandsAsync(): Promise<void> {
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // window app
-        pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
+        pxt.commands.deployCoreAsync = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 
+            ? pxt.winrt.hidDeployCoreAsync : pxt.winrt.driveDeployCoreAsync;
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;

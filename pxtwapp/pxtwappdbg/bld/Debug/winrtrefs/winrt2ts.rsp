@@ -12,6 +12,6 @@ C:\Program Files (x86)\Windows Kits\10\References\Windows.Services.Store.StoreCo
 C:\Program Files (x86)\Windows Kits\10\References\Windows.Networking.Connectivity.WwanContract\1.0.0.0\Windows.Networking.Connectivity.WwanContract.winmd
 -emitAnyForUnresolvedTypes
 -outFilePath
-c:\gh\pxt\pxtwapp\pxtwapp\bld\debug\winrtrefs\winrtrefs-temp.d.ts
+c:\gh\pxt\pxtwapp\pxtwappdbg\bld\debug\winrtrefs\winrtrefs-temp.d.ts
 -emitDocumentation
 -suppressWarningsForUnresolvedWindowsTypes

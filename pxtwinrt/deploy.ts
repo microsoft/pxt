@@ -1,8 +1,8 @@
 /// <reference path="../typings/globals/bluebird/index.d.ts"/>
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
+/// <reference path="./winrtrefs.d.ts"/>
 /// <reference path="../built/pxtlib.d.ts"/>
 namespace pxt.winrt {
-    export function deployCoreAsync(res: pxtc.CompileResult): Promise<void> {
+    export function driveDeployCoreAsync(res: pxtc.CompileResult): Promise<void> {
 
         const drives = pxt.appTarget.compile.deployDrives;
         pxt.Util.assert(!!drives);
