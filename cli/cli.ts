@@ -1210,8 +1210,22 @@ function maxMTimeAsync(dirs: string[]) {
 export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
-    copyCommonSim();
-    return simshimAsync()
+
+    let initPromise: Promise<void>;
+
+    const commonPackageDir = path.resolve("node_modules/pxt-common-packages")
+
+    // Make sure to build common sim in case of a local clean. This will do nothing for
+    // targets without pxt-common-packages installed.
+    if (!inCommonPkg("built/common-sim.js") || !inCommonPkg("built/common-sim.d.ts")) {
+        initPromise = buildCommonSimAsync();
+    }
+    else  {
+        initPromise = Promise.resolve();
+    }
+
+    return initPromise
+        .then(() => { copyCommonSim(); return simshimAsync() })
         .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(buildTargetCoreAsync)
         .then(() => buildFolderAsync('cmds', true))
@@ -1227,6 +1241,10 @@ export function buildTargetAsync(): Promise<void> {
             return Promise.resolve();
         })
         .then(() => buildFolderAsync('server', true, 'server'))
+
+    function inCommonPkg(p: string) {
+        return fs.existsSync(path.join(commonPackageDir, p));
+    }
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
@@ -1752,14 +1770,33 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         return Promise.resolve()
     }
 
+    const hasCommonPackages = fs.existsSync(path.resolve("node_modules/pxt-common-packages"));
+
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
+        .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => buildTargetDocsAsync(false, true).then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
-        .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
+        .then(() => {
+            const toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
+            if (hasCommonPackages) {
+                toWatch.push(path.resolve("node_modules/pxt-common-packages"))
+            }
+            return toWatch;
+        }));
+}
+
+function buildCommonSimAsync() {
+    const simPath = path.resolve("node_modules/pxt-common-packages/sim");
+    if (fs.existsSync(simPath)) {
+        return buildFolderAsync(simPath)
+    }
+    else {
+        return Promise.resolve();
+    }
 }
 
 function renderDocs(builtPackaged: string, localDir: string) {
