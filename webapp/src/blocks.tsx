@@ -194,10 +194,6 @@ export class Editor extends srceditor.Editor {
         }
     }
 
-    private translateBlocks(x: number, y: number) {
-
-    }
-
     private initPrompts() {
         // Overriding blockly prompts to use semantic modals
 
