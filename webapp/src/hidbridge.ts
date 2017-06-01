@@ -66,6 +66,7 @@ export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
     init()
     let b = new BridgeIO()
     return b.initAsync()
+        .then(() => b);
 }
 
 class BridgeIO implements pxt.HF2.PacketIO {
@@ -100,11 +101,11 @@ class BridgeIO implements pxt.HF2.PacketIO {
         throw new HIDError(U.lf("USB/HID error on device {0} ({1})", this.dev.product, msg))
     }
 
-    reconnectAsync() {
+    reconnectAsync(): Promise<void> {
         return this.initAsync()
     }
 
-    disconnectAsync() {
+    disconnectAsync(): Promise<void> {
         return iface.opAsync("disconnect", {
             path: this.dev.path
         })
@@ -122,7 +123,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
         })
     }
 
-    initAsync() {
+    initAsync(): Promise<void> {
         return iface.opAsync("list", {})
             .then((devs: any) => {
                 let d0 = (devs.devices as HidDevice[]).filter(d => (d.release & 0xff00) == 0x4200)[0]
