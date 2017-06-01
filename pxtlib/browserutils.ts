@@ -1,4 +1,8 @@
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
+declare namespace Windows {
+    namespace Storage {
+        class FileIO {}
+    }
+}
 
 namespace pxt.BrowserUtils {
     export function isWinRT(): boolean {

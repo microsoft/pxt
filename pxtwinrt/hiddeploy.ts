@@ -3,6 +3,11 @@
 /// <reference path="../built/pxtlib.d.ts"/>
 namespace pxt.winrt {
     export function hidDeployCoreAsync(res: pxtc.CompileResult): Promise<void> {
-        return Promise.resolve();
+        return pxt.winrt.promisify(Windows.Devices.Enumeration.DeviceInformation.findAllAsync()
+            .then(devices => {
+                devices.forEach(device => {
+                    console.log(`device ${device.name}`)
+                })
+            }).then(() => {}));
     }
 }
