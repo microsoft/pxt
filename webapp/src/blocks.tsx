@@ -168,16 +168,16 @@ export class Editor extends srceditor.Editor {
     }
 
     private initLayout() {
-        let minX = 0;
-        let minY = 0;
+        let minX: number;
+        let minY: number;
         let needsLayout = false;
 
         this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
-            if (!minX || tp.x < minX) {
+            if (minX === undefined || tp.x < minX) {
                 minX = tp.x;
             }
-            if (!minY || tp.y < minY) {
+            if (minY === undefined || tp.y < minY) {
                 minY = tp.y;
             }
 
