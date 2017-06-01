@@ -168,13 +168,30 @@ export class Editor extends srceditor.Editor {
     }
 
     private initLayout() {
-        // layout on first load if no data info
-        const needsLayout = this.editor.getTopBlocks(false).some(b => {
+        let minX = 0;
+        let minY = 0;
+        let needsLayout = false;
+
+        this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
-            return b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0
+            if (!minX || tp.x < minX) {
+                minX = tp.x;
+            }
+            if (!minY || tp.y < minY) {
+                minY = tp.y;
+            }
+
+            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0);
         });
-        if (needsLayout)
+
+        if (needsLayout) {
+            // If the blocks file has no location info (e.g. it's from the decompiler), format the code
             pxt.blocks.layout.flow(this.editor);
+        }
+        else {
+            // Otherwise translate the blocks so that they are positioned on the top left
+            this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY))
+        }
     }
 
     private initPrompts() {
