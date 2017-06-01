@@ -392,6 +392,7 @@ declare namespace Blockly {
         getScaledBBox_(): goog.math.Size;
         setValue(newValue: string): void;
         getValue(): string;
+        isCurrentlyEditable(): boolean;
     }
 
     class FieldVariable extends Field {
