@@ -17,15 +17,16 @@ namespace pxt.winrt {
         }
 
         reconnectAsync(): Promise<void> {
-            return this.initAsync()
+            return this.disconnectAsync()
+                .then(() => this.initAsync());
         }
 
         disconnectAsync(): Promise<void> {
             if (this.dev) {
                 this.dev.removeEventListener('inputreportreceived', this.onInputReportReceived);
                 this.dev.close();
+                delete this.dev;
             }
-            delete this.dev;
             return Promise.resolve();
         }
 
