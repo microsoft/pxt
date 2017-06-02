@@ -55,20 +55,20 @@ namespace pxt.winrt {
                     pxt.debug(`hid enumerate ${devices.length} devices`)
                     const device = devices[0];
                     if (device) {
-                        pxt.debug(`hid connect to ${device.id}`);
-                        return Windows.Devices.HumanInterfaceDevice.HidDevice.fromIdAsync(device.id, Windows.Storage.FileAccessMode.readWrite);
+                        pxt.debug(`hid connect to ${device.name} (${device.id})`);
+                        return Windows.Devices.HumanInterfaceDevice.HidDevice.fromIdAsync(device.id, Windows.Storage.FileAccessMode.readWrite)
+                            .then((r: Windows.Devices.HumanInterfaceDevice.HidDevice) => {
+                                this.dev = r;
+                                if (this.dev) {
+                                    pxt.debug(`hid device version ${this.dev.version}`);
+                                    this.dev.addEventListener("inputreportreceived", this.onInputReportReceived)
+                                } else {
+                                    pxt.debug(`no hid device found`);
+                                }
+                            });
                     }
-                    else return Promise.resolve(undefined);
-                })
-                .then((r: Windows.Devices.HumanInterfaceDevice.HidDevice) => {
-                    this.dev = r;
-                    if (this.dev) {
-                        pxt.debug(`hid device version ${this.dev.version}`);
-                        this.dev.addEventListener("inputreportreceived", this.onInputReportReceived)
-                    } else {
-                        pxt.debug(`no hid device found`);
-                    }
-                }));
+                    else return Promise.resolve();
+                }))
         }
 
         onInputReportReceived(e: Windows.Devices.HumanInterfaceDevice.HidInputReportReceivedEventArgs): void {
