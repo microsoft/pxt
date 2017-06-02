@@ -2094,12 +2094,12 @@ $(document).ready(() => {
         return;
     }
 
-    appcache.init();
     initLogin();
+    const hash = parseHash();
+    appcache.init(hash);
 
     pxt.docs.requireMarked = () => require("marked");
     const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
-    const hash = parseHash();
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
