@@ -159,7 +159,7 @@ namespace pxt.HF2 {
     }
 
     function log(msg: string) {
-        console.log("HF2: " + msg)
+        pxt.debug("HF2: " + msg)
     }
 
     export class Wrapper {
@@ -246,6 +246,7 @@ namespace pxt.HF2 {
         reconnectAsync(first = false): Promise<void> {
             this.resetState()
             if (first) return this.initAsync()
+            log(`reconnect`);
             return this.io.reconnectAsync()
                 .then(() => this.initAsync())
                 .catch(e => {
@@ -261,6 +262,7 @@ namespace pxt.HF2 {
         }
 
         disconnectAsync() {
+            log(`disconnect`);
             return this.io.disconnectAsync()
         }
 
@@ -362,6 +364,7 @@ namespace pxt.HF2 {
         }
 
         reflashAsync(blocks: pxtc.UF2.Block[]) {
+            log(`reflash`)
             return this.flashAsync(blocks)
                 .then(() => Promise.delay(100))
                 .then(() => this.reconnectAsync())
@@ -450,7 +453,7 @@ namespace pxt.HF2 {
                         Version: m[1],
                         Features: m[2],
                     }
-                    log("Board-ID: " + this.info.BoardID)
+                    log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
                 .then(() => {
                     this.reconnectTries = 0
