@@ -7,7 +7,7 @@ namespace pxt.winrt {
         onData = (v: Uint8Array) => { };
         onEvent = (v: Uint8Array) => { };
         onError = (e: Error) => { };
-        public devs: Windows.Devices.HumanInterfaceDevice.HidDevice[] = [];
+        public dev: Windows.Devices.HumanInterfaceDevice.HidDevice;
 
         constructor() {
         }
@@ -21,44 +21,65 @@ namespace pxt.winrt {
         }
 
         disconnectAsync(): Promise<void> {
-            this.devs.forEach(dev => dev.close());
-            this.devs = [];
+            if (this.dev) {
+                this.dev.removeEventListener('inputreportreceived', this.onInputReportReceived);
+                this.dev.close();
+            }
+            delete this.dev;
             return Promise.resolve();
         }
 
         sendPacketAsync(pkt: Uint8Array): Promise<void> {
-            // it's just silly that there's no way to pass a uint8array
-            // oh well
+            if (!this.dev) return Promise.resolve();
+
             const ar: number[] = [0];
             for (let i = 0; i < 64; ++i)
                 ar.push(pkt[i] || 0);
             const dataWriter = new Windows.Storage.Streams.DataWriter();
             dataWriter.writeBytes(ar);
             const buffer = dataWriter.detachBuffer();
+            const report = this.dev.createOutputReport(0);
+            report.data = buffer;
             return pxt.winrt.promisify(
-                Promise.all(this.devs.map(dev => {
-                    const report = dev.createOutputReport(0);
-                    report.data = buffer;
-                    return dev.sendOutputReportAsync(report)
-                        .then(value => {
-                            console.log(`hf2: ${value} bytes written`)
-                        })
-                })).then(() => { }));
+                this.dev.sendOutputReportAsync(report)
+                    .then(value => {
+                        pxt.debug(`hf2: ${value} bytes written`)
+                    }));
         }
 
         initAsync(): Promise<void> {
-            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xff00, 0x0001, 0x239a, 0x0019);
+            Util.assert(!this.dev, "HID interface not properly reseted");
+            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xff97, 0x0001);
             return pxt.winrt.promisify(Windows.Devices.Enumeration.DeviceInformation.findAllAsync(selector, null)
                 .then(devices => {
-                    const hdevs = devices.map(device =>
-                        Windows.Devices.HumanInterfaceDevice.HidDevice.fromIdAsync(device.id, Windows.Storage.FileAccessMode.readWrite)
-                    );
-                    return Promise.all(hdevs);
+                    pxt.debug(`hid enumerate ${devices.length} devices`)
+                    const device = devices[0];
+                    if (device) {
+                        pxt.debug(`hid connect to ${device.id}`);
+                        return Windows.Devices.HumanInterfaceDevice.HidDevice.fromIdAsync(device.id, Windows.Storage.FileAccessMode.readWrite);
+                    }
+                    else return Promise.resolve(undefined);
                 })
-                .then(devices => {
-                    this.devs = devices;
-                    this.devs.forEach(device => console.log(`hid device version ${device.version}`));
+                .then((r: Windows.Devices.HumanInterfaceDevice.HidDevice) => {
+                    this.dev = r;
+                    if (this.dev) {
+                        pxt.debug(`hid device version ${this.dev.version}`);
+                        this.dev.addEventListener("inputreportreceived", this.onInputReportReceived)
+                    } else {
+                        pxt.debug(`no hid device found`);
+                    }
                 }));
+        }
+
+        onInputReportReceived(e: Windows.Devices.HumanInterfaceDevice.HidInputReportReceivedEventArgs): void {
+            pxt.debug(`input report`)
+            const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
+            const ar: number[] = [];
+            dr.readBytes(ar);
+            const uar = new Uint8Array(ar.length);
+            for (let i = 0; i < ar.length; ++i)
+                uar[i] = ar[i];
+            this.onData(uar);
         }
     }
 

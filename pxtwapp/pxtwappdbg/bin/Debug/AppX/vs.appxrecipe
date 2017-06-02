@@ -20,7 +20,7 @@
     <WindowsSdkPath>
     </WindowsSdkPath>
     <LayoutDir>C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\AppX</LayoutDir>
-    <RegisteredManifestChecksum>256C03FEE10846DEC580113AF6CA36B5A6928FEE4E531D4CB03E43E2F4E5E3D3</RegisteredManifestChecksum>
+    <RegisteredManifestChecksum>3BD2C6401497FA398DAF027E792BC8DA12A2075A55E5471EC25D3166684ED137</RegisteredManifestChecksum>
     <RegisteredPackageMoniker>d6f74a43-358f-4081-88bc-7b2242586346_1.0.0.0_neutral__xnsf0qvfx7rsy</RegisteredPackageMoniker>
     <RegisteredUserModeAppID>d6f74a43-358f-4081-88bc-7b2242586346_xnsf0qvfx7rsy!App</RegisteredUserModeAppID>
     <RegisteredPackageID>d6f74a43-358f-4081-88bc-7b2242586346</RegisteredPackageID>
@@ -32,7 +32,7 @@
     <AppXManifest Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-06-02T07:36:47.998</Modified>
+      <Modified>2017-06-02T14:08:35.557</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
@@ -85,7 +85,7 @@
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\ReverseMap\resources.pri">
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-06-02T07:36:47.820</Modified>
+      <Modified>2017-06-02T14:08:35.325</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
