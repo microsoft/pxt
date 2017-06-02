@@ -1,13 +1,4 @@
-declare namespace Windows {
-    namespace Storage {
-        class FileIO {}
-    }
-}
-
 namespace pxt.BrowserUtils {
-    export function isWinRT(): boolean {
-        return typeof Windows !== "undefined";
-    }
 
     export function isIFrame(): boolean {
         try {

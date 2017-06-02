@@ -35,7 +35,7 @@ namespace pxt.winrt {
         }
 
         error(msg: string) {
-            throw new Error(U.lf("USB/HID error on device {0} ({1})", this.dev.productId, msg))
+            throw new Error(U.lf("USB/HID error ({0})", msg))
         }
 
         reconnectAsync(): Promise<void> {
@@ -63,16 +63,20 @@ namespace pxt.winrt {
         }
 
         initAsync(): Promise<void> {
-            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xff42, 0x0042);
-            const opts: Windows.Foundation.Collections.IIterable<string> = {
-                first: () => null
-            };
-            return pxt.winrt.promisify(Windows.Devices.Enumeration.DeviceInformation.findAllAsync(selector, opts)
-                .then(devices => Promise.all(devices.map(device => Windows.Devices.HumanInterfaceDevice.HidDevice.fromIdAsync(device.id
-                    , Windows.Storage.FileAccessMode.readWrite))))
+            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xFF42, 0x0042);
+            const p = Windows.Devices.Enumeration.DeviceInformation.findAllAsync(selector, null)
+                .then(devices => {
+                    const hdevs = devices.map(device =>
+                        Windows.Devices.HumanInterfaceDevice.HidDevice.fromIdAsync(device.id, Windows.Storage.FileAccessMode.readWrite)
+                    );
+                    return Promise.all(hdevs);
+                })
                 .then(devices => {
                     this.devs = devices;
-                }));
+                    this.devs.forEach(device => console.log(`device ${device.productId}`));
+                });
+
+            return pxt.winrt.promisify(p);
             /*
             return iface.opAsync("list", {})
                 .then((devs: any) => {
@@ -91,13 +95,9 @@ namespace pxt.winrt {
         }
     }
 
-    export function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
-        pxt.debug('HID deployment...');
-        let f = resp.outfiles[pxtc.BINARY_UF2]
-        let blocks = pxtc.UF2.parseFile(Util.stringToUint8Array(atob(f)))
-
+    export function mkPacketIOAsync(): Promise<pxt.HF2.PacketIO> {
         const b = new WindowsRuntimeIO()
         return b.initAsync()
-            .then(dev => dev.reflashAsync(blocks))
+            .then(() => b);
     }
 }

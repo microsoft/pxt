@@ -32,7 +32,7 @@
     <AppXManifest Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-06-02T05:43:12.372</Modified>
+      <Modified>2017-06-02T06:29:54.740</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
@@ -85,7 +85,7 @@
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\ReverseMap\resources.pri">
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-06-02T05:43:12.273</Modified>
+      <Modified>2017-06-02T06:29:54.657</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
