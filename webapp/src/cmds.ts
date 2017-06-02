@@ -138,12 +138,13 @@ export function initCommandsAsync(): Promise<void> {
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+    } else if (pxt.winrt.isWinRT()) { // window app
+        pxt.commands.deployCoreAsync = pxt.appTarget.serial && pxt.appTarget.serial.useHF2
+            ? pxt.winrt.hidDeployCoreAsync 
+            : pxt.winrt.driveDeployCoreAsync;
+        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (pxt.winrt.isWinRT()) { // window app
-        pxt.commands.deployCoreAsync = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 
-            ? pxt.winrt.hidDeployCoreAsync : pxt.winrt.driveDeployCoreAsync;
-        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser

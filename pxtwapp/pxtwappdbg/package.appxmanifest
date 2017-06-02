@@ -47,8 +47,8 @@
       </Device>
     </DeviceCapability>
     <DeviceCapability Name="humaninterfacedevice">
-      <Device Id="any">
-        <Function Type="usage:0006 *"/>
+      <Device Id="vidpid:239a 0019">
+        <Function Type="usage:ff42 0042"/>
       </Device>
     </DeviceCapability>
   </Capabilities>
