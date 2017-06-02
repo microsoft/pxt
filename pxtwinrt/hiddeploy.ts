@@ -7,31 +7,9 @@ namespace pxt.winrt {
         onData = (v: Uint8Array) => { };
         onEvent = (v: Uint8Array) => { };
         onError = (e: Error) => { };
-        onSerial = (v: Uint8Array, isErr: boolean) => { };
-        public devs: Windows.Devices.HumanInterfaceDevice.HidDevice[];
+        public devs: Windows.Devices.HumanInterfaceDevice.HidDevice[] = [];
 
         constructor() {
-        }
-
-        onOOB(v: any) {
-            if (v.op == "serial") {
-                this.onSerial(U.fromHex(v.result.data), v.result.isError)
-            } else if (v.op = "event") {
-                this.onEvent(U.fromHex(v.result.data))
-            }
-        }
-
-        talksAsync(cmds: pxt.HF2.TalkArgs[]): Promise<Uint8Array[]> {
-            // TODO
-            /*
-            return iface.opAsync("talk", {
-                path: this.dev.path,
-                cmds: cmds.map(c => ({ cmd: c.cmd, data: c.data ? U.toHex(c.data) : "" }))
-            })
-                .then(resp => {
-                    return resp.map((v: any) => U.fromHex(v.data))
-                }) */
-            return Promise.resolve([]);
         }
 
         error(msg: string) {
@@ -43,28 +21,34 @@ namespace pxt.winrt {
         }
 
         disconnectAsync(): Promise<void> {
-            // TODO
+            this.devs.forEach(dev => dev.close());
+            this.devs = [];
             return Promise.resolve();
         }
 
         sendPacketAsync(pkt: Uint8Array): Promise<void> {
-            throw new Error("should use talksAsync()!")
-        }
-
-        sendSerialAsync(buf: Uint8Array, useStdErr: boolean): Promise<void> {
-            // TODO
-            return Promise.resolve();
-            /*
-            return iface.opAsync("sendserial", {
-                path: this.dev.path,
-                data: U.toHex(buf),
-                isError: useStdErr
-            }) */
+            // it's just silly that there's no way to pass a uint8array
+            // oh well
+            const ar: number[] = [0];
+            for (let i = 0; i < 64; ++i)
+                ar.push(pkt[i] || 0);
+            const dataWriter = new Windows.Storage.Streams.DataWriter();
+            dataWriter.writeBytes(ar);
+            const buffer = dataWriter.detachBuffer();
+            return pxt.winrt.promisify(
+                Promise.all(this.devs.map(dev => {
+                    const report = dev.createOutputReport(0);
+                    report.data = buffer;
+                    return dev.sendOutputReportAsync(report)
+                        .then(value => {
+                            console.log(`hf2: ${value} bytes written`)
+                        })
+                })).then(() => { }));
         }
 
         initAsync(): Promise<void> {
-            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xFF42, 0x0042);
-            const p = Windows.Devices.Enumeration.DeviceInformation.findAllAsync(selector, null)
+            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xff00, 0x0001, 0x239a, 0x0019);
+            return pxt.winrt.promisify(Windows.Devices.Enumeration.DeviceInformation.findAllAsync(selector, null)
                 .then(devices => {
                     const hdevs = devices.map(device =>
                         Windows.Devices.HumanInterfaceDevice.HidDevice.fromIdAsync(device.id, Windows.Storage.FileAccessMode.readWrite)
@@ -73,25 +57,8 @@ namespace pxt.winrt {
                 })
                 .then(devices => {
                     this.devs = devices;
-                    this.devs.forEach(device => console.log(`device ${device.productId}`));
-                });
-
-            return pxt.winrt.promisify(p);
-            /*
-            return iface.opAsync("list", {})
-                .then((devs: any) => {
-                    let d0 = (devs.devices as HidDevice[]).filter(d => (d.release & 0xff00) == 0x4200)[0]
-                    if (d0) {
-                        if (this.dev)
-                            delete bridgeByPath[this.dev.path]
-                        this.dev = d0
-                        bridgeByPath[this.dev.path] = this
-                    }
-                    else throw new Error("No device connected")
-                })
-                .then(() => iface.opAsync("init", {
-                    path: this.dev.path
-                })) */
+                    this.devs.forEach(device => console.log(`hid device version ${device.version}`));
+                }));
         }
     }
 
