@@ -516,7 +516,7 @@ namespace pxt.blocks {
     }
 
     function checkNumber(n: number) {
-        if (n === Infinity || n === NaN) {
+        if (n === Infinity || isNaN(n)) {
             U.userError(lf("Number entered is either too large or too small"));
         }
     }
