@@ -1772,6 +1772,13 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 
     const hasCommonPackages = fs.existsSync(path.resolve("node_modules/pxt-common-packages"));
 
+    let simDirectories: string[] = [];
+    if (hasCommonPackages) {
+        const libsdir = path.resolve("node_modules/pxt-common-packages/libs");
+        simDirectories = fs.readdirSync(libsdir).map(fn => path.join(libsdir, fn, "sim"));
+        simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
+    }
+
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
         .then(() => buildTargetAsync().then(r => { }, e => {
@@ -1781,9 +1788,9 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => {
-            const toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
+            let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
             if (hasCommonPackages) {
-                toWatch.push(path.resolve("node_modules/pxt-common-packages"))
+                toWatch = toWatch.concat(simDirectories);
             }
             return toWatch;
         }));

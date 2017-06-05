@@ -509,14 +509,14 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function extractNumber(b: B.Block): number {
-        let v = b.getFieldValue("NUM");
+        let v = b.getFieldValue(b.type === "math_number_minmax" ? "SLIDER" : "NUM");
         const parsed = parseFloat(v);
         checkNumber(parsed);
         return parsed;
     }
 
     function checkNumber(n: number) {
-        if (n === Infinity || n === NaN) {
+        if (n === Infinity || isNaN(n)) {
             U.userError(lf("Number entered is either too large or too small"));
         }
     }
