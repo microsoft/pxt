@@ -340,7 +340,12 @@ declare namespace Blockly {
     function confirm(message: string, callback: (response: boolean) => void): void;
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
+    let ALIGN_LEFT: number;
     let ALIGN_RIGHT: number;
+
+    const OUTPUT_SHAPE_HEXAGONAL: number;
+    const OUTPUT_SHAPE_ROUND: number;
+    const OUTPUT_SHAPE_SQUARE: number;
     
     let VARIABLE_CATEGORY_NAME: string;
 
@@ -375,7 +380,6 @@ declare namespace Blockly {
         sourceBlock_: Block;
         fieldGroup_: Element;
         textElement_: Element;
-        borderRect_: Element;
         visible_: boolean;
         text_: string;
         size_: goog.math.Size;
@@ -430,6 +434,10 @@ declare namespace Blockly {
 
     class FieldGridPicker extends FieldDropdown {
         constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> ); 
+    }
+
+    class FieldIconDropdown extends FieldDropdown {
+        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], params?: pxt.Map<string> ); 
     }
     
     class FieldSlider extends FieldNumber {
@@ -508,7 +516,8 @@ declare namespace Blockly {
         removeInput(name: string, opt_quiet?: boolean): void;
         dispose(healGap: boolean): void;
         setCollapsed(collapsed: boolean): void;
-        setColour(colour: number | string): void;
+        setColour(colour: number | string, secondaryColour?: string, tertiaryColour?: string): void;
+        setOutputShape(shape: number): void;
         setCommentText(text: string): void;
         setConnectionsHidden(hidden: boolean): void;
         setDisabled(disabled: boolean): void;
@@ -656,6 +665,7 @@ declare namespace Blockly {
         getTopBlocks(ordered: boolean): Block[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
+        getVariablesOfType(type: string): VariableModel[];
         addChangeListener(f: (e: BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string): void;
@@ -682,10 +692,14 @@ declare namespace Blockly {
             viewWidth: number;
         }
         variableIndexOf(name: string): number;
-        playAudio(name: string): void;
+        getAudioManager(): WorkspaceAudio;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
         registerToolboxCategoryCallback(a: string, b: Function): void;
+    }
+
+    class WorkspaceAudio {
+        play(audio: string): void;
     }
 
     class WorkspaceSvg {
@@ -725,6 +739,7 @@ declare namespace Blockly {
             maxScale?: number;
             minScale?: number;
             scaleSpeed?: number;
+            startScale?: number;
         };
         enableRealTime?: boolean;
         rtl?: boolean;
@@ -752,9 +767,18 @@ declare namespace Blockly {
     }
 
     namespace Variables {
+        function generateVariableFieldXml_(variableModel: VariableModel): void;
         function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+    }
+
+    class VariableModel {
+        name: string;
+        type: string;
+        static compareByName: any;
+        getId(): string;
     }
 
     namespace ContextMenu {
@@ -838,9 +862,19 @@ declare namespace Blockly {
             scrollOffset: goog.math.Coordinate, rtl: boolean): void;
     }
 
+    namespace DropDownDiv {
+        function hideWithoutAnimation(): void;
+        function clearContent(): void;
+        function getContentDiv(): Element;
+    }
+
     var Tooltip: any;
 
     class PXTUtils {
         static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
+    }
+
+    namespace Colours {
+        const textField: string;
     }
 }

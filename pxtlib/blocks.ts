@@ -135,7 +135,10 @@ namespace pxt.blocks {
                 operators: {
                     'op': ["min", "max"]
                 },
-                category: 'math'
+                category: 'math',
+                block: {
+                    outputShape: Blockly.OUTPUT_SHAPE_ROUND
+                }
             },
             'math_op3': {
                 name: Util.lf("absolute number"),
@@ -143,7 +146,8 @@ namespace pxt.blocks {
                 url: '/blocks/math/abs',
                 category: 'math',
                 block: {
-                    message0: Util.lf("absolute of %1")
+                    message0: Util.lf("absolute of %1"),
+                    outputShape: Blockly.OUTPUT_SHAPE_ROUND
                 }
             },
             'device_random': {
@@ -152,7 +156,8 @@ namespace pxt.blocks {
                 url: '/blocks/math/random',
                 category: 'math',
                 block: {
-                    message0: Util.lf("pick random 0 to %1")
+                    message0: Util.lf("pick random 0 to %1"),
+                    outputShape: Blockly.OUTPUT_SHAPE_ROUND
                 }
             },
             'math_number': {

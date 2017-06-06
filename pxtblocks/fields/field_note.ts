@@ -261,6 +261,12 @@ namespace pxtblockly {
          * Create a piano under the note field.
          */
         showEditor_(opt_quietInput?: boolean): void {
+            // If there is an existing drop-down someone else owns, hide it immediately and clear it.
+            Blockly.DropDownDiv.hideWithoutAnimation();
+            Blockly.DropDownDiv.clearContent();
+
+            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+
             //  change Note name to number frequency
             Blockly.FieldNumber.prototype.setText.call(this, this.getText());
 
@@ -310,10 +316,9 @@ namespace pxtblockly {
             }
 
             //  create piano div
-            let div = Blockly.WidgetDiv.DIV;
             let pianoDiv = goog.dom.createDom("div", {});
             pianoDiv.className = "blocklyPianoDiv";
-            div.appendChild(pianoDiv);
+            contentDiv.appendChild(pianoDiv);
             let scrollOffset = goog.style.getViewportPageOffset(document);
             //let pianoHeight = keyHeight + div.scrollHeight + 5;
             let xy = this.getAbsoluteXY_();
