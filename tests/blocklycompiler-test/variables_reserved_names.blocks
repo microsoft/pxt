@@ -1,0 +1,54 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="I{9zVw/0]icrkq4+E=y%" type="pxt-on-start" x="90" y="50">
+    <statement name="HANDLER">
+      <block id="}yM{9kafDVMJEsiApt+j" type="variables_set">
+        <field name="VAR">boolean</field>
+        <value name="VALUE">
+          <shadow id="[M)fd/.RgR5`62;DNrWo" type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+        </value>
+        <next>
+          <block id="^qR=/8m(Nm^~2*r2Le6$" type="variables_set">
+            <field name="VAR">Number</field>
+            <value name="VALUE">
+              <shadow id="+XgCh_f0q_a9nlty.f?=" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+            <next>
+              <block id=";m;Jjy/;0/StgX-.-Ksx" type="variables_set">
+                <field name="VAR">string</field>
+                <value name="VALUE">
+                  <shadow id="Kf%!)k:Lt#Nt9W8BFp_6" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+                <next>
+                  <block id="d2oQl}{%L-u0UspURFg0" type="variables_set">
+                    <field name="VAR">let</field>
+                    <value name="VALUE">
+                      <shadow id=":a^/a{E[;b4x8PcQgeBV" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                    <next>
+                      <block id="(*wxevnjAR[jj4o`b`}L" type="variables_set">
+                        <field name="VAR">Math</field>
+                        <value name="VALUE">
+                          <shadow id="DmY1=@uE)4$WRAUw,zW8" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
