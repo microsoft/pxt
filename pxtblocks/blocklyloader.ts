@@ -574,7 +574,7 @@ namespace pxt.blocks {
 
         block.setTooltip(fn.attributes.jsDoc);
         block.setColour(color);
-        let blockShape = Blockly.OUTPUT_SHAPE_SQUARE;
+        let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
         switch (fn.retType) {
             case "number": blockShape = Blockly.OUTPUT_SHAPE_ROUND; break;
             case "boolean": blockShape = Blockly.OUTPUT_SHAPE_HEXAGONAL; break;
