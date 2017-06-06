@@ -7,6 +7,15 @@ namespace ts.pxtc.decompiler {
 
     const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
 
+    interface ParameterInfo {
+        name: string;
+        type?: string;
+        paramShadowOptions?: pxt.Map<string>;
+        paramFieldEditorOptions?: pxt.Map<string>;
+        paramFieldEditor?: string;
+        fieldName?: string;
+    }
+
     enum ShadowType {
         Boolean,
         Number,
@@ -1126,15 +1135,7 @@ ${output}</xml>`;
                 // }
             }
 
-            const argNames: [string, string][] = []
-            info.attrs.block.replace(/%(\w+)(?:=(\w+))?/g, (f, n, v) => {
-                argNames.push([n, v])
-                return ""
-            });
-
-            if (info.attrs.defaultInstance) {
-                argNames.unshift(["__instance__", undefined]);
-            }
+            const paramInfo = getParameterInfo(info, blocksInfo);
 
             const r: StatementNode = {
                 kind: "statement",
@@ -1176,7 +1177,7 @@ ${output}</xml>`;
                     case SK.PropertyAccessExpression:
                         const callInfo = (e as any).callInfo as pxtc.CallInfo;
                         const shadow = callInfo && !!callInfo.attrs.blockIdentity
-                        const aName = U.htmlEscape(argNames[i][0]);
+                        const aName = U.htmlEscape(paramInfo[i].name);
 
                         if (shadow && callInfo.attrs.blockIdentity !== info.qName) {
                             (r.inputs || (r.inputs = [])).push(getValue(aName, e));
@@ -1197,7 +1198,7 @@ ${output}</xml>`;
                         break;
                     default:
                         let v: ValueNode;
-                        const vName = U.htmlEscape(argNames[i][0]);
+                        const vName = U.htmlEscape(paramInfo[i].name);
                         let defaultV = true;
 
                         if (info.qName == "Math.random") {
@@ -1207,42 +1208,25 @@ ${output}</xml>`;
                                 value: getMathRandomArgumentExpresion(e)
                             };
                             defaultV = false;
-                        } else if (((e.kind == SK.TrueKeyword || e.kind == SK.FalseKeyword)
-                            || (e.kind == SK.StringLiteral || e.kind == SK.FirstTemplateToken || e.kind == SK.NoSubstitutionTemplateLiteral)
-                            || e.kind == SK.NumericLiteral
-                            || (e.kind == SK.PrefixUnaryExpression
-                                && ((e as PrefixUnaryExpression).operator == SK.PlusToken
-                                    || (e as PrefixUnaryExpression).operator == SK.MinusToken)
-                                && ((e as PrefixUnaryExpression).operand.kind == SK.NumericLiteral)))) {
-                            // Literal
-                            const shadowName = argNames[i][0];
-                            const shadowType = argNames[i][1];
-                            if (shadowName && shadowType) {
-                                const shadowBlock = blocksInfo.blocksById[shadowType];
-                                if (shadowBlock) {
-                                    let fieldName = '';
-                                    blocksInfo.blocksById[shadowType].attributes.block.replace(/%(\w+)/g, (f, n) => {
-                                        fieldName = n;
-                                        return "";
-                                    });
-                                    if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
-                                        let fieldBlock = getFieldBlock(shadowType, fieldName, e.getText(), true);
-                                        if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[shadowName]) {
-                                            fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(info.attrs.paramShadowOptions[shadowName]))}
-                                        }
-                                        v = {
-                                            kind: "value",
-                                            name: vName,
-                                            value: fieldBlock
-                                        };
-                                        defaultV = false;
-                                    }
+                        } else if (isLiteralNode(e)) {
+                            const param = paramInfo[i];
+
+                            if (param.paramFieldEditor) {
+                                let fieldBlock = getFieldBlock(param.type, param.fieldName, e.getText(), true);
+                                if (param.paramShadowOptions) {
+                                    fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(param.paramShadowOptions))};
                                 }
-                            } else if (info.attrs && info.attrs.paramFieldEditor && info.attrs.paramFieldEditorOptions) {
-                                if (info.attrs.paramFieldEditorOptions[vName] && info.attrs.paramFieldEditorOptions[vName]['onParentBlock']) {
-                                    (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
-                                    return;
-                                }
+
+                                v = {
+                                    kind: "value",
+                                    name: vName,
+                                    value: fieldBlock
+                                };
+                                defaultV = false;
+                            }
+                            else if (param.paramFieldEditorOptions && param.paramFieldEditorOptions['onParentBlock']) {
+                                (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
+                                return;
                             }
                         }
                         if (defaultV) {
@@ -1371,27 +1355,6 @@ ${output}</xml>`;
             }
 
             return undefined;
-        }
-
-        function isLiteralNode(node: ts.Node): boolean {
-            if (!node) {
-                return false
-            }
-            switch (node.kind) {
-                case SK.ParenthesizedExpression:
-                    return isLiteralNode((node as ts.ParenthesizedExpression).expression)
-                case SK.NumericLiteral:
-                case SK.StringLiteral:
-                case SK.NoSubstitutionTemplateLiteral:
-                case SK.TrueKeyword:
-                case SK.FalseKeyword:
-                    return true
-                case SK.PrefixUnaryExpression:
-                    const expression = (node as ts.PrefixUnaryExpression)
-                    return (expression.operator === SK.PlusToken || expression.operator === SK.MinusToken) && isLiteralNode(expression.operand)
-                default:
-                    return false;
-            }
         }
 
         /**
@@ -1656,14 +1619,10 @@ ${output}</xml>`;
                 return undefined;
             }
 
-            const argNames: string[] = []
-            info.attrs.block.replace(/%(\w+)/g, (f, n) => {
-                argNames.push(n)
-                return ""
-            });
+            const params = getParameterInfo(info, blocksInfo);
 
-            const argumentDifference = info.args.length - argNames.length;
-            if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1) && !checkForDestructuringMutation()) {
+            const argumentDifference = info.args.length - params.length;
+            if (argumentDifference > 0 && !checkForDestructuringMutation()) {
 
                 const hasCallback = hasArrowFunction(info);
                 if (argumentDifference > 1 || !hasCallback) {
@@ -1673,7 +1632,7 @@ ${output}</xml>`;
 
             const api = blocksInfo.apis.byQName[info.qName];
             if (api && api.parameters && api.parameters.length) {
-                let fail = false;
+                let fail: string;
                 const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
                 info.args.forEach((e, i) => {
                     if (instance && i === 0) {
@@ -1687,13 +1646,27 @@ ${output}</xml>`;
                                 return;
                             }
                         }
-                        fail = true;
+                        fail = Util.lf("Enum arguments may only be literal property access expressions");
                         return;
+                    }
+                    else if (isLiteralNode(e)) {
+                        const inf = params[i];
+                        if (inf.type) {
+                            const shadowApi = blocksInfo.blocksById[inf.type];
+
+                            if (shadowApi && inf.paramFieldEditor) {
+                                const opts = shadowApi.attributes && shadowApi.attributes.paramFieldEditorOptions;
+                                if (!opts || !opts[inf.fieldName] || !opts[inf.fieldName]["decompileLiterals"]) {
+                                    fail = Util.lf("Field editor does not support literal arguments");
+                                    return;
+                                }
+                            }
+                        }
                     }
                 });
 
                 if (fail) {
-                    return Util.lf("Enum arguments may only be literal property access expressions");
+                    return fail;
                 }
             }
 
@@ -1876,5 +1849,65 @@ ${output}</xml>`;
     function hasArrowFunction(info: CallInfo): boolean {
         const parameters = (info.decl as FunctionLikeDeclaration).parameters;
         return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
+    }
+
+    function isLiteralNode(node: ts.Node): boolean {
+        if (!node) {
+            return false
+        }
+        switch (node.kind) {
+            case SK.ParenthesizedExpression:
+                return isLiteralNode((node as ts.ParenthesizedExpression).expression)
+            case SK.NumericLiteral:
+            case SK.StringLiteral:
+            case SK.NoSubstitutionTemplateLiteral:
+            case SK.TrueKeyword:
+            case SK.FalseKeyword:
+                return true
+            case SK.PrefixUnaryExpression:
+                const expression = (node as ts.PrefixUnaryExpression)
+                return (expression.operator === SK.PlusToken || expression.operator === SK.MinusToken) && isLiteralNode(expression.operand)
+            default:
+                return false;
+        }
+    }
+
+    function getParameterInfo(info: CallInfo, blocksInfo: BlocksInfo) {
+        const argNames: [string, string][] = []
+        info.attrs.block.replace(/%(\w+)(?:=(\w+))?/g, (f, n, v) => {
+            argNames.push([n, v])
+            return ""
+        });
+
+        if (info.attrs.defaultInstance) {
+            argNames.unshift(["__instance__", undefined]);
+        }
+
+        return argNames.map(([name, type]) => {
+            const res: ParameterInfo = { name, type }
+            if (name && type) {
+                const shadowBlock = blocksInfo.blocksById[type];
+                if (shadowBlock) {
+                    let fieldName = '';
+                    blocksInfo.blocksById[type].attributes.block.replace(/%(\w+)/g, (f, n) => {
+                        fieldName = n;
+                        return "";
+                    });
+                    res.fieldName = fieldName;
+                    if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
+                        res.paramFieldEditor = shadowBlock.attributes.paramFieldEditor[fieldName];
+                        if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[name]) {
+                            res.paramShadowOptions = info.attrs.paramShadowOptions[name];
+                        }
+                    }
+                }
+            }
+
+            if (info.attrs.paramFieldEditorOptions) {
+                res.paramFieldEditorOptions = info.attrs.paramFieldEditorOptions[name];
+            }
+
+            return res;
+        });
     }
 }

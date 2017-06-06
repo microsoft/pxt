@@ -163,11 +163,23 @@ namespace testNamespace {
 
     //% blockId=test_customFieldEditorOnParentBlock block="%value"
     //% value.fieldEditor="note" value.fieldOptions.onParentBlock=true
+    //% value.fieldOptions.decompileLiterals=true
     export function customFieldEditorOnParentBlock(value: number): void { }
 
     //% blockId=test_customShadowField block="%value"
-    //% value.fieldEditor="note"
+    //% value.fieldEditor="note" value.fieldOptions.decompileLiterals=true
     export function customShadowField(value: number): number { return value; }
+
+    //% blockId=test_customShadowFieldNoLiterals block="%value"
+    //% value.fieldEditor="note"
+    export function customShadowFieldNoLiterals(value: number): number { return value; }
+
+    //% blockId=test_customShadowFieldNoLiterals2 block="%value"
+    //% value.fieldEditor="note"
+    export function customShadowFieldNoLiterals2(value: string): string { return value; }
+
+    //% blockId=test_customFieldEditor block="%value=test_customShadowFieldNoLiterals %value2=test_customShadowFieldNoLiterals2"
+    export function customFieldEditorNoLiterals(value: number, value2: string): void {  }
 }
 
 //% color=#A80000 weight=30
