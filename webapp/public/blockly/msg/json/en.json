@@ -1,7 +1,7 @@
 {
 	"@metadata": {
 		"author": "Ellen Spertus <ellen.spertus@gmail.com>",
-		"lastupdated": "2017-06-02 15:56:49.324237",
+		"lastupdated": "2017-06-06 23:31:55.286858",
 		"locale": "en",
 		"messagedocumentation" : "qqq"
 	},
@@ -31,6 +31,7 @@
 	"NEW_VARIABLE": "Create variable...",
 	"NEW_VARIABLE_TITLE": "New variable name:",
 	"VARIABLE_ALREADY_EXISTS": "A variable named '%1' already exists.",
+	"PROCEDURE_ALREADY_EXISTS": "A procedure named '%1' already exists.",
 	"DELETE_VARIABLE_CONFIRMATION": "Delete %1 uses of the '%2' variable?",
 	"CANNOT_DELETE_VARIABLE_PROCEDURE": "Can't delete the variable '%1' because it's part of the definition of the function '%2'",
 	"DELETE_VARIABLE": "Delete the '%1' variable",
@@ -206,8 +207,6 @@
 	"MATH_RANDOM_FLOAT_HELPURL": "https://en.wikipedia.org/wiki/Random_number_generation",
 	"MATH_RANDOM_FLOAT_TITLE_RANDOM": "random fraction",
 	"MATH_RANDOM_FLOAT_TOOLTIP": "Return a random fraction between 0.0 (inclusive) and 1.0 (exclusive).",
-	"NOTE_PICKER_HELPURL": "https://en.wikipedia.org/wiki/Piano_key_frequencies",
-	"NOTE_PICKER_TOOLTIP": "Choose a note from the piano.",
 	"TEXT_TEXT_HELPURL": "https://en.wikipedia.org/wiki/String_(computer_science)",
 	"TEXT_TEXT_TOOLTIP": "A letter, word, or line of text.",
 	"TEXT_JOIN_HELPURL": "https://github.com/google/blockly/wiki/Text#text-creation",
@@ -217,8 +216,7 @@
 	"TEXT_CREATE_JOIN_TOOLTIP": "Add, remove, or reorder sections to reconfigure this text block.",
 	"TEXT_CREATE_JOIN_ITEM_TOOLTIP": "Add an item to the text.",
 	"TEXT_APPEND_HELPURL": "https://github.com/google/blockly/wiki/Text#text-modification",
-	"TEXT_APPEND_TO": "to",
-	"TEXT_APPEND_APPENDTEXT": "append text",
+	"TEXT_APPEND_TITLE": "to %1 append text %2",
 	"TEXT_APPEND_TOOLTIP": "Append some text to variable '%1'.",
 	"TEXT_LENGTH_HELPURL": "https://github.com/google/blockly/wiki/Text#text-modification",
 	"TEXT_LENGTH_TITLE": "length of %1",
