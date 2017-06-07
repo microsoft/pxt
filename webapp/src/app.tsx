@@ -497,6 +497,9 @@ export class ProjectView
 
     handleMessage(msg: pxsim.SimulatorMessage) {
         switch (msg.type) {
+            case "popoutcomplete":
+                this.setState({sideDocsCollapsed: true, sideDocsLoadUrl: ''})
+                break;
             case "tutorial":
                 let t = msg as pxsim.TutorialMessage;
                 switch (t.subtype) {
@@ -2196,7 +2199,7 @@ $(document).ready(() => {
                 window.parent.postMessage(ev.data, "*");
         }
 
-        if (m.type == "tutorial") {
+        if (m.type == "tutorial" || m.type == "popoutcomplete") {
             if (theEditor && theEditor.editor)
                 theEditor.handleMessage(m);
         }
