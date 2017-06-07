@@ -10,6 +10,7 @@ namespace ts.pxtc.decompiler {
     interface ParameterInfo {
         name: string;
         type?: string;
+        decompileLiterals?: boolean;
         paramShadowOptions?: pxt.Map<string>;
         paramFieldEditorOptions?: pxt.Map<string>;
         paramFieldEditor?: string;
@@ -1211,7 +1212,7 @@ ${output}</xml>`;
                         } else if (isLiteralNode(e)) {
                             const param = paramInfo[i];
 
-                            if (param.paramFieldEditor) {
+                            if (param.decompileLiterals) {
                                 let fieldBlock = getFieldBlock(param.type, param.fieldName, e.getText(), true);
                                 if (param.paramShadowOptions) {
                                     fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(param.paramShadowOptions))};
@@ -1612,7 +1613,7 @@ ${output}</xml>`;
             }
 
             const params = getParameterInfo(info, blocksInfo);
-	    const argumentDifference = info.args.length - params.length;
+            const argumentDifference = info.args.length - params.length;
 
             if (info.attrs.imageLiteral) {
                 if (argumentDifference > 1) {
@@ -1631,8 +1632,6 @@ ${output}</xml>`;
                 return undefined;
             }
 
-
-            
             if (argumentDifference > 0 && !checkForDestructuringMutation()) {
 
                 const hasCallback = hasArrowFunction(info);
@@ -1662,16 +1661,8 @@ ${output}</xml>`;
                     }
                     else if (isLiteralNode(e)) {
                         const inf = params[i];
-                        if (inf.type) {
-                            const shadowApi = blocksInfo.blocksById[inf.type];
-
-                            if (shadowApi && inf.paramFieldEditor) {
-                                const opts = shadowApi.attributes && shadowApi.attributes.paramFieldEditorOptions;
-                                if (!opts || !opts[inf.fieldName] || !opts[inf.fieldName]["decompileLiterals"]) {
-                                    fail = Util.lf("Field editor does not support literal arguments");
-                                    return;
-                                }
-                            }
+                        if (inf.paramFieldEditor && (!inf.paramFieldEditorOptions || !inf.paramFieldEditorOptions["decompileLiterals"])) {
+                            fail = Util.lf("Field editor does not support literal arguments");
                         }
                     }
                 });
@@ -1900,22 +1891,28 @@ ${output}</xml>`;
                 const shadowBlock = blocksInfo.blocksById[type];
                 if (shadowBlock) {
                     let fieldName = '';
-                    blocksInfo.blocksById[type].attributes.block.replace(/%(\w+)/g, (f, n) => {
+                    shadowBlock.attributes.block.replace(/%(\w+)/g, (f, n) => {
                         fieldName = n;
                         return "";
                     });
                     res.fieldName = fieldName;
-                    if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
-                        res.paramFieldEditor = shadowBlock.attributes.paramFieldEditor[fieldName];
+                    const shadowA = shadowBlock.attributes;
+                    if (shadowA && shadowA.paramFieldEditor && shadowA.paramFieldEditor[fieldName]) {
                         if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[name]) {
                             res.paramShadowOptions = info.attrs.paramShadowOptions[name];
                         }
+
+                        res.decompileLiterals = !!(shadowA.paramFieldEditorOptions && shadowA.paramFieldEditorOptions[fieldName] && shadowA.paramFieldEditorOptions[fieldName]["decompileLiterals"])
                     }
                 }
             }
 
             if (info.attrs.paramFieldEditorOptions) {
                 res.paramFieldEditorOptions = info.attrs.paramFieldEditorOptions[name];
+            }
+
+            if (info.attrs.paramFieldEditor) {
+                res.paramFieldEditor = info.attrs.paramFieldEditor[name];
             }
 
             return res;
