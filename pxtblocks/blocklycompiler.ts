@@ -1262,15 +1262,15 @@ namespace pxt.blocks {
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
 
-        r.forEach(l => {
-            if (l.type === NT.Block) {
-                l.id = b.id
-            }
-        });
-
         if (comments.length) {
             addCommentNodes(comments, r)
         }
+
+        r.forEach(l => {
+            if (l.type === NT.Block || l.type === NT.Prefix && Util.startsWith(l.op, "//")) {
+                l.id = b.id
+            }
+        });
 
         return r;
     }
