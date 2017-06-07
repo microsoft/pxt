@@ -348,7 +348,7 @@ namespace pxt.blocks {
 
             let end = getCurrentLine();
 
-            if (n.id && start != end) {
+            if (n.id) {
                 if (sourceMapById[n.id]) {
                     const node = sourceMapById[n.id];
                     node.start = Math.min(node.start, start);

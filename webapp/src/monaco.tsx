@@ -1114,10 +1114,11 @@ export class Editor extends srceditor.Editor {
     highlightStatement(brk: pxtc.LocationInfo) {
         if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
         let position = this.editor.getModel().getPositionAt(brk.start);
-        if (!position) return;
+        let end = this.editor.getModel().getPositionAt(brk.start + brk.length);
+        if (!position || !end) return;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
             {
-                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column + brk.length),
+                range: new monaco.Range(position.lineNumber, position.column, end.lineNumber, end.column),
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
