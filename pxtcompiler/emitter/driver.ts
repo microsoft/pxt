@@ -28,11 +28,12 @@ namespace ts.pxtc {
 
     export function nodeLocationInfo(node: ts.Node) {
         let file = getSourceFileOfNode(node)
-        const { line, character } = ts.getLineAndCharacterOfPosition(file, node.pos);
+        const nodeStart = node.getStart ? node.getStart() : node.pos;
+        const { line, character } = ts.getLineAndCharacterOfPosition(file, nodeStart);
         const { line: endLine, character: endChar } = ts.getLineAndCharacterOfPosition(file, node.end);
         let r: LocationInfo = {
-            start: node.pos,
-            length: node.end - node.pos,
+            start: nodeStart,
+            length: node.end - nodeStart,
             line: line,
             column: character,
             endLine: endLine,

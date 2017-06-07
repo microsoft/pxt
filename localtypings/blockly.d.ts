@@ -341,7 +341,7 @@ declare namespace Blockly {
     function prompt(message: string, defaultValue: string, callback: (response: string) => void): void;
 
     let ALIGN_RIGHT: number;
-    
+
     let VARIABLE_CATEGORY_NAME: string;
 
     namespace utils {
@@ -429,9 +429,9 @@ declare namespace Blockly {
     }
 
     class FieldGridPicker extends FieldDropdown {
-        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> ); 
+        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> );
     }
-    
+
     class FieldSlider extends FieldNumber {
     }
 
@@ -646,6 +646,9 @@ declare namespace Blockly {
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
 
+        scrollX: number;
+        scrollY: number;
+
         undoStack_: Blockly.Events.Abstract[];
         redoStack_: Blockly.Events.Abstract[];
 
@@ -686,6 +689,8 @@ declare namespace Blockly {
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
         registerToolboxCategoryCallback(a: string, b: Function): void;
+
+        resizeContents(): void;
     }
 
     class WorkspaceSvg {

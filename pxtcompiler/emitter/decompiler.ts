@@ -1478,7 +1478,12 @@ ${output}</xml>`;
                 return Util.lf("for loop with multiple variables not supported");
             }
 
-            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
+            const assignment = initializer.declarations[0] as VariableDeclaration;
+            if (assignment.initializer.kind !== SK.NumericLiteral || (assignment.initializer as ts.LiteralExpression).text !== "0") {
+                return Util.lf("for loop initializers must be initialized to 0");
+            }
+
+            const indexVar = (assignment.name as ts.Identifier).text;
             if (!incrementorIsValid(indexVar)) {
                 return Util.lf("for loop incrementors may only increment the variable declared in the initializer");
             }
@@ -1606,7 +1611,14 @@ ${output}</xml>`;
                 info.attrs.blockId = builtin.blockId;
             }
 
+            const params = getParameterInfo(info, blocksInfo);
+	    const argumentDifference = info.args.length - params.length;
+
             if (info.attrs.imageLiteral) {
+                if (argumentDifference > 1) {
+                    return Util.lf("Function call has more arguments than are supported by its block");
+                }
+
                 let arg = n.arguments[0];
                 if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                     return Util.lf("Only string literals supported for image literals")
@@ -1619,9 +1631,8 @@ ${output}</xml>`;
                 return undefined;
             }
 
-            const params = getParameterInfo(info, blocksInfo);
 
-            const argumentDifference = info.args.length - params.length;
+            
             if (argumentDifference > 0 && !checkForDestructuringMutation()) {
 
                 const hasCallback = hasArrowFunction(info);
