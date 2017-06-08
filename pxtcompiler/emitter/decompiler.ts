@@ -716,7 +716,8 @@ ${output}</xml>`;
 
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
-            const parentCallInfo: pxtc.CallInfo = n.parent && (n.parent as any).callInfo;
+            const [parent, ] = getParent(n);
+            const parentCallInfo: pxtc.CallInfo = parent && (parent as any).callInfo;
             if (callInfo.attrs.blockIdentity && !(parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity)) {
                 if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
                     value = callInfo.attrs.enumval;
@@ -1151,6 +1152,7 @@ ${output}</xml>`;
 
 
             info.args.forEach((e, i) => {
+                e = unwrapNode(e) as Expression;
                 if (i === 0 && info.attrs.defaultInstance) {
                     if (e.getText() === info.attrs.defaultInstance) {
                         return;
@@ -1686,6 +1688,7 @@ ${output}</xml>`;
                 let fail = false;
                 const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
                 info.args.forEach((e, i) => {
+                    e = unwrapNode(e) as Expression;
                     if (instance && i === 0) {
                         return;
                     }
@@ -1860,8 +1863,37 @@ ${output}</xml>`;
         function checkPropertyAccessExpression(n: ts.PropertyAccessExpression) {
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
             if (callInfo) {
-                if (callInfo.attrs.blockIdentity || callInfo.decl.kind === SK.EnumMember || callInfo.attrs.blockId === "lists_length") {
+                if (callInfo.attrs.blockIdentity || callInfo.attrs.blockId === "lists_length") {
                     return undefined;
+                }
+                else if (callInfo.decl.kind === SK.EnumMember) {
+                    const [parent, child] = getParent(n);
+                    let fail = true;
+
+                    if (parent) {
+                        const parentInfo: pxtc.CallInfo = (parent as any).callInfo;
+                        if (parentInfo && parentInfo.args) {
+                            const api = blocksInfo.apis.byQName[parentInfo.qName];
+                            const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
+                            if (api) {
+                                parentInfo.args.forEach((arg, i) => {
+                                    if (arg === child) {
+                                        const paramInfo = api.parameters[instance ? i - 1 : i];
+                                        if (paramInfo.isEnum) {
+                                            fail = false;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    if (fail) {
+                        return Util.lf("Enum value without a corresponding block");
+                    }
+                    else {
+                        return undefined;
+                    }
                 }
                 else if (callInfo.attrs.fixedInstance && n.parent && n.parent.parent &&
                     n.parent.kind === SK.PropertyAccessExpression && n.parent.parent.kind === SK.CallExpression) {
@@ -1873,6 +1905,25 @@ ${output}</xml>`;
             }
             return Util.lf("No call info found");
         }
+    }
+
+    function getParent(node: Node): [Node, Node] {
+        if (!node.parent) {
+            return [undefined, node];
+        }
+        else if (node.parent.kind === SK.ParenthesizedExpression) {
+            return getParent(node.parent);
+        }
+        else {
+            return [node.parent, node];
+        }
+    }
+
+    function unwrapNode(node: Node) {
+        while (node.kind === SK.ParenthesizedExpression) {
+            node = (node as ParenthesizedExpression).expression;
+        }
+        return node;
     }
 
     function isEmptyString(a: string) {
