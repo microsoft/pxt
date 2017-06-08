@@ -28,7 +28,7 @@ Math.min(1, 2)
 
 It's a syntax error to have a left parenthesis without the "closing" right parenthesis:
 
-```typescript
+```typescript-ignore
 Math.min(
 ```
 
