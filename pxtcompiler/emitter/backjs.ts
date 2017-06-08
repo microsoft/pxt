@@ -73,9 +73,6 @@ namespace ts.pxtc {
         })
         if (bin.res.breakpoints)
             jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
-        jssource += "\npxsim.setupStringLiterals(" +
-            JSON.stringify(U.mapMap(bin.strings, (k, v) => 1), null, 1) +
-            ")\n"
         U.iterMap(bin.hexlits, (k, v) => {
             jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
         })

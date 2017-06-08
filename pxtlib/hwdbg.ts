@@ -4,6 +4,7 @@ namespace pxt {
     export const REF_TAG_BUFFER = 2
     export const REF_TAG_IMAGE = 3
     export const REF_TAG_NUMBER = 32
+    export const REF_TAG_ACTION = 33
 }
 
 namespace pxt.HWDBG {

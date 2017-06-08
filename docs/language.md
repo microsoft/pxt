@@ -143,7 +143,7 @@ On the plus side, this allows for [handling of async calls](/async), even if the
 doesn't support `yield` statement, as well as cross-browser and remote
 debugging. On the other hand, the generated code is not really human readable.
 
-In the [tagged strategy](/js/float), numbers are either tagged 31-bit signed
+In the [tagged strategy](/js/values), numbers are either tagged 31-bit signed
 integers, or if they do not fit boxed doubles. Special constants like `false`, `null` and
 `undefined` are given special values and can be distinguished.
 We're aiming at full JavaScript compatibility here.
