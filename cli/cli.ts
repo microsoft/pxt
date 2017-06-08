@@ -4478,6 +4478,8 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.log(`  Target dir:   ${nodeutil.targetDir}`)
     pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
 
+    pxt.HF2.enableLog()
+
     if (compileId != "none") {
         build.thisBuild = build.buildEngines[compileId]
         if (!build.thisBuild) U.userError("cannot find build engine: " + compileId)
