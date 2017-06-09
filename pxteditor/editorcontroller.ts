@@ -185,7 +185,7 @@ namespace pxt.editor {
                 }
             } else { // request from the host
                 const req = data as EditorMessageRequest;
-                pxt.debug(`pxteditor: ${req.action}`);
+                // pxt.debug(`pxteditor: ${req.action}`);
                 switch (req.action.toLowerCase()) {
                     case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
                     case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
