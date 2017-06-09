@@ -75,6 +75,7 @@ namespace pxt.blocks {
         tooltip?: string | Map<string>;
         operators?: Map<string[]>;
         block?: Map<string>;
+        outputShape?: number;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
     }
@@ -136,9 +137,7 @@ namespace pxt.blocks {
                     'op': ["min", "max"]
                 },
                 category: 'math',
-                block: {
-                    outputShape: Blockly.OUTPUT_SHAPE_ROUND
-                }
+                outputShape: Blockly.OUTPUT_SHAPE_ROUND
             },
             'math_op3': {
                 name: Util.lf("absolute number"),
@@ -146,9 +145,9 @@ namespace pxt.blocks {
                 url: '/blocks/math/abs',
                 category: 'math',
                 block: {
-                    message0: Util.lf("absolute of %1"),
-                    outputShape: Blockly.OUTPUT_SHAPE_ROUND
-                }
+                    message0: Util.lf("absolute of %1")
+                },
+                outputShape: Blockly.OUTPUT_SHAPE_ROUND
             },
             'device_random': {
                 name: Util.lf("pick random number"),
@@ -156,9 +155,9 @@ namespace pxt.blocks {
                 url: '/blocks/math/random',
                 category: 'math',
                 block: {
-                    message0: Util.lf("pick random 0 to %1"),
-                    outputShape: Blockly.OUTPUT_SHAPE_ROUND
-                }
+                    message0: Util.lf("pick random 0 to %1")
+                },
+                outputShape: Blockly.OUTPUT_SHAPE_ROUND
             },
             'math_number': {
                 name: Util.lf("{id:block}number"),

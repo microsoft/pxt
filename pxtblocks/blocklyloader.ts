@@ -2009,7 +2009,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "outputShape": mathOp2Def.block["outputShape"],
+                    "outputShape": mathOp2Def.outputShape,
                     "colour": getNamespaceColor('math')
                 });
 
@@ -2042,7 +2042,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "outputShape": mathOp3Def.block["outputShape"],
+                    "outputShape": mathOp3Def.outputShape,
                     "colour": getNamespaceColor('math')
                 });
 
@@ -2066,7 +2066,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
-                    "outputShape": deviceRandomDef.block["outputShape"],
+                    "outputShape": deviceRandomDef.outputShape,
                     "colour": getNamespaceColor('math')
                 });
 
