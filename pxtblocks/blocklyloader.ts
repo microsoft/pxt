@@ -1011,7 +1011,8 @@ namespace pxt.blocks {
                     if (catName === "variables" && (!filters.blocks ||
                         filters.blocks["variables_set"] ||
                         filters.blocks["variables_get"] ||
-                        filters.blocks["variables_change"])) {
+                        filters.blocks["variables_change"]) &&
+                        (!filters.namespaces || filters.namespaces["variables"] !== FilterState.Disabled)) {
                         continue;
                     }
 
