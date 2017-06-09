@@ -1006,6 +1006,15 @@ namespace pxt.blocks {
                         continue;
                     }
 
+                    // The variables category is special and won't have any children so we
+                    // need to check manually
+                    if (catName === "variables" && (!filters.blocks ||
+                        filters.blocks["variables_set"] ||
+                        filters.blocks["variables_get"] ||
+                        filters.blocks["variables_change"])) {
+                        continue;
+                    }
+
                     let categoryState = filters.namespaces && filters.namespaces[catName] != undefined ? filters.namespaces[catName] : filters.defaultState;
                     let blocks = cat.getElementsByTagName(`block`);
 
