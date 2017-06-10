@@ -596,9 +596,11 @@ ${files["main.ts"]}
                         // Split the steps
                         let stepcontent = content.innerHTML.split(/<h3.*\/h3>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
-                            stepInfo[i].headerContent = stepcontent[i + 1].split(/(<.*?>.*<\/.*?>)/i)[1];
+                            content.innerHTML = stepcontent[i + 1];
+                            stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
                             stepInfo[i].content = stepcontent[i + 1];
                         }
+                        content.innerHTML = '';
                         // return the result
                         window.parent.postMessage(<pxsim.TutorialLoadedMessage>{
                             type: "tutorial",
