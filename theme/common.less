@@ -407,6 +407,8 @@ div.simframe > iframe {
     box-shadow: none !important;
     background-color: transparent !important;
     opacity: 1 !important;
+    /* wrap the JS text inside a blockly Tooltip */
+    overflow-wrap: break-word;
 }
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
@@ -676,6 +678,9 @@ Avatar
 #docs .avatar .message {
     margin-left: 4em;
     margin-bottom: 1em;
+}
+#docs code.lang-typescript {
+    overflow-wrap: break-word;
 }
 
 @media only screen {
