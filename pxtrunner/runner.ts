@@ -597,7 +597,7 @@ ${files["main.ts"]}
                         let stepcontent = content.innerHTML.split(/<h3.*\/h3>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
                             content.innerHTML = stepcontent[i + 1];
-                            stepInfo[i].headerContent = content.firstElementChild.innerHTML;
+                            stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
                             stepInfo[i].content = stepcontent[i + 1];
                         }
                         content.innerHTML = '';
