@@ -29,12 +29,13 @@
       </uap:VisualElements>
       <Extensions>
         <uap:Extension Category="windows.fileTypeAssociation">
-          <uap:FileTypeAssociation Name="pxthex">
-            <uap:DisplayName>pxt binary file</uap:DisplayName>
+          <uap:FileTypeAssociation Name="makecode">
+            <uap:DisplayName>MakeCode binary file</uap:DisplayName>
             <uap:SupportedFileTypes>
               <uap:FileType ContentType="application/x-microbit-hex">.hex</uap:FileType>
               <uap:FileType ContentType="application/x-makecode-uf2">.uf2</uap:FileType>
               <uap:FileType ContentType="application/x-makecode-pxt">.pxt</uap:FileType>
+              <uap:FileType ContentType="application/x-makecode-mkcd">.mkcd</uap:FileType>
             </uap:SupportedFileTypes>
           </uap:FileTypeAssociation>
         </uap:Extension>
@@ -48,6 +49,11 @@
     <DeviceCapability Name="serialcommunication">
       <Device Id="any">
         <Function Type="name:serialPort" />
+      </Device>
+    </DeviceCapability>
+    <DeviceCapability Name="humaninterfacedevice">
+      <Device Id="any">
+        <Function Type="usage:0006 *"/>
       </Device>
     </DeviceCapability>
   </Capabilities>
