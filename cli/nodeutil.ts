@@ -320,7 +320,7 @@ export function cp(srcFile: string, destDirectory: string) {
 
 export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false): string[] {
     let res: string[] = []
-    if (allowMissing && !fs.existsSync(top)) return res
+    if (allowMissing && !existsDirSync(top)) return res
     for (const p of fs.readdirSync(top)) {
         if (p[0] == ".") continue;
         const inner = path.join(top, p)

@@ -6,11 +6,15 @@ Convert a MicroPython module(s) to PXT
 
 ```
 pxt pyconv <directory> [<support directory>...]
+pxt pyconv <file.py>... [<support directory>...]
 ```
 
 ## Operation
 
 All modules found in `<directory>` will be converted and written out in current directory.
+Modules are detected by presence of `setup.py`, `README.rst` or similar files.
+
+If instead of directory you specify one or more `.py` files, they will be converted.
 
 Additional Python modules will be searched for in the support directories. They are converted
 in background, but the results are not written.
