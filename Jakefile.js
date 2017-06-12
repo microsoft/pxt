@@ -56,6 +56,17 @@ function setupTest(taskName, testFolder, testFile) {
     `, ['built/pxt-common.json']);
 }
 
+function runKarma(that, flags) {
+    var command;
+    if (os.platform() === 'win32') {
+        command = "karma.cmd start ../../karma.conf.js " + flags;
+    }
+    else {
+        command = "./karma start ../../karma.conf.js " + flags;
+    }
+    cmdIn(that, "node_modules/.bin", command);
+}
+
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'wapp', 'monaco-editor'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
@@ -124,14 +135,11 @@ compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js"])
 compileDir("backendutils", ['pxtlib/util.ts', 'pxtlib/docsrender.ts'])
 
 task("karma", ["blocklycompilertest"], function() {
-    var command;
-    if (os.platform() === 'win32') {
-        command = "karma.cmd start ../../karma.conf.js";
-    }
-    else {
-        command = "./karma start ../../karma.conf.js";
-    }
-    cmdIn(this, "node_modules/.bin", command);
+    runKarma(this, "");
+});
+
+task("karma-debug", ["blocklycompilertest"], function() {
+    runKarma(this, "--no-single-run");
 });
 
 task("blocklycompilertest", ["default"], { async: true }, function() {
