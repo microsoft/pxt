@@ -6,11 +6,11 @@ let lf = Util.lf;
 
 namespace pxt.blocks {
     export const blockColors: Map<number | string> = {
-        loops: '#107c10',
-        logic: '#006970',
-        math: '#712672',
+        loops: '#0CAF57',
+        logic: '#3D93DE',
+        math: '#676A99',
         images: '#5C2D91',
-        variables: '#A80000',
+        variables: '#E25252',
         text: '#996600',
         arrays: '#A94400',
         advanced: '#3c3c3c'
