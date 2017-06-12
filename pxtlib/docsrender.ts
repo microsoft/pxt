@@ -518,7 +518,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         if (imgM)
             pubinfo["cardLogo"] = html2Quote(imgM[1]);
 
-        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
+        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@msmakecode");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first

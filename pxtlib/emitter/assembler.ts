@@ -836,7 +836,7 @@ namespace ts.pxtc.assembler {
         }
 
 
-        public getSource(clean: boolean) {
+        public getSource(clean: boolean, numStmts = 1) {
             let lenTotal = this.buf ? this.buf.length * 2 : 0
             let lenThumb = this.labels["_program_end"] || lenTotal;
             let lenFrag = this.labels["_frag_start"] || 0
@@ -847,7 +847,9 @@ namespace ts.pxtc.assembler {
                 // ARM-specific
                 lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
                     lenThumb, lenFrag, lenLit, lenTotal - lenThumb) +
-                lf("; assembly: {0} lines\n", this.lines.length) +
+                lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
+                    this.lines.length,
+                    Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
                 this.stats + "\n\n"
 
             let skipOne = false

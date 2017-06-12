@@ -1,0 +1,9 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="3" line0="for &#40;let i &#61; 1&#59; i &#60;&#61; 10&#59; i&#43;&#43;&#41; &#123;" line1="" line2="&#125;" />
+</block>
+</statement>
+</block>
+</xml>

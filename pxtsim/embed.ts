@@ -1,10 +1,6 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 
 namespace pxsim {
-    export interface SimulatorMessage {
-        type: string;
-    }
-
     export interface SimulatorRunMessage extends SimulatorMessage {
         type: "run";
         id?: string;
@@ -39,6 +35,10 @@ namespace pxsim {
     export interface SimulatorReadyMessage extends SimulatorMessage {
         type: "ready";
         frameid: string;
+    }
+
+    export interface SimulatorTopLevelCodeFinishedMessage extends SimulatorMessage {
+        type: "toplevelcodefinished";
     }
 
     export interface SimulatorDocsReadyMessage extends SimulatorMessage {
@@ -79,6 +79,7 @@ namespace pxsim {
 
     export interface SimulatorRadioPacketPayload {
         type: number;
+        groupId: number;
         stringData?: string;
         numberData?: number;
     }
@@ -105,12 +106,18 @@ namespace pxsim {
         subtype: string;
     }
 
-    export interface TutorialStepLoadedMessage extends TutorialMessage {
-        subtype: "steploaded";
-        data: { [index: string]: number };
+    export interface TutorialStepInfo {
+        fullscreen?: boolean;
+        hasHint?: boolean;
+        content?: string;
+        headerContent?: string;
+    }
+
+    export interface TutorialLoadedMessage extends TutorialMessage {
+        subtype: "loaded";
         showCategories?: boolean;
-        headercontent: string;
-        content: string;
+        stepInfo: TutorialStepInfo[];
+        toolboxSubset?: {[index: string]: number };
     }
 
     export interface TutorialStepChangeMessage extends TutorialMessage {
@@ -174,6 +181,7 @@ namespace pxsim {
                 .done(() => {
                     runtime.run((v) => {
                         pxsim.dumpLivePointers();
+                        Runtime.postMessage({ type: "toplevelcodefinished" })
                     })
                 })
         }

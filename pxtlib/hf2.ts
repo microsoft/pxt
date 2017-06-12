@@ -17,8 +17,10 @@ namespace pxt.HF2 {
         sendPacketAsync(pkt: Uint8Array): Promise<void>;
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;
+        onEvent: (v: Uint8Array) => void;
         error(msg: string): any;
         reconnectAsync(): Promise<void>;
+        disconnectAsync(): Promise<void>;
 
         // these are implemneted by HID-bridge
         talksAsync?(cmds: TalkArgs[]): Promise<Uint8Array[]>;
@@ -27,7 +29,6 @@ namespace pxt.HF2 {
     }
 
     // see https://github.com/Microsoft/uf2/blob/master/hf2.md for full spec
-
     export const HF2_CMD_BININFO = 0x0001 // no arguments
     export const HF2_MODE_BOOTLOADER = 0x01
     export const HF2_MODE_USERSPACE = 0x02
@@ -95,17 +96,21 @@ namespace pxt.HF2 {
     // no arguments
     // results is utf8 character array
 
-    const HF2_FLAG_SERIAL_OUT = 0x80
-    const HF2_FLAG_SERIAL_ERR = 0xC0
-    const HF2_FLAG_CMDPKT_LAST = 0x40
-    const HF2_FLAG_CMDPKT_BODY = 0x00
-    const HF2_FLAG_MASK = 0xC0
-    const HF2_SIZE_MASK = 63
+    export const HF2_FLAG_SERIAL_OUT = 0x80
+    export const HF2_FLAG_SERIAL_ERR = 0xC0
+    export const HF2_FLAG_CMDPKT_LAST = 0x40
+    export const HF2_FLAG_CMDPKT_BODY = 0x00
+    export const HF2_FLAG_MASK = 0xC0
+    export const HF2_SIZE_MASK = 63
 
-    const HF2_STATUS_OK = 0x00
-    const HF2_STATUS_INVALID_CMD = 0x01
-    const HF2_STATUS_EXEC_ERR = 0x02
+    export const HF2_STATUS_OK = 0x00
+    export const HF2_STATUS_INVALID_CMD = 0x01
+    export const HF2_STATUS_EXEC_ERR = 0x02
+    export const HF2_STATUS_EVENT = 0x80
 
+    // the eventId is overlayed on the tag+status; the mask corresponds
+    // to the HF2_STATUS_EVENT above
+    export const HF2_EV_MASK = 0x800000
 
     export function write32(buf: ArrayLike<number>, pos: number, v: number) {
         buf[pos + 0] = (v >> 0) & 0xff;
@@ -127,6 +132,22 @@ namespace pxt.HF2 {
         return buf[pos] | (buf[pos + 1] << 8)
     }
 
+    export function encodeU32LE(words: number[]) {
+        let r = new Uint8Array(words.length * 4)
+        for (let i = 0; i < words.length; ++i)
+            write32(r, i * 4, words[i])
+        return r
+    }
+
+    export function decodeU32LE(buf: Uint8Array) {
+        let res: number[] = []
+        for (let i = 0; i < buf.length; i += 4)
+            res.push(read32(buf, i))
+        return res
+    }
+
+
+
     export interface BootloaderInfo {
         Header: string;
         Parsed: {
@@ -137,8 +158,16 @@ namespace pxt.HF2 {
         BoardID: string;
     }
 
+    let logEnabled = false
+    export function enableLog() {
+        logEnabled = true
+    }
+
     function log(msg: string) {
-        console.log("HF2: " + msg)
+        if (logEnabled)
+            pxt.log("HF2: " + msg)
+        else
+            pxt.debug("HF2: " + msg)
     }
 
     export class Wrapper {
@@ -170,7 +199,21 @@ namespace pxt.HF2 {
                         ptr += f.length
                     }
                     frames = []
-                    this.msgs.push(r)
+                    if (r[2] & HF2_STATUS_EVENT) {
+                        // asynchronous event
+                        io.onEvent(r)
+                    } else {
+                        this.msgs.push(r)
+                    }
+                }
+            }
+            io.onEvent = buf => {
+                let evid = read32(buf, 0)
+                let f = U.lookup(this.eventHandlers, evid + "")
+                if (f) {
+                    f(buf.slice(4))
+                } else {
+                    log("unhandled event: " + evid.toString(16))
                 }
             }
             io.onError = err => {
@@ -188,6 +231,7 @@ namespace pxt.HF2 {
         bootloaderMode = false;
         reconnectTries = 0;
         msgs = new U.PromiseBuffer<Uint8Array>()
+        eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
 
         onSerial = (buf: Uint8Array, isStderr: boolean) => { };
 
@@ -202,9 +246,15 @@ namespace pxt.HF2 {
             this.msgs.drain()
         }
 
+        onEvent(id: number, f: (buf: Uint8Array) => void) {
+            U.assert(!!(id & HF2_EV_MASK))
+            this.eventHandlers[id + ""] = f
+        }
+
         reconnectAsync(first = false): Promise<void> {
             this.resetState()
             if (first) return this.initAsync()
+            log(`reconnect`);
             return this.io.reconnectAsync()
                 .then(() => this.initAsync())
                 .catch(e => {
@@ -217,6 +267,11 @@ namespace pxt.HF2 {
                         throw e
                     }
                 })
+        }
+
+        disconnectAsync() {
+            log(`disconnect`);
+            return this.io.disconnectAsync()
         }
 
         error(m: string) {
@@ -317,9 +372,17 @@ namespace pxt.HF2 {
         }
 
         reflashAsync(blocks: pxtc.UF2.Block[]) {
+            log(`reflash`)
             return this.flashAsync(blocks)
                 .then(() => Promise.delay(100))
                 .then(() => this.reconnectAsync())
+        }
+
+        writeWordsAsync(addr: number, words: number[]) {
+            U.assert(words.length <= 64) // just sanity check
+            return this.talkAsync(HF2_CMD_WRITE_WORDS,
+                encodeU32LE([addr, words.length].concat(words)))
+                .then(() => { })
         }
 
         readWordsAsync(addr: number, numwords: number) {
@@ -398,7 +461,7 @@ namespace pxt.HF2 {
                         Version: m[1],
                         Features: m[2],
                     }
-                    log("Board-ID: " + this.info.BoardID)
+                    log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
                 .then(() => {
                     this.reconnectTries = 0

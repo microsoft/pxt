@@ -5,54 +5,59 @@ interface Array<T> {
       * Gets or sets the length of the array. This is a number one higher than the highest element defined in an array.
       */
     //% shim=Array_::length weight=84
-    //% blockId="lists_length" block="length of %VALUE" blockBuiltin=true blockNamespace="lists"
+    //% blockId="lists_length" block="length of %VALUE" blockBuiltin=true blockNamespace="arrays"
     length: number;
 
     /**
       * Appends new elements to an array.
       * @param items New elements of the Array.
       */
-    //% shim=Array_::push weight=75
-    //% blockId="array_push" block="push into %this|with last item %item" blockNamespace="lists"
+    //% help=arrays/push
+    //% shim=Array_::push weight=49
+    //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
     push(item: T): void;
 
     /**
       * Removes the last element from an array and returns it.
       */
-    //% shim=Array_::pop weight=74
-    //% blockId="array_pop" block="pop last item from %this" blockNamespace="lists"
+    //% help=arrays/pop
+    //% shim=Array_::pop weight=48
+    //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
     pop(): T;
 
     /**
       * Reverses the elements in an Array. The first array element becomes the last, and the last array element becomes the first.
       */
-    //% helper=arrayReverse weight=10
-    //% blockId="array_reverse" block="reverse %this" blockNamespace="lists"
+    //% help=arrays/reverse
+    //% helper=arrayReverse weight=10 advanced=true
+    //% blockId="array_reverse" block="reverse %list" blockNamespace="arrays"
     reverse(): void;
 
     /**
       * Removes the first element from an array and returns that element. This method changes the length of the array.
       */
-    //% helper=arrayShift weight=70
-    //% blockId="array_shift" block="shift first item from %this" blockNamespace="lists"
+    //% help=arrays/shift
+    //% helper=arrayShift weight=70 advanced=true
+    //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
     shift(): T;
 
     /**
       * Adds one element to the beginning of an array and returns the new length of the array.
       * @param element to insert at the start of the Array.
       */
-    //% helper=arrayUnshift weight=69
-    //% blockId="array_unshift" block="unshift into %this|with first item %item" blockNamespace="lists"
+    //% help=arrays/unshift
+    //% helper=arrayUnshift weight=69 advanced=true
+    //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
-    unshift(value:T): number;
+    unshift(value: T): number;
 
     /**
       * Returns a section of an array.
       * @param start The beginning of the specified portion of the array. eg: 0
       * @param end The end of the specified portion of the array. eg: 0
       */
-    //% helper=arraySlice weight=41
-    //% blockId="array_slice" block="slice %this|from %start|to %end" blockNamespace="lists"
+    //% help=arrays/slice
+    //% helper=arraySlice weight=41 advanced=true blockNamespace="arrays"
     slice(start: number, end: number): T[];
 
     /**
@@ -95,37 +100,40 @@ interface Array<T> {
 
     /** Removes the first occurence of an object. Returns true if removed. */
     //% shim=Array_::removeElement weight=48
-    removeElement(element:T) : boolean;
+    removeElement(element: T): boolean;
 
     /** Removes the object at position index. */
-    //% shim=Array_::removeAt weight=49
-    //% blockId="array_removeat" block="remove from %this|at %index" blockNamespace="lists"
-    removeAt(index:number) : T;
+    //% help=arrays/removeat
+    //% shim=Array_::removeAt weight=49 advanced=true
+    //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
+    removeAt(index: number): T;
 
     /**
      * Insert the value at a particular index, increases length by 1
      * @param index the zero-based position in the list to insert the value, eg: 0
      * @param the value to insert, eg: 0
      */
-    //% shim=Array_::insertAt weight=84
-    //% blockId="array_insertAt" block="insert in %this|at %index|with value %value" blockNamespace="lists"
-    insertAt(index:number, value: T) : void;
+    //% help=arrays/insertat
+    //% shim=Array_::insertAt weight=84 advanced=true
+    //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
+    insertAt(index: number, value: T): void;
 
     /**
       * Returns the index of the first occurrence of a value in an array.
       * @param item The value to locate in the array.
       * @param fromIndex The array index at which to begin the search. If fromIndex is omitted, the search starts at index 0.
       */
-    //% shim=Array_::indexOf weight=50
-    //% blockId="array_indexof" block="index in %this|of %item" blockNamespace="lists"
+    //% help=arrays/indexof
+    //% shim=Array_::indexOf weight=50 advanced=true
+    //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
      * Gets the value at a particular index
      * @param index the zero-based position in the list of the item, eg: 0
      */
+    //% help=arrays/get
     //% shim=Array_::getAt weight=85
-    //% blockId="array_get" block="get from %this|at %index" blockNamespace="lists"
     get(index: number): T;
 
     /**
@@ -133,9 +141,9 @@ interface Array<T> {
      * @param index the zero-based position in the list to store the value, eg: 0
      * @param the value to insert, eg: 0
      */
+    //% help=arrays/set
     //% shim=Array_::setAt weight=84
-    //% blockId="array_set" block="set in %this|at %index|with value %value" blockNamespace="lists"
-    set(index: number, value : T) : void;
+    set(index: number, value: T): void;
 
     [n: number]: T;
 }
@@ -147,21 +155,21 @@ declare interface String {
      * Returns a string that contains the concatenation of two or more strings.
      * @param other The string to append to the end of the string.
      */
-    //% shim=String_::concat weight=80
+    //% shim=String_::concat weight=49
     //% blockId="string_concat" blockNamespace="text"
-    // block="join %this=text|%other"
+    // block="join %list=text|%other"
     concat(other: string): string;
 
     /**
      * Returns the character at the specified index.
      * @param index The zero-based index of the desired character.
      */
-    //% shim=String_::charAt weight=77
+    //% shim=String_::charAt weight=48
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */
-    //% property shim=String_::length weight=75
+    //% property shim=String_::length weight=47
     //% blockId="text_length" block="length of %VALUE" blockBuiltin=true blockNamespace="text"
     length: number;
 
@@ -187,7 +195,7 @@ declare interface String {
      */
     //% shim=String_::substr length.defl=1000000
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
-    substr(start:number, length?:number): string;
+    substr(start: number, length?: number): string;
 
     // This block is currently disabled, as it does not compile in some targets
     // Add % sign back to the block annotation to re-enable
@@ -195,7 +203,7 @@ declare interface String {
     //% shim=String_::isEmpty
     //% blockId="string_isempty" blockNamespace="text"
     // block="%this=text| is empty"
-    isEmpty() : boolean;
+    isEmpty(): boolean;
 
     [index: number]: string;
 }
@@ -208,14 +216,14 @@ declare interface String {
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
 declare function parseInt(text: string): number;
 
-interface Object {}
-interface Function {}
-interface IArguments {}
-interface RegExp {}
+interface Object { }
+interface Function { }
+interface IArguments { }
+interface RegExp { }
 
 type uint8 = number;
 type uint16 = number;
-//type uint32 = number;
+type uint32 = number;
 type int8 = number;
 type int16 = number;
 type int32 = number;
@@ -251,7 +259,6 @@ declare interface Number {
 }
 
 declare namespace Math {
-
     /**
      * Returns the value of a base expression taken to a specified power.
      * @param x The base value of the expression.
@@ -272,4 +279,48 @@ declare namespace Math {
      */
     //% shim=Math_::sqrt
     function sqrt(x: number): number;
+
+    /**
+     * Returns the smallest number greater than or equal to its numeric argument.
+     * @param x A numeric expression.
+     */
+    //% shim=Math_::ceil
+    function ceil(x: number): number;
+
+    /**
+      * Returns the greatest number less than or equal to its numeric argument.
+      * @param x A numeric expression.
+      */
+    //% shim=Math_::floor
+    function floor(x: number): number;
+
+    /**
+      * Returns the number with the decimal part truncated.
+      * @param x A numeric expression.
+      */
+    //% shim=Math_::trunc
+    function trunc(x: number): number;
+
+    /**
+      * Returns a supplied numeric expression rounded to the nearest number.
+      * @param x The value to be rounded to the nearest number.
+      */
+    //% shim=Math_::round
+    function round(x: number): number;
+
+    /**
+     * Returns the value of integer signed 32 bit multiplication of two numbers.
+     * @param x The first number
+     * @param y The second number
+     */
+    //% shim=Math_::imul
+    function imul(x: number, y: number): number;
+
+    /**
+     * Returns the value of integer signed 32 bit division of two numbers.
+     * @param x The first number
+     * @param y The second number
+     */
+    //% shim=Math_::idiv
+    function idiv(x: number, y: number): number;
 }

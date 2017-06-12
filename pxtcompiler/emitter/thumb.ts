@@ -93,7 +93,7 @@ namespace ts.pxtc.thumb {
             this.addInst("eors  $r0, $r1", 0x4040, 0xffc0);
             this.addInst("ldmia $r5!, $rl0", 0xc800, 0xf800);
             this.addInst("ldmia $r5, $rl0", 0xc800, 0xf800);
-            this.addInst("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800).canBeShared = true;
+            this.addInst("ldr   $r0, [$r1, $i5]", 0x6800, 0xf800); // this is used for debugger breakpoint - cannot be shared
             this.addInst("ldr   $r0, [$r1, $r4]", 0x5800, 0xfe00);
             this.addInst("ldr   $r5, [pc, $i1]", 0x4800, 0xf800);
             this.addInst("ldr   $r5, $la", 0x4800, 0xf800);

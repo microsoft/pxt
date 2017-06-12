@@ -17,29 +17,29 @@ namespace pxt {
     export function lzmaDecompressAsync(buf: Uint8Array): Promise<string> { // string
         return getLzmaAsync()
             .then(lzma => new Promise<string>((resolve, reject) => {
-            try {
-                lzma.decompress(buf, (res: string, error: any) => {
-                    resolve(error ? undefined : res);
-                })
-            }
-            catch (e) {
-                resolve(undefined);
-            }
-        }));
+                try {
+                    lzma.decompress(buf, (res: string, error: any) => {
+                        resolve(error ? undefined : res);
+                    })
+                }
+                catch (e) {
+                    resolve(undefined);
+                }
+            }));
     }
 
     export function lzmaCompressAsync(text: string): Promise<Uint8Array> {
         return getLzmaAsync()
             .then(lzma => new Promise<Uint8Array>((resolve, reject) => {
-            try {
-                lzma.compress(text, 7, (res: any, error: any) => {
-                    resolve(error ? undefined : new Uint8Array(res));
-                })
-            }
-            catch (e) {
-                resolve(undefined);
-            }
-        }));
+                try {
+                    lzma.compress(text, 7, (res: any, error: any) => {
+                        resolve(error ? undefined : new Uint8Array(res));
+                    })
+                }
+                catch (e) {
+                    resolve(undefined);
+                }
+            }));
     }
 }
 
@@ -219,11 +219,18 @@ namespace pxt.cpp {
                 switch (tp.replace(/\s+/g, "")) {
                     case "void": return "void";
                     // TODO: need int16_t
-                    case "TNumber":
                     case "int32_t":
+                    case "int":
+                        return "int32";
+
                     case "uint32_t":
                     case "unsigned":
-                    case "int": return "number";
+                        return "uint32";
+
+                    case "TNumber":
+                    case "float":
+                    case "double":
+                        return "number";
 
                     case "uint16_t": return "uint16";
 

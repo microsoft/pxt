@@ -192,11 +192,11 @@ namespace ts.pxtc {
                             return ""
                         });
                         if (attributes.paramShadowOptions[argNames[i]]) {
-                            options['fieldEditorOptions'] = {value: attributes.paramShadowOptions[argNames[i]] }
+                            options['fieldEditorOptions'] = { value: attributes.paramShadowOptions[argNames[i]] }
                         }
                     }
-                    if (minVal) options['min'] = {value: minVal};
-                    if (maxVal) options['max'] = {value: maxVal};
+                    if (minVal) options['min'] = { value: minVal };
+                    if (maxVal) options['max'] = { value: maxVal };
                     return {
                         name: n,
                         description: desc,
@@ -591,8 +591,10 @@ namespace ts.pxtc.service {
     let host: Host;
     let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
+    let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse;
     let builtinItems: SearchInfo[];
+    let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
     let tbSubset: Map<boolean>;
 
     function fileDiags(fn: string) {
@@ -615,7 +617,19 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    const blocksInfoOp = () => lastBlocksInfo || (lastBlocksInfo = getBlocksInfo(lastApiInfo));
+    const blocksInfoOp = (apisInfoLocOverride?: pxtc.ApisInfo) => {
+        if (apisInfoLocOverride) {
+            if (!lastLocBlocksInfo) {
+                lastLocBlocksInfo = getBlocksInfo(apisInfoLocOverride);
+            }
+            return lastLocBlocksInfo;
+        } else {
+            if (!lastBlocksInfo) {
+                lastBlocksInfo = getBlocksInfo(lastApiInfo);
+            }
+            return lastBlocksInfo;
+        }
+    }
 
     const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
@@ -703,21 +717,42 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            const blockInfo = blocksInfoOp(); // cache
+            const blockInfo = blocksInfoOp(search.localizedApis); // cache
+
+            if (search.localizedStrings) {
+                pxt.Util.setLocalizedStrings(search.localizedStrings);
+            }
+
+            // Computes the preferred tooltip or block text to use for search (used for blocks that have multiple tooltips or block texts)
+            const computeSearchProperty = (tooltipOrBlock: string | Map<string>, preferredSearch: string, blockDef: pxt.blocks.BlockDefinition): string => {
+                if (!tooltipOrBlock) {
+                    return;
+                }
+                if (typeof tooltipOrBlock === "string") {
+                    // There is only one tooltip or block text; use it
+                    return tooltipOrBlock;
+                }
+                if (preferredSearch) {
+                    // The block definition specifies a preferred tooltip / block text to use for search; use it
+                    return (<any>tooltipOrBlock)[preferredSearch];
+                }
+                // The block definition does not specify which tooltip or block text to use for search; join all values with a space
+                return Object.keys(tooltipOrBlock).map(k => (<Map<string>>tooltipOrBlock)[k]).join(" ");
+            };
 
             if (!builtinItems) {
                 builtinItems = [];
-                const helpResources = pxt.blocks.helpResources();
-                for (const id in helpResources) {
-                    const helpItem = helpResources[id];
+                blockDefinitions = pxt.blocks.blockDefinitions();
+                for (const id in blockDefinitions) {
+                    const blockDef = blockDefinitions[id];
 
-                    if (helpItem.operators) {
-                        for (const op in helpItem.operators) {
-                            const opValues = helpItem.operators[op];
+                    if (blockDef.operators) {
+                        for (const op in blockDef.operators) {
+                            const opValues = blockDef.operators[op];
                             opValues.forEach(v => builtinItems.push({
                                 id,
-                                name: helpItem.name,
-                                jsdoc: helpItem.tooltip,
+                                name: blockDef.name,
+                                jsdoc: typeof blockDef.tooltip === "string" ? <string>blockDef.tooltip : (<Map<string>>blockDef.tooltip)[v],
                                 block: v,
                                 field: [op, v]
                             }));
@@ -726,8 +761,9 @@ namespace ts.pxtc.service {
                     else {
                         builtinItems.push({
                             id,
-                            name: helpItem.name,
-                            jsdoc: helpItem.tooltip
+                            name: blockDef.name,
+                            jsdoc: computeSearchProperty(blockDef.tooltip, blockDef.tooltipSearch, blockDef),
+                            block: computeSearchProperty(blockDef.block, blockDef.blockTextSearch, blockDef)
                         });
                     }
 
@@ -746,7 +782,6 @@ namespace ts.pxtc.service {
             }
 
             if (!lastFuse || search.subset) {
-                const blockInfo = blocksInfoOp(); // cache
                 const weights: pxt.Map<number> = {};
                 let builtinSearchSet: SearchInfo[];
 
@@ -793,23 +828,22 @@ namespace ts.pxtc.service {
                     findAllMatches: false,
                     caseSensitive: false,
                     keys: [
-                        { name: 'name', weight: 0.5 },
-                        { name: 'namespace', weight: 0.3 },
-                        { name: 'block', weight: 0.7 },
-                        { name: 'jsDoc', weight: 0.1 }
+                        { name: 'name', weight: 0.3125 },
+                        { name: 'namespace', weight: 0.1875 },
+                        { name: 'block', weight: 0.4375 },
+                        { name: 'jsDoc', weight: 0.0625 }
                     ],
                     sortFn: function (a: any, b: any): number {
-                        const wa = a.qName ?  1 - weights[a.item.qName] / mw : 1;
+                        const wa = a.qName ? 1 - weights[a.item.qName] / mw : 1;
                         const wb = b.qName ? 1 - weights[b.item.qName] / mw : 1;
                         // allow 10% wiggle room for weights
-                        return a.score  * (1 + wa / 10) - b.score * (1 + wb / 10);
+                        return a.score * (1 + wa / 10) - b.score * (1 + wb / 10);
                     }
                 };
                 lastFuse = new Fuse(searchSet, fuseOptions);
             }
-            const fns = lastFuse.search(search.term)
-                .slice(0, SEARCH_RESULT_COUNT);
-            return fns;
+            const fns = lastFuse.search(search.term);
+            return fns.slice(0, SEARCH_RESULT_COUNT);
         }
     }
 

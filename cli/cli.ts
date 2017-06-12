@@ -23,6 +23,8 @@ import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
+import * as clidbg from './clidbg';
+import * as pyconv from './pyconv';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 
@@ -1208,22 +1210,50 @@ function maxMTimeAsync(dirs: string[]) {
 export function buildTargetAsync(): Promise<void> {
     if (pxt.appTarget.id == "core")
         return buildTargetCoreAsync()
-    return simshimAsync()
-        .then(() => buildFolderAsync('sim', true, 'sim'))
+
+    let initPromise: Promise<void>;
+
+    const commonPackageDir = path.resolve("node_modules/pxt-common-packages")
+
+    // Make sure to build common sim in case of a local clean. This will do nothing for
+    // targets without pxt-common-packages installed.
+    if (!inCommonPkg("built/common-sim.js") || !inCommonPkg("built/common-sim.d.ts")) {
+        initPromise = buildCommonSimAsync();
+    }
+    else {
+        initPromise = Promise.resolve();
+    }
+
+    return initPromise
+        .then(() => { copyCommonSim(); return simshimAsync() })
+        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(buildTargetCoreAsync)
-        .then(buildSemanticUIAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(() => buildFolderAsync('editor', true, 'editor'))
+        .then(buildSemanticUIAsync)
+        .then(() => {
+            if (fs.existsSync(path.join("editor", "tsconfig.json"))) {
+                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
+                if (tsConfig.compilerOptions.module)
+                    return buildFolderAndBrowserifyAsync('editor', true, 'editor');
+                else
+                    return buildFolderAsync('editor', true, 'editor');
+            }
+            return Promise.resolve();
+        })
         .then(() => buildFolderAsync('server', true, 'server'))
+
+    function inCommonPkg(p: string) {
+        return fs.existsSync(path.join(commonPackageDir, p));
+    }
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(p + "/tsconfig.json")) {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
         if (!optional) U.userError(`${p}/tsconfig.json not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(p + "/tsconfig.json", "utf8"));
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
         U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
     }
@@ -1238,6 +1268,57 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
+    })
+}
+
+function copyCommonSim() {
+    const p = "node_modules/pxt-common-packages/built";
+    if (fs.existsSync(p)) {
+        pxt.log(`copying common-sim...`)
+        nodeutil.cp(path.join(p, "common-sim.js"), "built");
+        nodeutil.cp(path.join(p, "common-sim.d.ts"), "built");
+    }
+}
+
+function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
+    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
+        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+        return Promise.resolve()
+    }
+
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    if (outputName && tsConfig.compilerOptions.outDir !== `../built/${outputName}`) {
+        U.userError(`${p}/tsconfig.json expected compilerOptions.ourDir:"../built/${outputName}", got "${tsConfig.compilerOptions.outDir}"`);
+    }
+
+    if (!fs.existsSync("node_modules/typescript")) {
+        U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
+    }
+
+    pxt.log(`building ${p}...`)
+    dirsToWatch.push(p)
+    return nodeutil.spawnAsync({
+        cmd: "node",
+        args: ["../node_modules/typescript/bin/tsc"],
+        cwd: p
+    }).then(() => {
+        const browserify = require('browserify');
+        let b = browserify();
+        nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
+            b.add(f);
+        });
+
+        let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
+        b.bundle().pipe(outFile);
+
+        return new Promise<void>((resolve, reject) => {
+            outFile.on('finish', () => {
+                resolve();
+            });
+            outFile.on('error', (err: any) => {
+                reject(err);
+            });
+        });
     })
 }
 
@@ -1373,9 +1454,6 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
 }
 
 function buildSemanticUIAsync() {
-    const rtlcss = require('rtlcss');
-    const autoprefixer = require('autoprefixer');
-
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1401,17 +1479,11 @@ function buildSemanticUIAsync() {
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
         semCss = semCss.replace('src: url("fonts/icons.eot");', "")
             .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+        fs.writeFileSync('built/web/semantic.css', semCss)
         return semCss;
     }).then((semCss) => {
-        // run autoprefixer
-        pxt.debug("running autoprefixer");
-        return autoprefixer.process(semCss).then((result: any) => {
-            fs.writeFileSync('built/web/semantic.css', result.css);
-            return result.css;
-        });
-    }).then((semCss) => {
-        // convert to rtl
-        let rtlCss = rtlcss.process(semCss);
+        const rtlcss = require('rtlcss');
+        const rtlCss = rtlcss.process(semCss);
         pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
     })
@@ -1516,6 +1588,8 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                             newProject.config.dependencies[k] = "*";
                         }
                     });
+                    if (newProject.config.icon)
+                        newProject.config.icon = uploadArtFile(newProject.config.icon);
                 } else {
                     newProject.files[relativePath] = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
                 }
@@ -1523,6 +1597,16 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 
             (<any>cfg)[projectId] = newProject;
         });
+
+    if (!cfg.tsprj && cfg.blocksprj) {
+        let notBlock = (s: string) => !U.endsWith(s, ".blocks")
+        cfg.tsprj = U.clone(cfg.blocksprj)
+        cfg.tsprj.id = "tsprj"
+        cfg.tsprj.config.files = cfg.tsprj.config.files.filter(notBlock)
+        for (let k of Object.keys(cfg.tsprj.files)) {
+            if (!notBlock(k)) delete cfg.tsprj.files[k]
+        }
+    }
 }
 
 function updateTOC(cfg: pxt.TargetBundle) {
@@ -1538,7 +1622,6 @@ function updateTOC(cfg: pxt.TargetBundle) {
 }
 
 function buildTargetCoreAsync() {
-    let previousForceCloudBuild = forceCloudBuild;
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
@@ -1551,6 +1634,8 @@ function buildTargetCoreAsync() {
             dirsToWatch.push("theme"); // simulator
             dirsToWatch.push(path.join("theme", "site", "globals")); // simulator
         }
+        if (fs.existsSync("editor"))
+            dirsToWatch.push("editor");
         if (fs.existsSync("sim")) {
             dirsToWatch.push("sim"); // simulator
             dirsToWatch = dirsToWatch.concat(
@@ -1567,18 +1652,17 @@ function buildTargetCoreAsync() {
     return forEachBundledPkgAsync((pkg, dirname) => {
         pxt.log(`building ${dirname}`);
         let isPrj = /prj$/.test(dirname);
-
-        if (isPrj) {
-            forceCloudBuild = true;
-        } else {
-            forceCloudBuild = previousForceCloudBuild;
+        const config = JSON.parse(fs.readFileSync(pxt.CONFIG_NAME, "utf8")) as pxt.PackageConfig;
+        if (config && config.additionalFilePath) {
+            dirsToWatch.push(path.resolve(config.additionalFilePath));
         }
 
         return pkg.filesToBePublishedAsync(true)
             .then(res => {
-                cfg.bundledpkgs[path.basename(dirname)] = res
+                if (!isPrj)
+                    cfg.bundledpkgs[path.basename(dirname)] = res
             })
-            .then(testForBuildTargetAsync)
+            .then(() => testForBuildTargetAsync(isPrj))
             .then((compileOpts) => {
                 // For the projects, we need to save the base HEX file to the offline HEX cache
                 if (isPrj && pxt.appTarget.compile.hasHex) {
@@ -1601,9 +1685,6 @@ function buildTargetCoreAsync() {
                 }
             })
     }, /*includeProjects*/ true)
-        .finally(() => {
-            forceCloudBuild = previousForceCloudBuild;
-        })
         .then(() => {
             let info = travisInfo()
             cfg.versions = {
@@ -1689,14 +1770,40 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
         return Promise.resolve()
     }
 
+    const hasCommonPackages = fs.existsSync(path.resolve("node_modules/pxt-common-packages"));
+
+    let simDirectories: string[] = [];
+    if (hasCommonPackages) {
+        const libsdir = path.resolve("node_modules/pxt-common-packages/libs");
+        simDirectories = fs.readdirSync(libsdir).map(fn => path.join(libsdir, fn, "sim"));
+        simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
+    }
+
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
+        .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
         .then(() => buildTargetAsync().then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
         .then(() => buildTargetDocsAsync(false, true).then(r => { }, e => {
             buildFailed("target build failed: " + e.message, e)
         }))
-        .then(() => [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)));
+        .then(() => {
+            let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
+            if (hasCommonPackages) {
+                toWatch = toWatch.concat(simDirectories);
+            }
+            return toWatch;
+        }));
+}
+
+function buildCommonSimAsync() {
+    const simPath = path.resolve("node_modules/pxt-common-packages/sim");
+    if (fs.existsSync(simPath)) {
+        return buildFolderAsync(simPath)
+    }
+    else {
+        return Promise.resolve();
+    }
 }
 
 function renderDocs(builtPackaged: string, localDir: string) {
@@ -1746,16 +1853,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !globalConfig.localBuild
+    forceCloudBuild = false; // always use yotta
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["yt"]) {
-        forceCloudBuild = false
-    } else if (parsed.flags["cloud"]) {
+    if (parsed.flags["cloud"]) {
         forceCloudBuild = true
     }
     if (parsed.flags["just"]) {
@@ -1763,11 +1868,10 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     } else if (parsed.flags["pkg"]) {
         justServe = true
         packaged = true
-    } else if (parsed.flags["noBrowser"]) {
-        justServe = true
+    }
+    if (parsed.flags["noBrowser"]) {
         globalConfig.noAutoStart = true
     }
-
     if (parsed.flags["sourceMaps"]) {
         includeSourceMaps = true;
     }
@@ -1822,7 +1926,7 @@ class SnippetHost implements pxt.Host {
     //Global cache of module files
     static files: Map<Map<string>> = {}
 
-    constructor(public name: string, public main: string, public extraDependencies: string[]) { }
+    constructor(public name: string, public main: string, public extraDependencies: string[], private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
         return ""
@@ -1838,10 +1942,15 @@ class SnippetHost implements pxt.Host {
                     "name": this.name,
                     "dependencies": this.dependencies,
                     "description": "",
-                    "files": [
+                    "files": this.includeCommon ? [
                         "main.blocks", //TODO: Probably don't want this
-                        "main.ts"
-                    ]
+                        "main.ts",
+                        "pxt-core.d.ts",
+                        "pxt-helpers.ts"
+                    ] : [
+                            "main.blocks", //TODO: Probably don't want this
+                            "main.ts",
+                        ]
                 })
             }
             else if (filename == "main.ts") {
@@ -1850,26 +1959,33 @@ class SnippetHost implements pxt.Host {
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
         } else {
-            let p0 = path.join(module.id, filename);
-            let p1 = path.join('libs', module.id, filename)
-            let p2 = path.join('libs', module.id, 'built', filename)
+            let ps = [
+                path.join(module.id, filename),
+                path.join('libs', module.id, filename),
+                path.join('libs', module.id, 'built', filename),
+            ];
 
             let contents: string = null
-
-            try {
-                contents = fs.readFileSync(p0, 'utf8')
-            }
-            catch (e) {
+            if (!ps.some(p => {
                 try {
-                    contents = fs.readFileSync(p1, 'utf8')
+                    contents = fs.readFileSync(p, 'utf8')
+                    return true;
                 }
                 catch (e) {
-                    //console.log(e)
-                    try {
-                        contents = fs.readFileSync(p2, 'utf8')
-                    }
-                    catch (e) {
-                        //console.log(e)
+                }
+                return false;
+            })) {
+                // try additional package location
+                if (pxt.appTarget.bundledpkgs[module.id]) {
+                    const modpkg = JSON.parse(pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    if (modpkg.additionalFilePath) {
+                        try {
+                            const ad = path.join(modpkg.additionalFilePath.replace('../../', ''), filename);
+                            pxt.debug(ad)
+                            contents = fs.readFileSync(ad, 'utf8')
+                        }
+                        catch (e) {
+                        }
                     }
                 }
             }
@@ -1879,7 +1995,28 @@ class SnippetHost implements pxt.Host {
                 return contents
             }
         }
+
+        if (module.id === "this") {
+            if (filename === "pxt-core.d.ts") {
+                const contents = fs.readFileSync(path.join(this.getRepoDir(), "libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
+                this.writeFile(module, filename, contents);
+                return contents;
+            }
+            else if (filename === "pxt-helpers.ts") {
+                const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+                this.writeFile(module, filename, contents);
+                return contents;
+            }
+        }
+
+        pxt.debug(`unresolved file ${module.id}/${filename}`)
         return ""
+    }
+
+    private getRepoDir() {
+        const cwd = process.cwd();
+        const i = cwd.lastIndexOf(path.sep + "pxt" + path.sep);
+        return cwd.substr(0, i + 5);
     }
 
     writeFile(module: pxt.Package, filename: string, contents: string) {
@@ -1890,8 +2027,7 @@ class SnippetHost implements pxt.Host {
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        //console.log(`getHexInfoAsync(${extInfo})`);
-        return Promise.resolve<any>(null)
+        return pxt.hex.getHexInfoAsync(this, extInfo)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -2069,7 +2205,7 @@ const defaultFiles: Map<string> = {
 }
 `,
 
-    "tests.ts": `// tests go here; this will not be compiled when this package is used as a library
+    "test.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
 
     "Makefile": `all: deploy
@@ -2490,20 +2626,30 @@ function runCoreAsync(res: pxtc.CompileResult) {
 }
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
+    process.chdir("../..")
     if (!nodeutil.existsDirSync("sim")) return;
 
     let decls: Map<ts.Symbol> = {}
 
     if (!pkgOpts.extinfo || pkgOpts.extinfo.functions.length == 0) return
 
+    pxt.log("checking for missing sim implementations...")
+
+    const sources = ["built/sim.d.ts", "node_modules/pxt-core/built/pxtsim.d.ts"];
+    if (fs.existsSync("built/common-sim.d.ts")) {
+        sources.push("built/common-sim.d.ts")
+    }
+
     let opts: pxtc.CompileOptions = {
         fileSystem: {},
-        sourceFiles: ["built/sim.d.ts", "node_modules/pxt-core/built/pxtsim.d.ts"],
+        sourceFiles: sources,
         target: mainPkg.getTargetOptions(),
         ast: true,
         noEmit: true,
         hexinfo: null
     }
+
+    opts.target.isNative = false
 
     for (let fn of opts.sourceFiles) {
         opts.fileSystem[fn] = fs.readFileSync(path.join(nodeutil.targetDir, fn), "utf8")
@@ -2531,10 +2677,12 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
+        if (pxtc.isBuiltinSimOp(shim))
+            continue
         let simName = pxtc.shimToJs(shim)
         let sym = U.lookup(decls, simName)
         if (!sym) {
-            console.log("missing in sim:", simName)
+            pxt.log("missing in sim: " + simName)
         }
     }
 
@@ -2566,7 +2714,7 @@ function testAssemblers(): Promise<void> {
 }
 
 
-function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
+function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOptions> {
     let opts: pxtc.CompileOptions
     return mainPkg.loadAsync()
         .then(() => {
@@ -2574,18 +2722,27 @@ function testForBuildTargetAsync(): Promise<pxtc.CompileOptions> {
             let target = mainPkg.getTargetOptions()
             if (target.hasHex)
                 target.isNative = true
+            if (!useNative)
+                target.isNative = false
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(o => {
             opts = o
             opts.testMode = true
             opts.ast = true
-            return pxtc.compile(opts)
+            if (useNative)
+                return pxtc.compile(opts)
+            else {
+                pxt.log("  skip native build of non-project")
+                return null
+            }
         })
         .then(res => {
-            reportDiagnostics(res.diagnostics);
-            if (!res.success) U.userError("Compiler test failed")
-            simulatorCoverage(res, opts)
+            if (res) {
+                reportDiagnostics(res.diagnostics);
+                if (!res.success) U.userError("Compiler test failed")
+                simulatorCoverage(res, opts)
+            }
         })
         .then(() => opts);
 }
@@ -2854,100 +3011,6 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
         })
 }
 
-function testDecompilerAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const filenames: string[] = [];
-    const dir = parsed.arguments[0];
-    const baselineDir = path.resolve(dir, "baselines")
-
-    try {
-        const stats = fs.statSync(baselineDir);
-        if (!stats.isDirectory()) {
-            console.error(baselineDir + " is not a directory; unable to run decompiler tests");
-            process.exit(1);
-        }
-    }
-    catch (e) {
-        console.error(baselineDir + " does not exist; unable to run decompiler tests");
-        process.exit(1);
-    }
-
-    const testBlocksDir = getTestBlocksDir(dir);
-
-    for (const file of fs.readdirSync(dir)) {
-        if (file[0] == ".") {
-            continue;
-        }
-
-        const filename = path.join(dir, file)
-        if (U.endsWith(file, ".ts")) {
-            filenames.push(filename)
-        }
-    }
-
-    const errors: string[] = [];
-
-    return Promise.mapSeries(filenames, filename => {
-        const basename = path.basename(filename);
-        const baselineFile = path.join(baselineDir, replaceFileExtension(basename, ".blocks"))
-
-        let baselineExists: boolean;
-        try {
-            const stats = fs.statSync(baselineFile)
-            baselineExists = stats.isFile()
-        }
-        catch (e) {
-            baselineExists = false
-        }
-
-        if (!baselineExists) {
-            // Don't kill the promise chain, just push an error
-            errors.push(`decompiler test FAILED; ${basename} does not have a baseline at ${baselineFile}`)
-            return Promise.resolve()
-        }
-
-        return decompileAsyncWorker(filename, testBlocksDir)
-            .then(decompiled => {
-                const baseline = fs.readFileSync(baselineFile, "utf8")
-                if (compareBaselines(decompiled, baseline)) {
-                    console.log(`decompiler test OK: ${basename}`);
-                }
-                else {
-                    const outFile = path.join(replaceFileExtension(filename, ".local.blocks"))
-                    fs.writeFileSync(outFile, decompiled)
-                    errors.push((`decompiler test FAILED; ${basename} did not match baseline, output written to ${outFile}`));
-                }
-            }, error => {
-                errors.push((`decompiler test FAILED; ${basename} was unable to decompile due to: ${error}`))
-            })
-    })
-        .then(() => {
-            if (errors.length) {
-                errors.forEach(e => console.log(e));
-                console.error(`${errors.length} decompiler test failure(s)`);
-                process.exit(1);
-            }
-            else {
-                console.log(`${filenames.length} decompiler test(s) OK`);
-            }
-        });
-}
-
-function getTestBlocksDir(parentDirectory: string): string {
-    const testBlocksDir = path.relative(process.cwd(), path.join(parentDirectory, "testBlocks"));
-    let testBlocksDirExists = false;
-    try {
-        const stats = fs.statSync(testBlocksDir);
-        testBlocksDirExists = stats.isDirectory();
-    }
-    catch (e) { }
-    return testBlocksDirExists ? testBlocksDir : undefined;
-}
-
-function compareBaselines(a: string, b: string): boolean {
-    // Ignore whitespace
-    return a.replace(/\s/g, "") === b.replace(/\s/g, "")
-}
-
 function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
@@ -3029,121 +3092,6 @@ function testPkgConflictsAsync() {
         });
 }
 
-function testDecompilerErrorsAsync(parsed: commandParser.ParsedCommand) {
-    const filenames: string[] = [];
-    const dir = parsed.arguments[0];
-    const testBlocksDir = getTestBlocksDir(path.resolve(dir, ".."));
-
-    for (const file of fs.readdirSync(dir)) {
-        if (file[0] == ".") {
-            continue;
-        }
-
-        const filename = path.join(dir, file)
-        if (U.endsWith(file, ".ts")) {
-            filenames.push(filename)
-        }
-    }
-
-    const errors: string[] = [];
-    let totalCases = 0;
-
-    return Promise.mapSeries(filenames, filename => {
-        const basename = path.basename(filename);
-        let fullText: string;
-
-        try {
-            fullText = fs.readFileSync(filename, "utf8");
-        }
-        catch (e) {
-            errors.push("Could not read " + filename)
-            process.exit(1)
-        }
-
-        const cases = getCasesFromFile(fullText);
-        totalCases += cases.length;
-
-        let success = true;
-
-        if (cases.length === 0) {
-            errors.push(`decompiler error test FAILED; ${basename} contains no test cases`)
-            success = false;
-        }
-
-        let currentCase: string = undefined;
-
-        return Promise.mapSeries(cases, testCase => {
-            const pkg = new pxt.MainPackage(new SnippetHost("decompile-error-pkg", testCase.text, [testBlocksDir]));
-            currentCase = testCase.name;
-            return pkg.getCompileOptionsAsync()
-                .then(opts => {
-                    opts.ast = true;
-                    const decompiled = pxtc.decompile(opts, "main.ts");
-                    if (decompiled.success) {
-                        errors.push(`decompiler error test FAILED; ${basename} case "${testCase.name}" expected a decompilation error but got none`);
-                        success = false;
-                    }
-                })
-        })
-            .then(() => {
-                if (success) {
-                    console.log(`decompiler error test OK: ${basename}`);
-                }
-            })
-            .catch(e => {
-                errors.push(`decompiler error test FAILED; ${basename} case "${currentCase}" generated an exception: ${e}`);
-                success = false
-            });
-    })
-        .then(() => {
-            if (errors.length) {
-                errors.forEach(e => console.log(e));
-                console.error(`${errors.length} decompiler error test failure(s)`);
-                process.exit(1);
-            }
-            else {
-                console.log(`${totalCases} decompiler error test(s) OK`);
-            }
-        })
-}
-
-interface DecompilerErrorTestCase {
-    name: string,
-    text: string
-}
-
-const testCaseSeperatorRegex = /\/\/\s+@case:\s*([a-zA-z ]+)$/
-
-function getCasesFromFile(fileText: string): DecompilerErrorTestCase[] {
-    const result: DecompilerErrorTestCase[] = [];
-
-    const lines = fileText.split("\n")
-
-    let currentCase: DecompilerErrorTestCase;
-
-    for (const line of lines) {
-        const match = testCaseSeperatorRegex.exec(line)
-        if (match) {
-            if (currentCase) {
-                result.push(currentCase)
-            }
-            currentCase = {
-                name: match[1],
-                text: ""
-            };
-        }
-        else if (currentCase) {
-            currentCase.text += line + "\n"
-        }
-    }
-
-    if (currentCase) {
-        result.push(currentCase)
-    }
-
-    return result;
-}
-
 function decompileAsync(parsed: commandParser.ParsedCommand) {
     return Promise.mapSeries(parsed.arguments, f => {
         const outFile = replaceFileExtension(f, ".blocks")
@@ -3163,7 +3111,7 @@ function decompileAsync(parsed: commandParser.ParsedCommand) {
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const input = fs.readFileSync(f, "utf8")
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : []));
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : [], true));
 
         pkg.getCompileOptionsAsync()
             .then(opts => {
@@ -3266,8 +3214,17 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
-            if (target.hasHex && mode != BuildOption.Run && mode != BuildOption.DebugSim)
+            if (target.hasHex)
                 target.isNative = true
+            switch (mode) {
+                case BuildOption.Run:
+                case BuildOption.DebugSim:
+                case BuildOption.GenDocs:
+                    target.isNative = false
+                    break
+                default:
+                    break
+            }
             return mainPkg.getCompileOptionsAsync(target)
         })
         .then(opts => {
@@ -3279,8 +3236,18 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
         })
 }
 
+function dbgTestAsync() {
+    return buildCoreAsync({
+        mode: BuildOption.JustBuild,
+        debug: true
+    })
+        .then(clidbg.startAsync)
+}
+
 interface BuildCoreOptions {
     mode: BuildOption;
+
+    debug?: boolean;
 
     // docs
     locs?: boolean;
@@ -3289,16 +3256,22 @@ interface BuildCoreOptions {
     createOnly?: boolean;
 }
 
-function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOptions> {
+function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
+    let compileResult: pxtc.CompileResult;
     ensurePkgDir();
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
             opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
+            if (buildOpts.debug) {
+                opts.breakpoints = true
+                opts.justMyCode = true
+            }
             return pxtc.compile(opts);
         })
         .then((res): Promise<void | pxtc.CompileOptions> => {
+            compileResult = res
             U.iterMap(res.outfiles, (fn, c) => {
                 if (fn !== pxtc.BINARY_JS) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
@@ -3365,7 +3338,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileOption
             }
         })
         .then(() => {
-            return compileOptions;
+            return compileResult;
         });
 }
 
@@ -3595,7 +3568,7 @@ export function buildTargetDocsAsync(docs: boolean, locs: boolean, fileFilter?: 
     // from target location?
     if (fs.existsSync("pxtarget.json"))
         return forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building in ${dirname}`);
+            pxt.log(`building docs in ${dirname}`);
             return build();
         });
     else return build();
@@ -4221,10 +4194,6 @@ function initCommands() {
                 description: "include souorce maps when building ts files",
                 aliases: ["include-source-maps"]
             },
-            yt: {
-                description: "use local yotta build",
-                aliases: ["yotta"]
-            },
             pkg: { description: "serve packaged" },
             cloud: { description: "forces build to happen in the cloud" },
             just: { description: "just serve without building" },
@@ -4304,11 +4273,10 @@ function initCommands() {
     // Hidden commands
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
-    advancedCommand("testdecompiler", "run decompiler tests", testDecompilerAsync, "<dir>");
-    advancedCommand("testdecompilererrors", "run decompiler error tests", testDecompilerErrorsAsync, "<dir>");
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
     advancedCommand("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
+    advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 
     advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
@@ -4343,6 +4311,13 @@ function initCommands() {
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
+    p.defineCommand({
+        name: "pyconv",
+        help: "convert from python",
+        argString: "<package-directory> <support-directory>...",
+        anyArgs: true,
+        advanced: true,
+    }, c => pyconv.convertAsync(c.arguments))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({
@@ -4509,6 +4484,8 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
     pxt.log(`  Target dir:   ${nodeutil.targetDir}`)
     pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
+
+    pxt.HF2.enableLog()
 
     if (compileId != "none") {
         build.thisBuild = build.buildEngines[compileId]

@@ -146,7 +146,7 @@ namespace pxt.runner {
         if (options.downloadScreenshots && woptions.hexname) {
             pxt.debug("Downloading screenshot for: " + woptions.hexname);
             let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
-            let fontSize = window.getComputedStyle($svg.get(0).querySelector(".blocklyText")).getPropertyValue("font-size");
+            let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
             const customCss = `
 .blocklyMainBackground {
     stroke:none !important;
@@ -431,12 +431,29 @@ namespace pxt.runner {
                             });
                             break;
                         case ts.SyntaxKind.ForStatement:
-                            addItem({
-                                name: ns ? "Loops" : "for",
-                                url: "blocks/loops" + (ns ? "" : "/for"),
-                                description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
-                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
-                            });
+                            let fs = stmt as ts.ForStatement;
+                            // look for the 'repeat' loop style signature in the condition expression, explicitly: (let i = 0; i < X; i++)
+                            // for loops will have the '<=' conditional.
+                            let forloop = true;
+                            if (fs.condition.getChildCount() == 3) {
+                                forloop = !(fs.condition.getChildAt(0).getText() == "0" ||
+                                        fs.condition.getChildAt(1).kind == ts.SyntaxKind.LessThanToken);
+                            }
+                            if (forloop) {
+                                addItem({
+                                    name: ns ? "Loops" : "for",
+                                    url: "blocks/loops" + (ns ? "" : "/for"),
+                                     description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
+                                     blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
+                                });
+                            } else {
+                                addItem({
+                                    name: ns ? "Loops" : "repeat",
+                                    url: "blocks/loops" + (ns ? "" : "/repeat"),
+                                    description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times."),
+                                    blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_repeat_ext"></block></xml>'
+                                });
+                            }
                             break;
                         case ts.SyntaxKind.VariableStatement:
                             addItem({

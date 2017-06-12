@@ -1,6 +1,7 @@
 import { BuiltinCategoryDefinition } from "./monaco";
 export const loops: BuiltinCategoryDefinition = {
     name: lf("{id:category}Loops"),
+    nameid: 'loops',
     blocks: [
         {
             name: "while",
@@ -18,7 +19,6 @@ export const loops: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["loops"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         icon: "loops",
         weight: 50.09,
@@ -28,6 +28,7 @@ export const loops: BuiltinCategoryDefinition = {
 
 export const logic: BuiltinCategoryDefinition = {
     name: lf("{id:category}Logic"),
+    nameid: 'logic',
     blocks: [
         {
             name: "if",
@@ -58,7 +59,6 @@ export const logic: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["logic"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.08,
         icon: "logic",
@@ -68,6 +68,7 @@ export const logic: BuiltinCategoryDefinition = {
 
 export const variables: BuiltinCategoryDefinition = {
     name: lf("{id:category}Variables"),
+    nameid: 'variables',
     blocks: [
         {
             name: "let",
@@ -95,7 +96,6 @@ export const variables: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["variables"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.07,
         icon: "variables",
@@ -105,6 +105,7 @@ export const variables: BuiltinCategoryDefinition = {
 
 export const maths: BuiltinCategoryDefinition = {
     name: lf("{id:category}Math"),
+    nameid: 'math',
     blocks: [
         {
             name: "plus",
@@ -183,7 +184,6 @@ export const maths: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
-        color: pxt.blocks.blockColors["math"].toString(),
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         weight: 50.06,
         icon: "math",
@@ -193,6 +193,7 @@ export const maths: BuiltinCategoryDefinition = {
 
 export const text: BuiltinCategoryDefinition = {
     name: lf("{id:category}Text"),
+    nameid: 'text',
     blocks: [
         {
             name: "length",
@@ -241,8 +242,127 @@ export const text: BuiltinCategoryDefinition = {
     ],
     attributes: {
         advanced: true,
-        color: pxt.blocks.blockColors["text"].toString(),
         icon: "text",
+        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        paramDefl: {}
+    }
+}
+
+export const arrays: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Arrays"),
+    nameid: "arrays",
+    blocks: [
+        {
+            name: "create",
+            snippet: `let ${lf("{id:snippets}list")} = [1, 2, 3];`,
+            snippetOnly: true,
+            attributes: {
+                weight: 100,
+                jsDoc: lf("Creates a new Array")
+            }
+        },
+        {
+            name: "length",
+            snippet: `${lf("{id:snippets}list")}.length`,
+            snippetOnly: true,
+            attributes: {
+                weight: 99,
+                jsDoc: lf("Returns the number of values in an Array")
+            }
+        },
+        {
+            name: "get",
+            snippet: `${lf("{id:snippets}list")}[0]`,
+            snippetOnly: true,
+            attributes: {
+                weight: 98,
+                jsDoc: lf("Returns the value in the Array at the given index")
+            }
+        },
+        {
+            name: "set",
+            snippet: `${lf("{id:snippets}list")}[0] = 1`,
+            snippetOnly: true,
+            attributes: {
+                weight: 97,
+                jsDoc: lf("Overwrites the value in an Array at the given index")
+            }
+        },
+        {
+            name: "push",
+            snippet: `${lf("{id:snippets}list")}.push(1)`,
+            attributes: {
+                weight: 96,
+                jsDoc: lf("Adds a value to the end of an Array")
+            }
+        },
+        {
+            name: "pop",
+            snippet: `${lf("{id:snippets}list")}.pop()`,
+            attributes: {
+                weight: 95,
+                jsDoc: lf("Removes and returns the value at the end of an Array")
+            }
+        },
+        {
+            name: "insertAt",
+            snippet: `${lf("{id:snippets}list")}.insertAt(0, 0)`,
+            attributes: {
+                weight: 50,
+                jsDoc: lf("Inserts a value into the Array at the given index"),
+                advanced: true
+            }
+        },
+        {
+            name: "removeAt",
+            snippet: `${lf("{id:snippets}list")}.removeAt(0)`,
+            attributes: {
+                weight: 49,
+                jsDoc: lf("Removes a value from the Array at the given index and returns it"),
+                advanced: true
+            }
+        },
+        {
+            name: "shift",
+            snippet: `${lf("{id:snippets}list")}.shift()`,
+            attributes: {
+                weight: 48,
+                jsDoc: lf("Removes and returns the value at the front of an Array"),
+                advanced: true
+            }
+        },
+        {
+            name: "unshift",
+            snippet: `${lf("{id:snippets}list")}.unshift(0)`,
+            attributes: {
+                weight: 47,
+                jsDoc: lf("Inserts a value at the beginning of an Array"),
+                advanced: true
+            }
+        },
+        {
+            name: "indexOf",
+            snippet: `["A", "B", "C"].indexOf("B")`,
+            attributes: {
+                weight: 46,
+                jsDoc: lf("Returns the first index in the Array that contains the given value or -1 if it does not exist in the Array"),
+                advanced: true
+            }
+        },
+        {
+            name: "reverse",
+            snippet: `${lf("{id:snippets}list")}.reverse()`,
+            attributes: {
+                weight: 45,
+                jsDoc: lf("Reverses the contents of an Array"),
+                advanced: true
+            }
+        },
+    ],
+    attributes: {
+        advanced: true,
+        color: pxt.blocks.blockColors["arrays"].toString(),
+        icon: "arrays",
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         paramDefl: {}
     }
@@ -250,22 +370,24 @@ export const text: BuiltinCategoryDefinition = {
 
 export function getBuiltinCategory(ns: string) {
         switch (ns) {
-            case loops.name: return loops;
-            case logic.name: return logic;
-            case variables.name: return variables;
-            case maths.name: return maths;
-            case text.name: return text;
+            case loops.nameid: return loops;
+            case logic.nameid: return logic;
+            case variables.nameid: return variables;
+            case maths.nameid: return maths;
+            case text.nameid: return text;
+            case arrays.nameid: return arrays;
         }
     return undefined;
 }
 
 export function isBuiltin(ns: string) {
     switch (ns) {
-        case loops.name:
-        case logic.name:
-        case variables.name:
-        case maths.name:
-        case text.name:
+        case loops.nameid:
+        case logic.nameid:
+        case variables.nameid:
+        case maths.nameid:
+        case text.nameid:
+        case arrays.nameid:
             return true;
     }
     return false;

@@ -5,6 +5,8 @@ namespace ts.pxtc.decompiler {
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
 
+    const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
+
     enum ShadowType {
         Boolean,
         Number,
@@ -500,6 +502,10 @@ ${output}</xml>`;
                         return getPrefixUnaryExpression(n as ts.PrefixUnaryExpression);
                     case SK.PropertyAccessExpression:
                         return getPropertyAccessExpression(n as ts.PropertyAccessExpression);
+                    case SK.ArrayLiteralExpression:
+                        return getArrayLiteralExpression(n as ts.ArrayLiteralExpression);
+                    case SK.ElementAccessExpression:
+                        return getElementAccessExpression(n as ts.ElementAccessExpression);
                     case SK.CallExpression:
                         return getStatementBlock(n, undefined, undefined, true) as any;
                     default:
@@ -699,9 +705,19 @@ ${output}</xml>`;
                 error(n);
                 return;
             }
+
+            if (callInfo.attrs.blockId === "lists_length") {
+                return {
+                    kind: "expr",
+                    type: U.htmlEscape(callInfo.attrs.blockId),
+                    inputs: [getValue("VALUE", n.expression)]
+                };
+            }
+
             let value = U.htmlEscape(callInfo.attrs.blockId || callInfo.qName);
 
-            const parentCallInfo: pxtc.CallInfo = n.parent && (n.parent as any).callInfo;
+            const [parent, ] = getParent(n);
+            const parentCallInfo: pxtc.CallInfo = parent && (parent as any).callInfo;
             if (callInfo.attrs.blockIdentity && !(parentCallInfo && parentCallInfo.qName === callInfo.attrs.blockIdentity)) {
                 if (callInfo.attrs.enumval && parentCallInfo && parentCallInfo.attrs.useEnumVal) {
                     value = callInfo.attrs.enumval;
@@ -726,6 +742,25 @@ ${output}</xml>`;
                     value
                 }
             }
+        }
+
+        function getArrayLiteralExpression(n: ts.ArrayLiteralExpression): ExpressionNode {
+            return {
+                kind: "expr",
+                type: "lists_create_with",
+                inputs: n.elements.map((e, i) => getValue("ADD" + i, e)),
+                mutation: {
+                    "items": n.elements.length.toString()
+                }
+            };
+        }
+
+        function getElementAccessExpression(n: ts.ElementAccessExpression): ExpressionNode {
+            return {
+                kind: "expr",
+                type: "lists_index_get",
+                inputs: [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression)]
+            };
         }
 
         function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false): StatementNode {
@@ -772,6 +807,9 @@ ${output}</xml>`;
                         break;
                     case SK.ForStatement:
                         stmt = getForStatement(node as ts.ForStatement);
+                        break;
+                    case SK.ForOfStatement:
+                        stmt = getForOfStatement(node as ts.ForOfStatement);
                         break;
                     case SK.CallExpression:
                         stmt = getCallStatement(node as ts.CallExpression);
@@ -879,16 +917,16 @@ ${output}</xml>`;
         }
 
         function getBinaryExpressionStatement(n: ts.BinaryExpression): StatementNode {
-            if (n.left.kind !== SK.Identifier) {
-                error(n, Util.lf("Only variable names may be assigned to"));
-                return;
-            }
-
             const name = (n.left as ts.Identifier).text;
 
             switch (n.operatorToken.kind) {
                 case SK.EqualsToken:
-                    return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
+                    if (n.left.kind === SK.Identifier) {
+                        return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
+                    }
+                    else {
+                        return getArraySetBlock(n.left as ts.ElementAccessExpression, n.right);
+                    }
                 case SK.PlusEqualsToken:
                     return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
@@ -1004,6 +1042,20 @@ ${output}</xml>`;
             }
         }
 
+        function getForOfStatement(n: ts.ForOfStatement): StatementNode {
+            const initializer = n.initializer as ts.VariableDeclarationList;
+            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
+            const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
+
+            return {
+                kind: "statement",
+                type: "controls_for_of",
+                inputs: [getValue("LIST", n.expression)],
+                fields: [getField("VAR", renamed)],
+                handlers: [{ name: "DO", statement: getStatementBlock(n.statement) }]
+            };
+        }
+
         function getVariableSetOrChangeBlock(name: ts.Identifier, value: Node | number, changed = false, overrideName = false): StatementNode {
             const renamed = getVariableName(name);
             varUsages[renamed] = true;
@@ -1013,6 +1065,18 @@ ${output}</xml>`;
                 type: changed ? "variables_change" : "variables_set",
                 inputs: [getValue("VALUE", value, ShadowType.Number)],
                 fields: [getField("VAR", renamed)]
+            };
+        }
+
+        function getArraySetBlock(left: ts.ElementAccessExpression, right: ts.Expression): StatementNode {
+            return {
+                kind: "statement",
+                type: "lists_index_set",
+                inputs: [
+                    getValue("LIST", left.expression),
+                    getValue("INDEX", left.argumentExpression, ShadowType.Number),
+                    getValue("VALUE", right)
+                ]
             };
         }
 
@@ -1088,6 +1152,7 @@ ${output}</xml>`;
 
 
             info.args.forEach((e, i) => {
+                e = unwrapNode(e) as Expression;
                 if (i === 0 && info.attrs.defaultInstance) {
                     if (e.getText() === info.attrs.defaultInstance) {
                         return;
@@ -1150,29 +1215,35 @@ ${output}</xml>`;
                             || (e.kind == SK.PrefixUnaryExpression
                                 && ((e as PrefixUnaryExpression).operator == SK.PlusToken
                                     || (e as PrefixUnaryExpression).operator == SK.MinusToken)
-                                && ((e as PrefixUnaryExpression).operand.kind == SK.NumericLiteral)))
-                            && argNames[i][1]) {
+                                && ((e as PrefixUnaryExpression).operand.kind == SK.NumericLiteral)))) {
                             // Literal
                             const shadowName = argNames[i][0];
                             const shadowType = argNames[i][1];
-                            const shadowBlock = blocksInfo.blocksById[shadowType];
-                            if (shadowBlock) {
-                                let fieldName = '';
-                                blocksInfo.blocksById[shadowType].attributes.block.replace(/%(\w+)/g, (f, n) => {
-                                    fieldName = n;
-                                    return "";
-                                });
-                                if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
-                                    let fieldBlock = getFieldBlock(shadowType, fieldName, e.getText(), true);
-                                    if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[shadowName]) {
-                                        fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(info.attrs.paramShadowOptions[shadowName]))}
+                            if (shadowName && shadowType) {
+                                const shadowBlock = blocksInfo.blocksById[shadowType];
+                                if (shadowBlock) {
+                                    let fieldName = '';
+                                    blocksInfo.blocksById[shadowType].attributes.block.replace(/%(\w+)/g, (f, n) => {
+                                        fieldName = n;
+                                        return "";
+                                    });
+                                    if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
+                                        let fieldBlock = getFieldBlock(shadowType, fieldName, e.getText(), true);
+                                        if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[shadowName]) {
+                                            fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(info.attrs.paramShadowOptions[shadowName]))}
+                                        }
+                                        v = {
+                                            kind: "value",
+                                            name: vName,
+                                            value: fieldBlock
+                                        };
+                                        defaultV = false;
                                     }
-                                    v = {
-                                        kind: "value",
-                                        name: vName,
-                                        value: fieldBlock
-                                    };
-                                    defaultV = false;
+                                }
+                            } else if (info.attrs && info.attrs.paramFieldEditor && info.attrs.paramFieldEditorOptions) {
+                                if (info.attrs.paramFieldEditorOptions[vName] && info.attrs.paramFieldEditorOptions[vName]['onParentBlock']) {
+                                    (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
+                                    return;
                                 }
                             }
                         }
@@ -1422,6 +1493,8 @@ ${output}</xml>`;
                 return checkBinaryExpression(node as ts.BinaryExpression, blocksInfo);
             case SK.ForStatement:
                 return checkForStatement(node as ts.ForStatement);
+            case SK.ForOfStatement:
+                return checkForOfStatement(node as ts.ForOfStatement);
         }
 
         return Util.lf("Unsupported statement in block: {0}", SK[node.kind]);
@@ -1444,7 +1517,12 @@ ${output}</xml>`;
                 return Util.lf("for loop with multiple variables not supported");
             }
 
-            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
+            const assignment = initializer.declarations[0] as VariableDeclaration;
+            if (assignment.initializer.kind !== SK.NumericLiteral || (assignment.initializer as ts.LiteralExpression).text !== "0") {
+                return Util.lf("for loop initializers must be initialized to 0");
+            }
+
+            const indexVar = (assignment.name as ts.Identifier).text;
             if (!incrementorIsValid(indexVar)) {
                 return Util.lf("for loop incrementors may only increment the variable declared in the initializer");
             }
@@ -1475,20 +1553,37 @@ ${output}</xml>`;
             }
         }
 
+        function checkForOfStatement(n: ts.ForOfStatement) {
+            if (n.initializer.kind !== SK.VariableDeclarationList) {
+                return Util.lf("only variable declarations are permitted in for of loop initializers");
+            }
+
+            // VariableDeclarationList in ForOfStatements are guranteed to have one declaration
+            return undefined;
+        }
+
         function checkBinaryExpression(n: ts.BinaryExpression, blocksInfo: BlocksInfo) {
-            if (n.left.kind !== SK.Identifier) {
+            if (n.left.kind !== SK.Identifier && n.left.kind !== SK.ElementAccessExpression) {
                 return Util.lf("Only variable names may be assigned to")
             }
 
-            switch (n.operatorToken.kind) {
-                case SK.EqualsToken:
-                    return checkExpression(n.right, blocksInfo);
-                case SK.PlusEqualsToken:
-                case SK.MinusEqualsToken:
-                    return undefined;
-                default:
-                    return Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]);
+            if (n.left.kind === SK.ElementAccessExpression) {
+                if (n.operatorToken.kind !== SK.EqualsToken) {
+                    return Util.lf("Element access expressions may only be assigned to using the equals operator");
+                }
             }
+            else {
+                switch (n.operatorToken.kind) {
+                    case SK.EqualsToken:
+                        return checkExpression(n.right, blocksInfo);
+                    case SK.PlusEqualsToken:
+                    case SK.MinusEqualsToken:
+                        return undefined;
+                    default:
+                        return Util.lf("Unsupported operator token in statement {0}", SK[n.operatorToken.kind]);
+                }
+            }
+            return undefined;
         }
 
         function checkArrowFunction(n: ts.ArrowFunction) {
@@ -1555,7 +1650,17 @@ ${output}</xml>`;
                 info.attrs.blockId = builtin.blockId;
             }
 
+            const argNames: string[] = []
+            info.attrs.block.replace(/%(\w+)/g, (f, n) => {
+                argNames.push(n)
+                return ""
+            });
+
             if (info.attrs.imageLiteral) {
+                if (info.args.length - argNames.length > 1) {
+                    return Util.lf("Function call has more arguments than are supported by its block");
+                }
+
                 let arg = n.arguments[0];
                 if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                     return Util.lf("Only string literals supported for image literals")
@@ -1568,11 +1673,6 @@ ${output}</xml>`;
                 return undefined;
             }
 
-            const argNames: string[] = []
-            info.attrs.block.replace(/%(\w+)/g, (f, n) => {
-                argNames.push(n)
-                return ""
-            });
 
             const argumentDifference = info.args.length - argNames.length;
             if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1) && !checkForDestructuringMutation()) {
@@ -1588,6 +1688,7 @@ ${output}</xml>`;
                 let fail = false;
                 const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
                 info.args.forEach((e, i) => {
+                    e = unwrapNode(e) as Expression;
                     if (instance && i === 0) {
                         return;
                     }
@@ -1725,16 +1826,19 @@ ${output}</xml>`;
 
     function checkExpression(n: ts.Node, blocksInfo: BlocksInfo): string {
         switch (n.kind) {
-            case SK.StringLiteral:
-            case SK.FirstTemplateToken:
-            case SK.NoSubstitutionTemplateLiteral:
             case SK.NumericLiteral:
             case SK.TrueKeyword:
             case SK.FalseKeyword:
             case SK.ExpressionStatement:
+            case SK.ArrayLiteralExpression:
+            case SK.ElementAccessExpression:
                 return undefined;
             case SK.ParenthesizedExpression:
                 return checkExpression((n as ts.ParenthesizedExpression).expression, blocksInfo);
+            case SK.StringLiteral:
+            case SK.FirstTemplateToken:
+            case SK.NoSubstitutionTemplateLiteral:
+                return checkStringLiteral(n as ts.StringLiteral);
             case SK.Identifier:
                 return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
             case SK.BinaryExpression:
@@ -1751,12 +1855,45 @@ ${output}</xml>`;
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
 
+        function checkStringLiteral(n: ts.StringLiteral) {
+            const literal = n.text;
+            return validStringRegex.test(literal) ? undefined : Util.lf("Only whitespace character allowed in string literals is space");
+        }
 
         function checkPropertyAccessExpression(n: ts.PropertyAccessExpression) {
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
             if (callInfo) {
-                if (callInfo.attrs.blockIdentity || callInfo.decl.kind === SK.EnumMember) {
+                if (callInfo.attrs.blockIdentity || callInfo.attrs.blockId === "lists_length") {
                     return undefined;
+                }
+                else if (callInfo.decl.kind === SK.EnumMember) {
+                    const [parent, child] = getParent(n);
+                    let fail = true;
+
+                    if (parent) {
+                        const parentInfo: pxtc.CallInfo = (parent as any).callInfo;
+                        if (parentInfo && parentInfo.args) {
+                            const api = blocksInfo.apis.byQName[parentInfo.qName];
+                            const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
+                            if (api) {
+                                parentInfo.args.forEach((arg, i) => {
+                                    if (arg === child) {
+                                        const paramInfo = api.parameters[instance ? i - 1 : i];
+                                        if (paramInfo.isEnum) {
+                                            fail = false;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    if (fail) {
+                        return Util.lf("Enum value without a corresponding block");
+                    }
+                    else {
+                        return undefined;
+                    }
                 }
                 else if (callInfo.attrs.fixedInstance && n.parent && n.parent.parent &&
                     n.parent.kind === SK.PropertyAccessExpression && n.parent.parent.kind === SK.CallExpression) {
@@ -1768,6 +1905,25 @@ ${output}</xml>`;
             }
             return Util.lf("No call info found");
         }
+    }
+
+    function getParent(node: Node): [Node, Node] {
+        if (!node.parent) {
+            return [undefined, node];
+        }
+        else if (node.parent.kind === SK.ParenthesizedExpression) {
+            return getParent(node.parent);
+        }
+        else {
+            return [node.parent, node];
+        }
+    }
+
+    function unwrapNode(node: Node) {
+        while (node.kind === SK.ParenthesizedExpression) {
+            node = (node as ParenthesizedExpression).expression;
+        }
+        return node;
     }
 
     function isEmptyString(a: string) {

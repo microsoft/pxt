@@ -33,3 +33,4 @@
     * [login](/cli/login)
     * [staticpkg](/cli/staticpkg)
     * [update](/cli/update)
+    * [pyconv](/cli/pyconv)

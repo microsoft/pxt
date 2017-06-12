@@ -12,7 +12,6 @@ namespace pxsim {
 
     let refObjId = 1;
     let liveRefObjs: any = {};
-    let stringLiterals: any;
     let stringRefCounts: any = {};
     let refCounting = true;
     let floatingPoint = false;
@@ -220,52 +219,10 @@ namespace pxsim {
                 delete liveRefObjs[o.id + ""]
                 o.destroy()
             }
-        } else if (typeof v == "string") {
-            if (stringLiterals && !stringLiterals.hasOwnProperty(v)) {
-                stringRefDelta(v, -1)
-            }
-        } else if (!v) {
-            // OK (null)
-        } else if (typeof v == "function") {
-            // OK (function literal)
-        } else if (typeof v == "number" || v === true) {
-            // OK (number)
-        } else {
-            throw new Error("bad decr: " + typeof v)
         }
     }
 
-    export function setupStringLiterals(strings: any) {
-        // reset
-        liveRefObjs = {};
-        stringRefCounts = {};
-
-        // and set up strings
-        strings[""] = 1
-        strings["true"] = 1
-        strings["false"] = 1
-        strings["null"] = 1
-        strings["undefined"] = 1
-
-        // comment out next line to disable string ref counting
-        // stringLiterals = strings
-    }
-
-    function stringRefDelta(s: string, n: number) {
-        if (!stringRefCounts.hasOwnProperty(s))
-            stringRefCounts[s] = 0
-        let r = (stringRefCounts[s] += n)
-        if (r == 0)
-            delete stringRefCounts[s]
-        else
-            check(r > 0)
-        return r
-    }
-
     export function initString(v: string) {
-        if (!v || !stringLiterals) return v
-        if (typeof v == "string" && !stringLiterals.hasOwnProperty(v))
-            stringRefDelta(v, 1)
         return v
     }
 
@@ -275,9 +232,6 @@ namespace pxsim {
             let o = <RefObject>v
             check(o.refcnt > 0)
             o.refcnt++
-        } else if (stringLiterals && typeof v == "string" && !stringLiterals.hasOwnProperty(v)) {
-            let k = stringRefDelta(v, 1)
-            check(k > 1)
         }
         return v;
     }
@@ -338,6 +292,26 @@ namespace pxsim {
         export function programHash() {
             return 0;
         }
+
+        export function programSize() {
+            return 0;
+        }
+
+        export function afterProgramPage() {
+            return 0;
+        }
+
+        // these shouldn't generally be called when compiled for simulator
+        // provide implementation to silence warnings and as future-proofing
+        export function toInt(n: number) { return n >> 0 }
+        export function toUInt(n: number) { return n >>> 0 }
+        export function toDouble(n: number) { return n }
+        export function toFloat(n: number) { return n }
+        export function fromInt(n: number) { return n }
+        export function fromUInt(n: number) { return n }
+        export function fromDouble(n: number) { return n }
+        export function fromFloat(n: number) { return n }
+        export function fromBool(n: any) { return !!n }
     }
 
     export namespace pxtrt {
@@ -354,6 +328,10 @@ namespace pxsim {
 
         export function toInt32(v: number) {
             return v | 0
+        }
+
+        export function toUInt32(v: number) {
+            return v >>> 0
         }
 
         export function toUInt8(v: number) {
@@ -373,8 +351,8 @@ namespace pxsim {
         }
 
         export function nullCheck(v: any) {
-            if (!v)
-                U.userError("Dereferencing null value.")
+            if (v === null || v === undefined)
+                U.userError("Dereferencing null/undefined value.")
         }
 
         export function panic(code: number) {
@@ -555,6 +533,13 @@ namespace pxsim {
         export var getNumGlobals: any;
         export var RefRecord_destroy: any;
         export var RefRecord_print: any;
+        export var anyPrint: any;
+        export var dumpDmesg: any;
+        export var getVTable: any;
+        export var switch_eq: any;
+        export var valType: any;
+        export var typeOf: any;
+        export var lookupPin: any;
     }
 
     export namespace thread {

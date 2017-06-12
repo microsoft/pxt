@@ -1,0 +1,62 @@
+<xml>
+    <block type="pxt-on-start" id="@87`:|P*5F_1#1ASj^V)" x="330" y="68">
+        <statement name="HANDLER">
+            <block type="variables_set" id="J7TBPNI`geyj#=.D{%cA">
+                <field name="VAR">list</field>
+                <value name="VALUE">
+                    <shadow type="math_number" id="qDXW6}GX}cv}+pFkzjd_">
+                        <field name="NUM">0</field>
+                    </shadow>
+                    <block type="lists_create_with" id="O~B.M|/aWAeQ5/i1,,Hw">
+                        <mutation items="1"></mutation>
+                        <value name="ADD0">
+                            <shadow type="math_number" id="[oxvY:#Y*wbNsg]/CGZQ">
+                                <field name="NUM">784</field>
+                            </shadow>
+                            <block type="lists_create_with" id="c($:XK0rR6=u6+XaxDz-">
+                                <mutation items="1"></mutation>
+                                <value name="ADD0">
+                                    <shadow type="math_number" id="*:vsT:KM63XdMf02[77Q">
+                                        <field name="NUM">784</field>
+                                    </shadow>
+                                </value>
+                            </block>
+                        </value>
+                    </block>
+                </value>
+                <next>
+                    <block type="controls_for_of" id="cC]()})7p7iDKUzI%2`j">
+                        <field name="VAR">value</field>
+                        <value name="LIST">
+                            <shadow type="variables_get" id="!plR6E[{$I4ML^aP=xbD">
+                                <field name="VAR">list</field>
+                            </shadow>
+                        </value>
+                        <statement name="DO">
+                            <block type="variables_set" id="!wmYPfB/;t_?s1^{@FTd">
+                                <field name="VAR">item</field>
+                                <value name="VALUE">
+                                    <shadow type="math_number" id="]N+L0y4u[PdYNW^s0UN=">
+                                        <field name="NUM">0</field>
+                                    </shadow>
+                                    <block type="lists_index_get" id="h9zt=s!GDjn8H]y06Yz$">
+                                        <value name="LIST">
+                                            <block type="variables_get" id="TzyNXur{H$6d*9lXroS}">
+                                                <field name="VAR">value</field>
+                                            </block>
+                                        </value>
+                                        <value name="INDEX">
+                                            <shadow type="math_number" id="H8qcfzy]9;#7?Kugk{0b">
+                                                <field name="NUM">0</field>
+                                            </shadow>
+                                        </value>
+                                    </block>
+                                </value>
+                            </block>
+                        </statement>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+</xml>

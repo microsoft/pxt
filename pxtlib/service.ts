@@ -95,6 +95,7 @@ namespace ts.pxtc {
         async?: boolean;
         promise?: boolean;
         hidden?: boolean;
+        undeletable?: boolean;
         callingConvention: ir.CallingConvention;
         block?: string; // format of the block, used at namespace level for category name
         blockId?: string; // unique id of the block
@@ -189,18 +190,20 @@ namespace ts.pxtc {
         // client options
         saveOnly?: boolean;
         userContextWindow?: Window;
+        downloadFileBaseName?: string;
+        confirmAsync?: (confirmOptions: {}) => Promise<number>;
     }
 
     export interface Breakpoint extends LocationInfo {
         id: number;
         isDebuggerStmt: boolean;
-        successors: number[]; // ids of all breakpoints that we could hit next
         binAddr?: number;
     }
 
     export interface CellInfo {
         name: string;
         type: string;
+        index: number;
     }
 
     export interface ProcCallInfo {
@@ -215,10 +218,21 @@ namespace ts.pxtc {
         idx: number;
         bkptLoc: number;
         codeStartLoc: number;
+        codeEndLoc: number;
         locals: CellInfo[];
         args: CellInfo[];
         localsMark: number;
         calls: ProcCallInfo[];
+    }
+
+    export const enum BitSize {
+        None,
+        Int8,
+        UInt8,
+        Int16,
+        UInt16,
+        Int32,
+        UInt32,
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
@@ -286,15 +300,18 @@ namespace ts.pxtc {
                     if (fn.parameters)
                         fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
                 }
-                if (fn.attributes.block) {
-                    const locBlock = loc[`${fn.qName}|block`];
-                    if (locBlock) {
-                        fn.attributes.block = locBlock;
+                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
+                const locBlock = loc[`${fn.qName}|block`];
+                if (nsDoc) {
+                    // Check for "friendly namespace"
+                    if (fn.attributes.block) {
+                        fn.attributes.block = locBlock || fn.attributes.block;
+                    } else {
+                        fn.attributes.block = nsDoc;
                     }
                 }
-                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                if (nsDoc) {
-                    fn.attributes.block = nsDoc;
+                else if (fn.attributes.block && locBlock) {
+                    fn.attributes.block = locBlock;
                 }
             }))
             .then(() => apis);
@@ -512,7 +529,12 @@ namespace ts.pxtc {
             return r
         }
 
-        export function toBin(blocks: Uint8Array) {
+        export interface ShiftedBuffer {
+            start: number;
+            buf: Uint8Array;
+        }
+
+        export function toBin(blocks: Uint8Array): ShiftedBuffer {
             if (blocks.length < 512)
                 return null
             let curraddr = -1
@@ -583,6 +605,8 @@ namespace ts.pxtc.service {
     export interface SearchOptions {
         subset?: pxt.Map<boolean>;
         term: string;
+        localizedApis?: ApisInfo;
+        localizedStrings?: pxt.Map<string>;
     }
 
     export interface FormatOptions {

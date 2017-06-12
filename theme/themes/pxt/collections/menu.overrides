@@ -16,6 +16,7 @@
 
 #menubar .item > .button {
     margin-right: 0.25rem;
+    padding: 0.6rem;
 }
 
 @media only screen and (max-width: @largestTabletScreen) {

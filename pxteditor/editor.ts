@@ -78,14 +78,20 @@ namespace pxt.editor {
         Disabled = 2
     }
 
+    export interface TutorialStepInfo {
+        fullscreen?: boolean;
+        hasHint?: boolean;
+        content?: string;
+        headerContent?: string;
+    }
+
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
         tutorialSteps?: string[]; // tutorial steps
+        tutorialStepInfo?: TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
-        tutorialHeaderContent?: string; // current tutorial header content
-        tutorialHint?: string; // current tutorial content, shown in hints
     }
 
     export interface IProjectView {
@@ -191,6 +197,8 @@ namespace pxt.editor {
 
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
+        beforeCompile?: () => void;
+        deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
     }
 

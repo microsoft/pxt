@@ -316,7 +316,7 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
         let f = res.outfiles[pxtc.BINARY_UF2]
         let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
-        return hid.hf2DeviceAsync()
+        return hid.initAsync()
             .then(dev => dev.flashAsync(blocks))
     }
 

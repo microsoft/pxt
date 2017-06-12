@@ -10,6 +10,18 @@ import B = Blockly;
 let iface: pxt.worker.Iface
 
 namespace pxt.blocks {
+    export const reservedWords = [ "abstract", "any", "as", "break",
+    "case", "catch", "class", "continue", "const", "constructor", "debugger",
+    "declare", "default", "delete", "do", "else", "enum", "export", "extends",
+    "false", "finally", "for", "from", "function", "get", "if", "implements",
+    "import", "in", "instanceof", "interface", "is", "let", "module", "namespace",
+    "new", "null", "package", "private", "protected", "public",
+    "require", "global", "return", "set", "static", "super", "switch",
+    "symbol", "this", "throw", "true", "try", "type", "typeof", "var", "void",
+    "while", "with", "yield", "async", "await", "of",
+
+    // PXT Specific
+    "Math"];
 
     export function initWorker() {
         if (!iface) {
@@ -22,194 +34,8 @@ namespace pxt.blocks {
         return iface.opAsync(op, arg)
     }
 
-    export enum NT {
-        Prefix, // op + map(children)
-        Infix, // children.length == 2, child[0] op child[1]
-        Block, // { } are implicit
-        NewLine
-    }
-
-    export interface JsNode {
-        type: NT;
-        children: JsNode[];
-        op: string;
-        id?: string;
-        glueToBlock?: boolean;
-        canIndentInside?: boolean;
-        noFinalNewline?: boolean;
-    }
-
-    const MAX_COMMENT_LINE_LENGTH = 50;
-
-    const reservedWords = ["break", "case", "catch", "class", "const", "continue", "debugger",
-        "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally",
-        "for", "function", "if", "import", "in", "instanceof", "new", "null", "return",
-        "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while",
-        "with"];
-
     let placeholders: Map<Map<any>> = {};
-
-    function stringLit(s: string) {
-        if (s.length > 20 && /\n/.test(s))
-            return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
-        else return JSON.stringify(s)
-    }
-
-    function mkNode(tp: NT, pref: string, children: JsNode[]): JsNode {
-        return {
-            type: tp,
-            op: pref,
-            children: children
-        }
-    }
-
-    function mkNewLine() {
-        return mkNode(NT.NewLine, "", [])
-    }
-
-    function mkPrefix(pref: string, children: JsNode[]) {
-        return mkNode(NT.Prefix, pref, children)
-    }
-
-    function mkInfix(child0: JsNode, op: string, child1: JsNode) {
-        return mkNode(NT.Infix, op, [child0, child1])
-    }
-
-    export function mkText(s: string) {
-        return mkPrefix(s, [])
-    }
-    function mkBlock(nodes: JsNode[]) {
-        return mkNode(NT.Block, "", nodes)
-    }
-
-    export function mkGroup(nodes: JsNode[]) {
-        return mkPrefix("", nodes)
-    }
-
-    function mkStmt(...nodes: JsNode[]) {
-        nodes.push(mkNewLine())
-        return mkGroup(nodes)
-    }
-
-    function mkCommaSep(nodes: JsNode[], externalInputs: boolean) {
-        const r: JsNode[] = []
-        for (const n of nodes) {
-            if (externalInputs) {
-                if (r.length > 0) r.push(mkText(","));
-                r.push(mkNewLine());
-            } else if (r.length > 0) {
-                r.push(mkText(", "))
-            }
-            r.push(n)
-        }
-        if (externalInputs) r.push(mkNewLine());
-        return mkGroup(r)
-    }
-
-    // A series of utility functions for constructing various J* AST nodes.
-    namespace Helpers {
-
-        export function mkArrayLiteral(args: JsNode[]) {
-            return mkGroup([
-                mkText("["),
-                mkCommaSep(args, false),
-                mkText("]")
-            ])
-        }
-
-        export function mkNumberLiteral(x: number) {
-            return mkText(x.toString())
-        }
-
-        export function mkBooleanLiteral(x: boolean) {
-            return mkText(x ? "true" : "false")
-        }
-
-        export function mkStringLiteral(x: string) {
-            return mkText(stringLit(x))
-        }
-
-        export function mkPropertyAccess(name: string, thisArg: JsNode) {
-            return mkGroup([
-                mkInfix(thisArg, ".", mkText(name)),
-            ])
-        }
-
-        export function mkCall(name: string, args: JsNode[], externalInputs: boolean, method = false) {
-            if (method)
-                return mkGroup([
-                    mkInfix(args[0], ".", mkText(name)),
-                    mkText("("),
-                    mkCommaSep(args.slice(1), externalInputs),
-                    mkText(")")
-                ])
-            else
-                return mkGroup([
-                    mkText(name),
-                    mkText("("),
-                    mkCommaSep(args, externalInputs),
-                    mkText(")")
-                ])
-
-        }
-
-        // Call function [name] from the standard device library with arguments
-        // [args].
-        export function stdCall(name: string, args: JsNode[], externalInputs: boolean) {
-            return mkCall(name, args, externalInputs);
-        }
-
-        // Call extension method [name] on the first argument
-        export function extensionCall(name: string, args: JsNode[], externalInputs: boolean) {
-            return mkCall(name, args, externalInputs, true);
-        }
-
-        // Call function [name] from the specified [namespace] in the micro:bit
-        // library.
-        export function namespaceCall(namespace: string, name: string, args: JsNode[], externalInputs: boolean) {
-            return mkCall(namespace + "." + name, args, externalInputs);
-        }
-
-        export function mathCall(name: string, args: JsNode[]) {
-            return namespaceCall("Math", name, args, false)
-        }
-
-        export function mkGlobalRef(name: string) {
-            return mkText(name)
-        }
-
-        export function mkSimpleCall(p: string, args: JsNode[]): JsNode {
-            assert(args.length == 2);
-            return mkInfix(args[0], p, args[1])
-        }
-
-        export function mkWhile(condition: JsNode, body: JsNode[]): JsNode {
-            return mkGroup([
-                mkText("while ("),
-                condition,
-                mkText(")"),
-                mkBlock(body)
-            ])
-        }
-
-        export function mkComment(text: string) {
-            return mkStmt(mkText("// " + text))
-        }
-
-        export function mkAssign(x: JsNode, e: JsNode): JsNode {
-            return mkStmt(mkSimpleCall("=", [x, e]))
-        }
-
-        export function mkParenthesizedExpression(expression: JsNode): JsNode {
-            return mkGroup([
-                mkText("("),
-                expression,
-                mkText(")")
-            ])
-        }
-    }
-
-    import H = Helpers;
+    const MAX_COMMENT_LINE_LENGTH = 50;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Miscellaneous utility functions
@@ -263,26 +89,50 @@ namespace pxt.blocks {
     export class Point {
         constructor(
             public link: Point,
-            public type: string
+            public type: string,
+            public parentType?: Point,
+            public childType?: Point
+
         ) { }
     }
 
     function find(p: Point): Point {
         if (p.link)
             return find(p.link);
-        else
-            return p;
+        return p;
     }
 
     function union(p1: Point, p2: Point) {
         let _p1 = find(p1);
         let _p2 = find(p2);
         assert(_p1.link == null && _p2.link == null);
+
         if (_p1 == _p2)
             return;
 
+        if (_p1.childType && _p2.childType) {
+            const ct = _p1.childType;
+            _p1.childType = null;
+            union(ct, _p2.childType);
+        }
+        else if (_p1.childType && !_p2.childType) {
+            _p2.childType = _p1.childType;
+        }
+
+        if (_p1.parentType && _p2.parentType) {
+            const pt = _p1.parentType;
+            _p1.parentType = null;
+            union(pt, _p2.parentType);
+        }
+        else if (_p1.parentType && !_p2.parentType) {
+            _p2.parentType = _p1.parentType;
+        }
+
+
         let t = unify(_p1.type, _p2.type);
+
         p1.link = _p2;
+        _p1.link = _p2;
         p1.type = null;
         p2.type = t;
     }
@@ -328,19 +178,68 @@ namespace pxt.blocks {
         if (b.type == "variables_get")
             return find(lookup(e, escapeVarName(b.getFieldValue("VAR"), e)).type);
 
-        assert(!b.outputConnection || b.outputConnection.check_ && b.outputConnection.check_.length > 0);
-
-        if (!b.outputConnection)
+        if (!b.outputConnection) {
             return ground(pUnit.type);
+        }
 
-        return ground(b.outputConnection.check_[0]);
+        const check = b.outputConnection.check_ && b.outputConnection.check_.length ? b.outputConnection.check_[0] : "T";
+
+        if (check === "Array") {
+            // The only block that hits this case should be lists_create_with, so we
+            // can safely infer the type from the first input that has a return type
+            let tp: Point;
+            if (b.inputList && b.inputList.length) {
+                for (const input of b.inputList) {
+                    if (input.connection && input.connection.targetBlock()) {
+                        let t = find(returnType(e, input.connection.targetBlock()))
+                        if (t) {
+                            if (t.parentType) {
+                                return t.parentType;
+                            }
+                            tp = ground(t.type + "[]");
+                            genericLink(tp, t);
+                            break;
+                        }
+                    }
+                }
+            }
+            return tp || ground("number[]");
+        }
+        else if (check === "T") {
+            const func = e.stdCallTable[b.type];
+            const isArrayGet = b.type === "lists_index_get";
+            if (isArrayGet || func && func.args.length) {
+                let parentInput: B.Input;
+
+                if (isArrayGet) {
+                    parentInput = b.inputList.filter(i => i.name === "LIST")[0];
+                }
+                else {
+                    parentInput = b.inputList.filter(i => i.name === func.args[0].field)[0];
+                }
+
+                if (parentInput.connection && parentInput.connection.targetBlock()) {
+                    const parentType = returnType(e, parentInput.connection.targetBlock());
+                    if (parentType.childType) {
+                        return parentType.childType;
+                    }
+                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(-2)) : mkPoint(null);
+                    genericLink(parentType, p);
+                    return p;
+                }
+            }
+            return mkPoint(null);
+        }
+
+        return ground(check);
     }
 
     // Basic type unification routine; easy, because there's no structural types.
+    // FIXME: Generics are not supported
     function unify(t1: string, t2: string) {
-        if (t1 == null)
+        if (t1 == null || t1 === "Array" && isArrayType(t2))
             return t2;
-        else if (t2 == null)
+        else if (t2 == null || t2 === "Array" && isArrayType(t1))
             return t1;
         else if (t1 == t2)
             return t1;
@@ -348,12 +247,17 @@ namespace pxt.blocks {
             throw new Error("cannot mix " + t1 + " with " + t2);
     }
 
-    function mkPlaceholderBlock(e: Environment, type?: string): B.Block {
+    function isArrayType(type: string) {
+        return type && type.indexOf("[]") !== -1;
+    }
+
+    function mkPlaceholderBlock(e: Environment, parent: B.Block, type?: string): B.Block {
         // XXX define a proper placeholder block type
         return <any>{
             type: "placeholder",
             p: mkPoint(type || null),
             workspace: e.workspace,
+            parentBlock_: parent
         };
     }
 
@@ -365,7 +269,9 @@ namespace pxt.blocks {
                 placeholders[b.id] = {};
             }
 
-            placeholders[b.id][n] = mkPlaceholderBlock(e, type);
+            if (!placeholders[b.id][n]) {
+                placeholders[b.id][n] = mkPlaceholderBlock(e, b, type);
+            }
         }
         else if (target.type === pxtc.TS_OUTPUT_TYPE && !((target as any).p)) {
             (target as any).p = mkPoint(null);
@@ -450,11 +356,17 @@ namespace pxt.blocks {
 
                     case "controls_if":
                         for (let i = 0; i <= (<B.IfBlock>b).elseifCount_; ++i)
-                        attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
+                            attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
                         break;
 
                     case "controls_simple_for":
                         unionParam(e, b, "TO", ground(pNumber.type));
+                        break;
+                    case "controls_for_of":
+                        unionParam(e, b, "LIST", ground("Array"));
+                        const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
+                        const elementTp = lookup(e, escapeVarName(b.getFieldValue("VAR"), e)).type;
+                        genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
                     case "variables_change":
@@ -478,17 +390,47 @@ namespace pxt.blocks {
                     case "device_while":
                         attachPlaceholderIf(e, b, "COND", pBoolean.type);
                         break;
-
+                    case "lists_index_get":
+                        unionParam(e, b, "LIST", ground("Array"));
+                        unionParam(e, b, "INDEX", ground(pNumber.type));
+                        const listType = returnType(e, getInputTargetBlock(b, "LIST"));
+                        const ret = returnType(e, b);
+                        genericLink(listType, ret);
+                        break;
+                    case "lists_index_set":
+                        unionParam(e, b, "LIST", ground("Array"));
+                        attachPlaceholderIf(e, b, "VALUE");
+                        handleGenericType(b, "LIST");
+                        unionParam(e, b, "INDEX", ground(pNumber.type));
+                        break;
                     default:
                         if (b.type in e.stdCallTable) {
-                            e.stdCallTable[b.type].args.forEach((p: StdArg) => {
+                            const call = e.stdCallTable[b.type];
+                            call.args.forEach((p: StdArg, i: number) => {
+                                const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.field && !b.getFieldValue(p.field)) {
                                     let i = b.inputList.filter((i: B.Input) => i.name == p.field)[0];
-                                    // This will throw if someone modified blocks-custom.js and forgot to add
-                                    // [setCheck]s in the block definition. This is intentional and MUST be
-                                    // fixed.
-                                    let t = i.connection.check_[0];
-                                    unionParam(e, b, p.field, ground(t));
+                                    if (i.connection && i.connection.check_) {
+                                        if (isInstance && connectionCheck(i) === "Array") {
+                                            let gen = handleGenericType(b, p.field);
+                                            if (gen) {
+                                                return;
+                                            }
+                                        }
+
+                                        // All of our injected blocks have single output checks, but the builtin
+                                        // blockly ones like string.length and array.length might have multiple
+                                        for (let j = 0; j < i.connection.check_.length; j++) {
+                                            try {
+                                                let t = i.connection.check_[j];
+                                                unionParam(e, b, p.field, ground(t));
+                                                break;
+                                            }
+                                            catch (e) {
+                                                // Ignore type checking errors in the blocks...
+                                            }
+                                        }
+                                    }
                                 }
                             });
                         }
@@ -503,9 +445,72 @@ namespace pxt.blocks {
         // Last pass: if some variable has no type (because it was never used or
         // assigned to), just unify it with int...
         e.bindings.forEach((b: Binding) => {
-            if (find(b.type).type == null)
+            if (getConcreteType(b.type).type == null)
                 union(b.type, ground(pNumber.type));
         });
+
+        function connectionCheck(i: B.Input) {
+            return i.name ? i.connection && i.connection.check_ && i.connection.check_.length ? i.connection.check_[0] : "T" : undefined;
+        }
+
+        function handleGenericType(b: B.Block, name: string) {
+            let genericArgs = b.inputList.filter((input: B.Input) => connectionCheck(input) === "T");
+            if (genericArgs.length) {
+                const gen = getInputTargetBlock(b, genericArgs[0].name);
+                if (gen) {
+                    const arg = returnType(e, gen);
+                    const arrayType = arg.type ? ground(returnType(e, gen).type + "[]") : ground(null);
+                    genericLink(arrayType, arg);
+                    unionParam(e, b, name, arrayType);
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    function genericLink(parent: Point, child: Point) {
+        const p = find(parent);
+        const c = find(child);
+        if (p.childType) {
+            union(p.childType, c);
+        }
+        else {
+            p.childType = c;
+        }
+
+        if (c.parentType) {
+            union(c.parentType, p);
+        }
+        else {
+            c.parentType = p;
+        }
+    }
+
+    function getConcreteType(point: Point, found: Point[] = []) {
+        const t = find(point)
+        if (found.indexOf(t)  === -1) {
+            found.push(t);
+            if (!t.type || t.type === "Array") {
+                if (t.parentType) {
+                    const parent = getConcreteType(t.parentType, found);
+                    if (parent.type && parent.type !== "Array") {
+                        t.type = parent.type.substr(0, parent.type.length - 2);
+                        return t;
+                    }
+                }
+
+                if (t.childType) {
+                    const child = getConcreteType(t.childType, found);
+                    if (child.type) {
+                        t.type = child.type + "[]";
+                        return t;
+                    }
+
+                }
+            }
+        }
+        return t;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -516,14 +521,14 @@ namespace pxt.blocks {
     ///////////////////////////////////////////////////////////////////////////////
 
     function extractNumber(b: B.Block): number {
-        let v = b.getFieldValue("NUM");
+        let v = b.getFieldValue(b.type === "math_number_minmax" ? "SLIDER" : "NUM");
         const parsed = parseFloat(v);
         checkNumber(parsed);
         return parsed;
     }
 
     function checkNumber(n: number) {
-        if (n === Infinity || n === NaN) {
+        if (n === Infinity || isNaN(n)) {
             U.userError(lf("Number entered is either too large or too small"));
         }
     }
@@ -667,17 +672,37 @@ namespace pxt.blocks {
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
             .filter(e => !!e);
 
-        // we need at least 1 element to determine the type...
-        if (args.length < 0)
-            U.userError(lf("The list must have at least one element"));
-
         return H.mkArrayLiteral(args);
+    }
+
+    function compileListGet(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const listBlock = getInputTargetBlock(b, "LIST");
+        const listExpr = compileExpression(e, listBlock, comments);
+        const index = compileExpression(e, getInputTargetBlock(b, "INDEX"), comments);
+        const res = mkGroup([listExpr, mkText("["), index, mkText("]")]);
+
+        return res;
+    }
+
+    function compileListSet(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const listBlock = getInputTargetBlock(b, "LIST");
+        const listExpr = compileExpression(e, listBlock, comments);
+        const index = compileExpression(e, getInputTargetBlock(b, "INDEX"), comments);
+        const value = compileExpression(e, getInputTargetBlock(b, "VALUE"), comments);
+        const res =  mkGroup([listExpr, mkText("["), index, mkText("] = "), value]);
+
+        return listBlock.type === "lists_create_with" ? prefixWithSemicolon(res) : res;
+
     }
 
     function defaultValueForType(t: Point): JsNode {
         if (t.type == null) {
             union(t, ground(pNumber.type));
             t = find(t);
+        }
+
+        if (isArrayType(t.type)) {
+            return mkText("[]");
         }
 
         switch (t.type) {
@@ -700,8 +725,25 @@ namespace pxt.blocks {
         e.stats[b.type] = (e.stats[b.type] || 0) + 1;
         maybeAddComment(b, comments);
         let expr: JsNode;
-        if (b.disabled || b.type == "placeholder")
-            expr = defaultValueForType(returnType(e, b));
+        if (b.disabled || b.type == "placeholder") {
+            const ret = find(returnType(e, b));
+            if (ret.type === "Array") {
+                // FIXME: Can't use default type here because TS complains about
+                // the array having an implicit any type. However, forcing this
+                // to be a number array may cause type issues. Also, potential semicolon
+                // issues if we ever have a block where the array is not the first argument...
+                let isExpression = b.parentBlock_.type === "lists_index_get";
+                if (!isExpression) {
+                    const call = e.stdCallTable[b.parentBlock_.type];
+                    isExpression = call && call.isExpression;
+                }
+                const arrayNode = mkText("[0]");
+                expr = isExpression ? arrayNode : prefixWithSemicolon(arrayNode);
+            }
+            else {
+                expr = defaultValueForType(returnType(e, b));
+            }
+        }
         else switch (b.type) {
             case "math_number":
                 expr = compileNumber(e, b, comments); break;
@@ -731,6 +773,10 @@ namespace pxt.blocks {
                 expr = compileTextJoin(e, b, comments); break;
             case "lists_create_with":
                 expr = compileCreateList(e, b, comments); break;
+            case "lists_index_get":
+                expr = compileListGet(e, b, comments); break;
+            case "lists_index_set":
+                expr = compileListSet(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
             default:
@@ -845,7 +891,7 @@ namespace pxt.blocks {
             let startNode = mkText("if (")
             if (i > 0) {
                 startNode = mkText("else if (")
-                startNode.glueToBlock = true
+                startNode.glueToBlock = GlueMode.WithSpace;
             }
             append(stmts, [
                 startNode,
@@ -856,7 +902,7 @@ namespace pxt.blocks {
         }
         if (b.elseCount_) {
             let elseNode = mkText("else")
-            elseNode.glueToBlock = true
+            elseNode.glueToBlock = GlueMode.WithSpace;
             append(stmts, [
                 elseNode,
                 compileStatements(e, getInputTargetBlock(b, "ELSE"))
@@ -914,6 +960,22 @@ namespace pxt.blocks {
         ]
     }
 
+    function compileControlsForOf(e: Environment, b: B.Block, comments: string[]) {
+        let bVar = escapeVarName(b.getFieldValue("VAR"), e);
+        let bOf = getInputTargetBlock(b, "LIST");
+        let bDo = getInputTargetBlock(b, "DO");
+
+        let binding = lookup(e, bVar);
+        assert(binding.declaredInLocalScope > 0);
+
+        return [
+            mkText("for (let " + bVar + " of "),
+            compileExpression(e, bOf, comments),
+            mkText(")"),
+            compileStatements(e, bDo)
+        ]
+    }
+
     function compileForever(e: Environment, b: B.Block): JsNode {
         let bBody = getInputTargetBlock(b, "HANDLER");
         let body = compileStatements(e, bBody);
@@ -931,7 +993,7 @@ namespace pxt.blocks {
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
             ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
 
-        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5)) {
+        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) || reservedWords.indexOf(n) !== -1) {
             n = "_" + n;
         }
 
@@ -1001,18 +1063,28 @@ namespace pxt.blocks {
         else if (call.hasHandler)
             return compileEvent(e, b, call, eventArgs(call), call.namespace, comments)
         else
-            return mkStmt(compileStdCall(e, b, e.stdCallTable[b.type], comments))
+            return mkStmt(compileStdCall(e, b, call, comments))
     }
 
-    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[]): JsNode {
+    function compileArgument(e: Environment, b: B.Block, p: StdArg, comments: string[], beginningOfStatement = false): JsNode {
         let lit: any = p.literal;
         if (lit)
             return lit instanceof String ? H.mkStringLiteral(<string>lit) : H.mkNumberLiteral(<number>lit);
         let f = b.getFieldValue(p.field);
-        if (f)
+        if (f != null)
             return mkText(f);
-        else
-            return compileExpression(e, getInputTargetBlock(b, p.field), comments)
+        else {
+            attachPlaceholderIf(e, b, p.field);
+            const target = getInputTargetBlock(b, p.field);
+            if (beginningOfStatement && target.type === "lists_create_with") {
+                // We have to be careful of array literals at the beginning of a statement
+                // because they can cause errors (i.e. they get parsed as an index). Add a
+                // semicolon to the previous statement just in case.
+                // FIXME: No need to do this if the previous statement was a code block
+                return prefixWithSemicolon(compileExpression(e, target, comments));
+            }
+            return compileExpression(e, target, comments)
+        }
     }
 
     function compileStdCall(e: Environment, b: B.Block, func: StdFunc, comments: string[]): JsNode {
@@ -1021,7 +1093,7 @@ namespace pxt.blocks {
             args = b.mutation.compileMutation(e, comments).children;
         }
         else {
-            args = func.args.map((p: StdArg) => compileArgument(e, b, p, comments));
+            args = func.args.map((p: StdArg, i: number) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
         const externalInputs = !b.getInputsInline();
@@ -1149,6 +1221,7 @@ namespace pxt.blocks {
         args: StdArg[];
         attrs: ts.pxtc.CommentAttrs;
         isExtensionMethod?: boolean;
+        isExpression?: boolean;
         imageLiteral?: number;
         hasHandler?: boolean;
         property?: boolean;
@@ -1168,6 +1241,9 @@ namespace pxt.blocks {
             case 'controls_for':
             case 'controls_simple_for':
                 r = compileControlsFor(e, b, comments);
+                break;
+            case 'controls_for_of':
+                r = compileControlsForOf(e, b, comments);
                 break;
             case 'variables_set':
                 r = [compileSet(e, b, comments)];
@@ -1198,15 +1274,15 @@ namespace pxt.blocks {
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
 
-        r.forEach(l => {
-            if (l.type === NT.Block) {
-                l.id = b.id
-            }
-        });
-
         if (comments.length) {
             addCommentNodes(comments, r)
         }
+
+        r.forEach(l => {
+            if (l.type === NT.Block || l.type === NT.Prefix && Util.startsWith(l.op, "//")) {
+                l.id = b.id
+            }
+        });
 
         return r;
     }
@@ -1260,6 +1336,12 @@ namespace pxt.blocks {
         return res;
     }
 
+    function prefixWithSemicolon(n: JsNode) {
+        const emptyStatement = mkStmt(mkText(";"));
+        emptyStatement.glueToBlock = GlueMode.NoSpace;
+        return mkGroup([emptyStatement, n]);
+    }
+
     // This function creates an empty environment where type inference has NOT yet
     // been performed.
     // - All variables have been assigned an initial [Point] in the union-find.
@@ -1270,13 +1352,23 @@ namespace pxt.blocks {
         let e = emptyEnv(w);
 
         // append functions in stdcalltable
-        if (blockInfo)
+        if (blockInfo) {
+            // Enums are not enclosed in namespaces, so add them to the taken names
+            // to avoid collision
+            Object.keys(blockInfo.apis.byQName).forEach(name => {
+                const info = blockInfo.apis.byQName[name];
+                if (info.kind === pxtc.SymbolKind.Enum) {
+                    e.renames.takenNames[info.qName] = true;
+                }
+            });
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
                         pxt.reportError("blocks", "function already defined", { "details": fn.attributes.blockId });
                         return;
                     }
+                    e.renames.takenNames[fn.namespace] = true;
                     let fieldMap = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
                     let args = (fn.parameters || []).map(p => {
@@ -1296,19 +1388,21 @@ namespace pxt.blocks {
                         args: args,
                         attrs: fn.attributes,
                         isExtensionMethod: instance,
+                        isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
                         hasHandler: fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
                 })
+        }
 
         if (skipVariables) return e;
 
         const variableIsScoped = (b: B.Block, name: string): boolean => {
             if (!b)
                 return false;
-            else if ((b.type == "controls_for" || b.type == "controls_simple_for")
+            else if ((b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of")
                 && escapeVarName(b.getFieldValue("VAR"), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
@@ -1331,9 +1425,14 @@ namespace pxt.blocks {
 
         // collect local variables.
         w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
-            if (b.type == "controls_for" || b.type == "controls_simple_for") {
+            if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
-                trackLocalDeclaration(x, pNumber.type);
+                if (b.type == "controls_for_of") {
+                    trackLocalDeclaration(x, null);
+                }
+                else {
+                    trackLocalDeclaration(x, pNumber.type);
+                }
             }
             else if (isMutatingBlock(b)) {
                 const declarations = b.mutation.getDeclaredVariables();
@@ -1399,12 +1498,24 @@ namespace pxt.blocks {
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
-                    // let btype = find(b.type);
-                    // Not sure we need the type here - is is always number or boolean?
-                    let defl = defaultValueForType(find(b.type))
+                    const t = getConcreteType(b.type);
+                    let defl: JsNode;
+
+                    if (t.type === "Array") {
+                        defl = mkText("[]");
+                    }
+                    else {
+                        defl = defaultValueForType(t);
+                    }
+
                     let tp = ""
-                    if (defl.op == "null") {
-                        let tpname = find(b.type).type
+                    if (defl.op == "null" || defl.op == "[]") {
+                        let tpname = t.type
+                        // If the type is "Array" or null[] it means that we failed to narrow the type of array.
+                        // Best we can do is just default to number[]
+                        if (tpname === "Array" || tpname === "null[]") {
+                            tpname = "number[]";
+                        }
                         let tpinfo = blockInfo.apis.byQName[tpname]
                         if (tpinfo && tpinfo.attributes.autoCreate)
                             defl = mkText(tpinfo.attributes.autoCreate + "()")
@@ -1479,12 +1590,6 @@ namespace pxt.blocks {
         });
     }
 
-    export interface SourceInterval {
-        id: string;
-        start: number;
-        end: number;
-    }
-
     export interface BlockCompilationResult {
         source: string;
         sourceMap: SourceInterval[];
@@ -1515,203 +1620,19 @@ namespace pxt.blocks {
         return result;
     }
 
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
-    const infixPriTable: Map<number> = {
-        // 0 = comma/sequence
-        // 1 = spread (...)
-        // 2 = yield, yield*
-        // 3 = assignment
-        "=": 3,
-        "+=": 3,
-        "-=": 3,
-        // 4 = conditional (?:)
-        "||": 5,
-        "&&": 6,
-        "|": 7,
-        "^": 8,
-        "&": 9,
-        // 10 = equality
-        "==": 10,
-        "!=": 10,
-        "===": 10,
-        "!==": 10,
-        // 11 = comparison (excludes in, instanceof)
-        "<": 11,
-        ">": 11,
-        "<=": 11,
-        ">=": 11,
-        // 12 = bitise shift
-        ">>": 12,
-        ">>>": 12,
-        "<<": 12,
-        "+": 13,
-        "-": 13,
-        "*": 14,
-        "/": 14,
-        "%": 14,
-        "!": 15,
-        ".": 18,
-    }
-
     function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
-        let sourceMap: SourceInterval[] = [];
-        let sourceMapById: pxt.Map<SourceInterval> = {};
-        let output = ""
-        let indent = ""
-        let variables: Map<string>[] = [{}];
+        let res = flattenNode(app)
 
-        function flatten(e0: JsNode) {
-            function rec(e: JsNode, outPrio: number) {
-                if (e.type != NT.Infix) {
-                    for (let c of e.children)
-                        rec(c, -1)
-                    return
-                }
+        // Note: the result of format is not used!
 
-                let r: JsNode[] = []
-
-                function pushOp(c: string) {
-                    r.push(mkText(c))
-                }
-
-                let infixPri = U.lookup(infixPriTable, e.op)
-                if (infixPri == null) U.oops("bad infix op: " + e.op)
-
-                if (infixPri < outPrio) pushOp("(");
-                if (e.children.length == 1) {
-                    pushOp(e.op)
-                    rec(e.children[0], infixPri)
-                } else {
-                    let bindLeft = infixPri != 3 && e.op != "**"
-                    let letType: string = undefined;
-                    /*
-                    if (e.name == "=" && e.args[0].nodeType == 'localRef') {
-                        let varloc = <TDev.AST.Json.JLocalRef>e.args[0];
-                        let varname = varloc.name;
-                        if (!variables[variables.length - 1][varname]) {
-                            variables[variables.length - 1][varname] = "1";
-                            pushOp("let")
-                            letType = varloc.type as any as string;
-                        }
-                    }
-                    */
-                    rec(e.children[0], bindLeft ? infixPri : infixPri + 0.1)
-                    r.push(e.children[0])
-                    if (letType && letType != "number") {
-                        pushOp(": ")
-                        pushOp(letType)
-                    }
-                    if (e.op == ".")
-                        pushOp(".")
-                    else
-                        pushOp(" " + e.op + " ")
-                    rec(e.children[1], !bindLeft ? infixPri : infixPri + 0.1)
-                    r.push(e.children[1])
-                }
-                if (infixPri < outPrio) pushOp(")");
-
-                e.type = NT.Prefix
-                e.op = ""
-                e.children = r
-            }
-
-            rec(e0, -1)
-        }
-
-        let root = mkGroup(app)
-        flatten(root)
-        emit(root)
-
-        // never return empty string - TS compiler service thinks it's an error
-        if (!output)
-            output += "\n"
-
-        // outformat async
-        return workerOpAsync("format", { format: {input: output, pos: 1} }).then(() => {
+        return workerOpAsync("format", { format: { input: res.output, pos: 1 } }).then(() => {
             return {
-                source: output,
-                sourceMap: sourceMap,
+                source: res.output,
+                sourceMap: res.sourceMap,
                 stats: env.stats
             };
         })
 
-        function emit(n: JsNode) {
-            if (n.glueToBlock) {
-                removeLastIndent()
-                output += " "
-            }
-
-            let start = getCurrentLine();
-
-            switch (n.type) {
-                case NT.Infix:
-                    U.oops("no infix should be left")
-                    break
-                case NT.NewLine:
-                    output += "\n" + indent
-                    break
-                case NT.Block:
-                    block(n)
-                    break
-                case NT.Prefix:
-                    if (n.canIndentInside)
-                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
-                    else
-                        output += n.op
-                    n.children.forEach(emit)
-                    break
-                default:
-                    break
-            }
-
-            let end = getCurrentLine();
-
-            if (n.id && start != end) {
-                if (sourceMapById[n.id]) {
-                    const node = sourceMapById[n.id];
-                    node.start = Math.min(node.start, start);
-                    node.end = Math.max(node.end, end);
-                }
-                else {
-                    const interval = { id: n.id, start: start, end: end }
-                    sourceMapById[n.id] = interval;
-                    sourceMap.push(interval)
-                }
-            }
-        }
-
-        function getCurrentLine() {
-            let i = 0;
-            output.replace(/\n/g, a => { i++; return a; })
-            return i;
-        }
-
-        function write(s: string) {
-            output += s.replace(/\n/g, "\n" + indent)
-        }
-
-        function removeLastIndent() {
-            output = output.replace(/\n *$/, "")
-        }
-
-        function block(n: JsNode) {
-            let finalNl = n.noFinalNewline ? "" : "\n";
-            if (n.children.length == 0) {
-                write(" {\n\t\n}" + finalNl)
-                return
-            }
-
-            let vars = U.clone<Map<string>>(variables[variables.length - 1] || {});
-            variables.push(vars);
-            indent += "    "
-            write(" {\n")
-            for (let nn of n.children)
-                emit(nn)
-            indent = indent.slice(4)
-            removeLastIndent()
-            write("\n}" + finalNl)
-            variables.pop();
-        }
     }
 
     function maybeAddComment(b: B.Block, comments: string[]) {
@@ -1775,9 +1696,5 @@ namespace pxt.blocks {
             return false;
         }
         return text.substr(text.length - suffix.length) === suffix;
-    }
-
-    function isReservedWord(str: string) {
-        return reservedWords.indexOf(str) !== -1;
     }
 }

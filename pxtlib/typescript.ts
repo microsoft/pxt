@@ -1,6 +1,5 @@
 /// <reference path='../built/typescriptServices.d.ts' />
 namespace ts.pxtc {
-
     export function flattenDiagnosticMessageText(messageText: string | DiagnosticMessageChain, newLine: string): string {
         if (typeof messageText === "string") {
             return messageText;
@@ -228,5 +227,11 @@ namespace ts.pxtc {
         }
 
         return false;
+    }
+
+    export enum DiagnosticCategory {
+        Warning = 0,
+        Error = 1,
+        Message = 2,
     }
 }

@@ -121,6 +121,23 @@ export class Item extends data.Component<ItemProps, {}> {
     }
 }
 
+export class ButtonMenuItem extends UiElement<ItemProps> {
+    renderCore() {
+        return (
+            <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
+                role={this.props.role}
+                title={this.props.title || this.props.text}
+                key={this.props.value}
+                data-value={this.props.value}
+                onClick={this.props.onClick}>
+                <div className={genericClassName("ui button", this.props)}>
+                    {genericContent(this.props) }
+                    {this.props.children}
+                </div>
+            </div>);
+    }
+}
+
 export interface ButtonProps extends WithPopupProps {
     title?: string;
     onClick?: (e: React.MouseEvent) => void;
@@ -684,17 +701,17 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
         const modalJSX = (
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
+                {this.props.closeIcon ? <Button
+                        icon={closeIconName}
+                        class="huge clear right floated"
+                        onClick={() => this.handleClose(null) } /> : undefined }
+                {this.props.helpUrl ?
+                    <a className={`ui button huge icon clear right floated`} href={this.props.helpUrl} target="_docs">
+                        <i className="help icon"></i>
+                    </a>
+                    : undefined}
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
-                    {this.props.closeIcon ? <Button
-                        icon={closeIconName}
-                        class="clear right floated"
-                        onClick={() => this.handleClose(null) } /> : undefined }
-                    {this.props.helpUrl ?
-                        <a className={`ui button icon-and-text right floated labeled`} href={this.props.helpUrl} target="_docs">
-                            <i className="help icon"></i>
-                        </a>
-                        : undefined}
                 </div> : undefined }
                 <div id={this.id + 'desc'} className="content">
                     {children}

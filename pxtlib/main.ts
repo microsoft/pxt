@@ -295,7 +295,7 @@ namespace pxt {
             if (getEmbeddedScript(this.id)) {
                 this.resolvedVersion = v = "embed:" + this.id
             } else if (!v || v == "*") {
-                U.userError(lf("version not specified for {0}", v))
+                U.userError(lf("version not specified for {0}", this.id))
             }
             return Promise.resolve(v)
         }
@@ -510,7 +510,7 @@ namespace pxt {
             const str = this.readFile(pxt.CONFIG_NAME);
             if (str == null) {
                 if (!isInstall)
-                    U.userError("Package not installed: " + this.id)
+                    U.userError("Package not installed: " + this.id + ", did you forget to run `pxt install`?")
             } else {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }

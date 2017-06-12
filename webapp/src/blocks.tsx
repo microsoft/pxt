@@ -83,14 +83,22 @@ export class Editor extends srceditor.Editor {
                     this.blockInfo = bi;
                     let showSearch = true;
                     let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
+
+                    // Search needs a toolbox with ALL blocks
+                    let tbAll: Element;
+                    if (this.showToolboxCategories !== CategoryMode.All) {
+                        tbAll = pxt.blocks.initBlocks(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+                    }
+
                     let tb = pxt.blocks.initBlocks(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
                     this.updateToolbox(tb, this.showToolboxCategories);
                     if (this.showToolboxCategories !== CategoryMode.None && showSearch) {
-                        pxt.blocks.initSearch(this.editor, tb,
+                        pxt.blocks.initSearch(this.editor, tb, tbAll || tb,
                             searchFor => compiler.apiSearchAsync(searchFor)
                                 .then((fns: pxtc.service.SearchInfo[]) => fns),
                             searchTb => this.updateToolbox(searchTb, this.showToolboxCategories, true));
                     }
+                    pxt.blocks.initFlyouts(this.editor);
 
                     let xml = this.delayLoadXml;
                     this.delayLoadXml = undefined;
@@ -160,13 +168,35 @@ export class Editor extends srceditor.Editor {
     }
 
     private initLayout() {
-        // layout on first load if no data info
-        const needsLayout = this.editor.getTopBlocks(false).some(b => {
+        let minX: number;
+        let minY: number;
+        let needsLayout = false;
+
+        this.editor.getTopBlocks(false).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
-            return b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0
+            if (minX === undefined || tp.x < minX) {
+                minX = tp.x;
+            }
+            if (minY === undefined || tp.y < minY) {
+                minY = tp.y;
+            }
+
+            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tp.x == 0 && tp.y == 0);
         });
-        if (needsLayout)
+
+        if (needsLayout) {
+            // If the blocks file has no location info (e.g. it's from the decompiler), format the code
             pxt.blocks.layout.flow(this.editor);
+        }
+        else {
+            // Otherwise translate the blocks so that they are positioned on the top left
+            this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
+            this.editor.scrollX = 10;
+            this.editor.scrollY = 10;
+
+            // Forces scroll to take effect
+            this.editor.resizeContents();
+        }
     }
 
     private initPrompts() {
@@ -209,7 +239,7 @@ export class Editor extends srceditor.Editor {
                 disagreeIcon: "checkmark",
                 size: "small"
             }).then(b => {
-                callback(b == 0);
+                callback(b == 1);
             })
         };
 
@@ -537,10 +567,10 @@ export class Editor extends srceditor.Editor {
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
-        let diags = tsfile.diagnostics.filter(d => d.category == ts.DiagnosticCategory.Error);
+        let diags = tsfile.diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
         let sourceMap = this.compilationResult.sourceMap;
 
-        diags.filter(diag => diag.category == ts.DiagnosticCategory.Error).forEach(diag => {
+        diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
             let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
@@ -592,7 +622,10 @@ export class Editor extends srceditor.Editor {
             comments: true,
             disable: false,
             readOnly: readOnly,
-            toolboxType: pxt.appTarget.appTheme.coloredToolbox ? 'coloured' : pxt.appTarget.appTheme.invertedToolbox ? 'inverted' : 'normal',
+            toolboxOptions: {
+                colour: pxt.appTarget.appTheme.coloredToolbox,
+                inverted: pxt.appTarget.appTheme.invertedToolbox
+            },
             zoom: {
                 enabled: false,
                 controls: false,
@@ -622,10 +655,16 @@ export class Editor extends srceditor.Editor {
         if (!this.blockInfo) return undefined;
 
         let toolbox = this.getDefaultToolbox(this.showToolboxCategories);
+        let tbAll: Element;
+
+        if (this.showToolboxCategories !== CategoryMode.All) {
+            tbAll = pxt.blocks.createToolbox(this.blockInfo, toolbox, CategoryMode.All, this.filters);
+        }
         let tb = pxt.blocks.createToolbox(this.blockInfo, toolbox, this.showToolboxCategories, this.filters);
         this.updateToolbox(tb, this.showToolboxCategories);
 
         pxt.blocks.cachedSearchTb = tb;
+        pxt.blocks.cachedSearchTbAll = tbAll || tb;
         return tb;
     }
 
