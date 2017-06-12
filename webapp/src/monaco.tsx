@@ -37,6 +37,7 @@ export interface MonacoBlockDefinition {
         deprecated?: boolean;
         blockHidden?: boolean;
     };
+    noNamespace?: boolean;
 }
 
 export interface BuiltinCategoryDefinition {
@@ -597,8 +598,9 @@ export class Editor extends srceditor.Editor {
                 }
                 else {
                     let blocks = snippets.getBuiltinCategory(ns).blocks;
+                    blocks.forEach(b => { b.noNamespace = true })
                     if (monacoEditor.nsMap[ns.toLowerCase()]) blocks = blocks.concat(monacoEditor.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
-                    el = monacoEditor.createCategoryElement("", md.color, md.icon, false, blocks, null, ns);
+                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, false, blocks, null, ns);
                 }
                 group.appendChild(el);
             });
@@ -744,7 +746,7 @@ export class Editor extends srceditor.Editor {
                     const snippet = fn.snippet;
                     const comment = fn.attributes.jsDoc;
 
-                    let snippetPrefix = ns;
+                    let snippetPrefix = fn.noNamespace ? "" : ns;
 
                     const element = fn as pxtc.SymbolInfo;
                     if (element.attributes.block) {
@@ -1114,10 +1116,11 @@ export class Editor extends srceditor.Editor {
     highlightStatement(brk: pxtc.LocationInfo) {
         if (!brk || !this.currFile || this.currFile.name != brk.fileName || !this.editor) return;
         let position = this.editor.getModel().getPositionAt(brk.start);
-        if (!position) return;
+        let end = this.editor.getModel().getPositionAt(brk.start + brk.length);
+        if (!position || !end) return;
         this.highlightDecorations = this.editor.deltaDecorations(this.highlightDecorations, [
             {
-                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column + brk.length),
+                range: new monaco.Range(position.lineNumber, position.column, end.lineNumber, end.column),
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);

@@ -190,7 +190,12 @@ export class Editor extends srceditor.Editor {
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
-            this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY))
+            this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
+            this.editor.scrollX = 10;
+            this.editor.scrollY = 10;
+
+            // Forces scroll to take effect
+            this.editor.resizeContents();
         }
     }
 

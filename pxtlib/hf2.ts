@@ -158,8 +158,16 @@ namespace pxt.HF2 {
         BoardID: string;
     }
 
+    let logEnabled = false
+    export function enableLog() {
+        logEnabled = true
+    }
+
     function log(msg: string) {
-        pxt.debug("HF2: " + msg)
+        if (logEnabled)
+            pxt.log("HF2: " + msg)
+        else
+            pxt.debug("HF2: " + msg)
     }
 
     export class Wrapper {
