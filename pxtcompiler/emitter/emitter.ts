@@ -1661,7 +1661,7 @@ ${lbl}: .short 0xffff
                 }
                 if (/^[+-]?\d+$/.test(ev))
                     return emitLit(parseInt(ev));
-                if (/^0x[A-Za-z\d]{2,8}$/.test(ev))
+                if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
                     return emitLit(parseInt(ev, 16));
                 U.userError("enumval only support number literals")
                 // TODO needs dealing with int conversions
