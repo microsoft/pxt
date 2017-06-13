@@ -5,20 +5,16 @@ In this page, we'll go through the steps necessary to get your target with your 
 
 Examples of targets are:
 
-* https://pxt.microbit.org
-* https://pxt.adafruit.com
-* http://microsoft.github.io/pxt-sample/
+* https://pxt.microbit.org (sources at https://github.com/microsoft/pxt-microbit)
+* http://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
 
 Since this is a rather technical topic, we assume that the reader is familiar with Node.JS, NPM
 and JavaScript and/or C++.
 
-* [theming](/targets/theming)
-* [simulator](/targets/simulator)
+A target is parameterized by [pxtarget.json](/targets/pxtarget) and contains the following folders:
 
-A target contains the following folders:
-
-* ``/libs``, packages (sometimes referred to as libraries) that define the JavaScript and APIs and how they should be exposed in blocks.
-* ``/sim``, TypeScript source for the in-browser simulator (if any).
+* ``/libs``, packages (sometimes referred to as libraries) that define the APIs (in C++, Static TypeScript or Thumb assembler) and how they should be exposed in blocks
+* ``/sim``, TypeScript source for the in-browser [simulator](/targets/simulator), if any
 * ``/docs``, markdown documentation pages
 
 ## Getting started
