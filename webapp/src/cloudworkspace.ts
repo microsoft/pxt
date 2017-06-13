@@ -423,7 +423,7 @@ function importLegacyScriptsAsync(): Promise<void> {
         delete (hd as any)._id;
         delete (hd as any)._rev;
         delete (hd as any).id;
-        pxt.debug(`importing ${hd.name}`)
+        pxt.log(`importing ${hd.name}`)
         return installAsync(hd, td)
             .then(() => pushProjectAsync(dbdata));
     }
@@ -437,6 +437,9 @@ function importLegacyScriptsAsync(): Promise<void> {
 
             pxt.debug(`received ${dbdata.header.length} projects`);
             pushProjectAsync(dbdata).done();
+        } else if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'error') {
+            pxt.log('error while importing: ' + ev.data.message);
+            clean(false);
         }
     }
     window.addEventListener('message', receiveMessage, false)

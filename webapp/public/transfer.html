@@ -41,6 +41,11 @@
                 .catch(function (error) {
                     if (error && error.error && error.name == 'indexed_db_went_bad') {
                         console.log('database corrupted');
+                        window.parent.postMessage({
+                            type: 'transfer',
+                            action: 'error',
+                            message: 'dbcorrupt'
+                        }, targetOrigin);
                         return;
                     }
                     console.log('database opened')
