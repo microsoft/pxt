@@ -52,12 +52,17 @@
         <Function Type="name:serialPort" />
       </Device>
     </DeviceCapability>
+    <DeviceCapability Name="humaninterfacedevice">
+      <Device Id="vidpid:239A 0019">
+        <Function Type="usage:FF97 0001" />
+      </Device>
+    </DeviceCapability>
   </Capabilities>
   <build:Metadata>
-    <build:Item Name="VisualStudio" Version="14.0" />
-    <build:Item Name="VisualStudioEdition" Value="Microsoft Visual Studio Enterprise 2015" />
-    <build:Item Name="OperatingSystem" Version="10.0.14393.0 (rs1_release.160715-1616)" />
-    <build:Item Name="Microsoft.Build.AppxPackage.dll" Version="14.0.25431.1" />
+    <build:Item Name="VisualStudio" Version="15.0" />
+    <build:Item Name="VisualStudioEdition" Value="Microsoft Visual Studio Enterprise 2017" />
+    <build:Item Name="OperatingSystem" Version="10.0.15063.0 (WinBuild.160101.0800)" />
+    <build:Item Name="Microsoft.Build.AppxPackage.dll" Version="15.0.26403.7" />
     <build:Item Name="ProjectGUID" Value="dd06d0fd-5d47-4f41-9fa5-870c5a8acc92" />
     <build:Item Name="OptimizingToolset" Value="None" />
     <build:Item Name="TargetRuntime" Value="AppHost" />

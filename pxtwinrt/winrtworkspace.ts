@@ -1,5 +1,7 @@
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxteditor.d.ts"/>
+/// <reference path="./winrtrefs.d.ts"/>
+
 namespace pxt.winrt.workspace {
 
     type Header = pxt.workspace.Header;

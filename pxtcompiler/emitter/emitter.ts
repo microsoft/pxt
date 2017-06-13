@@ -1661,7 +1661,9 @@ ${lbl}: .short 0xffff
                 }
                 if (/^[+-]?\d+$/.test(ev))
                     return emitLit(parseInt(ev));
-                U.userError("enumval=shimanme not supported at the moment")
+                if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
+                    return emitLit(parseInt(ev, 16));
+                U.userError("enumval only support number literals")
                 // TODO needs dealing with int conversions
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
