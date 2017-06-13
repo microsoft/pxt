@@ -18,11 +18,6 @@
         }
 
         function transfer() {
-            if (!window.parent || window.parent == window) {
-                console.error('no parent window');
-                return;
-            }
-
             // https://pxt.microbit.org/api/transfer/makecode.microbit.org?storageid=([a-z]+)
             var m = /^https:\/\/[a-z0-9.\/]+\/api\/transfer\/([^?]+)\?storageid=([a-z]+)$/i.exec(window.location.href);
             if (!m) {
@@ -39,6 +34,7 @@
             var resp = {};
             db.get('pouchdbsupportabletest')
                 .catch(function (error) {
+                    if (error) console.error(error);
                     if (error && error.error && error.name == 'indexed_db_went_bad') {
                         console.log('database corrupted');
                         window.parent.postMessage({
@@ -52,6 +48,7 @@
                     getAllAsync(db, "header")
                         .then(function (rh) {
                             resp.header = rh;
+                            console.log('headers loaded')
                             return getAllAsync(db, "text")
                         }).then(function (rt) {
                             resp.text = rt;
@@ -61,6 +58,7 @@
                                 action: 'export',
                                 data: resp
                             }, targetOrigin);
+                            console.log('waiting for clear command')
                             window.addEventListener('message', function (ev) {
                                 var origin = event.origin || event.originalEvent.origin;
                                 if (origin != targetOrigin) {
@@ -74,6 +72,9 @@
                                         .then(function () {
                                             console.log('databases dropped')
                                         })
+                                } else {
+                                    console.log('unknown message')
+                                    console.log(data);
                                 }
                             })
                         })
