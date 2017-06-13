@@ -1,11 +1,11 @@
 # Microsoft MakeCode Blog
 
-## [Microbit Editor v0.12.25](/blog/microbit/v0.12.25)
+## [Microbit Editor v0.12.30](/blog/microbit/v0.12.30)
 
 June 13th, 2017
 
 Migrating https://pxt.microbit.org to https://makecode.microbit.org 
-[Read more](/blog/microbit/v0.12.25)
+[Read more](/blog/microbit/v0.12.30)
 
 ## [Microbit Editor v0.12.23](/blog/microbit/v0.12.23)
 
