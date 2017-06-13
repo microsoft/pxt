@@ -383,6 +383,12 @@ function importLegacyScriptsAsync(): Promise<void> {
     if (legacyDomain == targetDomain)
         return Promise.resolve(); // nothing to do
 
+    if (window.applicationCache.status == window.applicationCache.DOWNLOADING
+        || window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+        pxt.debug('import skipped, app cached updating');
+        return Promise.resolve();
+    }
+
     pxt.debug('injecting import iframe');
     let frame = document.createElement("iframe") as HTMLIFrameElement;
     function clean(clear: boolean) {
