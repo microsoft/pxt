@@ -410,7 +410,7 @@ function importLegacyScriptsAsync(): Promise<void> {
 
     function pushProjectAsync(dbdata: {
         header: pxt.workspace.Header[];
-        text: pxt.workspace.ScriptText[];
+        text: { files: pxt.workspace.ScriptText; }[];
     }): Promise<void> {
         if (!dbdata.header.length) {
             pxt.log('done importing scripts');
@@ -420,11 +420,12 @@ function importLegacyScriptsAsync(): Promise<void> {
         }
         const hd = dbdata.header.pop();
         const td = dbdata.text.pop();
+        const text = td.files;
         delete (hd as any)._id;
         delete (hd as any)._rev;
         delete (hd as any).id;
-        pxt.debug(`importing ${hd.name}`)
-        return installAsync(hd, td)
+        pxt.log(`importing ${hd.name}`)
+        return installAsync(hd, text)
             .then(() => pushProjectAsync(dbdata));
     }
 
@@ -432,7 +433,7 @@ function importLegacyScriptsAsync(): Promise<void> {
         if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'export' && ev.data.data) {
             const dbdata: {
                 header: pxt.workspace.Header[];
-                text: pxt.workspace.ScriptText[];
+                text: { files: pxt.workspace.ScriptText}[];
             } = ev.data.data;
 
             pxt.debug(`received ${dbdata.header.length} projects`);
