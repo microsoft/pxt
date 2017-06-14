@@ -65,7 +65,7 @@ mountVirtualApi("gh-pkgcfg", {
 mountVirtualApi("target-config", {
     getAsync: query =>
         pxt.targetConfigAsync().catch(core.handleNetworkError),
-    expirationTime: p => 60 * 60 * 1000, /* 1 hour */
+    expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline()
 })
 
@@ -98,8 +98,7 @@ function expired(ce: CacheEntry) {
 
 function shouldCache(ce: CacheEntry) {
     if (!ce.data) return false
-    return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path)
-        || /^target-config:/.test(ce.path);
+    return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path);
 }
 
 export function clearCache() {
