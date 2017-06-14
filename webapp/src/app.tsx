@@ -488,7 +488,7 @@ export class ProjectView
         if (step > -1) {
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
-            this.setState({tutorialOptions: tutorialOptions});
+            this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
             else tutorial.TutorialContent.refresh();
@@ -498,7 +498,7 @@ export class ProjectView
     handleMessage(msg: pxsim.SimulatorMessage) {
         switch (msg.type) {
             case "popoutcomplete":
-                this.setState({sideDocsCollapsed: true, sideDocsLoadUrl: ''})
+                this.setState({ sideDocsCollapsed: true, sideDocsLoadUrl: '' })
                 break;
             case "tutorial":
                 let t = msg as pxsim.TutorialMessage;
@@ -2026,6 +2026,15 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
             core.showLoading(lf("loading project..."));
             theEditor.importProjectFromFileAsync(fileContents)
                 .done(() => core.hideLoading());
+            return true;
+        case "transfer":
+            pxt.tickEvent("hash." + hash.cmd);
+            const resp: { header: pxt.workspace.Header, text: pxt.workspace.ScriptText } =
+                JSON.parse(window.atob(hash.arg));
+            window.location.hash = "";
+            core.showLoading(lf("loading project..."));
+            workspace.installAsync(resp.header, resp.text)
+                .done(hd => theEditor.loadHeaderAsync(hd));
             return true;
     }
 
