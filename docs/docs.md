@@ -19,7 +19,7 @@ MakeCode is a toolkit to create JavaScript/Blocks online editors.
 ## PXT developer resources
 
 * [pxt command line interface](/cli)
-* [creating a PXT target](/target-creation)
+* [creating a PXT target](/target-creation), [pxtarget.json](/targets/pxtarget)
 * [creating a PXT package](/packages)
 * [expose your APIs as blocks](/defining-blocks)
 * [auto-generation of library files](/simshim), from either C++ or TypeScript sources

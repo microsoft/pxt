@@ -16,6 +16,8 @@ You can find examples for pxt-sample and pxt-microbit here:
 * https://github.com/Microsoft/pxt-sample/blob/master/package.json
 * https://github.com/Microsoft/pxt-microbit/blob/master/package.json
 
+Here's more about [creating a target](/target-creation)
+
 ## TargetBundle
 
 The interface `TargetBundle` describes the PXT packages that come bundled 
