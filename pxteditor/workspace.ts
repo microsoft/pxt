@@ -46,6 +46,7 @@ namespace pxt.workspace {
         resetAsync(): Promise<void>;
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
+        legacyScriptsUrl?: () => string;
         importLegacyScriptsAsync?: () => Promise<void>;
     }
 }

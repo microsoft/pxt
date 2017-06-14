@@ -373,10 +373,23 @@ function resetAsync() {
         })
 }
 
-function importLegacyScriptsAsync(): Promise<void> {
-    const key = 'legacyScriptsImported';
+const legacyKey = 'legacyScriptsImported';
+function legacyScriptsUrl(): string {
     const legacyDomain = pxt.appTarget.appTheme.legacyDomain;
-    if (!legacyDomain || !pxt.webConfig.targetUrl || !!pxt.storage.getLocal(key))
+    if (!legacyDomain || !pxt.webConfig.targetUrl || !!pxt.storage.getLocal(legacyKey))
+        return undefined;
+
+    const targetDomain = pxt.webConfig.targetUrl.replace(/^https:\/\//i, '');
+    if (legacyDomain == targetDomain)
+        return undefined; // nothing to do
+
+    const url = `https://${legacyDomain}/api/transfer/${targetDomain}?storageid=${pxt.storage.storageId()}`;
+    return url;
+}
+
+function importLegacyScriptsAsync(): Promise<void> {
+    const legacyDomain = pxt.appTarget.appTheme.legacyDomain;
+    if (!legacyDomain || !pxt.webConfig.targetUrl || !!pxt.storage.getLocal(legacyKey))
         return Promise.resolve();
 
     const targetDomain = pxt.webConfig.targetUrl.replace(/^https:\/\//i, '');
@@ -414,7 +427,7 @@ function importLegacyScriptsAsync(): Promise<void> {
     }): Promise<void> {
         if (!dbdata.header.length) {
             pxt.log('done importing scripts');
-            pxt.storage.setLocal(key, '1');
+            pxt.storage.setLocal(legacyKey, '1');
             clean(true);
             return Promise.resolve();
         }
@@ -469,5 +482,6 @@ export const provider: WorkspaceProvider = {
     saveToCloudAsync,
     syncAsync,
     resetAsync,
+    legacyScriptsUrl,
     importLegacyScriptsAsync
 }

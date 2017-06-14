@@ -50,7 +50,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     showOpenTutorials() {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
-        this.setState({ visible: true, tab: gals[0] || MYSTUFF})
+        this.setState({ visible: true, tab: gals[0] || MYSTUFF })
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
@@ -111,6 +111,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const headers = this.fetchLocalData();
         const urldata = this.fetchUrlData();
         const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
+        const legacyUrl = workspace.legacyScriptsUrl();
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
             pxt.tickEvent("projects.header");
@@ -220,7 +221,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
-                            <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t)} onClick={() => this.setState({ tab: t }) } />) }
+                            <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
                         <div className="right menu">
                             <sui.Button
                                 icon='close'
@@ -258,6 +259,14 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     description={lf("Open a shared project URL") }
                                     onClick={() => importUrl() }
                                     /> : undefined }
+                            { legacyUrl ?
+                                <codecard.CodeCardView
+                                    key={'importlegacy'}
+                                    icon="archive"
+                                    iconColor="secondary"
+                                    name={lf("Import old programs") }
+                                    description={lf("Import programs from {0}", theme.legacyDomain) }
+                                    url={legacyUrl} /> : undefined }
                         </div>
                     </div>
                     {headersGrouped.filter(g => g.headers.length != 0).map(headerGroup =>

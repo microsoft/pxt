@@ -69,6 +69,11 @@ export function getHeader(id: string) {
     return null
 }
 
+export function legacyScriptsUrl(): string {
+    checkSession();
+    return impl.legacyScriptsUrl ? impl.legacyScriptsUrl() : undefined;
+}
+
 export function importLegacyScriptsAsync(): Promise<void> {
     checkSession();
     return impl.importLegacyScriptsAsync ? impl.importLegacyScriptsAsync() : Promise.resolve();
