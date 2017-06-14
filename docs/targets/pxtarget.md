@@ -12,7 +12,7 @@ as indicated. All other fields below are user-supplied. Optional fields have a "
 
 All PXT targets/packages also must supply an NPM [package.json](https://docs.npmjs.com/files/package.json)
 file, which describes the versioning, dependency and resources required to build the target/package.
-You can find examples (simple and complex) here:
+You can find examples for pxt-sample and pxt-microbit here:
 * https://github.com/Microsoft/pxt-sample/blob/master/package.json
 * https://github.com/Microsoft/pxt-microbit/blob/master/package.json
 
@@ -62,12 +62,12 @@ via an "add package" request by the end user).
 Most of the user-defined fields for `pxttarget.json` are described by the interface `AppTarget`.
 ```typescript
     interface AppTarget {
-        id: string;             // Has to match ^[a-z]+$; used in URLs and domain names
+        id: string;             // unique id: should match ^[a-z]+$; used in URLs and domain names
         name: string;           // friendly name (spaces allowed)
         corepkg: string;        // specifies the directory (under libs/) for target's core APIs
                                 // such libraries also are known as packages. See section below. 
-        appTheme: AppTheme;     // see sections below for description 
         compile: CompileTarget; // see sections below for description
+        appTheme: AppTheme;     // see sections below for description 
 
         nickname?: string;      // Friendly id (should match ^[a-zA-Z]+$); used when generating files, 
                                 // folders, etc. defaults to id
@@ -96,33 +96,91 @@ Also, the core should always be bundled with the web app, as shown below:
     ]
 ```
 
-
-### appTheme: AppTheme
-
 ### compile: CompileTarget
 
+PXT supports compilation to both JavaScript and ARM machine code (native). Web-only targets
+will not need the native compilation path.
+
+```typescript
+    interface CompileTarget {
+        isNative: boolean;      // false -> JavaScript compilation only, for simulator
+        hasHex: boolean;        // output binary file (implies isNative)
+        nativeType?: string;    // currently only "thumb", though there is a prototype for AVR
+  
+        // output file options
+        useUF2?: boolean;       // true -> output UF2 format (see https://github.com/Microsoft/uf2), false -> HEX file
+        hexMimeType?: string;   // Mime type for hex files 
+        driveName?: string;     // how will the device appear when plugged in via MSD?
+        deployDrives?: string;  // partial name of drives where the HEX/UF2 file should be copied
+
+        // code generation options
+        floatingPoint?: boolean; // use floating point in JavaScript (default is 32-bit integers)
+        taggedInts?: boolean;    // true -> use tagged integers in native (implies floatingPoint)
+        shortPointers?: boolean; // true -> 16 bit pointers
+        flashCodeAlign?: number; // defaults to 1k page size
+        flashChecksumAddr?: number;  // where to store checksum of code
+
+        // advanced debugging options
+        boxDebug?: boolean;     // generate debugging code for boxing
+        jsRefCounting?: boolean;// generate debugging in JS for reference counting scheme
+        openocdScript?: string;
+    }
+```
+
 ### appTheme: AppTheme
 
-[theming](/targets/theming)
+PXT has a large number of options for controlling 
+the [look and feel](/targets/theming) of a target.
+Here is the appTheme from pxt-sample with some comments:
+```typescript
+    "appTheme": {
+        // URLs to use for various components of the UI
+        "logoUrl": "https://microsoft.github.io/pxt-sample/",
+        "homeUrl": "https://microsoft.github.io/pxt-sample/",
+        "privacyUrl": "https://go.microsoft.com/fwlink/?LinkId=521839",
+        "termsOfUseUrl": "https://go.microsoft.com/fwlink/?LinkID=206977",
+        "betaUrl": "https://makecode.com/",
+        // populating the (?) menu
+        "docMenu": [
+            {
+                "name": "About",
+                "path": "/about"
+            },
+            {
+                "name": "Docs",
+                "path": "/docs"
+            }
+        ],
+        // enable toolbox for both Blockly and JavaScript
+        "coloredToolbox": true,
+        "monacoToolbox": true,
+        "invertedMenu": true,
+        "simAnimationEnter": "rotate in",
+        "simAnimationExit": "rotate out",
+        "disableBlockIcons": true
+    }
+```
 
 ### cloud?: AppCloud
 
 PXT has a cloud backend that provides a set of services to the web app.  The services are configured using
-the "cloud" field in pxttarget.json, which follows the`AppCloud` interface:
+the `cloud` field in pxttarget.json, defined by the `AppCloud` interface:
+
 ```typescript
     interface AppCloud {
         workspaces?: boolean;         // 
         packages?: boolean;
         publishing?: boolean;
-        sharing?: boolean;            // uses cloud-based anonymous sharing
+        sharing?: boolean;            // enable cloud-based anonymous sharing of projects
         importing?: boolean;          // import url dialog
         embedding?: boolean;
         preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean;     // allow searching github for packages
     }
 ```
+
 For example in the pxttarget.json for http://github.com/microsoft/pxt-microbit, we see:
-```
+```typescript
     "cloud": {
         "workspace": false,
         "packages": true,
