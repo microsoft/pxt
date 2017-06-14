@@ -21,7 +21,7 @@ You can find examples for pxt-sample and pxt-microbit here:
 The interface `TargetBundle` describes the PXT packages that come bundled 
 with the target (as opposed to being pulled from the web), as well as the semantic
 version of the target:
-```typescript
+```ts
     interface TargetBundle extends AppTarget {
         versions: TargetVersions;       // DERIVED: defines the semantic versioning for the target
         bundleddirs: string[];          // packages to be bundled into web app (libs/*)
@@ -32,7 +32,7 @@ version of the target:
 
 PXT uses [semantic versioning](http://semver.org/) of its targets and packages.  The TargetVersions
 interface has two relevant fields that are populated as specified below:
-```typescript
+```ts
     interface TargetVersions {
         target: string; // equal to version field in "package.json"
         pxt: string;    // equal to version field in "package.json" or "node_modules/pxt-core/package.json"
