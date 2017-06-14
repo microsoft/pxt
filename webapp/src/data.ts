@@ -62,6 +62,13 @@ mountVirtualApi("gh-pkgcfg", {
     isOffline: () => !Cloud.isOnline(),
 })
 
+mountVirtualApi("target-config", {
+    getAsync: query =>
+        pxt.targetConfigAsync().catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline()
+})
+
 let cachedData: pxt.Map<CacheEntry> = {};
 
 function subscribe(component: AnyComponent, path: string) {
@@ -91,7 +98,7 @@ function expired(ce: CacheEntry) {
 
 function shouldCache(ce: CacheEntry) {
     if (!ce.data) return false
-    return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path)
+    return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path);
 }
 
 export function clearCache() {
@@ -287,7 +294,7 @@ export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspac
             return state;
         }),
         getTextAsync: ws.getTextAsync,
-        saveAsync: (h,t) => ws.saveAsync(h,t).then(() => {
+        saveAsync: (h, t) => ws.saveAsync(h, t).then(() => {
             invalidate("header:" + h.id);
             invalidate("text:" + h.id);
         }),
