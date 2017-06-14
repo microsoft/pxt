@@ -383,6 +383,10 @@ export class Editor extends srceditor.Editor {
         let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
+        // set Blockly Colors
+        let blocklyColors = (Blockly as any).Colours;
+        Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
+        (Blockly as any).Colours = blocklyColors;
         // zoom out on mobile by default
         if (pxt.BrowserUtils.isMobile())
             this.editor.zoomCenter(-4);

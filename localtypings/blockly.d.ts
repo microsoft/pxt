@@ -874,7 +874,9 @@ declare namespace Blockly {
         static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
     }
 
-    namespace Colours {
-        const textField: string;
+    interface Colours {
+        textField: string;
+        insertionMarker: string;
+        insertionMarkerOpacity: string;
     }
 }

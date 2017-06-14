@@ -98,7 +98,7 @@ namespace pxt.blocks {
         const typeInfo = typeDefaults[type];
 
         shadow.setAttribute("type", shadowType || typeInfo && typeInfo.block || type);
-        shadow.setAttribute("colour", Blockly.Colours.textField);
+        shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
         if (typeInfo) {
             const field = document.createElement("field");
@@ -1250,8 +1250,6 @@ namespace pxt.blocks {
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
         Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
-        (Blockly.Colours as any).insertionMarker = "#000000";
-        (Blockly.Colours as any).insertionMarkerOpacity = 0.2;
 
         initFieldEditors();
         initContextMenu();
@@ -2082,7 +2080,7 @@ namespace pxt.blocks {
             mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url,
-            Blockly.Colours.textField
+            (Blockly as any).Colours.textField
         );
 
         // builtin math_number_minmax
@@ -2093,7 +2091,7 @@ namespace pxt.blocks {
             mMInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mMInfo.url,
-            Blockly.Colours.textField
+            (Blockly as any).Colours.textField
         );
 
         // builtin math_arithmetic
