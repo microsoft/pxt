@@ -8,10 +8,30 @@
     <script src="/doccdn/jquery.js"></script>
     <script type="text/javascript" src="/blb/pxtlib.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pouchdb/5.2.1/pouchdb.min.js"></script>
+    <style>
+        /* Sandbox */
+        .footer {
+            position:absolute;
+            bottom:0rem;
+            right:1rem;
+            z-index:100;
+            margin-bottom: 0.2rem !important;
+        }
+        .footer .item{
+            font-size: 0.8rem !important;
+        }
+    </style>
 </head>
 
 <body>
     <div id="root" class="ui container">
+        <h1>Microsoft MakeCode for micro:bit</h1>
+
+        <footer class="ui horizontal small divided link list footer">
+            <a target="_blank" class="item" href="https://makecode.com">Microsoft MakeCode</a>
+            <a target="_blank" class="item" href="https://makecode.com/termsofuse">Terms of Use </a>
+            <a target="_blank" class="item" href="https://makecode.com/privacy">Privacy </a>
+        </footer>
     </div>
 
     <script>
@@ -105,7 +125,7 @@
                 }
             }
 
-            $('#root').append($('<h1/>').text('Migrate your programs to ' + (targetOrigin || 'the editor')));
+            $('#root').append($('<h2/>').text('Migrate your programs to ' + (targetOrigin || 'the editor')));
             $('#root').append($('<p/>').text('Click on a project to import it in ' + (targetOrigin || 'the editor')));
 
             var db = new PouchDB("pxt-" + storageId, { revs_limit: 2 })
