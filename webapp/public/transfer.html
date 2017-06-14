@@ -98,7 +98,7 @@
                 var hd = $('<div class="ui header"/>').text(header.name);
                 ctnt.append(hd);
 
-                var url = (targetOrigin ? 'https://' + targetOrigin : "/") + '#transfer:' + window.btoa(JSON.stringify({ header: header, text: text }));
+                var url = (targetOrigin || "/") + '#transfer:' + window.btoa(JSON.stringify({ header: header, text: text }));
                 d.attr('href', url);
 
                 programs.append(d);
