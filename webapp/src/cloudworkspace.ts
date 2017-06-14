@@ -409,6 +409,7 @@ function importLegacyScriptsAsync(): Promise<void> {
             pxt.debug('cleaning import iframe')
             window.removeEventListener('message', receiveMessage, false)
             if (clear) {
+                pxt.tickEvent("transfer.done")
                 pxt.debug(`sending clear command`)
                 frame.contentWindow.postMessage({
                     type: "transfer",
@@ -450,6 +451,7 @@ function importLegacyScriptsAsync(): Promise<void> {
             } = ev.data.data;
 
             pxt.debug(`received ${dbdata.header.length} projects`);
+            pxt.tickEvent("transfer.projects", { projects: dbdata.header.length })
             pushProjectAsync(dbdata).done();
         } else if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'error') {
             pxt.log('error while importing: ' + ev.data.message);
@@ -467,6 +469,7 @@ function importLegacyScriptsAsync(): Promise<void> {
         clean(false);
     };
 
+    pxt.tickEvent("transfer.start")
     document.documentElement.appendChild(frame);
 
     return Promise.resolve();

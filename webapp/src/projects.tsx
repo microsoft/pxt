@@ -164,6 +164,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             this.props.parent.importUrlDialog();
         }
+        const importLegacy = () => {
+            pxt.tickEvent("projects.importlegacy");
+            this.hide();
+            window.location.href = legacyUrl;
+        }
         const newProject = () => {
             pxt.tickEvent("projects.new");
             this.hide();
@@ -265,8 +270,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                                     icon="archive"
                                     iconColor="secondary"
                                     name={lf("Import old programs") }
-                                    description={lf("Import programs from {0}", theme.legacyDomain) }
-                                    url={legacyUrl} /> : undefined }
+                                    description={lf("from {0}", theme.legacyDomain) }
+                                    onClick={() => importLegacy()}
+                                    /> : undefined }
                         </div>
                     </div>
                     {headersGrouped.filter(g => g.headers.length != 0).map(headerGroup =>
