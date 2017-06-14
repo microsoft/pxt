@@ -10,8 +10,11 @@ and `AppTarget`, shown below.
 Fields labelled as "DERIVED" in the comments are populated by PXT from other sources,
 as indicated. All other fields below are user-supplied. Optional fields have a "?" after their name. 
 
-All PXT targets/packages) also must supply an NPM [package.json](https://docs.npmjs.com/files/package.json)
+All PXT targets/packages also must supply an NPM [package.json](https://docs.npmjs.com/files/package.json)
 file, which describes the versioning, dependency and resources required to build the target/package.
+You can find examples (simple and complex) here:
+* https://github.com/Microsoft/pxt-sample/blob/master/package.json
+* https://github.com/Microsoft/pxt-microbit/blob/master/package.json
 
 ## TargetBundle
 
@@ -40,7 +43,7 @@ interface has two relevant fields that are populated as specified below:
 
 A target can use many packages in addition to the required "corepkg". To 
 ensure that a package is bundled into the web app, you must include it in this list. For 
-example in the pxttarget.json for http://github.com/microsoft/pxt-microbit, we see:
+example in http://github.com/microsoft/pxt-microbit/blob/master, we see:
 ```typescript
     "bundleddirs": [
         "libs/core",
