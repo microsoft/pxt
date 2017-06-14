@@ -203,10 +203,75 @@ For example in the pxttarget.json for http://github.com/microsoft/pxt-microbit, 
 
 ### simulator?: AppSimulator;
 
+```typescript
+    interface AppSimulator {
+        autoRun?: boolean;
+        stopOnChange?: boolean;
+        hideRestart?: boolean;
+        enableTrace?: boolean;
+        hideFullscreen?: boolean;
+        streams?: boolean;
+        aspectRatio?: number; // width / height
+        boardDefinition?: pxsim.BoardDefinition;
+        parts?: boolean; // parts enabled?
+        instructions?: boolean;
+        partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
+        headless?: boolean; // whether simulator should still run while collapsed
+        trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
+    }
+```
+
 ### runtime?: RuntimeOptions;
 
+```typescript
+    interface RuntimeOptions {
+        mathBlocks?: boolean;
+        textBlocks?: boolean;
+        listsBlocks?: boolean;
+        variablesBlocks?: boolean;
+        logicBlocks?: boolean;
+        loopsBlocks?: boolean;
+        extraBlocks?: BlockToolboxDefinition[];
+        onStartNamespace?: string; // default = loops
+        onStartColor?: string;
+        onStartWeight?: number;
+        onStartUnDeletable?: boolean;
+    }
+```
+
 ### serial?: AppSerial;
+    
+```typescript
+    interface AppSerial {
+        useHF2?: boolean;
+        vendorId?: string; // used by node-serial
+        productId?: string; // used by node-serial
+        nameFilter?: string; // regex to match devices
+        log?: boolean;
+    }
+```
 
 ### compileService?: TargetCompileService;
 
+```typescript
+    interface TargetCompileService {
+        yottaTarget?: string; // bbc-microbit-classic-gcc
+        yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
+        yottaCorePackage?: string; // pxt-microbit-core
+        yottaConfig?: any; // additional config
+        githubCorePackage?: string; // microsoft/pxt-microbit-core
+        platformioIni?: string[];
+        gittag: string;
+        serviceId: string;
+        buildEngine?: string;  // default is yotta, set to platformio
+    }
+```
+
 ### analytics?: AppAnalytics;
+
+```typescript
+    interface AppAnalytics {
+        userVoiceApiKey?: string;
+        userVoiceForumId?: number;
+    }
+```
