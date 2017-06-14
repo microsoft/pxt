@@ -2,6 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui"
 import * as codecard from "./codecard"
+import * as data from "./data"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -9,7 +10,6 @@ const lf = pxt.Util.lf;
 
 interface LanguagesState {
     visible?: boolean;
-    supportedLanguages: string[];
 }
 
 interface Language {
@@ -75,30 +75,20 @@ export function setCookieLang(langId: string) {
     }
 }
 
-export class LanguagePicker extends React.Component<ISettingsProps, LanguagesState> {
+export class LanguagePicker extends data.Component<ISettingsProps, LanguagesState> {
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            visible: false,
-            supportedLanguages: null
+            visible: false
         }
     }
 
-    fetchSupportedLanguagesAsync(): Promise<void> {
-        if (this.state.supportedLanguages || !pxt.appTarget.appTheme.selectLanguage) {
-            return Promise.resolve();
-        }
+    fetchLanguages(): string[] {
+        if (!pxt.appTarget.appTheme.selectLanguage)
+            return undefined;
 
-        return pxt.targetConfigAsync()
-            .then((targetCfg) => {
-                if (targetCfg && targetCfg.languages) {
-                    this.setState({ visible: this.state.visible, supportedLanguages: targetCfg.languages });
-                }
-            })
-            .catch((e) => {
-                pxt.log("Error fetching supported languages: " + e.message || e);
-                pxt.tickEvent("menu.lang.langfetcherror");
-            });
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        return targetConfig ? targetConfig.languages : undefined;
     }
 
     changeLanguage(langId: string) {
@@ -118,28 +108,30 @@ export class LanguagePicker extends React.Component<ISettingsProps, LanguagesSta
     }
 
     hide() {
-        this.setState({ visible: false, supportedLanguages: this.state.supportedLanguages });
+        this.setState({ visible: false });
     }
 
     show() {
-        this.setState({ visible: true, supportedLanguages: this.state.supportedLanguages });
+        this.setState({ visible: true });
     }
 
-    render() {
-        this.fetchSupportedLanguagesAsync();
+    renderCore() {
+        if (!this.state.visible) return <div></div>;
 
         const targetTheme = pxt.appTarget.appTheme;
-        const fetchedLangs = this.state.supportedLanguages;
+        const fetchedLangs = this.fetchLanguages();
         const languagesToShow = fetchedLangs && fetchedLangs.length ? fetchedLangs : defaultLanguages;
         const modalSize = languagesToShow.length > 4 ? "large" : "small";
 
         return (
             <sui.Modal open={this.state.visible} header={lf("Select Language") } size={modalSize}
-                onClose={() => this.setState({ visible: false, supportedLanguages: this.state.supportedLanguages }) } dimmer={true}
+                onClose={() => this.hide() } dimmer={true}
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick
                 >
-                <div className="group">
+                {!fetchedLangs ?
+                    <div className="ui message info">{lf("loading...") }</div> : undefined}
+                {fetchedLangs ? <div className="group">
                     <div className="ui cards centered">
                         {languagesToShow.map(langId =>
                             <codecard.CodeCardView className="card-selected"
@@ -149,8 +141,7 @@ export class LanguagePicker extends React.Component<ISettingsProps, LanguagesSta
                                 onClick={() => this.changeLanguage(langId) }
                                 />
                         ) }
-                    </div>
-                </div>
+                    </div></div> : undefined }
                 <p><br/><br/>
                     <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank">{lf("Help us translate") }</a>
                 </p>
