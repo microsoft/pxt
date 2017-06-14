@@ -34,3 +34,4 @@
     * [staticpkg](/cli/staticpkg)
     * [update](/cli/update)
     * [pyconv](/cli/pyconv)
+    * [hidserial](/cli/hidserial)
