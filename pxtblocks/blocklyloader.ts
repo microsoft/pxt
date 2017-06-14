@@ -1493,13 +1493,13 @@ namespace pxt.blocks {
          */
         const blockEndDrag = (<any>Blockly).BlockDragger.prototype.endBlockDrag;
         (<any>Blockly).BlockDragger.prototype.endBlockDrag = function (e: any, currentDragDeltaXY: any) {
+            blockEndDrag.call(this, e, currentDragDeltaXY);
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (trashIcon) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
             }
-            blockEndDrag.call(this, e, currentDragDeltaXY);
         }
     }
 
