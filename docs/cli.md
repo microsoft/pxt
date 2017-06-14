@@ -91,3 +91,4 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 * [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
 * [staticpkg](/cli/staticpkg), compiles editor into flat file system
 * [cherrypick](/cli/cherrypick), recursive cherry picking
+* [hidserial](/cli/hidserial), monitor `serial.write(...)` from certain boards
