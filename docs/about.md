@@ -26,7 +26,7 @@ MakeCode is currently developed at Microsoft, Redmond.
 The BBC micro:bit is a small wearable and programmable mbed-based device that visibly features a 5x5 LED display, accelerometer, 
 compass, buttons, I/O pins, Micro USB plug, Bluetooth Low Energy antenna, ARM Cortex-M0 processor, and battery plug.
 
-* [Try the micro:bit editor](https://pxt.microbit.org) for BBC micro:bit!
+* [Try the micro:bit editor](https://makecode.microbit.org) for micro:bit!
 * [Fork our repo](https://github.com/pxt-microbit)
 
 ## MakeCode for Adafruit Circuit Playground Express

@@ -654,7 +654,7 @@ ${info.id}_VT:
         // VTable for interface method is just linear. If we ever have lots of interface
         // methods and lots of classes this could become a problem. We could use a table
         // of (iface-member-id, function-addr) pairs and binary search.
-        // See https://pxt.microbit.org/15593-01779-41046-40599 for Thumb binary search.
+        // See https://makecode.microbit.org/15593-01779-41046-40599 for Thumb binary search.
         s += `
         .balign 4
 ${info.id}_IfaceVT:

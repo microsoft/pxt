@@ -101,7 +101,7 @@ There are three kinds of URLs on the CDN:
 Whenever possible, `/blob/` URLs should be used, since they only change when the file changes.
 This allows for faster app updates.
 
-For an example, compare https://pxt.microbit.org/---manifest
+For an example, compare https://makecode.microbit.org/---manifest
 and https://github.com/Microsoft/pxt/blob/master/webapp/public/release.manifest
 
 Generally, PXT will rewrite URLs starting with `/cdn/` to `/commit/...` and ones starting
