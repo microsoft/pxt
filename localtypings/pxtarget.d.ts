@@ -193,6 +193,7 @@ declare namespace pxt {
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
+        blocklyColors?: Blockly.Colours; // Blockly workspace, flyout and other colors
     }
 
     interface DocMenuEntry {
