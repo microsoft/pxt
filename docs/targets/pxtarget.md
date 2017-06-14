@@ -168,14 +168,20 @@ the `cloud` field in pxttarget.json, defined by the `AppCloud` interface:
 
 ```typescript
     interface AppCloud {
-        workspaces?: boolean;         // 
-        packages?: boolean;
-        publishing?: boolean;
-        sharing?: boolean;            // enable cloud-based anonymous sharing of projects
-        importing?: boolean;          // import url dialog
+        sharing?: boolean;      // enable anonymous sharing of projects via URL
+        importing?: boolean;    // enable import of a previously shared project from 
+                                // a URL (requires sharing? and publishing?)
+
+        packages?: boolean;           // enabled loading of packages (from github)
+        preferredPackages?: string[]; // list of company/project(#tag) of packages on github
+        githubPackages?: boolean;     // enable user-specified term for searching github for packages
+
+        // not currently supported
+        workspaces?: boolean;
+        
+        // to be retired soon
+        publishing?: boolean;   // must set true for importing? to work; no other purpose evident
         embedding?: boolean;
-        preferredPackages?: string[]; // list of company/project(#tag) of packages
-        githubPackages?: boolean;     // allow searching github for packages
     }
 ```
 
