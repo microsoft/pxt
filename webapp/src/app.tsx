@@ -1400,21 +1400,19 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.languagePicker.show();
     }
 
-    showNotifications() {
-        if (this.state.notificationShown || pxt.shell.isSandboxMode())
-            return;
-        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        if (targetConfig) {
-            this.setState({ notificationShown: true })
-            const notifications: pxt.Map<pxt.Notification> = targetConfig && targetConfig.notifications
-                ? targetConfig.notifications
-                : {};
-            const thisNotification = notifications[window.location.hostname];
-            if (thisNotification) {
-                pxt.tickEvent("notifications.showDialog");
-                this.notificationDialog.show(thisNotification);
+    loadNotificationsAsync() {
+        return pxt.targetConfigAsync().then(targetConfig => {
+            if (targetConfig) {
+                const notifications: pxt.Map<pxt.Notification> = targetConfig && targetConfig.notifications
+                    ? targetConfig.notifications
+                    : {};
+                const thisNotification = notifications[window.location.hostname];
+                if (thisNotification) {
+                    pxt.tickEvent("notifications.showDialog");
+                    this.setState({ notification: thisNotification });
+                }
             }
-        }
+        });
     }
 
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<string> {
@@ -1537,7 +1535,6 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
         if (this.editor && this.editor.isReady) {
             this.updateEditorFile();
-            this.showNotifications();
         }
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
@@ -2182,7 +2179,9 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();
-        }).then(() => workspace.importLegacyScriptsAsync())
+        })
+        .then(() => workspace.importLegacyScriptsAsync())
+        .then(() => theEditor.loadNotificationsAsync())
         .done(() => { });
 
     document.addEventListener("visibilitychange", ev => {

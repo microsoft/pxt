@@ -9,47 +9,41 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 const lf = pxt.Util.lf;
 
 interface NotificationState {
-    visible?: boolean;
-    notification?: pxt.Notification;
 }
 
 export class NotificationDialog extends data.Component<ISettingsProps, NotificationState> {
     constructor(props: ISettingsProps) {
         super(props);
-        this.state = {
-            visible: false
-        }
+        this.state = {}
     }
 
     hide() {
-        this.setState({ visible: false });
-    }
-
-    show(notification: pxt.Notification) {
-        this.setState({ visible: true, notification: notification});
+        this.props.parent.setState({ notification: undefined })
     }
 
     readMore(notification: pxt.Notification) {
         if (!notification.readmore)
             return;
+        this.hide()
         window.open(notification.readmore);
     }
 
     goToURL(notification: pxt.Notification) {
         if (!notification.url)
             return;
+        this.hide()
         window.open(notification.url);
     }
 
     renderCore() {
-        if (!this.state.visible || !this.state.notification) return <div></div>;
+        if (!this.props.parent.state.notification) return <div></div>;
 
-        const notification = this.state.notification;
+        const notification = this.props.parent.state.notification;
 
         const header = notification.heading || lf("Notification");
 
         return (
-            <sui.Modal open={this.state.visible} className={`notificationDialog ${notification.type}`} header={header} size="small"
+            <sui.Modal open={!!notification} className={`notificationDialog ${notification.type}`} header={header} size="small"
                 onClose={() => this.hide() } dimmer={true}
                 closeIcon={true}
                 >
