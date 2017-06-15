@@ -12,6 +12,6 @@ export function init(hash: { cmd: string, arg: string }) {
             else {
                 location.reload()
             }
-        }, 3000);
+        }, 5000);
     }, false);
 }
