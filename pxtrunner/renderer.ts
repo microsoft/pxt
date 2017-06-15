@@ -54,14 +54,7 @@ namespace pxt.runner {
         decompileResult: DecompileResult,
         woptions: WidgetOptions = {}
     ) {
-        if (!$svg || !$svg[0]) {
-            let $c = $('<div class="ui segment"></div>');
-            $c.append($js);
-            $container.replaceWith($c);
-            return;
-        }
-
-        let cdn = pxt.webConfig.commitCdnUrl
+        const cdn = pxt.webConfig.commitCdnUrl
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
@@ -77,7 +70,7 @@ namespace pxt.runner {
             $menu.append($editBtn);
         }
 
-        if (options.showJavaScript) {
+        if (options.showJavaScript || !$svg) {
             // blocks
             $c.append($js);
 
@@ -532,6 +525,28 @@ namespace pxt.runner {
         });
     }
 
+    function renderTypeScript(options?: ClientRenderOptions) {
+        const woptions: WidgetOptions = {
+            showEdit: true,
+            run: true
+        }
+
+        function render(e: Node) {
+            if (typeof hljs !== "undefined")
+                hljs.highlightBlock(e)
+            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, woptions);
+        }
+
+        $('code.lang-typescript').each((i, e) => {
+            render(e);
+        });
+        $('code.lang-typescript-ignore').each((i, e) => {
+            render(e);
+            $(e).removeClass('lang-typescript-ignore')
+                .addClass('lang-typescript');
+        });
+    }
+
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
@@ -555,14 +570,7 @@ namespace pxt.runner {
             });
         }
 
-        if (typeof hljs !== "undefined") {
-            $('code.lang-typescript').each((i, e) => hljs.highlightBlock(e));
-            $('code.lang-typescript-ignore').each((i, e) => {
-                hljs.highlightBlock(e)
-                $(e).removeClass('lang-typescript-ignore');
-            });
-        }
-
+        renderTypeScript(options);
         return Promise.resolve()
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderShuffleAsync(options))
