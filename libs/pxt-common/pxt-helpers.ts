@@ -166,17 +166,17 @@ namespace Math {
     export const PI = 3.1415926535897932384626433832795;
 
     /**
-     * Convert degrees to radians.
-     * @param degrees The number degrees to convert to radians.
-     */
+      * Convert degrees to radians.
+      * @param degrees The number degrees to convert to radians.
+      */
     export function rad(degrees: number): number {
         return degrees * PI / 180;
     }
  
     /**
-     * Convert radians to degrees.
-     * @param radians The number radians to convert to degrees.
-     */
+      * Convert radians to degrees.
+      * @param radians The number radians to convert to degrees.
+      */
     export function deg(radians: number): number {
         return radians * 180 / PI;
     }
