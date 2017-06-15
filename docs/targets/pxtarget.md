@@ -81,9 +81,7 @@ Most of the user-defined fields for `pxttarget.json` are described by the interf
         cloud?: AppCloud;       // see sections below for descriptions of the rest of the fields
         simulator?: AppSimulator;
         runtime?: RuntimeOptions;
-        serial?: AppSerial;
         compileService?: TargetCompileService;
-        analytics?: AppAnalytics;
     }
 ```
 
@@ -250,9 +248,6 @@ This severely misnamed option controls the available blocks in the Blockly edito
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
 
-        // ???
-        extraBlocks?: BlockToolboxDefinition[];
-
         // options specific to the special "on start" block
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
@@ -261,50 +256,29 @@ This severely misnamed option controls the available blocks in the Blockly edito
     }
 ```
 
-```typescript
-    interface BlockToolboxDefinition {
-        namespace: string;
-        type: string;
-        gap?: number;
-        weight?: number;
-        fields?: Map<string>;
-    }
-```
-
-### serial?: AppSerial;
-    
-```typescript
-    interface AppSerial {
-        useHF2?: boolean;
-        vendorId?: string; // used by node-serial
-        productId?: string; // used by node-serial
-        nameFilter?: string; // regex to match devices
-        log?: boolean;
-    }
-```
-
 ### compileService?: TargetCompileService;
+
+PXT provides a compile service for C/C++ code that may be included in a target/package.  
+Currently, this compile service can be configured
+to use either [yotta](https://www.mbed.com/en/platform/software/mbed-yotta/) 
+or [platformio](http://platformio.org/).
+PXT defaults to using local installs of yotta and platformio.
+PXT expects to find the C/C++ sources on github.
 
 ```typescript
     interface TargetCompileService {
-        yottaTarget?: string; // bbc-microbit-classic-gcc
-        yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
-        yottaCorePackage?: string; // pxt-microbit-core
-        yottaConfig?: any; // additional config
-        githubCorePackage?: string; // microsoft/pxt-microbit-core
-        platformioIni?: string[];
+        buildEngine?: string;           // default is yotta, set to platformio
+        // where are the sources
+        githubCorePackage?: string;     // e.g. lancaster-university/microbit
         gittag: string;
+        // yotta configuration
+        yottaCorePackage?: string;      // name for PXT use
+        yottaTarget?: string;           // name of yotta target to build
+        yottaBinary?: string;           // name of yotta output file 
+        yottaConfig?: any;              // additional config
+        // platformio configuration
+        platformioIni?: string[];       // define contents of platformio.ini file
+
         serviceId: string;
-        buildEngine?: string;  // default is yotta, set to platformio
     }
 ```
-
-### analytics?: AppAnalytics;
-
-```typescript
-    interface AppAnalytics {
-        userVoiceApiKey?: string;
-        userVoiceForumId?: number;
-    }
-```
-
