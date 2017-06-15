@@ -821,6 +821,9 @@ ${output}</xml>`;
                     case SK.ForOfStatement:
                         stmt = getForOfStatement(node as ts.ForOfStatement);
                         break;
+                    case SK.FunctionDeclaration:
+                        stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
+                        break;
                     case SK.CallExpression:
                         stmt = getCallStatement(node as ts.CallExpression);
                         break;
@@ -858,7 +861,7 @@ ${output}</xml>`;
 
             function getNext() {
                 if (next && next.length) {
-                    return getStatementBlock(next.shift(), next);
+                    return getStatementBlock(next.shift(), next, undefined, false, topLevel);
                 }
                 return undefined;
             }
@@ -1108,6 +1111,17 @@ ${output}</xml>`;
             return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
         }
 
+        function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
+            const name = n.name.text;
+            const statements = getStatementBlock(n.body);
+            return {
+                kind: "statement",
+                type: "procedures_defnoreturn",
+                fields: [getField("NAME", name)],
+                handlers: [{ name: "STACK", statement: statements }]
+            };
+        }
+
         function getCallStatement(node: ts.CallExpression) {
             const info: pxtc.CallInfo = (node as any).callInfo
             if (!info) {
@@ -1329,7 +1343,7 @@ ${output}</xml>`;
 
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
-                const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent);
+                const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent, false, topLevel);
                 const emitOnStart = topLevel && !options.snippetMode;
                 if (emitOnStart) {
                     // Preserve any variable edeclarations that were never used
@@ -1459,6 +1473,8 @@ ${output}</xml>`;
                 return checkForStatement(node as ts.ForStatement);
             case SK.ForOfStatement:
                 return checkForOfStatement(node as ts.ForOfStatement);
+            case SK.FunctionDeclaration:
+                return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
         }
 
         return Util.lf("Unsupported statement in block: {0}", SK[node.kind]);
@@ -1722,6 +1738,29 @@ ${output}</xml>`;
                 }
                 return false;
             }
+        }
+
+        function checkFunctionDeclaration(n: ts.FunctionDeclaration, topLevel: boolean) {
+            if (!topLevel) {
+                return Util.lf("Function declarations must be top level");
+            }
+
+            if (n.parameters.length > 0) {
+                return Util.lf("Functions with parameters not supported in blocks");
+            }
+
+            let fail = false;
+            ts.forEachReturnStatement(n.body, stmt => {
+                if (stmt.expression) {
+                    fail = true;
+                }
+            });
+
+            if (fail) {
+                return Util.lf("Function with return value not supported in blocks")
+            }
+
+            return undefined;
         }
     }
 
