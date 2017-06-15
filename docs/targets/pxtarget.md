@@ -89,8 +89,9 @@ Most of the user-defined fields for `pxttarget.json` are described by the interf
 
 ### corepkg: string
 
-A target must have a package under the libs/ directory where the core APIs for the target reside.
-Also, the core should always be bundled with the web app, as shown below:
+A target must have a core [package](/packages) under the libs/ directory 
+where the core APIs for the target reside.
+The core package should always be bundled with the web app, as shown below:
 ```typescript
     "corepkg": "core",
     "bundleddirs": [
@@ -177,13 +178,13 @@ the `cloud` field in pxttarget.json, defined by the `AppCloud` interface:
         packages?: boolean;           // enabled loading of packages (from github)
         preferredPackages?: string[]; // list of company/project(#tag) of packages on github
         githubPackages?: boolean;     // enable user-specified term for searching github for packages
-
-        // not currently supported
-        workspaces?: boolean;
         
         // to be retired soon
         publishing?: boolean;   // must set true for importing? to work; no other purpose evident
         embedding?: boolean;
+        
+        // not currently supported
+        workspaces?: boolean;
     }
 ```
 
@@ -203,39 +204,70 @@ For example in the pxttarget.json for http://github.com/microsoft/pxt-microbit, 
 
 ### simulator?: AppSimulator;
 
+PXT provides a JavaScript-based simulation environment on the left side of the web
+app (typically for physical computing devices like the micro:bit).  PXT uses the
+term [board](/targets/board) to refer to the main physical computing device shown in the simulator.
+Each target has one board (plus optional parts).
+
 ```typescript
     interface AppSimulator {
-        autoRun?: boolean;
-        stopOnChange?: boolean;
-        hideRestart?: boolean;
-        enableTrace?: boolean;
-        hideFullscreen?: boolean;
-        streams?: boolean;
-        aspectRatio?: number; // width / height
-        boardDefinition?: pxsim.BoardDefinition;
-        parts?: boolean; // parts enabled?
-        instructions?: boolean;
-        partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
-        headless?: boolean; // whether simulator should still run while collapsed
-        trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
+        // define aspects of physical computing device
+        boardDefinition?: BoardDefinition;
+
+        // running and code changes
+        autoRun?: boolean;          // automatically run program after a change to its code
+        stopOnChange?: boolean;     // stop execution when user changes code
+        headless?: boolean;         // whether simulator should still run while collapsed
+        
+        // buttons and parts
+        hideRestart?: boolean;      // hide the restart button 
+        hideFullscreen?: boolean;   // hide the fullscreen button
+        enableTrace?: boolean;      // enable the slow-mode (snail) button
+        parts?: boolean;            // parts enabled?
+        instructions?: boolean;     // generate step-by-step wiring instructions (Make button)
+
+        // appearance
+        aspectRatio?: number;       // width / height
+        partsAspectRatio?: number;  // aspect ratio of the simulator when parts are displayed
+
+        // miscellaneous
+        trustedUrls?: string[];     // URLs that are allowed in simulator modal messages
     }
 ```
 
+
 ### runtime?: RuntimeOptions;
+
+This severely misnamed option controls the available blocks in the Blockly editor:
 
 ```typescript
     interface RuntimeOptions {
-        mathBlocks?: boolean;
+        // control whether or not Blockly built-in categories appear
+        mathBlocks?: boolean;       
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
+
+        // ???
         extraBlocks?: BlockToolboxDefinition[];
+
+        // options specific to the special "on start" block
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+    }
+```
+
+```typescript
+    interface BlockToolboxDefinition {
+        namespace: string;
+        type: string;
+        gap?: number;
+        weight?: number;
+        fields?: Map<string>;
     }
 ```
 
@@ -275,3 +307,4 @@ For example in the pxttarget.json for http://github.com/microsoft/pxt-microbit, 
         userVoiceForumId?: number;
     }
 ```
+
