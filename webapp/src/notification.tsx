@@ -56,10 +56,7 @@ export class NotificationDialog extends data.Component<ISettingsProps, Notificat
                 <div>
                     {notification.message}
                 </div>
-                <div className="ui segment inverted">
-                    {notification.readmore ? <sui.Button
-                        text={lf("Read more...")}
-                        onClick={() => this.readMore(notification)} /> : undefined }
+                <div className="ui segment inverted right aligned">
                     {notification.url ? <sui.Button
                         text={lf("Go to URL")}
                         class={`green`}
