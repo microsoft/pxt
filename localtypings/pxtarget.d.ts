@@ -7,6 +7,15 @@ declare namespace pxt {
     interface TargetConfig {
         packages?: PackagesConfig;
         languages?: string[];
+        notifications?: Map<Notification>; // domain specific notifications to show users on load
+    }
+
+    interface Notification {
+        type: "warning" | "info";
+        heading?: string;
+        message: string;
+        url?: string;
+        readmore?: string;
     }
 
     interface PackagesConfig {

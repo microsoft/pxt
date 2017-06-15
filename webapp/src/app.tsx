@@ -22,6 +22,7 @@ import * as screenshot from "./screenshot";
 import * as hidbridge from "./hidbridge";
 import * as share from "./share";
 import * as lang from "./lang";
+import * as notification from "./notification";
 import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as filelist from "./filelist";
@@ -95,6 +96,7 @@ export class ProjectView
     projects: projects.Projects;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
+    notificationDialog: notification.NotificationDialog;
     tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
 
@@ -1398,6 +1400,23 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         this.languagePicker.show();
     }
 
+    showNotifications() {
+        if (this.state.notificationShown || pxt.shell.isSandboxMode())
+            return;
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        if (targetConfig) {
+            this.setState({ notificationShown: true })
+            const notifications: pxt.Map<pxt.Notification> = targetConfig && targetConfig.notifications
+                ? targetConfig.notifications
+                : {};
+            const thisNotification = notifications[window.location.hostname];
+            if (thisNotification) {
+                pxt.tickEvent("notifications.showDialog");
+                this.notificationDialog.show(thisNotification);
+            }
+        }
+    }
+
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<string> {
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
@@ -1518,6 +1537,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
 
         if (this.editor && this.editor.isReady) {
             this.updateEditorFile();
+            this.showNotifications();
         }
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
@@ -1696,6 +1716,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
+                <notification.NotificationDialog parent={this} ref={v => this.notificationDialog = v} />
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
