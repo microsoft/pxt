@@ -695,6 +695,16 @@ namespace pxt.blocks {
 
     }
 
+    function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const stmts = getInputTargetBlock(b, "STACK");
+        return [
+            mkText("function " + name +"() {"),
+            compileStatements(e, stmts),
+            mkText("}")
+        ];
+    }
+
     function defaultValueForType(t: Point): JsNode {
         if (t.type == null) {
             union(t, ground(pNumber.type));
@@ -1259,6 +1269,9 @@ namespace pxt.blocks {
 
             case 'device_while':
                 r = compileWhile(e, b, comments);
+                break;
+            case 'procedures_defnoreturn':
+                r = compileProcedure(e, b, comments);
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
