@@ -555,6 +555,14 @@ namespace pxt.runner {
             });
         }
 
+        if (typeof hljs !== "undefined") {
+            $('code.lang-typescript').each((i, e) => hljs.highlightBlock(e));
+            $('code.lang-typescript-ignore').each((i, e) => {
+                hljs.highlightBlock(e)
+                $(e).removeClass('lang-typescript-ignore');
+            });
+        }
+
         return Promise.resolve()
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderShuffleAsync(options))
