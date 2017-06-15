@@ -40,10 +40,10 @@ namespace pxt.runner {
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
         $parent.append($('<div class="ui content js"/>').append($js));
-        $('code.highlight').each(function (i, block) {
-            let hljs = pxt.docs.requireHighlightJs();
-            if (hljs) hljs.highlightBlock(block);
-        });
+        if (typeof hljs !== "undefined")
+            $js.find('code.highlight').each(function (i, block) {
+                hljs.highlightBlock(block);
+            });
     }
 
     function fillWithWidget(
@@ -437,14 +437,14 @@ namespace pxt.runner {
                             let forloop = true;
                             if (fs.condition.getChildCount() == 3) {
                                 forloop = !(fs.condition.getChildAt(0).getText() == "0" ||
-                                        fs.condition.getChildAt(1).kind == ts.SyntaxKind.LessThanToken);
+                                    fs.condition.getChildAt(1).kind == ts.SyntaxKind.LessThanToken);
                             }
                             if (forloop) {
                                 addItem({
                                     name: ns ? "Loops" : "for",
                                     url: "blocks/loops" + (ns ? "" : "/for"),
-                                     description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
-                                     blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
+                                    description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
+                                    blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
                                 });
                             } else {
                                 addItem({
