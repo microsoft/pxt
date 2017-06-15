@@ -1,5 +1,5 @@
 export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none">
-        <category name="Loops" nameid="loops" colour="#107c10" category="50" iconclass="blocklyTreeIconloops">
+        <category name="Control" nameid="loops" colour="#107c10" category="50" iconclass="blocklyTreeIconlogic">
             <block type="controls_repeat_ext">
                 <value name="TIMES">
                     <shadow type="math_number">
@@ -26,8 +26,6 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
                     </shadow>
                 </value>
             </block>
-        </category>
-        <category name="Logic" nameid="logic" colour="#006970" category="49" iconclass="blocklyTreeIconlogic">
             <block type="controls_if" gap="8">
                 <value name="IF0">
                     <shadow type="logic_boolean">
