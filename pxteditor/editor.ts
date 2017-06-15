@@ -40,6 +40,8 @@ namespace pxt.editor {
         tutorialOptions?: TutorialOptions;
         hintShown?: boolean;
 
+        notificationShown?: boolean;
+
         running?: boolean;
         compiling?: boolean;
         publishing?: boolean;
