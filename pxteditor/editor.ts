@@ -40,7 +40,7 @@ namespace pxt.editor {
         tutorialOptions?: TutorialOptions;
         hintShown?: boolean;
 
-        notificationShown?: boolean;
+        notification?: pxt.Notification;
 
         running?: boolean;
         compiling?: boolean;
