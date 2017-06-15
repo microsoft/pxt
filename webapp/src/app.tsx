@@ -1401,11 +1401,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
     }
 
     showNotifications() {
-        if (this.state.notificationShown)
+        if (this.state.notificationShown || pxt.shell.isSandboxMode())
             return;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         if (targetConfig) {
-            this.setState({notificationShown: true})
+            this.setState({ notificationShown: true })
             const notifications: pxt.Map<pxt.Notification> = targetConfig && targetConfig.notifications
                 ? targetConfig.notifications
                 : {};
