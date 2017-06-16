@@ -80,5 +80,5 @@ the exact same user code, but this isn't a very common usage scenario.
 
 The position of the checksum block is MCU-specific.
 
-* SAMD21 - `0x20B0` (right after application vectors)
+* SAMD21 - `0x20B4` (after application vectors, plus one word reserved by Arduino)
 * nRF51 - `0x100010C0` (`CUSTOMER[16]` and onwards in UICR)

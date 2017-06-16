@@ -183,6 +183,15 @@ namespace pxsim {
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
         export function pow(x: number, y: number) { return Math.pow(x, y) }
+        export function log(n: number) { return Math.log(n) }
+        export function exp(n: number) { return Math.exp(n) }
+        export function sin(n: number) { return Math.sin(n) }
+        export function cos(n: number) { return Math.cos(n) }
+        export function tan(n: number) { return Math.tan(n) }
+        export function asin(n: number) { return Math.asin(n) }
+        export function acos(n: number) { return Math.acos(n) }
+        export function atan(n: number) { return Math.atan(n) }
+        export function atan2(y: number, x: number) { return Math.atan2(y, x) }
         export function trunc(x: number) {
             return x > 0 ? Math.floor(x) : Math.ceil(x);
         }

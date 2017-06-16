@@ -375,69 +375,81 @@ function resetAsync() {
 
 function importLegacyScriptsAsync(): Promise<void> {
     const key = 'legacyScriptsImported';
-    const domain = pxt.appTarget.appTheme.legacyDomain;
-    if (!domain || !pxt.webConfig.targetUrl || !!pxt.storage.getLocal(key))
+    const legacyDomain = pxt.appTarget.appTheme.legacyDomain;
+    if (!legacyDomain || !pxt.webConfig.targetUrl || !!pxt.storage.getLocal(key))
         return Promise.resolve();
 
-    const targetDomain = pxt.webConfig.targetUrl.replace(/^https:\/\//, '');
-    if (domain == targetDomain)
+    const targetDomain = pxt.webConfig.targetUrl.replace(/^https:\/\//i, '');
+    if (legacyDomain == targetDomain)
         return Promise.resolve(); // nothing to do
+
+    if (window.applicationCache.status == window.applicationCache.DOWNLOADING
+        || window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+        pxt.debug('import skipped, app cached updating');
+        return Promise.resolve();
+    }
 
     pxt.debug('injecting import iframe');
     let frame = document.createElement("iframe") as HTMLIFrameElement;
-    function clean() {
+    function clean(clear: boolean) {
         if (frame) {
             pxt.debug('cleaning import iframe')
             window.removeEventListener('message', receiveMessage, false)
-            frame.contentWindow.postMessage({
-                type: "transfer",
-                action: "clear"
-            }, `https://${domain}`);
+            if (clear) {
+                pxt.debug(`sending clear command`)
+                frame.contentWindow.postMessage({
+                    type: "transfer",
+                    action: "clear"
+                }, `https://${legacyDomain}`);
+            }
             let temp = frame;
             setTimeout(() => document.documentElement.removeChild(temp), 2000);
             frame = undefined;
         }
     }
 
-    function pushProject(dbdata: {
-                header: pxt.workspace.Header[];
-                text: pxt.workspace.ScriptText[];
-            }) {
+    function pushProjectAsync(dbdata: {
+        header: pxt.workspace.Header[];
+        text: { files: pxt.workspace.ScriptText; }[];
+    }): Promise<void> {
         if (!dbdata.header.length) {
             pxt.log('done importing scripts');
             pxt.storage.setLocal(key, '1');
-            clean();
-            return;
+            clean(true);
+            return Promise.resolve();
         }
         const hd = dbdata.header.pop();
         const td = dbdata.text.pop();
+        const text = td.files;
         delete (hd as any)._id;
         delete (hd as any)._rev;
         delete (hd as any).id;
-        pxt.debug(`importing ${hd.name}`)
-        installAsync(hd, td)
-            .done(() => pushProject(dbdata));
+        pxt.log(`importing ${hd.name}`)
+        return installAsync(hd, text)
+            .then(() => pushProjectAsync(dbdata));
     }
-
 
     function receiveMessage(ev: MessageEvent) {
         if (ev.data && ev.data.type == 'transfer' && ev.data.action == 'export' && ev.data.data) {
             const dbdata: {
                 header: pxt.workspace.Header[];
-                text: pxt.workspace.ScriptText[];
+                text: { files: pxt.workspace.ScriptText}[];
             } = ev.data.data;
 
             pxt.debug(`received ${dbdata.header.length} projects`);
-            pushProject(dbdata);
+            pushProjectAsync(dbdata).done();
         }
     }
     window.addEventListener('message', receiveMessage, false)
 
     frame.setAttribute("style", "position:absolute; width:1px; height:1px; right:0em; bottom:0em;");
-    const url = `https://${domain}/api/transfer/${targetDomain}?storageid=${pxt.storage.storageId()}`;
+    const url = `https://${legacyDomain}/api/transfer/${targetDomain}?storageid=${pxt.storage.storageId()}`;
     pxt.debug('transfer from ' + url);
     frame.src = url;
-    frame.onerror = clean
+    frame.onerror = (e) => {
+        pxt.reportException(e);
+        clean(false);
+    };
 
     document.documentElement.appendChild(frame);
 

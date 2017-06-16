@@ -37,7 +37,7 @@ In addition, the JavaScript editor provides code discovery facilities for the va
 
 ![Intellisense feature](/static/blog/makecode-overview/intellisenseEditor.jpg)
 
-Some of the projects you can create with Microsoft MakeCode include a milk carton robot (https://pxt.microbit.org/projects/milk-carton-robot) whose jaws move in response to light stimulus (see below), or an electric guitar (https://pxt.microbit.org/projects/guitar) that makes sounds in response to motion (see banner image of this blog entry).
+Some of the projects you can create with Microsoft MakeCode include a milk carton robot (https://makecode.microbit.org/projects/milk-carton-robot) whose jaws move in response to light stimulus (see below), or an electric guitar (https://makecode.microbit.org/projects/guitar) that makes sounds in response to motion (see banner image of this blog entry).
 
 ![Milk carton robot](/static/blog/makecode-overview/milkcartonRobot.jpg)
 
