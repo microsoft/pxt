@@ -699,7 +699,7 @@ namespace pxt.blocks {
         const name = escapeVarName(b.getFieldValue("NAME"), e);
         const stmts = getInputTargetBlock(b, "STACK");
         return [
-            mkText("function " + name +"() "),
+            mkText("function " + name + "() "),
             compileStatements(e, stmts)
         ];
     }
