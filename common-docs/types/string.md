@@ -4,10 +4,14 @@ A *String* is a sequence of characters.
 
 ### #intro
 
+A string type is more complex than a number or a boolean. Strings have a length and you can
+change the characters inside the string. You can also break strings apart and make new strings, or
+put strings together and make longer strings.
+
 ### Create a string variable
 
 ```block
-let salutation = "Hello";
+let greeting = "Hello";
 ```
 
 To create a variable that holds a string:
@@ -16,14 +20,14 @@ To create a variable that holds a string:
 
 2. Type a name for your new string variable by clicking the down arrow, then click New Variable. Then type the variable name "salutation"
 
-2. Drag a string block on the right side of the operator.
+3. Drag a string block on the right side of the operator.
 
-3. Click `"Hello"` and then type a string like `hello`.
+4. Click `"Hello"` and then type a string like `hello`.
 
 Your code should look something like this:
 
 ```block
-let salutation = "Hello";
+let greeting = "Hello";
 ```
 
 ## #examples
