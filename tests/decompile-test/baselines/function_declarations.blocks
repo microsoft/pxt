@@ -1,11 +1,9 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="pxt-on-start">
-<statement name="HANDLER">
 <block type="procedures_defnoreturn">
 <field name="NAME">shouldDecompile1</field>
 <statement name="STACK">
 </statement>
-<next>
+</block>
 <block type="procedures_defnoreturn">
 <field name="NAME">shouldDecompile2</field>
 <statement name="STACK">
@@ -13,7 +11,9 @@
 <mutation numlines="1" line0="return&#59;" />
 </block>
 </statement>
-<next>
+</block>
+<block type="pxt-on-start">
+<statement name="HANDLER">
 <block type="typescript_statement">
 <mutation numlines="1" line0="function hasParameters&#40;a&#58; number&#41; &#123; &#125;" />
 <next>
@@ -38,10 +38,6 @@
 <mutation numlines="3" line0="function scopedFunction&#40;&#41; &#123;" line1="" line2="    &#125;" />
 </block>
 </statement>
-</block>
-</next>
-</block>
-</next>
 </block>
 </next>
 </block>

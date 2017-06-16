@@ -293,6 +293,13 @@ namespace ts.pxtc.decompiler {
 
         const varUsages: pxt.Map<boolean> = {};
         const autoDeclarations: [string, ts.Node][] = [];
+        const declaredFunctions: pxt.Map<boolean> = {};
+
+        ts.forEachChild(file, topLevelNode => {
+            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, blocksInfo, false, true)) {
+                declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
+            }
+        })
 
         const n = codeBlock(stmts, undefined, true);
         emitStatementNode(n);
@@ -1112,7 +1119,7 @@ ${output}</xml>`;
         }
 
         function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
-            const name = n.name.text;
+            const name = getVariableName(n.name);
             const statements = getStatementBlock(n.body);
             return {
                 kind: "statement",
@@ -1122,18 +1129,23 @@ ${output}</xml>`;
             };
         }
 
-        function getCallStatement(node: ts.CallExpression) {
+        function getCallStatement(node: ts.CallExpression): StatementNode {
             const info: pxtc.CallInfo = (node as any).callInfo
-            if (!info) {
-                error(node);
-                return;
-            }
 
             if (!info.attrs.blockId || !info.attrs.block) {
                 const builtin = builtinBlocks[info.qName];
                 if (!builtin) {
-                    error(node)
-                    return;
+                    const name = getVariableName(node.expression as ts.Identifier);
+                    if (declaredFunctions[name]) {
+                        return {
+                            kind: "statement",
+                            type: "procedures_callnoreturn",
+                            mutation: {"name": name}
+                        };
+                    }
+                    else {
+                        return getTypeScriptStatementBlock(node);
+                    }
                 }
                 info.attrs.block = builtin.block;
                 info.attrs.blockId = builtin.blockId;
@@ -1331,7 +1343,9 @@ ${output}</xml>`;
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
             statements.reverse().forEach(statement => {
-                if (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement) && !checkStatement(statement, blocksInfo, false, topLevel)) {
+                if ((statement.kind === SK.FunctionDeclaration ||
+                    (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement))) &&
+                    !checkStatement(statement, blocksInfo, false, topLevel)) {
                     eventStatements.unshift(statement)
                 }
                 else {
@@ -1629,6 +1643,9 @@ ${output}</xml>`;
             if (!info.attrs.blockId || !info.attrs.block) {
                 const builtin = builtinBlocks[info.qName];
                 if (!builtin) {
+                    if (n.arguments.length === 0 && n.expression.kind === SK.Identifier) {
+                        return undefined; // Could be user defined function
+                    }
                     return Util.lf("Function call not supported in the blocks");
                 }
                 info.attrs.block = builtin.block;
