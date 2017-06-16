@@ -27,7 +27,7 @@ To create a variable that holds a string:
 Your code should look something like this:
 
 ```block
-let greeing = "Hello";
+let greeting = "Hello";
 ```
 
 ## #examples
