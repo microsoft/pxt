@@ -97,10 +97,10 @@ also the measurement of the angle between the path of your direction and the pat
 yourself to North and spin around to the right (clockwise) in one spot, you will see the compass change from 0 degrees, go up to 359 degrees, and back to 0 degrees. So, a full rotation is 360 degrees, or full
 circle.
  
-Another way to measure angles is to use numbers that are special to the size of circles. A circle has two important numbers related to it. They are called the _radius_ and _pi_ The radius is the distance from the center of the circle to its outside edge. A long time ago, people learned that no matter how big
+Another way to measure angles is to use numbers that are special to the size of circles. A circle has two important numbers related to it. They are called the _radius_ and _pi_. The radius is the distance from the center of the circle to its outside edge. A long time ago, people learned that no matter how big
 a circle is, if you divide the length of its outside edge by the length of its radius, you always get the same number back. They decided to call this number **_pi_**. It's **2** times **_pi_** actually, because they used the whole length across the circle which is two lengths of the radius.
 
-Now, we don't have to worry about the radius anymore, we can just use some part of **2_pi_** to tell where any spot on the edge of a circle is. Any part or all of **_2pi_** is called _radians_. We can use radians to measure an angle of direction too, just like with the compass. Except now, we spin **2_pi_** radians around the circle instead of 360 degrees.
+Now, we don't have to worry about the radius anymore, we can just use some part of **2_pi_** to tell where any spot on the edge of a circle is. Any part or all of **2_pi_** is called _radians_. We can use radians to measure an angle of direction too, just like with the compass. Except now, we spin **2_pi_** radians around the circle instead of 360 degrees.
 
 ### ~hint
 **What number is _pi_?**
