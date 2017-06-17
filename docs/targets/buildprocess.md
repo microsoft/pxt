@@ -2,6 +2,13 @@
 
 The PXT build process (kicked off by `pxt serve`) has a number of key steps and some special cases. It requires the file [pxtarget.json](/targets/pxtarget).
 
+## lib directory
+
+Per package, 
+- enums.d.ts
+- shims.d.ts
+- dal.d.ts (core package only)
+
 ## sim directory
 
 ## cmds directory
