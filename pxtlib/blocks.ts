@@ -372,7 +372,8 @@ namespace pxt.blocks {
                 url: 'types/function/define',
                 category: 'procedures',
                 block: {
-                    PROCEDURES_DEFNORETURN_TITLE: Util.lf("function")
+                    PROCEDURES_DEFNORETURN_TITLE: Util.lf("function"),
+                    PROCEDURE_ALREADY_EXISTS: Util.lf("A function named '%1' already exists.")
                 }
             },
             'procedures_callnoreturn': {

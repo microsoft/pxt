@@ -2283,6 +2283,7 @@ namespace pxt.blocks {
         const proceduresDefTooltips = <Map<string>>proceduresDef.tooltip;
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
+        msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
 
         Blockly.Blocks['procedures_defnoreturn'].init = function () {
             let nameField = new Blockly.FieldTextInput('',
@@ -2292,7 +2293,7 @@ namespace pxt.blocks {
                 .appendField((Blockly as any).Msg.PROCEDURES_DEFNORETURN_TITLE)
                 .appendField(nameField, 'NAME')
                 .appendField('', 'PARAMS');
-            this.setColour(getNamespaceColor('procedures'));
+            this.setColour(getNamespaceColor('functions'));
             this.setTooltip((Blockly as any).Msg.PROCEDURES_DEFNORETURN_TOOLTIP);
             this.setHelpUrl((Blockly as any).Msg.PROCEDURES_DEFNORETURN_HELPURL);
             this.arguments_ = [];
@@ -2315,7 +2316,7 @@ namespace pxt.blocks {
                     .appendField(nameField, 'NAME');
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
-                this.setColour(getNamespaceColor('procedures'));
+                this.setColour(getNamespaceColor('functions'));
                 // Tooltip is set in renameProcedure.
                 this.setHelpUrl((Blockly as any).Msg.PROCEDURES_CALLNORETURN_HELPURL);
                 this.arguments_ = [];
