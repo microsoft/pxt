@@ -716,7 +716,7 @@ declare namespace Blockly {
     namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;
-        function domToWorkspace(dom: Element, workspace: Workspace): void;
+        function domToWorkspace(dom: Element, workspace: Workspace): string[];
         function textToDom(text: string): Element;
         function workspaceToDom(workspace: Workspace): Element;
     }

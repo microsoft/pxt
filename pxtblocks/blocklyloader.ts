@@ -2466,9 +2466,11 @@ namespace pxt.blocks {
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
                 xml.appendChild(block);
-                Blockly.Xml.domToWorkspace(xml, workspace);
-                // Refresh flyout
-                (workspace as any).toolbox_.refreshSelection();
+                let newBlockIds = Blockly.Xml.domToWorkspace(xml, workspace);
+                // Close flyout and highlight block
+                (workspace as any).toolbox_.clearSelection();
+                let newBlock = workspace.getBlockById(newBlockIds[0]);
+                newBlock.select();
             }
 
             workspace.registerButtonCallback('CREATE_FUNCTION', function(button) {
