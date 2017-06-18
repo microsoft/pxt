@@ -2431,14 +2431,6 @@ namespace pxt.blocks {
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
 
-            if (pxt.appTarget.appTheme.showFlyoutHeadings) {
-                // Add the Heading label
-                let headingLabel = goog.dom.createDom('heading');
-                headingLabel.setAttribute('text', lf("Functions"));
-                headingLabel.setAttribute('iconclass', 'blocklyTreeIconvariables');
-                xmlList.push(headingLabel as HTMLElement);
-            }
-
             const newFunction = lf("Make a Function");
             const newFunctionTitle = lf("New function name:");
 
