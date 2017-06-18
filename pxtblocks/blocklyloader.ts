@@ -2480,33 +2480,33 @@ namespace pxt.blocks {
 
             workspace.registerButtonCallback('CREATE_FUNCTION', function(button) {
                 let promptAndCheckWithAlert = (defaultName: string) => {
-                    Blockly.prompt(newFunctionTitle, defaultName, function(newVar) {
+                    Blockly.prompt(newFunctionTitle, defaultName, function(newFunc) {
                         // Merge runs of whitespace.  Strip leading and trailing whitespace.
                         // Beyond this, all names are legal.
-                        if (newVar) {
-                            newVar = newVar.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
-                            if (newVar == newFunction) {
+                        if (newFunc) {
+                            newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
+                            if (newFunc == newFunction) {
                                 // Ok, not ALL names are legal...
-                                newVar = null;
+                                newFunc = null;
                             }
                         }
-                        if (newVar) {
-                            if (workspace.variableIndexOf(newVar) != -1) {
-                                Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
-                                    newVar.toLowerCase()),
+                        if (newFunc) {
+                            if (workspace.variableIndexOf(newFunc) != -1) {
+                                Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
+                                    newFunc.toLowerCase()),
                                     function() {
-                                        promptAndCheckWithAlert(newVar);  // Recurse
+                                        promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
-                            else if (!Blockly.Procedures.isLegalName_(newVar, workspace)) {
+                            else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
                                 Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
-                                    newVar.toLowerCase()),
+                                    newFunc.toLowerCase()),
                                     function() {
-                                        promptAndCheckWithAlert(newVar);  // Recurse
+                                        promptAndCheckWithAlert(newFunc);  // Recurse
                                     });
                             }
                             else {
-                                createFunction(newVar);
+                                createFunction(newFunc);
                             }
                         }
                     });
