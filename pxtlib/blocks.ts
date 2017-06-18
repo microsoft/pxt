@@ -365,6 +365,23 @@ namespace pxt.blocks {
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")
                 }
+            },
+            'procedures_defnoreturn': {
+                name: Util.lf("rename the function"),
+                tooltip: Util.lf("Define a function."),
+                url: 'types/function/define',
+                category: 'procedures',
+                block: {
+                    PROCEDURES_DEFNORETURN_TITLE: Util.lf("function")
+                }
+            },
+            'procedures_callnoreturn': {
+                tooltip: Util.lf("Call the function."),
+                url: 'types/function/call',
+                category: 'procedures',
+                block: {
+                    PROCEDURES_CALLNORETURN_TITLE: Util.lf("call")
+                }
             }
         };
         _blockDefinitions[pxtc.ON_START_TYPE] = {

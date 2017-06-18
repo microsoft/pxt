@@ -57,6 +57,7 @@ declare namespace pxt {
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
+        functionBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops

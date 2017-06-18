@@ -80,6 +80,8 @@ export default new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinitio
         </category>
         <category name="Variables" nameid="variables" colour="#A80000" custom="VARIABLE" category="48" iconclass="blocklyTreeIconvariables">
         </category>
+        <category name="Functions" nameid="functions" colour="#005a9e" custom="PROCEDURE" category="48" iconclass="blocklyTreeIconfunctions">
+        </category>
         <category name="Math" nameid="math" colour="#712672" category="47" iconclass="blocklyTreeIconmath" expandedclass="blocklyTreeIconmath">
             <block type="math_arithmetic" gap="8">
                 <value name="A">
