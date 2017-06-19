@@ -382,7 +382,7 @@ namespace pxt.blocks {
                 url: 'types/function/call',
                 category: 'procedures',
                 block: {
-                    PROCEDURES_CALLNORETURN_TITLE: Util.lf("call")
+                    PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
             }
         };
