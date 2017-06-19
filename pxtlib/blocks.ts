@@ -365,6 +365,25 @@ namespace pxt.blocks {
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")
                 }
+            },
+            'procedures_defnoreturn': {
+                name: Util.lf("define the function"),
+                tooltip: Util.lf("Create a function."),
+                url: 'types/function/define',
+                category: 'functions',
+                block: {
+                    PROCEDURES_DEFNORETURN_TITLE: Util.lf("function"),
+                    PROCEDURE_ALREADY_EXISTS: Util.lf("A function named '%1' already exists.")
+                }
+            },
+            'procedures_callnoreturn': {
+                name: Util.lf("call the function"),
+                tooltip: Util.lf("Call the user-defined function."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                    PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
+                }
             }
         };
         _blockDefinitions[pxtc.ON_START_TYPE] = {
