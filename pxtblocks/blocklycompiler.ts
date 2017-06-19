@@ -695,6 +695,20 @@ namespace pxt.blocks {
 
     }
 
+    function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const stmts = getInputTargetBlock(b, "STACK");
+        return [
+            mkText("function " + name + "() "),
+            compileStatements(e, stmts)
+        ];
+    }
+
+    function compileProcedureCall(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        return mkStmt(mkText(name + "()"));
+    }
+
     function defaultValueForType(t: Point): JsNode {
         if (t.type == null) {
             union(t, ground(pNumber.type));
@@ -1260,6 +1274,12 @@ namespace pxt.blocks {
             case 'device_while':
                 r = compileWhile(e, b, comments);
                 break;
+            case 'procedures_defnoreturn':
+                r = compileProcedure(e, b, comments);
+                break;
+            case 'procedures_callnoreturn':
+                r = [compileProcedureCall(e, b, comments)];
+                break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
                 break;
@@ -1572,7 +1592,7 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (call && call.attrs.blockAllowMultiple) return;
+            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple) return;
             // is this an event?
             else if (call && call.hasHandler) {
                 // compute key that identifies event call

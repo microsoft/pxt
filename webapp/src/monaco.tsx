@@ -630,6 +630,7 @@ export class Editor extends srceditor.Editor {
         if (config.logicBlocks) namespaces.push(snippets.logic.nameid);
         if (config.variablesBlocks) namespaces.push(snippets.variables.nameid);
         if (config.mathBlocks) namespaces.push(snippets.maths.nameid);
+        if (config.functionBlocks) namespaces.push(snippets.functions.nameid);
         if (config.textBlocks) namespaces.push(snippets.text.nameid);
         if (config.listsBlocks) namespaces.push(snippets.arrays.nameid);
 
