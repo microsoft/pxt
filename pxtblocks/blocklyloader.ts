@@ -2290,7 +2290,6 @@ namespace pxt.blocks {
     }
 
     function initFunctions() {
-        let funcname = lf("{id:var}functionName");
         const msg: any = Blockly.Msg;
 
         // builtin procedures_defnoreturn
