@@ -866,7 +866,6 @@ namespace pxt.blocks {
             if (!config.variablesBlocks) removeCategory(tb, "Variables");
             if (!config.logicBlocks) removeCategory(tb, "Logic");
             if (!config.loopsBlocks) removeCategory(tb, "Loops");
-            if (!config.functionBlocks) removeCategory(tb, "Functions");
 
             // Advanced builtin categories
             if (!config.textBlocks) {
@@ -884,6 +883,23 @@ namespace pxt.blocks {
                 }
                 if (showCategories === CategoryMode.Basic) {
                     removeCategory(tb, "Text");
+                }
+            }
+            if (!config.functionBlocks) {
+                removeCategory(tb, "Functions");
+            }
+            else {
+                showAdvanced = true;
+                const cat = categoryElement(tb, "Functions");
+                if (cat) {
+                    const blockElements = cat.getElementsByTagName("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+                }
+                if (showCategories === CategoryMode.Basic) {
+                    removeCategory(tb, "Functions");
                 }
             }
 

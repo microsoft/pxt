@@ -388,6 +388,7 @@ export const functions: BuiltinCategoryDefinition = {
         },
     ],
     attributes: {
+        advanced: true,
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         color: pxt.blocks.blockColors["functions"].toString(),
         icon: "function",
