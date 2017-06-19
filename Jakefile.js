@@ -341,7 +341,7 @@ task('serve', ['default'], { async: true }, function () {
         cmdArg += ' -browser ' + process.env.browser;
     }
 
-    let destination = '../pxt-microbit';
+    let destination = '../pxt-adafruit';
     if (process.env.target) {
         destination = '../' + process.env.target;
     }
