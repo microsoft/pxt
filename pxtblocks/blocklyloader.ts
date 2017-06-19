@@ -825,40 +825,6 @@ namespace pxt.blocks {
             .keys(cachedBlocks).filter(k => !currentBlocks[k])
             .forEach(k => removeBlock(cachedBlocks[k].fn));
 
-        // add extra blocks
-        if (tb && pxt.appTarget.runtime) {
-            const extraBlocks = pxt.appTarget.runtime.extraBlocks || [];
-            extraBlocks.push({
-                namespace: pxt.appTarget.runtime.onStartNamespace || "loops",
-                weight: pxt.appTarget.runtime.onStartWeight || 10,
-                type: ts.pxtc.ON_START_TYPE
-            })
-            extraBlocks.forEach(eb => {
-                let el = document.createElement("block");
-                el.setAttribute("type", eb.type);
-                el.setAttribute("weight", (eb.weight || 50).toString());
-                if (eb.gap) el.setAttribute("gap", eb.gap.toString());
-                if (eb.fields) {
-                    for (let f in eb.fields) {
-                        let fe = document.createElement("field");
-                        fe.setAttribute("name", f);
-                        fe.appendChild(document.createTextNode(eb.fields[f]));
-                        el.appendChild(fe);
-                    }
-                }
-                if (showCategories !== CategoryMode.None) {
-                    let cat = categoryElement(tb, eb.namespace);
-                    if (cat) {
-                        insertBlock(el, cat, eb.weight)
-                    } else {
-                        console.error(`trying to add block ${eb.type} to unknown category ${eb.namespace}`)
-                    }
-                } else {
-                    tb.appendChild(el);
-                }
-            })
-        }
-
         if (tb && showCategories !== CategoryMode.None) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};

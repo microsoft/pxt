@@ -27,7 +27,7 @@ Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the
 
 ## AppTheme
 
-[pxtarget.json](/pxtarget) contains an extensive customization section (appTheme) to control logos, names, colors, etc.  Details are below (TBD):
+[pxtarget.json](/targets/pxtarget) contains an extensive customization section (appTheme) to control logos, names, colors, etc.  Details are below (TBD):
 
 ```typescript
 interface AppTheme {
