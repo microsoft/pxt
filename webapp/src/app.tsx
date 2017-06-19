@@ -30,6 +30,8 @@ import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
 import * as sounds from "./sounds";
 import * as make from "./make";
+import * as baseToolbox from "./toolbox";
+import * as monacoToolbox from "./monacoSnippets"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -2055,11 +2057,12 @@ function initExtensionsAsync(): Promise<void> {
     return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
         .then(res => {
-            if (res.hexFileImporters)
+            if (res.hexFileImporters) {
                 res.hexFileImporters.forEach(fi => {
                     pxt.debug(`\tadded hex importer ${fi.id}`);
                     theEditor.hexFileImporters.push(fi);
                 });
+            }
             if (res.deployCoreAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
                 pxt.commands.deployCoreAsync = res.deployCoreAsync;
@@ -2067,10 +2070,19 @@ function initExtensionsAsync(): Promise<void> {
             if (res.beforeCompile) {
                 theEditor.beforeCompile = res.beforeCompile;
             }
-            if (res.fieldEditors)
+            if (res.fieldEditors) {
                 res.fieldEditors.forEach(fi => {
                     pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
                 })
+            }
+            if (res.toolboxOptions) {
+                if (res.toolboxOptions.blocklyXml) {
+                    baseToolbox.overrideBaseToolbox(res.toolboxOptions.blocklyXml);
+                }
+                if (res.toolboxOptions.monacoToolbox) {
+                    monacoToolbox.overrideToolbox(res.toolboxOptions.monacoToolbox);
+                }
+            }
         });
 }
 
