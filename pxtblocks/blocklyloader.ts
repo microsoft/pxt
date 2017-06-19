@@ -2684,7 +2684,8 @@ namespace pxt.blocks {
 
     function initText() {
         // builtin text
-        installBuiltinHelpInfo('text');
+        const textInfo = pxt.blocks.getBlockDefinition('text');
+        installHelpResources('text', textInfo.name, textInfo.tooltip, textInfo.url, (Blockly as any).Colours.textField);
 
         // builtin text_length
         const msg: any = Blockly.Msg;
