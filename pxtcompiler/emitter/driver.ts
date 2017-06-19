@@ -137,7 +137,7 @@ namespace ts.pxtc {
 
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
         // ensure that main.ts is last of TS files
-        let tsFilesNoMain = tsFiles.filter(f => !f.match("^main.ts$"))
+        let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
         if (tsFiles.length > tsFilesNoMain.length) {
             tsFiles = tsFilesNoMain
             tsFiles.push("main.ts")
