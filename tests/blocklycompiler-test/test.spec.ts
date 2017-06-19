@@ -285,5 +285,9 @@ describe("blockly compiler", () => {
         it("should change invalid names and preserve unicode names", done => {
             blockTestAsync("variables_names").then(done, done);
         });
+
+        it("should change reserved names", done => {
+            blockTestAsync("variables_reserved_names").then(done, done);
+        });
     });
 });

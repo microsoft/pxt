@@ -407,6 +407,8 @@ div.simframe > iframe {
     box-shadow: none !important;
     background-color: transparent !important;
     opacity: 1 !important;
+    /* wrap the JS text inside a blockly Tooltip */
+    overflow-wrap: break-word;
 }
 
 .blocklyToolboxDiv, .monacoToolboxDiv {
@@ -554,6 +556,9 @@ span.blocklyTreeIcon {
 .blocklyTreeIcon.blocklyTreeIconvariables::before {
     content: "\f039";
 }
+.blocklyTreeIcon.blocklyTreeIconfunctions::before {
+    content: "\f0ae";
+}
 .blocklyTreeIcon.blocklyTreeIcontext::before {
     content: "\f035";
 }
@@ -676,6 +681,9 @@ Avatar
 #docs .avatar .message {
     margin-left: 4em;
     margin-bottom: 1em;
+}
+#docs code.lang-typescript {
+    overflow-wrap: break-word;
 }
 
 @media only screen {
@@ -1028,6 +1036,7 @@ Field editors
         display:inline-block;
         width: 10rem;
         margin-right:0.5rem;
+        padding-bottom: 81.96% !important;
     }
     div.simframe:not(:first-child) {
         display:none !important;

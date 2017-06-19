@@ -1,0 +1,78 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" y="430" x="-130">
+    <statement name="HANDLER">
+      <block id="s^UwO%u]hUv]]*=l6[5y" type="variables_set">
+        <field name="VAR">item</field>
+        <value name="VALUE">
+          <shadow id="6]9nylybhPGdNk?Ge|0s" type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+          <block id="mLLkHoa](:QhsWR)9Kj$" type="math_arithmetic">
+            <field name="OP">ADD</field>
+            <value name="A">
+              <shadow id="6l-?z?4}=9%?Vw0q!l@P" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+              <block id="5%phn#ErU}QYV#h?*F#f" type="math_arithmetic">
+                <field name="OP">MINUS</field>
+                <value name="A">
+                  <shadow id="}Llx:V2I^OkC?z,X;ALl" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block id="RyTPVnhvB-J^m$2a#iP." type="math_arithmetic">
+                    <field name="OP">MULTIPLY</field>
+                    <value name="A">
+                      <shadow id="E|l8HT{Oa-.U1#9.?]P%" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                      <block id="`4Q~J;=]|3M-xWQVDPxY" type="math_arithmetic">
+                        <field name="OP">DIVIDE</field>
+                        <value name="A">
+                          <shadow id="O+ITJD`f~}~j*=KJibTx" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                          <block id="Gev5-9`v/!Biwl7^7@a?" type="math_modulo">
+                            <value name="DIVIDEND">
+                              <shadow id=",G2xyTxb+2B.(B8dL.`x" type="math_number">
+                                <field name="NUM">0</field>
+                              </shadow>
+                            </value>
+                            <value name="DIVISOR">
+                              <shadow id="0QB;4#9/%ke)vXr9j{4/" type="math_number">
+                                <field name="NUM">1</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <shadow id="g{Ipn~tfFa?~%T8AehBg" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <shadow id="0(aNQ118o5eTaJ/}-{o1" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <shadow id=":@$iwy@k{k#3K)yq{Vqa" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+              </block>
+            </value>
+            <value name="B">
+              <shadow id="y/o1i}Ap[tD#56OoZ711" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>

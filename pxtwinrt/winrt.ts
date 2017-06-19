@@ -1,6 +1,6 @@
-/// <reference path="../typings/globals/bluebird/index.d.ts"/>
+/// <reference path="./winrtrefs.d.ts"/>
 namespace pxt.winrt {
-    export function promisify<T>(p: Windows.Foundation.IPromise<T>): Promise<T> {
+    export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             p.done(v => resolve(v), e => reject(e));
         })
@@ -45,12 +45,13 @@ namespace pxt.winrt {
                     let f = file as Windows.Storage.StorageFile;
                     Windows.Storage.FileIO.readBufferAsync(f)
                         .done(buffer => {
-                            let ar = new Uint8Array(buffer.length);
+                            //let ar = new Uint8Array(buffer.length);
+                            let ar: number[] = [];
                             let dataReader = Windows.Storage.Streams.DataReader.fromBuffer(buffer);
                             dataReader.readBytes(ar);
                             dataReader.close();
 
-                            pxt.cpp.unpackSourceFromHexAsync(ar)
+                            pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar))
                                 .done(hex => onHexFileImported(hex));
                         });
                 }

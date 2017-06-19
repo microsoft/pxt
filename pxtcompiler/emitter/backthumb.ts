@@ -197,6 +197,7 @@ _numops_toInt:
     blx lr
 .over:
     push {lr}
+    lsls r0, r0, #1
     bl pxt::toInt
     pop {pc}
 

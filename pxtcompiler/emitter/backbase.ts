@@ -577,7 +577,7 @@ ${baseLabel}:
                 this.write(this.t.unconditional_branch(".themain"))
             this.write(".balign 4");
             this.write(this.proc.label() + "_Lit:");
-            this.write(".short 0xffff, 0x0000   ; action literal");
+            this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
             this.write("@stackmark litfunc");
             if (isMain)
                 this.write(".themain:")

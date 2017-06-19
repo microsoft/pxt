@@ -17,8 +17,7 @@ Let's say you want to create a package called `banana` for target `TARGET`.
 * edit `pxt.json` and `README.md` with the right descriptions
 * commit files to git: `git add .`, and commit them: `git commit -m "Initial"`
 
-> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise
-the package will not show up in search.**
+> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise the package will not show up in search.**
 
 ### Step 2: Developing package
 

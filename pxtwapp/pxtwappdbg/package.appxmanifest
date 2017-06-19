@@ -46,5 +46,10 @@
         <Function Type="name:serialPort" />
       </Device>
     </DeviceCapability>
+    <DeviceCapability Name="humaninterfacedevice">
+      <Device Id="vidpid:239A 0019">
+        <Function Type="usage:FF97 0001"/>
+      </Device>
+    </DeviceCapability>
   </Capabilities>
 </Package>

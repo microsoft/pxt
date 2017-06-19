@@ -92,7 +92,6 @@
         var content = document.getElementById('content');        
         ksRunnerReady(function() {
             pxt.docs.requireMarked = function() { return marked; }
-            pxt.docs.requireHighlightJs = function() { return hljs; }
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
             var code = /code=([^&?]+)/i.exec(window.location.href);
             var md = /md=([^&?]+)/i.exec(window.location.href);

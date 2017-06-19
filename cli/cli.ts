@@ -1220,7 +1220,7 @@ export function buildTargetAsync(): Promise<void> {
     if (!inCommonPkg("built/common-sim.js") || !inCommonPkg("built/common-sim.d.ts")) {
         initPromise = buildCommonSimAsync();
     }
-    else  {
+    else {
         initPromise = Promise.resolve();
     }
 
@@ -1948,9 +1948,9 @@ class SnippetHost implements pxt.Host {
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ] : [
-                        "main.blocks", //TODO: Probably don't want this
-                        "main.ts",
-                    ]
+                            "main.blocks", //TODO: Probably don't want this
+                            "main.ts",
+                        ]
                 })
             }
             else if (filename == "main.ts") {
@@ -1959,26 +1959,33 @@ class SnippetHost implements pxt.Host {
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
         } else {
-            let p0 = path.join(module.id, filename);
-            let p1 = path.join('libs', module.id, filename)
-            let p2 = path.join('libs', module.id, 'built', filename)
+            let ps = [
+                path.join(module.id, filename),
+                path.join('libs', module.id, filename),
+                path.join('libs', module.id, 'built', filename),
+            ];
 
             let contents: string = null
-
-            try {
-                contents = fs.readFileSync(p0, 'utf8')
-            }
-            catch (e) {
+            if (!ps.some(p => {
                 try {
-                    contents = fs.readFileSync(p1, 'utf8')
+                    contents = fs.readFileSync(p, 'utf8')
+                    return true;
                 }
                 catch (e) {
-                    //console.log(e)
-                    try {
-                        contents = fs.readFileSync(p2, 'utf8')
-                    }
-                    catch (e) {
-                        //console.log(e)
+                }
+                return false;
+            })) {
+                // try additional package location
+                if (pxt.appTarget.bundledpkgs[module.id]) {
+                    const modpkg = JSON.parse(pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    if (modpkg.additionalFilePath) {
+                        try {
+                            const ad = path.join(modpkg.additionalFilePath.replace('../../', ''), filename);
+                            pxt.debug(ad)
+                            contents = fs.readFileSync(ad, 'utf8')
+                        }
+                        catch (e) {
+                        }
                     }
                 }
             }
@@ -2002,6 +2009,7 @@ class SnippetHost implements pxt.Host {
             }
         }
 
+        pxt.debug(`unresolved file ${module.id}/${filename}`)
         return ""
     }
 
@@ -2019,8 +2027,7 @@ class SnippetHost implements pxt.Host {
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        //console.log(`getHexInfoAsync(${extInfo})`);
-        return Promise.resolve<any>(null)
+        return pxt.hex.getHexInfoAsync(this, extInfo)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -4477,6 +4484,8 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     pxt.log(`Using target PXT/${trg.id} with build engine ${compileId}`)
     pxt.log(`  Target dir:   ${nodeutil.targetDir}`)
     pxt.log(`  PXT Core dir: ${nodeutil.pxtCoreDir}`)
+
+    pxt.HF2.enableLog()
 
     if (compileId != "none") {
         build.thisBuild = build.buildEngines[compileId]

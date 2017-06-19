@@ -82,12 +82,6 @@ namespace pxt.docs {
         return require("marked");
     }
 
-    export var requireHighlightJs = () => {
-        if (typeof hljs !== "undefined") return hljs;
-        if (typeof require === "undefined") return undefined;
-        return require("highlight.js");
-    }
-
     export interface RenderData {
         html: string;
         theme: AppTheme;
@@ -412,17 +406,7 @@ namespace pxt.docs {
                 pedantic: false,
                 sanitize: true,
                 smartLists: true,
-                smartypants: true,
-                highlight: function (code, lang) {
-                    try {
-                        let hljs = requireHighlightJs();
-                        if (!hljs) return code;
-                        return hljs.highlightAuto(code, [lang.replace('-ignore', '')]).value;
-                    }
-                    catch (e) {
-                        return code;
-                    }
-                }
+                smartypants: true
             })
         };
 

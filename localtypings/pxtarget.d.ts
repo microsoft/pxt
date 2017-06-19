@@ -15,6 +15,7 @@ declare namespace pxt {
         bannedOrgs?: string[];
         bannedRepos?: string[];
         allowUnapproved?: boolean;
+        preferredRepos?: string[]; // list of company/project(#tag) of packages to show by default in search
     }
 
     interface AppTarget {
@@ -56,13 +57,14 @@ declare namespace pxt {
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
+        functionBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
-        extraBlocks?: BlockToolboxDefinition[];
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        extraBlocks?: BlockToolboxDefinition[];  // deprecated
     }
 
     interface AppAnalytics {
@@ -72,7 +74,8 @@ declare namespace pxt {
 
     interface AppSerial {
         useHF2?: boolean;
-        manufacturerFilter?: string; // used by node-serial
+        vendorId?: string; // used by node-serial
+        productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
         log?: boolean;
     }
@@ -84,7 +87,6 @@ declare namespace pxt {
         sharing?: boolean; // uses cloud-based anonymous sharing
         importing?: boolean; // import url dialog
         embedding?: boolean;
-        preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages
     }
 
@@ -217,9 +219,9 @@ declare namespace pxt {
     }
 
     interface TargetBundle extends AppTarget {
-        bundledpkgs: Map<Map<string>>;
+        bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
-        versions: TargetVersions;
+        versions: TargetVersions;        // @derived
     }
 }
 

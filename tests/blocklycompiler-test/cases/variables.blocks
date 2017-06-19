@@ -1,0 +1,27 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" y="350" x="-350">
+    <statement name="HANDLER">
+      <block id="2HQ#cE=Kc#BY,{:xEMF)" type="variables_set">
+        <field name="VAR">item</field>
+        <value name="VALUE">
+          <shadow id="Oh4YdBQY7uI}X/t3o?xi" type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+        </value>
+        <next>
+          <block id="]Mb`w1u8y7`+DCP3J4])" type="variables_change">
+            <field name="VAR">item</field>
+            <value name="VALUE">
+              <shadow id="D^L^H@#/#ubc1^cM?s!V" type="math_number">
+                <field name="NUM">1</field>
+              </shadow>
+              <block id="J(u2-`0lnoP)E%0315NG" type="variables_get">
+                <field name="VAR">item</field>
+              </block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

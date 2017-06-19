@@ -10,6 +10,18 @@ import B = Blockly;
 let iface: pxt.worker.Iface
 
 namespace pxt.blocks {
+    export const reservedWords = [ "abstract", "any", "as", "break",
+    "case", "catch", "class", "continue", "const", "constructor", "debugger",
+    "declare", "default", "delete", "do", "else", "enum", "export", "extends",
+    "false", "finally", "for", "from", "function", "get", "if", "implements",
+    "import", "in", "instanceof", "interface", "is", "let", "module", "namespace",
+    "new", "null", "package", "private", "protected", "public",
+    "require", "global", "return", "set", "static", "super", "switch",
+    "symbol", "this", "throw", "true", "try", "type", "typeof", "var", "void",
+    "while", "with", "yield", "async", "await", "of",
+
+    // PXT Specific
+    "Math"];
 
     export function initWorker() {
         if (!iface) {
@@ -683,6 +695,20 @@ namespace pxt.blocks {
 
     }
 
+    function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const stmts = getInputTargetBlock(b, "STACK");
+        return [
+            mkText("function " + name + "() "),
+            compileStatements(e, stmts)
+        ];
+    }
+
+    function compileProcedureCall(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        return mkStmt(mkText(name + "()"));
+    }
+
     function defaultValueForType(t: Point): JsNode {
         if (t.type == null) {
             union(t, ground(pNumber.type));
@@ -981,7 +1007,7 @@ namespace pxt.blocks {
         let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
             ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
 
-        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5)) {
+        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) || reservedWords.indexOf(n) !== -1) {
             n = "_" + n;
         }
 
@@ -1248,6 +1274,12 @@ namespace pxt.blocks {
             case 'device_while':
                 r = compileWhile(e, b, comments);
                 break;
+            case 'procedures_defnoreturn':
+                r = compileProcedure(e, b, comments);
+                break;
+            case 'procedures_callnoreturn':
+                r = [compileProcedureCall(e, b, comments)];
+                break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
                 break;
@@ -1262,15 +1294,15 @@ namespace pxt.blocks {
         }
         let l = r[r.length - 1]; if (l) l.id = b.id;
 
-        r.forEach(l => {
-            if (l.type === NT.Block) {
-                l.id = b.id
-            }
-        });
-
         if (comments.length) {
             addCommentNodes(comments, r)
         }
+
+        r.forEach(l => {
+            if (l.type === NT.Block || l.type === NT.Prefix && Util.startsWith(l.op, "//")) {
+                l.id = b.id
+            }
+        });
 
         return r;
     }
@@ -1340,13 +1372,23 @@ namespace pxt.blocks {
         let e = emptyEnv(w);
 
         // append functions in stdcalltable
-        if (blockInfo)
+        if (blockInfo) {
+            // Enums are not enclosed in namespaces, so add them to the taken names
+            // to avoid collision
+            Object.keys(blockInfo.apis.byQName).forEach(name => {
+                const info = blockInfo.apis.byQName[name];
+                if (info.kind === pxtc.SymbolKind.Enum) {
+                    e.renames.takenNames[info.qName] = true;
+                }
+            });
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
                         pxt.reportError("blocks", "function already defined", { "details": fn.attributes.blockId });
                         return;
                     }
+                    e.renames.takenNames[fn.namespace] = true;
                     let fieldMap = pxt.blocks.parameterNames(fn);
                     let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
                     let args = (fn.parameters || []).map(p => {
@@ -1373,6 +1415,7 @@ namespace pxt.blocks {
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
                 })
+        }
 
         if (skipVariables) return e;
 
@@ -1549,7 +1592,7 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (call && call.attrs.blockAllowMultiple) return;
+            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple) return;
             // is this an event?
             else if (call && call.hasHandler) {
                 // compute key that identifies event call
