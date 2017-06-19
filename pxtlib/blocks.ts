@@ -370,7 +370,7 @@ namespace pxt.blocks {
                 name: Util.lf("define the function"),
                 tooltip: Util.lf("Create a function."),
                 url: 'types/function/define',
-                category: 'procedures',
+                category: 'functions',
                 block: {
                     PROCEDURES_DEFNORETURN_TITLE: Util.lf("function"),
                     PROCEDURE_ALREADY_EXISTS: Util.lf("A function named '%1' already exists.")
@@ -380,7 +380,7 @@ namespace pxt.blocks {
                 name: Util.lf("call the function"),
                 tooltip: Util.lf("Call the user-defined function."),
                 url: 'types/function/call',
-                category: 'procedures',
+                category: 'functions',
                 block: {
                     PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
