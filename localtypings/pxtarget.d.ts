@@ -63,6 +63,7 @@ declare namespace pxt {
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        extraBlocks?: BlockToolboxDefinition[];  // deprecated
     }
 
     interface AppAnalytics {
