@@ -21,8 +21,7 @@ The `pxt.json` is described by the interface `PackageConfig`:
         public?: boolean;             // set true to enable the package to be published (to cloud),
                                       // in support of publishing user scripts
 
-        // url to icon -- support for built-in packages only
-        icon?: string;
+        icon?: string;                // url to icon -- support for built-in packages only
         card?: CodeCard;
         documentation?: string; // doc page to open when loading project
 
