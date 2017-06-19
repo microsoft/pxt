@@ -368,6 +368,34 @@ export const arrays: BuiltinCategoryDefinition = {
     }
 }
 
+export const functions: BuiltinCategoryDefinition = {
+    name: lf("{id:category}Functions"),
+    blocks: [
+        {
+            name: "function doSomething",
+            snippet: `function doSomething() {\n\n}`,
+            attributes: {
+                jsDoc: lf("Define a function")
+            }
+        },
+        {
+            name: "doSomething",
+            snippet: `doSomething()`,
+            attributes: {
+                jsDoc: lf("Call a function")
+            }
+        },
+    ],
+    attributes: {
+        advanced: true,
+        weight: 52,
+        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+        color: pxt.blocks.blockColors["functions"].toString(),
+        icon: "function",
+        paramDefl: {}
+    }
+};
+
 export function getBuiltinCategory(ns: string) {
         switch (ns) {
             case loops.name: return loops;
@@ -376,6 +404,7 @@ export function getBuiltinCategory(ns: string) {
             case maths.name: return maths;
             case text.name: return text;
             case arrays.name: return arrays;
+            case functions.name: return functions;
         }
     return undefined;
 }
@@ -388,6 +417,7 @@ export function isBuiltin(ns: string) {
         case maths.name:
         case text.name:
         case arrays.name:
+        case functions.name:
             return true;
     }
     return false;

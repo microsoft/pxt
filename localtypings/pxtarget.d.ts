@@ -66,6 +66,7 @@ declare namespace pxt {
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
+        functionBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         extraBlocks?: BlockToolboxDefinition[];

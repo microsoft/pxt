@@ -341,6 +341,10 @@ declare namespace Blockly {
         getVars?: () => any[];
         renameVar?: (oldName: string, newName: string) => void;
         customContextMenu?: any;
+        getProcedureCall?: () => string;
+        renameProcedure?: (oldName: string, newName: string) => void;
+        defType_?: string;
+        onchange?: (event: any) => void;
     }
 
     const Blocks: {
@@ -351,6 +355,7 @@ declare namespace Blockly {
         name: string;
         EDITABLE: boolean;
         borderRect_: any;
+        fieldGroup_: any;
         sourceBlock_: Block;
         init(block: Block): void;
         static superClass_: Field;
@@ -365,9 +370,14 @@ declare namespace Blockly {
         getScaledBBox_(): goog.math.Size;
         setValue(newValue: string): void;
         getValue(): string;
+        setSourceBlock(block: Block): void;
     }
 
     class FieldVariable extends Field {
+        constructor(d: any);
+    }
+
+    class FieldProcedure extends Field {
         constructor(d: any);
     }
 
@@ -386,7 +396,7 @@ declare namespace Blockly {
     }
 
     class FieldDropdown extends Field {
-        constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]));
+        constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]), opt_validator?: Function);
 
         static CHECKMARK_OVERHANG: number;
         protected value_: any;
@@ -401,9 +411,9 @@ declare namespace Blockly {
     }
 
     class FieldGridPicker extends FieldDropdown {
-        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> ); 
+        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> );
     }
-    
+
     class FieldSlider extends FieldNumber {
     }
 
@@ -432,6 +442,8 @@ declare namespace Blockly {
         type: string;
         id: string;
         isShadow_: boolean;
+        isInFlyout: boolean;
+        rendered: boolean;
         nextConnection: Connection;
         outputConnection: Connection;
         previousConnection: Connection;
@@ -498,6 +510,10 @@ declare namespace Blockly {
         setTooltip(newTip: string | (() => void)): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
+
+        render(): void;
+        select(): void;
+        getRelativeToSurfaceXY(): goog.math.Coordinate;
     }
 
     class Comment extends Icon {
@@ -616,6 +632,8 @@ declare namespace Blockly {
         redoStack_: Blockly.Events.Abstract[];
 
         newBlock(prototypeName: string, opt_id?: string): Block;
+        addTopBlock(block: Block): void;
+        getAllBlocks(): Block[];
         render(): void;
         clear(): void;
         dispose(): void;
@@ -661,7 +679,7 @@ declare namespace Blockly {
     namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;
-        function domToWorkspace(dom: Element, workspace: Workspace): void;
+        function domToWorkspace(dom: Element, workspace: Workspace): string[];
         function textToDom(text: string): Element;
         function workspaceToDom(workspace: Workspace): Element;
     }
@@ -714,6 +732,13 @@ declare namespace Blockly {
         function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+    }
+
+    namespace Procedures {
+        function allProcedures(wp: Workspace): [any, any][];
+        function getDefinition(name: string, wp: Workspace): Block;
+        let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        function isLegalName_(name: string, workspace: Workspace, opt_exclude?: Blockly.Block): boolean;
     }
 
     namespace ContextMenu {
