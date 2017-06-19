@@ -916,6 +916,26 @@ namespace pxt.blocks {
             })
         }
 
+        // Insert on start
+        const onStart = document.createElement("block");
+        onStart.setAttribute("type", pxtc.ON_START_TYPE);
+
+        let onStartCat = categoryElement(tb, "loops")
+        let onStartWeight = 50;
+        if (pxt.appTarget && pxt.appTarget.runtime) {
+            if (pxt.appTarget.runtime.onStartNamespace) {
+                onStartCat = categoryElement(tb, pxt.appTarget.runtime.onStartNamespace);
+            }
+
+            if (pxt.appTarget.runtime.onStartWeight != undefined) {
+                onStartWeight = pxt.appTarget.runtime.onStartWeight
+            }
+        }
+
+        if (onStartCat) {
+            insertBlock(onStart, onStartCat, onStartWeight);
+        }
+
         // Add the "Advanced" category
         if (showAdvanced && tb && showCategories !== CategoryMode.None) {
             const cat = createCategoryElement(Util.lf("{id:category}Advanced"), "Advanced", 1, getNamespaceColor('advanced'), showCategories === CategoryMode.Basic ? 'blocklyTreeIconadvancedcollapsed' : 'blocklyTreeIconadvancedexpanded');
