@@ -368,7 +368,7 @@ namespace pxt.blocks {
             },
             'procedures_defnoreturn': {
                 name: Util.lf("define the function"),
-                tooltip: Util.lf("Define a function."),
+                tooltip: Util.lf("Create a function."),
                 url: 'types/function/define',
                 category: 'procedures',
                 block: {
@@ -378,7 +378,7 @@ namespace pxt.blocks {
             },
             'procedures_callnoreturn': {
                 name: Util.lf("call the function"),
-                tooltip: Util.lf("Call the function."),
+                tooltip: Util.lf("Call the user-defined function."),
                 url: 'types/function/call',
                 category: 'procedures',
                 block: {

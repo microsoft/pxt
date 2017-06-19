@@ -2280,7 +2280,6 @@ namespace pxt.blocks {
         // builtin procedures_defnoreturn
         const proceduresDefId = "procedures_defnoreturn";
         const proceduresDef = pxt.blocks.getBlockDefinition(proceduresDefId);
-        const proceduresDefTooltips = <Map<string>>proceduresDef.tooltip;
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
         msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
@@ -2294,8 +2293,6 @@ namespace pxt.blocks {
                 .appendField(nameField, 'NAME')
                 .appendField('', 'PARAMS');
             this.setColour(getNamespaceColor('functions'));
-            this.setTooltip((Blockly as any).Msg.PROCEDURES_DEFNORETURN_TOOLTIP);
-            this.setHelpUrl((Blockly as any).Msg.PROCEDURES_DEFNORETURN_HELPURL);
             this.arguments_ = [];
             this.setStatements_(true);
             this.statementConnection_ = null;
@@ -2305,7 +2302,8 @@ namespace pxt.blocks {
         // builtin procedures_defnoreturn
         const proceduresCallId = "procedures_callnoreturn";
         const proceduresCallDef = pxt.blocks.getBlockDefinition(proceduresCallId);
-        const proceduresCallTooltips = <Map<string>>proceduresDef.tooltip;
+
+        msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip;
 
         Blockly.Blocks['procedures_callnoreturn'] = {
             init: function () {
@@ -2317,8 +2315,6 @@ namespace pxt.blocks {
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
                 this.setColour(getNamespaceColor('functions'));
-                // Tooltip is set in renameProcedure.
-                this.setHelpUrl((Blockly as any).Msg.PROCEDURES_CALLNORETURN_HELPURL);
                 this.arguments_ = [];
                 this.quarkConnections_ = {};
                 this.quarkIds_ = null;
@@ -2342,10 +2338,6 @@ namespace pxt.blocks {
             renameProcedure: function(oldName: string, newName: string) {
                 if (Blockly.Names.equals(oldName, this.getProcedureCall())) {
                     this.setFieldValue(newName, 'NAME');
-                    this.setTooltip(
-                        (this.outputConnection ? (Blockly as any).Msg.PROCEDURES_CALLRETURN_TOOLTIP :
-                        (Blockly as any).Msg.PROCEDURES_CALLNORETURN_TOOLTIP)
-                        .replace('%1', newName));
                 }
             },
             /**
@@ -2428,6 +2420,7 @@ namespace pxt.blocks {
             },
             defType_: 'procedures_defnoreturn'
         }
+        installBuiltinHelpInfo(proceduresCallId);
 
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
