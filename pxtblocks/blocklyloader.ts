@@ -103,7 +103,18 @@ namespace pxt.blocks {
         if (typeInfo) {
             const field = document.createElement("field");
             shadow.appendChild(field);
-            field.setAttribute("name", shadowType == "variables_get" ? "VAR" : typeInfo.field);
+
+            let fieldName: string;
+            switch (shadowType) {
+                case "variables_get":
+                    fieldName = "VAR"; break;
+                case "math_number_minmax":
+                    fieldName = "SLIDER"; break;
+                default:
+                    fieldName = typeInfo.field; break;
+            }
+
+            field.setAttribute("name", fieldName);
 
             let value: Text;
             if (type == "boolean") {

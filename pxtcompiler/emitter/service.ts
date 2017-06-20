@@ -13,7 +13,7 @@ namespace ts.pxtc {
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
-        if (p.defaults) return p.defaults[0]
+        if (p.default) return p.default
         if (p.type == "number") return "0"
         if (p.type == "boolean") return "false"
         else if (p.type == "string") {
@@ -202,7 +202,7 @@ namespace ts.pxtc {
                         description: desc,
                         type: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
-                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
+                        default: attributes.paramDefl[n],
                         properties: props,
                         options: options,
                         isEnum

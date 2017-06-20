@@ -18,7 +18,7 @@ namespace pxt.blocks {
             fn.parameters.forEach(pr => attrNames[pr.name] = {
                 name: pr.name,
                 type: pr.type,
-                shadowValue: pr.defaults ? pr.defaults[0] : undefined
+                shadowValue: pr.default || undefined
             });
         if (fn.attributes.block) {
             Object.keys(attrNames).forEach(k => attrNames[k].name = "");
