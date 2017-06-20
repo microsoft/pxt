@@ -527,8 +527,8 @@ namespace pxt.runner {
 
     function renderTypeScript(options?: ClientRenderOptions) {
         const woptions: WidgetOptions = {
-            showEdit: true,
-            run: true
+            showEdit: !!options.showEdit,
+            run: !!options.simulator
         }
 
         function render(e: Node) {
