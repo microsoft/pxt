@@ -637,6 +637,10 @@ namespace pxt.cpp {
                         if (pkg.verProtocol() && pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
                             res.onlyPublic = false
                     }
+                    if (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s")) {
+                        let src = pkg.readFile(fn)
+                        res.extensionFiles[sourcePath + pkg.config.name + "/" + fn] = src
+                    }
                 }
                 if (thisErrors) {
                     allErrors += lf("Package {0}:\n", pkg.id) + thisErrors
