@@ -2600,7 +2600,7 @@ namespace pxt.blocks {
                         }
                     });
                 };
-                promptAndCheckWithAlert('');
+                promptAndCheckWithAlert('doSomething');
             });
             xmlList.push(button as HTMLElement);
 
