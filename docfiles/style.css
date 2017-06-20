@@ -354,11 +354,17 @@ print only stuff
     }
     /* bigger fonts */
     body {
-        color: #000; /* explicit colors */
-        background: #fff;
+        color: #000 !important; /* explicit colors */
+        background: #fff !important;        
         font-size: 12pt;
         line-height: 1.3;
     }    
+    body.pushable {
+        background: #fff !important;        
+    }
+    .pusher {
+        background: transparent !important;
+    }
     /* page margins */
     @page {
         margin-top: 2cm;
@@ -382,5 +388,11 @@ print only stuff
     ul, ol, img, h2, h3 {
         page-break-inside: avoid;
     }
-    /* headers, footers */ 
+    /* headers, footers */
+    /* messages */
+    .ui.message {
+        background: none !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
 }
