@@ -136,6 +136,13 @@ namespace ts.pxtc {
             opts.sourceFiles = Object.keys(opts.fileSystem)
 
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
+        // ensure that main.ts is last of TS files
+        let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
+        if (tsFiles.length > tsFilesNoMain.length) {
+            tsFiles = tsFilesNoMain
+            tsFiles.push("main.ts")
+        }
+        // TODO: ensure that main.ts is last???
         let program = createProgram(tsFiles, options, host);
 
         // First get and report any syntactic errors.

@@ -169,7 +169,7 @@ export interface DialogOptions {
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
-    const buttons = options.buttons ? options.buttons.filter(b => !!b) : undefined;
+    const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
 
     let logos = (options.logos || [])
         .filter(logo => !!logo)

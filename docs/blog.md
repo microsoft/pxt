@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [Timing Advantures in Infrared](/blog/timing-adventures-in-infrared)
+
+June 20, 2017 by [mmoskal](https://github.com/mmoskal)
+
+Circuit Playground boards can now talk to each other over IR!
+[Read how it came about](/blog/timing-adventures-in-infrared)
+
 ## [Microbit Editor v0.12.35](/blog/microbit/v0.12.35)
 
 June 13th, 2017
