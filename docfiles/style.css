@@ -92,6 +92,17 @@ code {
     border-radius: 3px;
 }
 
+p code, li code {
+    background-color: rgba(0,0,0,0.04);    
+}
+
+p code:before, p code:after,
+li code:before, li code:after {
+    letter-spacing: -0.2em;
+    padding: 0 !important;
+    content: "\00a0";
+}
+
 code.hljs {
     padding: 0 !important;
 }
