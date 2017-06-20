@@ -17,6 +17,8 @@ temp/
 *.db
 pxtwapp/pxtwapp/bin
 pxtwapp/pxtwapp/bld
+pxtwapp/pxtwappdbg/bin
+pxtwapp/pxtwappdbg/bld
 *.suo
 *.user
 *.log

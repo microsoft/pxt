@@ -14,7 +14,8 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" StartPage="https://makecode.com/uwp">
+    <Application Id="App" StartPage="https://makecode.adafruit.com">
+    <!--<Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1">-->
       <uap:ApplicationContentUriRules>
         <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://pxt.microbit.org" Type="include" WindowsRuntimeAccess="all" />
@@ -45,15 +46,17 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <uap:Capability Name="removableStorage" />
-    <DeviceCapability Name="bluetooth" />
     <DeviceCapability Name="serialcommunication">
       <Device Id="any">
         <Function Type="name:serialPort" />
       </Device>
     </DeviceCapability>
     <DeviceCapability Name="humaninterfacedevice">
-      <Device Id="any">
-        <Function Type="usage:0006 *"/>
+      <Device Id="vidpid:239A 0018">
+        <Function Type="usage:FF97 *" />
+      </Device>
+    <Device Id="vidpid:03EB 2402">
+        <Function Type="usage:FF97 *" />
       </Device>
     </DeviceCapability>
   </Capabilities>

@@ -139,7 +139,7 @@ export function initCommandsAsync(): Promise<void> {
 
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
-    } else if (pxt.winrt.isWinRT()) { // window app
+    } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             hidbridge.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
