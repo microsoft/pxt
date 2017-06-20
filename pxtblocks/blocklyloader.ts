@@ -11,6 +11,7 @@ namespace pxt.blocks {
         math: '#712672',
         images: '#5C2D91',
         variables: '#A80000',
+        functions: '#005a9e',
         text: '#996600',
         arrays: '#A94400',
         advanced: '#3c3c3c'
@@ -102,7 +103,18 @@ namespace pxt.blocks {
         if (typeInfo) {
             const field = document.createElement("field");
             shadow.appendChild(field);
-            field.setAttribute("name", shadowType == "variables_get" ? "VAR" : typeInfo.field);
+
+            let fieldName: string;
+            switch (shadowType) {
+                case "variables_get":
+                    fieldName = "VAR"; break;
+                case "math_number_minmax":
+                    fieldName = "SLIDER"; break;
+                default:
+                    fieldName = typeInfo.field; break;
+            }
+
+            field.setAttribute("name", fieldName);
 
             let value: Text;
             if (type == "boolean") {
@@ -884,6 +896,23 @@ namespace pxt.blocks {
                     removeCategory(tb, "Text");
                 }
             }
+            if (!config.functionBlocks) {
+                removeCategory(tb, "Functions");
+            }
+            else {
+                showAdvanced = true;
+                const cat = categoryElement(tb, "Functions");
+                if (cat) {
+                    const blockElements = cat.getElementsByTagName("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+                }
+                if (showCategories === CategoryMode.Basic) {
+                    removeCategory(tb, "Functions");
+                }
+            }
 
             if (!config.listsBlocks) {
                 removeCategory(tb, "Arrays");
@@ -1257,6 +1286,7 @@ namespace pxt.blocks {
         initOnStart();
         initMath();
         initVariables();
+        initFunctions();
         initLists();
         initLoops();
         initLogic();
@@ -2131,6 +2161,7 @@ namespace pxt.blocks {
 
     export function initFlyouts(workspace: Blockly.Workspace) {
         workspace.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME, Blockly.Variables.flyoutCategory);
+        workspace.registerToolboxCategoryCallback(Blockly.PROCEDURE_CATEGORY_NAME, Blockly.Procedures.flyoutCategory);
     }
 
     function initVariables() {
@@ -2267,6 +2298,260 @@ namespace pxt.blocks {
                 setBuiltinHelpInfo(this, variablesChangeId);
             }
         };
+    }
+
+    function initFunctions() {
+        const msg: any = Blockly.Msg;
+
+        // builtin procedures_defnoreturn
+        const proceduresDefId = "procedures_defnoreturn";
+        const proceduresDef = pxt.blocks.getBlockDefinition(proceduresDefId);
+
+        msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
+        msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
+
+        Blockly.Blocks['procedures_defnoreturn'].init = function () {
+            let nameField = new Blockly.FieldTextInput('',
+                (Blockly as any).Procedures.rename);
+            //nameField.setSpellcheck(false); //TODO
+            this.appendDummyInput()
+                .appendField((Blockly as any).Msg.PROCEDURES_DEFNORETURN_TITLE)
+                .appendField(nameField, 'NAME')
+                .appendField('', 'PARAMS');
+            this.setColour(getNamespaceColor('functions'));
+            this.arguments_ = [];
+            this.setStatements_(true);
+            this.statementConnection_ = null;
+        };
+        installBuiltinHelpInfo(proceduresDefId);
+
+        // builtin procedures_defnoreturn
+        const proceduresCallId = "procedures_callnoreturn";
+        const proceduresCallDef = pxt.blocks.getBlockDefinition(proceduresCallId);
+
+        msg.PROCEDURES_CALLRETURN_TOOLTIP = proceduresDef.tooltip;
+
+        Blockly.Blocks['procedures_callnoreturn'] = {
+            init: function () {
+                let nameField = new pxtblockly.FieldProcedure('');
+                nameField.setSourceBlock(this);
+                this.appendDummyInput('TOPROW')
+                    .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE'])
+                    .appendField(nameField, 'NAME');
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+                this.setColour(getNamespaceColor('functions'));
+                this.arguments_ = [];
+                this.quarkConnections_ = {};
+                this.quarkIds_ = null;
+            },
+            /**
+             * Returns the name of the procedure this block calls.
+             * @return {string} Procedure name.
+             * @this Blockly.Block
+             */
+            getProcedureCall: function() {
+                // The NAME field is guaranteed to exist, null will never be returned.
+                return /** @type {string} */ (this.getFieldValue('NAME'));
+            },
+            /**
+             * Notification that a procedure is renaming.
+             * If the name matches this block's procedure, rename it.
+             * @param {string} oldName Previous name of procedure.
+             * @param {string} newName Renamed procedure.
+             * @this Blockly.Block
+             */
+            renameProcedure: function(oldName: string, newName: string) {
+                if (Blockly.Names.equals(oldName, this.getProcedureCall())) {
+                    this.setFieldValue(newName, 'NAME');
+                }
+            },
+            /**
+             * Procedure calls cannot exist without the corresponding procedure
+             * definition.  Enforce this link whenever an event is fired.
+             * @param {!Blockly.Events.Abstract} event Change event.
+             * @this Blockly.Block
+             */
+            onchange: function(event: any) {
+                if (!this.workspace || this.workspace.isFlyout) {
+                    // Block is deleted or is in a flyout.
+                    return;
+                }
+                if (event.type == Blockly.Events.CREATE &&
+                    event.ids.indexOf(this.id) != -1) {
+                    // Look for the case where a procedure call was created (usually through
+                    // paste) and there is no matching definition.  In this case, create
+                    // an empty definition block with the correct signature.
+                    let name = this.getProcedureCall();
+                    let def = Blockly.Procedures.getDefinition(name, this.workspace);
+                    if (def && (def.type != this.defType_ ||
+                        JSON.stringify((def as any).arguments_) != JSON.stringify(this.arguments_))) {
+                        // The signatures don't match.
+                        def = null;
+                }
+                if (!def) {
+                    Blockly.Events.setGroup(event.group);
+                    /**
+                     * Create matching definition block.
+                     * <xml>
+                     *   <block type="procedures_defreturn" x="10" y="20">
+                     *     <field name="NAME">test</field>
+                     *   </block>
+                     * </xml>
+                     */
+                    let xml = goog.dom.createDom('xml');
+                    let block = goog.dom.createDom('block');
+                    block.setAttribute('type', this.defType_);
+                    let xy = this.getRelativeToSurfaceXY();
+                    let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
+                    let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
+                    block.setAttribute('x', x);
+                    block.setAttribute('y', y);
+                    let field = goog.dom.createDom('field');
+                    field.setAttribute('name', 'NAME');
+                    field.appendChild(document.createTextNode(this.getProcedureCall()));
+                    block.appendChild(field);
+                    xml.appendChild(block);
+                    Blockly.Xml.domToWorkspace(xml, this.workspace);
+                    Blockly.Events.setGroup(false);
+                }
+                } else if (event.type == Blockly.Events.DELETE) {
+                    // Look for the case where a procedure definition has been deleted,
+                    // leaving this block (a procedure call) orphaned.  In this case, delete
+                    // the orphan.
+                    let name = this.getProcedureCall();
+                    let def = Blockly.Procedures.getDefinition(name, this.workspace);
+                    if (!def) {
+                        Blockly.Events.setGroup(event.group);
+                        this.dispose(true, false);
+                        Blockly.Events.setGroup(false);
+                    }
+                }
+            },
+            /**
+             * Add menu option to find the definition block for this call.
+             * @param {!Array} options List of menu options to add to.
+             * @this Blockly.Block
+             */
+            customContextMenu: function(options: any) {
+                let option: any = {enabled: true};
+                option.text = (Blockly as any).Msg.PROCEDURES_HIGHLIGHT_DEF;
+                let name = this.getProcedureCall();
+                let workspace = this.workspace;
+                option.callback = function() {
+                let def = Blockly.Procedures.getDefinition(name, workspace);
+                    def && def.select();
+                };
+                options.push(option);
+            },
+            defType_: 'procedures_defnoreturn'
+        }
+        installBuiltinHelpInfo(proceduresCallId);
+
+        Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
+            let xmlList: HTMLElement[] = [];
+
+            const newFunction = lf("Make a Function");
+            const newFunctionTitle = lf("New function name:");
+
+            // Add the "Make a function" button
+            let button = goog.dom.createDom('button');
+            button.setAttribute('text', newFunction);
+            button.setAttribute('callbackKey', 'CREATE_FUNCTION');
+
+            let createFunction = (name: string) => {
+                /**
+                 * Create matching definition block.
+                 * <xml>
+                 *   <block type="procedures_defreturn" x="10" y="20">
+                 *     <field name="NAME">test</field>
+                 *   </block>
+                 * </xml>
+                 */
+                let topBlock = workspace.getTopBlocks(true)[0];
+                let x = 0, y = 0;
+                if (topBlock) {
+                    let xy = topBlock.getRelativeToSurfaceXY();
+                    x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
+                    y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
+                }
+                let xml = goog.dom.createDom('xml');
+                let block = goog.dom.createDom('block');
+                block.setAttribute('type', 'procedures_defnoreturn');
+                block.setAttribute('x', String(x));
+                block.setAttribute('y', String(y));
+                let field = goog.dom.createDom('field');
+                field.setAttribute('name', 'NAME');
+                field.appendChild(document.createTextNode(name));
+                block.appendChild(field);
+                xml.appendChild(block);
+                let newBlockIds = Blockly.Xml.domToWorkspace(xml, workspace);
+                // Close flyout and highlight block
+                (workspace as any).toolbox_.clearSelection();
+                let newBlock = workspace.getBlockById(newBlockIds[0]);
+                newBlock.select();
+            }
+
+            workspace.registerButtonCallback('CREATE_FUNCTION', function(button) {
+                let promptAndCheckWithAlert = (defaultName: string) => {
+                    Blockly.prompt(newFunctionTitle, defaultName, function(newFunc) {
+                        // Merge runs of whitespace.  Strip leading and trailing whitespace.
+                        // Beyond this, all names are legal.
+                        if (newFunc) {
+                            newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
+                            if (newFunc == newFunction) {
+                                // Ok, not ALL names are legal...
+                                newFunc = null;
+                            }
+                        }
+                        if (newFunc) {
+                            if (workspace.variableIndexOf(newFunc) != -1) {
+                                Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
+                                    newFunc.toLowerCase()),
+                                    function() {
+                                        promptAndCheckWithAlert(newFunc);  // Recurse
+                                    });
+                            }
+                            else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
+                                Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+                                    newFunc.toLowerCase()),
+                                    function() {
+                                        promptAndCheckWithAlert(newFunc);  // Recurse
+                                    });
+                            }
+                            else {
+                                createFunction(newFunc);
+                            }
+                        }
+                    });
+                };
+                promptAndCheckWithAlert('doSomething');
+            });
+            xmlList.push(button as HTMLElement);
+
+            function populateProcedures(procedureList: any, templateName: any) {
+                for (let i = 0; i < procedureList.length; i++) {
+                    let name = procedureList[i][0];
+                    let args = procedureList[i][1];
+                    // <block type="procedures_callnoreturn" gap="16">
+                    //   <field name="NAME">name</field>
+                    // </block>
+                    let block = goog.dom.createDom('block');
+                    block.setAttribute('type', templateName);
+                    block.setAttribute('gap', '16');
+                    block.setAttribute('colour', getNamespaceColor('functions'));
+                    let field = goog.dom.createDom('field', null, name);
+                    field.setAttribute('name', 'NAME');
+                    block.appendChild(field);
+                    xmlList.push(block as HTMLElement);
+                }
+            }
+
+            let tuple = Blockly.Procedures.allProcedures(workspace);
+            populateProcedures(tuple[0], 'procedures_callnoreturn');
+
+            return xmlList;
+        }
     }
 
     function initLogic() {

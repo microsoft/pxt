@@ -18,7 +18,7 @@ namespace pxt.blocks {
             fn.parameters.forEach(pr => attrNames[pr.name] = {
                 name: pr.name,
                 type: pr.type,
-                shadowValue: pr.defaults ? pr.defaults[0] : undefined
+                shadowValue: pr.default || undefined
             });
         if (fn.attributes.block) {
             Object.keys(attrNames).forEach(k => attrNames[k].name = "");
@@ -364,6 +364,25 @@ namespace pxt.blocks {
                 category: 'text',
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")
+                }
+            },
+            'procedures_defnoreturn': {
+                name: Util.lf("define the function"),
+                tooltip: Util.lf("Create a function."),
+                url: 'types/function/define',
+                category: 'functions',
+                block: {
+                    PROCEDURES_DEFNORETURN_TITLE: Util.lf("function"),
+                    PROCEDURE_ALREADY_EXISTS: Util.lf("A function named '%1' already exists.")
+                }
+            },
+            'procedures_callnoreturn': {
+                name: Util.lf("call the function"),
+                tooltip: Util.lf("Call the user-defined function."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                    PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
             }
         };

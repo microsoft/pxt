@@ -20,7 +20,7 @@ namespace ts.pxtc {
         description: string;
         type: string;
         initializer?: string;
-        defaults?: string[];
+        default?: string;
         properties?: PropertyDesc[];
         options?: pxt.Map<PropertyOption>;
         isEnum?: boolean;
@@ -401,6 +401,12 @@ namespace ts.pxtc {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
+                if (!res.paramDefl[name]) {
+                    let m = /\beg\.?:\s*(.+)/.exec(desc);
+                    if (m) {
+                        res.paramDefl[name] = m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim())[0] : undefined;
+                    }
+                }
                 return ""
             })
             res.jsDoc += doccmt

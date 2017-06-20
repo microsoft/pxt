@@ -57,13 +57,14 @@ declare namespace pxt {
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
+        functionBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
-        extraBlocks?: BlockToolboxDefinition[];
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        extraBlocks?: BlockToolboxDefinition[];  // deprecated
     }
 
     interface AppAnalytics {

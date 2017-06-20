@@ -1,38 +1,62 @@
 # MakeCode (PXT) Documentation
 
-These pages contain documentation for Microsoft MakeCode.
-MakeCode is a toolkit to create JavaScript/Blocks online editors.
+These pages contain documentation for Microsoft MakeCode, a framework
+for creating JavaScript/Blocks online editors.
 
 [Microsoft MakeCode](https://www.makecode.com) is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
 
 ## For MakeCode users
 
-* [Blog](/blog) - our release and developer blog
-* [JavaScript Editor features](/js/editor) -- a comprehensive list of features supported by the JavaScript Editor
-* [Static TypeScript (Javascript with types)](/language) -- see which features are supported
+* [About MakeCode](/about)
+* [Blog](/blog)
+* [Contact Us](/contact)
+* [JS Editor Features](/js/editor)
+* [Programming Language](/language)
+* [Technical Docs](/docs)
 
 ## Documentation and translation
 
-* [writing docs](/writing-docs), leverage the markdown-based documentation system
-* [translations](/translate)
+### [Writing Docs](/writing-docs)
 
-## PXT developer resources
+* [Macros](/writing-docs/macros)
+* [Anchors](/writing-docs/anchors)
+* [Routing](/writing-docs/routing)
+* [Testing](/writing-docs/testing)
 
-### [pxt command line interface](/cli)
+### [Translations](/translate)
 
-### [creating a PXT target](/target-creation)
+## For PXT developers
+
+### [Creating Targets](/target-creation)
 * [pxtarget.json](/targets/pxtarget)
-* [expose your APIs as blocks](/defining-blocks)
-* [auto-generation of library files](/simshim), from C++ or TypeScript
-* [async functions and threads](/async)
-* [board definition](/targets/board)
-* [theming](/targets/theming)
+* [Defining Blocks](/defining-blocks)
+* [Auto-generation of .d.ts](/simshim)
+* [Static File Drops](/cli/staticpkg)
+* [Simulator](/targets/simulator)
+* [Theming Editor](/targets/theming)
+* [Board Definition](/targets/board)
+* [Async Functions](/async)
+* [Partial Flashing](/partial-flashing)
+* [Source Embedding](/source-embedding)
 
-### [creating a PXT package](/packages)
+### [Creating Packages](/packages)
+* [pxt.json](/packages/pxtJson)
 
-### resources specific to devices
+### [Command Line Interface](/cli)
+* [build](/cli/build)
+* [bump](/cli/bump)
+* [cherrypick](/cli/cherrypick)
+* [deploy](/cli/deploy)
+* [electron](/cli/electron)
+* [login](/cli/login)
+* [staticpkg](/cli/staticpkg)
+* [update](/cli/update)
+* [pyconv](/cli/pyconv)
+* [hidserial](/cli/hidserial)
+
+## Resources specific to devices
 
 * [UF2 file format](http://github.com/microsoft/uf2) 
-* [embedding source code](/source-embedding)
-* [partial flashing](/partial-flashing)
+
+
 

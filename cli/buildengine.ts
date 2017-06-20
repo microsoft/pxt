@@ -118,6 +118,15 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
+    for (let f of nodeutil.allFiles(buildEngine.buildPath, 8, true)) {
+        let bn = f.slice(buildEngine.buildPath.length)
+        bn = bn.replace(/\\/g, "/").replace(/^\//, "/")
+        if (U.startsWith(bn, "/source/") && !allFiles[bn]) {
+            pxt.log("removing stale " + bn)
+            fs.unlinkSync(f)
+        }
+    }
+
     U.iterMap(allFiles, (fn, v) => {
         fn = buildEngine.buildPath + fn
         nodeutil.mkdirP(path.dirname(fn))

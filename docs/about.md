@@ -3,16 +3,17 @@
 **Microsoft MakeCode** is a framework for creating special-purpose programming experiences for beginners,
 especially focused on computer science education. 
 
-Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
+Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, 
+``PXT`` is used in all the GitHub sources.
 
 MakeCode's underlying programming language 
-is a subset of TypeScript (leaving out JavaScript dynamic features).
+is a [subset of TypeScript](/language), omitting JavaScript dynamic features.
 
 The main features of MakeCode are:
 
 * a [Google Blockly](https://developers.google.com/blockly/)-based code editor along with converter to JavaScript
 * a [Monaco](https://github.com/Microsoft/monaco-editor)-based text editor with enhanced, robust auto-completion and auto-correction powered by [TypeScript](https://www.typescriptlang.org/).
-* extensibility support to define new blocks in TypeScript or C++
+* extensibility support to [define blocks](/defining-blocks) via TypeScript or C++
 * markdown-based documentation system with built-in macros to render block snippets
 * an ARM Thumb machine code emitter
 * a command-line package manager
