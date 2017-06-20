@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [Timing Advantures in Infrared](/blog/timing-adventures-in-infrared)
+## [Timing Adventures in Infrared](/blog/timing-adventures-in-infrared)
 
 June 20, 2017 by [mmoskal](https://github.com/mmoskal)
 
