@@ -12,7 +12,6 @@ namespace pxsim {
 
     let refObjId = 1;
     let liveRefObjs: any = {};
-    let stringLiterals: any;
     let stringRefCounts: any = {};
     let refCounting = true;
     let floatingPoint = false;
@@ -220,52 +219,10 @@ namespace pxsim {
                 delete liveRefObjs[o.id + ""]
                 o.destroy()
             }
-        } else if (typeof v == "string") {
-            if (stringLiterals && !stringLiterals.hasOwnProperty(v)) {
-                stringRefDelta(v, -1)
-            }
-        } else if (!v) {
-            // OK (null)
-        } else if (typeof v == "function") {
-            // OK (function literal)
-        } else if (typeof v == "number" || v === true) {
-            // OK (number)
-        } else {
-            throw new Error("bad decr: " + typeof v)
         }
     }
 
-    export function setupStringLiterals(strings: any) {
-        // reset
-        liveRefObjs = {};
-        stringRefCounts = {};
-
-        // and set up strings
-        strings[""] = 1
-        strings["true"] = 1
-        strings["false"] = 1
-        strings["null"] = 1
-        strings["undefined"] = 1
-
-        // comment out next line to disable string ref counting
-        // stringLiterals = strings
-    }
-
-    function stringRefDelta(s: string, n: number) {
-        if (!stringRefCounts.hasOwnProperty(s))
-            stringRefCounts[s] = 0
-        let r = (stringRefCounts[s] += n)
-        if (r == 0)
-            delete stringRefCounts[s]
-        else
-            check(r > 0)
-        return r
-    }
-
     export function initString(v: string) {
-        if (!v || !stringLiterals) return v
-        if (typeof v == "string" && !stringLiterals.hasOwnProperty(v))
-            stringRefDelta(v, 1)
         return v
     }
 
@@ -275,9 +232,6 @@ namespace pxsim {
             let o = <RefObject>v
             check(o.refcnt > 0)
             o.refcnt++
-        } else if (stringLiterals && typeof v == "string" && !stringLiterals.hasOwnProperty(v)) {
-            let k = stringRefDelta(v, 1)
-            check(k > 1)
         }
         return v;
     }

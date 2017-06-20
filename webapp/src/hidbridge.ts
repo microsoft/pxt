@@ -61,13 +61,14 @@ export function shouldUse() {
     return pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && Cloud.isLocalHost() && !!Cloud.localToken
 }
 
-
-export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
+function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
     init()
     let b = new BridgeIO()
     return b.initAsync()
         .then(() => b);
 }
+
+export var mkPacketIOAsync = mkBridgeAsync;
 
 class BridgeIO implements pxt.HF2.PacketIO {
     onData = (v: Uint8Array) => { };
@@ -142,7 +143,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
 }
 
 function hf2Async() {
-    return mkBridgeAsync()
+    return mkPacketIOAsync()
         .then(h => {
             let w = new pxt.HF2.Wrapper(h)
             return w.reconnectAsync(true)

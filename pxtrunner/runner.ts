@@ -309,6 +309,11 @@ namespace pxt.runner {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let url = mp[1] == "doc" ? `${mp[2]}` : `${docsUrl}?md=${mp[2]}`;
                     window.open(url, "_blank");
+                    // notify parent iframe that we have completed the popout
+                    if (window.parent)
+                        window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{
+                            type: "popoutcomplete"
+                        }, "*");
                 }
                 break;
             case "localtoken":
@@ -591,9 +596,11 @@ ${files["main.ts"]}
                         // Split the steps
                         let stepcontent = content.innerHTML.split(/<h3.*\/h3>/gi);
                         for (let i = 0; i < stepcontent.length - 1; i++) {
-                            stepInfo[i].headerContent = stepcontent[i + 1].split(/(<.*?>.*<\/.*?>)/i)[1];
+                            content.innerHTML = stepcontent[i + 1];
+                            stepInfo[i].headerContent = `<p>` + content.firstElementChild.innerHTML + `</p>`;
                             stepInfo[i].content = stepcontent[i + 1];
                         }
+                        content.innerHTML = '';
                         // return the result
                         window.parent.postMessage(<pxsim.TutorialLoadedMessage>{
                             type: "tutorial",

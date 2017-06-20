@@ -16,7 +16,11 @@
     <PackageRegistrationPath>
     </PackageRegistrationPath>
     <RemoveNonLayoutFiles>true</RemoveNonLayoutFiles>
-    <RegisteredManifestChecksum>AF4C47D5F8E780FFD2BE34680C56B3C0386325AC2153BB4A0B22F5EC2CF5A580</RegisteredManifestChecksum>
+    <DeployOptionalPackages>false</DeployOptionalPackages>
+    <WindowsSdkPath>
+    </WindowsSdkPath>
+    <LayoutDir>C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\AppX</LayoutDir>
+    <RegisteredManifestChecksum>F1F0C39A68CE411F505DFE21BD50C7D6BAC19FD9FA3786D587A1DC58B77C62CC</RegisteredManifestChecksum>
     <RegisteredPackageMoniker>d6f74a43-358f-4081-88bc-7b2242586346_1.0.0.0_neutral__xnsf0qvfx7rsy</RegisteredPackageMoniker>
     <RegisteredUserModeAppID>d6f74a43-358f-4081-88bc-7b2242586346_xnsf0qvfx7rsy!App</RegisteredUserModeAppID>
     <RegisteredPackageID>d6f74a43-358f-4081-88bc-7b2242586346</RegisteredPackageID>
@@ -28,60 +32,60 @@
     <AppXManifest Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-03-23T16:42:14.436</Modified>
+      <Modified>2017-06-02T15:54:35.207</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\msapp-error.js">
       <PackagePath>msapp-error.js</PackagePath>
-      <Modified>2016-12-12T05:21:49.528</Modified>
+      <Modified>2017-05-11T14:12:51.446</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\msapp-error.css">
       <PackagePath>msapp-error.css</PackagePath>
-      <Modified>2016-12-12T05:21:49.476</Modified>
+      <Modified>2017-05-11T14:12:51.442</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\msapp-error.html">
       <PackagePath>msapp-error.html</PackagePath>
-      <Modified>2016-12-12T05:21:49.502</Modified>
+      <Modified>2017-05-11T14:12:51.444</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\images\LockScreenLogo.scale-200.png">
       <PackagePath>images\LockScreenLogo.scale-200.png</PackagePath>
-      <Modified>2016-12-12T05:21:49.442</Modified>
+      <Modified>2017-05-11T14:12:51.416</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\images\SplashScreen.scale-200.png">
       <PackagePath>images\SplashScreen.scale-200.png</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-12-12T05:21:49.449</Modified>
+      <Modified>2017-05-11T14:12:51.421</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\images\Square150x150Logo.scale-200.png">
       <PackagePath>images\Square150x150Logo.scale-200.png</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-12-12T05:21:49.453</Modified>
+      <Modified>2017-05-11T14:12:51.428</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\images\Square44x44Logo.scale-200.png">
       <PackagePath>images\Square44x44Logo.scale-200.png</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-12-12T05:21:49.456</Modified>
+      <Modified>2017-05-11T14:12:51.430</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\images\Square44x44Logo.targetsize-24_altform-unplated.png">
       <PackagePath>images\Square44x44Logo.targetsize-24_altform-unplated.png</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-12-12T05:21:49.457</Modified>
+      <Modified>2017-05-11T14:12:51.432</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\images\StoreLogo.png">
       <PackagePath>images\StoreLogo.png</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-12-12T05:21:49.459</Modified>
+      <Modified>2017-05-11T14:12:51.434</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\images\Wide310x150Logo.scale-200.png">
       <PackagePath>images\Wide310x150Logo.scale-200.png</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2016-12-12T05:21:49.460</Modified>
+      <Modified>2017-05-11T14:12:51.436</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\gh\pxt\pxtwapp\pxtwappdbg\bin\Debug\ReverseMap\resources.pri">
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-03-23T16:42:14.198</Modified>
+      <Modified>2017-06-02T15:54:35.124</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>

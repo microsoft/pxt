@@ -1,0 +1,49 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block type="pxt-on-start" id="q#:z$@}s.9hgO(*%6aI7" x="-203" y="157">
+    <statement name="HANDLER">
+      <block type="array_push" id="W@~#qBIOefv.,m/-H=b}">
+        <value name="list">
+          <block type="lists_index_get" id="2ic(|.)d3^r5kqk%=~#W">
+            <value name="LIST">
+              <block type="variables_get" id="ycM6k)z.@QJ[@bs^,87n">
+                <field name="VAR">myList</field>
+              </block>
+            </value>
+            <value name="INDEX">
+              <shadow type="math_number" id="(3;tAfWN$XEMx5k17iqv">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+          </block>
+        </value>
+        <value name="value">
+          <block type="text" id="!YWl9}bT2Y!XkWNf6)zt">
+            <field name="TEXT"></field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set" id="c*EydZvr[mcS$i7fh]D4">
+            <field name="VAR">item</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="Ke).)S=vUuX)u#Lf#{PJ">
+                <field name="NUM">0</field>
+              </shadow>
+              <block type="lists_index_get" id="9I9RHC$YC`iDrhl~3JpY">
+                <value name="LIST">
+                  <block type="variables_get" id="lR_(R(J2uzgehJ3o#Fd;">
+                    <field name="VAR">myList</field>
+                  </block>
+                </value>
+                <value name="INDEX">
+                  <shadow type="math_number" id="Z;yVh|0]{X,cauM6S_8:">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+              </block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

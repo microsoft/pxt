@@ -28,11 +28,12 @@ namespace ts.pxtc {
 
     export function nodeLocationInfo(node: ts.Node) {
         let file = getSourceFileOfNode(node)
-        const { line, character } = ts.getLineAndCharacterOfPosition(file, node.pos);
+        const nodeStart = node.getStart ? node.getStart() : node.pos;
+        const { line, character } = ts.getLineAndCharacterOfPosition(file, nodeStart);
         const { line: endLine, character: endChar } = ts.getLineAndCharacterOfPosition(file, node.end);
         let r: LocationInfo = {
-            start: node.pos,
-            length: node.end - node.pos,
+            start: nodeStart,
+            length: node.end - nodeStart,
             line: line,
             column: character,
             endLine: endLine,
@@ -135,6 +136,13 @@ namespace ts.pxtc {
             opts.sourceFiles = Object.keys(opts.fileSystem)
 
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
+        // ensure that main.ts is last of TS files
+        let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
+        if (tsFiles.length > tsFilesNoMain.length) {
+            tsFiles = tsFilesNoMain
+            tsFiles.push("main.ts")
+        }
+        // TODO: ensure that main.ts is last???
         let program = createProgram(tsFiles, options, host);
 
         // First get and report any syntactic errors.
