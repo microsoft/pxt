@@ -597,10 +597,17 @@ export class Editor extends srceditor.Editor {
                     el = monacoEditor.createCategoryElement(ns, md.color, md.icon, true, blocks, undefined, categoryName);
                 }
                 else {
-                    let blocks = snippets.getBuiltinCategory(ns).blocks;
+                    let cat = snippets.getBuiltinCategory(ns);
+                    let blocks = cat.blocks;
+                    let name = cat.name;
+
+                    if (!blocks || !blocks.length) {
+                        return;
+                    }
+
                     blocks.forEach(b => { b.noNamespace = true })
                     if (monacoEditor.nsMap[ns.toLowerCase()]) blocks = blocks.concat(monacoEditor.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
-                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, false, blocks, null, ns);
+                    el = monacoEditor.createCategoryElement(ns, md.color, md.icon, false, blocks, null, name);
                 }
                 group.appendChild(el);
             });

@@ -8,7 +8,7 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
-import defaultToolbox from "./toolbox"
+import * as baseToolbox from "./toolbox";
 
 import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
@@ -646,7 +646,7 @@ export class Editor extends srceditor.Editor {
 
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
         return showCategories !== CategoryMode.None ?
-            defaultToolbox.documentElement
+            baseToolbox.getBaseToolboxDom().documentElement
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
 
