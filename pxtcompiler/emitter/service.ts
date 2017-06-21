@@ -243,6 +243,8 @@ namespace ts.pxtc {
             const ns = ts.pxtc.blocksCategory(si);
             if (ns)
                 locStrings[`{id:category}${ns}`] = ns;
+            if (si.attributes.subcategory)
+                locStrings[`{id:category}${si.attributes.subcategory}`] = si.attributes.subcategory;
             if (si.attributes.jsDoc)
                 jsdocStrings[si.qName] = si.attributes.jsDoc;
             if (si.attributes.block)
