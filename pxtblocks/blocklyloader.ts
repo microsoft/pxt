@@ -395,14 +395,15 @@ namespace pxt.blocks {
         let ci = 0;
         for (ci = 0; ci < categories.length; ++ci) {
             let cat = categories[ci];
+            const catAdvanced = cat.hasAttribute("advanced") && cat.getAttribute("advanced") !== "false";
 
             // Advanced categories always come last
             if (isAdvanced) {
-                if (!cat.hasAttribute("advanced")) {
+                if (!catAdvanced) {
                     continue;
                 }
             }
-            else if (cat.hasAttribute("advanced")) {
+            else if (catAdvanced) {
                 tb.insertBefore(category, cat);
                 break;
             }
@@ -873,66 +874,18 @@ namespace pxt.blocks {
         if (tb && showCategories !== CategoryMode.None) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
-            if (!config.mathBlocks) removeCategory(tb, "Math");
-            if (!config.variablesBlocks) removeCategory(tb, "Variables");
-            if (!config.logicBlocks) removeCategory(tb, "Logic");
-            if (!config.loopsBlocks) removeCategory(tb, "Loops");
+            initBuiltinCategoryXml("Math", !config.mathBlocks);
+            initBuiltinCategoryXml("Variables", !config.variablesBlocks);
+            initBuiltinCategoryXml("Logic", !config.logicBlocks);
+            initBuiltinCategoryXml("Loops", !config.loopsBlocks);
+            initBuiltinCategoryXml("Text", !config.textBlocks);
+            initBuiltinCategoryXml("Arrays", !config.listsBlocks);
+            initBuiltinCategoryXml("Functions", !config.functionBlocks);
 
-            // Advanced builtin categories
-            if (!config.textBlocks) {
-                removeCategory(tb, "Text");
-            }
-            else {
-                showAdvanced = true;
-                const cat = categoryElement(tb, "Text");
+            if (!config.listsBlocks && config.loopsBlocks) {
+                const cat = categoryElement(tb, "Loops");
                 if (cat) {
-                    const blockElements = cat.getElementsByTagName("block");
-                    for (let i = 0; i < blockElements.length; i++) {
-                        const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
-                    }
-                }
-                if (showCategories === CategoryMode.Basic) {
-                    removeCategory(tb, "Text");
-                }
-            }
-            if (!config.functionBlocks) {
-                removeCategory(tb, "Functions");
-            }
-            else {
-                showAdvanced = true;
-                const cat = categoryElement(tb, "Functions");
-                if (cat) {
-                    const blockElements = cat.getElementsByTagName("block");
-                    for (let i = 0; i < blockElements.length; i++) {
-                        const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
-                    }
-                }
-                if (showCategories === CategoryMode.Basic) {
-                    removeCategory(tb, "Functions");
-                }
-            }
-
-            if (!config.listsBlocks) {
-                removeCategory(tb, "Arrays");
-                if (config.loopsBlocks) {
-                    const cat = categoryElement(tb, "Loops");
                     cat.removeChild(getFirstChildWithAttr(cat, "block", "type", "controls_for_of"))
-                }
-            }
-            else {
-                showAdvanced = true;
-                const cat = categoryElement(tb, "Arrays");
-                if (cat) {
-                    const blockElements = cat.getElementsByTagName("block");
-                    for (let i = 0; i < blockElements.length; i++) {
-                        const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
-                    }
-                }
-                if (showCategories === CategoryMode.Basic) {
-                    removeCategory(tb, "Arrays");
                 }
             }
 
@@ -1101,6 +1054,34 @@ namespace pxt.blocks {
         }
 
         return tb;
+
+
+        function initBuiltinCategoryXml(name: string, remove: boolean) {
+            if (remove) {
+                 removeCategory(tb, name);
+                 return;
+            }
+
+            const cat = categoryElement(tb, name);
+            if (cat) {
+                const attr = cat.getAttribute("advanced");
+                if (attr && attr !== "false") {
+                    showAdvanced = true;
+
+                    // Record all block usages in case this category doesn't show up
+                    // in the toolbox (i.e. advanced is collapsed)
+                    const blockElements = cat.getElementsByTagName("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+
+                    if (showCategories === CategoryMode.Basic) {
+                        removeCategory(tb, name);
+                    }
+                }
+            }
+        }
     }
 
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
