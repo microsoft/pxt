@@ -58,7 +58,8 @@ function init() {
 }
 
 export function shouldUse() {
-    return pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && Cloud.isLocalHost() && !!Cloud.localToken
+    return pxt.appTarget.serial && pxt.appTarget.serial.useHF2 &&
+        (Cloud.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
 function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {

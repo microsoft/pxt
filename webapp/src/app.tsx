@@ -1789,7 +1789,7 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!pxt.appTarget.serial || !Cloud.isLocalHost() || !Cloud.localToken)
+    if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {

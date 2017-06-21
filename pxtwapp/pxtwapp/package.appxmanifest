@@ -14,10 +14,11 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" StartPage="https://makecode.adafruit.com">
-    <!--<Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1">-->
+    <!--<Application Id="App" StartPage="https://makecode.adafruit.com">-->
+    <Application Id="App" StartPage="http://localhost:3232/index.html?nolocalhost=1">
       <uap:ApplicationContentUriRules>
         <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="http://localhost:3232/index.html?nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://pxt.microbit.org" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://makecode.adafruit.com" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://mini.pxt.io" Type="include" WindowsRuntimeAccess="all" />
