@@ -1,5 +1,5 @@
 const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display: none">
-    <category name="Loops" nameid="loops" colour="#107c10" category="50" iconclass="blocklyTreeIconloops">
+    <category name="Loops" nameid="loops" colour="#107c10" category="50" iconclass="blocklyTreeIconloops" expandedclass="blocklyTreeIconloops">
         <block type="controls_repeat_ext">
             <value name="TIMES">
                 <shadow type="math_number">
@@ -27,7 +27,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
             </value>
         </block>
     </category>
-    <category name="Logic" nameid="logic" colour="#006970" category="49" iconclass="blocklyTreeIconlogic">
+    <category name="Logic" nameid="logic" colour="#006970" category="49" iconclass="blocklyTreeIconlogic" expandedclass="blocklyTreeIconlogic">
         <block type="controls_if" gap="8">
             <value name="IF0">
                 <shadow type="logic_boolean">
@@ -78,7 +78,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
             <field name="BOOL">FALSE</field>
         </block>
     </category>
-    <category name="Variables" nameid="variables" colour="#A80000" custom="VARIABLE" category="48" iconclass="blocklyTreeIconvariables">
+    <category name="Variables" nameid="variables" colour="#A80000" custom="VARIABLE" category="48" iconclass="blocklyTreeIconvariables" expandedclass="blocklyTreeIconvariables">
     </category>
     <category name="Math" nameid="math" colour="#712672" category="47" iconclass="blocklyTreeIconmath" expandedclass="blocklyTreeIconmath">
         <block type="math_arithmetic" gap="8">
@@ -189,7 +189,7 @@ const defaultToolboxString = `<xml id="blocklyToolboxDefinition" style="display:
             </block>
         </category>
     </category>
-        <category name="Functions" nameid="functions" colour="#005a9e" custom="PROCEDURE" category="46" iconclass="blocklyTreeIconfunctions" advanced="true">
+        <category name="Functions" nameid="functions" colour="#005a9e" custom="PROCEDURE" category="46" iconclass="blocklyTreeIconfunctions" expandedclass="blocklyTreeIconfunctions" advanced="true">
         </category>
     <category colour="#66672C" name="Arrays" nameid="arrays" category="45" iconclass="blocklyTreeIconarrays" expandedclass="blocklyTreeIconarrays" advanced="true">
         <block type="lists_create_with">
