@@ -165,7 +165,6 @@ namespace Math {
      * @param max the upper inclusive bound, eg: 10
      */
     //% blockId="device_random" block="pick random %min|to %limit"
-    //% shim=Math_::randomRange
     //% helpUrl="/blocks/math/random"
     export function randomRange(min: number, max: number): number {
         min = Math.floor(min);
