@@ -326,7 +326,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
 export function promptAsync(options: PromptOptions): Promise<string> {
     if (!options.buttons) options.buttons = []
 
-    let result = options.defaultValue;
+    let result = "";
 
     if (!options.hideAgree) {
         options.buttons.push({
