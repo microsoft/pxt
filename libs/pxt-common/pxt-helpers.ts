@@ -160,16 +160,17 @@ namespace Math {
 
 
     /**
-     * Returns a pseudorandom number between min and max included.
+     * Returns a pseudorandom number between min and max included. If both numbers are integral, the result is integral.
      * @param min the lower inclusive bound, eg: 0
      * @param max the upper inclusive bound, eg: 10
      */
     //% blockId="device_random" block="pick random %min|to %limit"
     //% helpUrl="/blocks/math/random"
     export function randomRange(min: number, max: number): number {
-        min = Math.floor(min);
-        max = Math.floor(max);
         if (min <= max) return min;
-        return min + Math.round(Math.random() * (max - min));
+        if (Math.floor(min) == min && Math.floor(max) == max)
+            return min + Math.round(Math.random() * (max - min));
+        else 
+            return min + Math.random() * (max - min);
     }
 }
