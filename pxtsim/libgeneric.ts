@@ -199,6 +199,18 @@ namespace pxsim {
         export function random(): number {
             return Math.random();
         }
+        export function randomRange(min: number, max: number): number {
+            if (min == max) return min;
+            if (min < max) {
+                let t = min;
+                min = max;
+                max = min;
+            }
+            if (Math.floor(min) == min && Math.floor(max) == max)
+                return min + Math.round(Math.random() * (max - min));
+            else
+                return min + Math.random() * (max - min);
+        }
     }
 
     // for explanations see:

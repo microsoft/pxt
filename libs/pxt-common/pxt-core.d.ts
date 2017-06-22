@@ -275,6 +275,17 @@ declare namespace Math {
     function random(): number;
 
     /**
+     * Returns a pseudorandom number between min and max included. 
+     * If both numbers are integral, the result is integral.
+     * @param min the lower inclusive bound, eg: 0
+     * @param max the upper inclusive bound, eg: 10
+     */
+    //% blockId="device_random" block="pick random %min|to %limit"
+    //% helpUrl="/reference/math/random-range"
+    //% shim=Math_::randomRange
+    function randomRange(min: number, max: number): number;
+
+    /**
      * Returns the natural logarithm (base e) of a number.
      * @param x A number
      */

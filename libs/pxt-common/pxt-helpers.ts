@@ -157,21 +157,4 @@ namespace Math {
         if (a <= b) return a;
         return b;
     }
-
-
-    /**
-     * Returns a pseudorandom number between min and max included. 
-     * If both numbers are integral, the result is integral.
-     * @param min the lower inclusive bound, eg: 0
-     * @param max the upper inclusive bound, eg: 10
-     */
-    //% blockId="device_random" block="pick random %min|to %limit"
-    //% helpUrl="/reference/math/random-range"
-    export function randomRange(min: number, max: number): number {
-        if (min >= max) return min;
-        if (Math.floor(min) == min && Math.floor(max) == max)
-            return min + Math.round(Math.random() * (max - min));
-        else
-            return min + Math.random() * (max - min);
-    }
 }
