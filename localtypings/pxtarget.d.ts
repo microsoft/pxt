@@ -111,8 +111,14 @@ declare namespace pxt {
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
-        githubCorePackage?: string; // microsoft/pxt-microbit-core
+        
         platformioIni?: string[];
+
+        codalTarget?: string;
+        codalBinary?: string;
+        codalDefinitions?: any;
+
+        githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio

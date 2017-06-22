@@ -146,8 +146,12 @@ namespace pxt.cpp {
         pxt.debug("Generating new extinfo")
         const res = pxtc.emptyExtInfo();
         const isPlatformio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        const isCodal = pxt.appTarget.compileService && pxt.appTarget.compileService.buildEngine == "codal"
+        const isYotta = !isPlatformio && !isCodal
         if (isPlatformio)
             sourcePath = "/src/"
+        else if (isCodal)
+            sourcePath = "/application/"
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -501,10 +505,10 @@ namespace pxt.cpp {
                         protos.write(`${retTp} ${funName}(${origArgs});`)
                     }
                     res.functions.push(fi)
-                    if (isPlatformio)
-                        pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
-                    else
+                    if (isYotta)
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
+                    else
+                        pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
                     return;
                 }
 
@@ -594,7 +598,7 @@ namespace pxt.cpp {
 
 
         // This is overridden on the build server, but we need it for command line build
-        if (!isPlatformio && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (isYotta && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             let cs = pxt.appTarget.compileService
             U.assert(!!cs.yottaCorePackage);
             U.assert(!!cs.githubCorePackage);
@@ -654,7 +658,23 @@ namespace pxt.cpp {
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
         const configJson = U.jsonUnFlatten(optSettings)
-        if (isPlatformio) {
+        if (isCodal) {
+            let cs = pxt.appTarget.compileService
+            let codalJson = {
+                "target": cs.codalTarget + ".json",
+                "definitions": U.clone(cs.codalDefinitions) || {},
+                "application": "application",
+                "output_folder": ".",
+                // include these, because we use hash of this file to see if anything changed
+                "pxt_gitrepo": cs.githubCorePackage,
+                "pxt_gittag": cs.gittag,
+            }
+            U.iterMap(U.jsonFlatten(configJson), (k, v) => {
+                k = k.toUpperCase().replace(/\./g, "_").replace("CODAL_", "DEVICE_")
+                codalJson.definitions[k] = v
+            })
+            res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
+        } else if (isPlatformio) {
             const iniLines = pxt.appTarget.compileService.platformioIni.slice()
             // TODO merge configjson
             iniLines.push("lib_deps =")
@@ -710,7 +730,7 @@ int main() {
             config: compileService.serviceId,
             tag: compileService.gittag,
             replaceFiles: tmp,
-            dependencies: (!isPlatformio ? res.yotta.dependencies : null)
+            dependencies: (isYotta ? res.yotta.dependencies : null)
         }
 
         let data = JSON.stringify(creq)
