@@ -1,0 +1,9 @@
+{
+    "name": "empty",
+    "description": "An empty project for docs rendering",
+    "files": [
+        "main.ts"
+    ],
+    "public": true,
+    "dependencies": {}
+}

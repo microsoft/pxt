@@ -89,13 +89,22 @@ code {
     padding-bottom: 0.2em;
     margin: 0;
     font-size: 85%;
-    background-color: rgba(0,0,0,0.04);
     border-radius: 3px;
 }
 
-code:before, code:after {
+p code, li code {
+    background-color: rgba(0,0,0,0.04);    
+}
+
+p code:before, p code:after,
+li code:before, li code:after {
     letter-spacing: -0.2em;
+    padding: 0 !important;
     content: "\00a0";
+}
+
+code.hljs {
+    padding: 0 !important;
 }
 
 .ui[class*="5:3"].embed {
@@ -107,6 +116,7 @@ code {
         white-space: pre-wrap;
 }
 code.lang-config, code.lang-package { display: none;}
+code.lang-block::before,
 code.lang-blocks::before,
 code.lang-sig::before,
 code.lang-block::before,
@@ -121,6 +131,7 @@ code.lang-codecard::before
     top:calc(50% - 0.5em);
     left:calc(50% - 5em);
 }
+code.lang-block,
 code.lang-blocks,
 code.lang-sig,
 code.lang-block,
@@ -130,11 +141,8 @@ code.lang-cards,
 code.lang-namespaces,
 code.lang-codecard
 {
+    background-color: rgba(0,0,0,0.04);
     color:transparent;   
-}
-
-code.lang-typescript {
-    background: none !important;
 }
 
 /* Limit width of text so that it's readable
@@ -354,11 +362,17 @@ print only stuff
     }
     /* bigger fonts */
     body {
-        color: #000; /* explicit colors */
-        background: #fff;
+        color: #000 !important; /* explicit colors */
+        background: #fff !important;        
         font-size: 12pt;
         line-height: 1.3;
     }    
+    body.pushable {
+        background: #fff !important;        
+    }
+    .pusher {
+        background: transparent !important;
+    }
     /* page margins */
     @page {
         margin-top: 2cm;
@@ -382,5 +396,11 @@ print only stuff
     ul, ol, img, h2, h3 {
         page-break-inside: avoid;
     }
-    /* headers, footers */ 
+    /* headers, footers */
+    /* messages */
+    .ui.message {
+        background: none !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
 }

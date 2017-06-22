@@ -194,11 +194,83 @@ namespace pxt.editor {
 
     }
 
+    export interface IToolboxOptions {
+        blocklyXml?: string;
+        monacoToolbox?: MonacoToolboxDefinition;
+    }
+
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
+        toolboxOptions?: IToolboxOptions;
+    }
+
+    export interface MonacoToolboxDefinition {
+        loops?: MonacoToolboxCategoryDefinition;
+        logic?: MonacoToolboxCategoryDefinition;
+        variables?: MonacoToolboxCategoryDefinition;
+        maths?: MonacoToolboxCategoryDefinition;
+        text?: MonacoToolboxCategoryDefinition;
+        arrays?: MonacoToolboxCategoryDefinition;
+    }
+
+    export interface MonacoToolboxCategoryDefinition {
+        /**
+         * The display name for the category
+         */
+        name?: string;
+
+        /**
+         * The weight of the category relative to other categories in the toolbox
+         */
+        weight?: number;
+
+        /**
+         * Blocks to appear in the category. Specifying this field will override
+         * all existing blocks in the category. The ordering of the blocks is
+         * determined by the ordering of this array.
+         */
+        blocks?: MonacoToolboxBlockDefinition[];
+    }
+
+    export interface MonacoToolboxBlockDefinition {
+        /**
+         * Name of the API or construct, used in highlighting of snippet. For function
+         * calls, should match the name of the function
+         */
+        name: string;
+
+        /**
+         * Snippet of code to insert when dragged into editor
+         */
+        snippet: string;
+
+        /**
+         * Description of code to appear in the hover text
+         */
+        jsDoc?: string
+
+        /**
+         * Display just the snippet and nothing else. Should be set to true for
+         * language constructs (eg. for-loops) and to false for function
+         * calls (eg. Math.random())
+         */
+        snippetOnly?: boolean;
+
+        /**
+         * Indicates an advanced API. Advanced APIs appear after basic ones in the
+         * toolbox
+         */
+        advanced?: boolean;
+
+        /**
+         * The weight for the block. Blocks are arranged in order of they appear in the category
+         * definition's array but the weight can be specified in the case that other APIs are
+         * dynamically added to the category (eg. loops.forever())
+         */
+        weight?: number;
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;

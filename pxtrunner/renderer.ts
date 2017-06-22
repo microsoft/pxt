@@ -527,23 +527,25 @@ namespace pxt.runner {
 
     function renderTypeScript(options?: ClientRenderOptions) {
         const woptions: WidgetOptions = {
-            showEdit: true,
-            run: true
+            showEdit: !!options.showEdit,
+            run: !!options.simulator
         }
 
         function render(e: Node) {
-            if (typeof hljs !== "undefined")
+            if (typeof hljs !== "undefined") {
+                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
+            }
             fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, woptions);
         }
 
         $('code.lang-typescript').each((i, e) => {
             render(e);
+            $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
             render(e);
             $(e).removeClass('lang-typescript-ignore')
-                .addClass('lang-typescript');
         });
     }
 

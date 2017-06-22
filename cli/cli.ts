@@ -880,6 +880,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/doccdn/": "@commitCdnUrl@",
         "/sim/": "@commitCdnUrl@",
         "/blb/": "@blobCdnUrl@",
+        "@timestamp@": "",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
@@ -3376,8 +3377,19 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
         }
         return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
-    } else return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
-        .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
+    } else {
+        return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
+            .then(() => uploadDocs
+                ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+                    // scan for docs in bundled packages
+                    .then(() => Promise.all(pxt.appTarget.bundleddirs
+                        // there must be a folder under .../docs
+                        .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
+                        // upload to crowdin
+                        .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
+                    )).then(() => { }))
+                : Promise.resolve());
+    }
 }
 
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
