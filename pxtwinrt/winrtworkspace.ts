@@ -11,6 +11,7 @@ namespace pxt.winrt.workspace {
     import U = pxt.Util;
     import Cloud = pxt.Cloud;
     const lf = U.lf
+    const projectRootFolderName = "MakeCode";
 
     let folder: Windows.Storage.StorageFolder;
     let allScripts: HeaderWithScript[] = [];
@@ -88,10 +89,10 @@ namespace pxt.winrt.workspace {
         allScripts = [];
         currentTarget = target;
 
-        const applicationData = Windows.Storage.ApplicationData.current;
-        const localFolder = applicationData.localFolder;
+        const documentsFolder = Windows.Storage.KnownFolders.documentsLibrary;
         pxt.debug(`winrt: initializing workspace`)
-        return promisify(localFolder.createFolderAsync(currentTarget, Windows.Storage.CreationCollisionOption.openIfExists))
+        return promisify(documentsFolder.createFolderAsync(projectRootFolderName, Windows.Storage.CreationCollisionOption.openIfExists))
+            .then(projectsRoot => projectsRoot.createFolderAsync(currentTarget, Windows.Storage.CreationCollisionOption.openIfExists))
             .then(fd => {
                 folder = fd;
                 pxt.debug(`winrt: initialized workspace at ${folder.path}`)

@@ -1,5 +1,18 @@
 /// <reference path="./winrtrefs.d.ts"/>
 namespace pxt.winrt {
+    const fullProjectFileExtensions = [
+        ".uf2",
+        ".hex",
+        ".mkcd",
+        ".pxt"
+    ];
+    const singleProjectFileExtensions = [
+        ".ts",
+        ".blocks",
+        ".md",
+        ".json"
+    ];
+
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             p.done(v => resolve(v), e => reject(e));
@@ -24,38 +37,81 @@ namespace pxt.winrt {
         return typeof Windows !== "undefined";
     }
 
-    export function initAsync(onHexFileImported?: (hex: pxt.cpp.HexFile) => void) {
+    export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void,
+        importFolderImpl?: (headerId: string, createNewIfFailed?: boolean) => void) {
         if (!isWinRT()) return Promise.resolve();
 
         initSerial();
-        if (onHexFileImported)
-            initActivation(onHexFileImported);
-
-        return Promise.resolve();
+        return initialActivationPromise
+            .then((args) => {
+                if (args && args.kind === Windows.ApplicationModel.Activation.ActivationKind.file) {
+                    hasActivationProject = true;
+                }
+                if (importHexImpl) {
+                    importHex = importHexImpl;
+                    importFolder = importFolderImpl;
+                    const app = Windows.UI.WebUI.WebUIApplication as any;
+                    app.removeEventListener("activated", initialActivationHandler);
+                    app.addEventListener("activated", fileActivationHandler);
+                }
+            });
     }
 
-    function initActivation(onHexFileImported: (hex: pxt.cpp.HexFile) => void) {
-        // Subscribe to the Windows Activation Event
-        (Windows.UI.WebUI.WebUIApplication as any).addEventListener("activated", function (args: Windows.ApplicationModel.Activation.IActivatedEventArgs) {
-            let activation = Windows.ApplicationModel.Activation;
-            if (args.kind === activation.ActivationKind.file) {
-                let info = args as Windows.UI.WebUI.WebUIFileActivatedEventArgs;
-                let file: Windows.Storage.IStorageItem = info.files.getAt(0);
-                if (file && file.isOfType(Windows.Storage.StorageItemTypes.file)) {
-                    let f = file as Windows.Storage.StorageFile;
+    // Needed for when user double clicks an associated file without the app already running
+    export function captureInitialActivation() {
+        if (!isWinRT()) {
+            return;
+        }
+        (Windows.UI.WebUI.WebUIApplication as any).addEventListener("activated", initialActivationHandler);
+    }
+
+    export function loadActivationProject() {
+        return initialActivationPromise
+            .then((args) => fileActivationHandler(args, /* createNewIfFailed */ true));
+    }
+
+    export let hasActivationProject = false;
+
+    function initialActivationHandler(args: Windows.ApplicationModel.Activation.IActivatedEventArgs) {
+        (Windows.UI.WebUI.WebUIApplication as any).removeEventListener("activated", initialActivationHandler);
+        resolveInitialActivationPromise(args);
+    }
+
+    const initialActivationPromise = new Promise<Windows.ApplicationModel.Activation.IActivatedEventArgs>((resolve, reject) => {
+        resolveInitialActivationPromise = resolve;
+        // After a few seconds, consider we missed the initial activation event and ignore any double clicked file
+        setTimeout(() => resolve(null), 5000);
+    });
+    let resolveInitialActivationPromise: (args: Windows.ApplicationModel.Activation.IActivatedEventArgs) => void;
+    let importHex: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void;
+    let importFolder: (headerPath: string, createNewIfFailed?: boolean) => void;
+
+    function fileActivationHandler(args: Windows.ApplicationModel.Activation.IActivatedEventArgs, createNewIfFailed = false) {
+        if (args.kind === Windows.ApplicationModel.Activation.ActivationKind.file) {
+            let info = args as Windows.UI.WebUI.WebUIFileActivatedEventArgs;
+            let file: Windows.Storage.IStorageItem = info.files.getAt(0);
+            if (file && file.isOfType(Windows.Storage.StorageItemTypes.file)) {
+                let f = file as Windows.Storage.StorageFile;
+                if (fullProjectFileExtensions.indexOf(f.fileType) > -1) {
                     Windows.Storage.FileIO.readBufferAsync(f)
-                        .done(buffer => {
-                            //let ar = new Uint8Array(buffer.length);
+                        .then(buffer => {
                             let ar: number[] = [];
                             let dataReader = Windows.Storage.Streams.DataReader.fromBuffer(buffer);
-                            dataReader.readBytes(ar);
+                            while (dataReader.unconsumedBufferLength) {
+                                ar.push(dataReader.readByte());
+                            }
                             dataReader.close();
-
-                            pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar))
-                                .done(hex => onHexFileImported(hex));
+                            return pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar));
+                        })
+                        .then((hex) => importHex(hex, createNewIfFailed));
+                } else if (singleProjectFileExtensions.indexOf(f.fileType) > -1) {
+                    // User opened a source file (.ts, .json, etc); attempt to open the parent folder as a project
+                    f.getParentAsync()
+                        .then((fold) => {
+                            importFolder(fold.name, createNewIfFailed);
                         });
                 }
-            };
-        });
+            }
+        }
     }
 }

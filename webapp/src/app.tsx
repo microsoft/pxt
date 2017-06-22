@@ -488,7 +488,7 @@ export class ProjectView
         if (step > -1) {
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
-            this.setState({tutorialOptions: tutorialOptions});
+            this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
             else tutorial.TutorialContent.refresh();
@@ -498,7 +498,7 @@ export class ProjectView
     handleMessage(msg: pxsim.SimulatorMessage) {
         switch (msg.type) {
             case "popoutcomplete":
-                this.setState({sideDocsCollapsed: true, sideDocsLoadUrl: ''})
+                this.setState({ sideDocsCollapsed: true, sideDocsLoadUrl: '' })
                 break;
             case "tutorial":
                 let t = msg as pxsim.TutorialMessage;
@@ -673,10 +673,11 @@ export class ProjectView
         }
     }];
 
-    importHex(data: pxt.cpp.HexFile) {
+    importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
+            if (createNewIfFailed) this.newProject();
             return;
         }
 
@@ -685,18 +686,17 @@ export class ProjectView
             pxt.tickEvent("import." + importer.id);
             core.showLoading(lf("loading project..."))
             importer.importAsync(this, data)
-                .done(
-                () => core.hideLoading(),
-                e => {
+                .done(() => core.hideLoading(), e => {
                     pxt.reportException(e, { importer: importer.id });
                     core.hideLoading();
                     core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                }
-                );
+                    if (createNewIfFailed) this.newProject();
+                });
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
             pxt.tickEvent("warning.importfailed");
+            if (createNewIfFailed) this.newProject();
         }
     }
 
@@ -1548,8 +1548,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const { hideMenuBar, hideEditorToolbar} = targetTheme;
         const isHeadless = simOpts.headless;
         const cookieKey = "cookieconsent"
-        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey) 
-                                || sandbox;
+        const cookieConsented = targetTheme.hideCookieNotice || electron.isElectron || pxt.winrt.isWinRT() || !!pxt.storage.getLocal(cookieKey)
+            || sandbox;
         const simActive = this.state.embedSimView;
         const blockActive = this.isBlocksActive();
         const javascriptActive = this.isJavaScriptActive();
@@ -1645,7 +1645,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         : <span className="name">{targetTheme.organization}</span>}
                                     {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>) : null}
                                 </a> : undefined }
-                                {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel">{lf("Beta")}</a> : undefined }
+                                {betaUrl ? <a href={`${betaUrl}`} className="ui red mini corner top left attached label betalabel">{lf("Beta") }</a> : undefined }
                             </div>
                         </div>
                     </div> }
@@ -1699,7 +1699,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                     <a target="_blank" className="item" href={targetTheme.termsOfUseUrl}>{lf("Terms of Use") }</a>
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
-                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className={`icon ${pxt.appTarget.appTheme.downloadIcon  || 'download'}`}/>{ pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download") }</a></span>
+                    <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`}/>{ pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
                     <button arial-label={lf("Ok") } className="ui right floated icon button clear inverted" onClick={consentCookie}>
@@ -2075,6 +2075,7 @@ function initExtensionsAsync(): Promise<void> {
         });
 }
 
+pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
@@ -2103,7 +2104,14 @@ $(document).ready(() => {
     appcache.init(hash);
 
     pxt.docs.requireMarked = () => require("marked");
-    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
+    const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
+    const loadHeader = (headerId: string, createNewIfFailed = false) => {
+        const h = workspace.getHeader(headerId);
+        theEditor.loadHeaderAsync(h, null)
+            .catch(() => {
+                if (createNewIfFailed) theEditor.newProject();
+            });
+    };
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
@@ -2142,13 +2150,17 @@ $(document).ready(() => {
             initSerial();
             initScreenshots();
             initHashchange();
+            return pxt.winrt.initAsync(importHex, loadHeader);
         })
-        .then(() => pxt.winrt.initAsync(ih))
         .then(() => initExtensionsAsync())
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))
                 return Promise.resolve();
+
+            if (pxt.winrt.hasActivationProject) {
+                return pxt.winrt.loadActivationProject();
+            }
 
             // default handlers
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
@@ -2157,7 +2169,8 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();
-        }).then(() => workspace.importLegacyScriptsAsync())
+        })
+        .then(() => workspace.importLegacyScriptsAsync())
         .done(() => { });
 
     document.addEventListener("visibilitychange", ev => {

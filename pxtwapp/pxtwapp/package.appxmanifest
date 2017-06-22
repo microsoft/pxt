@@ -15,7 +15,7 @@
   </Resources>
   <Applications>
     <!--<Application Id="App" StartPage="https://makecode.adafruit.com">-->
-    <Application Id="App" StartPage="http://localhost:3232/index.html?nolocalhost=1">
+    <Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1">
       <uap:ApplicationContentUriRules>
         <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="http://localhost:3232/index.html?nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
@@ -38,6 +38,14 @@
               <uap:FileType ContentType="application/x-makecode-uf2">.uf2</uap:FileType>
               <uap:FileType ContentType="application/x-makecode-pxt">.pxt</uap:FileType>
               <uap:FileType ContentType="application/x-makecode-mkcd">.mkcd</uap:FileType>
+              <uap:FileType ContentType="text/plain">.txt</uap:FileType>
+              <uap:FileType ContentType="application/json">.json</uap:FileType>
+              <uap:FileType ContentType="text/markdown">.md</uap:FileType>
+              <uap:FileType ContentType="application/x-makecode-blocks">.blocks</uap:FileType>
+              <uap:FileType ContentType="text/x-makecode-typescript">.ts</uap:FileType>
+            <uap:FileType ContentType="text/x-makecode-cpp">.cpp</uap:FileType>
+          <uap:FileType ContentType="text/x-makecode-h">.h</uap:FileType>
+        <uap:FileType ContentType="text/x-makecode-asm">.asm</uap:FileType>
             </uap:SupportedFileTypes>
           </uap:FileTypeAssociation>
         </uap:Extension>
@@ -47,6 +55,7 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <uap:Capability Name="removableStorage" />
+    <uap:Capability Name="documentsLibrary"/>
     <DeviceCapability Name="serialcommunication">
       <Device Id="any">
         <Function Type="name:serialPort" />
@@ -56,7 +65,7 @@
       <Device Id="vidpid:239A 0018">
         <Function Type="usage:FF97 *" />
       </Device>
-    <Device Id="vidpid:03EB 2402">
+      <Device Id="vidpid:03EB 2402">
         <Function Type="usage:FF97 *" />
       </Device>
     </DeviceCapability>
