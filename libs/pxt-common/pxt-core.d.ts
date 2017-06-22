@@ -271,6 +271,7 @@ declare namespace Math {
      * Returns a pseudorandom number between 0 and 1.
      */
     //% shim=Math_::random
+    //% helpUrl="/reference/math/random"
     function random(): number;
 
     /**
