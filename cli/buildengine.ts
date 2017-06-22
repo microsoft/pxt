@@ -74,7 +74,7 @@ export const buildEngines: Map<BuildEngine> = {
         buildPath: "built/codal",
         moduleConfig: "codal.json",
         deployAsync: msdDeployCoreAsync,
-        appPath: "application"
+        appPath: "pxtapp"
     },
 }
 

@@ -151,7 +151,7 @@ namespace pxt.cpp {
         if (isPlatformio)
             sourcePath = "/src/"
         else if (isCodal)
-            sourcePath = "/application/"
+            sourcePath = "/pxtapp/"
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -663,7 +663,7 @@ namespace pxt.cpp {
             let codalJson = {
                 "target": cs.codalTarget + ".json",
                 "definitions": U.clone(cs.codalDefinitions) || {},
-                "application": "application",
+                "application": "pxtapp",
                 "output_folder": ".",
                 // include these, because we use hash of this file to see if anything changed
                 "pxt_gitrepo": cs.githubCorePackage,
@@ -708,7 +708,8 @@ namespace pxt.cpp {
 
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
-        res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
+        if (isYotta)
+            res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
         res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
 #ifdef PXT_MAIN
