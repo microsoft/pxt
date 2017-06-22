@@ -341,13 +341,14 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     }
 
     options.htmlBody = `<div class="ui fluid icon input">
-                            <input type="text" id="promptDialogInput" placeholder="${options.defaultValue}">
+                            <input type="text" id="promptDialogInput" value="${options.defaultValue}">
                         </div>`;
 
     options.onLoaded = () => {
         let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
         if (dialogInput) {
             dialogInput.focus();
+            dialogInput.selectionStart = dialogInput.selectionEnd = 10000;
         }
     };
 
