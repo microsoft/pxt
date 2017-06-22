@@ -207,7 +207,7 @@ namespace pxsim {
                 max = t;
             }
             if (Math.floor(min) == min && Math.floor(max) == max)
-                return min + Math.round(Math.random() * (max - min));
+                return min + Math.floor(Math.random() * (max - min + 1));
             else
                 return min + Math.random() * (max - min);
         }
