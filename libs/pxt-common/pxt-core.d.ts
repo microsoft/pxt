@@ -268,10 +268,10 @@ declare namespace Math {
     function pow(x: number, y: number): number;
 
     /**
-     * Returns a pseudorandom number between 0 and `max`.
+     * Returns a pseudorandom number between 0 and 1.
      */
     //% shim=Math_::random
-    function random(max: number): number;
+    function random(): number;
 
     /**
      * Returns the natural logarithm (base e) of a number.

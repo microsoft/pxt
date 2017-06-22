@@ -196,13 +196,8 @@ namespace pxsim {
             return x > 0 ? Math.floor(x) : Math.ceil(x);
         }
 
-        export function random(max: number): number {
-            if (max < 1) return 0;
-            let r = 0;
-            do {
-                r = Math.floor(Math.random() * max);
-            } while (r == max);
-            return r;
+        export function random(): number {
+            return Math.random();
         }
     }
 
