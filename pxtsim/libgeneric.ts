@@ -201,10 +201,10 @@ namespace pxsim {
         }
         export function randomRange(min: number, max: number): number {
             if (min == max) return min;
-            if (min < max) {
+            if (min > max) {
                 let t = min;
                 min = max;
-                max = min;
+                max = t;
             }
             if (Math.floor(min) == min && Math.floor(max) == max)
                 return min + Math.round(Math.random() * (max - min));
