@@ -149,16 +149,6 @@ namespace pxt.blocks {
                 },
                 outputShape: Blockly.OUTPUT_SHAPE_ROUND
             },
-            'device_random': {
-                name: Util.lf("pick random number"),
-                tooltip: Util.lf("Returns a random integer between 0 and the specified bound (inclusive)."),
-                url: '/blocks/math/random',
-                category: 'math',
-                block: {
-                    message0: Util.lf("pick random 0 to %1")
-                },
-                outputShape: Blockly.OUTPUT_SHAPE_ROUND
-            },
             'math_number': {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',

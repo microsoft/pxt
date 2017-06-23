@@ -452,16 +452,29 @@ span.blocklyTreeLabel {
 }
 
 .blocklyFlyoutLabelText {
-    fill: white !important;
-    font-size:1rem;
+    fill: @flyoutLabelColor !important;
+    font-size: 1rem;
+}
+.blocklyFlyoutHeading .blocklyFlyoutLabelText {
+    fill: @flyoutLabelColor !important;
+    font-size: 1.5rem;
 }
 .blocklyFlyoutLabelText:hover {
-    fill: white !important;
+    fill: @flyoutLabelColor !important;
+}
+
+.blocklyFlyoutLabelIcon {
+    font-family: 'Icons';
+    font-size: 1.5rem;
+}
+line.blocklyFlyoutLine {
+    stroke: @flyoutLabelColor;
 }
 
 /* Opacity of blockly flyout background */
 .blocklyFlyoutBackground {
-    fill-opacity: 0.9 !important;
+    fill: @blocklyFlyoutColor;
+    fill-opacity: @blocklyFlyoutColorOpacity !important;
 }
 
 div.blocklyTreeRow, span.blocklyTreeLabel {
@@ -556,14 +569,20 @@ span.blocklyTreeIcon {
 .blocklyTreeIcon.blocklyTreeIconvariables::before {
     content: "\f039";
 }
-.blocklyTreeIcon.blocklyTreeIconfunctions::before {
-    content: "\f0ae";
-}
 .blocklyTreeIcon.blocklyTreeIcontext::before {
     content: "\f035";
 }
 .blocklyTreeIcon.blocklyTreeIconarrays::before {
     content: "\f0cb";
+}
+.blocklyTreeIcon.blocklyTreeIconfunctions {
+    font-family: xicon !important;
+}
+.blocklyTreeIcon.blocklyTreeIconfunctions::before {
+    content: "\f107";
+}
+.blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
+    font-family: xicon !important;
 }
 
 /* Blockly Slider field */
@@ -631,7 +650,7 @@ span.blocklyTreeIcon {
 /* Monaco Toolbox */
 .monacoFlyout {
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    background: rgba(221,221,221, 0.8);
+    background: @monacoFlyoutColor;
     overflow-x: visible;
     overflow-y: auto;
     border-top-right-radius: 8px;
@@ -639,7 +658,34 @@ span.blocklyTreeIcon {
 }
 
 .monacoFlyout > div {
-    margin: 1.1rem;
+    margin: 1rem;
+}
+
+.monacoFlyoutLabel {
+    vertical-align: middle;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    color: white;
+    font-size: 15px;
+}
+
+.monacoFlyoutHeading {
+    padding-bottom: 0.4rem;
+}
+.monacoFlyoutHeading .monacoFlyoutHeadingText {
+    color: white;
+}
+.monacoFlyoutHeadingIcon {
+    vertical-align: middle !important;
+    font-size: 1.5rem !important;
+    margin: -0.7em 0.2em 0em 0.5em !important;
+}
+.monacoFlyoutLabelLine {
+    border: none;
+    border-top: 1px dotted white;
+    height:1px;
 }
 
 .monacoDraggableBlock {
@@ -1108,7 +1154,8 @@ Field editors
     }
     div.blocklyTreeRow {
         padding-right: 0;
-        height: 2rem;
+        padding-top: 0.25rem;
+        height: 2.5rem;
         text-align: center;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
