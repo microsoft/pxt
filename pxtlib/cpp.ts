@@ -629,7 +629,7 @@ namespace pxt.cpp {
                         if (pkg.config.name == "core" && isHeader)
                             fullName = fn
                         if (isHeader)
-                            includesInc += `#include "${isPlatformio ? "" : sourcePath.slice(1)}${fullName}"\n`
+                            includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`
                         let src = pkg.readFile(fn)
                         fileName = fullName
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
@@ -664,7 +664,7 @@ namespace pxt.cpp {
                 "target": cs.codalTarget + ".json",
                 "definitions": U.clone(cs.codalDefinitions) || {},
                 "application": "pxtapp",
-                "output_folder": ".",
+                "output_folder": "build",
                 // include these, because we use hash of this file to see if anything changed
                 "pxt_gitrepo": cs.githubCorePackage,
                 "pxt_gittag": cs.gittag,

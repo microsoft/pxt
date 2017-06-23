@@ -93,7 +93,7 @@ function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
 
 function patchCodalHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = buildEngines['codal']
-    let hexPath = buildEngine.buildPath + "/" + pxt.appTarget.compileService.codalBinary;
+    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.codalBinary + ".hex";
 
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
