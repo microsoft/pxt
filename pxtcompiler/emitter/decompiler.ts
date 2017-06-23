@@ -64,7 +64,6 @@ namespace ts.pxtc.decompiler {
     const multiLineCommentRegex = /^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*(.*?)(?:\*?\*\/)?$/
 
     const builtinBlocks: pxt.Map<{ block: string; blockId: string; }> = {
-        "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
         "Math.min": { blockId: "math_op2", block: "of %x|and %y" },
         "Math.max": { blockId: "math_op2", block: "of %x|and %y" }

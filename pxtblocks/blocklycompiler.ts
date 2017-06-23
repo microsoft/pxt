@@ -650,23 +650,6 @@ namespace pxt.blocks {
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
-    function extractNumberLit(e: JsNode): number {
-        if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
-            return null
-        const parsed = parseInt(e.op);
-        checkNumber(parsed);
-        return parsed;
-    }
-
-    function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let expr = compileExpression(e, getInputTargetBlock(b, "limit"), comments);
-        let v = extractNumberLit(expr)
-        if (v != null)
-            return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
-        else
-            return H.mathCall("random", [H.mkSimpleCall(opToTok["ADD"], [expr, H.mkNumberLiteral(1)])])
-    }
-
     function compileCreateList(e: Environment, b: B.Block, comments: string[]): JsNode {
         // collect argument
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
@@ -767,8 +750,6 @@ namespace pxt.blocks {
                 expr = compileMathOp2(e, b, comments); break;
             case "math_op3":
                 expr = compileMathOp3(e, b, comments); break;
-            case "device_random":
-                expr = compileRandom(e, b, comments); break;
             case "math_arithmetic":
             case "logic_compare":
             case "logic_operation":
