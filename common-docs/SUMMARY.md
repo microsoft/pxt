@@ -6,6 +6,8 @@
 
 ## #examples
 
+## #courses
+
 ## #reference
 
 ## #packages
