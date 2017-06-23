@@ -348,7 +348,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
         let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
         if (dialogInput) {
             dialogInput.focus();
-            dialogInput.selectionStart = dialogInput.selectionEnd = 10000;
+            dialogInput.select();
         }
     };
 
