@@ -273,7 +273,7 @@
   "arithmetic operation": "rekenkundige bewerking",
   "assign the value of a variable": "de waarde van een variabele toewijzen",
   "boolean operation": "boolean bewerking",
-  "change %1 by %2": "%1 vervangen door %2",
+  "change %1 by %2": "%1 veranderen met %2",
   "comparing two numbers": "twee getallen vergelijken",
   "conflict on yotta setting {0} between packages {1} and {2}": "conflict op yotta instelling {0} tussen pakketten {1} en {2}",
   "creating new project...": "nieuw project aanmaken...",
