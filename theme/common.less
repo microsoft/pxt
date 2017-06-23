@@ -452,15 +452,15 @@ span.blocklyTreeLabel {
 }
 
 .blocklyFlyoutLabelText {
-    fill: @grey !important;
+    fill: @flyoutLabelColor !important;
     font-size: 1rem;
 }
 .blocklyFlyoutHeading .blocklyFlyoutLabelText {
-    fill: @grey !important;
+    fill: @flyoutLabelColor !important;
     font-size: 1.5rem;
 }
 .blocklyFlyoutLabelText:hover {
-    fill: @grey !important;
+    fill: @flyoutLabelColor !important;
 }
 
 .blocklyFlyoutLabelIcon {
@@ -468,12 +468,13 @@ span.blocklyTreeLabel {
     font-size: 1.5rem;
 }
 line.blocklyFlyoutLine {
-    stroke: white;
+    stroke: @flyoutLabelColor;
 }
 
 /* Opacity of blockly flyout background */
 .blocklyFlyoutBackground {
-    fill-opacity: 0.9 !important;
+    fill: @blocklyFlyoutColor;
+    fill-opacity: @blocklyFlyoutColorOpacity !important;
 }
 
 div.blocklyTreeRow, span.blocklyTreeLabel {
@@ -649,7 +650,7 @@ span.blocklyTreeIcon {
 /* Monaco Toolbox */
 .monacoFlyout {
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    background: rgba(221,221,221, 0.8);
+    background: @monacoFlyoutColor;
     overflow-x: visible;
     overflow-y: auto;
     border-top-right-radius: 8px;
