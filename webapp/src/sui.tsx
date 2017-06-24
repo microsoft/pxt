@@ -226,6 +226,7 @@ export class Input extends data.Component<{
     lines?: number;
     readOnly?: boolean;
     copy?: boolean;
+    selectOnClick?: boolean;
 }, {}> {
 
     copy() {
@@ -262,6 +263,7 @@ export class Input extends data.Component<{
                         type={p.type || "text"}
                         placeholder={p.placeholder} value={p.value}
                         readOnly={!!p.readOnly}
+                        onClick={(e) => p.selectOnClick ? (e.target as any).select() : undefined}
                         onChange={v => p.onChange((v.target as any).value) }/>
                         : <textarea
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
@@ -269,6 +271,7 @@ export class Input extends data.Component<{
                             placeholder={p.placeholder}
                             value={p.value}
                             readOnly={!!p.readOnly}
+                            onClick={(e) => p.selectOnClick ? (e.target as any).select() : undefined}
                             onChange={v => p.onChange((v.target as any).value) }>
                         </textarea>}
                     {copyBtn}
