@@ -64,6 +64,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
+        const showSocialIcons = pxt.appTarget.appTheme.showSocialIcons;
 
         let ready = false;
         let mode = this.state.mode;
@@ -156,6 +157,28 @@ pxt extract ${url}`;
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing;
 
+        let fbUrl = '';
+        let twitterUrl = '';
+        if (showSocialIcons) {
+            let twitterText = lf("Check out what I made!");
+            const twitterHandle = pxt.appTarget.appTheme.orgTwitterHandle;
+            const orgTwitterHandle = pxt.appTarget.appTheme.orgTwitterHandle;
+            if (twitterHandle && orgTwitterHandle) {
+                twitterText = lf("Check out what I made with {0} and {1}!", twitterHandle, orgTwitterHandle);
+            } else if (twitterHandle) {
+                twitterText = lf("Check out what I made with {0}!", twitterHandle);
+            } else if (orgTwitterHandle) {
+                twitterText = lf("Check out what I made with {0}!", orgTwitterHandle);
+            }
+            fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+            twitterUrl = `https://twitter.com/intent/tweet?url=${url}&text=${encodeURIComponent(twitterText)}`;
+        }
+
+        const popupWindow = (url: string, title: string, width: number, height: number) => {
+            return window.open(url, title, `resizable=no, copyhistory=no, ` +
+                `width=${width}, height=${height}, top=${(screen.height / 2) - (height / 2)}, left=${(screen.width / 2) - (width / 2)}`);
+        }
+
         return (
             <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
                 onClose={() => this.setState({ visible: false }) } dimmer={true}
@@ -173,6 +196,10 @@ pxt extract ${url}`;
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
                         <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
+                        {showSocialIcons ? <div className="social-icons">
+                            <a className="ui button large icon facebook" onClick={(e) => {popupWindow(fbUrl, lf("Share on Facebook"), 500, 500); e.preventDefault(); return false;}}><i className="icon facebook"></i></a>
+                            <a className="ui button large icon twitter" onClick={(e) => {popupWindow(twitterUrl, lf("Share on Twitter"), 500, 500); e.preventDefault(); return false;}}><i className="icon twitter"></i></a>
+                        </div> : undefined}
                     </div>
                         : undefined }
                     { ready ? <div>

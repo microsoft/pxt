@@ -196,6 +196,9 @@ declare namespace pxt {
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
+        showSocialIcons?: boolean; // show social icons in share dialog
+        twitterHandle?: string;
+        orgTwitterHandle?: string;
     }
 
     interface DocMenuEntry {
