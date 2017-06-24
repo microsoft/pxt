@@ -42,6 +42,11 @@ function genericContent(props: UiProps) {
     ]
 }
 
+export function popupWindow(url: string, title: string, width: number, height: number) {
+    return window.open(url, title, `resizable=no, copyhistory=no, ` +
+        `width=${width}, height=${height}, top=${(screen.height / 2) - (height / 2)}, left=${(screen.width / 2) - (width / 2)}`);
+}
+
 export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
     popup() {
         if (this.props.popup) {
