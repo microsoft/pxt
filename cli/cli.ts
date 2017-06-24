@@ -3650,7 +3650,7 @@ export function testAsync() {
 export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     let p = Promise.resolve();
     let onLine: (info: serial.SerialPortInfo, line: string) => void = undefined;
-    const queue = parsed.flags["iotQueue"] as string;
+    const queue = parsed.flags["serviceBusQueue"] as string;
     if (queue) {
         p = p.then(() => azure.initServiceBusAsync(queue));
         onLine = (info, line) => {
@@ -4177,10 +4177,10 @@ function initCommands() {
         name: "serial",
         help: "listen and print serial commands to console",
         flags: {
-            iotQueue: {
-                argument: "iotQueue",
-                description: "upload JSON payloas to an Azure IoT queue",
-                aliases: ["iot", "queue"],
+            serviceBusQueue: {
+                argument: "serviceBusQueue",
+                description: "upload JSON payloads to an Azure Service Bus queue",
+                aliases: ["queue", "bus", "sb"],
                 type: "string"
             }
         }

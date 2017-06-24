@@ -17,7 +17,7 @@ export function initServiceBusAsync(queue: string): Promise<void> {
             U.userError('azure tools missing, did you run `npm install azure`?');
         }
     }
-    pxt.log('connecting to service bus')
+    pxt.log(`connecting to service bus queue ${queue}...`)
     try {
         serviceBus = azure.createServiceBusService();
     }
