@@ -161,7 +161,7 @@ pxt extract ${url}`;
         let twitterUrl = '';
         if (showSocialIcons) {
             let twitterText = lf("Check out what I made!");
-            const twitterHandle = pxt.appTarget.appTheme.orgTwitterHandle;
+            const twitterHandle = pxt.appTarget.appTheme.twitterHandle;
             const orgTwitterHandle = pxt.appTarget.appTheme.orgTwitterHandle;
             if (twitterHandle && orgTwitterHandle) {
                 twitterText = lf("Check out what I made with {0} and {1}!", twitterHandle, orgTwitterHandle);
