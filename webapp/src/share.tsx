@@ -197,8 +197,8 @@ pxt extract ${url}`;
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
                         <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
                         {showSocialIcons ? <div className="social-icons">
-                            <a className="ui button large icon facebook" onClick={(e) => {popupWindow(fbUrl, lf("Share on Facebook"), 500, 500); e.preventDefault(); return false;}}><i className="icon facebook"></i></a>
-                            <a className="ui button large icon twitter" onClick={(e) => {popupWindow(twitterUrl, lf("Share on Twitter"), 500, 500); e.preventDefault(); return false;}}><i className="icon twitter"></i></a>
+                            <a className="ui button large icon facebook" onClick={(e) => {popupWindow(fbUrl, lf("Share on Facebook"), 600, 600); e.preventDefault(); return false;}}><i className="icon facebook"></i></a>
+                            <a className="ui button large icon twitter" onClick={(e) => {popupWindow(twitterUrl, lf("Share on Twitter"), 600, 600); e.preventDefault(); return false;}}><i className="icon twitter"></i></a>
                         </div> : undefined}
                     </div>
                         : undefined }
