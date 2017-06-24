@@ -23,6 +23,7 @@ import * as commandParser from './commandparser';
 import * as hid from './hid';
 import * as serial from './serial';
 import * as gdb from './gdb';
+import * as azure from './azure';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 
@@ -1833,9 +1834,9 @@ class SnippetHost implements pxt.Host {
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ] : [
-                        "main.blocks", //TODO: Probably don't want this
-                        "main.ts",
-                    ]
+                            "main.blocks", //TODO: Probably don't want this
+                            "main.ts",
+                        ]
                 })
             }
             else if (filename == "main.ts") {
@@ -3647,11 +3648,29 @@ export function testAsync() {
 }
 
 export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    let buf: string = "";
-    serial.monitorSerial((info, buffer) => {
+    let p = Promise.resolve();
+    let onLine: (info: serial.SerialPortInfo, line: string) => void = undefined;
+    const queue = parsed.flags["iotQueue"] as string;
+    if (queue) {
+        p = p.then(() => azure.initServiceBusAsync(queue));
+        onLine = (info, line) => {
+            try {
+                const payload = JSON.parse(line);
+                azure.sendMessageAsync(queue, payload).done(
+                    () => { },
+                    (e) => { });
+            } catch (e) {
+                // ingore
+            }
+        }
+    }
+    let onData = (info: serial.SerialPortInfo, buffer: Buffer) => {
         process.stdout.write(buffer);
+    };
+
+    return p.then(() => {
+        serial.monitorSerial(onData, onLine)
     })
-    return Promise.resolve();
 }
 
 export interface SavedProject {
@@ -4154,7 +4173,18 @@ function initCommands() {
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    simpleCmd("serial", "listen and print serial commands to console", serialAsync);
+    p.defineCommand({
+        name: "serial",
+        help: "listen and print serial commands to console",
+        flags: {
+            iotQueue: {
+                argument: "iotQueue",
+                description: "upload JSON payloas to an Azure IoT queue",
+                aliases: ["iot", "queue"],
+                type: "string"
+            }
+        }
+    }, serialAsync);
 
     p.defineCommand({
         name: "login",
