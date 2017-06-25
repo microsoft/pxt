@@ -326,7 +326,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
 export function promptAsync(options: PromptOptions): Promise<string> {
     if (!options.buttons) options.buttons = []
 
-    let result = options.defaultValue;
+    let result = "";
 
     if (!options.hideAgree) {
         options.buttons.push({
@@ -341,13 +341,14 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     }
 
     options.htmlBody = `<div class="ui fluid icon input">
-                            <input type="text" id="promptDialogInput" placeholder="${options.defaultValue}">
+                            <input type="text" id="promptDialogInput" value="${options.defaultValue}">
                         </div>`;
 
     options.onLoaded = () => {
         let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
         if (dialogInput) {
             dialogInput.focus();
+            dialogInput.setSelectionRange(0, 9999);
         }
     };
 
