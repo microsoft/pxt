@@ -10,46 +10,44 @@ namespace helpers {
         }
     }
 
-    export function arrayReverse<T>(arr: T[]) : void {
+    export function arrayReverse<T>(arr: T[]): void {
         let len = arr.length;
-        for (let i = 0; i < len/2; i++)
-        {
+        for (let i = 0; i < len / 2; i++) {
             swap(arr, i, len - i - 1);
         }
     }
 
-    export function arrayShift<T>(arr: T[]) : T {
+    export function arrayShift<T>(arr: T[]): T {
         return arr.removeAt(0);
     }
 
-/*TODO: Enable this multiple value unshift, after rest is enabled in our compiler.
-    export function arrayUnshift<T>(arr: T[], ...values: T[]) : number {
-        for(let i = values.length; i > 0; --i) {
-            arr.insertAt(0, values[i - 1]);
+    /*TODO: Enable this multiple value unshift, after rest is enabled in our compiler.
+        export function arrayUnshift<T>(arr: T[], ...values: T[]) : number {
+            for(let i = values.length; i > 0; --i) {
+                arr.insertAt(0, values[i - 1]);
+            }
+            return arr.length;
         }
+    */
+    export function arrayUnshift<T>(arr: T[], value: T): number {
+        arr.insertAt(0, value);
         return arr.length;
     }
-*/
-    export function arrayUnshift<T>(arr: T[], value: T) : number {
-        arr.insertAt(0, value);
-       return arr.length;
-    }
 
-    function swap<T>(arr: T[], i : number, j: number) : void {
-        let temp : T = arr[i];
+    function swap<T>(arr: T[], i: number, j: number): void {
+        let temp: T = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
     }
 
-    function sortHelper<T>(arr: T[], callbackfn ?: (value1: T, value2: T) => number) : T[] {
+    function sortHelper<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
         if (arr.length <= 0 || !callbackfn) {
             return arr;
         }
         let len = arr.length;
         // simple selection sort.
         for (let i = 0; i < len - 1; ++i) {
-            for (let j = i + 1; j < len; ++j)
-            {
+            for (let j = i + 1; j < len; ++j) {
                 if (callbackfn(arr[i], arr[j]) > 0) {
                     swap(arr, i, j);
                 }

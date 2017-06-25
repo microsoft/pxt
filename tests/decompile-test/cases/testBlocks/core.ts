@@ -74,4 +74,12 @@ namespace Math {
     export function min(a: number, b: number): number {
         return 0;
     }
+
+    /**
+     * 
+     */
+    //% blockId="device_random" block="pick random %min|to %limit"
+    export function randomRange(min: number, max: number): number {
+        return 0;
+    }
 }

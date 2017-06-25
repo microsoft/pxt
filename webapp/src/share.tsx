@@ -172,7 +172,7 @@ pxt extract ${url}`;
                         : undefined }
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} />
+                        <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
                     </div>
                         : undefined }
                     { ready ? <div>
@@ -185,7 +185,7 @@ pxt extract ${url}`;
                             </sui.Menu> : undefined }
                         { advancedMenu ?
                             <sui.Field>
-                                <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} />
+                                <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true}/>
                             </sui.Field> : null }
                     </div> : undefined }
                 </div>
