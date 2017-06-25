@@ -961,6 +961,7 @@ namespace pxt.blocks {
         // lf("{id:category}Text")
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
+        // lf("{id:category}Search")
         // lf("{id:category}More\u2026")
 
         // update shadow types
@@ -1241,6 +1242,10 @@ namespace pxt.blocks {
             toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
         }
 
+        const hasSearchFlyout = () => {
+            return document.getElementsByClassName('blocklyTreeIconsearch').length > 0;
+        }
+
         const showSearchFlyout = () => {
             const tree = (workspace as any).toolbox_.tree_;
             // Show the search flyout
@@ -1269,8 +1274,7 @@ namespace pxt.blocks {
                     let parentCategoryList = searchTb;
 
                     const nsWeight = 101; // Show search category on top
-                    const locCatName = lf("Search");
-                    category = createCategoryElement(locCatName, catName, nsWeight);
+                    category = createCategoryElement(lf("{id:category}Search"), catName, nsWeight);
                     category.setAttribute("colour", '#000');
                     category.setAttribute("iconclass", 'blocklyTreeIconsearch');
                     category.setAttribute("expandedclass", 'blocklyTreeIconsearch');
@@ -1335,7 +1339,11 @@ namespace pxt.blocks {
             let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
             let searchFor = searchField.value.toLowerCase();
             if (searchFor != '') {
-                showSearchFlyout();
+                if (hasSearchFlyout()) showSearchFlyout();
+                else {
+                    previousSearchTerm = '';
+                    searchChangeHandler();
+                }
             }
         }
 
