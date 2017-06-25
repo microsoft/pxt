@@ -1347,7 +1347,7 @@ namespace pxt.blocks {
             : blocklySearchInputField.onclick = searchClickHandler;
 
         // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
-        const oldKeyDown = (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown;
+        const oldKeyDown = Blockly.Toolbox.TreeNode.prototype.onKeyDown;
         (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
             const x = e.which || e.keyCode;
             const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows (Handled by Blockly)
