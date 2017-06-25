@@ -1192,7 +1192,7 @@ namespace pxt.blocks {
         let tb = createToolbox(blockInfo, toolbox, showCategories, filters);
 
         // add trash icon to toolbox
-        if (!$('#blocklyTrashIcon').length) {
+        if (!document.getElementById("blocklyTrashIcon")) {
             let trashDiv = document.createElement('div');
             trashDiv.id = "blocklyTrashIcon";
             trashDiv.style.opacity = '0';
@@ -1200,7 +1200,7 @@ namespace pxt.blocks {
             let trashIcon = document.createElement('i');
             trashIcon.className = 'trash icon';
             trashDiv.appendChild(trashIcon);
-            $('.blocklyToolboxDiv').append(trashDiv);
+            document.getElementsByClassName('blocklyToolboxDiv')[0].appendChild(trashDiv);
         }
 
         return tb;
@@ -1237,17 +1237,27 @@ namespace pxt.blocks {
             blocklySearchInput.appendChild(blocklySearchInputField);
             blocklySearchInput.appendChild(blocklySearchInputIcon);
             blocklySearchArea.appendChild(blocklySearchInput);
-            $('.blocklyToolboxDiv').prepend(blocklySearchArea);
+            const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
+            toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
+        }
+
+        const showSearchFlyout = () => {
+            const tree = (workspace as any).toolbox_.tree_;
+            // Show the search flyout
+            tree.setSelectedItem(tree.getChildren()[0]);
         }
 
         pxt.blocks.cachedSearchTb = tb;
         pxt.blocks.cachedSearchTbAll = tbAll;
-        const searchHandler = Util.debounce(() => {
-            let searchField = $('.blocklySearchInputField');
-            let searchFor = searchField.val().toLowerCase();
-            blocklySearchInput.className += ' loading';
+        let previousSearchTerm = '';
+        const searchChangeHandler = Util.debounce(() => {
+            let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+            let searchFor = searchField.value.toLowerCase();
 
             if (searchFor != '') {
+                blocklySearchInput.className += ' loading';
+                previousSearchTerm = searchFor;
+
                 pxt.tickEvent("blocks.search");
                 let searchTb = pxt.blocks.cachedSearchTb ? <Element>pxt.blocks.cachedSearchTb.cloneNode(true) : undefined;
 
@@ -1261,7 +1271,6 @@ namespace pxt.blocks {
                     const nsWeight = 101; // Show search category on top
                     const locCatName = lf("Search");
                     category = createCategoryElement(locCatName, catName, nsWeight);
-                    category.setAttribute("expanded", 'true');
                     category.setAttribute("colour", '#000');
                     category.setAttribute("iconclass", 'blocklyTreeIconsearch');
                     category.setAttribute("expandedclass", 'blocklyTreeIconsearch');
@@ -1280,6 +1289,7 @@ namespace pxt.blocks {
                 }
 
                 searchAsync({ term: searchFor, subset: updateUsedBlocks ? usedBlocks : undefined }).then(blocks => {
+                    pxt.log("searching for: " + searchFor);
                     updateUsedBlocks = false;
                     if (!blocks) return;
                     if (blocks.length == 0) {
@@ -1310,22 +1320,52 @@ namespace pxt.blocks {
                     if (tb) {
                         updateToolbox(searchTb);
                         blocklySearchInput.className = origClassName;
+                        showSearchFlyout();
                     }
                 })
-            } else {
+            } else if (previousSearchTerm != '') {
                 // Clearing search
                 updateToolbox(pxt.blocks.cachedSearchTb);
                 blocklySearchInput.className = origClassName;
             }
             // Search
-        }, 1000, false);
+        }, 300, false);
 
-        blocklySearchInputField.oninput = searchHandler;
-        blocklySearchInputField.onchange = searchHandler;
+        const searchClickHandler = () => {
+            let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+            let searchFor = searchField.value.toLowerCase();
+            if (searchFor != '') {
+                showSearchFlyout();
+            }
+        }
+
+        blocklySearchInputField.oninput = searchChangeHandler;
         blocklySearchInputField.onfocus = () => blocklySearchInputField.select();
+
         pxt.BrowserUtils.isTouchEnabled() ?
-            blocklySearchInputField.ontouchstart = searchHandler
-            : blocklySearchInputField.onclick = searchHandler;
+            blocklySearchInputField.ontouchstart = searchClickHandler
+            : blocklySearchInputField.onclick = searchClickHandler;
+
+        // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
+        const oldKeyDown = (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown;
+        (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
+            const x = e.which || e.keyCode;
+            const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows
+                && !e.ctrlKey && !e.metaKey && !e.altKey; // Meta keys
+            if (interceptCharacter) {
+                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+                if (x == 8) { // Backspace
+                    searchField.focus();
+                    searchField.select();
+                } else {
+                    let char = String.fromCharCode(x);
+                    searchField.value = searchField.value + char;
+                    searchField.focus();
+                }
+            } else {
+                oldKeyDown.call(this, e);
+            }
+        }
     }
 
     function categoryElement(tb: Element, nameid: string): Element {
