@@ -1201,7 +1201,8 @@ namespace pxt.blocks {
             let trashIcon = document.createElement('i');
             trashIcon.className = 'trash icon';
             trashDiv.appendChild(trashIcon);
-            document.getElementsByClassName('blocklyToolboxDiv')[0].appendChild(trashDiv);
+            const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
+            if (toolboxDiv) toolboxDiv.appendChild(trashDiv);
         }
 
         return tb;
