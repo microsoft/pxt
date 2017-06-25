@@ -1350,7 +1350,7 @@ namespace pxt.blocks {
         const oldKeyDown = (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown;
         (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
             const x = e.which || e.keyCode;
-            const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows
+            const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows (Handled by Blockly)
                 && !e.ctrlKey && !e.metaKey && !e.altKey; // Meta keys
             if (interceptCharacter) {
                 let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
