@@ -802,6 +802,7 @@ declare namespace Blockly {
             setExpanded(expanded: boolean): void;
             toggle(): void;
             updateRow(): void;
+            onKeyDown(e: any): void;
         }
 
         class TreeControl {
