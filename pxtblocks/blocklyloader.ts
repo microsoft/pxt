@@ -228,9 +228,17 @@ namespace pxt.blocks {
                         appendToolboxIconCss(nsnIconClassName, nsn.attributes.icon);
                         category.setAttribute("iconclass", nsnIconClassName);
                         category.setAttribute("expandedclass", nsnIconClassName);
+                        category.setAttribute("web-icon", nsn.attributes.icon);
                     } else {
                         category.setAttribute("iconclass", `blocklyTreeIconDefault`);
                         category.setAttribute("expandedclass", `blocklyTreeIconDefault`);
+                        category.setAttribute("web-icon", "\uf12e");
+                    }
+                    if (nsn && nsn.attributes.groups) {
+                        category.setAttribute("groups", nsn.attributes.groups.join(', '));
+                    }
+                    if (nsn && nsn.attributes.labelLineWidth) {
+                        category.setAttribute("labellinewidth", nsn.attributes.labelLineWidth);
                     }
 
                     insertTopLevelCategory(category, tb, nsWeight, isAdvanced);
@@ -272,7 +280,7 @@ namespace pxt.blocks {
             }
             else {
                 if (showCategories !== CategoryMode.None && !(showCategories === CategoryMode.Basic && isAdvanced)) {
-                    insertBlock(block, category, fn.attributes.weight);
+                    insertBlock(block, category, fn.attributes.weight, fn.attributes.group);
                     injectToolboxIconCss();
                 } else if (showCategories === CategoryMode.None) {
                     tb.appendChild(block);
@@ -282,8 +290,11 @@ namespace pxt.blocks {
 
     }
 
-    function insertBlock(bl: Element, cat: Element, weight?: number) {
+    function insertBlock(bl: Element, cat: Element, weight?: number, group?: string) {
         const isBuiltin = !!blockColors[cat.getAttribute("nameid")];
+        if (group) {
+            bl.setAttribute("group", group)
+        }
         if (isBuiltin && weight > 50) {
             bl.setAttribute("loaded", "true")
 
@@ -395,14 +406,15 @@ namespace pxt.blocks {
         let ci = 0;
         for (ci = 0; ci < categories.length; ++ci) {
             let cat = categories[ci];
+            const catAdvanced = cat.hasAttribute("advanced") && cat.getAttribute("advanced") !== "false";
 
             // Advanced categories always come last
             if (isAdvanced) {
-                if (!cat.hasAttribute("advanced")) {
+                if (!catAdvanced) {
                     continue;
                 }
             }
-            else if (cat.hasAttribute("advanced")) {
+            else if (catAdvanced) {
                 tb.insertBefore(category, cat);
                 break;
             }
@@ -873,66 +885,18 @@ namespace pxt.blocks {
         if (tb && showCategories !== CategoryMode.None) {
             // remove unused categories
             let config = pxt.appTarget.runtime || {};
-            if (!config.mathBlocks) removeCategory(tb, "Math");
-            if (!config.variablesBlocks) removeCategory(tb, "Variables");
-            if (!config.logicBlocks) removeCategory(tb, "Logic");
-            if (!config.loopsBlocks) removeCategory(tb, "Loops");
+            initBuiltinCategoryXml("Math", !config.mathBlocks);
+            initBuiltinCategoryXml("Variables", !config.variablesBlocks);
+            initBuiltinCategoryXml("Logic", !config.logicBlocks);
+            initBuiltinCategoryXml("Loops", !config.loopsBlocks);
+            initBuiltinCategoryXml("Text", !config.textBlocks);
+            initBuiltinCategoryXml("Arrays", !config.listsBlocks);
+            initBuiltinCategoryXml("Functions", !config.functionBlocks);
 
-            // Advanced builtin categories
-            if (!config.textBlocks) {
-                removeCategory(tb, "Text");
-            }
-            else {
-                showAdvanced = true;
-                const cat = categoryElement(tb, "Text");
+            if (!config.listsBlocks && config.loopsBlocks) {
+                const cat = categoryElement(tb, "Loops");
                 if (cat) {
-                    const blockElements = cat.getElementsByTagName("block");
-                    for (let i = 0; i < blockElements.length; i++) {
-                        const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
-                    }
-                }
-                if (showCategories === CategoryMode.Basic) {
-                    removeCategory(tb, "Text");
-                }
-            }
-            if (!config.functionBlocks) {
-                removeCategory(tb, "Functions");
-            }
-            else {
-                showAdvanced = true;
-                const cat = categoryElement(tb, "Functions");
-                if (cat) {
-                    const blockElements = cat.getElementsByTagName("block");
-                    for (let i = 0; i < blockElements.length; i++) {
-                        const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
-                    }
-                }
-                if (showCategories === CategoryMode.Basic) {
-                    removeCategory(tb, "Functions");
-                }
-            }
-
-            if (!config.listsBlocks) {
-                removeCategory(tb, "Arrays");
-                if (config.loopsBlocks) {
-                    const cat = categoryElement(tb, "Loops");
                     cat.removeChild(getFirstChildWithAttr(cat, "block", "type", "controls_for_of"))
-                }
-            }
-            else {
-                showAdvanced = true;
-                const cat = categoryElement(tb, "Arrays");
-                if (cat) {
-                    const blockElements = cat.getElementsByTagName("block");
-                    for (let i = 0; i < blockElements.length; i++) {
-                        const b = blockElements.item(i);
-                        usedBlocks[b.getAttribute("type")] = true;
-                    }
-                }
-                if (showCategories === CategoryMode.Basic) {
-                    removeCategory(tb, "Arrays");
                 }
             }
 
@@ -943,7 +907,7 @@ namespace pxt.blocks {
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
             }
 
-            // update category colors
+            // update category colors and add heading
             let topCats = getDirectChildren(tb, "category")
 
             for (let i = 0; i < topCats.length; i++) {
@@ -955,6 +919,35 @@ namespace pxt.blocks {
                     for (let j = 0; j < childCats.length; j++) {
                         childCats[j].setAttribute('colour', nsColor);
                     }
+                }
+                if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+                    // Add the Heading label
+                    let headingLabel = goog.dom.createDom('label');
+                    headingLabel.setAttribute('text', topCats[i].getAttribute('name'));
+                    headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+                    headingLabel.setAttribute('web-icon-color', topCats[i].getAttribute('colour'));
+                    let icon = topCats[i].getAttribute('web-icon');
+                    let iconClass = topCats[i].getAttribute('web-icon-class');
+                    if (icon) {
+                        if (icon.length === 1) {
+                            headingLabel.setAttribute('web-icon', icon);
+                            if (iconClass) headingLabel.setAttribute('web-icon-class', iconClass);
+                        }
+                        else {
+                            toolboxStyleBuffer += `
+                                .blocklyFlyoutLabelIcon.blocklyFlyoutIcon${topCats[i].getAttribute('name')} {
+                                    display: inline-block !important;
+                                    background-image: url("${pxt.webConfig.commitCdnUrl + encodeURI(icon)}")!important;
+                                    width: 1em;
+                                    height: 1em;
+                                    background-size: 1em!important;
+                                }
+                            `;
+                            injectToolboxIconCss();
+                            headingLabel.setAttribute('web-icon-class', `blocklyFlyoutIcon${topCats[i].getAttribute('name')}`);
+                        }
+                    }
+                    topCats[i].insertBefore(headingLabel, topCats[i].firstChild);
                 }
             }
         }
@@ -968,6 +961,7 @@ namespace pxt.blocks {
         // lf("{id:category}Text")
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
+        // lf("{id:category}Search")
         // lf("{id:category}More\u2026")
 
         // update shadow types
@@ -1004,8 +998,69 @@ namespace pxt.blocks {
             updateUsedBlocks = true;
         }
 
+        // Rearrange blocks in the flyout and add group labels
+        if (tb) {
+            let categories = tb.getElementsByTagName(`category`);
+            for (let ci = 0; ci < categories.length; ++ci) {
+                let cat = categories.item(ci);
+                let catName = cat.getAttribute("nameid");
+                if (catName === "advanced") continue;
+
+                let blocks = getDirectChildren(cat, `block`);
+                let groups = cat.getAttribute("groups");
+                let labelLineWidth = cat.getAttribute("labellinewidth");
+                let blockGroups: {[group: string]: Element[]} = {}
+                let sortedGroups: string[] = [];
+                if (groups) sortedGroups = groups.split(', ');
+
+                // Organize the blocks into the different groups
+                for (let bi = 0; bi < blocks.length; ++bi) {
+                    let blk = blocks[bi];
+                    let group = blk.getAttribute("group") || 'other';
+                    if (!blockGroups[group]) blockGroups[group] = [];
+                    blockGroups[group].push(blk);
+                }
+
+                if (Object.keys(blockGroups).length > 1) {
+                    // Add any missing groups to the sorted groups list
+                    Object.keys(blockGroups).sort().forEach(group => {
+                        if (sortedGroups.indexOf(group) == -1) {
+                            sortedGroups.push(group);
+                        }
+                    })
+
+                    // Add the blocks to the xmlList
+                    let xmlList: Element[] = [];
+                    for (let bg = 0; bg < sortedGroups.length; ++bg) {
+                        let group = sortedGroups[bg];
+                        // Add the group label
+                        if (group != 'other') {
+                            let groupLabel = goog.dom.createDom('label');
+                            groupLabel.setAttribute('text', pxt.Util.rlf(`{id:group}${group}`));
+                            groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
+                            groupLabel.setAttribute('web-line', '1.5');
+                            if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
+                            xmlList.push(groupLabel as HTMLElement);
+                        }
+
+                        // Add the blocks in that group
+                        if (blockGroups[group])
+                            blockGroups[group].forEach(groupedBlock => {
+                                cat.removeChild(groupedBlock);
+                                xmlList.push(groupedBlock);
+                            })
+                    }
+
+                    // Add the blocks back into the category
+                    xmlList.forEach(arrangedBlock => {
+                        cat.appendChild(arrangedBlock);
+                    })
+                }
+            }
+        }
+
         // Filter the blocks
-        if (filters) {
+        if (tb && filters) {
             function filterBlocks(blocks: any, defaultState?: number) {
                 let hasChild: boolean = false;
                 for (let bi = 0; bi < blocks.length; ++bi) {
@@ -1101,6 +1156,34 @@ namespace pxt.blocks {
         }
 
         return tb;
+
+
+        function initBuiltinCategoryXml(name: string, remove: boolean) {
+            if (remove) {
+                 removeCategory(tb, name);
+                 return;
+            }
+
+            const cat = categoryElement(tb, name);
+            if (cat) {
+                const attr = cat.getAttribute("advanced");
+                if (attr && attr !== "false") {
+                    showAdvanced = true;
+
+                    // Record all block usages in case this category doesn't show up
+                    // in the toolbox (i.e. advanced is collapsed)
+                    const blockElements = cat.getElementsByTagName("block");
+                    for (let i = 0; i < blockElements.length; i++) {
+                        const b = blockElements.item(i);
+                        usedBlocks[b.getAttribute("type")] = true;
+                    }
+
+                    if (showCategories === CategoryMode.Basic) {
+                        removeCategory(tb, name);
+                    }
+                }
+            }
+        }
     }
 
     export function initBlocks(blockInfo: pxtc.BlocksInfo, toolbox?: Element, showCategories = CategoryMode.Basic, filters?: BlockFilters): Element {
@@ -1110,7 +1193,7 @@ namespace pxt.blocks {
         let tb = createToolbox(blockInfo, toolbox, showCategories, filters);
 
         // add trash icon to toolbox
-        if (!$('#blocklyTrashIcon').length) {
+        if (!document.getElementById("blocklyTrashIcon")) {
             let trashDiv = document.createElement('div');
             trashDiv.id = "blocklyTrashIcon";
             trashDiv.style.opacity = '0';
@@ -1118,7 +1201,8 @@ namespace pxt.blocks {
             let trashIcon = document.createElement('i');
             trashIcon.className = 'trash icon';
             trashDiv.appendChild(trashIcon);
-            $('.blocklyToolboxDiv').append(trashDiv);
+            const injectionDiv = document.getElementsByClassName('injectionDiv')[0];
+            if (injectionDiv) injectionDiv.appendChild(trashDiv);
         }
 
         return tb;
@@ -1155,17 +1239,31 @@ namespace pxt.blocks {
             blocklySearchInput.appendChild(blocklySearchInputField);
             blocklySearchInput.appendChild(blocklySearchInputIcon);
             blocklySearchArea.appendChild(blocklySearchInput);
-            $('.blocklyToolboxDiv').prepend(blocklySearchArea);
+            const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
+            toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
+        }
+
+        const hasSearchFlyout = () => {
+            return document.getElementsByClassName('blocklyTreeIconsearch').length > 0;
+        }
+
+        const showSearchFlyout = () => {
+            const tree = (workspace as any).toolbox_.tree_;
+            // Show the search flyout
+            tree.setSelectedItem(tree.getChildren()[0]);
         }
 
         pxt.blocks.cachedSearchTb = tb;
         pxt.blocks.cachedSearchTbAll = tbAll;
-        const searchHandler = Util.debounce(() => {
-            let searchField = $('.blocklySearchInputField');
-            let searchFor = searchField.val().toLowerCase();
-            blocklySearchInput.className += ' loading';
+        let previousSearchTerm = '';
+        const searchChangeHandler = Util.debounce(() => {
+            let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+            let searchFor = searchField.value.toLowerCase();
 
             if (searchFor != '') {
+                blocklySearchInput.className += ' loading';
+                previousSearchTerm = searchFor;
+
                 pxt.tickEvent("blocks.search");
                 let searchTb = pxt.blocks.cachedSearchTb ? <Element>pxt.blocks.cachedSearchTb.cloneNode(true) : undefined;
 
@@ -1177,9 +1275,7 @@ namespace pxt.blocks {
                     let parentCategoryList = searchTb;
 
                     const nsWeight = 101; // Show search category on top
-                    const locCatName = lf("Search");
-                    category = createCategoryElement(locCatName, catName, nsWeight);
-                    category.setAttribute("expanded", 'true');
+                    category = createCategoryElement(lf("{id:category}Search"), catName, nsWeight);
                     category.setAttribute("colour", '#000');
                     category.setAttribute("iconclass", 'blocklyTreeIconsearch');
                     category.setAttribute("expandedclass", 'blocklyTreeIconsearch');
@@ -1198,6 +1294,7 @@ namespace pxt.blocks {
                 }
 
                 searchAsync({ term: searchFor, subset: updateUsedBlocks ? usedBlocks : undefined }).then(blocks => {
+                    pxt.log("searching for: " + searchFor);
                     updateUsedBlocks = false;
                     if (!blocks) return;
                     if (blocks.length == 0) {
@@ -1228,22 +1325,56 @@ namespace pxt.blocks {
                     if (tb) {
                         updateToolbox(searchTb);
                         blocklySearchInput.className = origClassName;
+                        showSearchFlyout();
                     }
                 })
-            } else {
+            } else if (previousSearchTerm != '') {
                 // Clearing search
                 updateToolbox(pxt.blocks.cachedSearchTb);
                 blocklySearchInput.className = origClassName;
             }
             // Search
-        }, 1000, false);
+        }, 300, false);
 
-        blocklySearchInputField.oninput = searchHandler;
-        blocklySearchInputField.onchange = searchHandler;
+        const searchClickHandler = () => {
+            let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+            let searchFor = searchField.value.toLowerCase();
+            if (searchFor != '') {
+                if (hasSearchFlyout()) showSearchFlyout();
+                else {
+                    previousSearchTerm = '';
+                    searchChangeHandler();
+                }
+            }
+        }
+
+        blocklySearchInputField.oninput = searchChangeHandler;
         blocklySearchInputField.onfocus = () => blocklySearchInputField.select();
+
         pxt.BrowserUtils.isTouchEnabled() ?
-            blocklySearchInputField.ontouchstart = searchHandler
-            : blocklySearchInputField.onclick = searchHandler;
+            blocklySearchInputField.ontouchstart = searchClickHandler
+            : blocklySearchInputField.onclick = searchClickHandler;
+
+        // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
+        const oldKeyDown = Blockly.Toolbox.TreeNode.prototype.onKeyDown;
+        (Blockly as any).Toolbox.TreeNode.prototype.onKeyDown = function(e: any) {
+            const x = e.which || e.keyCode;
+            const interceptCharacter = x != 37 && x != 38 && x != 39 && x != 40 // Arrows (Handled by Blockly)
+                && !e.ctrlKey && !e.metaKey && !e.altKey; // Meta keys
+            if (interceptCharacter) {
+                let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+                if (x == 8) { // Backspace
+                    searchField.focus();
+                    searchField.select();
+                } else {
+                    let char = String.fromCharCode(x);
+                    searchField.value = searchField.value + char;
+                    searchField.focus();
+                }
+            } else {
+                oldKeyDown.call(this, e);
+            }
+        }
     }
 
     function categoryElement(tb: Element, nameid: string): Element {
@@ -1775,7 +1906,7 @@ namespace pxt.blocks {
 
     function collapseSubcategories(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
         while (cat) {
-            if (cat.isUserCollapsible_ && cat != child && (!child || !isChild(child, cat))) {
+            if (cat.isUserCollapsible_ && cat.getTree() && cat != child && (!child || !isChild(child, cat))) {
                 cat.setExpanded(false);
                 cat.updateRow();
             }
@@ -2078,29 +2209,6 @@ namespace pxt.blocks {
             }
         };
 
-        // device_random
-        const deviceRandomId = "device_random";
-        const deviceRandomDef = pxt.blocks.getBlockDefinition(deviceRandomId);
-        Blockly.Blocks[deviceRandomId] = {
-            init: function () {
-                this.jsonInit({
-                    "message0": deviceRandomDef.block["message0"],
-                    "args0": [
-                        {
-                            "type": "input_value",
-                            "name": "limit",
-                            "check": "Number"
-                        }
-                    ],
-                    "inputsInline": true,
-                    "output": "Number",
-                    "colour": getNamespaceColor('math')
-                });
-
-                setBuiltinHelpInfo(this, deviceRandomId);
-            }
-        };
-
         // builtin math_number
         //XXX Integer validation needed.
         const mInfo = pxt.blocks.getBlockDefinition("math_number");
@@ -2168,6 +2276,17 @@ namespace pxt.blocks {
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
+
+            if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+                // Add the Heading label
+                let headingLabel = goog.dom.createDom('label');
+                headingLabel.setAttribute('text', lf("Variables"));
+                headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+                headingLabel.setAttribute('web-icon', '\uf039');
+                headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
+                xmlList.push(headingLabel as HTMLElement);
+            }
+
             let button = goog.dom.createDom('button');
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
@@ -2450,6 +2569,17 @@ namespace pxt.blocks {
 
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
+
+            if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
+                // Add the Heading label
+                let headingLabel = goog.dom.createDom('label');
+                headingLabel.setAttribute('text', lf("Functions"));
+                headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
+                headingLabel.setAttribute('web-icon', '\uf107');
+                headingLabel.setAttribute('web-icon-class', 'blocklyFlyoutIconfunctions');
+                headingLabel.setAttribute('web-icon-color', getNamespaceColor('functions'));
+                xmlList.push(headingLabel as HTMLElement);
+            }
 
             const newFunction = lf("Make a Function");
             const newFunctionTitle = lf("New function name:");

@@ -146,15 +146,6 @@ namespace pxt.blocks {
                     message0: Util.lf("absolute of %1")
                 }
             },
-            'device_random': {
-                name: Util.lf("pick random number"),
-                tooltip: Util.lf("Returns a random integer between 0 and the specified bound (inclusive)."),
-                url: '/blocks/math/random',
-                category: 'math',
-                block: {
-                    message0: Util.lf("pick random 0 to %1")
-                }
-            },
             'math_number': {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',
