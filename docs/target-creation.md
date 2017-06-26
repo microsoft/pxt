@@ -4,6 +4,8 @@ PXT is built to allow targeting different coding environment, called **targets**
 In this page, we'll go through the steps necessary to get your target with your own blocks and runtime.
 
 Examples of targets are:
+* https://makecode.microbit.org (sources at https://github.com/microsoft/pxt-microbit)
+* http://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
 
 * https://pxt.microbit.org
 * https://pxt.adafruit.com
@@ -60,10 +62,18 @@ Graphical assets are located under ``/docs/static``.
 
 ### Updating the ``sample`` package
 
-* Rename the ``/libs/sample`` project to your target id, ``libs/[your target id]``
-* open ``pxt.json`` under that folder and rename ``id`` field value to your target id.
+The `libs/core` package of *pxt-sample* defines a *minimal* package structure.
 
-### Updating the ``templates`` packages
+In fact,  the APIs of *pxt-sample* live in the `sim/api.ts` (annotated to expose
+[TypeScript functions as blocks](/defining-blocks)), as this target is only
+for the web. The PXT compiler generates
+the file `libs/core/sim.d.ts` from the simulator code.  
+
+See [creating a PXT package](/packages)
+for more information on authoring packages, which includes code
+in the package itself.
+For now, you can try adding a new API to one of the existing namespaces
+in`sim/api.ts` with annotations to make a new block. 
 
 Templates are the default projects for your target. There is one default blocks project, and one default JavaScript project.
 The initial templates are empty projects.
