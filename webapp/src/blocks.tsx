@@ -552,6 +552,11 @@ export class Editor extends srceditor.Editor {
             this.filters = null;
         }
         this.currFile = file;
+        // Clear the search field if a value exists
+        let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+        if (searchField && searchField.value) {
+            searchField.value = '';
+        }
         return Promise.resolve();
     }
 
