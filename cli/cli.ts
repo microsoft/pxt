@@ -3886,7 +3886,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             }
             const isResource = /\.[a-z]+$/i.test(url)
             if (!isResource && !toc) {
-                pxt.debug(`link not in SUMMARY: ${url}`);
+                pxt.log(`link not in SUMMARY: ${url}`);
                 noTOCs.push(url);
             }
             // TODO: correct resolution of static resources
