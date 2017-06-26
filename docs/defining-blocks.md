@@ -29,7 +29,7 @@ samples.
 namespace basic {
 ````
 
-* `icon` icon character from the icon font to display. You can browse the full list of icons at https://semantic-ui.com/elements/icon.html
+* `icon` icon Unicode character from the icon font to display. The [Semantic UI](https://semantic-ui.com/elements/icon.html) icon set has been ported from Font Awesome (v4.5.6 at the time of writing), and a full list can be found at http://fontawesome.io/icons/
 * `color` should be included in a comment line starting with `\\%`. The color takes a **hue** value or a HTML color.
 
 To have a category appear under the "Advanced" section of the Block Editor toolbox, add the annotation `advanced=true`.

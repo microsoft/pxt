@@ -110,3 +110,14 @@
 
 @blocklyRowWidthWide: 200px;
 @blocklyRowWidthComputer: 180px;
+@blocklyRowWidthTablet: 150px;
+@blocklyRowWidthMobile: 45px;
+
+/*-------------------
+   Flyout
+--------------------*/
+
+@flyoutLabelColor: white;
+@blocklyFlyoutColor: @grey;
+@blocklyFlyoutColorOpacity: 0.9;
+@monacoFlyoutColor: rgba(221,221,221, 0.8);

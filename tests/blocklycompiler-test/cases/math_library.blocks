@@ -7,24 +7,17 @@
           <shadow id="6]9nylybhPGdNk?Ge|0s" type="math_number">
             <field name="NUM">0</field>
           </shadow>
-          <block id=")d~IXiY+~_I5vqmf$UvH" type="device_random">
-            <value name="limit">
-              <shadow id="c-d_+#ettu[Ku]]U0dR6" type="math_number">
-                <field name="NUM">4</field>
+          <block id="o=c@tAUuL,sUvWO{:71b" type="math_arithmetic">
+            <field name="OP">ADD</field>
+            <value name="A">
+              <shadow id="gxY$BLK[D[6kjf5;iOl^" type="math_number">
+                <field name="NUM">0</field>
               </shadow>
-              <block id="o=c@tAUuL,sUvWO{:71b" type="math_arithmetic">
-                <field name="OP">ADD</field>
-                <value name="A">
-                  <shadow id="gxY$BLK[D[6kjf5;iOl^" type="math_number">
-                    <field name="NUM">0</field>
-                  </shadow>
-                </value>
-                <value name="B">
-                  <shadow id="8u1R3V2*f~$+Bd,bL_)d" type="math_number">
-                    <field name="NUM">0</field>
-                  </shadow>
-                </value>
-              </block>
+            </value>
+            <value name="B">
+              <shadow id="8u1R3V2*f~$+Bd,bL_)d" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
             </value>
           </block>
         </value>

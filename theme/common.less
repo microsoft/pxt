@@ -452,16 +452,29 @@ span.blocklyTreeLabel {
 }
 
 .blocklyFlyoutLabelText {
-    fill: white !important;
-    font-size:1rem;
+    fill: @flyoutLabelColor !important;
+    font-size: 1rem;
+}
+.blocklyFlyoutHeading .blocklyFlyoutLabelText {
+    fill: @flyoutLabelColor !important;
+    font-size: 1.5rem;
 }
 .blocklyFlyoutLabelText:hover {
-    fill: white !important;
+    fill: @flyoutLabelColor !important;
+}
+
+.blocklyFlyoutLabelIcon {
+    font-family: 'Icons';
+    font-size: 1.5rem;
+}
+line.blocklyFlyoutLine {
+    stroke: @flyoutLabelColor;
 }
 
 /* Opacity of blockly flyout background */
 .blocklyFlyoutBackground {
-    fill-opacity: 0.9 !important;
+    fill: @blocklyFlyoutColor;
+    fill-opacity: @blocklyFlyoutColorOpacity !important;
 }
 
 div.blocklyTreeRow, span.blocklyTreeLabel {
@@ -481,16 +494,15 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
 /* The trash icon inside the toolbox */
 #blocklyTrashIcon {
     position: absolute;
-    top: 20%;
-    margin-left: auto;
-    margin-right: auto;
+    top: 30%;
     left: 0;
-    right: 0;
+    text-align: center;
     width: 100px;
     height: 80px;
     z-index: 8;
     font-size:5rem;
     color: @trashIconColor;
+    margin: 0.5rem;
 }
 
 /* Blockly / Monaco Toolbox Buttons */
@@ -521,6 +533,7 @@ span.blocklyTreeIcon {
     -webkit-font-smoothing: antialiased;
     backface-visibility: hidden;
     font-size: 1.2rem;
+    height: 15px;
     display: none;
 }
 .blocklyTreeSelected .blocklyTreeIcon{
@@ -556,14 +569,20 @@ span.blocklyTreeIcon {
 .blocklyTreeIcon.blocklyTreeIconvariables::before {
     content: "\f039";
 }
-.blocklyTreeIcon.blocklyTreeIconfunctions::before {
-    content: "\f0ae";
-}
 .blocklyTreeIcon.blocklyTreeIcontext::before {
     content: "\f035";
 }
 .blocklyTreeIcon.blocklyTreeIconarrays::before {
     content: "\f0cb";
+}
+.blocklyTreeIcon.blocklyTreeIconfunctions {
+    font-family: xicon !important;
+}
+.blocklyTreeIcon.blocklyTreeIconfunctions::before {
+    content: "\f107";
+}
+.blocklyFlyoutLabelIcon.blocklyFlyoutIconfunctions {
+    font-family: xicon !important;
 }
 
 /* Blockly Slider field */
@@ -631,7 +650,7 @@ span.blocklyTreeIcon {
 /* Monaco Toolbox */
 .monacoFlyout {
     font-family: Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
-    background: rgba(221,221,221, 0.8);
+    background: @monacoFlyoutColor;
     overflow-x: visible;
     overflow-y: auto;
     border-top-right-radius: 8px;
@@ -639,7 +658,34 @@ span.blocklyTreeIcon {
 }
 
 .monacoFlyout > div {
-    margin: 1.1rem;
+    margin: 1rem;
+}
+
+.monacoFlyoutLabel {
+    vertical-align: middle;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    color: white;
+    font-size: 15px;
+}
+
+.monacoFlyoutHeading {
+    padding-bottom: 0.4rem;
+}
+.monacoFlyoutHeading .monacoFlyoutHeadingText {
+    color: white;
+}
+.monacoFlyoutHeadingIcon {
+    vertical-align: middle !important;
+    font-size: 1.5rem !important;
+    margin: -0.7em 0.2em 0em 0.5em !important;
+}
+.monacoFlyoutLabelLine {
+    border: none;
+    border-top: 1px dotted white;
+    height:1px;
 }
 
 .monacoDraggableBlock {
@@ -825,6 +871,9 @@ Field editors
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthWide;
     }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthWide;
+    }
 }
 
 /* Small Monitor */
@@ -833,14 +882,23 @@ Field editors
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthComputer;
     }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthComputer;
+    }
 }
 
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     /* Blockly */
     div.blocklyTreeRow {
-        padding-top: 0.25rem !important;
-        padding-bottom: 1.5rem !important;
+        min-width: @blocklyRowWidthTablet;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthTablet;
+    }
+    div.blocklyTreeRow {
+        padding-top: 0.5rem !important;
+        padding-bottom: 2.0rem !important;
         border-left-width: 12px !important;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
@@ -852,6 +910,12 @@ Field editors
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
+    div.blocklyTreeRow {
+        min-width: @blocklyRowWidthMobile;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthMobile;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
@@ -1108,7 +1172,8 @@ Field editors
     }
     div.blocklyTreeRow {
         padding-right: 0;
-        height: 2rem;
+        padding-top: 0.25rem;
+        height: 2.5rem;
         text-align: center;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
