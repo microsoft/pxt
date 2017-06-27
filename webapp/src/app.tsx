@@ -2118,10 +2118,27 @@ $(document).ready(() => {
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
     const loadHeader = (headerId: string, createNewIfFailed = false) => {
+        if (!headerId) {
+            core.warningNotification(lf("Oops, can't open files outside the Documents folder"));
+            if (createNewIfFailed) {
+                theEditor.newProject();
+            }
+            return;
+        }
         const h = workspace.getHeader(headerId);
+        if (!h) {
+            core.warningNotification(lf("Oops, the file doesn't look like a project"));
+            if (createNewIfFailed) {
+                theEditor.newProject();
+            }
+            return;
+        }
         theEditor.loadHeaderAsync(h, null)
-            .catch(() => {
-                if (createNewIfFailed) theEditor.newProject();
+            .catch((e) => {
+                pxt.log(e.message);
+                if (createNewIfFailed) {
+                    theEditor.newProject();
+                }
             });
     };
 

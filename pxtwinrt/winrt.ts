@@ -10,7 +10,10 @@ namespace pxt.winrt {
         ".ts",
         ".blocks",
         ".md",
-        ".json"
+        ".json",
+        ".cpp",
+        ".h",
+        ".c"
     ];
 
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
@@ -108,7 +111,7 @@ namespace pxt.winrt {
                     // User opened a source file (.ts, .json, etc); attempt to open the parent folder as a project
                     f.getParentAsync()
                         .then((fold) => {
-                            importFolder(fold.name, createNewIfFailed);
+                            importFolder(fold ? fold.name : null, createNewIfFailed);
                         });
                 }
             }
