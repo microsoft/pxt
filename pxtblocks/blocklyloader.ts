@@ -1336,9 +1336,10 @@ namespace pxt.blocks {
             // Search
         }, 300, false);
 
-        const searchClickHandler = () => {
-            let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
-            let searchFor = searchField.value.toLowerCase();
+        blocklySearchInputField.oninput = searchChangeHandler;
+        blocklySearchInputField.onfocus = () => {
+            blocklySearchInputField.select();
+            let searchFor = blocklySearchInputField.value.toLowerCase();
             if (searchFor != '') {
                 if (hasSearchFlyout()) showSearchFlyout();
                 else {
@@ -1347,13 +1348,11 @@ namespace pxt.blocks {
                 }
             }
         }
-
-        blocklySearchInputField.oninput = searchChangeHandler;
-        blocklySearchInputField.onfocus = () => blocklySearchInputField.select();
-
-        pxt.BrowserUtils.isTouchEnabled() ?
-            blocklySearchInputField.ontouchstart = searchClickHandler
-            : blocklySearchInputField.onclick = searchClickHandler;
+        if (pxt.BrowserUtils.isTouchEnabled()) {
+            blocklySearchInputField.ontouchstart = () => {
+                blocklySearchInputField.focus();
+            };
+        }
 
         // Override Blockly's toolbox keydown method to intercept characters typed and move the focus to the search input
         const oldKeyDown = Blockly.Toolbox.TreeNode.prototype.onKeyDown;
