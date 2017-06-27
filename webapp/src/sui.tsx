@@ -11,6 +11,7 @@ export interface UiProps {
     class?: string;
     role?: string;
     title?: string;
+    tabIndex?: number;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -101,7 +102,8 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
         return (
             <div className={genericClassName("ui dropdown item", this.props) }
                 role={this.props.role}
-                title={this.props.title}>
+                title={this.props.title}
+                tabIndex={this.props.tabIndex}>
                 {genericContent(this.props) }
                 <div className="menu">
                     {this.props.children}
@@ -114,6 +116,7 @@ export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
     onClick?: () => void;
+    onKeyPress?: (e: React.KeyboardEvent) => void;
 }
 
 export class Item extends data.Component<ItemProps, {}> {
@@ -122,9 +125,11 @@ export class Item extends data.Component<ItemProps, {}> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
                 title={this.props.title || this.props.text}
+                tabIndex={this.props.tabIndex}
                 key={this.props.value}
                 data-value={this.props.value}
-                onClick={this.props.onClick}>
+                onClick={this.props.onClick}
+                onKeyPress={this.props.onKeyPress}>
                 {genericContent(this.props) }
                 {this.props.children}
             </div>);
@@ -160,6 +165,7 @@ export class Button extends UiElement<ButtonProps> {
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.title}
+                tabIndex={this.props.tabIndex}
                 aria-label={this.props.title || this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
