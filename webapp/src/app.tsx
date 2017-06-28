@@ -971,6 +971,9 @@ export class ProjectView
                 resp.userContextWindow = userContextWindow;
                 resp.downloadFileBaseName = pkg.genFileName("");
                 resp.confirmAsync = core.confirmAsync;
+                if (saveOnly) {
+                    return pxt.commands.saveOnlyAsync(resp);
+                }
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
                         core.warningNotification(lf("Upload failed, please try again."));
