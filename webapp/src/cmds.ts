@@ -148,6 +148,11 @@ export function initCommandsAsync(): Promise<void> {
             pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+        pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
+            return pxt.winrt.saveOnlyAsync(resp)
+                .then(() => core.infoNotification(lf("file saved!")))
+                .catch(() => core.errorNotification(lf("saving file failed...")));
+        };
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js

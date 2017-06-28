@@ -40,11 +40,11 @@
             </uap:SupportedFileTypes>
           </uap:FileTypeAssociation>
         </uap:Extension>
-        <uap3:Extension Category="windows.appUriHandler">
+        <!--<uap3:Extension Category="windows.appUriHandler">
           <uap3:AppUriHandler>
             <uap3:Host Name="makecode.adafruit.com" />
           </uap3:AppUriHandler>
-        </uap3:Extension>
+        </uap3:Extension>-->
       </Extensions>
     </Application>
   </Applications>
