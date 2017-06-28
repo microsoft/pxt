@@ -1,21 +1,5 @@
 /// <reference path="./winrtrefs.d.ts"/>
 namespace pxt.winrt {
-    const fullProjectFileExtensions = [
-        ".uf2",
-        ".hex",
-        ".mkcd",
-        ".pxt"
-    ];
-    const singleProjectFileExtensions = [
-        ".ts",
-        ".blocks",
-        ".md",
-        ".json",
-        ".cpp",
-        ".h",
-        ".c"
-    ];
-
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             p.done(v => resolve(v), e => reject(e));
@@ -40,8 +24,7 @@ namespace pxt.winrt {
         return typeof Windows !== "undefined";
     }
 
-    export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void,
-        importFolderImpl?: (headerId: string, createNewIfFailed?: boolean) => void) {
+    export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void) {
         if (!isWinRT()) return Promise.resolve();
 
         initSerial();
@@ -52,7 +35,6 @@ namespace pxt.winrt {
                 }
                 if (importHexImpl) {
                     importHex = importHexImpl;
-                    importFolder = importFolderImpl;
                     const app = Windows.UI.WebUI.WebUIApplication as any;
                     app.removeEventListener("activated", initialActivationHandler);
                     app.addEventListener("activated", fileActivationHandler);
@@ -60,7 +42,7 @@ namespace pxt.winrt {
             });
     }
 
-    // Needed for when user double clicks an associated file without the app already running
+    // Needed for when user double clicks a hex file without the app already running
     export function captureInitialActivation() {
         if (!isWinRT()) {
             return;
@@ -83,11 +65,10 @@ namespace pxt.winrt {
     const initialActivationPromise = new Promise<Windows.ApplicationModel.Activation.IActivatedEventArgs>((resolve, reject) => {
         resolveInitialActivationPromise = resolve;
         // After a few seconds, consider we missed the initial activation event and ignore any double clicked file
-        setTimeout(() => resolve(null), 5000);
+        setTimeout(() => resolve(null), 3500);
     });
     let resolveInitialActivationPromise: (args: Windows.ApplicationModel.Activation.IActivatedEventArgs) => void;
     let importHex: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void;
-    let importFolder: (headerPath: string, createNewIfFailed?: boolean) => void;
 
     function fileActivationHandler(args: Windows.ApplicationModel.Activation.IActivatedEventArgs, createNewIfFailed = false) {
         if (args.kind === Windows.ApplicationModel.Activation.ActivationKind.file) {
@@ -95,25 +76,17 @@ namespace pxt.winrt {
             let file: Windows.Storage.IStorageItem = info.files.getAt(0);
             if (file && file.isOfType(Windows.Storage.StorageItemTypes.file)) {
                 let f = file as Windows.Storage.StorageFile;
-                if (fullProjectFileExtensions.indexOf(f.fileType) > -1) {
-                    Windows.Storage.FileIO.readBufferAsync(f)
-                        .then(buffer => {
-                            let ar: number[] = [];
-                            let dataReader = Windows.Storage.Streams.DataReader.fromBuffer(buffer);
-                            while (dataReader.unconsumedBufferLength) {
-                                ar.push(dataReader.readByte());
-                            }
-                            dataReader.close();
-                            return pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar));
-                        })
-                        .then((hex) => importHex(hex, createNewIfFailed));
-                } else if (singleProjectFileExtensions.indexOf(f.fileType) > -1) {
-                    // User opened a source file (.ts, .json, etc); attempt to open the parent folder as a project
-                    f.getParentAsync()
-                        .then((fold) => {
-                            importFolder(fold ? fold.name : null, createNewIfFailed);
-                        });
-                }
+                Windows.Storage.FileIO.readBufferAsync(f)
+                    .then(buffer => {
+                        let ar: number[] = [];
+                        let dataReader = Windows.Storage.Streams.DataReader.fromBuffer(buffer);
+                        while (dataReader.unconsumedBufferLength) {
+                            ar.push(dataReader.readByte());
+                        }
+                        dataReader.close();
+                        return pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar));
+                    })
+                    .then((hex) => importHex(hex, createNewIfFailed));
             }
         }
     }

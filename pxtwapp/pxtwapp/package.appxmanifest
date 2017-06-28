@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" IgnorableNamespaces="uap uap3 mp">
-  <Identity Name="microsoft.makecode.adafruit" Version="1.0.0.0" Publisher="CN=jhalleux" />
+  <Identity Name="d6f74a43-358f-4081-88bc-7b2242586346" Version="1.0.0.0" Publisher="CN=jhalleux" />
   <mp:PhoneIdentity PhoneProductId="d6f74a43-358f-4081-88bc-7b2242586346" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>pxtwapp</DisplayName>
@@ -14,8 +14,7 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <!--<Application Id="App" StartPage="https://makecode.adafruit.com">-->
-    <Application Id="App" StartPage="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1">
+    <Application Id="App" StartPage="https://makecode.com/uwp">
       <uap:ApplicationContentUriRules>
         <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="http://localhost:3232/index.html?nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
@@ -38,14 +37,6 @@
               <uap:FileType ContentType="application/x-makecode-uf2">.uf2</uap:FileType>
               <uap:FileType ContentType="application/x-makecode-pxt">.pxt</uap:FileType>
               <uap:FileType ContentType="application/x-makecode-mkcd">.mkcd</uap:FileType>
-              <uap:FileType ContentType="text/plain">.txt</uap:FileType>
-              <uap:FileType ContentType="application/json">.json</uap:FileType>
-              <uap:FileType ContentType="text/markdown">.md</uap:FileType>
-              <uap:FileType ContentType="application/x-makecode-blocks">.blocks</uap:FileType>
-              <uap:FileType ContentType="text/x-makecode-typescript">.ts</uap:FileType>
-              <uap:FileType ContentType="text/x-makecode-cpp">.cpp</uap:FileType>
-              <uap:FileType ContentType="text/x-makecode-h">.h</uap:FileType>
-              <uap:FileType ContentType="text/x-makecode-asm">.asm</uap:FileType>
             </uap:SupportedFileTypes>
           </uap:FileTypeAssociation>
         </uap:Extension>
@@ -60,7 +51,7 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <uap:Capability Name="removableStorage" />
-    <uap:Capability Name="documentsLibrary" />
+    <DeviceCapability Name="bluetooth" />
     <DeviceCapability Name="serialcommunication">
       <Device Id="any">
         <Function Type="name:serialPort" />
