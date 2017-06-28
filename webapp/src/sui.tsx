@@ -225,9 +225,11 @@ export class Input extends data.Component<{
 
         if (!p.lines || p.lines == 1) {
             const inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
+            inp.focus();
             inp.setSelectionRange(0, 9999);
         } else {
             const inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
+            inp.focus();
             inp.setSelectionRange(0, 9999);
         }
 

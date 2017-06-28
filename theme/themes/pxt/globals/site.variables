@@ -110,6 +110,8 @@
 
 @blocklyRowWidthWide: 200px;
 @blocklyRowWidthComputer: 180px;
+@blocklyRowWidthTablet: 150px;
+@blocklyRowWidthMobile: 45px;
 
 /*-------------------
    Flyout

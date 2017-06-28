@@ -214,6 +214,7 @@ namespace pxt.editor {
         maths?: MonacoToolboxCategoryDefinition;
         text?: MonacoToolboxCategoryDefinition;
         arrays?: MonacoToolboxCategoryDefinition;
+        functions?: MonacoToolboxCategoryDefinition;
     }
 
     export interface MonacoToolboxCategoryDefinition {
@@ -228,11 +229,26 @@ namespace pxt.editor {
         weight?: number;
 
         /**
+         * Whether or not the category should be placed in the advanced category
+         */
+        advanced?: boolean;
+
+        /**
+         * Whether or not the category should be removed
+         */
+        removed?: boolean;
+
+        /**
          * Blocks to appear in the category. Specifying this field will override
          * all existing blocks in the category. The ordering of the blocks is
          * determined by the ordering of this array.
          */
         blocks?: MonacoToolboxBlockDefinition[];
+
+        /**
+         * Whether or not to replace or append blocks
+         */
+        appendBlocks?: boolean;
     }
 
     export interface MonacoToolboxBlockDefinition {

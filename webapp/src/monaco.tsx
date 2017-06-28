@@ -46,6 +46,7 @@ export interface BuiltinCategoryDefinition {
     blocks: MonacoBlockDefinition[];
     nameid: string;
     attributes: pxtc.CommentAttrs;
+    removed?: boolean;
 }
 
 export class Editor extends srceditor.Editor {
@@ -634,13 +635,13 @@ export class Editor extends srceditor.Editor {
         const namespaces = Object.keys(this.nsMap).filter(ns => !snippets.isBuiltin(ns) && !!this.getNamespaceAttrs(ns));
 
         let config = pxt.appTarget.runtime || {};
-        if (config.loopsBlocks) namespaces.push(snippets.loops.nameid);
-        if (config.logicBlocks) namespaces.push(snippets.logic.nameid);
-        if (config.variablesBlocks) namespaces.push(snippets.variables.nameid);
-        if (config.mathBlocks) namespaces.push(snippets.maths.nameid);
-        if (config.functionBlocks) namespaces.push(snippets.functions.nameid);
-        if (config.textBlocks) namespaces.push(snippets.text.nameid);
-        if (config.listsBlocks) namespaces.push(snippets.arrays.nameid);
+        if (config.loopsBlocks && !snippets.loops.removed) namespaces.push(snippets.loops.nameid);
+        if (config.logicBlocks && !snippets.logic.removed) namespaces.push(snippets.logic.nameid);
+        if (config.variablesBlocks && !snippets.variables.removed) namespaces.push(snippets.variables.nameid);
+        if (config.mathBlocks && !snippets.maths.removed) namespaces.push(snippets.maths.nameid);
+        if (config.functionBlocks && !snippets.functions.removed) namespaces.push(snippets.functions.nameid);
+        if (config.textBlocks && !snippets.text.removed) namespaces.push(snippets.text.nameid);
+        if (config.listsBlocks && !snippets.arrays.removed) namespaces.push(snippets.arrays.nameid);
 
         return namespaces;
     }

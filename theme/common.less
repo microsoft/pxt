@@ -494,16 +494,15 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
 /* The trash icon inside the toolbox */
 #blocklyTrashIcon {
     position: absolute;
-    top: 20%;
-    margin-left: auto;
-    margin-right: auto;
+    top: 30%;
     left: 0;
-    right: 0;
+    text-align: center;
     width: 100px;
     height: 80px;
     z-index: 8;
     font-size:5rem;
     color: @trashIconColor;
+    margin: 0.5rem;
 }
 
 /* Blockly / Monaco Toolbox Buttons */
@@ -534,6 +533,7 @@ span.blocklyTreeIcon {
     -webkit-font-smoothing: antialiased;
     backface-visibility: hidden;
     font-size: 1.2rem;
+    height: 15px;
     display: none;
 }
 .blocklyTreeSelected .blocklyTreeIcon{
@@ -871,6 +871,9 @@ Field editors
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthWide;
     }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthWide;
+    }
 }
 
 /* Small Monitor */
@@ -879,14 +882,23 @@ Field editors
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthComputer;
     }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthComputer;
+    }
 }
 
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     /* Blockly */
     div.blocklyTreeRow {
-        padding-top: 0.25rem !important;
-        padding-bottom: 1.5rem !important;
+        min-width: @blocklyRowWidthTablet;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthTablet;
+    }
+    div.blocklyTreeRow {
+        padding-top: 0.5rem !important;
+        padding-bottom: 2.0rem !important;
         border-left-width: 12px !important;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
@@ -898,6 +910,12 @@ Field editors
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
+    div.blocklyTreeRow {
+        min-width: @blocklyRowWidthMobile;
+    }
+    #blocklyTrashIcon {
+        width: @blocklyRowWidthMobile;
+    }
 }
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
