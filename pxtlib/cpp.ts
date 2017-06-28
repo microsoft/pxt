@@ -249,6 +249,7 @@ namespace pxt.cpp {
 
                     case "bool": return "boolean";
                     case "StringData*": return "string";
+                    case "String": return "string";
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
 

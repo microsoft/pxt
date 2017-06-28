@@ -174,6 +174,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     let saveCache = () => fs.writeFileSync(buildCachePath, JSON.stringify(buildCache, null, 4) + "\n")
 
     let modSha = U.sha256(extInfo.generatedFiles["/" + buildEngine.moduleConfig])
+    let needDal = false
     if (buildCache.modSha !== modSha) {
         tasks = tasks
             .then(buildEngine.setPlatformAsync)
@@ -182,7 +183,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 buildCache.sha = ""
                 buildCache.modSha = modSha
                 saveCache();
-                buildDalConst(buildEngine, mainPkg, true);
+                needDal = true
             })
     } else {
         pxt.debug("Skipping C++ build update.")
@@ -193,6 +194,8 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         .then(() => {
             buildCache.sha = extInfo.sha
             saveCache()
+            if (needDal)
+                buildDalConst(buildEngine, mainPkg, true);
         })
 
     return tasks
@@ -359,12 +362,15 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         if (!fs.existsSync(incPath))
             incPath = buildEngine.buildPath + "/yotta_modules/codal/inc/";
         if (!fs.existsSync(incPath))
+            incPath = buildEngine.buildPath
+        if (!fs.existsSync(incPath))
             U.userError("cannot find " + incPath);
-        let files = nodeutil.allFiles(incPath).filter(fn => U.endsWith(fn, ".h"))
+        let files = nodeutil.allFiles(incPath, 20).filter(fn => U.endsWith(fn, ".h"))
         files.sort(U.strcmp)
         let fc: Map<string> = {}
         for (let fn of files) {
             if (U.endsWith(fn, "Config.h")) continue
+            if (fn.indexOf("/mbed-classic/") >= 0) continue
             fc[fn] = fs.readFileSync(fn, "utf8")
         }
         files = Object.keys(fc)
