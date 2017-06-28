@@ -2166,7 +2166,7 @@ $(document).ready(() => {
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
             let hd = workspace.getHeaders()[0]
             if (ent) hd = workspace.getHeader(ent.id)
-            if (hd) return theEditor.loadHeaderAsync(hd, null)
+            if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.filters)
             else theEditor.newProject();
             return Promise.resolve();
         }).then(() => workspace.importLegacyScriptsAsync())
