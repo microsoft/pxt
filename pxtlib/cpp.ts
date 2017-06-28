@@ -631,6 +631,8 @@ namespace pxt.cpp {
                         if (isHeader)
                             includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`
                         let src = pkg.readFile(fn)
+                        if (src == null)
+                            U.userError(lf("C++ file {0} is missing in package {1}.", fn, pkg.config.name))
                         fileName = fullName
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         src = parseCpp(src, isHeader)
