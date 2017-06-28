@@ -336,7 +336,7 @@ div.blocklyWidgetDiv {
     display: none;
 }
 .monaco-editor-hover {
-    z-index:1000;
+    z-index:1000 !important;
 }
 
 #monacoEditorInner {

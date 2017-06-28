@@ -216,6 +216,7 @@ export class Input extends data.Component<{
     lines?: number;
     readOnly?: boolean;
     copy?: boolean;
+    selectOnClick?: boolean;
 }, {}> {
 
     copy() {
@@ -224,10 +225,12 @@ export class Input extends data.Component<{
 
         if (!p.lines || p.lines == 1) {
             const inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
-            inp.select();
+            inp.focus();
+            inp.setSelectionRange(0, 9999);
         } else {
             const inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
-            inp.select();
+            inp.focus();
+            inp.setSelectionRange(0, 9999);
         }
 
         try {
@@ -252,6 +255,7 @@ export class Input extends data.Component<{
                         type={p.type || "text"}
                         placeholder={p.placeholder} value={p.value}
                         readOnly={!!p.readOnly}
+                        onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                         onChange={v => p.onChange((v.target as any).value) }/>
                         : <textarea
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
@@ -259,6 +263,7 @@ export class Input extends data.Component<{
                             placeholder={p.placeholder}
                             value={p.value}
                             readOnly={!!p.readOnly}
+                            onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                             onChange={v => p.onChange((v.target as any).value) }>
                         </textarea>}
                     {copyBtn}

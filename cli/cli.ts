@@ -880,6 +880,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/doccdn/": "@commitCdnUrl@",
         "/sim/": "@commitCdnUrl@",
         "/blb/": "@blobCdnUrl@",
+        "@timestamp@": "",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
@@ -915,8 +916,10 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
             "/blb/": opts.localDir,
-            "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
-            //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
+            "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
+            "@workerjs@": `${opts.localDir}worker.js`,
+            "@timestamp@": `# ver ${new Date().toString()}`,
+            "data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
@@ -3883,7 +3886,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             }
             const isResource = /\.[a-z]+$/i.test(url)
             if (!isResource && !toc) {
-                pxt.debug(`link not in SUMMARY: ${url}`);
+                pxt.log(`link not in SUMMARY: ${url}`);
                 noTOCs.push(url);
             }
             // TODO: correct resolution of static resources

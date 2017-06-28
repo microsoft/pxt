@@ -3,7 +3,7 @@
 PXT can be customized to create your own **target**, with your own set of APIs and runtime, 
 supported by Block-based and JavaScript editing. Examples of targets are:
 
-* https://pxt.microbit.org (sources at https://github.com/microsoft/pxt-microbit)
+* https://makecode.microbit.org (sources at https://github.com/microsoft/pxt-microbit)
 * http://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
 
 We assume that the reader is familiar with Node.JS, NPM, JavaScript and/or C++. If you haven't done so yet, 
@@ -53,12 +53,13 @@ Graphical assets are located under ``/docs/static``.
 
 ### Updating the ``core`` package
 
-The `libs/core` package of pxt-sample defines a *minimal* package structure.
+The `libs/core` package of *pxt-sample* defines a *minimal* package structure.
 
-In fact,  the APIs of the sample live in the `sim/api.ts` (annotated to expose
+In fact,  the APIs of *pxt-sample* live in the `sim/api.ts` (annotated to expose
 [TypeScript functions as blocks](/defining-blocks)), as this target is only
 for the web. The PXT compiler generates
 the file `libs/core/sim.d.ts` from the simulator code.  
+
 See [creating a PXT package](/packages)
 for more information on authoring packages, which includes code
 in the package itself.

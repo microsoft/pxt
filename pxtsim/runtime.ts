@@ -120,7 +120,7 @@ namespace pxsim {
 
         constructor() {
             super()
-            this.id = "b" + Math_.random(2147483647);
+            this.id = "b" + Math.round(Math.random() * 2147483647);
             this.bus = new pxsim.EventBus(runtime);
 
             // updates

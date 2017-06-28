@@ -126,8 +126,11 @@ namespace ts.pxtc {
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         // On block
         subcategory?: string;
+        group?: string;
         // On namepspace
         subcategories?: string[];
+        groups?: string[];
+        labelLineWidth?: string;
 
         // on interfaces
         indexerGet?: string;
@@ -425,6 +428,14 @@ namespace ts.pxtc {
             }
             catch (e) {
                 res.subcategories = undefined;
+            }
+        }
+        if (res.groups) {
+            try {
+                res.groups = JSON.parse(res.groups as any);
+            }
+            catch (e) {
+                res.groups = undefined;
             }
         }
 
