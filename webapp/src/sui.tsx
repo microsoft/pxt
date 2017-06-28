@@ -19,6 +19,7 @@ export interface WithPopupProps extends UiProps {
 }
 
 export interface DropdownProps extends WithPopupProps {
+    tabIndex?: number;
     value?: string;
     title?: string;
     onChange?: (v: string) => void;
@@ -53,6 +54,12 @@ function removeClass(el: HTMLElement, cls: string) {
     else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
 }
 
+export function fireClickOnEnter(e: React.KeyboardEvent): void {
+    if (e.charCode == 13) {
+        (document.activeElement as HTMLElement).click();
+    }
+}
+
 export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
     popup() {
         if (this.props.popup) {
@@ -83,13 +90,18 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
-            action: "hide",
+            action: (text: string, value:any, element: JQuery) => {
+                element.click()
+                this.child("").dropdown("hide")
+            },
             fullTextSearch: true,
             onChange: (v: string) => {
                 if (this.props.onChange && v != this.props.value) {
                     this.props.onChange(v)
                 }
             }
+        }).on("click", ".item", function(e: Event) {
+            e.preventDefault();
         });
     }
 
@@ -125,12 +137,12 @@ export class Item extends data.Component<ItemProps, {}> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
                 title={this.props.title || this.props.text}
-                tabIndex={this.props.tabIndex}
+                tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}
-                onKeyPress={this.props.onKeyPress}>
-                {genericContent(this.props) }
+                onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
+                {genericContent(this.props)}
                 {this.props.children}
             </div>);
     }
@@ -144,7 +156,8 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
                 title={this.props.title || this.props.text}
                 key={this.props.value}
                 data-value={this.props.value}
-                onClick={this.props.onClick}>
+                onClick={this.props.onClick}
+                onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
                 <div className={genericClassName("ui button", this.props)}>
                     {genericContent(this.props) }
                     {this.props.children}
@@ -156,6 +169,7 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
 export interface ButtonProps extends WithPopupProps {
     title?: string;
     onClick?: (e: React.MouseEvent) => void;
+    onKeyPress?: (e: React.KeyboardEvent) => void;
     disabled?: boolean;
 }
 
@@ -165,10 +179,11 @@ export class Button extends UiElement<ButtonProps> {
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.title}
-                tabIndex={this.props.tabIndex}
+                tabIndex={this.props.tabIndex || 0}
                 aria-label={this.props.title || this.props.text}
-                onClick={this.props.onClick}>
-                {genericContent(this.props) }
+                onClick={this.props.onClick}
+                onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
+                {genericContent(this.props)}
                 {this.props.children}
             </button>
         );
