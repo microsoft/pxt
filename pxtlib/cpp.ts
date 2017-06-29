@@ -145,12 +145,21 @@ namespace pxt.cpp {
 
         pxt.debug("Generating new extinfo")
         const res = pxtc.emptyExtInfo();
-        const isPlatformio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
-        const isCodal = pxt.appTarget.compileService && pxt.appTarget.compileService.buildEngine == "codal"
-        const isYotta = !isPlatformio && !isCodal
+
+        let compileService = appTarget.compileService;
+        if (!compileService)
+            compileService = {
+                gittag: "none",
+                serviceId: "nocompile"
+            }
+
+        const isPlatformio = !!compileService.platformioIni;
+        const isCodal = compileService.buildEngine == "codal"
+        const isDockerMake = compileService.buildEngine == "dockermake"
+        const isYotta = !isPlatformio && !isCodal && !isDockerMake
         if (isPlatformio)
             sourcePath = "/src/"
-        else if (isCodal)
+        else if (isCodal || isDockerMake)
             sourcePath = "/pxtapp/"
 
         let pxtConfig = "// Configuration defines\n"
@@ -167,12 +176,6 @@ namespace pxt.cpp {
         let allErrors = ""
         let knownEnums: Map<boolean> = {}
 
-        let compileService = appTarget.compileService;
-        if (!compileService)
-            compileService = {
-                gittag: "none",
-                serviceId: "nocompile"
-            }
 
         const enumVals: Map<string> = {
             "true": "1",
@@ -186,6 +189,8 @@ namespace pxt.cpp {
             return name.trim().replace(/[\_\*]$/, "")
         }
 
+        let makefile = ""
+
         for (const pkg of mainPkg.sortedDeps()) {
             if (pkg.getFiles().indexOf(constsName) >= 0) {
                 const src = pkg.host().readFile(pkg, constsName)
@@ -196,6 +201,9 @@ namespace pxt.cpp {
                         enumVals[m[1]] = m[2]
                     }
                 })
+            }
+            if (!makefile && pkg.getFiles().indexOf("Makefile") >= 0) {
+                makefile = pkg.host().readFile(pkg, "Makefile")
             }
         }
 
@@ -566,6 +574,9 @@ namespace pxt.cpp {
                 U.jsonCopyFrom(res.yotta.dependencies, json.dependencies)
             }
 
+            if (res.npmDependencies && pkg.config.npmDependencies)
+                U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
+
             if (json.config) {
                 const cfg = U.jsonFlatten(json.config)
                 for (const settingName of Object.keys(cfg)) {
@@ -627,7 +638,7 @@ namespace pxt.cpp {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
                         let fullName = pkg.config.name + "/" + fn
-                        if (pkg.config.name == "core" && isHeader)
+                        if ((pkg.config.name == "base" || pkg.config.name == "core") && isHeader)
                             fullName = fn
                         if (isHeader)
                             includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`
@@ -646,7 +657,7 @@ namespace pxt.cpp {
                     }
                     if (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s")) {
                         let src = pkg.readFile(fn)
-                        res.extensionFiles[sourcePath + pkg.config.name + "/" + fn] = src
+                        res.extensionFiles[sourcePath + pkg.config.name + "/" + fn.replace(/\.S$/, ".s")] = src
                     }
                 }
                 if (thisErrors) {
@@ -661,7 +672,14 @@ namespace pxt.cpp {
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
         const configJson = U.jsonUnFlatten(optSettings)
-        if (isCodal) {
+        if (isDockerMake) {
+            let packageJson = {
+                name: "pxt-app",
+                private: true,
+                dependencies: res.npmDependencies,
+            }
+            res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
+        } else if (isCodal) {
             let cs = pxt.appTarget.compileService
             let codalJson = {
                 "target": cs.codalTarget + ".json",
@@ -726,6 +744,24 @@ int main() {
 }
 #endif
 `
+        if (makefile) {
+            let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
+            let inc = ""
+            let objs: string[] = []
+            let add = (name: string, ext: string) => {
+                let files = allfiles.filter(f => U.endsWith(f, ext)).map(s => s.slice(1))
+                inc += `${name} = ${files.join(" ")}\n`
+            }
+            add("PXT_C", ".c")
+            add("PXT_CPP", ".cpp")
+            add("PXT_S", ".s")
+            add("PXT_HEADERS", ".h")
+            inc += "PXT_SOURCES = $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
+            inc += "PXT_OBJS = $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
+            res.generatedFiles["/Makefile"] = makefile
+            res.generatedFiles["/Makefile.inc"] = inc
+
+        }
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)

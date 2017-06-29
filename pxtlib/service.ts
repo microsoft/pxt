@@ -321,7 +321,10 @@ namespace ts.pxtc {
     }
 
     export function emptyExtInfo(): ExtensionInfo {
-        const pio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        let cs = pxt.appTarget.compileService
+        if (!cs) cs = {} as any
+        const pio = !!cs.platformioIni;
+        const docker = cs.buildEngine == "dockermake";
         const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},
@@ -333,6 +336,7 @@ namespace ts.pxtc {
             onlyPublic: true
         }
         if (pio) r.platformio = { dependencies: {} };
+        else if (docker) r.npmDependencies = {};
         else r.yotta = { config: {}, dependencies: {} };
         return r;
     }

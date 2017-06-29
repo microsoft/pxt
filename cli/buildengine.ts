@@ -67,12 +67,24 @@ export const buildEngines: Map<BuildEngine> = {
 
     codal: {
         updateEngineAsync: updateCodalBuildAsync,
-        buildAsync: () => runCodalBuildAsync([]),
+        buildAsync: () => runBuildCmdAsync("python", "build.py"),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchCodalHexInfo,
         prepBuildDirAsync: prepCodalBuildDirAsync,
         buildPath: "built/codal",
         moduleConfig: "codal.json",
+        deployAsync: msdDeployCoreAsync,
+        appPath: "pxtapp"
+    },
+
+    dockermake: {
+        updateEngineAsync: () => runBuildCmdAsync("npm", "install"),
+        buildAsync: () => runDockerAsync(["make"]),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchCodalHexInfo, // TODO
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/dockermake",
+        moduleConfig: "package.json",
         deployAsync: msdDeployCoreAsync,
         appPath: "pxtapp"
     },
@@ -245,6 +257,17 @@ function runPlatformioAsync(args: string[]) {
     })
 }
 
+function runDockerAsync(args: string[]) {
+    let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
+    let cs = pxt.appTarget.compileService
+    return nodeutil.spawnAsync({
+        cmd: "docker",
+        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src", "-u", "build",
+            cs.dockerImage].concat(args),
+        cwd: thisBuild.buildPath
+    })
+}
+
 let parseCppInt = pxt.cpp.parseCppInt;
 
 
@@ -267,10 +290,10 @@ function prepCodalBuildDirAsync() {
         .then(() => codalGitAsync("checkout", cs.gittag))
 }
 
-function runCodalBuildAsync(args: string[]) {
+function runBuildCmdAsync(cmd: string, ...args: string[]) {
     return nodeutil.spawnAsync({
-        cmd: "python",
-        args: ["build.py"].concat(args),
+        cmd,
+        args,
         cwd: thisBuild.buildPath,
     })
 }

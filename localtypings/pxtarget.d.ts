@@ -111,12 +111,14 @@ declare namespace pxt {
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
-        
+
         platformioIni?: string[];
 
         codalTarget?: string;
         codalBinary?: string;
         codalDefinitions?: any;
+
+        dockerImage?: string;
 
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
@@ -290,6 +292,7 @@ declare namespace ts.pxtc {
         extensionFiles: pxt.Map<string>;
         yotta?: pxt.YottaConfig;
         platformio?: pxt.PlatformIOConfig;
+        npmDependencies?: Map<string>;
         sha: string;
         compileData: string;
         shimsDTS: string;
