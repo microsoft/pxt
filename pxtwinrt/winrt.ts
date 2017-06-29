@@ -27,6 +27,16 @@ namespace pxt.winrt {
     export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void) {
         if (!isWinRT()) return Promise.resolve();
 
+        const uiCore = Windows.UI.Core;
+        const navMgr = uiCore.SystemNavigationManager.getForCurrentView();
+        navMgr.onbackrequested = (e) => {
+            // Ignore the built-in back button; it tries to back-navigate the sidedoc panel, but it crashes the
+            // app if the sidedoc has been closed since the navigation happened
+            console.log("BACK NAVIGATION");
+            navMgr.appViewBackButtonVisibility = uiCore.AppViewBackButtonVisibility.collapsed;
+            e.handled = true;
+        };
+
         initSerial();
         return initialActivationPromise
             .then((args) => {
