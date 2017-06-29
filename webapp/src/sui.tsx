@@ -90,9 +90,20 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
-            action: (text: string, value:any, element: JQuery) => {
-                element.click()
+            action: (text: string, value: any, element: any) => {
                 this.child("").dropdown("hide")
+
+                if (typeof element.get === "function") {
+                    let jqueryElement = element as JQuery
+
+                    if (jqueryElement.get(0).tagName.toLowerCase() === 'a') {
+                        let win = window.open((jqueryElement.get(0) as HTMLLinkElement).href, '_blank')
+                        win.focus()
+                        return
+                    }
+                }
+                
+                (element as HTMLElement).click()
             },
             fullTextSearch: true,
             onChange: (v: string) => {
@@ -100,8 +111,8 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                     this.props.onChange(v)
                 }
             }
-        }).on("click", ".item", function(e: Event) {
-            e.preventDefault();
+        }).on("click", ".item", function (e: Event) {
+            e.preventDefault()
         });
     }
 
@@ -154,6 +165,7 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
                 title={this.props.title || this.props.text}
+                tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}
@@ -181,8 +193,7 @@ export class Button extends UiElement<ButtonProps> {
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
                 aria-label={this.props.title || this.props.text}
-                onClick={this.props.onClick}
-                onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
+                onClick={this.props.onClick}>
                 {genericContent(this.props)}
                 {this.props.children}
             </button>
@@ -742,9 +753,9 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const modalJSX = (
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.closeIcon ? <Button
-                        icon={closeIconName}
-                        class="huge clear right floated"
-                        onClick={() => this.handleClose(null) } /> : undefined }
+                    icon={closeIconName}
+                    class="huge clear right floated"
+                    onClick={() => this.handleClose(null) } /> : undefined }
                 {this.props.helpUrl ?
                     <a className={`ui button huge icon clear right floated`} href={this.props.helpUrl} target="_docs">
                         <i className="help icon"></i>
