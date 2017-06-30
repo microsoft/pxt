@@ -943,7 +943,7 @@ export class ProjectView
         }
         this.beforeCompile();
         let userContextWindow: Window = undefined;
-        if (pxt.BrowserUtils.isBrowserDownloadInSameWindow())
+        if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow())
             userContextWindow = window.open("");
 
         pxt.tickEvent("compile");
