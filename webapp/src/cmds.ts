@@ -150,7 +150,11 @@ export function initCommandsAsync(): Promise<void> {
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
         pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
             return pxt.winrt.saveOnlyAsync(resp)
-                .then(() => core.infoNotification(lf("file saved!")))
+                .then((saved) => {
+                    if (saved) {
+                        core.infoNotification(lf("file saved!"));
+                    }
+                })
                 .catch(() => core.errorNotification(lf("saving file failed...")));
         };
     } else if (hidbridge.shouldUse() && !forceHexDownload) {

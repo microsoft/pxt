@@ -40,7 +40,7 @@ namespace pxt.winrt {
         );
     }
 
-    export function saveOnlyAsync(res: pxtc.CompileResult): Promise<void> {
+    export function saveOnlyAsync(res: pxtc.CompileResult): Promise<boolean> {
         const useUf2 = pxt.appTarget.compile.useUF2;
         const fileTypes = useUf2 ? [".uf2"] : [".hex"];
         const savePicker = new Windows.Storage.Pickers.FileSavePicker();
@@ -54,10 +54,11 @@ namespace pxt.winrt {
                     const ar: number[] = [];
                     const bytes = Util.stringToUint8Array(atob(fileContent));
                     bytes.forEach((b) => ar.push(b));
-                    return Windows.Storage.FileIO.writeBytesAsync(file, ar);
+                    return Windows.Storage.FileIO.writeBytesAsync(file, ar)
+                        .then(() => true);
                 }
                 // Save cancelled
-                return Promise.resolve();
+                return Promise.resolve(false);
             }));
     }
 }
