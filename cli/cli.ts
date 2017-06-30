@@ -3251,7 +3251,7 @@ function dbgTestAsync() {
 function elfAsync(parsed: commandParser.ParsedCommand) {
     let fn = parsed.arguments[0]
     let buf = fs.readFileSync(fn)
-    let buf2 = elf.patchElf(fn, buf)
+    let buf2 = elf.patchElf(fn, buf as any)
     fs.writeFileSync("a.out", buf2)
     return Promise.resolve()
 }

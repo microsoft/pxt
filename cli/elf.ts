@@ -1,7 +1,3 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as nodeutil from './nodeutil';
-
 import U = pxt.Util;
 import Map = pxt.Map;
 
@@ -53,9 +49,11 @@ const enum PHF {
 }
 
 
+let r32 = pxt.HF2.read32
+let r16 = pxt.HF2.read16
 
-export function patchElf(filename: string, buf: Buffer): Buffer {
-    if (buf.readUInt32LE(0) != 0x464c457f)
+export function patchElf(filename: string, buf: Uint8Array): Uint8Array {
+    if (r32(buf, 0) != 0x464c457f)
         U.userError("no magic")
     if (buf[4] != 1)
         U.userError("not 32 bit")
@@ -64,16 +62,16 @@ export function patchElf(filename: string, buf: Buffer): Buffer {
     if (buf[6] != 1)
         U.userError("bad version")
 
-    if (buf.readUInt16LE(0x10) != 2)
+    if (r16(buf, 0x10) != 2)
         U.userError("wrong object type")
-    if (buf.readUInt16LE(0x12) != 0x28)
+    if (r16(buf, 0x12) != 0x28)
         U.userError("not ARM")
-    let phoff = buf.readUInt32LE(0x1c)
-    let shoff = buf.readUInt32LE(0x20)
+    let phoff = r32(buf, 0x1c)
+    let shoff = r32(buf, 0x20)
     if (phoff == 0)
         U.userError("expecting program headers")
-    let phentsize = buf.readUInt16LE(42)
-    let phnum = buf.readUInt16LE(44)
+    let phentsize = r16(buf, 42)
+    let phnum = r16(buf, 44)
 
     console.log(`${phnum} entries of ${phentsize} at ${phoff}`)
 
@@ -95,9 +93,9 @@ export function patchElf(filename: string, buf: Buffer): Buffer {
 
     let addSize = 12000
 
-    let resBuf = new Buffer(addFileOff + addSize)
+    let resBuf = new Uint8Array(addFileOff + addSize)
     resBuf.fill(0)
-    buf.copy(resBuf)
+    U.memcpy(resBuf, 0, buf)
 
     for (let i = 0; i < addSize; ++i) {
         resBuf[addFileOff + i] = i & 0xff
@@ -127,7 +125,7 @@ export function patchElf(filename: string, buf: Buffer): Buffer {
         let r: Map<number> = {};
         let o0 = off
         for (let f of progHeaderFields) {
-            r[f] = buf.readUInt32LE(off)
+            r[f] = r32(buf, off)
             off += 4
         }
         let rr = r as any as ProgramHeader
@@ -135,10 +133,10 @@ export function patchElf(filename: string, buf: Buffer): Buffer {
         return rr
     }
 
-    function savePH(buf: Buffer, ph: ProgramHeader) {
+    function savePH(buf: Uint8Array, ph: ProgramHeader) {
         let off = ph._filepos
         for (let f of progHeaderFields) {
-            buf.writeUInt32LE((ph as any)[f] || 0, off)
+            pxt.HF2.write32(buf, (ph as any)[f] || 0, off)
             off += 4
         }
     }
