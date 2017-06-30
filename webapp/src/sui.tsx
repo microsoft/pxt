@@ -197,7 +197,7 @@ export class Button extends UiElement<ButtonProps> {
                 tabIndex={this.props.tabIndex || 0}
                 aria-label={this.props.title || this.props.text}
                 onClick={this.props.onClick}>
-                {genericContent(this.props)}
+                {genericContent(this.props) }
                 {this.props.children}
             </button>
         );
@@ -756,9 +756,9 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const modalJSX = (
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.closeIcon ? <Button
-                    icon={closeIconName}
-                    class="huge clear right floated"
-                    onClick={() => this.handleClose(null) } /> : undefined }
+                        icon={closeIconName}
+                        class="huge clear right floated"
+                        onClick={() => this.handleClose(null) } /> : undefined }
                 {this.props.helpUrl ?
                     <a className={`ui button huge icon clear right floated`} href={this.props.helpUrl} target="_docs">
                         <i className="help icon"></i>
