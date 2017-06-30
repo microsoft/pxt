@@ -55,7 +55,8 @@ function removeClass(el: HTMLElement, cls: string) {
 }
 
 export function fireClickOnEnter(e: React.KeyboardEvent): void {
-    if (e.charCode == 13) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === 13 || charCode === 32) {
         (document.activeElement as HTMLElement).click();
     }
 }
@@ -91,19 +92,23 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
         this.popup()
         this.child("").dropdown({
             action: (text: string, value: any, element: any) => {
+                let htmlElement: HTMLElement
+
                 this.child("").dropdown("hide")
 
+                // When we use the keyboard, it is not an HTMLElement that we receive, but a JQuery. Activating click on it reproduce the same behavior than a real click.
                 if (typeof element.get === "function") {
                     let jqueryElement = element as JQuery
-
-                    if (jqueryElement.get(0).tagName.toLowerCase() === 'a') {
-                        let win = window.open((jqueryElement.get(0) as HTMLLinkElement).href, '_blank')
-                        win.focus()
-                        return
-                    }
+                    htmlElement = jqueryElement.get(0)
+                    htmlElement.click()
+                    return
+                } else {
+                    htmlElement = element as HTMLElement
                 }
-                
-                (element as HTMLElement).click()
+
+                if (htmlElement.tagName.toLowerCase() === 'a') {
+                    let win = window.open((htmlElement as HTMLLinkElement).href, '_blank')
+                }
             },
             fullTextSearch: true,
             onChange: (v: string) => {
@@ -111,8 +116,6 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                     this.props.onChange(v)
                 }
             }
-        }).on("click", ".item", function (e: Event) {
-            e.preventDefault()
         });
     }
 
