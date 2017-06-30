@@ -25,6 +25,7 @@ import * as serial from './serial';
 import * as gdb from './gdb';
 import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
+import * as elf from './elf';
 
 const rimraf: (f: string, opts: any, cb: () => void) => void = require('rimraf');
 
@@ -3247,6 +3248,14 @@ function dbgTestAsync() {
         .then(clidbg.startAsync)
 }
 
+function elfAsync(parsed: commandParser.ParsedCommand) {
+    let fn = parsed.arguments[0]
+    let buf = fs.readFileSync(fn)
+    let buf2 = elf.patchElf(fn, buf)
+    fs.writeFileSync("a.out", buf2)
+    return Promise.resolve()
+}
+
 interface BuildCoreOptions {
     mode: BuildOption;
 
@@ -3387,7 +3396,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                         .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
                         // upload to crowdin
                         .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                    )).then(() => { }))
+                        )).then(() => { }))
                 : Promise.resolve());
     }
 }
@@ -4291,6 +4300,7 @@ function initCommands() {
     advancedCommand("testconv", "test TD->TS converter", testConverterAsync, "<jsonurl>");
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
     advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
+    advancedCommand("elf", "ELF processing", elfAsync, "<ELF-file>");
 
     advancedCommand("buildtarget", "build pxtarget.json", buildTargetAsync);
     advancedCommand("uploadtrg", "upload target release", pc => uploadTargetAsync(pc.arguments[0]), "<label>");
