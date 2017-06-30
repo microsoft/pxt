@@ -81,7 +81,7 @@ export const buildEngines: Map<BuildEngine> = {
         updateEngineAsync: () => runBuildCmdAsync("npm", "install"),
         buildAsync: () => runDockerAsync(["make"]),
         setPlatformAsync: noopAsync,
-        patchHexInfo: patchCodalHexInfo, // TODO
+        patchHexInfo: patchCodalHexInfo,
         prepBuildDirAsync: noopAsync,
         buildPath: "built/dockermake",
         moduleConfig: "package.json",
@@ -104,9 +104,7 @@ function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function patchCodalHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let buildEngine = buildEngines['codal']
-    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.codalBinary + ".hex";
-
+    let hexPath = thisBuild.buildPath + "/bld/pxt-app.hex"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
     }
