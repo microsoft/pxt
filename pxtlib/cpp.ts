@@ -566,6 +566,9 @@ namespace pxt.cpp {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
 
+            if (res.npmDependencies && pkg.config.npmDependencies)
+                U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
+
             let json = pkg.config.yotta
             if (!json) return;
 
@@ -573,9 +576,6 @@ namespace pxt.cpp {
             if (json.dependencies) {
                 U.jsonCopyFrom(res.yotta.dependencies, json.dependencies)
             }
-
-            if (res.npmDependencies && pkg.config.npmDependencies)
-                U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
 
             if (json.config) {
                 const cfg = U.jsonFlatten(json.config)
