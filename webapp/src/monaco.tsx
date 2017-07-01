@@ -1192,9 +1192,9 @@ export class Editor extends srceditor.Editor {
                     monacoErrors.push({
                         severity: monaco.Severity.Error,
                         message: message,
-                        startLineNumber: d.line,
+                        startLineNumber: d.line + 1,
                         startColumn: d.column,
-                        endLineNumber: d.endLine || endPos.lineNumber,
+                        endLineNumber: (d.endLine || endPos.lineNumber) + 1,
                         endColumn: d.endColumn || endPos.column
                     })
                 }
