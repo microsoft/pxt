@@ -154,7 +154,9 @@ ${baseLabel}:
                 }
             }
 
-            this.write(this.t.debugger_proc(bkptLabel))
+            if (this.bin.options.breakpoints) {
+                this.write(this.t.debugger_proc(bkptLabel))
+            }
             this.write(this.t.proc_setup(true))
             // initialize the locals
             let numlocals = this.proc.locals.length

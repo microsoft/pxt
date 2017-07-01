@@ -410,6 +410,9 @@ namespace ts.pxtc {
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
+                    if (!(value & 1)) {
+                        U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
+                    }
                     inf.value = value
                 }
             }
