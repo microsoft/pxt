@@ -49,7 +49,7 @@ namespace pxt.elf {
     const r32 = pxt.HF2.read32
     const r16 = pxt.HF2.read16
 
-    export interface ElfInfo {
+    export interface Info {
         template: Uint8Array;
         imageMemStart: number;
         imageFileStart: number;
@@ -58,7 +58,7 @@ namespace pxt.elf {
 
     const pageSize = 4096
 
-    export function parse(buf: Uint8Array): ElfInfo {
+    export function parse(buf: Uint8Array): Info {
         if (r32(buf, 0) != 0x464c457f)
             U.userError("no magic")
         if (buf[4] != 1)
@@ -121,7 +121,7 @@ namespace pxt.elf {
         }
     }
 
-    export function patch(info: ElfInfo, program: Uint8Array): Uint8Array {
+    export function patch(info: Info, program: Uint8Array): Uint8Array {
         let resBuf = new Uint8Array(info.imageFileStart + program.length)
         resBuf.fill(0)
         U.memcpy(resBuf, 0, info.template)
@@ -145,7 +145,7 @@ namespace pxt.elf {
         function savePH(buf: Uint8Array, ph: ProgramHeader) {
             let off = ph._filepos
             for (let f of progHeaderFields) {
-                pxt.HF2.write32(buf, (ph as any)[f] || 0, off)
+                pxt.HF2.write32(buf, off, (ph as any)[f] || 0)
                 off += 4
             }
         }

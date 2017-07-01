@@ -173,6 +173,7 @@ namespace ts.pxtc {
         let jmpStartIdx: number;
         let bytecodePaddingSize: number;
         let bytecodeStartAddr: number;
+        let elfInfo: pxt.elf.Info;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
         let asmLabels: Map<boolean> = {};
@@ -280,12 +281,34 @@ namespace ts.pxtc {
             if (isSetupFor(extInfo))
                 return;
 
+            let funs: FuncInfo[] = extInfo.functions;
+
             currentSetup = extInfo.sha;
             currentHexInfo = hexinfo;
 
             hex = hexinfo.hex;
 
             patchSegmentHex(hex)
+
+            if (hex.length <= 2) {
+                elfInfo = pxt.elf.parse(U.fromHex(hex[0]))
+                bytecodeStartIdx = -1
+                bytecodeStartAddr = elfInfo.imageMemStart
+                bytecodeStartAddrPadded = elfInfo.imageMemStart
+                bytecodePaddingSize = 0
+
+                let jmpIdx = hex[0].indexOf("0108010842424242010801083ed8e98d")
+                if (jmpIdx < 0)
+                    oops("no jmp table in elf")
+
+                jmpStartAddr = jmpIdx / 2
+                jmpStartIdx = -1
+
+                let ptrs = hex[0].slice(jmpIdx + 32, jmpIdx + 32 + funs.length * 8 + 16)
+                readPointers(ptrs)
+                checkFuns()
+                return
+            }
 
             let i = 0;
             let upperAddr = "0000"
@@ -362,20 +385,27 @@ namespace ts.pxtc {
                 oops("No hex end")
 
             funcInfo = {};
-            let funs: FuncInfo[] = extInfo.functions;
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
                 let m = /^:..(....)00(.{4,})/.exec(hex[i]);
                 if (!m) continue;
 
-                let s = m[2]
+                readPointers(m[2])
+                if (funs.length == 0) break
+            }
+
+            checkFuns();
+            return
+
+
+            function readPointers(s: string) {
                 let step = opts.shortPointers ? 4 : 8
                 while (s.length >= step) {
                     let hexb = s.slice(0, step)
                     let value = parseInt(swapBytes(hexb), 16)
                     s = s.slice(step)
                     let inf = funs.shift()
-                    if (!inf) return;
+                    if (!inf) break;
                     funcInfo[inf.name] = inf;
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
@@ -384,8 +414,10 @@ namespace ts.pxtc {
                 }
             }
 
-            if (funs.length)
-                oops("premature EOF in hex file; missing: " + funs.map(f => f.name).join(", "));
+            function checkFuns() {
+                if (funs.length)
+                    oops("premature EOF in hex file; missing: " + funs.map(f => f.name).join(", "));
+            }
         }
 
         export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
@@ -519,6 +551,17 @@ namespace ts.pxtc {
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
+
+            if (elfInfo) {
+                let prog = new Uint8Array(buf.length * 2)
+                for (let i = 0; i < buf.length; ++i) {
+                    pxt.HF2.write16(prog, i * 2, buf[i])
+                }
+                let resbuf = pxt.elf.patch(elfInfo, prog)
+                for (let i = 0; i < hd.length; ++i)
+                    pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
+                return [U.uint8ArrayToString(resbuf)]
+            }
 
             let uf2 = useuf2 ? UF2.newBlockFile() : null
 
