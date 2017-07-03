@@ -954,7 +954,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         )
 
         this.portalNode = this.rootNode.firstElementChild;
-        core.giveFocusFirstInteractiveElement($(this.portalNode));
+        core.initializeFocusTabIndexLoop($(this.portalNode));
     }
 
     renderCore() {

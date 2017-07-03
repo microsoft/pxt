@@ -269,7 +269,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
-            onVisible: () => giveFocusFirstInteractiveElement(mo)
+            onVisible: () => initializeFocusTabIndexLoop(mo)
         });
         mo.modal("show")
     })
@@ -465,7 +465,7 @@ function giveFocusToLastTag(e: JQueryKeyEventObject) {
     }
 };
 
-export function giveFocusFirstInteractiveElement(element: JQuery) {
+export function initializeFocusTabIndexLoop(element: JQuery) {
     let firstTag: HTMLElement
     let lastTag: HTMLElement
     let tags = element.find("*")
