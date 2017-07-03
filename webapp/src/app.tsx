@@ -675,10 +675,11 @@ export class ProjectView
         }
     }];
 
-    importHex(data: pxt.cpp.HexFile) {
+    importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
             core.warningNotification(lf("Sorry, we could not recognize this file."))
+            if (createNewIfFailed) this.newProject();
             return;
         }
 
@@ -687,18 +688,17 @@ export class ProjectView
             pxt.tickEvent("import." + importer.id);
             core.showLoading(lf("loading project..."))
             importer.importAsync(this, data)
-                .done(
-                () => core.hideLoading(),
-                e => {
+                .done(() => core.hideLoading(), e => {
                     pxt.reportException(e, { importer: importer.id });
                     core.hideLoading();
                     core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                }
-                );
+                    if (createNewIfFailed) this.newProject();
+                });
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
             pxt.tickEvent("warning.importfailed");
+            if (createNewIfFailed) this.newProject();
         }
     }
 
@@ -1794,7 +1794,7 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!pxt.appTarget.serial || !Cloud.isLocalHost() || !Cloud.localToken)
+    if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
         return;
 
     if (hidbridge.shouldUse()) {
@@ -2090,6 +2090,7 @@ function initExtensionsAsync(): Promise<void> {
         });
 }
 
+pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
@@ -2118,7 +2119,7 @@ $(document).ready(() => {
     appcache.init(hash);
 
     pxt.docs.requireMarked = () => require("marked");
-    const ih = (hex: pxt.cpp.HexFile) => theEditor.importHex(hex);
+    const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
@@ -2157,13 +2158,17 @@ $(document).ready(() => {
             initSerial();
             initScreenshots();
             initHashchange();
+            return pxt.winrt.initAsync(importHex);
         })
-        .then(() => pxt.winrt.initAsync(ih))
         .then(() => initExtensionsAsync())
         .then(() => {
             electron.init();
             if (hash.cmd && handleHash(hash))
                 return Promise.resolve();
+
+            if (pxt.winrt.hasActivationProject) {
+                return pxt.winrt.loadActivationProject();
+            }
 
             // default handlers
             let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
@@ -2172,7 +2177,8 @@ $(document).ready(() => {
             if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();
-        }).then(() => workspace.importLegacyScriptsAsync())
+        })
+        .then(() => workspace.importLegacyScriptsAsync())
         .done(() => { });
 
     document.addEventListener("visibilitychange", ev => {

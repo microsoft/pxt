@@ -87,7 +87,6 @@ namespace pxt.winrt.workspace {
     function initAsync(target: string): Promise<void> {
         allScripts = [];
         currentTarget = target;
-
         const applicationData = Windows.Storage.ApplicationData.current;
         const localFolder = applicationData.localFolder;
         pxt.debug(`winrt: initializing workspace`)
@@ -96,7 +95,7 @@ namespace pxt.winrt.workspace {
                 folder = fd;
                 pxt.debug(`winrt: initialized workspace at ${folder.path}`)
                 return syncAsync();
-            }).then(() => {})
+            }).then(() => { })
     }
 
     function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
@@ -222,7 +221,7 @@ namespace pxt.winrt.workspace {
         return promisify(Windows.Storage.StorageFolder.getFolderFromPathAsync(fd))
             .then(dk => dk.createFileAsync(name, Windows.Storage.CreationCollisionOption.replaceExisting))
             .then(f => Windows.Storage.FileIO.writeTextAsync(f, content))
-            .then(() => {})
+            .then(() => { })
     }
 
     function statOptAsync(path: string) {

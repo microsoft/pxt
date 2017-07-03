@@ -140,7 +140,7 @@ export function initCommandsAsync(): Promise<void> {
 
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
-    } else if (pxt.winrt.isWinRT()) { // window app
+    } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             hidbridge.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
@@ -148,6 +148,15 @@ export function initCommandsAsync(): Promise<void> {
             pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+        pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
+            return pxt.winrt.saveOnlyAsync(resp)
+                .then((saved) => {
+                    if (saved) {
+                        core.infoNotification(lf("file saved!"));
+                    }
+                })
+                .catch(() => core.errorNotification(lf("saving file failed...")));
+        };
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js

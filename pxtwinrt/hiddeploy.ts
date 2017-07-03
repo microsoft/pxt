@@ -23,7 +23,6 @@ namespace pxt.winrt {
 
         disconnectAsync(): Promise<void> {
             if (this.dev) {
-                this.dev.removeEventListener('inputreportreceived', this.onInputReportReceived);
                 this.dev.close();
                 delete this.dev;
             }
@@ -50,7 +49,7 @@ namespace pxt.winrt {
 
         initAsync(): Promise<void> {
             Util.assert(!this.dev, "HID interface not properly reseted");
-            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xff97, 0x0001);
+            const selector = Windows.Devices.HumanInterfaceDevice.HidDevice.getDeviceSelector(0xFF97, 0x0001);
             return pxt.winrt.promisify(Windows.Devices.Enumeration.DeviceInformation.findAllAsync(selector, null)
                 .then(devices => {
                     pxt.debug(`hid enumerate ${devices.length} devices`)
@@ -62,7 +61,18 @@ namespace pxt.winrt {
                                 this.dev = r;
                                 if (this.dev) {
                                     pxt.debug(`hid device version ${this.dev.version}`);
-                                    this.dev.addEventListener("inputreportreceived", this.onInputReportReceived)
+                                    this.dev.addEventListener("inputreportreceived", (e) => {
+                                        pxt.debug(`input report`)
+                                        const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
+                                        const values: number[] = [];
+                                        while (dr.unconsumedBufferLength) {
+                                            values.push(dr.readByte());
+                                        }
+                                        if (values.length == 65 && values[0] === 0) {
+                                            values.shift()
+                                        }
+                                        this.onData(new Uint8Array(values));
+                                    });
                                 } else {
                                     pxt.debug(`no hid device found`);
                                 }
@@ -70,17 +80,6 @@ namespace pxt.winrt {
                     }
                     else return Promise.resolve();
                 }))
-        }
-
-        onInputReportReceived(e: Windows.Devices.HumanInterfaceDevice.HidInputReportReceivedEventArgs): void {
-            pxt.debug(`input report`)
-            const dr = Windows.Storage.Streams.DataReader.fromBuffer(e.report.data);
-            const ar: number[] = [];
-            dr.readBytes(ar);
-            const uar = new Uint8Array(ar.length);
-            for (let i = 0; i < ar.length; ++i)
-                uar[i] = ar[i];
-            this.onData(uar);
         }
     }
 
