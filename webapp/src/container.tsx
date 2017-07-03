@@ -39,6 +39,7 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 }
 
 export class SideDocs extends data.Component<ISettingsProps, {}> {
+    private rootNode: Element;
     private firstLoad = true;
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
@@ -72,6 +73,15 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         this.firstLoad = false;
     }
 
+    private handleDocumentKeyPress = (e: KeyboardEvent) => {
+            if (e.keyCode !== 27) {
+                return;
+            }
+
+            e.preventDefault();
+            this.toggleVisibility();
+    }
+
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
     }
@@ -90,10 +100,32 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     componentDidUpdate() {
         this.props.parent.editor.resize();
 
-        if (ReactDOM.findDOMNode(this) !== null) {
-            var rootNode = $(ReactDOM.findDOMNode(this));
-            core.giveFocusFirstInteractiveElement(rootNode);
+        if (!this.props.parent.state.sideDocsCollapsed) {
+            this.rootNode = ReactDOM.findDOMNode(this);
+            if (this.rootNode !== null) {
+                core.giveFocusFirstInteractiveElement($(this.rootNode));
+                this.mountSideDocs();
+            }
         }
+        else {
+            this.unmountSideDocs();
+        }
+    }
+
+    componentWillUnmount() {
+        this.unmountSideDocs();
+    }
+
+    mountSideDocs = () => {
+        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.addEventListener('keydown', this.handleDocumentKeyPress, true)
+        document.addEventListener('keydown', this.handleDocumentKeyPress, true)
+    }
+
+    unmountSideDocs = () => {
+        this.rootNode = null;
+        document.removeEventListener('keydown', this.handleDocumentKeyPress, true);
+        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.removeEventListener('keydown', this.handleDocumentKeyPress, true);
+        (document.activeElement as HTMLElement).blur();
     }
 
     renderCore() {
@@ -108,7 +140,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
             </button>
             <div id="sidedocs">
                 <div id="sidedocsbar">
-                    <h3><a className="ui icon link" data-content={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut()} >
+                    <h3><a className="ui icon link" data-content={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut() } tabIndex={9999} >
                         <i className="external icon"></i>
                     </a></h3>
                 </div>
