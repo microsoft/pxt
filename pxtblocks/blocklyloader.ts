@@ -1240,7 +1240,8 @@ namespace pxt.blocks {
             blocklySearchInput.appendChild(blocklySearchInputIcon);
             blocklySearchArea.appendChild(blocklySearchInput);
             const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
-            toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
+            if (toolboxDiv) // Only add if a toolbox exists, eg not in sandbox mode
+                toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
         }
 
         const hasSearchFlyout = () => {
