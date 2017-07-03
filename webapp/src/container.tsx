@@ -6,6 +6,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -88,6 +89,11 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
 
     componentDidUpdate() {
         this.props.parent.editor.resize();
+
+        if (ReactDOM.findDOMNode(this) !== null) {
+            var rootNode = $(ReactDOM.findDOMNode(this));
+            core.giveFocusFirstInteractiveElement(rootNode);
+        }
     }
 
     renderCore() {

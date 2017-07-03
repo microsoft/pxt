@@ -231,7 +231,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             <sui.Button
                                 icon='close'
                                 class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.setState({ visible: false }) } />
+                                onClick={() => this.setState({ visible: false }) }
+                                tabIndex={1} />
                         </div>
                     </sui.Menu>
                 </sui.Segment>

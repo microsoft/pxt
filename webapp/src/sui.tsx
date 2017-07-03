@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as data from "./data";
+import * as core from "./core";
 
 export interface UiProps {
     icon?: string;
@@ -465,6 +466,8 @@ export interface MenuItemProps {
     name?: string;
     onClick?: (event: React.MouseEvent, data: MenuItemProps) => void;
     position?: 'right';
+    tabIndex?: number;
+    onKeyPress?: (e: React.KeyboardEvent) => void;
 }
 
 export class MenuItem extends data.Component<MenuItemProps, {}> {
@@ -506,11 +509,11 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         ]);
 
         if (children) {
-            return <div className={classes} onClick={this.handleClick}>{children}</div>
+            return <div className={classes} onClick={this.handleClick} tabIndex={this.props.tabIndex || 0} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>{children}</div>
         }
 
         return (
-            <div className={classes} onClick={this.handleClick}>
+            <div className={classes} onClick={this.handleClick} tabIndex={this.props.tabIndex || 0} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
                 {icon ? <i className={`icon ${icon}`} ></i> : undefined}
                 {content || name}
             </div>
@@ -881,6 +884,15 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         }
     }
 
+    handleDocumentKeyPress = (e: KeyboardEvent) => {
+            if (e.keyCode !== 27) {
+                return;
+            }
+
+            e.preventDefault();
+            this.close(e);
+    }
+
     close = (e: Event) => {
         const { onClose } = this.props;
         if (onClose) onClose(e);
@@ -906,6 +918,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         mountNode.appendChild(this.rootNode);
 
         document.addEventListener('click', this.handleDocumentClick)
+        document.addEventListener('keydown', this.handleDocumentKeyPress, true)
 
         const { onMount } = this.props
         if (onMount) onMount()
@@ -921,6 +934,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         this.portalNode = null;
 
         document.removeEventListener('click', this.handleDocumentClick);
+        document.removeEventListener('keydown', this.handleDocumentKeyPress, true);
 
         const { onUnmount } = this.props;
         if (onUnmount) onUnmount();
@@ -940,6 +954,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         )
 
         this.portalNode = this.rootNode.firstElementChild;
+        core.giveFocusFirstInteractiveElement($(this.portalNode));
     }
 
     renderCore() {
