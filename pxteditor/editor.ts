@@ -150,7 +150,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
-        toggleTrace(): void;
+        toggleTrace(intervalSpeed?: number): void;
 
         startTutorial(tutorialId: string): void;
 

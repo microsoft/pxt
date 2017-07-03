@@ -1013,13 +1013,13 @@ export class ProjectView
         this.startSimulator();
     }
 
-    toggleTrace() {
+    toggleTrace(intervalSpeed?: number) {
         if (this.state.tracing) {
             this.editor.clearHighlightedStatements();
             simulator.setTraceInterval(0);
         }
         else {
-            simulator.setTraceInterval(simulator.SLOW_TRACE_INTERVAL);
+            simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
         }
         this.setState({ tracing: !this.state.tracing })
         this.restartSimulator();
