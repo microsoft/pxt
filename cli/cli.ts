@@ -2118,10 +2118,14 @@ class Host
             }
         }
         check(p)
-        let ext = pxt.outputName().replace(/[^\.]*/, "")
-        if (pxt.isOutputText()) ext = ".uf2"
-        if (U.endsWith(filename, ext))
+
+        if (U.endsWith(filename, ".uf2"))
             fs.writeFileSync(p, contents, "base64")
+        else if (U.endsWith(filename, ".elf"))
+            fs.writeFileSync(p, contents, {
+                encoding: "base64",
+                mode: 0o777
+            })
         else
             fs.writeFileSync(p, contents, "utf8")
     }
