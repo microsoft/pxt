@@ -254,6 +254,7 @@ declare namespace ts.pxtc {
         openocdScript?: string;
         flashChecksumAddr?: number;
         onStartText?: boolean;
+        stackAlign?: number; // 1 word (default), or 2
     }
 
     interface CompileOptions {
