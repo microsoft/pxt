@@ -2118,7 +2118,9 @@ class Host
             }
         }
         check(p)
-        if (U.endsWith(filename, ".uf2"))
+        let ext = pxt.outputName().replace(/[^\.]*/, "")
+        if (pxt.isOutputText()) ext = ".uf2"
+        if (U.endsWith(filename, ext))
             fs.writeFileSync(p, contents, "base64")
         else
             fs.writeFileSync(p, contents, "utf8")
@@ -3297,7 +3299,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }));
             }
 
-            console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
+            console.log(`Package built; written to ${pxt.outputName()}; size: ${(res.outfiles[pxt.outputName()] || "").length}`)
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:

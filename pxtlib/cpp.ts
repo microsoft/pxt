@@ -919,10 +919,20 @@ int main() {
     export function unpackSourceFromHexAsync(dat: Uint8Array): Promise<HexFile> { // string[] (guid)
         let rawEmbed: RawEmbed
 
-        let bin = pxt.appTarget.compile.useUF2 ? ts.pxtc.UF2.toBin(dat) : undefined;
-        if (bin) {
-            rawEmbed = extractSourceFromBin(bin.buf)
-        } else {
+        // UF2?
+        if (pxt.HF2.read32(dat, 0) == ts.pxtc.UF2.UF2_MAGIC_START0) {
+            let bin = ts.pxtc.UF2.toBin(dat)
+            if (bin)
+                rawEmbed = extractSourceFromBin(bin.buf)
+        }
+
+        // ELF?
+        if (pxt.HF2.read32(dat, 0) == 0x464c457f) {
+            rawEmbed = extractSourceFromBin(dat)
+        }
+
+        // HEX? (check for colon)
+        if (dat[0] == 0x3a) {
             let str = fromUTF8Bytes(dat);
             rawEmbed = extractSource(str || "")
         }

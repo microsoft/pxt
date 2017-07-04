@@ -423,8 +423,8 @@ const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer> = 
 const readDirAsync = Promise.promisify(fs.readdir)
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
-    const firmware = pxt.appTarget.compile.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_HEX;
-    const encoding = pxt.appTarget.compile.useUF2 ? "base64" : "utf8";
+    const firmware = pxt.outputName()
+    const encoding = pxt.isOutputText() ? "utf8" : "base64";
 
     if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
         let f = res.outfiles[pxtc.BINARY_UF2]

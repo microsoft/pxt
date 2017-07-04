@@ -925,12 +925,12 @@ __flash_checksums:
                 chk[chk.length - 5] = len
                 bin.checksumBlock = chk;
             }
-            if (opts.target.useUF2) {
+            if (!pxt.isOutputText()) {
                 const myhex = btoa(hex.patchHex(bin, res.buf, false, true)[0])
-                bin.writeFile(pxtc.BINARY_UF2, myhex)
+                bin.writeFile(pxt.outputName(), myhex)
             } else {
                 const myhex = hex.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"
-                bin.writeFile(pxtc.BINARY_HEX, myhex)
+                bin.writeFile(pxt.outputName(), myhex)
             }
         }
 
