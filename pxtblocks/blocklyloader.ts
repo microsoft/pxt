@@ -2417,6 +2417,9 @@ namespace pxt.blocks {
                 setBuiltinHelpInfo(this, variablesChangeId);
             }
         };
+
+        // New variable dialog
+        msg.NEW_VARIABLE_TITLE = lf("New variable name:");
     }
 
     function initFunctions() {
