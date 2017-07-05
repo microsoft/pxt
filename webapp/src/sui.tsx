@@ -450,6 +450,8 @@ export interface MenuProps {
     tabular?: boolean | 'right';
     text?: boolean;
     vertical?: boolean;
+    tabIndex?: number;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export interface MenuItemProps {
@@ -466,8 +468,6 @@ export interface MenuItemProps {
     name?: string;
     onClick?: (event: React.MouseEvent, data: MenuItemProps) => void;
     position?: 'right';
-    tabIndex?: number;
-    onKeyPress?: (e: React.KeyboardEvent) => void;
 }
 
 export class MenuItem extends data.Component<MenuItemProps, {}> {
@@ -509,11 +509,11 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         ]);
 
         if (children) {
-            return <div className={classes} onClick={this.handleClick} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>{children}</div>
+            return <div className={classes} onClick={this.handleClick}>{children}</div>
         }
 
         return (
-            <div className={classes} onClick={this.handleClick} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
+            <div className={classes} onClick={this.handleClick}>
                 {icon ? <i className={`icon ${icon}`} ></i> : undefined}
                 {content || name}
             </div>
@@ -528,6 +528,47 @@ export interface MenuState {
 export class Menu extends data.Component<MenuProps, MenuState> {
     constructor(props: MenuProps) {
         super(props);
+    }
+
+    private handleKeyboardNavigation = (e: React.KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        let leftOrUpKey = charCode === 37 || charCode === 38
+        let rightorBottomKey = charCode === 39 || charCode === 40
+
+        if (!leftOrUpKey && !rightorBottomKey) {
+            return
+        }
+
+        let rootNode = ReactDOM.findDOMNode(this)
+        let items = rootNode.getElementsByClassName("link item")
+        let activeNodeIndex = -1
+        let i = 0
+
+        while (activeNodeIndex === -1 && i < items.length) {
+            if (items.item(i).classList.contains("active")) {
+                activeNodeIndex = i
+            }
+
+            i++
+        }
+
+        if (activeNodeIndex === -1) {
+            return
+        }
+
+        if (leftOrUpKey) {
+            if (activeNodeIndex === 0) {
+                (items.item(items.length - 1) as HTMLElement).click()
+            } else {
+                (items.item(activeNodeIndex - 1) as HTMLElement).click()
+            }
+        } else if (rightorBottomKey) {
+            if (activeNodeIndex === items.length - 1) {
+                (items.item(0) as HTMLElement).click()
+            } else {
+                (items.item(activeNodeIndex + 1) as HTMLElement).click()
+            }
+        }
     }
 
     renderCore() {
@@ -577,7 +618,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         ]);
 
         return (
-            <div className={classes}>
+            <div className={classes} tabIndex={this.props.tabIndex || 0} onKeyDown={this.props.onKeyDown || this.handleKeyboardNavigation}>
                 {children}
             </div>
         )
