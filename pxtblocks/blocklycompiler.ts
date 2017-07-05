@@ -1129,7 +1129,7 @@ namespace pxt.blocks {
             callback = mkGroup([argumentDeclaration, body]);
         }
         else {
-            callback = mkGroup([mkText("() =>"), body]);
+            callback = mkGroup([mkText("function ()"), body]);
         }
 
         if (isExtension)
