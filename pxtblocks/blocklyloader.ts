@@ -46,6 +46,9 @@ namespace pxt.blocks {
         }
     }
 
+    // Matches arrays and tuple types
+    const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
+
     let usedBlocks: Map<boolean> = {};
     let updateUsedBlocks = false;
 
@@ -498,9 +501,16 @@ namespace pxt.blocks {
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_RIGHT)
-        // ignore generic types
-        if (type && type != "T")
-            i.setCheck(type);
+        // Ignore generic types
+        if (type && type != "T") {
+            if (arrayTypeRegex.test(type)) {
+                // All array types get the same check regardless of their subtype
+                i.setCheck("Array");
+            }
+            else {
+                i.setCheck(type);
+            }
+        }
         return i;
     }
 
@@ -707,7 +717,13 @@ namespace pxt.blocks {
             case "boolean": block.setOutput(true, "Boolean"); break;
             case "void": break; // do nothing
             //TODO
-            default: block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+            default:
+                if (arrayTypeRegex.test(fn.retType)) {
+                    block.setOutput(true, "Array");
+                }
+                else {
+                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                }
         }
 
         // hook up/down if return value is void
