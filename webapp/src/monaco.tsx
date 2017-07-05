@@ -412,7 +412,8 @@ export class Editor extends srceditor.Editor {
                         identifier: { major: 0, minor: 0 },
                         range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
                         text: insertText,
-                        forceMoveMarkers: false
+                        forceMoveMarkers: true,
+                        isAutoWhitespaceEdit: true
                     }
                 ]);
                 this.beforeCompile();
