@@ -108,6 +108,8 @@ namespace pxt.cpp {
     export function parseCppInt(v: string): number {
         if (!v) return null
         v = v.trim()
+        let mm = /^\((.*)\)/.exec(v)
+        if (mm) v = mm[1]
         if (/^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v))
             return parseInt(v)
         return null
