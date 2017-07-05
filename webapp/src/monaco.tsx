@@ -611,7 +611,7 @@ export class Editor extends srceditor.Editor {
                     if (monacoEditor.nsMap[ns.toLowerCase()]) blocks = blocks.concat(monacoEditor.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
                     el = monacoEditor.createCategoryElement(ns, md.color, md.icon, false, blocks, null, name);
                 }
-                group.appendChild(el);
+                if (el) group.appendChild(el);
             });
         }
     }
@@ -674,7 +674,7 @@ export class Editor extends srceditor.Editor {
         let filters = this.parent.state.filters;
         const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
         let hasChild = false;
-        if (filters) {
+        if (filters && categoryState !== undefined && fns) {
             Object.keys(fns).forEach((fn) => {
                 const fnState = filters.fns && filters.fns[fn] != undefined ? filters.fns[fn] : (categoryState != undefined ? categoryState : filters.defaultState);
                 if (fnState == pxt.editor.FilterState.Disabled || fnState == pxt.editor.FilterState.Visible) hasChild = true;
