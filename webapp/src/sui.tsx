@@ -509,11 +509,11 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         ]);
 
         if (children) {
-            return <div className={classes} onClick={this.handleClick} tabIndex={this.props.tabIndex || 0} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>{children}</div>
+            return <div className={classes} onClick={this.handleClick} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>{children}</div>
         }
 
         return (
-            <div className={classes} onClick={this.handleClick} tabIndex={this.props.tabIndex || 0} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
+            <div className={classes} onClick={this.handleClick} onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
                 {icon ? <i className={`icon ${icon}`} ></i> : undefined}
                 {content || name}
             </div>
@@ -956,7 +956,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         )
 
         this.portalNode = this.rootNode.firstElementChild;
-        core.initializeFocusTabIndexLoop(this.portalNode);
+        core.initializeFocusTabIndex(this.portalNode, true);
     }
 
     renderCore() {

@@ -104,7 +104,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!this.props.parent.state.sideDocsCollapsed) {
             this.rootNode = ReactDOM.findDOMNode(this);
             if (this.rootNode !== null) {
-                core.initializeFocusTabIndexLoop(this.rootNode);
+                core.initializeFocusTabIndex(this.rootNode, false);
                 this.mountSideDocs();
             }
         }

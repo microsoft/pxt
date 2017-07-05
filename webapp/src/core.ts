@@ -269,7 +269,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
-            onVisible: () => initializeFocusTabIndexLoop(mo.get(0))
+            onVisible: () => initializeFocusTabIndex(mo.get(0), true)
         });
         mo.modal("show")
     })
@@ -465,7 +465,7 @@ function giveFocusToLastTag(e: JQueryKeyEventObject) {
     }
 };
 
-export function initializeFocusTabIndexLoop(element: Element) {
+export function initializeFocusTabIndex(element: Element, trapLoop: boolean) {
     let firstTag: HTMLElement
     let lastTag: HTMLElement
     let tags = $(element).find("*")
@@ -473,11 +473,13 @@ export function initializeFocusTabIndexLoop(element: Element) {
     // Potentially, all tabIndex are not equal to 0. We look for the first HtmlElement with a tabIndex > -1 and for the one with the highest tabIndex, or the last one of the scope that is > -1.
     for (let i = 0; i < tags.length; i++) {
         if (!tags[i].hidden && tags[i].style.visibility !== "hidden" && tags[i].style.display !== "none") {
-            let jTag = $(tags[i])
-            jTag.off("keydown", giveFocusToFirstTag)
-            jTag.off("keydown", giveFocusToLastTag)
-            jTag.off("keyup", giveFocusToFirstTag)
-            jTag.off("keyup", giveFocusToLastTag)
+            if (!trapLoop) {
+                let jTag = $(tags[i])
+                jTag.off("keydown", giveFocusToFirstTag)
+                jTag.off("keydown", giveFocusToLastTag)
+                jTag.off("keyup", giveFocusToFirstTag)
+                jTag.off("keyup", giveFocusToLastTag)
+            }
 
             if (tags[i].tabIndex > -1) {
                 if (firstTag === undefined) {
@@ -496,13 +498,15 @@ export function initializeFocusTabIndexLoop(element: Element) {
         return
     }
 
-    let jLastTag = $(lastTag)
-    let jFirstTag = $(firstTag)
-    jLastTag.on("keydown", firstTag, giveFocusToFirstTag)
-    jFirstTag.on("keydown", lastTag, giveFocusToLastTag)
-    if (firstTag === lastTag) { // if there is only one interactive element in the scope, we trap the user to force him to validate the modal/message
-        jLastTag.on("keyup", firstTag, giveFocusToFirstTag)
-        jFirstTag.on("keyup", lastTag, giveFocusToLastTag)
+    if (trapLoop) {
+        let jLastTag = $(lastTag)
+        let jFirstTag = $(firstTag)
+        jLastTag.on("keydown", firstTag, giveFocusToFirstTag)
+        jFirstTag.on("keydown", lastTag, giveFocusToLastTag)
+        if (firstTag === lastTag) { // if there is only one interactive element in the scope, we trap the user to force him to validate the modal/message
+            jLastTag.on("keyup", firstTag, giveFocusToFirstTag)
+            jFirstTag.on("keyup", lastTag, giveFocusToLastTag)
+        }
     }
 
     firstTag.focus()
