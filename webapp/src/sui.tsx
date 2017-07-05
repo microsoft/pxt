@@ -761,7 +761,8 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 {this.props.closeIcon ? <Button
                         icon={closeIconName}
                         class="huge clear right floated"
-                        onClick={() => this.handleClose(null) } /> : undefined }
+                        onClick={() => this.handleClose(null) }
+                        tabIndex={999} /> : undefined }
                 {this.props.helpUrl ?
                     <a className={`ui button huge icon clear right floated`} href={this.props.helpUrl} target="_docs">
                         <i className="help icon"></i>
@@ -884,13 +885,14 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         }
     }
 
-    handleDocumentKeyPress = (e: KeyboardEvent) => {
-            if (e.keyCode !== 27) {
-                return;
-            }
+    private handleEscape = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode !== 27) {
+            return;
+        }
 
-            e.preventDefault();
-            this.close(e);
+        e.preventDefault();
+        this.close(e);
     }
 
     close = (e: Event) => {
@@ -918,7 +920,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         mountNode.appendChild(this.rootNode);
 
         document.addEventListener('click', this.handleDocumentClick)
-        document.addEventListener('keydown', this.handleDocumentKeyPress, true)
+        document.addEventListener('keydown', this.handleEscape, true)
 
         const { onMount } = this.props
         if (onMount) onMount()
@@ -934,7 +936,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         this.portalNode = null;
 
         document.removeEventListener('click', this.handleDocumentClick);
-        document.removeEventListener('keydown', this.handleDocumentKeyPress, true);
+        document.removeEventListener('keydown', this.handleEscape, true);
 
         const { onUnmount } = this.props;
         if (onUnmount) onUnmount();
@@ -954,7 +956,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         )
 
         this.portalNode = this.rootNode.firstElementChild;
-        core.initializeFocusTabIndexLoop($(this.portalNode));
+        core.initializeFocusTabIndexLoop(this.portalNode);
     }
 
     renderCore() {

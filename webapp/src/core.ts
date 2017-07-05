@@ -269,7 +269,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
-            onVisible: () => initializeFocusTabIndexLoop(mo)
+            onVisible: () => initializeFocusTabIndexLoop(mo.get(0))
         });
         mo.modal("show")
     })
@@ -465,10 +465,10 @@ function giveFocusToLastTag(e: JQueryKeyEventObject) {
     }
 };
 
-export function initializeFocusTabIndexLoop(element: JQuery) {
+export function initializeFocusTabIndexLoop(element: Element) {
     let firstTag: HTMLElement
     let lastTag: HTMLElement
-    let tags = element.find("*")
+    let tags = $(element).find("*")
 
     // Potentially, all tabIndex are not equal to 0. We look for the first HtmlElement with a tabIndex > -1 and for the one with the highest tabIndex, or the last one of the scope that is > -1.
     for (let i = 0; i < tags.length; i++) {

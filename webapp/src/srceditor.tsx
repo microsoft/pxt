@@ -3,6 +3,7 @@ import * as core from "./core";
 import * as data from "./data";
 import * as app from "./app";
 import * as React from "react";
+import * as pxtjson from "./pxtjson"
 
 
 export type ViewState = any;
@@ -20,6 +21,13 @@ export class Editor implements pxt.editor.IEditor {
     changeCallback = () => { };
     setVisible(v: boolean) {
         this.isVisible = v;
+
+        if (this.isVisible && this.getId() === "pxtJsonEditor") {
+            // There is probably a better way, like waiting that React update the style itself.
+            // The reason why we do it here is that otherwise the focus is not given because pxtJsonEditor is still not visible on the screen, so the web browser, doesn't give the focus.
+            document.getElementById(this.getId()).style.display = "block";
+            core.initializeFocusTabIndexLoop(document.getElementById(this.getId()));
+        }
     }
 
     /*******************************

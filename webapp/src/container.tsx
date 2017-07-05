@@ -73,13 +73,14 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         this.firstLoad = false;
     }
 
-    private handleDocumentKeyPress = (e: KeyboardEvent) => {
-            if (e.keyCode !== 27) {
-                return;
-            }
+    private handleEscape = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode !== 27) {
+            return;
+        }
 
-            e.preventDefault();
-            this.toggleVisibility();
+        e.preventDefault();
+        this.toggleVisibility();
     }
 
     collapse() {
@@ -103,7 +104,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!this.props.parent.state.sideDocsCollapsed) {
             this.rootNode = ReactDOM.findDOMNode(this);
             if (this.rootNode !== null) {
-                core.initializeFocusTabIndexLoop($(this.rootNode));
+                core.initializeFocusTabIndexLoop(this.rootNode);
                 this.mountSideDocs();
             }
         }
@@ -117,14 +118,14 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     mountSideDocs = () => {
-        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.addEventListener('keydown', this.handleDocumentKeyPress, true)
-        document.addEventListener('keydown', this.handleDocumentKeyPress, true)
+        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.addEventListener('keydown', this.handleEscape, true)
+        document.addEventListener('keydown', this.handleEscape, true)
     }
 
     unmountSideDocs = () => {
         this.rootNode = null;
-        document.removeEventListener('keydown', this.handleDocumentKeyPress, true);
-        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.removeEventListener('keydown', this.handleDocumentKeyPress, true);
+        document.removeEventListener('keydown', this.handleEscape, true);
+        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.removeEventListener('keydown', this.handleEscape, true);
         (document.activeElement as HTMLElement).blur();
     }
 
