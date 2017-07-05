@@ -80,7 +80,7 @@ namespace ts.pxtc {
 
     export class ProctoAssembler {
 
-        private t: ThumbSnippets; // TODO change back to AssemblerSnippets
+        private t: AssemblerSnippets;
         private bin: Binary;
         private resText = ""
         private exprStack: ir.Expr[] = []
