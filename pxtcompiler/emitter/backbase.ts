@@ -500,18 +500,18 @@ ${baseLabel}:
 
             if (this.stackAlignmentNeeded()) needsRePush = true
 
-            let interAlign = this.stackAlignmentNeeded(argStmts.length)
-            if (interAlign) {
-                this.write(this.t.push_locals(interAlign))
-                for (let i = 0; i < interAlign; ++i) {
-                    let dummy = ir.numlit(0)
-                    dummy.totalUses = 1
-                    dummy.currUses = 1
-                    this.exprStack.unshift(dummy)
-                }
-            }
-
             if (needsRePush) {
+                let interAlign = this.stackAlignmentNeeded(argStmts.length)
+                if (interAlign) {
+                    this.write(this.t.push_locals(interAlign))
+                    for (let i = 0; i < interAlign; ++i) {
+                        let dummy = ir.numlit(0)
+                        dummy.totalUses = 1
+                        dummy.currUses = 1
+                        this.exprStack.unshift(dummy)
+                    }
+                }
+
                 for (let a of argStmts) {
                     let idx = this.exprStack.indexOf(a)
                     assert(idx >= 0)
