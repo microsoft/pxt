@@ -479,14 +479,15 @@ export function initializeFocusTabIndexLoop(element: Element) {
             jTag.off("keyup", giveFocusToFirstTag)
             jTag.off("keyup", giveFocusToLastTag)
 
-            if (firstTag === undefined) {
-                if (tags[i].tabIndex > -1) {
+            if (tags[i].tabIndex > -1) {
+                if (firstTag === undefined) {
                     firstTag = tags[i]
                     lastTag = firstTag
+                } else if (firstTag.tabIndex > tags[i].tabIndex) {
+                    firstTag = tags[i]
+                } else if (lastTag !== undefined && tags[i].tabIndex >= lastTag.tabIndex) {
+                    lastTag = tags[i]
                 }
-            }
-            else if (tags[i].tabIndex >= lastTag.tabIndex) {
-                lastTag = tags[i]
             }
         }
     }
