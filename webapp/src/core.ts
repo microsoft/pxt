@@ -466,6 +466,10 @@ function giveFocusToLastTag(e: JQueryKeyEventObject) {
 };
 
 export function initializeFocusTabIndex(element: Element, trapLoop: boolean) {
+    if (jQuery.contains(element, document.activeElement)) {
+        return
+    }
+
     let firstTag: HTMLElement
     let lastTag: HTMLElement
     let tags = $(element).find("*")
