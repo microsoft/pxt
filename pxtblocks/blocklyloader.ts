@@ -1335,6 +1335,25 @@ namespace pxt.blocks {
         const listsLengthId = "lists_length";
         const listsLengthDef = pxt.blocks.getBlockDefinition(listsLengthId);
         msg.LISTS_LENGTH_TITLE = listsLengthDef.block["LISTS_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[listsLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.LISTS_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['Array']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
+
         installBuiltinHelpInfo(listsLengthId);
     }
 
@@ -2585,6 +2604,24 @@ namespace pxt.blocks {
         const textLengthId = "text_length";
         const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
         msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[textLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.TEXT_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['String']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
         installBuiltinHelpInfo(textLengthId);
 
         // builtin text_join
