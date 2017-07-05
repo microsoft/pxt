@@ -14,6 +14,17 @@ namespace ts.pxtc {
 
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
+        stackAligned() {
+            return pxt.appTarget.compile.stackAlign && pxt.appTarget.compile.stackAlign > 1
+        }
+        pushLR() {
+            if (this.stackAligned()) return "push {lr, r3}  ; r3 for align"
+            else return "push {lr}"
+        }
+        popPC() {
+            if (this.stackAligned()) return "pop {pc, r3}  ; r3 for align"
+            else return "pop {pc}"
+        }
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
@@ -107,9 +118,9 @@ ${lbl}:`
     bx r0
 .objlit:
     ${isSet ? "ldr r2, [sp, #0]" : ""}
-    push {lr, r3} ; r3 for alignment
+    ${this.pushLR()}
     bl ${mapMethod}
-    pop {pc, r3}
+    ${this.popPC()}
 `;
         }
         prologue_vtable(arg_top_index: number, vtableShift: number) {
@@ -122,7 +133,7 @@ ${lbl}:`
         lambda_prologue() {
             return `
     @stackmark args
-    push {lr, r3} ; r3-alignment
+    ${this.pushLR()}
     mov r5, r0
 `;
         }
@@ -130,7 +141,7 @@ ${lbl}:`
             return `
     bl pxtrt::getGlobalsPtr
     mov r6, r0
-    pop {pc, r3}
+    ${this.popPC()}
     @stackempty args
 `
         }
@@ -184,9 +195,9 @@ _numops_${op}:
 
                 r += `
 .boxed:
-    push {lr, r3}
+    ${this.pushLR()}
     bl numops::${op}
-    pop {pc, r3}
+    ${this.popPC()}
 `
             }
 
@@ -197,10 +208,10 @@ _numops_toInt:
     bcc .over
     blx lr
 .over:
-    push {lr, r3}
+    ${this.pushLR()}
     lsls r0, r0, #1
     bl pxt::toInt
-    pop {pc, r3}
+    ${this.popPC()}
 
 _numops_fromInt:
     lsls r2, r0, #1
@@ -210,9 +221,9 @@ _numops_fromInt:
     adds r0, r2, #1
     blx lr
 .over2:
-    push {lr, r3}
+    ${this.pushLR()}
     bl pxt::fromInt
-    pop {pc, r3}
+    ${this.popPC()}
 `
 
             return r
