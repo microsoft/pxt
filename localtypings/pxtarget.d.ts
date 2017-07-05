@@ -294,7 +294,7 @@ declare namespace ts.pxtc {
         extensionFiles: pxt.Map<string>;
         yotta?: pxt.YottaConfig;
         platformio?: pxt.PlatformIOConfig;
-        npmDependencies?: Map<string>;
+        npmDependencies?: pxt.Map<string>;
         sha: string;
         compileData: string;
         shimsDTS: string;
