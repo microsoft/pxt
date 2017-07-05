@@ -1166,7 +1166,13 @@ export class ProjectView
 
     importFileDialog() {
         let input: HTMLInputElement;
-        const ext = pxt.appTarget.compile && pxt.appTarget.compile.hasHex ? ".hex" : ".mkcd";
+        let ext = ".mkcd";
+        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+            ext = ".hex";
+        }
+        if (pxt.appTarget.compile && pxt.appTarget.compile.useUF2) {
+            ext = ".uf2";
+        }
         core.confirmAsync({
             header: lf("Open {0} file", ext),
             onLoaded: ($el) => {
