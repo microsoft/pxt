@@ -1019,7 +1019,7 @@ export class ProjectView
             simulator.setTraceInterval(0);
         }
         else {
-            simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
+            simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
         }
         this.setState({ tracing: !this.state.tracing })
         this.restartSimulator();
