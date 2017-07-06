@@ -142,7 +142,7 @@ export function initCommandsAsync(): Promise<void> {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // window app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
-            hidbridge.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         } else {
             pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;

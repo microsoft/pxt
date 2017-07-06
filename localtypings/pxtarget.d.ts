@@ -77,6 +77,7 @@ declare namespace pxt {
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
+        rawHID?: boolean;
         log?: boolean;
     }
 

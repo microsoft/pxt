@@ -59,13 +59,24 @@ export function getHF2Devices() {
     const hid = getHID();
     if (!hid) return [];
     let devices = hid.devices() as HidDevice[]
-    return devices.filter(d => (d.release & 0xff00) == 0x4200)
+    let serial = pxt.appTarget.serial
+    return devices.filter(d =>
+        (serial && parseInt(serial.productId) == d.productId && parseInt(serial.vendorId) == d.vendorId) ||
+        (d.release & 0xff00) == 0x4200)
 }
 
-export function hf2ConnectAsync(path: string) {
+export function hf2ConnectAsync(path: string, raw = false) {
     let h = new HF2.Wrapper(new HidIO(path))
+    h.rawMode = raw
     return h.reconnectAsync(true).then(() => h)
 }
+
+export function mkPacketIOAsync() {
+    let h = new HidIO(null)
+    return Promise.resolve(h)
+}
+
+pxt.HF2.mkPacketIOAsync = mkPacketIOAsync
 
 let hf2Dev: Promise<HF2.Wrapper>
 export function initAsync(path: string = null): Promise<HF2.Wrapper> {
@@ -131,7 +142,7 @@ export class HidIO implements HF2.PacketIO {
         return Promise.resolve()
             .then(() => {
                 let lst = [0]
-                for (let i = 0; i < 64; ++i)
+                for (let i = 0; i < Math.max(64, pkt.length); ++i)
                     lst.push(pkt[i] || 0)
                 this.dev.write(lst)
             })
