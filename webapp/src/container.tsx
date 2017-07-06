@@ -125,10 +125,16 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
 
     unmountSideDocs = () => {
         (document.activeElement as HTMLElement).blur();
-        core.initializeFocusTabIndex(this.rootNode);
+        if (this.rootNode !== null) {
+            core.initializeFocusTabIndex(this.rootNode);
+        }
+
         this.rootNode = null;
         document.removeEventListener('keydown', this.handleEscape, true);
-        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.removeEventListener('keydown', this.handleEscape, true);
+        let sidedocsframe = document.getElementById("sidedocsframe") as HTMLIFrameElement
+        if (sidedocsframe !== null && sidedocsframe.contentWindow !== undefined) {
+            sidedocsframe.contentWindow.document.removeEventListener('keydown', this.handleEscape, true);
+        }
     }
 
     renderCore() {

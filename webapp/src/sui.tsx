@@ -109,7 +109,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                 }
 
                 if (htmlElement.tagName.toLowerCase() === 'a') {
-                    let win = window.open((htmlElement as HTMLLinkElement).href, '_blank')
+                    window.open((htmlElement as HTMLLinkElement).href, '_blank')
                 }
             },
             fullTextSearch: true,
@@ -124,6 +124,11 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidUpdate() {
         this.child("").dropdown("refresh")
         this.popup()
+        let hrefTags = ReactDOM.findDOMNode(this).getElementsByTagName("a")
+        for (let i = 0; i < hrefTags.length; i++) {
+            hrefTags.item(0).onclick = () => { return false }
+            hrefTags.item(0).onkeypress = () => { return false }
+        }
     }
 
     renderCore() {

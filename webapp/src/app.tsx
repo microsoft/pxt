@@ -887,7 +887,7 @@ export class ProjectView
             header: lf("Reset"),
             body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
             agreeLbl: lf("Reset"),
-            agreeClass: "red",
+            agreeClass: "red firstFocused",
             agreeIcon: "sign out",
             disagreeLbl: lf("Cancel")
         }).then(r => {
