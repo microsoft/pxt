@@ -7,8 +7,8 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["build"],
-			"cwd": "${workspaceRoot}/../pxt-calliope/libs/core",
+			"args": ["serve", "--cloud"],
+			"cwd": "${workspaceRoot}/../pxt-adafruit",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"
