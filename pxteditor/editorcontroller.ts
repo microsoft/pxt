@@ -47,6 +47,8 @@ namespace pxt.editor {
         | "redo"
         | "renderblocks"
 
+        | "toggletrace" // EditorMessageToggleTraceRequest
+
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
         | "workspacesave" // EditorWorkspaceSaveRequest
@@ -154,6 +156,12 @@ namespace pxt.editor {
         exception?: string;
     }
 
+    export interface EditorMessageToggleTraceRequest extends EditorMessageRequest {
+        action: "toggletrace";
+        // interval speed for the execution trace
+        intervalSpeed?: number;
+    }
+
     const pendingRequests: pxt.Map<{
         resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
         reject: (err: any) => void;
@@ -227,6 +235,11 @@ namespace pxt.editor {
                         const rendermsg = data as EditorMessageRenderBlocksRequest;
                         p = p.then(() => projectView.renderBlocksAsync(rendermsg))
                             .then((img: string) => { resp = img; });
+                        break;
+                    }
+                    case "toggletrace": {
+                        const togglemsg = data as EditorMessageToggleTraceRequest;
+                        p = p.then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
                         break;
                     }
                 }

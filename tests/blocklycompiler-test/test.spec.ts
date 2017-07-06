@@ -235,6 +235,10 @@ describe("blockly compiler", () => {
         it("should not infinitely recurse for unininitialized arrays used in a for of loop", done => {
             blockTestAsync("lists_infinite2").then(done, done);
         });
+
+        it("should not declare lists as strings when using the length block", done => {
+            blockTestAsync("lists_length_with_for_of").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" IgnorableNamespaces="uap uap3 mp">
   <Identity Name="d6f74a43-358f-4081-88bc-7b2242586346" Version="1.0.0.0" Publisher="CN=jhalleux" />
   <mp:PhoneIdentity PhoneProductId="d6f74a43-358f-4081-88bc-7b2242586346" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
@@ -17,6 +17,7 @@
     <Application Id="App" StartPage="https://makecode.com/uwp">
       <uap:ApplicationContentUriRules>
         <uap:Rule Match="http://localhost:3232/index.html?dbg=1&amp;nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
+        <uap:Rule Match="http://localhost:3232/index.html?nolocalhost=1" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://pxt.microbit.org" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://makecode.adafruit.com" Type="include" WindowsRuntimeAccess="all" />
         <uap:Rule Match="https://mini.pxt.io" Type="include" WindowsRuntimeAccess="all" />
@@ -39,6 +40,11 @@
             </uap:SupportedFileTypes>
           </uap:FileTypeAssociation>
         </uap:Extension>
+        <!--<uap3:Extension Category="windows.appUriHandler">
+          <uap3:AppUriHandler>
+            <uap3:Host Name="makecode.adafruit.com" />
+          </uap3:AppUriHandler>
+        </uap3:Extension>-->
       </Extensions>
     </Application>
   </Applications>
@@ -52,8 +58,11 @@
       </Device>
     </DeviceCapability>
     <DeviceCapability Name="humaninterfacedevice">
-      <Device Id="any">
-        <Function Type="usage:0006 *"/>
+      <Device Id="vidpid:239A 0018">
+        <Function Type="usage:FF97 *" />
+      </Device>
+      <Device Id="vidpid:03EB 2402">
+        <Function Type="usage:FF97 *" />
       </Device>
     </DeviceCapability>
   </Capabilities>
