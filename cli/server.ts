@@ -394,6 +394,8 @@ function initSocketServer(wsPort: number, hostname: string) {
     }
 
     function objToString(obj: any) {
+        if (obj == null)
+            return "null"
         let r = "{\n"
         for (let k of Object.keys(obj)) {
             r += "   " + k + ": "

@@ -59,7 +59,7 @@ function init() {
 
 export function shouldUse() {
     let serial = pxt.appTarget.serial
-    return serial && (serial.useHF2 || serial.rawHID) && Cloud.isLocalHost() && !!Cloud.localToken
+    return serial && serial.useHF2 && Cloud.isLocalHost() && !!Cloud.localToken
 }
 
 function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
@@ -120,7 +120,7 @@ class BridgeIO implements pxt.HF2.PacketIO {
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
         if (this.rawMode)
-            return iface.opAsync("sendserial", {
+            return iface.opAsync("send", {
                 path: this.dev.path,
                 data: U.toHex(pkt),
                 raw: true
@@ -138,8 +138,11 @@ class BridgeIO implements pxt.HF2.PacketIO {
 
     initAsync(): Promise<void> {
         return iface.opAsync("list", {})
-            .then((devs: any) => {
-                let d0 = (devs.devices as HidDevice[]).filter(d => (d.release & 0xff00) == 0x4200)[0]
+            .then((devs0: any) => {
+                let devs = devs0.devices as HidDevice[]
+                let d0 = devs.filter(d => (d.release & 0xff00) == 0x4200)[0]
+                if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)
+                    d0 = devs[0]
                 if (d0) {
                     if (this.dev)
                         delete bridgeByPath[this.dev.path]

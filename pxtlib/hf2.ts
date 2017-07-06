@@ -257,7 +257,7 @@ namespace pxt.HF2 {
         reconnectAsync(first = false): Promise<void> {
             this.resetState()
             if (first) return this.initAsync()
-            log(`reconnect`);
+            log(`reconnect raw=${this.rawMode}`);
             return this.io.reconnectAsync()
                 .then(() => this.initAsync())
                 .catch(e => {

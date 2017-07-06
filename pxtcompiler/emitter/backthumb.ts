@@ -15,7 +15,7 @@ namespace ts.pxtc {
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
         stackAligned() {
-            return pxt.appTarget.compile.stackAlign && pxt.appTarget.compile.stackAlign > 1
+            return target.stackAlign && target.stackAlign > 1
         }
         pushLR() {
             if (this.stackAligned()) return "push {lr, r3}  ; r3 for align"

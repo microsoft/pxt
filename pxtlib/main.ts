@@ -213,16 +213,17 @@ namespace pxt {
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
 
-    export function outputName() {
-        if (appTarget.compile.useELF)
+    export function outputName(trg: CompileTarget = null) {
+        if (!trg) trg = appTarget.compile
+        if (trg.useELF)
             return ts.pxtc.BINARY_ELF
-        else if (appTarget.compile.useUF2)
+        else if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
         else
             return ts.pxtc.BINARY_HEX
     }
 
-    export function isOutputText() {
-        return outputName() == ts.pxtc.BINARY_HEX
+    export function isOutputText(trg: CompileTarget = null) {
+        return outputName(trg) == ts.pxtc.BINARY_HEX
     }
 }
