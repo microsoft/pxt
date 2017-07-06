@@ -1,0 +1,89 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+.hc {
+
+    /* root */
+    #root {
+        background: black !important;
+    }
+
+    /* Simulator */
+    #filelist {
+        background: black !important;
+    }
+
+
+    /* Menu bar */
+    #menubar .ui.inverted.menu {
+        background: black !important;
+        border-bottom: 1px solid white;
+    }
+
+    /* Editor toolbar */
+    #editortools {
+        background: black !important;
+        border-top: 1px solid white;
+    }
+
+    /* Buttons */
+    .ui.button {
+        background: black !important;
+        color: white !important;
+        outline: 2px solid white;
+    }
+
+    /* Hyperlinks */
+    a {
+        color: yellow !important;
+    }
+
+    /* Items */
+    .ui.item {
+        background: black !important;
+        color: white !important;
+    }
+
+    /* Dropdown */
+    .ui.menu .ui.dropdown .menu > .item {
+        background: black !important;
+        color: white !important;
+    }
+
+    /* Editor switch toggle */
+    #menubar .ui.menu .item.editor-menuitem { 
+        border: 1px solid white !important;
+    }
+
+    #menubar .ui.menu .item.editor-menuitem .active {
+        background: #10C8CD !important;
+        color: black !important;
+    }
+
+    /* Modals */
+    .ui.modal {
+        border: 2px solid white !important;
+    }
+
+    .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions {
+        background: black !important;
+        color: white !important;
+    }
+
+    /* Blockly / Monaco toolbox */
+    .blocklyToolboxDiv, .monacoToolboxDiv {
+        background: black !important;
+        border-left: 1px solid white !important; 
+        border-right: 1px solid white !important;
+    }
+
+    .blocklyTreeLabel {
+        color: white !important;
+    }
+
+
+}
