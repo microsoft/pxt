@@ -199,8 +199,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return (
             <sui.Modal open={this.state.visible} dimmer={true} header={headerText} className="searchdialog" size="large"
                 onClose={() => this.setState({ visible: false }) }
+                closeIsLastFocused
                 closeIcon={true}
                 helpUrl="/packages"
+                helpIsFirstFocused
                 closeOnDimmerClick>
                 <div className="ui vertical segment">
                     <div className="ui search">

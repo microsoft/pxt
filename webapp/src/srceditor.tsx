@@ -26,7 +26,7 @@ export class Editor implements pxt.editor.IEditor {
             // There is probably a better way, like waiting that React update the style itself.
             // The reason why we do it here is that otherwise the focus is not given because pxtJsonEditor is still not visible on the screen, so the web browser, doesn't give the focus.
             document.getElementById(this.getId()).style.display = "block";
-            core.initializeFocusTabIndex(document.getElementById(this.getId()), false);
+            core.initializeFocusTabIndex(document.getElementById(this.getId()));
         }
     }
 

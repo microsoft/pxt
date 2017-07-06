@@ -96,6 +96,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     toggleVisibility() {
         const state = this.props.parent.state;
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
+        document.getElementById("sidedocstoggle").focus();
     }
 
     componentDidUpdate() {
@@ -104,7 +105,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!this.props.parent.state.sideDocsCollapsed) {
             this.rootNode = ReactDOM.findDOMNode(this);
             if (this.rootNode !== null) {
-                core.initializeFocusTabIndex(this.rootNode, false);
+                core.initializeFocusTabIndex(this.rootNode);
                 this.mountSideDocs();
             }
         }
@@ -123,10 +124,11 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
     }
 
     unmountSideDocs = () => {
+        (document.activeElement as HTMLElement).blur();
+        core.initializeFocusTabIndex(this.rootNode);
         this.rootNode = null;
         document.removeEventListener('keydown', this.handleEscape, true);
         (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.removeEventListener('keydown', this.handleEscape, true);
-        (document.activeElement as HTMLElement).blur();
     }
 
     renderCore() {
@@ -135,7 +137,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!docsUrl) return null;
 
         return <div>
-            <button id="sidedocstoggle" role="button" className="ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocstoggle" role="button" className="firstFocused ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`icon large inverted ${state.sideDocsCollapsed ? 'book' : 'chevron right'}`}></i>
                 {state.sideDocsCollapsed ? <i className={`icon large inverted chevron left hover`}></i> : undefined }
             </button>

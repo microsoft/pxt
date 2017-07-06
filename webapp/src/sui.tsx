@@ -58,6 +58,7 @@ function removeClass(el: HTMLElement, cls: string) {
 export function fireClickOnEnter(e: React.KeyboardEvent): void {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
     if (charCode === 13 || charCode === 32) {
+        e.preventDefault();
         (document.activeElement as HTMLElement).click();
     }
 }
@@ -143,7 +144,7 @@ export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
     onClick?: () => void;
-    onKeyPress?: (e: React.KeyboardEvent) => void;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export class Item extends data.Component<ItemProps, {}> {
@@ -156,7 +157,7 @@ export class Item extends data.Component<ItemProps, {}> {
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}
-                onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
+                onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
                 {genericContent(this.props)}
                 {this.props.children}
             </div>);
@@ -173,7 +174,7 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}
-                onKeyPress={this.props.onKeyPress || fireClickOnEnter}>
+                onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
                 <div className={genericClassName("ui button", this.props)}>
                     {genericContent(this.props) }
                     {this.props.children}
@@ -185,7 +186,6 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
 export interface ButtonProps extends WithPopupProps {
     title?: string;
     onClick?: (e: React.MouseEvent) => void;
-    onKeyPress?: (e: React.KeyboardEvent) => void;
     disabled?: boolean;
 }
 
@@ -632,6 +632,7 @@ export interface ModalProps {
     closeIcon?: any;
     closeOnDimmerClick?: boolean;
     closeOnDocumentClick?: boolean;
+    closeIsLastFocused?: boolean;
     dimmer?: boolean | 'blurring' | 'inverted';
     dimmerClassName?: string;
 
@@ -645,10 +646,12 @@ export interface ModalProps {
     headerClass?: string;
     header?: string;
     helpUrl?: string;
+    helpIsFirstFocused?: boolean
 
     action?: string;
     actionClick?: () => void;
     actionLoading?: boolean;
+    actionIsFirstFocused?: boolean;
 }
 
 export interface ModalState {
@@ -780,10 +783,17 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             closeIcon,
             closeOnDimmerClick,
             closeOnDocumentClick,
+            closeIsLastFocused,
+            actionIsFirstFocused,
+            helpIsFirstFocused,
             dimmer,
             dimmerClassName,
             size,
         } = this.props
+
+        if (actionIsFirstFocused && helpIsFirstFocused) {
+            console.error("actionIsFirstFocused and helpIsFirstFocused cannot be both true.")
+        }
 
         const { marginTop, scrolling } = this.state
         const classes = cx([
@@ -801,11 +811,11 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.closeIcon ? <Button
                         icon={closeIconName}
-                        class="huge clear right floated"
+                        class={`huge clear right floated ${closeIsLastFocused ? "lastFocused" : ""}`}
                         onClick={() => this.handleClose(null) }
                         tabIndex={999} /> : undefined }
                 {this.props.helpUrl ?
-                    <a className={`ui button huge icon clear right floated`} href={this.props.helpUrl} target="_docs">
+                    <a className={`ui button huge icon clear right floated ${helpIsFirstFocused ? "firstFocused" : ""}`} href={this.props.helpUrl} target="_docs">
                         <i className="help icon"></i>
                     </a>
                     : undefined}
@@ -819,7 +829,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     <div className="actions">
                         <Button
                             text={this.props.action}
-                            class={`approve primary ${this.props.actionLoading ? "loading" : ""}`}
+                            class={`approve primary ${this.props.actionLoading ? "loading" : ""} ${actionIsFirstFocused ? "firstFocused" : ""}`}
                             onClick={() => {
                                 this.props.actionClick();
                             } } />
@@ -997,7 +1007,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         )
 
         this.portalNode = this.rootNode.firstElementChild;
-        core.initializeFocusTabIndex(this.portalNode, true);
+        core.initializeFocusTabIndex(this.portalNode);
     }
 
     renderCore() {

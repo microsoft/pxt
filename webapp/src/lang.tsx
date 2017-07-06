@@ -127,14 +127,16 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             <sui.Modal open={this.state.visible} header={lf("Select Language") } size={modalSize}
                 onClose={() => this.hide() } dimmer={true}
                 closeIcon={true}
-                closeOnDimmerClick closeOnDocumentClick
+                closeOnDimmerClick
+                closeOnDocumentClick
+                closeIsLastFocused
                 >
                 {!fetchedLangs ?
                     <div className="ui message info">{lf("loading...") }</div> : undefined}
                 {fetchedLangs ? <div className="group">
                     <div className="ui cards centered">
                         {languagesToShow.map(langId =>
-                            <codecard.CodeCardView className="card-selected"
+                            <codecard.CodeCardView className={`card-selected ${langId == "de" ? "firstFocused" : ""}`}
                                 key={langId}
                                 name={allLanguages[langId].localizedName}
                                 description={allLanguages[langId].englishName}

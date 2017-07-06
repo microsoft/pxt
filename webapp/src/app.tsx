@@ -1381,9 +1381,10 @@ export class ProjectView
             header: lf("About {0}", pxt.appTarget.name),
             hideCancel: true,
             agreeLbl: lf("Ok"),
+            agreeClass: "positive lastFocused",
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
-<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
+<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="firstFocused" href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
 <p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
 ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
@@ -1624,7 +1625,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         <img className="ui mini image" src={Util.toDataUri(rightLogo) } tabIndex={0} onClick={() => this.launchFullEditor() } onKeyPress={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`}/>
                                     </span>
                                 </div> }
-                            {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem" tabIndex={-1} onKeyPress={null}>
+                            {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem" tabIndex={-1} onKeyDown={null}>
                                 {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
                                 <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
                                 <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />

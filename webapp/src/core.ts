@@ -200,7 +200,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: options.disagreeClass || "cancel",
+            class: (options.disagreeClass || "cancel") + " lastFocused",
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -269,7 +269,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
-            onVisible: () => initializeFocusTabIndex(mo.get(0), true)
+            onVisible: () => initializeFocusTabIndex(mo.get(0))
         });
         mo.modal("show")
     })
@@ -298,7 +298,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (options.deleteLbl) {
         options.buttons.push({
             label: options.deleteLbl,
-            class: "delete red",
+            class: "delete red firstFocused",
             icon: "trash",
             onclick: () => {
                 result = 2
@@ -315,7 +315,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
         header: lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
-        agreeClass: "red",
+        agreeClass: "red firstFocused",
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
@@ -465,46 +465,42 @@ function giveFocusToLastTag(e: JQueryKeyEventObject) {
     }
 };
 
-export function initializeFocusTabIndex(element: Element, trapLoop: boolean) {
-    if (jQuery.contains(element, document.activeElement)) {
+export function initializeFocusTabIndex(element: Element) {
+    if (element !== document.activeElement && element.contains(document.activeElement)) {
         return
     }
 
+    let firstFocused = element.getElementsByClassName("firstFocused")
+    let lastFocused = element.getElementsByClassName("lastFocused")
     let firstTag: HTMLElement
     let lastTag: HTMLElement
-    let tags = $(element).find("*")
+    let jFirstTag: JQuery
+    let jLastTag: JQuery
 
-    // Potentially, all tabIndex are not equal to 0. We look for the first HtmlElement with a tabIndex > -1 and for the one with the highest tabIndex, or the last one of the scope that is > -1.
-    for (let i = 0; i < tags.length; i++) {
-        if (!tags[i].hidden && tags[i].style.visibility !== "hidden" && tags[i].style.display !== "none") {
-            if (!trapLoop) {
-                let jTag = $(tags[i])
-                jTag.off("keydown", giveFocusToFirstTag)
-                jTag.off("keydown", giveFocusToLastTag)
-                jTag.off("keyup", giveFocusToFirstTag)
-                jTag.off("keyup", giveFocusToLastTag)
-            }
-
-            if (tags[i].tabIndex > -1) {
-                if (firstTag === undefined) {
-                    firstTag = tags[i]
-                    lastTag = firstTag
-                } else if (firstTag.tabIndex > tags[i].tabIndex) {
-                    firstTag = tags[i]
-                } else if (lastTag !== undefined && tags[i].tabIndex >= lastTag.tabIndex) {
-                    lastTag = tags[i]
-                }
-            }
-        }
-    }
-
-    if (firstTag === undefined) {
+    if (firstFocused.length > 1) {
+        console.error("There must be maximum one element with the class firstFocused in the scope.")
+        return
+    } else if (firstFocused.length === 1) {
+        firstTag = firstFocused.item(0) as HTMLElement
+        jFirstTag = $(firstTag)
+        jFirstTag.off("keydown", giveFocusToLastTag)
+        jFirstTag.off("keyup", giveFocusToLastTag)
+    } else {
+        console.error("There must be one element with the class firstFocused in the scope.")
         return
     }
 
-    if (trapLoop) {
-        let jLastTag = $(lastTag)
-        let jFirstTag = $(firstTag)
+    if (lastFocused.length > 1) {
+        console.error("There must be maximum one element with the class lastFocused in the scope.")
+        return
+    } else if (lastFocused.length === 1) {
+        lastTag = lastFocused.item(0) as HTMLElement
+        jLastTag = $(lastTag)
+        jLastTag.off("keydown", giveFocusToFirstTag)
+        jLastTag.off("keyup", giveFocusToFirstTag)
+    }
+
+    if (lastTag !== undefined) {
         jLastTag.on("keydown", firstTag, giveFocusToFirstTag)
         jFirstTag.on("keydown", lastTag, giveFocusToLastTag)
         if (firstTag === lastTag) { // if there is only one interactive element in the scope, we trap the user to force him to validate the modal/message
