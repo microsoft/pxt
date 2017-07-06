@@ -24,7 +24,7 @@ More info:
 
 Examples of Editors built with PXT:
 
-* https://pxt.microbit.org
+* https://makecode.microbit.org
 * https://makecode.adafruit.com
 
 ## Branches
