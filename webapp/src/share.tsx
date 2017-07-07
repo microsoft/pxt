@@ -158,10 +158,13 @@ pxt extract ${url}`;
 
         return (
             <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
-                onClose={() => this.setState({ visible: false }) } dimmer={true}
+                onClose={() => this.setState({ visible: false }) }
+                closeIsLastFocused
+                dimmer={true}
                 action={action}
                 actionClick={publish}
                 actionLoading={actionLoading}
+                actionIsFirstFocused
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick
                 >
@@ -172,7 +175,7 @@ pxt extract ${url}`;
                         : undefined }
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
+                        <sui.Input class="firstFocused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
                     </div>
                         : undefined }
                     { ready ? <div>

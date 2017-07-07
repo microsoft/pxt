@@ -86,7 +86,7 @@ export class Editor extends srceditor.Editor {
         return (
             <div className="ui content">
                 <div className="ui segment form text" style={{ backgroundColor: "white" }}>
-                    <sui.Input label={lf("Name")} value={c.name} onChange={setFileName}/>
+                    <sui.Input class="firstFocused" label={lf("Name")} value={c.name} onChange={setFileName}/>
                     {userConfigs.map(uc =>
                         <sui.Checkbox
                             key={`userconfig-${uc.description}`}

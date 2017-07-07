@@ -200,7 +200,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: options.disagreeClass || "cancel",
+            class: (options.disagreeClass || "cancel") + " lastFocused",
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -269,6 +269,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
+            onVisible: () => initializeFocusTabIndex(mo.get(0))
         });
         mo.modal("show")
     })
@@ -297,7 +298,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (options.deleteLbl) {
         options.buttons.push({
             label: options.deleteLbl,
-            class: "delete red",
+            class: "delete red firstFocused",
             icon: "trash",
             onclick: () => {
                 result = 2
@@ -314,7 +315,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
         header: lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
-        agreeClass: "red",
+        agreeClass: "red firstFocused",
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
@@ -447,6 +448,67 @@ export function scrollIntoView(item: JQuery, margin = 0) {
         parent.scrollTop(newTop)
         //parent.animate({ 'scrollTop': newTop }, 'fast');
     }
+}
+
+function giveFocusToFirstTag(e: JQueryKeyEventObject) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === 9 && !e.shiftKey) {
+        e.preventDefault();
+        (e.data as HTMLElement).focus()
+    }
+}
+function giveFocusToLastTag(e: JQueryKeyEventObject) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === 9 && e.shiftKey) {
+        e.preventDefault();
+        (e.data as HTMLElement).focus()
+    }
+};
+
+export function initializeFocusTabIndex(element: Element) {
+    if (element !== document.activeElement && element.contains(document.activeElement)) {
+        return
+    }
+
+    let firstFocused = element.getElementsByClassName("firstFocused")
+    let lastFocused = element.getElementsByClassName("lastFocused")
+    let firstTag: HTMLElement
+    let lastTag: HTMLElement
+    let jFirstTag: JQuery
+    let jLastTag: JQuery
+
+    if (firstFocused.length > 1) {
+        console.error("There must be maximum one element with the class firstFocused in the scope.")
+        return
+    } else if (firstFocused.length === 1) {
+        firstTag = firstFocused.item(0) as HTMLElement
+        jFirstTag = $(firstTag)
+        jFirstTag.off("keydown", giveFocusToLastTag)
+        jFirstTag.off("keyup", giveFocusToLastTag)
+    } else {
+        return
+    }
+
+    if (lastFocused.length > 1) {
+        console.error("There must be maximum one element with the class lastFocused in the scope.")
+        return
+    } else if (lastFocused.length === 1) {
+        lastTag = lastFocused.item(0) as HTMLElement
+        jLastTag = $(lastTag)
+        jLastTag.off("keydown", giveFocusToFirstTag)
+        jLastTag.off("keyup", giveFocusToFirstTag)
+    }
+
+    if (lastTag !== undefined) {
+        jLastTag.on("keydown", firstTag, giveFocusToFirstTag)
+        jFirstTag.on("keydown", lastTag, giveFocusToLastTag)
+        if (firstTag === lastTag) { // if there is only one interactive element in the scope, we trap the user to force him to validate the modal/message
+            jLastTag.on("keyup", firstTag, giveFocusToFirstTag)
+            jFirstTag.on("keyup", lastTag, giveFocusToLastTag)
+        }
+    }
+
+    firstTag.focus()
 }
 
 // for JavaScript console

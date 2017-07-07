@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as data from "./data";
+import * as core from "./core";
 
 export interface UiProps {
     icon?: string;
@@ -11,6 +12,7 @@ export interface UiProps {
     class?: string;
     role?: string;
     title?: string;
+    tabIndex?: number;
 }
 
 export interface WithPopupProps extends UiProps {
@@ -18,6 +20,7 @@ export interface WithPopupProps extends UiProps {
 }
 
 export interface DropdownProps extends WithPopupProps {
+    tabIndex?: number;
     value?: string;
     title?: string;
     onChange?: (v: string) => void;
@@ -52,6 +55,14 @@ function removeClass(el: HTMLElement, cls: string) {
     else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
 }
 
+export function fireClickOnEnter(e: React.KeyboardEvent): void {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === 13 || charCode === 32) {
+        e.preventDefault();
+        (document.activeElement as HTMLElement).click();
+    }
+}
+
 export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
     popup() {
         if (this.props.popup) {
@@ -82,7 +93,25 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
-            action: "hide",
+            action: (text: string, value: any, element: any) => {
+                let htmlElement: HTMLElement
+
+                this.child("").dropdown("hide")
+
+                // When we use the keyboard, it is not an HTMLElement that we receive, but a JQuery. Activating click on it reproduce the same behavior than a real click.
+                if (typeof element.get === "function") {
+                    let jqueryElement = element as JQuery
+                    htmlElement = jqueryElement.get(0)
+                    htmlElement.click()
+                    return
+                } else {
+                    htmlElement = element as HTMLElement
+                }
+
+                if (htmlElement.tagName.toLowerCase() === 'a') {
+                    window.open((htmlElement as HTMLLinkElement).href, '_blank')
+                }
+            },
             fullTextSearch: true,
             onChange: (v: string) => {
                 if (this.props.onChange && v != this.props.value) {
@@ -95,13 +124,19 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidUpdate() {
         this.child("").dropdown("refresh")
         this.popup()
+        let hrefTags = ReactDOM.findDOMNode(this).getElementsByTagName("a")
+        for (let i = 0; i < hrefTags.length; i++) {
+            hrefTags.item(0).onclick = () => { return false }
+            hrefTags.item(0).onkeypress = () => { return false }
+        }
     }
 
     renderCore() {
         return (
             <div className={genericClassName("ui dropdown item", this.props) }
                 role={this.props.role}
-                title={this.props.title}>
+                title={this.props.title}
+                tabIndex={this.props.tabIndex}>
                 {genericContent(this.props) }
                 <div className="menu">
                     {this.props.children}
@@ -114,6 +149,7 @@ export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
     onClick?: () => void;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export class Item extends data.Component<ItemProps, {}> {
@@ -122,10 +158,12 @@ export class Item extends data.Component<ItemProps, {}> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
                 title={this.props.title || this.props.text}
+                tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
                 data-value={this.props.value}
-                onClick={this.props.onClick}>
-                {genericContent(this.props) }
+                onClick={this.props.onClick}
+                onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
+                {genericContent(this.props)}
                 {this.props.children}
             </div>);
     }
@@ -137,9 +175,11 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
                 title={this.props.title || this.props.text}
+                tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
                 data-value={this.props.value}
-                onClick={this.props.onClick}>
+                onClick={this.props.onClick}
+                onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
                 <div className={genericClassName("ui button", this.props)}>
                     {genericContent(this.props) }
                     {this.props.children}
@@ -160,6 +200,7 @@ export class Button extends UiElement<ButtonProps> {
             <button className={genericClassName("ui button", this.props) + " " + (this.props.disabled ? "disabled" : "") }
                 role={this.props.role}
                 title={this.props.title}
+                tabIndex={this.props.tabIndex || 0}
                 aria-label={this.props.title || this.props.text}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
@@ -414,6 +455,8 @@ export interface MenuProps {
     tabular?: boolean | 'right';
     text?: boolean;
     vertical?: boolean;
+    tabIndex?: number;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export interface MenuItemProps {
@@ -492,6 +535,47 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         super(props);
     }
 
+    private handleKeyboardNavigation = (e: React.KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        let leftOrUpKey = charCode === 37 || charCode === 38
+        let rightorBottomKey = charCode === 39 || charCode === 40
+
+        if (!leftOrUpKey && !rightorBottomKey) {
+            return
+        }
+
+        let rootNode = ReactDOM.findDOMNode(this)
+        let items = rootNode.getElementsByClassName("link item")
+        let activeNodeIndex = -1
+        let i = 0
+
+        while (activeNodeIndex === -1 && i < items.length) {
+            if (items.item(i).classList.contains("active")) {
+                activeNodeIndex = i
+            }
+
+            i++
+        }
+
+        if (activeNodeIndex === -1) {
+            return
+        }
+
+        if (leftOrUpKey) {
+            if (activeNodeIndex === 0) {
+                (items.item(items.length - 1) as HTMLElement).click()
+            } else {
+                (items.item(activeNodeIndex - 1) as HTMLElement).click()
+            }
+        } else if (rightorBottomKey) {
+            if (activeNodeIndex === items.length - 1) {
+                (items.item(0) as HTMLElement).click()
+            } else {
+                (items.item(activeNodeIndex + 1) as HTMLElement).click()
+            }
+        }
+    }
+
     renderCore() {
         const {
             attached,
@@ -539,7 +623,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         ]);
 
         return (
-            <div className={classes}>
+            <div className={classes} tabIndex={this.props.tabIndex || 0} onKeyDown={this.props.onKeyDown || this.handleKeyboardNavigation}>
                 {children}
             </div>
         )
@@ -553,6 +637,7 @@ export interface ModalProps {
     closeIcon?: any;
     closeOnDimmerClick?: boolean;
     closeOnDocumentClick?: boolean;
+    closeIsLastFocused?: boolean;
     dimmer?: boolean | 'blurring' | 'inverted';
     dimmerClassName?: string;
 
@@ -566,10 +651,12 @@ export interface ModalProps {
     headerClass?: string;
     header?: string;
     helpUrl?: string;
+    helpIsFirstFocused?: boolean
 
     action?: string;
     actionClick?: () => void;
     actionLoading?: boolean;
+    actionIsFirstFocused?: boolean;
 }
 
 export interface ModalState {
@@ -701,10 +788,17 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             closeIcon,
             closeOnDimmerClick,
             closeOnDocumentClick,
+            closeIsLastFocused,
+            actionIsFirstFocused,
+            helpIsFirstFocused,
             dimmer,
             dimmerClassName,
             size,
         } = this.props
+
+        if (actionIsFirstFocused && helpIsFirstFocused) {
+            console.error("actionIsFirstFocused and helpIsFirstFocused cannot be both true.")
+        }
 
         const { marginTop, scrolling } = this.state
         const classes = cx([
@@ -722,10 +816,11 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
                 {this.props.closeIcon ? <Button
                         icon={closeIconName}
-                        class="huge clear right floated"
-                        onClick={() => this.handleClose(null) } /> : undefined }
+                        class={`huge clear right floated ${closeIsLastFocused ? "lastFocused" : ""}`}
+                        onClick={() => this.handleClose(null) }
+                        tabIndex={999} /> : undefined }
                 {this.props.helpUrl ?
-                    <a className={`ui button huge icon clear right floated`} href={this.props.helpUrl} target="_docs">
+                    <a className={`ui button huge icon clear right floated ${helpIsFirstFocused ? "firstFocused" : ""}`} href={this.props.helpUrl} target="_docs">
                         <i className="help icon"></i>
                     </a>
                     : undefined}
@@ -739,7 +834,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     <div className="actions">
                         <Button
                             text={this.props.action}
-                            class={`approve primary ${this.props.actionLoading ? "loading" : ""}`}
+                            class={`approve primary ${this.props.actionLoading ? "loading" : ""} ${actionIsFirstFocused ? "firstFocused" : ""}`}
                             onClick={() => {
                                 this.props.actionClick();
                             } } />
@@ -846,6 +941,16 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         }
     }
 
+    private handleEscape = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode !== 27) {
+            return;
+        }
+
+        e.preventDefault();
+        this.close(e);
+    }
+
     close = (e: Event) => {
         const { onClose } = this.props;
         if (onClose) onClose(e);
@@ -871,6 +976,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         mountNode.appendChild(this.rootNode);
 
         document.addEventListener('click', this.handleDocumentClick)
+        document.addEventListener('keydown', this.handleEscape, true)
 
         const { onMount } = this.props
         if (onMount) onMount()
@@ -886,6 +992,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         this.portalNode = null;
 
         document.removeEventListener('click', this.handleDocumentClick);
+        document.removeEventListener('keydown', this.handleEscape, true);
 
         const { onUnmount } = this.props;
         if (onUnmount) onUnmount();
@@ -905,10 +1012,129 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         )
 
         this.portalNode = this.rootNode.firstElementChild;
+        core.initializeFocusTabIndex(this.portalNode);
     }
 
     renderCore() {
         return <div />;
     }
 
+}
+
+interface HiddenMenuProps {
+    children?: any;
+    openAfterTabOnElement?: HTMLElement;
+}
+
+interface HiddenMenuState {
+    open?: boolean;
+}
+
+export class HiddenMenu extends data.Component<HiddenMenuProps, HiddenMenuState> {
+    private rootNode: HTMLElement
+    private logoHrefTags: NodeListOf<Element>
+    private openProjectTag: HTMLElement
+    private firstOpen: boolean
+    private showLastItemFirst: boolean
+
+    constructor(props: HiddenMenuProps) {
+        super(props);
+        this.firstOpen = true
+        this.state = { open: false };
+    }
+
+    handleTab = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 9) {
+            e.preventDefault()
+
+            let currentElement = (e.target as HTMLElement)
+            let nextElement: HTMLElement
+
+            if (e.shiftKey) {
+                nextElement = currentElement.previousElementSibling as HTMLElement
+            } else {
+                nextElement = currentElement.nextElementSibling as HTMLElement
+            }
+
+            currentElement.classList.add("hide")
+
+            if (nextElement !== null) {
+                this.activateElement(nextElement)
+            } else {
+                this.close(e.shiftKey)
+            }
+        }
+    }
+
+    handleClick = (e: MouseEvent) => {
+        this.close(false)
+    }
+
+    private activateElement(element: HTMLElement) {
+        element.classList.remove("hide")
+        element.focus()
+    }
+
+    private close(shiftKey: boolean): void {
+        this.setState({ open: false })
+        if (shiftKey) {
+            let i = 0
+            while (i < this.logoHrefTags.length) {
+                if (window.getComputedStyle(this.logoHrefTags.item(i)).display !== "none") {
+                    (this.logoHrefTags.item(i) as HTMLElement).focus()
+                    i = this.logoHrefTags.length
+                }
+
+                i++
+            }
+        } else {
+            this.openProjectTag.focus()
+        }
+    }
+
+    open(showLastItemFirst: boolean, logoHrefTag: NodeListOf<Element>, openProjectTag: HTMLElement): void {
+        this.setState({ open: true })
+
+        for (let i = 0; i < this.rootNode.children.length; i++) {
+            let item = this.rootNode.children.item(i) as HTMLElement
+            if (this.firstOpen) {
+                item.addEventListener("keydown", this.handleTab)
+                item.addEventListener("click", this.handleClick)
+            }
+
+            if (!item.classList.contains("hide")) {
+                item.classList.add("hide")
+            }
+        }
+
+        this.logoHrefTags = logoHrefTag
+        this.openProjectTag = openProjectTag
+        this.showLastItemFirst = showLastItemFirst
+        this.firstOpen = false
+    }
+
+    componentDidUpdate() {
+        if (this.rootNode === undefined) {
+            this.rootNode = ReactDOM.findDOMNode(this) as HTMLElement
+        } else if (this.rootNode.children.length > 0) {
+            if (!this.showLastItemFirst) {
+                this.activateElement(this.rootNode.children.item(0) as HTMLElement)
+            } else {
+                this.activateElement(this.rootNode.children.item(this.rootNode.children.length - 1) as HTMLElement)
+            }
+        }
+    }
+
+    renderCore() {
+        const {
+            children
+        } = this.props
+
+        return (
+            <div id="hiddenMenu" className={`ui borderless fixed ${pxt.appTarget.appTheme.invertedMenu ? `inverted` : ''} menu ${!this.state.open ? `hide` : ''}`} role="menubar">
+                {children}
+            </div>
+        );
+    }
 }

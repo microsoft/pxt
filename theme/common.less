@@ -187,6 +187,21 @@ div.simframe > iframe {
     padding: calc(@mainMenuHeight/10);
     border-radius: 0.5rem !important;
 }
+.ui.menu.hide {
+    display: none !important;
+}
+#hiddenMenu {
+    .ui.item {
+        width: 100%;
+    }
+    .ui.item .text {
+        width: inherit;
+        text-align: center;
+    }
+    .ui.item.hide {
+        display: none !important;
+    }
+}
 .ui.menu.fixed .item.editor-menuitem .item {
     border-radius: 0px !important;
 }
