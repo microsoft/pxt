@@ -99,6 +99,7 @@ export class ProjectView
     notificationDialog: notification.NotificationDialog;
     tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
+    hiddenMenu: sui.HiddenMenu;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -1531,6 +1532,24 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
     }
 
+    showHiddenMenu = (e: React.KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 9) {
+            let logoHrefTag = document.getElementsByClassName("logoHref")
+            let openProjectTag = document.getElementsByClassName("openproject").item(0) as HTMLElement
+            if ((e.target as HTMLElement).classList.contains("openproject")) {
+                if (e.shiftKey) {
+                    e.preventDefault()
+                    this.hiddenMenu.open(true, logoHrefTag, openProjectTag)
+                }
+            }
+            else if (!e.shiftKey) {
+                e.preventDefault()
+                this.hiddenMenu.open(false, logoHrefTag, openProjectTag)
+            }
+        }
+    }
+
     renderCore() {
         theEditor = this;
 
@@ -1613,11 +1632,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" href={targetTheme.logoUrl}><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
+                                        ? <a className={`logoHref ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" href={targetTheme.logoUrl} onKeyDown={this.showHiddenMenu}><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
                                         : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
+                                    {targetTheme.portraitLogo ? (<a className="logoHref ui portrait only" target="_blank" href={targetTheme.logoUrl} onKeyDown={this.showHiddenMenu}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
                                 </span>
-                                {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
+                                {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } onKeyDown={(e) => {this.showHiddenMenu(e); sui.fireClickOnEnter(e)}}/> : null}
                                 {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
@@ -1667,6 +1686,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </a> : undefined }
                             </div>
                         </div>
+
+                        <sui.HiddenMenu ref={(self) => { this.hiddenMenu = self; }}>
+                            <sui.Item role="menuitem" icon="xicon js" text={lf("Switch to JavaScript") } onClick={() => this.openJavaScript() }/>
+                            <sui.Item role="menuitem" icon="xicon globe" text={lf("Change Language") } onClick={() => this.selectLang() }/>
+                            <sui.Item role="menuitem" text={lf("Set High Contrast") } onClick={() => this.toggleHighContrast() }/>
+                        </sui.HiddenMenu>
                     </div> }
                 {gettingStarted ?
                     <div id="getting-started-btn">

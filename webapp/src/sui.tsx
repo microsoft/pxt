@@ -1020,3 +1020,121 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     }
 
 }
+
+interface HiddenMenuProps {
+    children?: any;
+    openAfterTabOnElement?: HTMLElement;
+}
+
+interface HiddenMenuState {
+    open?: boolean;
+}
+
+export class HiddenMenu extends data.Component<HiddenMenuProps, HiddenMenuState> {
+    private rootNode: HTMLElement
+    private logoHrefTags: NodeListOf<Element>
+    private openProjectTag: HTMLElement
+    private firstOpen: boolean
+    private showLastItemFirst: boolean
+
+    constructor(props: HiddenMenuProps) {
+        super(props);
+        this.firstOpen = true
+        this.state = { open: false };
+    }
+
+    handleTab = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 9) {
+            e.preventDefault()
+
+            let currentElement = (e.target as HTMLElement)
+            let nextElement: HTMLElement
+
+            if (e.shiftKey) {
+                nextElement = currentElement.previousElementSibling as HTMLElement
+            } else {
+                nextElement = currentElement.nextElementSibling as HTMLElement
+            }
+
+            currentElement.classList.add("hide")
+
+            if (nextElement !== null) {
+                this.activateElement(nextElement)
+            } else {
+                this.close(e.shiftKey)
+            }
+        }
+    }
+
+    handleClick = (e: MouseEvent) => {
+        this.close(false)
+    }
+
+    private activateElement(element: HTMLElement) {
+        element.classList.remove("hide")
+        element.focus()
+    }
+
+    private close(shiftKey: boolean): void {
+        this.setState({ open: false })
+        if (shiftKey) {
+            let i = 0
+            while (i < this.logoHrefTags.length) {
+                if (window.getComputedStyle(this.logoHrefTags.item(i)).display !== "none") {
+                    (this.logoHrefTags.item(i) as HTMLElement).focus()
+                    i = this.logoHrefTags.length
+                }
+
+                i++
+            }
+        } else {
+            this.openProjectTag.focus()
+        }
+    }
+
+    open(showLastItemFirst: boolean, logoHrefTag: NodeListOf<Element>, openProjectTag: HTMLElement): void {
+        this.setState({ open: true })
+
+        for (let i = 0; i < this.rootNode.children.length; i++) {
+            let item = this.rootNode.children.item(i) as HTMLElement
+            if (this.firstOpen) {
+                item.addEventListener("keydown", this.handleTab)
+                item.addEventListener("click", this.handleClick)
+            }
+
+            if (!item.classList.contains("hide")) {
+                item.classList.add("hide")
+            }
+        }
+
+        this.logoHrefTags = logoHrefTag
+        this.openProjectTag = openProjectTag
+        this.showLastItemFirst = showLastItemFirst
+        this.firstOpen = false
+    }
+
+    componentDidUpdate() {
+        if (this.rootNode === undefined) {
+            this.rootNode = ReactDOM.findDOMNode(this) as HTMLElement
+        } else if (this.rootNode.children.length > 0) {
+            if (!this.showLastItemFirst) {
+                this.activateElement(this.rootNode.children.item(0) as HTMLElement)
+            } else {
+                this.activateElement(this.rootNode.children.item(this.rootNode.children.length - 1) as HTMLElement)
+            }
+        }
+    }
+
+    renderCore() {
+        const {
+            children
+        } = this.props
+
+        return (
+            <div id="hiddenMenu" className={`ui borderless fixed ${pxt.appTarget.appTheme.invertedMenu ? `inverted` : ''} menu ${!this.state.open ? `hide` : ''}`} role="menubar">
+                {children}
+            </div>
+        );
+    }
+}
