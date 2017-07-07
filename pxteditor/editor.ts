@@ -264,6 +264,12 @@ namespace pxt.editor {
         snippet: string;
 
         /**
+         * Group label used to categorize block.  Blocks are arranged with other
+         * blocks that share the same group.
+         */
+        group?: string,
+
+        /**
          * Description of code to appear in the hover text
          */
         jsDoc?: string
