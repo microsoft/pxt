@@ -145,6 +145,9 @@ export function initCommandsAsync(): Promise<void> {
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         } else {
+            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
+                pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            }
             pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
