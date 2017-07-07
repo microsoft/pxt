@@ -9,9 +9,11 @@
   npm install -g pxt
   ```
 
+3. Read the [Creating a Target](https://makecode.com/target-creation) docs.
+
 ## Step 1: UF2-SAMD21 Bootloader
 
-Create a PR adding a config for the board to the UF2-SAMD21 Bootloader repo (see the README of that repo for details).
+Create a PR adding a config for the board to the [UF2-SAMD21](https://github.com/Microsoft/uf2-samd21/) Bootloader repo (see the README of that repo for details).
 
 ## Step 2: Configure the pins in pxt-common-packages
 
@@ -73,7 +75,7 @@ This library will be the project that is initially loaded in the editor when the
 The `main.blocks` file contains the XML definition for the initial blocks project. For now, you can leave it as is.
 Inside the `pxt.json` of this library, add a dependencyfor the "main" library created in the last step.
 
-## Step 8: Add the common-sim library
+## Step 6: Add the common-sim library
 
 For the pxt simulator to simulate functions defined in C++, equivalent TypeScript versions of the functions must be defined. The pxt-common-packages npm module includes a common-sim file that defines the simulator implementations for all of its APIs. To use common-sim in your target:
 
