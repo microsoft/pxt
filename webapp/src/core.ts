@@ -233,6 +233,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
+        let focusedNodeBeforeOpening = document.activeElement as HTMLElement;
         let mo: JQuery;
         let timer = options.timeout ? setTimeout(() => {
             timer = 0;
@@ -259,6 +260,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             onHidden: () => {
                 modal.remove();
                 mo.remove();
+                if (focusedNodeBeforeOpening != null) {
+                    focusedNodeBeforeOpening.focus();
+                }
             },
             onApprove: onfinish,
             onDeny: onfinish,
@@ -269,7 +273,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
-            onVisible: () => initializeFocusTabIndex(mo.get(0))
+            onVisible: () => {
+                initializeFocusTabIndex(mo.get(0));
+            }
         });
         mo.modal("show")
     })

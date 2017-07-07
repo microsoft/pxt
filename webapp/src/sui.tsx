@@ -892,8 +892,10 @@ interface PortalState {
 export class Portal extends data.Component<PortalProps, PortalState> {
     rootNode: HTMLElement;
     portalNode: Element;
+    focusedNodeBeforeOpening: HTMLElement;
     constructor(props: PortalProps) {
         super(props);
+        this.focusedNodeBeforeOpening = null;
     }
 
     componentDidMount() {
@@ -996,6 +998,11 @@ export class Portal extends data.Component<PortalProps, PortalState> {
 
         const { onUnmount } = this.props;
         if (onUnmount) onUnmount();
+
+        if (this.focusedNodeBeforeOpening !== null) {
+            this.focusedNodeBeforeOpening.focus();
+            this.focusedNodeBeforeOpening = null;
+        }
     }
 
     renderPortal() {
@@ -1010,6 +1017,10 @@ export class Portal extends data.Component<PortalProps, PortalState> {
             React.Children.only(children),
             this.rootNode
         )
+
+        if (this.focusedNodeBeforeOpening === null) {
+            this.focusedNodeBeforeOpening = document.activeElement as HTMLElement;
+        }
 
         this.portalNode = this.rootNode.firstElementChild;
         core.initializeFocusTabIndex(this.portalNode);

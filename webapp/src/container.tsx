@@ -73,16 +73,6 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         this.firstLoad = false;
     }
 
-    private handleEscape = (e: KeyboardEvent) => {
-        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-        if (charCode !== 27) {
-            return;
-        }
-
-        e.preventDefault();
-        this.toggleVisibility();
-    }
-
     collapse() {
         this.props.parent.setState({ sideDocsCollapsed: true });
     }
@@ -106,7 +96,6 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
             this.rootNode = ReactDOM.findDOMNode(this);
             if (this.rootNode !== null) {
                 core.initializeFocusTabIndex(this.rootNode);
-                this.mountSideDocs();
             }
         }
         else {
@@ -118,11 +107,6 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         this.unmountSideDocs();
     }
 
-    mountSideDocs = () => {
-        (document.getElementById("sidedocsframe") as HTMLIFrameElement).contentWindow.document.addEventListener('keydown', this.handleEscape, true)
-        document.addEventListener('keydown', this.handleEscape, true)
-    }
-
     unmountSideDocs = () => {
         (document.activeElement as HTMLElement).blur();
         if (this.rootNode !== null) {
@@ -130,11 +114,6 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         }
 
         this.rootNode = null;
-        document.removeEventListener('keydown', this.handleEscape, true);
-        let sidedocsframe = document.getElementById("sidedocsframe") as HTMLIFrameElement
-        if (sidedocsframe !== null && sidedocsframe.contentWindow !== undefined) {
-            sidedocsframe.contentWindow.document.removeEventListener('keydown', this.handleEscape, true);
-        }
     }
 
     renderCore() {
