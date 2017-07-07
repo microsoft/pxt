@@ -209,7 +209,8 @@ namespace pxt.docs {
             }
             if (m.subitems && m.subitems.length > 0) {
                 if (lev == 0) templ = toc["top-dropdown"]
-                else templ = toc["inner-dropdown"]
+                else if (lev == 1) templ = toc["inner-dropdown"]
+                else templ = toc["nested-dropdown"]
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -230,7 +231,7 @@ namespace pxt.docs {
             breadcrumbHtml = `
             <div class="ui breadcrumb">
                 ${breadcrumb.map((b, i) =>
-                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section" 
+                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
                         href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
                     .join('<i class="right chevron icon divider"></i>')}
             </div>`;
