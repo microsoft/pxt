@@ -486,7 +486,6 @@ export function initializeFocusTabIndex(element: Element) {
         jFirstTag.off("keydown", giveFocusToLastTag)
         jFirstTag.off("keyup", giveFocusToLastTag)
     } else {
-        console.error("There must be one element with the class firstFocused in the scope.")
         return
     }
 
