@@ -462,6 +462,7 @@ export function overrideCategory(ns: string, def: pxt.editor.MonacoToolboxCatego
                             weight: currentWeight,
                             advanced: b.advanced,
                             jsDoc: b.jsDoc,
+                            group: b.group,
                         },
                         noNamespace: true
                     }
@@ -484,6 +485,7 @@ export function overrideCategory(ns: string, def: pxt.editor.MonacoToolboxCatego
                             weight: currentWeight,
                             advanced: b.advanced,
                             jsDoc: b.jsDoc,
+                            group: b.group,
                         },
                         noNamespace: true
                     }
