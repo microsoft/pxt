@@ -637,7 +637,6 @@ export interface ModalProps {
     closeIcon?: any;
     closeOnDimmerClick?: boolean;
     closeOnDocumentClick?: boolean;
-    closeIsLastFocused?: boolean;
     dimmer?: boolean | 'blurring' | 'inverted';
     dimmerClassName?: string;
 
@@ -651,12 +650,10 @@ export interface ModalProps {
     headerClass?: string;
     header?: string;
     helpUrl?: string;
-    helpIsFirstFocused?: boolean
 
     action?: string;
     actionClick?: () => void;
     actionLoading?: boolean;
-    actionIsFirstFocused?: boolean;
 }
 
 export interface ModalState {
@@ -788,17 +785,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             closeIcon,
             closeOnDimmerClick,
             closeOnDocumentClick,
-            closeIsLastFocused,
-            actionIsFirstFocused,
-            helpIsFirstFocused,
             dimmer,
             dimmerClassName,
             size,
         } = this.props
-
-        if (actionIsFirstFocused && helpIsFirstFocused) {
-            console.error("actionIsFirstFocused and helpIsFirstFocused cannot be both true.")
-        }
 
         const { marginTop, scrolling } = this.state
         const classes = cx([
@@ -814,18 +804,13 @@ export class Modal extends data.Component<ModalProps, ModalState> {
 
         const modalJSX = (
             <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
-                {this.props.closeIcon ? <Button
-                        icon={closeIconName}
-                        class={`huge clear right floated ${closeIsLastFocused ? "lastFocused" : ""}`}
-                        onClick={() => this.handleClose(null) }
-                        tabIndex={999} /> : undefined }
-                {this.props.helpUrl ?
-                    <a className={`ui button huge icon clear right floated ${helpIsFirstFocused ? "firstFocused" : ""}`} href={this.props.helpUrl} target="_docs">
+                {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
+                    {this.props.header}
+                    {this.props.helpUrl ?
+                    <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs">
                         <i className="help icon"></i>
                     </a>
                     : undefined}
-                {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
-                    {this.props.header}
                 </div> : undefined }
                 <div id={this.id + 'desc'} className="content">
                     {children}
@@ -834,11 +819,16 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     <div className="actions">
                         <Button
                             text={this.props.action}
-                            class={`approve primary ${this.props.actionLoading ? "loading" : ""} ${actionIsFirstFocused ? "firstFocused" : ""}`}
+                            class={`approve primary ${this.props.actionLoading ? "loading" : ""} focused`}
                             onClick={() => {
                                 this.props.actionClick();
                             } } />
                     </div> : undefined }
+                {this.props.closeIcon ? <Button
+                    icon={closeIconName}
+                    class={`huge clear right floated closeIcon focused`}
+                    onClick={() => this.handleClose(null) }
+                    tabIndex={0} /> : undefined }
             </div>
         )
 

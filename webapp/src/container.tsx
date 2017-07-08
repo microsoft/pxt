@@ -39,7 +39,6 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
 }
 
 export class SideDocs extends data.Component<ISettingsProps, {}> {
-    private rootNode: Element;
     private firstLoad = true;
     public static notify(message: pxsim.SimulatorMessage) {
         let sd = document.getElementById("sidedocsframe") as HTMLIFrameElement;
@@ -91,29 +90,6 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
 
     componentDidUpdate() {
         this.props.parent.editor.resize();
-
-        if (!this.props.parent.state.sideDocsCollapsed) {
-            this.rootNode = ReactDOM.findDOMNode(this);
-            if (this.rootNode !== null) {
-                core.initializeFocusTabIndex(this.rootNode);
-            }
-        }
-        else {
-            this.unmountSideDocs();
-        }
-    }
-
-    componentWillUnmount() {
-        this.unmountSideDocs();
-    }
-
-    unmountSideDocs = () => {
-        (document.activeElement as HTMLElement).blur();
-        if (this.rootNode !== null) {
-            core.initializeFocusTabIndex(this.rootNode);
-        }
-
-        this.rootNode = null;
     }
 
     renderCore() {
@@ -122,13 +98,13 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!docsUrl) return null;
 
         return <div>
-            <button id="sidedocstoggle" role="button" className="firstFocused ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocstoggle" role="button" className="ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`icon large inverted ${state.sideDocsCollapsed ? 'book' : 'chevron right'}`}></i>
                 {state.sideDocsCollapsed ? <i className={`icon large inverted chevron left hover`}></i> : undefined }
             </button>
             <div id="sidedocs">
                 <div id="sidedocsbar">
-                    <h3><a className="ui icon link" data-content={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut() } tabIndex={9999} >
+                    <h3><a className="ui icon link" data-content={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut() } >
                         <i className="external icon"></i>
                     </a></h3>
                 </div>

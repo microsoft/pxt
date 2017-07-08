@@ -224,16 +224,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 onClose={() => this.setState({ visible: false }) } dimmer={true}
                 closeOnDimmerClick closeOnDocumentClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
-                    <sui.Menu className="firstFocused" inverted={targetTheme.invertedMenu} secondary>
+                    <sui.Menu className="focused" inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
                             <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
-                        <div className="right menu">
-                            <sui.Button
-                                icon='close'
-                                class={`lastFocused huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.setState({ visible: false }) }
-                                tabIndex={1} />
-                        </div>
                     </sui.Menu>
                 </sui.Segment>
                 {tab == MYSTUFF ? <div className={tabClasses}>
@@ -332,6 +325,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </div>
                     </div>
                     : undefined }
+                <sui.Button
+                    icon='close'
+                    class={`closeIcon huge clear ${targetTheme.invertedMenu ? 'inverted' : ''} focused`}
+                    onClick={() => this.setState({ visible: false }) }
+                    tabIndex={0} />
             </sui.Modal >
         );
     }

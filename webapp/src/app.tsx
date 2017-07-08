@@ -887,7 +887,7 @@ export class ProjectView
             header: lf("Reset"),
             body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
             agreeLbl: lf("Reset"),
-            agreeClass: "red firstFocused",
+            agreeClass: "red focused",
             agreeIcon: "sign out",
             disagreeLbl: lf("Cancel")
         }).then(r => {
@@ -1381,10 +1381,10 @@ export class ProjectView
             header: lf("About {0}", pxt.appTarget.name),
             hideCancel: true,
             agreeLbl: lf("Ok"),
-            agreeClass: "positive lastFocused",
+            agreeClass: "positive focused",
             htmlBody: `
 <p>${Util.htmlEscape(pxt.appTarget.description)}</p>
-<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="firstFocused" href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
+<p>${lf("{0} version:", Util.htmlEscape(pxt.appTarget.name))} <a class="focused" href="${Util.htmlEscape(pxt.appTarget.appTheme.githubUrl)}/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.target)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>
 <p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${Util.htmlEscape(pxt.appTarget.versions.pxt)}" target="_blank">${Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
 ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" target="_blank">${Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
 `
