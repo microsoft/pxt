@@ -69,7 +69,7 @@ function setupSemantic() {
     // don't show related videos
     $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
 
-    //This is an adapted version of the original template code in Semantic UI 
+    //This is an adapted version of the original template code in Semantic UI
     $.fn.embed.settings.templates.placeholder = function (image, icon) {
         var html = '';
         if (icon) {
@@ -139,11 +139,13 @@ function setupBlocklyAsync() {
     let promise = Promise.resolve();
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
         let opts = {};
-        promise = promise.then(() => pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js"))
-            .then(() => pxt.editor.initExtensionsAsync(opts))
-            .then(res => {
+        promise = promise.then(function () {
+                return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
+            }).then(function () {
+                return pxt.editor.initExtensionsAsync(opts)
+            }).then(function (res) {
                 if (res.fieldEditors)
-                    res.fieldEditors.forEach(fi => {
+                    res.fieldEditors.forEach(function (fi) {
                         pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
                     })
             })
@@ -163,7 +165,7 @@ function renderSnippets() {
         setupSidebar();
         setupSemantic();
         setupBlocklyAsync()
-        .then(() => {
+        .then(function () {
             return pxt.runner.renderAsync({
                 snippetClass: 'lang-blocks',
                 signatureClass: 'lang-sig',
