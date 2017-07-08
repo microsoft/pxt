@@ -3,6 +3,7 @@ import * as core from "./core";
 import * as data from "./data";
 import * as app from "./app";
 import * as React from "react";
+import * as pxtjson from "./pxtjson"
 
 
 export type ViewState = any;

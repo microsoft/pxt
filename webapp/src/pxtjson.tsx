@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as pkg from "./package";
-import * as core from "./core";
 import * as srceditor from "./srceditor"
 import * as sui from "./sui";
 import * as codecard from "./codecard"
