@@ -340,7 +340,7 @@ the optionals on `digital write` will be now `D0`, `D1` and `A0`.
 Variables with `fixedInstance` annotations can be added anywhere, at the top-level,
 even in different libraries or namespaces.
 
-This feature is often used with `indexedInstance*` and `noRefCounting` attributes.
+This feature is often used with `indexedInstance*` attributes.
 
 It is also possible to define the instances to be used in blocks in TypeScript,
 for example:

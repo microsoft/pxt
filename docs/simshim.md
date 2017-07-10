@@ -160,7 +160,6 @@ are usually used to wrap native C++ classes that require no reference
 counting. Thus, you also need to manually add the following TypeScript:
 
 ```typescript
-//% noRefCounting
 interface DevicePin {
     // no methods needed, they come from C++
 }
@@ -172,6 +171,5 @@ chaos will prevail (even though you might not see it at the beginning).
 You can also specify inheritance in such a declaration:
 
 ```typescript
-//% noRefCounting
 interface AnalogPin extends DigitalPin {}
 ```
