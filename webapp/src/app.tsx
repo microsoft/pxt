@@ -1608,7 +1608,13 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return (
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
-                    <div id="menubar" role="banner">
+                    <div id="menubar" role="banner" className={"ui menu"}>
+                        <ul id="accessibleMenu" role="menubar">
+                            {!this.isJavaScriptActive() ? <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Switch to JavaScript") } onClick={() => this.openJavaScript() }/></li> : undefined}
+                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Change Language") } onClick={() => this.selectLang() }/></li>
+                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast On") : lf("High Contrast Off") } onClick={() => this.toggleHighContrast() }/></li>
+                        </ul>
+
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
