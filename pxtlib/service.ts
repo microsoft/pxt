@@ -128,6 +128,7 @@ namespace ts.pxtc {
         // On block
         subcategory?: string;
         group?: string;
+        whenUsed?: boolean;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
