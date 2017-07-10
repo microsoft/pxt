@@ -102,6 +102,7 @@ export class ProjectView
 
     private lastChangeTime: number;
     private reload: boolean;
+    private shouldTryDecompile: boolean;
 
     constructor(props: IAppProps) {
         super(props);
@@ -218,7 +219,7 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isJavaScriptActive()) this.textEditor.openBlocks();
+        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView)) this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
             this.saveFileAsync()
@@ -232,6 +233,8 @@ export class ProjectView
                     this.setFile(pkg.mainEditorPkg().files["main.blocks"])
                 });
         } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
+
+        this.shouldTryDecompile = false;
     }
 
     openPreviousEditor() {
@@ -405,6 +408,10 @@ export class ProjectView
     setFile(fn: pkg.File) {
         if (!fn) return;
 
+        if (fn.name === "main.ts") {
+            this.shouldTryDecompile = true;
+        }
+
         this.setState({
             currFile: fn,
             showBlocks: false,
@@ -563,6 +570,11 @@ export class ProjectView
                     currFile: file,
                     sideDocsLoadUrl: ''
                 })
+
+                if (file.name === "main.ts") {
+                    this.shouldTryDecompile = true;
+                }
+
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h, this.state.filters).done()
                 }
