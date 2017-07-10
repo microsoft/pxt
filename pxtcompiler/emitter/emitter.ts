@@ -1723,9 +1723,20 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function isOnDemandGlobal(decl: Declaration) {
+            if (!isGlobalVar(decl))
+                return false
+            let v = decl as VariableDeclaration
+            if (!isSideEffectfulInitializer(v.initializer))
+                return true
+            let attrs = parseComments(decl)
+            if (attrs.whenUsed)
+                return true
+            return false
+        }
+
         function isOnDemandDecl(decl: Declaration) {
-            let res = (isGlobalVar(decl) && !isSideEffectfulInitializer((<VariableDeclaration>decl).initializer)) ||
-                isTopLevelFunctionDecl(decl)
+            let res = isOnDemandGlobal(decl) || isTopLevelFunctionDecl(decl)
             if (opts.testMode && res) {
                 if (!U.startsWith(getSourceFileOfNode(decl).fileName, "pxt_modules"))
                     return false
