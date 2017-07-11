@@ -37,6 +37,7 @@ namespace pxsim {
         partDefinitions?: pxsim.Map<PartDefinition>;
         mute?: boolean;
         highContrast?: boolean;
+        cdnUrl?: string;
     }
 
     export interface HwDebugger {
@@ -233,7 +234,8 @@ namespace pxsim {
                 code: js,
                 partDefinitions: opts.partDefinitions,
                 mute: opts.mute,
-                highContrast: opts.highContrast
+                highContrast: opts.highContrast,
+                cdnUrl: opts.cdnUrl
             }
 
             this.applyAspectRatio();
