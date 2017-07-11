@@ -1867,6 +1867,9 @@ ${lbl}: .short 0xffff
                 case SK.FalseKeyword:
                 case SK.NumericLiteral:
                     return true;
+                case SK.PropertyAccessExpression:
+                    let r = emitExpr(node)
+                    return r.exprKind == EK.NumberLiteral
                 default:
                     return false;
             }
