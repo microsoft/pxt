@@ -282,13 +282,13 @@ namespace pxt.blocks {
                 return escapedParam;
             }).join(", ");
 
-            const lambdaString = ` ({ ${declarationString} }) => `;
+            const functionString = `function ({ ${declarationString} })`;
 
             if (this.info.attributes.mutatePropertyEnum) {
-                return mkText(` [${this.parameters.map(p => `${this.info.attributes.mutatePropertyEnum}.${p}`).join(", ")}],${lambdaString}`)
+                return mkText(` [${this.parameters.map(p => `${this.info.attributes.mutatePropertyEnum}.${p}`).join(", ")}],${functionString}`)
             }
             else {
-                return mkText(lambdaString);
+                return mkText(functionString);
             }
         }
 

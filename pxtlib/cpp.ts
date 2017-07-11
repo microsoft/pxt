@@ -919,6 +919,11 @@ int main() {
     }
 
     export function unpackSourceFromHexAsync(dat: Uint8Array): Promise<HexFile> { // string[] (guid)
+        function error(e: string) {
+            pxt.debug(e);
+            return Promise.reject(new Error(e));
+        }
+
         let rawEmbed: RawEmbed
 
         // UF2?
@@ -939,11 +944,8 @@ int main() {
             rawEmbed = extractSource(str || "")
         }
 
-        if (!rawEmbed) return undefined
-
-        if (!rawEmbed.meta || !rawEmbed.text) {
-            pxt.debug("This .hex file doesn't contain source.")
-            return undefined;
+        if (!rawEmbed || !rawEmbed.meta || !rawEmbed.text) {
+            return error("This .hex file doesn't contain source.");
         }
 
         let hd: {
@@ -954,8 +956,7 @@ int main() {
             target?: string;
         } = JSON.parse(rawEmbed.meta)
         if (!hd) {
-            pxt.debug("This .hex file is not valid.")
-            return undefined;
+            return error("This .hex file is not valid.");
         }
         else if (hd.compression == "LZMA") {
             return lzmaDecompressAsync(rawEmbed.text)
@@ -968,8 +969,7 @@ int main() {
                     return { meta: hd as any, source: text }
                 })
         } else if (hd.compression) {
-            pxt.debug(`Compression type ${hd.compression} not supported.`)
-            return undefined
+            return error(`Compression type ${hd.compression} not supported.`);
         } else {
             return Promise.resolve({ source: fromUTF8Bytes(rawEmbed.text) });
         }

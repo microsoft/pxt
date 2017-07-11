@@ -59,7 +59,7 @@ function init() {
 
 export function shouldUse() {
     let serial = pxt.appTarget.serial
-    return serial && serial.useHF2 && Cloud.isLocalHost() && !!Cloud.localToken
+    return serial && serial.useHF2 && (Cloud.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
 function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
@@ -169,11 +169,25 @@ function hf2Async() {
 
 let initPromise: Promise<pxt.HF2.Wrapper>
 export function initAsync() {
-    if (!initPromise)
+    let isFirstInit = false;
+    if (!initPromise) {
+        isFirstInit = true;
         initPromise = hf2Async()
             .catch(err => {
                 initPromise = null
                 return Promise.reject(err)
             })
+    }
+    let wrapper: pxt.HF2.Wrapper;
     return initPromise
+        .then((w) => {
+            wrapper = w;
+            if (pxt.winrt.isWinRT() && !isFirstInit) {
+                // For WinRT, disconnecting the device after flashing once puts the wrapper in a bad state.
+                // To workaround this, reconnect every time.
+                return wrapper.reconnectAsync();
+            }
+            return Promise.resolve();
+        })
+        .then(() => wrapper);
 }
