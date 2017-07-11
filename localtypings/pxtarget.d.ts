@@ -165,6 +165,7 @@ declare namespace pxt {
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         disableBlockIcons?: boolean; // Disable icons in blocks
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
+        monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation

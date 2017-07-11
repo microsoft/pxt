@@ -391,7 +391,7 @@ export const functions: BuiltinCategoryDefinition = {
         advanced: true,
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         color: pxt.blocks.blockColors["functions"].toString(),
-        icon: "function",
+        icon: "functions",
         paramDefl: {}
     }
 };
