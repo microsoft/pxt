@@ -64,6 +64,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         const embedding = !!cloud.embedding;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
+        const showSocialIcons = !!pxt.appTarget.appTheme.socialOptions;
 
         let ready = false;
         let mode = this.state.mode;
@@ -156,6 +157,33 @@ pxt extract ${url}`;
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = this.props.parent.state.publishing;
 
+        let fbUrl = '';
+        let twitterUrl = '';
+        if (showSocialIcons) {
+            let twitterText = lf("Check out what I made!");
+            const socialOptions =  pxt.appTarget.appTheme.socialOptions;
+            if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
+                twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
+            } else if (socialOptions.twitterHandle) {
+                twitterText = lf("Check out what I made with @{0}!", socialOptions.twitterHandle);
+            } else if (socialOptions.orgTwitterHandle) {
+                twitterText = lf("Check out what I made with @{0}!", socialOptions.orgTwitterHandle);
+            }
+            fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+            twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}` +
+                `&text=${encodeURIComponent(twitterText)}` +
+                (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '');
+                (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
+        }
+        const showFbPopup = () => {
+            pxt.tickEvent('share.facebook')
+            sui.popupWindow(fbUrl, lf("Share on Facebook"), 600, 600);
+        }
+        const showTwtPopup = () => {
+            pxt.tickEvent('share.twitter')
+            sui.popupWindow(twitterUrl, lf("Share on Twitter"), 600, 600);
+        }
+
         return (
             <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
                 onClose={() => this.setState({ visible: false }) } dimmer={true}
@@ -173,6 +201,10 @@ pxt extract ${url}`;
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
                         <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
+                        {showSocialIcons ? <div className="social-icons">
+                            <a className="ui button large icon facebook" onClick={(e) => {showFbPopup(); e.preventDefault(); return false;}}><i className="icon facebook"></i></a>
+                            <a className="ui button large icon twitter" onClick={(e) => {showTwtPopup(); e.preventDefault(); return false;}}><i className="icon twitter"></i></a>
+                        </div> : undefined}
                     </div>
                         : undefined }
                     { ready ? <div>
