@@ -490,35 +490,50 @@ namespace ts.pxtc {
             return r.toUpperCase();
         }
 
-        function applyPatches(f: UF2.BlockFile) {
+        function applyPatches(f: UF2.BlockFile, binfile: Uint8Array = null) {
             // constant strings in the binary are 4-byte aligned, and marked 
             // with "@PXT@:" at the beginning - this 6 byte string needs to be
             // replaced with proper reference count (0xffff to indicate read-only
             // flash location), string virtual table, and the length of the string
             let stringVT = [0xff, 0xff, 0x01, 0x00]
             assert(stringVT.length == 4)
-            for (let bidx = 0; bidx < f.blocks.length; ++bidx) {
-                let b = f.blocks[bidx]
-                let upper = f.ptrs[bidx] << 8
-                for (let i = 32; i < 32 + 256; i += 4) {
-                    // @PXT
-                    if (b[i] == 0x40 && b[i + 1] == 0x50 && b[i + 2] == 0x58 && b[i + 3] == 0x54) {
-                        let addr = upper + i - 32
-                        let bytes = UF2.readBytesFromFile(f, addr, 200)
-                        // @:
-                        if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
-                            let len = 0
-                            while (6 + len < bytes.length) {
-                                if (bytes[6 + len] == 0)
-                                    break
-                                len++
-                            }
-                            if (6 + len >= bytes.length)
-                                U.oops("constant string too long!")
-                            let patchV = stringVT.concat([len & 0xff, len >> 8])
-                            //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
-                            UF2.writeBytes(f, addr, patchV)
+            let patchAt = (b: Uint8Array, i: number,
+                readMore: () => Uint8Array) => {
+                // @PXT
+                if (b[i] == 0x40 && b[i + 1] == 0x50 && b[i + 2] == 0x58 && b[i + 3] == 0x54) {
+                    let bytes = readMore()
+                    // @:
+                    if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
+                        let len = 0
+                        while (6 + len < bytes.length) {
+                            if (bytes[6 + len] == 0)
+                                break
+                            len++
                         }
+                        if (6 + len >= bytes.length)
+                            U.oops("constant string too long!")
+                        return stringVT.concat([len & 0xff, len >> 8])
+                        //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
+                    }
+                }
+                return null
+            }
+
+            if (binfile) {
+                for (let i = 0; i < binfile.length - 8; i += 4) {
+                    let patchV = patchAt(binfile, i, () => binfile.slice(i, i + 200))
+                    if (patchV)
+                        U.memcpy(binfile, i, patchV)
+                }
+            } else {
+                for (let bidx = 0; bidx < f.blocks.length; ++bidx) {
+                    let b = f.blocks[bidx]
+                    let upper = f.ptrs[bidx] << 8
+                    for (let i = 32; i < 32 + 256; i += 4) {
+                        let addr = upper + i - 32
+                        let patchV = patchAt(b, i, () => UF2.readBytesFromFile(f, addr, 200))
+                        if (patchV)
+                            UF2.writeBytes(f, addr, patchV)
                     }
                 }
             }
@@ -563,6 +578,7 @@ namespace ts.pxtc {
                 let resbuf = pxt.elf.patch(elfInfo, prog)
                 for (let i = 0; i < hd.length; ++i)
                     pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
+                applyPatches(null, resbuf)
                 return [U.uint8ArrayToString(resbuf)]
             }
 
