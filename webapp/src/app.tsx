@@ -2041,6 +2041,29 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     return false;
 }
 
+// Determines whether the hash argument affects the starting project
+function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
+    if (!hash) {
+        return false;
+    }
+    switch (hash.cmd) {
+        case "follow":
+        case "newproject":
+        case "newjavascript":
+        // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
+        case "tutorial":
+        case "projects":
+        case "sandbox":
+        case "pub":
+        case "edit":
+        case "sandboxproject":
+        case "project":
+            return true;
+        default:
+            return false;
+    }
+}
+
 function loadHeaderBySharedId(id: string) {
     const existing = workspace.getHeaders()
         .filter(h => h.pubCurrent && h.pubId == id)[0]
@@ -2095,6 +2118,9 @@ function initExtensionsAsync(): Promise<void> {
             }
         });
 }
+
+const landingDialog = true; // TODO MOVE TO PXTARGET.JSON
+const landingDialogDeferred = Promise.defer<boolean>();
 
 pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
@@ -2152,27 +2178,50 @@ $(document).ready(() => {
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => compiler.init())
         .then(() => workspace.initAsync())
-        .then(state => {
-            $("#loading").remove();
-            render()
-            return workspace.syncAsync();
+        .then(() => workspace.syncAsync())
+        .then((state) => {
+            if (state) {
+                theEditor.setState(state);
+            }
+            return pxt.winrt.hasActivationProjectAsync();
         })
-        .then(state => state ? theEditor.setState(state) : undefined)
-        .then(() => {
-            initSerial();
-            initScreenshots();
-            initHashchange();
-            return pxt.winrt.initAsync(importHex);
-        })
-        .then(() => initExtensionsAsync())
-        .then(() => {
-            electron.init();
-            if (hash.cmd && handleHash(hash))
-                return Promise.resolve();
+        .then((hasWinRTProject) => {
+            let landingDialogPromise = Promise.resolve(false);
+            if (landingDialog && !hasWinRTProject && !isProjectRelatedHash(hash)) {
+                // Only show the landing dialog if there are no initial projects requested
+                // (e.g. from the URL hash or from WinRT activation arguments)
+                landingDialogPromise = landingDialogDeferred.promise;
+                theEditor.projects.showOpenTutorials();
+            }
 
-            if (pxt.winrt.hasActivationProject) {
+            render()
+            return Promise.all([landingDialogPromise, Promise.resolve(hasWinRTProject), workspace.syncAsync()
+                .then(() => {
+                    return compiler.init();
+                })
+                .then(() => {
+                    initSerial();
+                    initScreenshots();
+                    initHashchange();
+                    return pxt.winrt.initAsync(importHex);
+                })
+                .then(() => initExtensionsAsync())
+                .then(() => {
+                    electron.init();
+                })
+            ]);
+        })
+        .then((results) => {
+            $("#loading").remove();
+            const didSelectLandingProject = results[0];
+            const hasWinRTProject = results[1];
+
+            if (hash.cmd && handleHash(hash)) {
+                return Promise.resolve();
+            }
+
+            if (hasWinRTProject) {
                 return pxt.winrt.loadActivationProject();
             }
 

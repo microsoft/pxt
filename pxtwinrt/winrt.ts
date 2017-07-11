@@ -25,6 +25,9 @@ namespace pxt.winrt {
     }
 
     export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void) {
+        // By the time the webapp calls this, if the activation promise hasn't been settled yet, assume we missed the
+        // activation event and pretend there were no activation args
+        initialActivationDeferred.resolve(null); // This is no-op if the promise had been previously resolved
         if (!isWinRT()) return Promise.resolve();
 
         const uiCore = Windows.UI.Core;
@@ -38,11 +41,8 @@ namespace pxt.winrt {
         };
 
         initSerial();
-        return initialActivationPromise
+        return initialActivationDeferred.promise
             .then((args) => {
-                if (args && args.kind === Windows.ApplicationModel.Activation.ActivationKind.file) {
-                    hasActivationProject = true;
-                }
                 if (importHexImpl) {
                     importHex = importHexImpl;
                     const app = Windows.UI.WebUI.WebUIApplication as any;
@@ -61,23 +61,26 @@ namespace pxt.winrt {
     }
 
     export function loadActivationProject() {
-        return initialActivationPromise
+        return initialActivationDeferred.promise
             .then((args) => fileActivationHandler(args, /* createNewIfFailed */ true));
     }
 
-    export let hasActivationProject = false;
+    export function hasActivationProjectAsync() {
+        // By the time the webapp calls this, if the activation promise hasn't been settled yet, assume we missed the
+        // activation event and pretend there were no activation args
+        initialActivationDeferred.resolve(null); // This is no-op if the promise had been previously resolved
+        return initialActivationDeferred.promise
+            .then((args) => {
+                return Promise.resolve(args && args.kind === Windows.ApplicationModel.Activation.ActivationKind.file);
+            });
+    }
 
     function initialActivationHandler(args: Windows.ApplicationModel.Activation.IActivatedEventArgs) {
         (Windows.UI.WebUI.WebUIApplication as any).removeEventListener("activated", initialActivationHandler);
-        resolveInitialActivationPromise(args);
+        initialActivationDeferred.resolve(args);
     }
 
-    const initialActivationPromise = new Promise<Windows.ApplicationModel.Activation.IActivatedEventArgs>((resolve, reject) => {
-        resolveInitialActivationPromise = resolve;
-        // After a few seconds, consider we missed the initial activation event and ignore any double clicked file
-        setTimeout(() => resolve(null), 3500);
-    });
-    let resolveInitialActivationPromise: (args: Windows.ApplicationModel.Activation.IActivatedEventArgs) => void;
+    const initialActivationDeferred = Promise.defer<Windows.ApplicationModel.Activation.IActivatedEventArgs>();
     let importHex: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void;
 
     function fileActivationHandler(args: Windows.ApplicationModel.Activation.IActivatedEventArgs, createNewIfFailed = false) {
