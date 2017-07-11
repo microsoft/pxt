@@ -102,6 +102,7 @@ export class ProjectView
 
     private lastChangeTime: number;
     private reload: boolean;
+    private javaScriptEditorOpening: boolean;
 
     constructor(props: IAppProps) {
         super(props);
@@ -163,6 +164,10 @@ export class ProjectView
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
         this.editor.resize();
+        if (this.javaScriptEditorOpening && this.isJavaScriptActive()) {
+            this.javaScriptEditorOpening = false;
+            this.textEditor.editor.focus();
+        }
     }
 
     fireResize() {
@@ -208,7 +213,10 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isBlocksActive()) this.blocksEditor.openTypeScript();
+        if (this.isBlocksActive()) {
+            this.javaScriptEditorOpening = true;
+            this.blocksEditor.openTypeScript();
+        }
         else this.setFile(pkg.mainEditorPkg().files["main.ts"])
     }
 
