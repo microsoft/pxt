@@ -3,9 +3,25 @@
 Electron app wrapper for PXT targets.
 
 ## Prerequisites
+
+### Native Components
+
 This app has dependencies that have native components. These native components will need to be recompiled when you install them. To recompile them, you need the following: 
 - [Python 2.x](https://www.python.org/downloads/) (__NOT 3.x__); make sure `python` is in your global Path
 - (Windows only) Visual Studio; any of the newer versions will do (Community 2015 works fine)
+
+### Npm mopdules
+
+Due to bugs in NPM 3 and NPM 5 it is recommended to use the latest release of NPM 4:
+
+```
+npm install -g npm@4.6.1
+```
+
+The app also requires 'gulp' to be installed globally using npm:
+```
+npm install -g gulp
+```
 
 ## Getting started
 Once you have the above prerequisites:
@@ -28,8 +44,8 @@ pxt electron run
 > **NOTE 3:** Because of the way native modules work, `pxt electron init` may break `pxt serve`.
 Once you run `pxt electron init`, if you can't run `pxt serve` anymore, delete all node modules from your target and from pxt-core, and reinstall them.
 
-> **NOTE 4:** Due to a bug in NPM 3 when linking packages, this functionality only works in NPM 2.
-If you are using NPM 3, you can still package the app (see section below), but you won't be able to run your target in Electron on the fly - you'll need to re-package the app every time you make changes.
+> **NOTE 4:** Due to a linking packages bug, this funcionality does not work on NPM 3.
+If you are using NPM 3, you can still package the app (see section below), but you won't be able to run your target in Electron on the fly - you'll need to re-package the app every time you make changes. It is recommended you use NPM 4 (see [Prerequisites](#prerequisites))
 
 ## Packaging the app
 To package (build) the app for your current target, run:
@@ -47,6 +63,8 @@ The packaged app will be in `[Target directory]/electron-out`.
 > **NOTE 3:** Packaging the app undoes `pxt electron init`. This means you will need to re-run `pxt electron init` if you want to use `pxt electron run` again.
 
 > **NOTE 4:** Use the `--installer` flag to also build the distributable artifact for the app (.exe installer on Windows, zipped app bundle on Mac).
+
+> **NOTE 5:** Due to a bug in NPM 5 this functionality only works in NPM 4.6.1 or below (see [Prerequisites](#prerequisites)).
 
 You can also package the app for a published target instead of using your local target:
 ```
