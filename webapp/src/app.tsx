@@ -379,6 +379,7 @@ export class ProjectView
             return;
         this.saveSettings();
 
+        const hc = this.state.highContrast;
         // save file before change
         this.saveFileAsync()
             .then(() => {
@@ -389,7 +390,7 @@ export class ProjectView
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
-            .then(() => { return this.editor.loadFileAsync(this.editorFile); })
+            .then(() => { return this.editor.loadFileAsync(this.editorFile, hc); })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
                 this.typecheck();
@@ -1525,6 +1526,9 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const hc = !this.state.highContrast;
         pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
         this.setState({ highContrast: hc }, () => this.restartSimulator());
+        if (this.editor && this.editor.isReady) {
+            this.editor.setHighContrast(hc);
+        }
     }
 
     completeTutorial() {

@@ -656,12 +656,12 @@ span.blocklyTreeIcon {
 
 /* Monaco Editor Line number background, changed from the default light theme */
 .monaco-editor.vs .margin-view-overlays.monaco-editor-background {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Monaco Editor Current line highlighting, only needed for the light theme */
 .monaco-editor.vs .current-line {
-	background: rgba(0, 0, 255, 0.1);
+	background: rgba(0, 0, 255, 0.1) !important;
 }
 
 /* Monaco Editor Suggest Widget, styling */
@@ -669,20 +669,17 @@ span.blocklyTreeIcon {
     border-radius:5px;
 }
 .monaco-list-row.focused {
-    background-color:#0078D7;
-    color: #fff;
+    background-color:#0078D7 !important;
+    color: #fff !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
-    color: #0078D7;
+    color: #0078D7 !important;
 }
 .monaco-editor.vs .suggest-widget:not(.frozen) .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
-    color: #fff;
+    color: #fff !important;
 }
 .monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
-    color: #FFB900;
-}
-.monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .docs, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .docs {
-    color: #fff;
+    color: #FFB900 !important;
 }
 
 /* Monaco Editor Main tokens */
