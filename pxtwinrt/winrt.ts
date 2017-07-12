@@ -1,5 +1,6 @@
 /// <reference path="./winrtrefs.d.ts"/>
 namespace pxt.winrt {
+    type ActivationArgs = Windows.ApplicationModel.Activation.IActivatedEventArgs;
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             p.done(v => resolve(v), e => reject(e));
@@ -25,9 +26,6 @@ namespace pxt.winrt {
     }
 
     export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void) {
-        // By the time the webapp calls this, if the activation promise hasn't been settled yet, assume we missed the
-        // activation event and pretend there were no activation args
-        initialActivationDeferred.resolve(null); // This is no-op if the promise had been previously resolved
         if (!isWinRT()) return Promise.resolve();
 
         const uiCore = Windows.UI.Core;
@@ -41,8 +39,8 @@ namespace pxt.winrt {
         };
 
         initSerial();
-        return initialActivationDeferred.promise
-            .then((args) => {
+        return hasActivationProjectAsync()
+            .then(() => {
                 if (importHexImpl) {
                     importHex = importHexImpl;
                     const app = Windows.UI.WebUI.WebUIApplication as any;
@@ -57,6 +55,7 @@ namespace pxt.winrt {
         if (!isWinRT()) {
             return;
         }
+        initialActivationDeferred = Promise.defer<ActivationArgs>();
         (Windows.UI.WebUI.WebUIApplication as any).addEventListener("activated", initialActivationHandler);
     }
 
@@ -66,6 +65,10 @@ namespace pxt.winrt {
     }
 
     export function hasActivationProjectAsync() {
+        if (!isWinRT()) {
+            return Promise.resolve(false);
+        }
+
         // By the time the webapp calls this, if the activation promise hasn't been settled yet, assume we missed the
         // activation event and pretend there were no activation args
         initialActivationDeferred.resolve(null); // This is no-op if the promise had been previously resolved
@@ -75,15 +78,15 @@ namespace pxt.winrt {
             });
     }
 
-    function initialActivationHandler(args: Windows.ApplicationModel.Activation.IActivatedEventArgs) {
+    function initialActivationHandler(args: ActivationArgs) {
         (Windows.UI.WebUI.WebUIApplication as any).removeEventListener("activated", initialActivationHandler);
         initialActivationDeferred.resolve(args);
     }
 
-    const initialActivationDeferred = Promise.defer<Windows.ApplicationModel.Activation.IActivatedEventArgs>();
+    let initialActivationDeferred: Promise.Resolver<ActivationArgs>;
     let importHex: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void;
 
-    function fileActivationHandler(args: Windows.ApplicationModel.Activation.IActivatedEventArgs, createNewIfFailed = false) {
+    function fileActivationHandler(args: ActivationArgs, createNewIfFailed = false) {
         if (args.kind === Windows.ApplicationModel.Activation.ActivationKind.file) {
             let info = args as Windows.UI.WebUI.WebUIFileActivatedEventArgs;
             let file: Windows.Storage.IStorageItem = info.files.getAt(0);

@@ -2135,11 +2135,10 @@ function initExtensionsAsync(): Promise<void> {
         });
 }
 
-const landingDialog = true; // TODO MOVE TO PXTARGET.JSON
-const landingDialogDeferred = Promise.defer<boolean>();
-
 pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
+    const landingDialog = true; // TODO MOVE TO PXTARGET.JSON
+    const landingDialogDeferred = Promise.defer<boolean>();
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -2178,7 +2177,7 @@ $(document).ready(() => {
     else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
-
+    console.log("Before Promise.delay()");
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -2197,6 +2196,8 @@ $(document).ready(() => {
         .then(() => workspace.initAsync())
         .then(() => workspace.syncAsync())
         .then((state) => {
+            $("#loading").remove();
+            render();
             if (state) {
                 theEditor.setState(state);
             }
@@ -2211,12 +2212,9 @@ $(document).ready(() => {
                 theEditor.projects.showOpenTutorials();
             }
 
-            render()
-            return Promise.all([landingDialogPromise, Promise.resolve(hasWinRTProject), workspace.syncAsync()
+            return Promise.all([landingDialogPromise, Promise.resolve(hasWinRTProject), Promise.resolve()
                 .then(() => {
-                    return compiler.init();
-                })
-                .then(() => {
+                    compiler.init();
                     initSerial();
                     initScreenshots();
                     initHashchange();
@@ -2229,7 +2227,6 @@ $(document).ready(() => {
             ]);
         })
         .then((results) => {
-            $("#loading").remove();
             const didSelectLandingProject = results[0];
             const hasWinRTProject = results[1];
 
