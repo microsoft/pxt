@@ -119,7 +119,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             // Hidden way to navigate to /beta, useful for UWP app testing
             if (str === "@/beta") {
                 let homeUrl = pxt.appTarget.appTheme.homeUrl;
-                if (!/\//.test(homeUrl)) {
+                if (!/\/$/.test(homeUrl)) {
                     homeUrl += "/";
                 }
                 window.location.href = homeUrl + "beta";
