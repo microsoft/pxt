@@ -794,6 +794,7 @@ ${output}</xml>`;
                         return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression, topLevel);
                     case SK.VariableStatement:
                         return codeBlock((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
+                    case SK.FunctionExpression:
                     case SK.ArrowFunction:
                         return getArrowFunctionStatement(node as ts.ArrowFunction, next);
                     case SK.BinaryExpression:
@@ -1195,6 +1196,7 @@ ${output}</xml>`;
                 }
 
                 switch (e.kind) {
+                    case SK.FunctionExpression:
                     case SK.ArrowFunction:
                         const m = getDestructuringMutation(e as ArrowFunction);
                         if (m) {
@@ -1478,6 +1480,7 @@ ${output}</xml>`;
             case SK.PostfixUnaryExpression:
             case SK.PrefixUnaryExpression:
                 return checkIncrementorExpression(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
+            case SK.FunctionExpression:
             case SK.ArrowFunction:
                 return checkArrowFunction(node as ts.ArrowFunction);
             case SK.BinaryExpression:
@@ -1729,7 +1732,7 @@ ${output}</xml>`;
                     const arrayArg = info.args[info.args.length - 2] as ArrayLiteralExpression;
                     const callbackArg = info.args[info.args.length - 1] as ArrowFunction;
 
-                    if (arrayArg.kind === SK.ArrayLiteralExpression && callbackArg.kind === SK.ArrowFunction) {
+                    if (arrayArg.kind === SK.ArrayLiteralExpression && isFunctionExpression(callbackArg)) {
                         const propNames: string[] = [];
 
                         // Make sure that all elements in the array literal are enum values
@@ -1959,7 +1962,7 @@ ${output}</xml>`;
 
     function hasArrowFunction(info: CallInfo): boolean {
         const parameters = (info.decl as FunctionLikeDeclaration).parameters;
-        return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
+        return info.args.some((arg, index) => arg && isFunctionExpression(arg));
     }
 
     function isLiteralNode(node: ts.Node): boolean {
@@ -2026,5 +2029,9 @@ ${output}</xml>`;
 
             return res;
         });
+    }
+
+    function isFunctionExpression(node: Node) {
+        return node.kind === SK.ArrowFunction || node.kind === SK.FunctionExpression;
     }
 }

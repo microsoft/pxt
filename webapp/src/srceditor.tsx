@@ -85,7 +85,7 @@ export class Editor implements pxt.editor.IEditor {
      loadFile
     *******************************/
 
-    loadFileAsync(file: pkg.File): Promise<void> {
+    loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         this.currSource = file.content
         this.setDiagnostics(file, this.snapshotState())
         return Promise.resolve();
@@ -112,4 +112,6 @@ export class Editor implements pxt.editor.IEditor {
     filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.blocks.CategoryMode.All): Element {
         return null
     }
+
+    setHighContrast(hc: boolean) {}
 }
