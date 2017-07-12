@@ -113,20 +113,14 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
-            action: (text: string, value: any, element: any) => {
-                let htmlElement: HTMLElement
-
+            action: (text: string, value: any, element: JQuery) => {
                 this.close()
 
                 // When we use the keyboard, it is not an HTMLElement that we receive, but a JQuery.
                 if (typeof element.get === "function") {
-                    htmlElement = (element as JQuery).get(0)
-                } else {
-                    htmlElement = element as HTMLElement
-                }
-
-                if (htmlElement.tagName.toLowerCase() === 'a') {
-                    window.open((htmlElement as HTMLLinkElement).href, '_blank')
+                    if (element.get(0).tagName.toLowerCase() === 'a') {
+                        window.open((element.get(0) as HTMLLinkElement).href, '_blank')
+                    }
                 }
             },
             fullTextSearch: true,
@@ -163,11 +157,6 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidUpdate() {
         this.child("").dropdown("refresh")
         this.popup()
-        let hrefTags = ReactDOM.findDOMNode(this).getElementsByTagName("a")
-        for (let i = 0; i < hrefTags.length; i++) {
-            hrefTags.item(0).onclick = () => { return false }
-            hrefTags.item(0).onkeypress = () => { return false }
-        }
     }
 
     renderCore() {
