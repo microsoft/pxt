@@ -373,6 +373,8 @@ declare namespace Blockly {
         renameProcedure?: (oldName: string, newName: string) => void;
         defType_?: string;
         onchange?: (event: any) => void;
+        mutationToDom?: () => Element;
+        domToMutation?: (xmlElement: Element) => void;
     }
 
     const Blocks: {

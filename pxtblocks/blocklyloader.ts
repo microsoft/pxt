@@ -2630,33 +2630,33 @@ namespace pxt.blocks {
                         JSON.stringify((def as any).arguments_) != JSON.stringify(this.arguments_))) {
                         // The signatures don't match.
                         def = null;
-                }
-                if (!def) {
-                    Blockly.Events.setGroup(event.group);
-                    /**
-                     * Create matching definition block.
-                     * <xml>
-                     *   <block type="procedures_defreturn" x="10" y="20">
-                     *     <field name="NAME">test</field>
-                     *   </block>
-                     * </xml>
-                     */
-                    let xml = goog.dom.createDom('xml');
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', this.defType_);
-                    let xy = this.getRelativeToSurfaceXY();
-                    let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
-                    let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
-                    block.setAttribute('x', x);
-                    block.setAttribute('y', y);
-                    let field = goog.dom.createDom('field');
-                    field.setAttribute('name', 'NAME');
-                    field.appendChild(document.createTextNode(this.getProcedureCall()));
-                    block.appendChild(field);
-                    xml.appendChild(block);
-                    Blockly.Xml.domToWorkspace(xml, this.workspace);
-                    Blockly.Events.setGroup(false);
-                }
+                    }
+                    if (!def) {
+                        Blockly.Events.setGroup(event.group);
+                        /**
+                         * Create matching definition block.
+                         * <xml>
+                         *   <block type="procedures_defreturn" x="10" y="20">
+                         *     <field name="NAME">test</field>
+                         *   </block>
+                         * </xml>
+                         */
+                        let xml = goog.dom.createDom('xml');
+                        let block = goog.dom.createDom('block');
+                        block.setAttribute('type', this.defType_);
+                        let xy = this.getRelativeToSurfaceXY();
+                        let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
+                        let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
+                        block.setAttribute('x', x);
+                        block.setAttribute('y', y);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NAME');
+                        field.appendChild(document.createTextNode(this.getProcedureCall()));
+                        block.appendChild(field);
+                        xml.appendChild(block);
+                        Blockly.Xml.domToWorkspace(xml, this.workspace);
+                        Blockly.Events.setGroup(false);
+                    }
                 } else if (event.type == Blockly.Events.DELETE) {
                     // Look for the case where a procedure definition has been deleted,
                     // leaving this block (a procedure call) orphaned.  In this case, delete
@@ -2669,6 +2669,15 @@ namespace pxt.blocks {
                         Blockly.Events.setGroup(false);
                     }
                 }
+            },
+            mutationToDom: function() {
+                const mutationElement = document.createElement("mutation");
+                mutationElement.setAttribute("name", this.getProcedureCall());
+                return mutationElement;
+            },
+            domToMutation: function(element: Element) {
+                const name = element.getAttribute("name");
+                this.renameProcedure(this.getProcedureCall(), name);
             },
             /**
              * Add menu option to find the definition block for this call.
