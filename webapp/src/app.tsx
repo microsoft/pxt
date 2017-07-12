@@ -102,7 +102,6 @@ export class ProjectView
 
     private lastChangeTime: number;
     private reload: boolean;
-    private javaScriptEditorOpening: boolean;
 
     constructor(props: IAppProps) {
         super(props);
@@ -164,10 +163,6 @@ export class ProjectView
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
         this.editor.resize();
-        if (this.javaScriptEditorOpening && this.isJavaScriptActive()) {
-            this.javaScriptEditorOpening = false;
-            this.textEditor.editor.focus();
-        }
     }
 
     fireResize() {
@@ -214,7 +209,6 @@ export class ProjectView
             return;
         }
         if (this.isBlocksActive()) {
-            this.javaScriptEditorOpening = true;
             this.blocksEditor.openTypeScript();
         }
         else this.setFile(pkg.mainEditorPkg().files["main.ts"])
@@ -1623,8 +1617,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <div id="menubar" role="banner" className={"ui menu"}>
                         <ul id="accessibleMenu" role="menubar">
                             <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() }/></li>
-                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Change Language") } onClick={() => this.selectLang() }/></li>
-                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("Set High contrast OFF") : lf("Set High contrast ON") } onClick={() => this.toggleHighContrast() }/></li>
+                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() }/></li>
+                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() }/></li>
                         </ul>
 
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
