@@ -456,14 +456,15 @@ export function scrollIntoView(item: JQuery, margin = 0) {
     }
 }
 
-export function initializeFocusTabIndex(element: Element) {
-    if (element !== document.activeElement && element.contains(document.activeElement)) {
+export function initializeFocusTabIndex(element: Element, allowResetFocus = false) {
+    if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
         return;
     }
 
     const focused = element.getElementsByClassName("focused");
-    if (focused.length == 0)
+    if (focused.length == 0) {
         return;
+    }
 
     const firstTag = focused[0] as HTMLElement;
     const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;

@@ -19,6 +19,15 @@
     padding: 0.6rem;
 }
 
+#menubar #accessibleMenu .ui.item.link {
+    height: @mainMenuHeight;
+    min-height: @mainMenuMinHeight !important;
+}
+
+#menubar #accessibleMenu .ui.item.link.inverted:hover {
+    background: @invertedBackground;
+}
+
 @media only screen and (max-width: @largestTabletScreen) {
     #menubar .ui.menu {
         height: @mobileMenuHeight !important;
@@ -30,6 +39,10 @@
     }
     .ui.menu .item > i.icon {
         margin: 0;
+    }
+    #menubar #accessibleMenu .ui.item.link {
+        height: @mobileMenuHeight !important;
+        min-height: @mobileMenuHeight !important;
     }
 }
 
