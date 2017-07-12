@@ -30,9 +30,9 @@ export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         return <sui.DropdownMenuItem icon="help circle large" class="help-dropdown-menuitem" textClass={"landscape only"} title={lf("Reference, lessons, ...") }>
             {targetTheme.docMenu.map(m =>
-                !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" className="ui item link" href={m.path} target="docs" tabIndex={-1}>{m.name}</a>
-                : !m.tutorial ? <sui.Item key={"docsmenu" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openDocs(m.path) } tabIndex={-1}/>
-                : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" text={m.name} class="" onClick={() => this.openTutorial(m.path) } tabIndex={-1}/>
+                !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} className="ui item link" href={m.path} target="docs" tabIndex={-1}>{m.name}</a>
+                : !m.tutorial ? <sui.Item key={"docsmenu" + m.path} role="menuitem" aria-label={m.name} text={m.name} class="" onClick={() => this.openDocs(m.path) } tabIndex={-1}/>
+                : <sui.Item key={"docsmenututorial" + m.path} role="menuitem" aria-label={m.name} text={m.name} class="" onClick={() => this.openTutorial(m.path) } tabIndex={-1}/>
             ) }
         </sui.DropdownMenuItem>
     }

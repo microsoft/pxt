@@ -12,6 +12,7 @@ export interface UiProps {
     class?: string;
     role?: string;
     title?: string;
+    ariaLabel?: string;
     tabIndex?: number;
 }
 
@@ -59,7 +60,7 @@ export function fireClickOnEnter(e: React.KeyboardEvent): void {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
     if (charCode === 13 || charCode === 32) {
         e.preventDefault();
-        (document.activeElement as HTMLElement).click();
+        (e.currentTarget as HTMLElement).click();
     }
 }
 
@@ -90,20 +91,36 @@ export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
 }
 
 export class DropdownMenuItem extends UiElement<DropdownProps> {
+    private isOpened = false
+    private preventHide = false
+
+    private handleTab = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 9) {
+            this.close()
+        } else if (charCode === 32 || charCode === 13) {
+            /* give the focus back to the dropdown menu, so if the menuitem opens a modal,
+               the focus will not be reset once the modal is closed. */
+            this.child("").focus()
+        }
+    }
+
+    private close() {
+        this.preventHide = false
+        this.child("").dropdown("hide")
+    }
+
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
             action: (text: string, value: any, element: any) => {
                 let htmlElement: HTMLElement
 
-                this.child("").dropdown("hide")
+                this.close()
 
-                // When we use the keyboard, it is not an HTMLElement that we receive, but a JQuery. Activating click on it reproduce the same behavior than a real click.
+                // When we use the keyboard, it is not an HTMLElement that we receive, but a JQuery.
                 if (typeof element.get === "function") {
-                    let jqueryElement = element as JQuery
-                    htmlElement = jqueryElement.get(0)
-                    htmlElement.click()
-                    return
+                    htmlElement = (element as JQuery).get(0)
                 } else {
                     htmlElement = element as HTMLElement
                 }
@@ -113,10 +130,32 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                 }
             },
             fullTextSearch: true,
-            onChange: (v: string) => {
+            onChange: (v: string, text: string, item: JQuery) => {
+                this.preventHide = true
+                item.get(0).focus()
+
                 if (this.props.onChange && v != this.props.value) {
                     this.props.onChange(v)
                 }
+            },
+            onShow: () => {
+                this.isOpened = true
+                this.forceUpdate()
+
+                var menuItems = this.child(".link")
+                menuItems.each((index: number, elem: HTMLElement) => {
+                    elem.onkeydown = this.handleTab
+                })
+            },
+            onHide: () => {
+                if (this.preventHide) {
+                    this.preventHide = false
+                    return false
+                }
+
+                this.isOpened = false
+                this.forceUpdate()
+                return true;
             }
         });
     }
@@ -134,11 +173,14 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     renderCore() {
         return (
             <div className={genericClassName("ui dropdown item", this.props) }
-                role={this.props.role}
+                role="menu"
                 title={this.props.title}
-                tabIndex={this.props.tabIndex}>
+                tabIndex={this.props.tabIndex}
+                aria-roledescription="dropdown menu"
+                aria-haspopup="true"
+                aria-expanded={this.isOpened}>
                 {genericContent(this.props) }
-                <div className="menu">
+                <div className="menu" aria-hidden={!this.isOpened}>
                     {this.props.children}
                 </div>
             </div>);
@@ -154,10 +196,17 @@ export interface ItemProps extends UiProps {
 
 export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
+        const {
+            text,
+            title,
+            ariaLabel
+        } = this.props;
+
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
-                title={this.props.title || this.props.text}
+                aria-label={ariaLabel || title || text}
+                title={title || ariaLabel || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
                 data-value={this.props.value}

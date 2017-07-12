@@ -1608,27 +1608,27 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return (
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
-                    <div id="menubar" role="banner">
+                    <header id="menubar" role="banner">
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" href={targetTheme.logoUrl}><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
+                                        ? <a className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} rel="external" role="menuitem"><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } aria-description alt={`${targetTheme.boardName} Logo`}/></a>
                                         : <span className="name">{targetTheme.name}</span>}
-                                    {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
+                                    {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} rel="external" role="menuitem"><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
                                 </span>
-                                {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
-                                {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
+                                {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" ariaLabel={lf("Create or open recent project") } text={lf("Projects") } onClick={() => this.openProject() } /> : null}
+                                {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project") } text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
                                     <span id="logo" className="ui item logo">
                                         <img className="ui mini image" src={Util.toDataUri(rightLogo) } tabIndex={0} onClick={() => this.launchFullEditor() } onKeyPress={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`}/>
                                     </span>
                                 </div> }
-                            {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem" tabIndex={-1} onKeyDown={null}>
-                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                            {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem" tabIndex={-1} onClick={undefined} onKeyDown={undefined}>
+                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
+                                <sui.Item class="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                <sui.Item class="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
                             </sui.Item> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             <div className="right menu">
@@ -1667,7 +1667,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 </a> : undefined }
                             </div>
                         </div>
-                    </div> }
+                    </header> }
                 {gettingStarted ?
                     <div id="getting-started-btn">
                         <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } />
