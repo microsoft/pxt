@@ -356,7 +356,7 @@ namespace pxt.cpp {
                         currAttrs = ""
                         currDocComment = ""
                     }
-                    enumsDTS.write(`declare enum ${toJs(enM[2])} ${enM[3]}`)
+                    enumsDTS.write(`declare const enum ${toJs(enM[2])} ${enM[3]}`)
 
                     if (!isHeader) {
                         protos.setNs(currNs)
