@@ -279,6 +279,7 @@ namespace ts.pxtc.decompiler {
 
     export interface DecompileBlocksOptions {
         snippetMode?: boolean; // do not emit "on start"
+        alwaysEmitOnStart?: boolean; // emit "on start" even if empty
     }
 
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
@@ -1382,11 +1383,23 @@ ${output}</xml>`;
                             }]
                         } as StatementNode;
                     }
+                    else {
+                        maybeEmitEmptyOnStart();
+                    }
                 }
                 return stmt;
             }
+            else {
+                maybeEmitEmptyOnStart();
+            }
 
             return undefined;
+        }
+
+        function maybeEmitEmptyOnStart() {
+            if (options.alwaysEmitOnStart) {
+                write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
+            }
         }
 
         /**
