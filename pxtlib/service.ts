@@ -406,8 +406,15 @@ namespace ts.pxtc {
                 res.paramHelp[name] = desc
                 if (!res.paramDefl[name]) {
                     let m = /\beg\.?:\s*(.+)/.exec(desc);
-                    if (m) {
-                        res.paramDefl[name] = m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim())[0] : undefined;
+                    if (m && m[1]) {
+                        let defaultValue = /"([^"]*)"|'([^']*)'|[^\s,]+/g.exec(m[1]);
+                        if (defaultValue && defaultValue[1]) {
+                            // If there are spaces in the value, it means the value was surrounded with quotes, so add them back
+                            if (defaultValue[1].indexOf(" ") > -1) {
+                                res.paramDefl[name] = `"${defaultValue[1]}"`;
+                            }
+                            res.paramDefl[name] = defaultValue[1];
+                        }
                     }
                 }
                 return ""

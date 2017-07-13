@@ -373,6 +373,8 @@ declare namespace Blockly {
         renameProcedure?: (oldName: string, newName: string) => void;
         defType_?: string;
         onchange?: (event: any) => void;
+        mutationToDom?: () => Element;
+        domToMutation?: (xmlElement: Element) => void;
     }
 
     const Blocks: {
@@ -684,7 +686,6 @@ declare namespace Blockly {
         getTopBlocks(ordered: boolean): Block[];
         getBlockById(id: string): Block;
         getAllBlocks(): Block[];
-        getVariablesOfType(type: string): VariableModel[];
         addChangeListener(f: (e: BlocklyEvent) => void): callbackHandler;
         removeChangeListener(h: callbackHandler): void;
         updateToolbox(newTree: Element | string): void;
@@ -711,6 +712,7 @@ declare namespace Blockly {
             viewWidth: number;
         }
         getVariable(name: string): number;
+        getVariablesOfType(type: string): VariableModel[];
         getAudioManager(): WorkspaceAudio;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
@@ -799,6 +801,7 @@ declare namespace Blockly {
         name: string;
         type: string;
         static compareByName: any;
+        constructor(wp: Workspace, name: string, type?: string, id?: string);
         getId(): string;
     }
 

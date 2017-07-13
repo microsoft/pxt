@@ -38,6 +38,7 @@ for creating JavaScript/Blocks online editors.
 * [Async Functions](/async)
 * [Partial Flashing](/partial-flashing)
 * [Source Embedding](/source-embedding)
+* [SAMD21 Targets](/targets/samd21targets)
 
 ### [Creating Packages](/packages)
 * [pxt.json](/packages/pxtJson)
@@ -56,7 +57,7 @@ for creating JavaScript/Blocks online editors.
 
 ## Resources specific to devices
 
-* [UF2 file format](http://github.com/microsoft/uf2) 
+* [UF2 file format](http://github.com/microsoft/uf2)
 
 
 
