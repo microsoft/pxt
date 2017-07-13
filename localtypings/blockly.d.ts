@@ -396,6 +396,7 @@ declare namespace Blockly {
         setText(newText: any): void;
         updateEditable(): void;
         dispose(): void;
+        render_(): void;
         showEditor_(): void;
         getAbsoluteXY_(): goog.math.Coordinate;
         getScaledBBox_(): goog.math.Size;
