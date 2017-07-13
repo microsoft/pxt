@@ -1357,10 +1357,10 @@ ${output}</xml>`;
 
             eventStatements.map(n => getStatementBlock(n, undefined, undefined, false, topLevel)).forEach(emitStatementNode);
 
+            const emitOnStart = topLevel && !options.snippetMode;
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
                 const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent, false, topLevel);
-                const emitOnStart = topLevel && !options.snippetMode;
                 if (emitOnStart) {
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
@@ -1389,7 +1389,7 @@ ${output}</xml>`;
                 }
                 return stmt;
             }
-            else {
+            else if (emitOnStart) {
                 maybeEmitEmptyOnStart();
             }
 
