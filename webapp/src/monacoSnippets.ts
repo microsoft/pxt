@@ -391,7 +391,7 @@ export const functions: BuiltinCategoryDefinition = {
         weight: 52,
         callingConvention: ts.pxtc.ir.CallingConvention.Plain,
         color: pxt.blocks.blockColors["functions"].toString(),
-        icon: "function",
+        icon: "functions",
         paramDefl: {}
     }
 };
