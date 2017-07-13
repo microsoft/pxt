@@ -2324,75 +2324,89 @@ namespace pxt.blocks {
 
     function initVariables() {
         let varname = lf("{id:var}item");
-        Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
+        Blockly.Variables.flyoutCategory = function(workspace) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
                 // Add the Heading label
-                let headingLabel = goog.dom.createDom('label');
+                let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
                 headingLabel.setAttribute('web-icon', '\uf039');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
-                xmlList.push(headingLabel as HTMLElement);
+                xmlList.push(headingLabel);
             }
 
-            let button = goog.dom.createDom('button');
+            let button = goog.dom.createDom('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
-            xmlList.push(button as HTMLElement);
+
+            xmlList.push(button);
 
             let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace);
             xmlList = xmlList.concat(blockList);
-
             return xmlList;
         };
-
         Blockly.Variables.flyoutCategoryBlocks = function(workspace) {
             let variableModelList = workspace.getVariablesOfType('');
             variableModelList.sort(Blockly.VariableModel.compareByName);
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
-            //goog.array.remove(variableModelList, varname);
-            //variableModelList.unshift(varname);
+            for (let i = 0, tempVar: any; tempVar = variableModelList[i]; i++) {
+                if (tempVar.getId() == varname) {
+                    variableModelList.splice(i, 1);
+                    break;
+                }
+            }
+            const defaultVar = new Blockly.VariableModel(workspace, varname);
+            variableModelList.unshift(defaultVar);
 
             let xmlList: HTMLElement[] = [];
-            /*
             if (variableModelList.length > 0) {
+                // variables getters first
                 for (let i = 0, variable: any; variable = variableModelList[i]; i++) {
                     if (Blockly.Blocks['variables_get']) {
                         let blockText = '<xml>' +
-                            '<block type="variables_get" gap="24" colour="' + getNamespaceColor('variables') + '">' +
+                            '<block type="variables_get" gap="8">' +
                             Blockly.Variables.generateVariableFieldXml_(variable) +
-                            '<value name="VALUE">' +
-                            '<shadow type="math_number">' +
-                            '<field name="NUM">1</field>' +
-                            '</shadow>' +
-                            '</value>' +
                             '</block>' +
                             '</xml>';
                         let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
                         xmlList.push(block);
                     }
                 }
+                xmlList[xmlList.length - 1].setAttribute('gap', '24');
+
                 let firstVariable = variableModelList[0];
                 if (Blockly.Blocks['variables_set']) {
                     let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
                     let blockText = '<xml>' +
-                            '<block type="variables_set" gap="' + gap + '" colour="' + getNamespaceColor('variables') + '">' +
+                            '<block type="variables_set" gap="' + gap + '">' +
                             Blockly.Variables.generateVariableFieldXml_(firstVariable) +
                             '</block>' +
                             '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
+                    {
+                        let value = goog.dom.createDom('value');
+                        value.setAttribute('name', 'VALUE');
+                        let shadow = goog.dom.createDom('shadow');
+                        shadow.setAttribute("type", "math_number");
+                        value.appendChild(shadow);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NUM');
+                        field.appendChild(document.createTextNode("0"));
+                        shadow.appendChild(field);
+                        block.appendChild(value);
+                    }
                     xmlList.push(block);
                 }
                 if (Blockly.Blocks['variables_change']) {
-                    let gap = Blockly.Blocks['variables_set'] ? 20 : 8;
+                    let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
                         Blockly.Variables.generateVariableFieldXml_(firstVariable) +
@@ -2404,76 +2418,7 @@ namespace pxt.blocks {
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
-                    xmlList.push(block);
-                }
-            }
-            let variableList = Blockly.Variables.allVariables(workspace);
-            variableList.sort(goog.string.caseInsensitiveCompare);
-            */
-
-            // In addition to the user's variables, we also want to display the default
-            // variable name at the top.  We also don't want this duplicated if the
-            // user has created a variable of the same name.
-            //goog.array.remove(variableModelList, varname);
-            //variableModelList.unshift(varname);
-
-
-            if (variableModelList.length > 0) {
-                // variables getters first
-                for (let i = 0; i < variableModelList.length; i++) {
-                    // <block type="variables_get" gap="24">
-                    //   <field name="VAR">item</field>
-                    // </block>
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', 'variables_get');
-                    block.setAttribute('gap', '8');
-                    block.setAttribute('colour', getNamespaceColor('variables'));
-                    let field = goog.dom.createDom('field', null, variableModelList[i].name);
-                    field.setAttribute('name', 'VAR');
-                    field.setAttribute('variableType', variableModelList[i].type)
-                    field.setAttribute('id', variableModelList[i].getId())
-                    block.appendChild(field);
-                    xmlList.push(block as HTMLElement);
-                }
-                xmlList[xmlList.length - 1].setAttribute('gap', '24');
-
-                for (let i = 0; i < Math.min(1, variableModelList.length); i++) {
                     {
-                        // <block type="variables_set" gap="8">
-                        //   <field name="VAR">item</field>
-                        // </block>
-                        let block = goog.dom.createDom('block');
-                        block.setAttribute('type', 'variables_set');
-                        block.setAttribute('gap', '8');
-                        {
-                            let field = goog.dom.createDom('field', null, variableModelList[i].name);
-                            field.setAttribute('name', 'VAR');
-                            field.setAttribute('variableType', variableModelList[i].type)
-                            field.setAttribute('id', variableModelList[i].getId())
-                            block.appendChild(field);
-                        }
-                        {
-                            let value = goog.dom.createDom('value');
-                            value.setAttribute('name', 'VALUE');
-                            let shadow = goog.dom.createDom('shadow');
-                            shadow.setAttribute("type", "math_number");
-                            value.appendChild(shadow);
-                            let field = goog.dom.createDom('field');
-                            field.setAttribute('name', 'NUM');
-                            field.appendChild(document.createTextNode("0"));
-                            shadow.appendChild(field);
-                            block.appendChild(value);
-                        }
-
-                        xmlList.push(block as HTMLElement);
-                    }
-                    {
-                        // <block type="variables_get" gap="24">
-                        //   <field name="VAR">item</field>
-                        // </block>
-                        let block = goog.dom.createDom('block');
-                        block.setAttribute('type', 'variables_change');
-                        block.setAttribute('gap', '24');
                         let value = goog.dom.createDom('value');
                         value.setAttribute('name', 'VALUE');
                         let shadow = goog.dom.createDom('shadow');
@@ -2481,12 +2426,11 @@ namespace pxt.blocks {
                         value.appendChild(shadow);
                         let field = goog.dom.createDom('field');
                         field.setAttribute('name', 'NUM');
-                        field.appendChild(document.createTextNode("1"));
+                        field.appendChild(document.createTextNode("0"));
                         shadow.appendChild(field);
                         block.appendChild(value);
-
-                        xmlList.push(block as HTMLElement);
                     }
+                    xmlList.push(block);
                 }
             }
             return xmlList;
