@@ -162,14 +162,16 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     renderCore() {
         return (
             <div className={genericClassName("ui dropdown item", this.props) }
-                role="menu"
+                role="menuitem"
                 title={this.props.title}
                 tabIndex={this.props.tabIndex}
-                aria-roledescription="dropdown menu"
                 aria-haspopup="true"
                 aria-expanded={this.isOpened}>
                 {genericContent(this.props) }
-                <div className="menu" aria-hidden={!this.isOpened}>
+                <div className="menu"
+                     role="menu"
+                     aria-label={`Dropdown menu: ${this.props.title}`}
+                     aria-hidden={!this.isOpened}>
                     {this.props.children}
                 </div>
             </div>);
