@@ -170,7 +170,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                 {genericContent(this.props) }
                 <div className="menu"
                      role="menu"
-                     aria-label={`Dropdown menu: ${this.props.title}`}
+                     aria-label={lf(`Dropdown menu ${this.props.title}`)}
                      aria-hidden={!this.isOpened}>
                     {this.props.children}
                 </div>
