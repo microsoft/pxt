@@ -686,6 +686,7 @@ export interface ModalProps {
     open?: boolean;
     mountNode?: any;
     size?: string;
+    allowResetFocus?: boolean;
 
     headerClass?: string;
     header?: string;
@@ -828,6 +829,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             dimmer,
             dimmerClassName,
             size,
+            allowResetFocus
         } = this.props
 
         const { marginTop, scrolling } = this.state
@@ -894,7 +896,8 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 onUnmount={this.handlePortalUnmount}
                 onClose={this.handleClose}
                 onOpen={this.handleOpen}
-                open={open}>
+                open={open}
+                allowResetFocus={allowResetFocus}>
                 {modalJSX}
             </Portal>
         )
@@ -913,6 +916,7 @@ interface PortalProps {
     closeOnRootNodeClick?: boolean;
     closeOnDocumentClick?: boolean;
     closeOnEscape?: boolean;
+    allowResetFocus?: boolean;
 }
 
 interface PortalState {
@@ -1036,7 +1040,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
     }
 
     renderPortal() {
-        const { children, className, open} = this.props;
+        const { children, className, open, allowResetFocus} = this.props;
 
         this.mountPortal();
 
@@ -1053,7 +1057,7 @@ export class Portal extends data.Component<PortalProps, PortalState> {
         }
 
         this.portalNode = this.rootNode.firstElementChild;
-        core.initializeFocusTabIndex(this.portalNode);
+        core.initializeFocusTabIndex(this.portalNode, allowResetFocus);
     }
 
     renderCore() {

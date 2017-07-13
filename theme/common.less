@@ -181,6 +181,30 @@ div.simframe > iframe {
 }
 
 /* Menu */
+#menubar #accessibleMenu {
+    position: absolute;
+    z-index: 1001;
+    top: -20em;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    list-style-type: none;
+
+    .ui.item.link {
+        position: absolute;
+        width: 100%;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .ui.item.link:focus {
+        top:20em;
+    }
+
+    .ui.item.link:hover {
+        top:20em;
+    }
+}
+
 #menubar .ui.menu .item.editor-menuitem {
     background: fade(@black, 30%) !important;
     margin: calc(@mainMenuHeight/10);
@@ -1100,6 +1124,10 @@ Avatar
     .sandbox #menubar .ui.menu .item.editor-menuitem {
         margin: calc(@sandboxMobileMenuHeight/10);
         padding: calc(@sandboxMobileMenuHeight/10);
+    }
+    #menubar #accessibleMenu {
+        height: @mobileMenuHeight !important;
+        min-height: @mobileMenuHeight !important;
     }
     /* Top Menu */
     #maineditor {

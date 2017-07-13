@@ -124,9 +124,13 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         const modalSize = languagesToShow.length > 4 ? "large" : "small";
 
         return (
-            <sui.Modal open={this.state.visible} header={lf("Select Language") } size={modalSize}
-                onClose={() => this.hide() } dimmer={true}
+            <sui.Modal open={this.state.visible}
+                header={lf("Select Language") }
+                size={modalSize}
+                onClose={() => this.hide() }
+                dimmer={true}
                 closeIcon={true}
+                allowResetFocus={true}
                 closeOnDimmerClick
                 closeOnDocumentClick
                 >
