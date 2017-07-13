@@ -1612,7 +1612,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         return (
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
-                    <header id="menubar" role="banner">
+                    <header id="menubar" role="banner" className="ui menu">
                         <ul id="accessibleMenu" role="menubar">
                             <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() }/></li>
                             <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() }/></li>
