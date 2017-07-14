@@ -194,7 +194,7 @@ namespace ts.pxtc {
         let file = resp.ast.getSourceFile(fileName);
         const apis = getApiInfo(resp.ast);
         const blocksInfo = pxtc.getBlocksInfo(apis);
-        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false }, pxtc.decompiler.buildRenameMap(resp.ast, file))
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false, alwaysEmitOnStart: opts.alwaysDecompileOnStart }, pxtc.decompiler.buildRenameMap(resp.ast, file))
         return bresp;
     }
 
