@@ -994,7 +994,11 @@ export class ProjectView
                 }
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
-                        core.warningNotification(lf("Upload failed, please try again."));
+                        if (e.notifyUser) {
+                            core.warningNotification(e.message);
+                        } else {
+                            core.warningNotification(lf("Upload failed, please try again."));
+                        }
                         pxt.reportException(e);
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
