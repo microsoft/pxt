@@ -94,7 +94,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     private isOpened = false
     private preventHide = false
 
-    private handleTab = (e: KeyboardEvent) => {
+    private handleKeyDown = (e: KeyboardEvent) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 9) {
             this.close()
@@ -138,7 +138,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
                 var menuItems = this.child(".link")
                 menuItems.each((index: number, elem: HTMLElement) => {
-                    elem.onkeydown = this.handleTab
+                    elem.onkeydown = this.handleKeyDown
                 })
             },
             onHide: () => {
