@@ -2343,7 +2343,7 @@ namespace pxt.blocks {
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
             for (let i = 0, tempVar: any; tempVar = variableModelList[i]; i++) {
-                if (tempVar.getId() == varname) {
+                if (tempVar.name == varname) {
                     variableModelList.splice(i, 1);
                     break;
                 }
