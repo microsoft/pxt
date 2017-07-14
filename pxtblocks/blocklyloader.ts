@@ -1460,10 +1460,10 @@ namespace pxt.blocks {
         installHelpResources(id, info.name, info.tooltip, info.url, getNamespaceColor(info.category));
     }
 
-    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, undeletable?: boolean) {
+    function setHelpResources(block: any, id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string, undeletable?: boolean) {
         if (tooltip && (typeof tooltip === "string" || typeof tooltip === "function")) block.setTooltip(tooltip);
         if (url) block.setHelpUrl(url);
-        if (colour) block.setColour(colour);
+        if (colour) block.setColour(colour, colourSecondary, colourTertiary);
         if (undeletable) block.setDeletable(false);
 
         let tb = document.getElementById('blocklyToolboxDefinition');
@@ -1478,7 +1478,7 @@ namespace pxt.blocks {
         };
     }
 
-    function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string) {
+    function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
         let block = Blockly.Blocks[id];
         let old = block.init;
         if (!old) return;
@@ -1486,7 +1486,7 @@ namespace pxt.blocks {
         block.init = function () {
             old.call(this);
             let block = this;
-            setHelpResources(this, id, name, tooltip, url, colour);
+            setHelpResources(this, id, name, tooltip, url, colour, colourSecondary, colourTertiary);
         }
     }
 
@@ -1995,6 +1995,7 @@ namespace pxt.blocks {
                     onStartDef.tooltip,
                     onStartDef.url,
                     String((pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartColor : '') || getNamespaceColor('loops')),
+                    undefined, undefined,
                     pxt.appTarget.runtime ? pxt.appTarget.runtime.onStartUnDeletable : false
                 );
             }
@@ -2267,6 +2268,8 @@ namespace pxt.blocks {
             mInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mInfo.url,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField,
             (Blockly as any).Colours.textField
         );
 
@@ -2278,6 +2281,8 @@ namespace pxt.blocks {
             mMInfo.name,
             (pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ? lf("a decimal number") : lf("an integer number"),
             mMInfo.url,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField,
             (Blockly as any).Colours.textField
         );
 
@@ -2358,7 +2363,7 @@ namespace pxt.blocks {
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
             for (let i = 0, tempVar: any; tempVar = variableModelList[i]; i++) {
-                if (tempVar.getId() == varname) {
+                if (tempVar.name == varname) {
                     variableModelList.splice(i, 1);
                     break;
                 }
@@ -2816,7 +2821,10 @@ namespace pxt.blocks {
     function initText() {
         // builtin text
         const textInfo = pxt.blocks.getBlockDefinition('text');
-        installHelpResources('text', textInfo.name, textInfo.tooltip, textInfo.url, (Blockly as any).Colours.textField);
+        installHelpResources('text', textInfo.name, textInfo.tooltip, textInfo.url,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField,
+            (Blockly as any).Colours.textField);
 
         // builtin text_length
         const msg: any = Blockly.Msg;
