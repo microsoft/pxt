@@ -2138,7 +2138,7 @@ function initExtensionsAsync(): Promise<void> {
 
 pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
-    const useLandingDialog = false; // TODO MOVE TO PXTARGET.JSON
+    const useLandingDialog = true; // TODO MOVE TO PXTARGET.JSON
     const landingDialogDeferred = Promise.defer<ld.SelectionResult>();
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
@@ -2203,10 +2203,10 @@ $(document).ready(() => {
                 const selectHandler = (result: ld.SelectionResult) => {
                     landingDialogDeferred.resolve(result);
                 }
-                $("#loading").remove();
                 ReactDOM.render(
                     <ld.LandingDialog onSelect={selectHandler}/>,
                     $("#landingdialog")[0]);
+                $("#loading").remove();
             }
 
             return Promise.all([
@@ -2216,10 +2216,10 @@ $(document).ready(() => {
                     .then(() => cmds.initCommandsAsync())
                     .then(() => workspace.initAsync())
                     .then(() => {
+                        render();
                         if (!shouldShowLandingDialog) {
                             $("#loading").remove();
                         }
-                        render();
                         return workspace.syncAsync();
                     })
                     .then((state) => {
