@@ -1336,7 +1336,7 @@ export class ProjectView
             })
             .catch(e => {
                 core.errorNotification(e.message)
-                return undefined;
+                throw e;
             })
     }
 
