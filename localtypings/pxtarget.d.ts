@@ -273,6 +273,8 @@ declare namespace ts.pxtc {
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
 
+        alwaysDecompileOnStart?: boolean; // decompiler only
+
         embedMeta?: string;
         embedBlob?: string; // base64
     }

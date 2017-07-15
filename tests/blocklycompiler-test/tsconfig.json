@@ -9,6 +9,7 @@
         "sourceMap": false
     },
     "files": [
-        "test.spec.ts"
+        "test.spec.ts",
+        "commentparsing.spec.ts"
     ]
 }
