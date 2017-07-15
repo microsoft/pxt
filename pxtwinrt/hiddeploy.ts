@@ -73,13 +73,19 @@ namespace pxt.winrt {
                                         }
                                         this.onData(new Uint8Array(values));
                                     });
-                                } else {
-                                    pxt.debug(`no hid device found`);
+                                    return Promise.resolve();
                                 }
+                                pxt.debug("no hid device found");
+                                return Promise.reject(new Error("no hid device found"));
                             });
                     }
-                    else return Promise.resolve();
+                    return Promise.reject(new Error("no hid device found"));
                 }))
+                .catch((e) => {
+                    const err = new Error(U.lf("Device not found"));
+                    (<any>err).notifyUser = true;
+                    return Promise.reject(err);
+                });
         }
     }
 
