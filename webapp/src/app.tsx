@@ -932,6 +932,7 @@ export class ProjectView
 
     saveAndCompile() {
         if (!this.state.header) return;
+        this.setState({isSaving: true});
 
         return (this.state.projectName !== lf("Untitled")
             ? Promise.resolve(true) : this.promptRenameProjectAsync())
@@ -939,7 +940,11 @@ export class ProjectView
             .then(() => this.saveFileAsync())
             .then(() => {
                 if (!pxt.appTarget.compile.hasHex) {
-                    this.saveProjectToFileAsync().done();
+                    this.saveProjectToFileAsync()
+                        .finally(() => {
+                            this.setState({isSaving: false});
+                        })
+                        .done();
                 }
                 else {
                     this.compile(true);
@@ -989,7 +994,11 @@ export class ProjectView
                 }
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
-                        core.warningNotification(lf("Upload failed, please try again."));
+                        if (e.notifyUser) {
+                            core.warningNotification(e.message);
+                        } else {
+                            core.warningNotification(lf("Upload failed, please try again."));
+                        }
                         pxt.reportException(e);
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
@@ -1000,7 +1009,7 @@ export class ProjectView
                 if (userContextWindow)
                     try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
-                this.setState({ compiling: false });
+                this.setState({ compiling: false, isSaving: false });
                 if (simRestart) this.runSimulator();
             })
             .done();

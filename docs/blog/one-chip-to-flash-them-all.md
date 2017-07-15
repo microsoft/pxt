@@ -234,7 +234,7 @@ The problem was that compiling just the ASF version of MSC and CDC together resu
 way over the 8KB limit.
 Thus, I needed to simplify and cut down the code to size, reimplementing a few things on the way.
 
-The result is the [UF2-SAMD21 bootloader](https://github.com/Microsoft/uf2-samd21) (to be made available shortly), 
+The result is the [UF2-SAMD21 bootloader](https://github.com/Microsoft/uf2-samd21), 
 supporting a number of SAMD21 boards including
 Arduino Zero and MKR1000, as well as [Adafruit Feather M0 Express](https://www.adafruit.com/products/3403) and upcoming Metro M0 Express and Circuit Playground Express.
 The boards are supported with essentially the same code base, except that for some of the boards
