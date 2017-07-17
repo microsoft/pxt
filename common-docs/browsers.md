@@ -36,7 +36,7 @@ version of one of the following:
 
 ## Chrome OS
 
-* Version 58 or older
+* Version 58 or higher
 
 ## How to check your OS or browser
 
