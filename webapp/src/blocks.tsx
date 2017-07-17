@@ -576,7 +576,7 @@ export class Editor extends srceditor.Editor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
+            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: 0 });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
