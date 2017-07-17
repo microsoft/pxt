@@ -109,15 +109,7 @@ namespace pxt.winrt {
 
         private initUf2Selectors() {
             const whid = Windows.Devices.HumanInterfaceDevice.HidDevice;
-            // Selectors common to all UF2 bootloaders
-            WindowsRuntimeIO.uf2Selectors = [
-                // UF2 Bootloader v1.23.0
-                whid.getDeviceSelector(0xFF97, 0x0001, 0x239A, 0x0018),
-                // UF2 Bootloader v1.22.0
-                whid.getDeviceSelector(0xFF00, 0x0001, 0x239A, 0x0019)
-            ];
-
-            // Target-specified selectors (for User Space)
+            WindowsRuntimeIO.uf2Selectors = [];
             if (pxt.appTarget && pxt.appTarget.compile && pxt.appTarget.compile.hidSelectors) {
                 pxt.appTarget.compile.hidSelectors.forEach((s) => {
                     const sel = whid.getDeviceSelector(parseInt(s.usagePage), parseInt(s.usageId), parseInt(s.vid), parseInt(s.pid));
