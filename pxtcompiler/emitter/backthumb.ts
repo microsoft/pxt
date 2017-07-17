@@ -14,6 +14,7 @@ namespace ts.pxtc {
 
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
+        hasCommonalize() { return true }
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`

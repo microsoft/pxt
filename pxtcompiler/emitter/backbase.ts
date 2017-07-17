@@ -29,24 +29,24 @@ namespace ts.pxtc {
     // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
-        nop() { return "TBD " }
-        reg_gets_imm(reg: string, imm: number) { return "TBD" }
+        hasCommonalize(): boolean{ return false }
+        nop() { return "TBD(nop)" }
+        reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
         // Registers are stored on the stack in numerical order 
-        proc_setup(main?: boolean) { return "TBD" }
-        push_fixed(reg: string[]) { return "TBD" }
-        push_local(reg: string) { return "TBD" }
-        proc_setup_end() { return "" }
-        pop_fixed(reg: string[]) { return "TBD" }
-        pop_locals(n: number) { return "TBD" }
-        proc_return() { return "TBD" }
-        debugger_stmt(lbl: string) { return "TBD" }
-        debugger_bkpt(lbl: string) { return "TBD" }
-        debugger_proc(lbl: string) { return "TBD" }
-        unconditional_branch(lbl: string) { return "TBD" }
-        beq(lbl: string) { return "TBD" }
-        bne(lbl: string) { return "TBD" }
-        cmp(reg1: string, reg: string) { return "TBD" }
-        cmp_zero(reg1: string) { return "TBD" }
+        proc_setup(main?: boolean) { return "TBD(proc_setup)" }
+        push_fixed(reg: string[]) { return "TBD(push_fixed)" }
+        push_local(reg: string) { return "TBD(push_local)" }
+        pop_fixed(reg: string[]) { return "TBD(pop_fixed)" }
+        pop_locals(n: number) { return "TBD(pop_locals)" }
+        proc_return() { return "TBD(proc_return)" }
+        debugger_stmt(lbl: string) { return "" }
+        debugger_bkpt(lbl: string) { return "" }
+        debugger_proc(lbl: string) { return "" }
+        unconditional_branch(lbl: string) { return "TBD(unconditional_branch)" }
+        beq(lbl: string) { return "TBD(beq)" }
+        bne(lbl: string) { return "TBD(bne)" }
+        cmp(reg1: string, reg: string) { return "TBD(cmp)" }
+        cmp_zero(reg1: string) { return "TBD(cmp_zero)" }
         arithmetic() { return "" }
         // load_reg_src_off is load/store indirect
         // word? - does offset represent an index that must be multiplied by word size?
@@ -54,18 +54,25 @@ namespace ts.pxtc {
         // str?  - true=Store/false=Load
         // src - can range over
 
-        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, store?: boolean, inf?: BitSizeInfo) { return "TBD"; }
-        rt_call(name: string, r0: string, r1: string) { return "TBD"; }
-        call_lbl(lbl: string) { return "TBD" }
-        call_reg(reg: string) { return "TBD" }
-        vcall(mapMethod: string, isSet: boolean, vtableShift: number) { return "TBD" }
-        prologue_vtable(arg_index: number, vtableShift: number) { return "TBD" }
-        lambda_prologue() { return "TBD" }
-        lambda_epilogue() { return "TBD" }
-        load_ptr(lbl: string, reg: string) { return "TBD" }
-        load_ptr_full(lbl: string, reg: string) { return "TBD" }
+        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, 
+                         store?: boolean, inf?: BitSizeInfo) { 
+                             return "TBD(load_reg_src_off)"; 
+        }
+        rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
+        call_lbl(lbl: string) { return "TBD(call_lbl)" }
+        call_reg(reg: string) { return "TBD(call_reg)" }
+        vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
+            return "TBD(vcall)" 
+        }
+        prologue_vtable(arg_index: number, vtableShift: number) { 
+            return "TBD(prologue_vtable" 
+        }
+        lambda_prologue() { return "TBD(lambda_prologue)" }
+        lambda_epilogue() { return "TBD(lambda_epilogue)" }
+        load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
+        load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
 
-        emit_int(v: number, reg: string) { return "TBD" }
+        emit_int(v: number, reg: string) { return "TBD(emit_int)" }
     }
 
     // helper for emit_int
@@ -163,7 +170,6 @@ ${baseLabel}:
             this.proc.locals.forEach(l => {
                 this.write(this.t.push_local("r0") + " ;loc")
             })
-            this.write(this.t.proc_setup_end())
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
@@ -583,7 +589,10 @@ ${baseLabel}:
                 this.write(".themain:")
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup())
-            this.write(this.t.push_fixed(["r5", "r6", "r7"]))
+            if (this.t.hasCommonalize())
+                this.write(this.t.push_fixed(["r5", "r6", "r7"]))
+            else
+                this.write(this.t.push_fixed(["r5", "r6"]))
             if (parms.length >= 1)
                 this.write(this.t.push_local("r1"))
 
@@ -593,7 +602,6 @@ ${baseLabel}:
                 if (i > 0) // r1 already done
                     this.write(this.t.push_local(`r${i + 1}`))
             })
-            this.write(this.t.proc_setup_end())
 
             let asm = this.t.lambda_prologue()
 
@@ -612,7 +620,10 @@ ${baseLabel}:
 
             if (parms.length)
                 this.write(this.t.pop_locals(parms.length))
-            this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
+            if (this.t.hasCommonalize())
+                this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
+            else
+                this.write(this.t.pop_fixed(["r6", "r5"]))
             this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }
