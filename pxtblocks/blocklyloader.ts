@@ -764,7 +764,7 @@ namespace pxt.blocks {
         if (fn.attributes.inlineInputMode === "external") {
             block.setInputsInline(false);
         }
-        else if (fn.attributes.inlineInputMode === "internal") {
+        else if (fn.attributes.inlineInputMode === "inline") {
             block.setInputsInline(true);
         }
         else {
