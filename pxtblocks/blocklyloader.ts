@@ -761,7 +761,15 @@ namespace pxt.blocks {
             }
         }
 
-        block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        if (fn.attributes.inlineInputMode === "external") {
+            block.setInputsInline(false);
+        }
+        else if (fn.attributes.inlineInputMode === "internal") {
+            block.setInputsInline(true);
+        }
+        else {
+            block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        }
 
         switch (fn.retType) {
             case "number": block.setOutput(true, "Number"); break;
