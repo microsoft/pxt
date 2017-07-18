@@ -456,7 +456,7 @@ export function scrollIntoView(item: JQuery, margin = 0) {
     }
 }
 
-export function initializeFocusTabIndex(element: Element, allowResetFocus = false) {
+export function initializeFocusTabIndex(element: Element, allowResetFocus = false, giveFocusToFirstElement = true) {
     if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
         return;
     }
@@ -466,17 +466,23 @@ export function initializeFocusTabIndex(element: Element, allowResetFocus = fals
         return;
     }
 
+    function unregister(): void {
+        firstTag.removeEventListener('keydown', giveFocusToLastTag);
+        lastTag.removeEventListener('keydown', giveFocusToFirstTag);
+    }
+
     const firstTag = focused[0] as HTMLElement;
     const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;
-
-    firstTag.removeEventListener('keydown', giveFocusToLastTag);
-    lastTag.removeEventListener('keydown', giveFocusToFirstTag);
 
     function giveFocusToFirstTag(e: KeyboardEvent) {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 9 && !e.shiftKey) {
             e.preventDefault();
-            firstTag.focus();
+            unregister();
+            initializeFocusTabIndex(element, true);
+        } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+            unregister();
+            initializeFocusTabIndex(element, true, false);
         }
     }
 
@@ -484,14 +490,22 @@ export function initializeFocusTabIndex(element: Element, allowResetFocus = fals
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 9 && e.shiftKey) {
             e.preventDefault();
+            unregister();
+            initializeFocusTabIndex(element, true, false);
             lastTag.focus();
+        } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+            unregister();
+            initializeFocusTabIndex(element, true, false);
         }
     };
 
+    unregister();
     firstTag.addEventListener('keydown', giveFocusToLastTag);
     lastTag.addEventListener('keydown', giveFocusToFirstTag);
 
-    firstTag.focus()
+    if (giveFocusToFirstElement) {
+        firstTag.focus()
+    }
 }
 
 // for JavaScript console

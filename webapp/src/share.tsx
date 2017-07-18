@@ -178,11 +178,11 @@ pxt extract ${url}`;
                         : undefined }
                     { ready ? <div>
                         <div className="ui divider"></div>
-                        <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                        <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
                         { advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>
-                                    <sui.MenuItem key={`tab${f.label}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
+                                    <sui.MenuItem key={`tab${f.label}`} id={`tab${f.mode}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
                             </sui.Menu> : undefined }
                         { advancedMenu ?
                             <sui.Field>

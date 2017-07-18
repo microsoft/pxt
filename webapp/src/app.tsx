@@ -1615,11 +1615,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             <div id='root' className={rootClasses}>
                 {hideMenuBar ? undefined :
                     <header id="menubar" role="banner" className={"ui menu"}>
-                        <ul id="accessibleMenu" role="menubar">
-                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() }/></li>
-                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() }/></li>
-                            <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() }/></li>
-                        </ul>
+                        <div id="accessibleMenu" role="menubar">
+                            <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={() => this.openJavaScript() }/>
+                            <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() }/>
+                            <sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() }/>
+                        </div>
 
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
                             {!sandbox ? <div className="left menu">
@@ -1686,10 +1686,11 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                     : undefined}
                 <div id="simulator">
-                    <div id="filelist" className="ui items" role="complementary">
-                        <div id="boardview" className={`ui vertical editorFloat`}>
-                        </div>
-                        { !isHeadless ? <div className="ui item grid centered portrait hide simtoolbar">
+                    <aside id="filelist" className="ui items" role="complementary">
+                        <label htmlFor="boardview" id="boardviewLabel" hidden>{lf("Simulator")}</label>
+                        <section id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
+                        </section>
+                        { !isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
                                 {run ? <sui.Button key='runbtn' class={`play-button ${this.state.running ? "stop" : "play"}`} icon={this.state.running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator() } /> : undefined}
@@ -1700,7 +1701,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {audio ? <sui.Button key='mutebtn' class={`mute-button ${this.state.mute ? 'red' : ''}`} icon={`${this.state.mute ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={() => this.toggleMute() } /> : undefined}
                                 {fullscreen ? <sui.Button key='fullscreenbtn' class={`fullscreen-button`} icon={`${this.state.fullscreen ? 'compress' : 'maximize'}`} title={fullscreenTooltip} onClick={() => this.toggleSimulatorFullscreen() } /> : undefined}
                             </div>
-                        </div> : undefined }
+                        </aside> : undefined }
                         <div className="ui item portrait hide">
                             {pxt.options.debug && !this.state.running ? <sui.Button key='debugbtn' class='teal' icon="xicon bug" text={"Sim Debug"} onClick={() => this.runSimulator({ debug: true }) } /> : ''}
                             {pxt.options.debug ? <sui.Button key='hwdebugbtn' class='teal' icon="xicon chip" text={"Dev Debug"} onClick={() => this.hwDebug() } /> : ''}
@@ -1709,7 +1710,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             <logview.LogView ref="logs" />
                         </div>
                         {sandbox || isBlocks ? undefined : <filelist.FileList parent={this} />}
-                    </div>
+                    </aside>
                 </div>
                 <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {inTutorial ? <tutorial.TutorialCard ref="tutorialcard" parent={this} /> : undefined }
@@ -1733,7 +1734,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <a target="_blank" className="item" href={targetTheme.privacyUrl}>{lf("Privacy") }</a>
                     <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
                 </div> : undefined}
-                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment">
+                {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment" role="alert">
                     <button arial-label={lf("Ok") } tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
