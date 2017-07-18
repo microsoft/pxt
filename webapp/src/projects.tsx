@@ -30,6 +30,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
     private prevGalleries: pxt.Map<pxt.CodeCard[]> = {};
+    private galleryFetchErrors: { [tab: string]: boolean } = {};
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -51,14 +52,20 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     showOpenTutorials() {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
-        this.setState({ visible: true, tab: gals[0] || MYSTUFF})
+        this.setState({ visible: true, tab: gals[0] || MYSTUFF })
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
         if (this.state.tab != tab) return [];
 
         let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
-        if (res) this.prevGalleries[path] = Util.concat(res.map(g => g.cards));
+        if (res) {
+            if (res instanceof Error) {
+                this.galleryFetchErrors[tab] = true;
+            } else {
+                this.prevGalleries[path] = Util.concat(res.map(g => g.cards));
+            }
+        }
         return this.prevGalleries[path] || [];
     }
 
@@ -111,6 +118,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const headers = this.fetchLocalData();
         const urldata = this.fetchUrlData();
+        this.galleryFetchErrors = {};
         const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
@@ -219,7 +227,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             { name: lf("Older"), headers: headersOlder },
         ];
 
-        const isLoading = tab != MYSTUFF && !gals[tab].length;
+        const hadFetchError = this.galleryFetchErrors[tab];
+        const isLoading = tab != MYSTUFF && !hadFetchError && !gals[tab].length;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
@@ -233,7 +242,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
-                            <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t)} onClick={() => this.setState({ tab: t }) } />) }
+                            <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
                         <div className="right menu">
                             <sui.Button
                                 icon='close'
@@ -310,18 +319,20 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards centered">
-                        {gals[tab].map(scr => <codecard.CodeCardView
-                            key={tab + scr.name}
-                            name={scr.name}
-                            description={scr.description}
-                            url={scr.url}
-                            imageUrl={scr.imageUrl}
-                            youTubeId={scr.youTubeId}
-                            onClick={() => chgGallery(scr) }
-                            />
-                        ) }
-                    </div>
+                    {hadFetchError ?
+                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                        : <div className="ui cards centered">
+                            {gals[tab].map(scr => <codecard.CodeCardView
+                                key={tab + scr.name}
+                                name={scr.name}
+                                description={scr.description}
+                                url={scr.url}
+                                imageUrl={scr.imageUrl}
+                                youTubeId={scr.youTubeId}
+                                onClick={() => chgGallery(scr) }
+                                />
+                            ) }
+                        </div>}
                 </div> : undefined }
                 { isEmpty() ?
                     <div className="ui items">
