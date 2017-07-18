@@ -70,11 +70,11 @@ let maxval = Math.max(8, 2);
 
 ## Random value
 
-Make up any number from 0 to some maximum value. If you want a random number up to
-100, say: **Math.random(100)**.
+Make up any number from a mimimum value to a some maximum value. If you want a random number up to
+100, say: **Math.randomRange(0, 100)**.
 
 ```block
-let myRandom = Math.random(5);
+let myRandom = Math.randomRange(0, 5);
 ```
 
 ## Constrain
