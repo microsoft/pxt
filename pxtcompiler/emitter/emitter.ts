@@ -80,7 +80,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9266
+    // next free error 9267
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -3586,8 +3586,10 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function emitClassExpression(node: ClassExpression) { }
         function emitClassDeclaration(node: ClassDeclaration) {
+            if (opts.target.isNative && opts.target.nativeType == "AVR") {
+                throw userError(9266, lf("classes not yet supported on AVR processor"))
+            }
             getClassInfo(null, node)
             node.members.forEach(emit)
         }
