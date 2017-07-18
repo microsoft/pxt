@@ -20,8 +20,8 @@
             telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
             if (typeof window !== "undefined" && window.location && /[?&]electron=1/i.test(window.location.href))
                 telemetryItem.properties["electron"] = 1;
-            if (typeof window !== "undefined" && window.location && /uwp/i.test(window.location.href))
-                telemetryItem.properties["uwp"] = 1;
+            if (typeof Windows !== "undefined")
+                telemetryItem.properties["WindowsApp"] = 1;
         });
     });
     appInsights.trackPageView();
