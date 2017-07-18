@@ -255,6 +255,7 @@ declare namespace ts.pxtc {
         openocdScript?: string;
         flashChecksumAddr?: number;
         onStartText?: boolean;
+        hidSelectors?: HidSelector[];
     }
 
     interface CompileOptions {
@@ -304,5 +305,13 @@ declare namespace ts.pxtc {
 
     interface HexInfo {
         hex: string[];
+    }
+
+    // HEX values as strings, e.g. "0xFF97"
+    interface HidSelector {
+        vid: string;
+        pid: string;
+        usagePage: string;
+        usageId: string;
     }
 }
