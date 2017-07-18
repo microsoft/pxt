@@ -226,7 +226,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
-                            <sui.MenuItem key={`tab${t}`} id={`${t}tab`} ariaControls={`tab${t}`} className={tab == t ? "focused" : undefined} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
+                            <sui.MenuItem key={`tab${t}`} id={`${t}tab`} ariaControls={tab == t ? `tab${t}` : undefined} className={tab == t ? "focused" : undefined} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
                     </sui.Menu>
                 </sui.Segment>
                 {tab == MYSTUFF ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
@@ -282,7 +282,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             <h3 className="ui dividing header disabled">
                                 {headerGroup.name}
                             </h3>
-                            <div className="ui cards" role="listbox">
+                            <div className="ui cards" role={headerGroup.headers.length ? "listbox" : undefined}>
                                 {headerGroup.headers.map(scr =>
                                     <codecard.CodeCardView
                                         ariaLabel={scr.name}
@@ -299,7 +299,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </div>
                     ) }
                     <div className="group">
-                        <div className="ui cards" role="listbox">
+                        <div className="ui cards" role={urldata.length ? "listbox" : undefined}>
                             {urldata.map(scr =>
                                 <codecard.CodeCardView
                                     ariaLabel={scr.name}
@@ -318,7 +318,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     </div>
                 </div> : undefined }
                 {tab != MYSTUFF ? <div id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false" className={tabClasses}>
-                    <div className="ui cards centered" role="listbox">
+                    <div className="ui cards centered" role={gals[tab].length ? "listbox" : undefined}>
                         {gals[tab].map(scr => <codecard.CodeCardView
                             ariaLabel={scr.name}
                             role="option"

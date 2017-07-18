@@ -544,7 +544,7 @@ export class Editor extends srceditor.Editor {
         root.className = 'blocklyTreeRoot';
         toolbox.appendChild(root);
         let group = document.createElement('div');
-        group.setAttribute('role', 'group');
+        group.setAttribute('role', 'tree');
         root.appendChild(group);
 
         const namespaces = this.getNamespaces().map(ns => [ns, this.getNamespaceAttrs(ns)] as [string, pxtc.CommentAttrs]);

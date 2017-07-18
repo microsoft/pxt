@@ -165,11 +165,11 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                 role="menuitem"
                 title={this.props.title}
                 tabIndex={this.props.tabIndex}
-                aria-haspopup="true"
-                aria-expanded={this.isOpened}>
+                aria-haspopup="true">
                 {genericContent(this.props) }
                 <div className="menu"
                      role="menu"
+                     aria-expanded={this.isOpened}
                      aria-label={lf("Dropdown menu {0}", this.props.title)}
                      aria-hidden={!this.isOpened}>
                     {this.props.children}
@@ -243,7 +243,7 @@ export class Button extends UiElement<ButtonProps> {
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
-                aria-label={this.props.ariaLabel || this.props.title || this.props.text}
+                aria-label={this.props.ariaLabel}
                 aria-expanded={this.props.ariaExpanded}
                 onClick={this.props.onClick}>
                 {genericContent(this.props) }
@@ -866,7 +866,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const closeIconName = closeIcon === true ? 'close' : closeIcon;
 
         const modalJSX = (
-            <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.props.description ? this.id + 'description' : this.id + 'desc'} >
+            <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.props.header ? this.id + 'title' : undefined} aria-describedby={this.props.description ? this.id + 'description' : this.id + 'desc'} >
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
                     {this.props.helpUrl ?

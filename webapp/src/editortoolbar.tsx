@@ -121,7 +121,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 {collapsed ?
                     <div className="ui equal width grid">
                         <div className="left aligned column">
-                            <div className="ui icon small buttons" role="complementary" aria-label={lf("Simulator toolbar")}>
+                            <div className="ui icon small buttons">
                                 <sui.Button icon={`${collapsed ? 'toggle up' : 'toggle down'}`} class={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} title={collapseTooltip} onClick={() => this.toggleCollapse('mobile') } />
                                 {headless && run ? <sui.Button class={`play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onClick={() => this.startStopSimulator('mobile') } /> : undefined }
                                 {headless && restart ? <sui.Button key='restartbtn' class={`restart-button`} icon="refresh" title={restartTooltip} onClick={() => this.restartSimulator('mobile') } /> : undefined }
@@ -241,9 +241,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
                                         <div className="column">
                                             <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
+                                                <label htmlFor="fileNameInput" id="fileNameInputLabel" hidden>{lf("Type a name for your project")}</label>
                                                 <input id="fileNameInput"
                                                     type="text"
-                                                    aria-label={lf("Type a name for your project")}
+                                                    aria-labelledby="fileNameInputLabel"
                                                     placeholder={lf("Pick a name...") }
                                                     value={projectName || ''}
                                                     onChange={(e) => this.saveProjectName((e.target as any).value, 'tablet') }>
@@ -302,9 +303,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     {showProjectRename ?
                         <div className="column left aligned">
                             <div className={`ui right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project") }>
+                                <label htmlFor="fileNameInput" id="fileNameInputLabel" hidden>{lf("Type a name for your project")}</label>
                                 <input id="fileNameInput"
                                     type="text"
-                                    aria-label={lf("Type a name for your project")}
+                                    aria-labelledby="fileNameInputLabel"
                                     placeholder={lf("Pick a name...") }
                                     value={projectName || ''}
                                     onChange={(e) => this.saveProjectName((e.target as any).value, 'computer') }>

@@ -65,7 +65,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onClick={() => parent.setSideFile(file) }
                     tabIndex={0}
                     role="treeitem"
-                    aria-label={file.name}
+                    aria-label={parent.state.currFile == file ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
                     onKeyPress={sui.fireClickOnEnter}
                     className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                     >

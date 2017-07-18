@@ -1625,7 +1625,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
                                     {targetTheme.logo || targetTheme.portraitLogo
-                                        ? <a className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} rel="external" role="menuitem"><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } aria-description alt={`${targetTheme.boardName} Logo`}/></a>
+                                        ? <a className={`ui image ${targetTheme.portraitLogo ? " portrait hide" : ''}`} target="_blank" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} rel="external" role="menuitem"><img className="ui logo" src={Util.toDataUri(targetTheme.logo || targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>
                                         : <span className="name">{targetTheme.name}</span>}
                                     {targetTheme.portraitLogo ? (<a className="ui portrait only" target="_blank" href={targetTheme.logoUrl} aria-label={lf("{0} website", targetTheme.boardName)} rel="external" role="menuitem"><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
                                 </span>
@@ -1671,7 +1671,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                 {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
                                 {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial(true) } /> : undefined}
 
-                                {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
+                                {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} aria-label={`${targetTheme.organization} Logo`} role="menuitem" target="blank" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
                                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={Util.toDataUri(targetTheme.organizationWideLogo || targetTheme.organizationLogo) } alt={`${targetTheme.organization} Logo`}/>
                                         : <span className="name">{targetTheme.organization}</span>}
@@ -1686,7 +1686,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     </div>
                     : undefined}
                 <div id="simulator">
-                    <aside id="filelist" className="ui items" role="complementary">
+                    <aside id="filelist" className="ui items">
                         <label htmlFor="boardview" id="boardviewLabel" hidden>{lf("Simulator")}</label>
                         <section id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
                         </section>
@@ -1718,7 +1718,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 </div>
                 {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined }
                 {inTutorial ? <tutorial.TutorialContent ref="tutorialcontent" parent={this} /> : undefined }
-                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary">
+                {hideEditorToolbar ? undefined : <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> }
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
