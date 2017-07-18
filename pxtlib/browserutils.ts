@@ -36,6 +36,11 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /arm/i.test(navigator.platform);
     }
 
+    // Detects if we are running inside the UWP runtime (Edge)
+    export function isUwpEdge(): boolean {
+        return typeof window !== "undefined" && !!(<any>window).Windows;
+    }
+
     /*
     Notes on browser detection
 
