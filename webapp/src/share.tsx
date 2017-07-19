@@ -158,7 +158,8 @@ pxt extract ${url}`;
 
         return (
             <sui.Modal open={this.state.visible} className="sharedialog" header={lf("Share Project") } size="small"
-                onClose={() => this.setState({ visible: false }) } dimmer={true}
+                onClose={() => this.setState({ visible: false }) }
+                dimmer={true}
                 action={action}
                 actionClick={publish}
                 actionLoading={actionLoading}
@@ -172,12 +173,12 @@ pxt extract ${url}`;
                         : undefined }
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
-                        <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
+                        <sui.Input class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
                     </div>
                         : undefined }
                     { ready ? <div>
                         <div className="ui divider"></div>
-                        <sui.Button class="labeled" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                        <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
                         { advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>

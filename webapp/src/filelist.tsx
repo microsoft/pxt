@@ -63,6 +63,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             return (
                 <a key={file.getName() }
                     onClick={() => parent.setSideFile(file) }
+                    tabIndex={0}
+                    onKeyPress={sui.fireClickOnEnter}
                     className={(parent.state.currFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                     >
                     {file.name} {meta.isSaved ? "" : "*"}
@@ -80,7 +82,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && p.getPkgId() != "built"
             && p.getPkgId() != pxt.appTarget.corepkg;
         let upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
-        return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => this.togglePkg(p) }>
+        return [<div key={"hd-" + p.getPkgId() } className="header link item" onClick={() => this.togglePkg(p) } tabIndex={0} onKeyPress={sui.fireClickOnEnter}>
             <i className={`chevron ${expands[p.getPkgId()] ? "down" : "right"} icon`}></i>
             {upd ? <sui.Button class="primary label" icon="refresh" onClick={(e) => this.updatePkg(e, p) } /> : ''}
             {del ? <sui.Button class="primary label" icon="trash" onClick={(e) => this.removePkg(e, p) } /> : ''}
@@ -161,7 +163,7 @@ namespace custom {
         const targetTheme = pxt.appTarget.appTheme;
         const plus = show && !pkg.mainEditorPkg().files[customFile]
         return <div className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only`}>
-            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() }>
+            <div key="projectheader" className="link item" onClick={() => this.toggleVisibility() } tabIndex={0} onKeyPress={sui.fireClickOnEnter}>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
                 {plus ? <sui.Button class="primary label" icon="plus" onClick={(e) => this.addCustomBlocksFile() } /> : undefined }

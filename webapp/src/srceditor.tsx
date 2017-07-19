@@ -3,6 +3,7 @@ import * as core from "./core";
 import * as data from "./data";
 import * as app from "./app";
 import * as React from "react";
+import * as pxtjson from "./pxtjson"
 
 
 export type ViewState = any;
@@ -85,7 +86,7 @@ export class Editor implements pxt.editor.IEditor {
      loadFile
     *******************************/
 
-    loadFileAsync(file: pkg.File): Promise<void> {
+    loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         this.currSource = file.content
         this.setDiagnostics(file, this.snapshotState())
         return Promise.resolve();
@@ -112,4 +113,6 @@ export class Editor implements pxt.editor.IEditor {
     filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories = pxt.blocks.CategoryMode.All): Element {
         return null
     }
+
+    setHighContrast(hc: boolean) {}
 }

@@ -200,7 +200,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     if (!options.hideCancel) {
         buttons.push({
             label: options.disagreeLbl || lf("Cancel"),
-            class: options.disagreeClass || "cancel",
+            class: (options.disagreeClass || "cancel") + " focused",
             icon: options.disagreeIcon || "cancel"
         })
     }
@@ -233,6 +233,7 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
     (modal.find(".ui.accordion") as any).accordion()
 
     return new Promise<void>((resolve, reject) => {
+        let focusedNodeBeforeOpening = document.activeElement as HTMLElement;
         let mo: JQuery;
         let timer = options.timeout ? setTimeout(() => {
             timer = 0;
@@ -259,6 +260,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             onHidden: () => {
                 modal.remove();
                 mo.remove();
+                if (focusedNodeBeforeOpening != null) {
+                    focusedNodeBeforeOpening.focus();
+                }
             },
             onApprove: onfinish,
             onDeny: onfinish,
@@ -269,6 +273,9 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
                     resolve()
                 }
             },
+            onVisible: () => {
+                initializeFocusTabIndex(mo.get(0));
+            }
         });
         mo.modal("show")
     })
@@ -297,7 +304,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (options.deleteLbl) {
         options.buttons.push({
             label: options.deleteLbl,
-            class: "delete red",
+            class: "delete red focused",
             icon: "trash",
             onclick: () => {
                 result = 2
@@ -314,7 +321,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
         header: lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
-        agreeClass: "red",
+        agreeClass: "red focused",
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
@@ -447,6 +454,44 @@ export function scrollIntoView(item: JQuery, margin = 0) {
         parent.scrollTop(newTop)
         //parent.animate({ 'scrollTop': newTop }, 'fast');
     }
+}
+
+export function initializeFocusTabIndex(element: Element, allowResetFocus = false) {
+    if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
+        return;
+    }
+
+    const focused = element.getElementsByClassName("focused");
+    if (focused.length == 0) {
+        return;
+    }
+
+    const firstTag = focused[0] as HTMLElement;
+    const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;
+
+    firstTag.removeEventListener('keydown', giveFocusToLastTag);
+    lastTag.removeEventListener('keydown', giveFocusToFirstTag);
+
+    function giveFocusToFirstTag(e: KeyboardEvent) {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 9 && !e.shiftKey) {
+            e.preventDefault();
+            firstTag.focus();
+        }
+    }
+
+    function giveFocusToLastTag(e: KeyboardEvent) {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 9 && e.shiftKey) {
+            e.preventDefault();
+            lastTag.focus();
+        }
+    };
+
+    firstTag.addEventListener('keydown', giveFocusToLastTag);
+    lastTag.addEventListener('keydown', giveFocusToFirstTag);
+
+    firstTag.focus()
 }
 
 // for JavaScript console
