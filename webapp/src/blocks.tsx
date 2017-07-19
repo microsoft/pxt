@@ -415,6 +415,10 @@ export class Editor extends srceditor.Editor {
                         (this.editor as any).toolbox_.clearSelection();
                         this.parent.addPackage();
                     }
+                    if (ev.newValue == lf("{id:category}Open Gesture")) {
+                        (this.editor as any).toolbox_.clearSelection();
+                        this.parent.openGesture();
+                    }
                     else if (ev.newValue == lf("{id:category}Advanced")) {
                         if (this.showToolboxCategories === CategoryMode.All) {
                             this.showToolboxCategories = CategoryMode.Basic;

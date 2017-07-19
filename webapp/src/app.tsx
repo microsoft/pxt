@@ -32,6 +32,7 @@ import * as sounds from "./sounds";
 import * as make from "./make";
 import * as baseToolbox from "./toolbox";
 import * as monacoToolbox from "./monacoSnippets"
+import * as gesture from "./gesture"
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -99,6 +100,7 @@ export class ProjectView
     languagePicker: lang.LanguagePicker;
     tutorialComplete: tutorial.TutorialComplete;
     prevEditorId: string;
+    gestureToolbox: gesture.GestureToolbox;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -813,6 +815,10 @@ export class ProjectView
     addPackage() {
         pxt.tickEvent("menu.addpackage");
         this.scriptSearch.showAddPackages();
+    }
+
+    openGesture() {
+        this.gestureToolbox.show();
     }
 
     newEmptyProject(name?: string, documentation?: string) {
@@ -1733,6 +1739,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
+                <gesture.GestureToolbox parent={this} ref={v => this.gestureToolbox = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">
