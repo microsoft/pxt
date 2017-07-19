@@ -16,4 +16,4 @@ Math.randomRange(0,5);
 
 ## See Also
 
-[logic](/blocks/logic), [loops](/blocks/loops), [math](/blocks/math), [variables](/blocks/variables), [on-start](/blocks/on-start), [javascript blocks](/blocks/javascript-blocks), [custom blocks](blocks/custom)
+[logic](/blocks/logic), [loops](/blocks/loops), [math](/reference/math), [variables](/blocks/variables), [on-start](/blocks/on-start), [javascript blocks](/blocks/javascript-blocks), [custom blocks](blocks/custom)
