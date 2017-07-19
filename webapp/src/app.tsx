@@ -208,7 +208,7 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isBlocksActive()) { 
+        if (this.isBlocksActive()) {
             this.blocksEditor.openTypeScript();
         }
         else this.setFile(pkg.mainEditorPkg().files["main.ts"])
@@ -1622,6 +1622,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                             <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={() => this.selectLang() }/></li>
                             <li><sui.Item class={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={this.state.highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={() => this.toggleHighContrast() }/></li>
                         </ul>
+
                         <div className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
                             {!sandbox ? <div className="left menu">
                                 <span id="logo" className="ui item logo">
@@ -1650,7 +1651,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                     <sui.DropdownMenuItem icon='setting large' title={lf("More...") } class="more-dropdown-menuitem">
                                         {this.state.header ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings") } onClick={() => this.setFile(pkg.mainEditorPkg().lookupFile("this/pxt.json")) } tabIndex={-1}/> : undefined}
                                         {this.state.header && packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Add Package...") } onClick={() => this.addPackage() } tabIndex={-1}/> : undefined}
-                                        {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } tabIndex={-1}/> : undefined} 
+                                        {this.state.header ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project") } onClick={() => this.removeProject() } tabIndex={-1}/> : undefined}
                                         {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...") } onClick={() => this.showReportAbuse() } tabIndex={-1}/> : undefined}
                                         <div className="ui divider"></div>
                                         {selectLanguage ? <sui.Item icon="xicon globe" role="menuitem" text={lf("Language") } onClick={() => this.selectLang() } tabIndex={-1}/> : undefined }
@@ -1663,7 +1664,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                         {targetTheme.privacyUrl ? <a className="ui item" href={targetTheme.privacyUrl} role="menuitem" title={lf("Privacy & Cookies") } target="_blank" tabIndex={-1}>{lf("Privacy & Cookies") }</a> : undefined}
                                         {targetTheme.termsOfUseUrl ? <a className="ui item" href={targetTheme.termsOfUseUrl} role="menuitem" title={lf("Terms Of Use") } target="_blank" tabIndex={-1}>{lf("Terms Of Use") }</a> : undefined}
                                         <sui.Item role="menuitem" text={lf("About...") } onClick={() => this.about() } tabIndex={-1}/>
-                                        {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } /> : undefined}
+                                        {electron.isElectron ? <sui.Item role="menuitem" text={lf("Check for updates...") } onClick={() => electron.checkForUpdate() } tabIndex={-1}/> : undefined}
                                         {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined }
                                         {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback") } target="_blank" tabIndex={-1}>{lf("Give Feedback") }</a> : undefined}
                                     </sui.DropdownMenuItem> }
