@@ -7,6 +7,9 @@
 
 .hc {
 
+@selected: #10C8CD;
+@disabled: #3ff23f;
+
     /* root */
     #root {
         background: black !important;
@@ -34,7 +37,20 @@
     .ui.button {
         background: black !important;
         color: white !important;
-        outline: 2px solid white;
+        outline: 1px solid white;
+    }
+
+    .ui.button.disabled {
+        opacity: 1 !important;
+        outline: 1px solid @disabled;
+
+        i, span {
+            color: @disabled !important;
+        }
+    }
+
+    .ui.button.download-button:hover > span, i {
+        color: white !important;
     }
 
     /* Hyperlinks */
@@ -49,9 +65,32 @@
     }
 
     /* Dropdown */
-    .ui.menu .ui.dropdown .menu > .item {
+    .ui.menu .ui.dropdown .menu, .ui.menu .ui.dropdown .menu > .item {
         background: black !important;
         color: white !important;
+    }
+    
+    .ui.menu .ui.dropdown .menu > .divider {
+        background: black !important;
+        border-top: 1px solid white !important;
+    }
+
+    /* Cards */
+    .card {
+        background: black !important;
+        border: 2px solid white !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+        
+        .header, .description {
+            color: white !important;
+        }
+
+        .ui.orange.labels .label, .ui.orange.label {
+            background: @disabled !important;
+            border-color: @disabled !important;
+            color: black !important;
+        }
     }
 
     /* Editor switch toggle */
@@ -60,18 +99,45 @@
     }
 
     #menubar .ui.menu .item.editor-menuitem .active {
-        background: #10C8CD !important;
+        background: @selected !important;
         color: black !important;
     }
 
     /* Modals */
     .ui.modal {
         border: 2px solid white !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
     }
 
-    .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions {
+    .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions, .ui.modal > .segment {
         background: black !important;
         color: white !important;
+    }
+
+    /* Tab list in Modals*/
+    .ui.secondary.menu > .item:not(.active), .ui.secondary.pointing.menu > .item:not(.active), .ui.secondary.inverted.menu .link.item:not(.active) {
+        color: white !important;
+        border-color: white !important;
+    }
+
+    .ui.secondary.menu > .item.active, .ui.secondary.menu > .item.active:hover,
+    .ui.secondary.pointing.menu > .item.active, .ui.secondary.pointing.menu > .item.active:hover {
+        color: @selected !important;
+        border: 2px solid @selected !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+    }
+
+    .ui.modal.projectsdialog .tabsegment, .ui.modal .ui.inverted.segment, .ui.modal .ui.primary.inverted.segment {
+        background: black !important;
+        color: white !important;
+        border-color: white !important;
+
+        .header {
+            opacity: 1 !important;
+            color: white !important;
+        }
     }
 
     /* Blockly / Monaco toolbox */
@@ -85,5 +151,39 @@
         color: white !important;
     }
 
+    .monacoFlyout {
+        background: black !important;
+        border-right: 1px solid white !important;
+    }
+
+    /* Editor toolbox */
+    .filemenu {
+        .item {
+            background: black !important;
+            color: white !important;
+            border: 1px solid white !important;
+        }
+
+        .item.active {
+            background: @selected !important;
+
+            span, i {
+                color: black !important;
+            }
+        }
+    }
+
+    /* PxtJson */
+    #maineditor {
+        border-left: 1px solid white !important;
+    }
+
+    #maineditor, .ui.segment.form {
+        background: black !important;
+            
+        label {
+            color: white !important;
+        }
+    }
 
 }
