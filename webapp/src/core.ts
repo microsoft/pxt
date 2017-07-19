@@ -354,8 +354,14 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     options.onLoaded = () => {
         let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
         if (dialogInput) {
-            dialogInput.focus();
             dialogInput.setSelectionRange(0, 9999);
+            dialogInput.onkeyup = (e: KeyboardEvent) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === 13 || charCode === 32) {
+                    e.preventDefault();
+                    (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
+                }
+            }
         }
     };
 
