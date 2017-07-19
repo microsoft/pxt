@@ -1160,6 +1160,11 @@ namespace pxt.blocks {
         const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.emptyEventHandlerComments && body.children.length === 0) {
+            body.children.unshift(mkStmt(mkText(`// ${pxtc.HANDLER_COMMENT}`)))
+        }
+
         let argumentDeclaration: JsNode;
 
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
