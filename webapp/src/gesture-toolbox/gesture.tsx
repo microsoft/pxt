@@ -9,6 +9,8 @@ import * as blocks from "./../blocks"
 import * as hidbridge from "./../hidbridge";
 import Cloud = pxt.Cloud;
 
+import * as Webcam from "./webcam";
+import * as Viz from "./visualizations"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -33,11 +35,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     hide() {
         this.setState({ visible: false });
+        Webcam.mediaStream.stop();
     }
 
 
     show() {
         this.setState({ visible: true });
+
+        Webcam.init("webcam-video");
+
     }
 
 
@@ -55,7 +61,17 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 closeIcon={true}
                 closeOnDimmerClick closeOnDocumentClick
                 >
-                {/*use react classes for your HTML components*/}
+                <div className="ui three column grid">
+                    <div className="six wide column">
+                        {/* Webcam */}
+                        <video id="webcam-video"></video>
+                    </div>
+                    <div className="eight wide column">
+                        {/* Sensor Data */}
+                        <div id="realtime-graph"></div>
+                    </div>
+                    <div className="two wide column">buttons</div>
+                </div>
             </sui.Modal>
         )
     }
