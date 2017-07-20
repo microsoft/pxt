@@ -106,7 +106,8 @@
     "typings": "^2.1.0",
     "tslint": "^3.9.0",
     "typescript": "1.8.7",
-    "webfonts-generator": "^0.3.3"
+    "webfonts-generator": "^0.3.3",
+    "@types/d3": "4.9.0"
   },
   "scripts": {
     "test": "jake travis --trace",
