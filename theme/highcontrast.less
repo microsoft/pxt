@@ -42,6 +42,14 @@
         background: black !important;
         color: white !important;
         outline: 1px solid white;
+
+        &:focus {
+            outline: 1px solid @selected;
+
+            i, span {
+                color: @selected !important;
+            }
+        }
     }
 
     .ui.button.disabled {
@@ -76,6 +84,15 @@
     .ui.menu .ui.dropdown .menu, .ui.menu .ui.dropdown .menu > .item {
         background: black !important;
         color: white !important;
+
+        &:focus {
+            outline: 1px solid @selected;
+            color: @selected !important;
+
+            span {
+                font-weight: normal !important;
+            }
+        }
     }
     
     .ui.menu .ui.dropdown .menu > .divider {
@@ -90,6 +107,14 @@
         border-radius: initial !important;
         box-shadow: initial !important;
         
+        &:focus {
+            border: 2px solid @selected !important;
+
+            .header, .description, .meta {
+                color: @selected !important;
+            }
+        }
+
         .header, .description, .meta {
             color: white !important;
         }
@@ -177,7 +202,7 @@
             border: 1px solid white !important;
         }
 
-        .item.active {
+        .item:focus, .item.active {
             background: @selected !important;
 
             span, i {
