@@ -9,6 +9,7 @@ import * as blocks from "./../blocks"
 import * as hidbridge from "./../hidbridge";
 import Cloud = pxt.Cloud;
 
+import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations"
 
@@ -43,7 +44,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.setState({ visible: true });
 
         Webcam.init("webcam-video");
+        Viz.init("realtime-graph", 600, 400);
 
+        window.setInterval(() => {
+            Viz.update(new Types.Vector(Math.random() * 30, Math.random() * 30, Math.random() * 30));
+        }, 40);
     }
 
 
