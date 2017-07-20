@@ -93,7 +93,17 @@ namespace pxt.Cloud {
     }
 
     export function isLoggedIn() { return !!accessToken }
-    export function isOnline() { return _isOnline; }
+
+    function isNavigatorOnline() {
+        return navigator && navigator.onLine;
+    }
+
+    export function isOnline() {
+        if (typeof navigator !== "undefined" && isNavigatorOnline()) {
+            _isOnline = true;
+        }
+        return _isOnline;
+    }
 
     export function getServiceUrl() {
         return apiRoot.replace(/\/api\/$/, "")

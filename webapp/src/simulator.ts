@@ -92,6 +92,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             updateDebuggerButtons()
         },
         onStateChanged: function (state) {
+            if (state === pxsim.SimulatorState.Stopped) {
+                postSimEditorEvent("stopped");
+            }
             updateDebuggerButtons()
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
@@ -183,7 +186,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         fnArgs,
         highContrast,
         aspectRatio: parts.length ? pxt.appTarget.simulator.partsAspectRatio : pxt.appTarget.simulator.aspectRatio,
-        partDefinitions: pkg.computePartDefinitions(parts)
+        partDefinitions: pkg.computePartDefinitions(parts),
+        cdnUrl: pxt.webConfig.commitCdnUrl
     }
     postSimEditorEvent("started");
 

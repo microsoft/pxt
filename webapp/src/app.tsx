@@ -102,6 +102,7 @@ export class ProjectView
 
     private lastChangeTime: number;
     private reload: boolean;
+    private shouldTryDecompile: boolean;
 
     constructor(props: IAppProps) {
         super(props);
@@ -218,7 +219,7 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isJavaScriptActive()) this.textEditor.openBlocks();
+        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView)) this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
             this.saveFileAsync()
@@ -232,6 +233,8 @@ export class ProjectView
                     this.setFile(pkg.mainEditorPkg().files["main.blocks"])
                 });
         } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
+
+        this.shouldTryDecompile = false;
     }
 
     openPreviousEditor() {
@@ -371,6 +374,7 @@ export class ProjectView
             return;
         this.saveSettings();
 
+        const hc = this.state.highContrast;
         // save file before change
         this.saveFileAsync()
             .then(() => {
@@ -381,7 +385,7 @@ export class ProjectView
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
-            .then(() => { return this.editor.loadFileAsync(this.editorFile); })
+            .then(() => { return this.editor.loadFileAsync(this.editorFile, hc); })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
                 this.typecheck();
@@ -404,6 +408,10 @@ export class ProjectView
 
     setFile(fn: pkg.File) {
         if (!fn) return;
+
+        if (fn.name === "main.ts") {
+            this.shouldTryDecompile = true;
+        }
 
         this.setState({
             currFile: fn,
@@ -563,6 +571,11 @@ export class ProjectView
                     currFile: file,
                     sideDocsLoadUrl: ''
                 })
+
+                if (file.name === "main.ts") {
+                    this.shouldTryDecompile = true;
+                }
+
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
                     this.loadHeaderAsync(h, this.state.filters).done()
                 }
@@ -919,6 +932,7 @@ export class ProjectView
 
     saveAndCompile() {
         if (!this.state.header) return;
+        this.setState({isSaving: true});
 
         return (this.state.projectName !== lf("Untitled")
             ? Promise.resolve(true) : this.promptRenameProjectAsync())
@@ -926,7 +940,11 @@ export class ProjectView
             .then(() => this.saveFileAsync())
             .then(() => {
                 if (!pxt.appTarget.compile.hasHex) {
-                    this.saveProjectToFileAsync().done();
+                    this.saveProjectToFileAsync()
+                        .finally(() => {
+                            this.setState({isSaving: false});
+                        })
+                        .done();
                 }
                 else {
                     this.compile(true);
@@ -976,7 +994,11 @@ export class ProjectView
                 }
                 return pxt.commands.deployCoreAsync(resp)
                     .catch(e => {
-                        core.warningNotification(lf("Upload failed, please try again."));
+                        if (e.notifyUser) {
+                            core.warningNotification(e.message);
+                        } else {
+                            core.warningNotification(lf("Upload failed, please try again."));
+                        }
                         pxt.reportException(e);
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
@@ -987,7 +1009,7 @@ export class ProjectView
                 if (userContextWindow)
                     try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
-                this.setState({ compiling: false });
+                this.setState({ compiling: false, isSaving: false });
                 if (simRestart) this.runSimulator();
             })
             .done();
@@ -1323,7 +1345,7 @@ export class ProjectView
             })
             .catch(e => {
                 core.errorNotification(e.message)
-                return undefined;
+                throw e;
             })
     }
 
@@ -1462,6 +1484,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 return this.createProjectAsync({
                     name: title
                 });
+            })
+            .catch((e) => {
+                core.hideLoading();
+                core.handleNetworkError(e);
             });
     }
 
@@ -1502,6 +1528,9 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
         const hc = !this.state.highContrast;
         pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
         this.setState({ highContrast: hc }, () => this.restartSimulator());
+        if (this.editor && this.editor.isReady) {
+            this.editor.setHighContrast(hc);
+        }
     }
 
     completeTutorial() {

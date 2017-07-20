@@ -71,7 +71,8 @@ namespace pxt.blocks.layout {
     }
 
     export function screenshotEnabled(): boolean {
-        return !BrowserUtils.isIE();
+        return !BrowserUtils.isIE()
+            && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
     export function screenshotAsync(ws: B.Workspace): Promise<string> {
