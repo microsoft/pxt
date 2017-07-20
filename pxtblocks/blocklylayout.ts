@@ -72,7 +72,12 @@ namespace pxt.blocks.layout {
     }
 
     export function flow(ws: B.Workspace, opts?: FlowOptions) {
-        flowBlocks(ws.getTopBlocks(true), opts.ratio, opts.maxWidth);
+        if (opts) {
+            flowBlocks(ws.getTopBlocks(true), opts.ratio, opts.maxWidth);
+        }
+        else {
+            flowBlocks(ws.getTopBlocks(true));
+        }
     }
 
     export function screenshotEnabled(): boolean {
