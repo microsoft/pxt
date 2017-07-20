@@ -25,6 +25,9 @@ export interface GestureToolboxState {
 
 
 export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
+    private graphX: Viz.RealTimeGraph;
+    private graphY: Viz.RealTimeGraph;
+    private graphZ: Viz.RealTimeGraph;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -44,11 +47,26 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.setState({ visible: true });
 
         Webcam.init("webcam-video");
-        Viz.init("realtime-graph", 600, 400);
+        let maxval = 30;
 
-        window.setInterval(() => {
-            Viz.update(new Types.Vector(Math.random() * 30, Math.random() * 30, Math.random() * 30));
-        }, 40);
+        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red", 5, maxval);
+        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green", 5, maxval);
+        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue", 5, maxval);
+
+        if (hidbridge.shouldUse()) {
+            hidbridge.initAsync()
+            .then(dev => {
+                dev.onSerial = (buf, isErr) => {
+                    let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+                }
+            });
+        }
+
+        // window.setInterval(() => {
+        //     this.graphX.update(Math.random() * maxval * 2 - maxval, this.graphX.smoothedLine);
+        //     this.graphY.update(Math.random() * maxval * 2 - maxval, this.graphY.smoothedLine);
+        //     this.graphZ.update(Math.random() * maxval * 2 - maxval, this.graphZ.smoothedLine);
+        // }, 40);
     }
 
 
@@ -67,15 +85,25 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 closeOnDimmerClick closeOnDocumentClick
                 >
                 <div className="ui three column grid">
-                    <div className="six wide column">
-                        {/* Webcam */}
+                    <div className="four wide column">
                         <video id="webcam-video"></video>
                     </div>
-                    <div className="eight wide column">
-                        {/* Sensor Data */}
-                        <div id="realtime-graph"></div>
+                    <div className="nine wide column">
+                        <div className="row" id="realtime-graph-x"></div>
+                        <div className="row" id="realtime-graph-y"></div>
+                        <div className="row" id="realtime-graph-z"></div>
                     </div>
-                    <div className="two wide column">buttons</div>
+                    <div className="three wide column">
+                        <button className="ui button icon-and-text primary fluid download-button big">
+                            <i className="download icon icon-and-text"></i>
+                            <span className="ui text">Program Streamer</span>
+                        </button>
+                        <br/>
+                        <button className="ui button blocks-menuitem green big">
+                            <i className="xicon blocks icon icon-and-text"></i>
+                            <span className="ui text">Create Block</span>
+                        </button>
+                    </div>
                 </div>
             </sui.Modal>
         )
