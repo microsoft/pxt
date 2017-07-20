@@ -372,7 +372,7 @@ function electronGulpTask(taskName: string): Promise<void> {
     const gulpPath = path.join(pxtElectronPath, "node_modules", ".bin", "gulp");
 
     return nodeutil.spawnAsync({
-        cmd: nodeutil.addCmd(gulpPath),
+        cmd: "gulp.cmd",
         args: [
             taskName,
             "--" + targetProductJson,
