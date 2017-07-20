@@ -256,6 +256,7 @@ declare namespace ts.pxtc {
         flashChecksumAddr?: number;
         onStartText?: boolean;
         hidSelectors?: HidSelector[];
+        emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
     }
 
     interface CompileOptions {
