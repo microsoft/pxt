@@ -1687,8 +1687,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     : undefined}
                 <div id="simulator">
                     <aside id="filelist" className="ui items">
-                        <label htmlFor="boardview" id="boardviewLabel" hidden>{lf("Simulator")}</label>
-                        <section id="boardview" className={`ui vertical editorFloat`} role="region" aria-labelledby="boardviewLabel">
+                        <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden">{lf("Simulator")}</label>
+                        <section id="boardview" className={`ui vertical editorFloat`} role="region" aria-describedby="boardviewLabel">
                         </section>
                         { !isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>

@@ -311,6 +311,7 @@ export class Input extends data.Component<{
     readOnly?: boolean;
     copy?: boolean;
     selectOnClick?: boolean;
+    id?:string;
 }, {}> {
 
     copy() {
@@ -345,6 +346,7 @@ export class Input extends data.Component<{
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input
+                        id={p.id}
                         className={p.class || ""}
                         type={p.type || "text"}
                         placeholder={p.placeholder} value={p.value}
@@ -352,6 +354,7 @@ export class Input extends data.Component<{
                         onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                         onChange={v => p.onChange((v.target as any).value) }/>
                         : <textarea
+                            id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
                             rows={p.lines}
                             placeholder={p.placeholder}
@@ -875,7 +878,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     </a>
                     : undefined}
                 </div> : undefined }
-                {this.props.description ? <label id={this.id + 'description'} hidden>{this.props.description}</label> : undefined}
+                {this.props.description ? <label id={this.id + 'description'} className="accessible-hidden">{this.props.description}</label> : undefined}
                 <div id={this.id + 'desc'} className="content">
                     {children}
                 </div>

@@ -241,7 +241,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
                                         <div className="column">
                                             <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
-                                                <label htmlFor="fileNameInput" id="fileNameInputLabel" hidden>{lf("Type a name for your project")}</label>
+                                                <label htmlFor="fileNameInput" id="fileNameInputLabel" className="accessible-hidden">{lf("Type a name for your project")}</label>
                                                 <input id="fileNameInput"
                                                     type="text"
                                                     aria-labelledby="fileNameInputLabel"
@@ -303,7 +303,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     {showProjectRename ?
                         <div className="column left aligned">
                             <div className={`ui right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project") }>
-                                <label htmlFor="fileNameInput" id="fileNameInputLabel" hidden>{lf("Type a name for your project")}</label>
+                                <label htmlFor="fileNameInput" id="fileNameInputLabel" className="accessible-hidden">{lf("Type a name for your project")}</label>
                                 <input id="fileNameInput"
                                     type="text"
                                     aria-labelledby="fileNameInputLabel"
