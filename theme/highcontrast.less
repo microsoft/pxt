@@ -87,9 +87,9 @@
 
         &:focus {
             outline: 1px solid @selected;
-            color: @selected !important;
 
-            span {
+            i, span {
+                color: @selected !important;
                 font-weight: normal !important;
             }
         }
@@ -98,32 +98,6 @@
     .ui.menu .ui.dropdown .menu > .divider {
         background: black !important;
         border-top: 1px solid white !important;
-    }
-
-    /* Cards */
-    .card {
-        background: black !important;
-        border: 2px solid white !important;
-        border-radius: initial !important;
-        box-shadow: initial !important;
-        
-        &:focus {
-            border: 2px solid @selected !important;
-
-            .header, .description, .meta {
-                color: @selected !important;
-            }
-        }
-
-        .header, .description, .meta {
-            color: white !important;
-        }
-
-        .ui.orange.labels .label, .ui.orange.label {
-            background: @disabled !important;
-            border-color: @disabled !important;
-            color: black !important;
-        }
     }
 
     /* Editor switch toggle */
@@ -169,7 +143,33 @@
 
         .header {
             opacity: 1 !important;
+            color: white;
+        }
+    }
+
+    /* Cards */
+    .card {
+        background: black !important;
+        border: 2px solid white !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+
+        .header, .description, .meta {
             color: white !important;
+        }
+        
+        &:focus {
+            border: 2px solid @selected !important;
+
+            .header, .description, .meta {
+                color: @selected !important;
+            }
+        }
+
+        .ui.orange.labels .label, .ui.orange.label {
+            background: @disabled !important;
+            border-color: @disabled !important;
+            color: black !important;
         }
     }
 
