@@ -1,12 +1,12 @@
-/// <reference path="../../built/pxtlib.d.ts"/>
+/// <reference path="../../../built/pxtlib.d.ts"/>
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as data from "./data";
-import * as sui from "./sui";
-import * as pkg from "./package";
-import * as blocks from "./blocks"
-import * as hidbridge from "./hidbridge";
+import * as data from "./../data";
+import * as sui from "./../sui";
+import * as pkg from "./../package";
+import * as blocks from "./../blocks"
+import * as hidbridge from "./../hidbridge";
 import Cloud = pxt.Cloud;
 
 
