@@ -46,6 +46,9 @@ namespace pxt.blocks {
         }
     }
 
+    // Matches arrays and tuple types
+    const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
+
     let usedBlocks: Map<boolean> = {};
     let updateUsedBlocks = false;
 
@@ -498,9 +501,16 @@ namespace pxt.blocks {
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_RIGHT)
-        // ignore generic types
-        if (type && type != "T")
-            i.setCheck(type);
+        // Ignore generic types
+        if (type && type != "T") {
+            if (arrayTypeRegex.test(type)) {
+                // All array types get the same check regardless of their subtype
+                i.setCheck("Array");
+            }
+            else {
+                i.setCheck(type);
+            }
+        }
         return i;
     }
 
@@ -707,7 +717,13 @@ namespace pxt.blocks {
             case "boolean": block.setOutput(true, "Boolean"); break;
             case "void": break; // do nothing
             //TODO
-            default: block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+            default:
+                if (arrayTypeRegex.test(fn.retType)) {
+                    block.setOutput(true, "Array");
+                }
+                else {
+                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                }
         }
 
         // hook up/down if return value is void
@@ -1335,6 +1351,25 @@ namespace pxt.blocks {
         const listsLengthId = "lists_length";
         const listsLengthDef = pxt.blocks.getBlockDefinition(listsLengthId);
         msg.LISTS_LENGTH_TITLE = listsLengthDef.block["LISTS_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[listsLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.LISTS_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['Array']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
+
         installBuiltinHelpInfo(listsLengthId);
     }
 
@@ -2585,6 +2620,24 @@ namespace pxt.blocks {
         const textLengthId = "text_length";
         const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
         msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[textLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.TEXT_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['String']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
         installBuiltinHelpInfo(textLengthId);
 
         // builtin text_join

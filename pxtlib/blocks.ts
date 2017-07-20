@@ -270,7 +270,7 @@ namespace pxt.blocks {
                 url: '/blocks/arrays/length',
                 category: 'arrays',
                 block: {
-                    LISTS_LENGTH_TITLE: Util.lf("length of %1")
+                    LISTS_LENGTH_TITLE: Util.lf("length of array %1")
                 }
             },
             'lists_index_get': {
@@ -354,7 +354,7 @@ namespace pxt.blocks {
                 url: 'types/string/length',
                 category: 'text',
                 block: {
-                    TEXT_LENGTH_TITLE: Util.lf("length of %1")
+                    TEXT_LENGTH_TITLE: Util.lf("length of text %1")
                 }
             },
             'text_join': {
