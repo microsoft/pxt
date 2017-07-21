@@ -9,6 +9,7 @@ import * as blocks from "./../blocks"
 import * as hidbridge from "./../hidbridge";
 import Cloud = pxt.Cloud;
 
+import * as Helper from "./helper";
 import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations"
@@ -23,7 +24,7 @@ export interface GestureToolboxState {
     visible?: boolean;
 }
 
-
+let maxInput = -999999;
 export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
@@ -47,26 +48,27 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.setState({ visible: true });
 
         Webcam.init("webcam-video");
-        let maxval = 30;
+        let maxval = 2500;
 
-        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red", 5, maxval);
-        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green", 5, maxval);
-        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue", 5, maxval);
+        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red", 7, maxval);
+        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green", 7, maxval);
+        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue", 7, maxval);
 
         if (hidbridge.shouldUse()) {
             hidbridge.initAsync()
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
                     let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+                    let newData = Helper.parseString(strBuf);
+
+                    if (newData.acc) {
+                        this.graphX.update(newData.accVec.X, this.graphX.smoothedLine);
+                        this.graphY.update(newData.accVec.Y, this.graphY.smoothedLine);
+                        this.graphZ.update(newData.accVec.Z, this.graphZ.smoothedLine);
+                    }
                 }
             });
         }
-
-        // window.setInterval(() => {
-        //     this.graphX.update(Math.random() * maxval * 2 - maxval, this.graphX.smoothedLine);
-        //     this.graphY.update(Math.random() * maxval * 2 - maxval, this.graphY.smoothedLine);
-        //     this.graphZ.update(Math.random() * maxval * 2 - maxval, this.graphZ.smoothedLine);
-        // }, 40);
     }
 
 
@@ -104,6 +106,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <span className="ui text">Create Block</span>
                         </button>
                     </div>
+                </div>
+                <div id="recorded-container">
+
                 </div>
             </sui.Modal>
         )
