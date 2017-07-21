@@ -9,19 +9,27 @@ export class Point {
 }
 
 
-export class GestureData {
-    public gesture: string;
+export class Gesture {
+    public gestures: GestureSample[];
     public label: number;
-    public dimension: number;
-    public video: string[];
-    public data: number[][][];
+    public name: string;
+    public displayGesture: GestureSample;
+    public htmlContainer: any;
 
     constructor() {
-        this.gesture = "";
-        this.label = 0;
-        this.dimension = 3;
-        this.video = [];
-        this.data = [];
+        this.gestures = [];
+    }
+}
+
+
+export class GestureSample {
+    public rawData: Vector[];
+    public video: any;
+    public startTime: number;
+    public endTime: number;
+
+    constructor() {
+        this.rawData = [];
     }
 }
 
@@ -36,20 +44,24 @@ export class Vector {
         this.Y = y;
         this.Z = z;
     }
+
+    public clone() {
+        return new Vector(this.X, this.Y, this.Z);
+    }
 }
 
 
 export class Match {
-    public MinimumDistance: number;
+    public minDist: number;
     public Ts: number;
     public Te: number;
-    public classNumber: number;
+    public classNum: number;
 
-    constructor(dmin: number, ts: number, te: number, classNum: number) {
-        this.MinimumDistance = dmin;
-        this.Te = te;
-        this.Ts = ts;
-        this.classNumber = classNum;
+    constructor(_dmin: number, _ts: number, _te: number, _classNum: number) {
+        this.minDist = _dmin;
+        this.Te = _te;
+        this.Ts = _ts;
+        this.classNum = _classNum;
     }
 
     public Length(): number {
