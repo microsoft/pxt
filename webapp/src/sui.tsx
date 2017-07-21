@@ -234,6 +234,7 @@ export interface ButtonProps extends WithPopupProps {
     ariaExpanded?: boolean;
     onClick?: (e: React.MouseEvent) => void;
     disabled?: boolean;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export class Button extends UiElement<ButtonProps> {
@@ -245,7 +246,8 @@ export class Button extends UiElement<ButtonProps> {
                 tabIndex={this.props.tabIndex || 0}
                 aria-label={this.props.ariaLabel}
                 aria-expanded={this.props.ariaExpanded}
-                onClick={this.props.onClick}>
+                onClick={this.props.onClick}
+                onKeyDown={this.props.onKeyDown}>
                 {genericContent(this.props) }
                 {this.props.children}
             </button>
