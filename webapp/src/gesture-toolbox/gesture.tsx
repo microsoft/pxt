@@ -9,7 +9,7 @@ import * as blocks from "./../blocks"
 import * as hidbridge from "./../hidbridge";
 import Cloud = pxt.Cloud;
 
-import * as Helper from "./helper";
+import * as Recorder from "./recorder";
 import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations"
@@ -35,6 +35,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.state = {
             visible: false
         }
+
+        Recorder.initKeyboard();
     }
 
 
@@ -46,26 +48,36 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     show() {
         this.setState({ visible: true });
+        let wasRecording = false;
 
         Webcam.init("webcam-video");
-        let maxval = 2500;
 
-        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red", 7, maxval);
-        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green", 7, maxval);
-        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue", 7, maxval);
+        let maxval = 2500;
+        let dx = 7;
+        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red", dx, maxval);
+        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green", dx, maxval);
+        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue", dx, maxval);
 
         if (hidbridge.shouldUse()) {
             hidbridge.initAsync()
             .then(dev => {
                 dev.onSerial = (buf, isErr) => {
                     let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
-                    let newData = Helper.parseString(strBuf);
+                    let newData = Recorder.parseString(strBuf);
 
                     if (newData.acc) {
                         this.graphX.update(newData.accVec.X, this.graphX.smoothedLine);
                         this.graphY.update(newData.accVec.Y, this.graphY.smoothedLine);
                         this.graphZ.update(newData.accVec.Z, this.graphZ.smoothedLine);
                     }
+
+                    if (wasRecording == false && Recorder.isRecording == true) {
+                    }
+                    else if (wasRecording == true && Recorder.isRecording == true) {
+                    }
+                    else if (wasRecording == true && Recorder.isRecording == false) {
+                    }
+                    wasRecording = Recorder.isRecording;
                 }
             });
         }
@@ -107,7 +119,33 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         </button>
                     </div>
                 </div>
-                <div id="recorded-container">
+                <div id="records">
+
+                    <div>
+                        <br/>
+                        <span className="ui text">Gesture Name: YES GOOZ</span>
+                        <div className="ui row">
+                            {/* the video: */}
+                            <video className="rec-video"></video>
+
+                            {/* the main (or average) prototype */}
+                            <div className="rec-graph main">
+                                <div className="ui row rec-graph-row"> X </div>
+                                <div className="ui row rec-graph-row"> Y </div>
+                                <div className="ui row rec-graph-row"> Z </div>
+                            </div>
+
+                            {/* other prototypes */}
+
+                            <div className="vertical-sep"></div>
+
+                            <div className="rec-graph">
+                                <div className="ui row rec-graph-row"> X </div>
+                                <div className="ui row rec-graph-row"> Y </div>
+                                <div className="ui row rec-graph-row"> Z </div>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
             </sui.Modal>

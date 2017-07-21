@@ -23,15 +23,3 @@ export function init(webcam_id: string) {
             });
     }
 }
-
-
-// start
-// mediaRecorder.start(60 * 1000);
-
-// stop
-// mediaRecorder.stop();
-
-// onrecord
-// mediaRecorder.ondataavailable = function (blob: any) {
-//     let vid = window.URL.createObjectURL(blob);
-// };

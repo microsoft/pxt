@@ -1,4 +1,4 @@
-import { Vector, GestureData, Match, DataType } from './types';
+import { Vector, Match, DataType } from './types';
 
 
 export function EuclideanDistance(a: Vector, b: Vector): number {
