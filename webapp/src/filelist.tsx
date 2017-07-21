@@ -168,7 +168,7 @@ namespace custom {
             <div role="treeitem" aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={() => this.toggleVisibility() } tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer") }
                 <i className={`chevron ${show ? "down" : "right"} icon`}></i>
-                {plus ? <sui.Button class="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => this.addCustomBlocksFile() } onKeyDown={(e) => e.stopPropagation()} /> : undefined }
+                {plus ? <sui.Button class="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={(e) => {this.addCustomBlocksFile(); e.stopPropagation();} } onKeyDown={(e) => e.stopPropagation()} /> : undefined }
             </div>
             {show ? Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined }
         </div>;
