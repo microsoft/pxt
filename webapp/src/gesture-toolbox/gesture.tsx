@@ -96,7 +96,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             <sui.Modal open={this.state.visible} className="gesture_toolbox" header={lf("Gesture Toolkit") } size="fullscreen"
                 onClose={() => this.hide() } dimmer={true}
                 closeIcon={true}
-                closeOnDimmerClick closeOnDocumentClick
+                closeOnDimmerClick
                 >
                 <div className="ui three column grid">
                     <div className="four wide column">
