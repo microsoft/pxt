@@ -59,12 +59,12 @@ export function stopRecording(newData: Vector) {
         recData[recPointer].gestures[cur].video = vid;
 
         // draw everything
-        drawSample(recPointer, cur);
+        // drawSample(recPointer, cur);
     };
 }
 
 
-function drawSample(gestIndex: number, sampleIndex: number) {
+function drawSample(data: GestureSample) {
     // if sampleIndex == 0, draw the video and the main sample, and store their pointers for future updates
 
     // else:

@@ -1,5 +1,29 @@
 import { Point, Vector } from './types';
+import * as Recorder from './recorder';
+import * as GestureUI from './gesture';
 const d3 = require('d3');
+
+let dx: number = 7;
+let maxVal: number = 2500;
+let margin = {top: 0, right: 0, bottom: 0, left: 0};
+
+
+export let normalLine = d3.line()
+    .x((d: Point, i: number) => {
+        return i * dx;
+    })
+    .y((d: Point, i: number) => {
+        return d.Y;
+    });
+
+export let smoothedLine = d3.line()
+    .x((d: Point, i: number) => {
+        return i * dx;
+    })
+    .y((d: Point, i: number) => {
+        return d.Y;
+    })
+    .curve(d3.curveCardinal);
 
 
 export class RealTimeGraph {
@@ -8,36 +32,30 @@ export class RealTimeGraph {
 
     private width: number;
     private height: number;
-    private dx: number;
-
-    private maxInputVal: number;
 
     private data: Point[] = [];
     private path: any;
 
-    private margin = {top: 0, right: 0, bottom: 0, left: 0};
 
-    constructor(_graph_id: string, color: string, _dx: number, _maxInputVal: number) {
+    constructor(_graph_id: string, color: string) {
         this.graphDiv = d3.select("#" + _graph_id);
-        this.dx = _dx;
-        this.maxInputVal = _maxInputVal;
 
-        this.width = document.getElementById(_graph_id).offsetWidth - this.margin.left - this.margin.right;
-        this.height = document.getElementById(_graph_id).offsetHeight - this.margin.top - this.margin.bottom;
+        this.width = document.getElementById(_graph_id).offsetWidth - margin.left - margin.right;
+        this.height = document.getElementById(_graph_id).offsetHeight - margin.top - margin.bottom;
 
         let y = d3.scaleLinear()
-            .domain([-this.maxInputVal, +this.maxInputVal])
+            .domain([-maxVal, +maxVal])
             .range([this.height, 0]);
 
-        for (let i = 0; i < Math.round(this.width / this.dx); i++)
-            this.data.push(new Point(i * this.dx, y(0)));
+        for (let i = 0; i < Math.round(this.width / dx); i++)
+            this.data.push(new Point(i * dx, y(0)));
 
         this.graphSvg = this.graphDiv.append("svg")
             .attr("width", this.width)
             .attr("height", this.height);
 
         this.path = this.graphSvg.append("path")
-            .attr("d", this.smoothedLine(this.data))
+            .attr("d", smoothedLine(this.data))
             .attr("stroke", color)
             .attr("stroke-width", 1)
             .attr("fill", "none");
@@ -46,37 +64,18 @@ export class RealTimeGraph {
 
     public update(yt: number, lineFun: any): void {
         let y = d3.scaleLinear()
-            .domain([-this.maxInputVal, +this.maxInputVal])
+            .domain([-maxVal, +maxVal])
             .range([this.height, 0]);
 
-        this.data.push(new Point(this.width - this.dx, y(yt)));
+        this.data.push(new Point(this.width - dx, y(yt)));
 
         this.path.attr("d", lineFun(this.data))
             .attr("transform", null)
             .transition()
-                .attr("transform", "translate(" + -this.dx + ")");
+                .attr("transform", "translate(" + -dx + ")");
 
         this.data.shift();
     }
-
-
-    public normalLine = d3.line()
-        .x((d: Point, i: number) => {
-            return i * this.dx;
-        })
-        .y((d: Point, i: number) => {
-            return d.Y;
-        });
-
-
-    public smoothedLine = d3.line()
-        .x((d: Point, i: number) => {
-            return i * this.dx;
-        })
-        .y((d: Point, i: number) => {
-            return d.Y;
-        })
-        .curve(d3.curveCardinal);
 }
 
 // set size parameters
@@ -93,3 +92,104 @@ export class RealTimeGraph {
 // everything should be re-loadable (if you go out and come back again)
 
 // everything should be downloadable (video as mp4, data as json)
+
+function drawGraph(data: Point[], axis: any, color: string) {
+    let width = axis.node().offsetWidth - margin.left - margin.right;
+    let height = axis.offsetHeight - margin.top - margin.bottom;
+
+    let y = d3.scaleLinear()
+            .domain([-maxVal, +maxVal])
+            .range([this.height, 0]);
+
+    let svg = axis.append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    svg.append("path")
+        .attr("d", smoothedLine(data))
+            .attr("stroke", color)
+            .attr("stroke-width", 1)
+            .attr("fill", "none");
+}
+
+export function drawContainer(gestIndex: number) {
+    // add it to the html dom
+
+    let container = d3.select("#" + GestureUI.gesturesContainerID)
+        .append("div")
+        .attr("class", "gesture-container");
+
+    container.append("span")
+        .html("Gesture Name: ");
+
+    container.append("span")
+        .attr("contenteditable")
+        .attr("class", "gesture-name ui text big");
+
+    container.append("br");
+
+    let vidElement = container.append("video")
+        .attr("class", "rec-video")
+        .attr("controls", "controls");
+
+    let mainGraph = container.append("div")
+        .attr("class", "main-graph");
+
+    mainGraph.append("div")
+        .attr("class", "ui row graph-x");
+    mainGraph.append("div")
+        .attr("class", "ui row graph-y");
+    mainGraph.append("div")
+        .attr("class", "ui row graph-z");
+
+    container.append("div")
+        .attr("class", "vertical-sep");
+
+    let samples = container.append("div")
+        .attr("class", "samples-container");
+
+    // and then add it to that htmlContainer as a new object.
+    Recorder.recData[gestIndex].htmlContainer = {video: vidElement, mainGraph: mainGraph, samplesContainer: samples};
+}
+
+
+export function drawVideo(gestIndex: number, vid: any) {
+    Recorder.recData[gestIndex].htmlContainer.video.attr("src", vid);
+}
+
+export function drawMainGraph(gestIndex: number) {
+    let data = Recorder.recData[gestIndex].displayGesture.rawData;
+
+    let xAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select("graph-x");
+    let yAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select("graph-y");
+    let zAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select("graph-z");
+
+    drawGraph(data.map((v: Vector) => { return new Point(0, v.X)}), xAxis, "red");
+    drawGraph(data.map((v: Vector) => { return new Point(0, v.Y)}), yAxis, "green");
+    drawGraph(data.map((v: Vector) => { return new Point(0, v.Z)}), zAxis, "blue");
+}
+
+export function drawGestureSample(gestIndex: number, sampleIndex: number) {
+    let data = Recorder.recData[gestIndex].gestures[sampleIndex].rawData;
+
+    let graphContainer = Recorder.recData[gestIndex].htmlContainer.samplesContainer
+        .append("div")
+        .attr("class", "sample-graph");
+
+    let xAxis = graphContainer.append("div")
+        .attr("class", "ui row graph-x");
+
+    let yAxis = graphContainer.append("div")
+        .attr("class", "ui row graph-y");
+
+    let zAxis = graphContainer.append("div")
+        .attr("class", "ui row graph-z");
+
+    drawGraph(data.map((v: Vector) => { return new Point(0, v.X)}), xAxis, "red");
+    drawGraph(data.map((v: Vector) => { return new Point(0, v.Y)}), yAxis, "green");
+    drawGraph(data.map((v: Vector) => { return new Point(0, v.Z)}), zAxis, "blue");
+}
+
+export function clearGestureSample(gestIndex: number, sampleIndex: number) {
+
+}

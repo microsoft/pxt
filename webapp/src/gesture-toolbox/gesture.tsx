@@ -19,6 +19,7 @@ type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
+export let gesturesContainerID: string = "gestures-container";
 
 export interface GestureToolboxState {
     visible?: boolean;
@@ -52,11 +53,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         Webcam.init("webcam-video");
 
-        let maxval = 2500;
-        let dx = 7;
-        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red", dx, maxval);
-        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green", dx, maxval);
-        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue", dx, maxval);
+        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red");
+        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
+        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
 
         if (hidbridge.shouldUse()) {
             hidbridge.initAsync()
@@ -66,9 +65,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     let newData = Recorder.parseString(strBuf);
 
                     if (newData.acc) {
-                        this.graphX.update(newData.accVec.X, this.graphX.smoothedLine);
-                        this.graphY.update(newData.accVec.Y, this.graphY.smoothedLine);
-                        this.graphZ.update(newData.accVec.Z, this.graphZ.smoothedLine);
+                        this.graphX.update(newData.accVec.X, Viz.smoothedLine);
+                        this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
+                        this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
                     }
 
                     if (wasRecording == false && Recorder.isRecording == true) {
@@ -119,34 +118,33 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         </button>
                     </div>
                 </div>
-                <div id="records">
-
-                    <div>
+                <br/>
+                <div id={gesturesContainerID}>
+                    {/* How each new gesture set will look like: */}
+                    {/*
+                    <div className="gesture-container">
+                        <span>Gesture Name: </span>
+                        <span contentEditable className="gesture-name ui text big">New Gesture</span>
                         <br/>
-                        <span className="ui text">Gesture Name: YES GOOZ</span>
-                        <div className="ui row">
-                            {/* the video: */}
-                            <video className="rec-video"></video>
+                        <video className="rec-video"></video>
 
-                            {/* the main (or average) prototype */}
-                            <div className="rec-graph main">
-                                <div className="ui row rec-graph-row"> X </div>
-                                <div className="ui row rec-graph-row"> Y </div>
-                                <div className="ui row rec-graph-row"> Z </div>
-                            </div>
+                        <div className="main-graph">
+                            <div className="ui row graph-x"> X </div>
+                            <div className="ui row graph-y"> Y </div>
+                            <div className="ui row graph-z"> Z </div>
+                        </div>
 
-                            {/* other prototypes */}
+                        <div className="vertical-sep"></div>
 
-                            <div className="vertical-sep"></div>
-
-                            <div className="rec-graph">
-                                <div className="ui row rec-graph-row"> X </div>
-                                <div className="ui row rec-graph-row"> Y </div>
-                                <div className="ui row rec-graph-row"> Z </div>
+                        <div className="samples-container">
+                            <div className="sample-graph">
+                                <div className="ui row graph-x"> X </div>
+                                <div className="ui row graph-y"> Y </div>
+                                <div className="ui row graph-z"> Z </div>
                             </div>
                         </div>
                     </div>
-
+                    */}
                 </div>
             </sui.Modal>
         )
