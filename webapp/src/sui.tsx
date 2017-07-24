@@ -136,7 +136,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
                 this.isOpened = true
                 this.forceUpdate()
 
-                var menuItems = this.child(".link")
+                var menuItems = this.child(".item")
                 menuItems.each((index: number, elem: HTMLElement) => {
                     elem.onkeydown = this.handleKeyDown
                 })
