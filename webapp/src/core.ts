@@ -293,7 +293,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (!options.hideAgree) {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
-            class: options.agreeClass,
+            class: options.agreeClass + " focused",
             icon: options.agreeIcon,
             onclick: () => {
                 result = 1
@@ -348,14 +348,20 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     }
 
     options.htmlBody = `<div class="ui fluid icon input">
-                            <input type="text" id="promptDialogInput" value="${options.defaultValue}">
+                            <input class="focused" type="text" id="promptDialogInput" value="${options.defaultValue}">
                         </div>`;
 
     options.onLoaded = () => {
         let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
         if (dialogInput) {
-            dialogInput.focus();
             dialogInput.setSelectionRange(0, 9999);
+            dialogInput.onkeyup = (e: KeyboardEvent) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === 13 || charCode === 32) {
+                    e.preventDefault();
+                    (document.getElementsByClassName("approve positive").item(0) as HTMLElement).click();
+                }
+            }
         }
     };
 

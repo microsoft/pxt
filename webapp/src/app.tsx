@@ -208,6 +208,9 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
+        if (this.textEditor && !this.textEditor.giveFocusOnLoading) {
+            this.textEditor.giveFocusOnLoading = true;
+        }
         if (this.isBlocksActive()) {
             this.blocksEditor.openTypeScript();
         }
@@ -443,6 +446,10 @@ export class ProjectView
                 });
             }
         } else {
+            if (this.isTextEditor() || this.isPxtJsonEditor()) {
+                this.textEditor.giveFocusOnLoading = false
+            }
+
             this.setFile(fn)
         }
     }
@@ -1371,6 +1378,10 @@ export class ProjectView
 
     isTextEditor(): boolean {
         return this.editor == this.textEditor;
+    }
+
+    isPxtJsonEditor(): boolean {
+        return this.editor == this.pxtJsonEditor;
     }
 
     isBlocksEditor(): boolean {
