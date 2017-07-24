@@ -40,6 +40,19 @@ html, body {
     right: 0;
 }
 
+.accessible-hidden {
+    position: absolute !important;
+    display: block;
+    visibility: visible;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    clip: rect(0 0 0 0);
+}
+
 /* Main Editor layout */
 #maineditor {
     left: @simulatorWidth;
@@ -188,7 +201,6 @@ div.simframe > iframe {
     padding: 0;
     margin: 0;
     width: 100%;
-    list-style-type: none;
 
     .ui.item.link {
         position: absolute;

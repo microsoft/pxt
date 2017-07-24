@@ -67,6 +67,8 @@ declare namespace pxt {
         name?: string;
         shortName?: string;
         title?: string;
+        role?: string;
+        ariaLabel?: string;
         label?: string;
         tabIndex?: number
 

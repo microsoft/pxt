@@ -173,20 +173,22 @@ pxt extract ${url}`;
                         : undefined }
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
-                        <sui.Input class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
+                        <sui.Input id="projectUri" class="focused mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel"/>
+                        <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project. You can copy it by pressing Control C.")}</label>
                     </div>
                         : undefined }
                     { ready ? <div>
                         <div className="ui divider"></div>
-                        <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
+                        <sui.Button class="labeled focused" icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed") } ariaExpanded={advancedMenu} onClick={() => this.setState({ advancedMenu: !advancedMenu }) } />
                         { advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>
-                                    <sui.MenuItem key={`tab${f.label}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
+                                    <sui.MenuItem key={`tab${f.label}`} id={`tab${f.mode}`} active={mode == f.mode} name={f.label} onClick={() => this.setState({ mode: f.mode }) } />) }
                             </sui.Menu> : undefined }
                         { advancedMenu ?
                             <sui.Field>
-                                <sui.Input class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true}/>
+                                <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true}/>
+                                <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab. You can copy it by pressing Control C.")}</label>
                             </sui.Field> : null }
                     </div> : undefined }
                 </div>

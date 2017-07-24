@@ -14,6 +14,7 @@ export interface UiProps {
     class?: string;
     role?: string;
     title?: string;
+    ariaLabel?: string;
     tabIndex?: number;
 }
 
@@ -42,7 +43,7 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
 
 function genericContent(props: UiProps) {
     return [
-        props.icon ? (<i key='iconkey' className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
+        props.icon ? (<i key='iconkey' aria-hidden="true" role="presentation" className={props.icon + " icon " + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '') }></i>) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '') }>{props.text}</span>) : null,
     ]
 }
@@ -61,7 +62,7 @@ export function fireClickOnEnter(e: React.KeyboardEvent): void {
     let charCode = (typeof e.which == "number") ? e.which : e.keyCode
     if (charCode === 13 || charCode === 32) {
         e.preventDefault();
-        (document.activeElement as HTMLElement).click();
+        (e.currentTarget as HTMLElement).click();
     }
 }
 
@@ -92,33 +93,65 @@ export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
 }
 
 export class DropdownMenuItem extends UiElement<DropdownProps> {
+    private isOpened = false
+    private preventHide = false
+
+    private handleKeyDown = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 9) {
+            this.close()
+        } else if (charCode === 32 || charCode === 13) {
+            /* give the focus back to the dropdown menu, so if the menuitem opens a modal,
+               the focus will not be reset once the modal is closed. */
+            this.child("").focus()
+        }
+    }
+
+    private close() {
+        this.preventHide = false
+        this.child("").dropdown("hide")
+    }
+
     componentDidMount() {
         this.popup()
         this.child("").dropdown({
-            action: (text: string, value: any, element: any) => {
-                let htmlElement: HTMLElement
+            action: (text: string, value: any, element: JQuery) => {
+                this.close()
 
-                this.child("").dropdown("hide")
-
-                // When we use the keyboard, it is not an HTMLElement that we receive, but a JQuery. Activating click on it reproduce the same behavior than a real click.
+                // When we use the keyboard, it is not an HTMLElement that we receive, but a JQuery.
                 if (typeof element.get === "function") {
-                    let jqueryElement = element as JQuery
-                    htmlElement = jqueryElement.get(0)
-                    htmlElement.click()
-                    return
-                } else {
-                    htmlElement = element as HTMLElement
-                }
-
-                if (htmlElement.tagName.toLowerCase() === 'a') {
-                    window.open((htmlElement as HTMLLinkElement).href, '_blank')
+                    if (element.get(0).tagName.toLowerCase() === 'a') {
+                        window.open((element.get(0) as HTMLLinkElement).href, '_blank')
+                    }
                 }
             },
             fullTextSearch: true,
-            onChange: (v: string) => {
+            onChange: (v: string, text: string, item: JQuery) => {
+                this.preventHide = true
+                item.get(0).focus()
+
                 if (this.props.onChange && v != this.props.value) {
                     this.props.onChange(v)
                 }
+            },
+            onShow: () => {
+                this.isOpened = true
+                this.forceUpdate()
+
+                var menuItems = this.child(".item")
+                menuItems.each((index: number, elem: HTMLElement) => {
+                    elem.onkeydown = this.handleKeyDown
+                })
+            },
+            onHide: () => {
+                if (this.preventHide) {
+                    this.preventHide = false
+                    return false
+                }
+
+                this.isOpened = false
+                this.forceUpdate()
+                return true
             }
         });
     }
@@ -126,21 +159,21 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     componentDidUpdate() {
         this.child("").dropdown("refresh")
         this.popup()
-        let hrefTags = ReactDOM.findDOMNode(this).getElementsByTagName("a")
-        for (let i = 0; i < hrefTags.length; i++) {
-            hrefTags.item(0).onclick = () => { return false }
-            hrefTags.item(0).onkeypress = () => { return false }
-        }
     }
 
     renderCore() {
         return (
             <div className={genericClassName("ui dropdown item", this.props) }
-                role={this.props.role}
+                role="menuitem"
                 title={this.props.title}
-                tabIndex={this.props.tabIndex}>
+                tabIndex={this.props.tabIndex}
+                aria-haspopup="true">
                 {genericContent(this.props) }
-                <div className="menu">
+                <div className="menu"
+                     role="menu"
+                     aria-expanded={this.isOpened}
+                     aria-label={lf("Dropdown menu {0}", this.props.title)}
+                     aria-hidden={!this.isOpened}>
                     {this.props.children}
                 </div>
             </div>);
@@ -156,10 +189,17 @@ export interface ItemProps extends UiProps {
 
 export class Item extends data.Component<ItemProps, {}> {
     renderCore() {
+        const {
+            text,
+            title,
+            ariaLabel
+        } = this.props;
+
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}` }
                 role={this.props.role}
-                title={this.props.title || this.props.text}
+                aria-label={ariaLabel || title || text}
+                title={title || ariaLabel || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
                 data-value={this.props.value}
@@ -192,8 +232,11 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
 
 export interface ButtonProps extends WithPopupProps {
     title?: string;
+    ariaLabel?: string;
+    ariaExpanded?: boolean;
     onClick?: (e: React.MouseEvent) => void;
     disabled?: boolean;
+    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export class Button extends UiElement<ButtonProps> {
@@ -203,8 +246,10 @@ export class Button extends UiElement<ButtonProps> {
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
-                aria-label={this.props.title || this.props.text}
-                onClick={this.props.onClick}>
+                aria-label={this.props.ariaLabel}
+                aria-expanded={this.props.ariaExpanded}
+                onClick={this.props.onClick}
+                onKeyDown={this.props.onKeyDown}>
                 {genericContent(this.props) }
                 {this.props.children}
             </button>
@@ -270,6 +315,7 @@ export class Input extends data.Component<{
     readOnly?: boolean;
     copy?: boolean;
     selectOnClick?: boolean;
+    id?:string;
 }, {}> {
 
     copy() {
@@ -304,6 +350,7 @@ export class Input extends data.Component<{
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input
+                        id={p.id}
                         className={p.class || ""}
                         type={p.type || "text"}
                         placeholder={p.placeholder} value={p.value}
@@ -311,6 +358,7 @@ export class Input extends data.Component<{
                         onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                         onChange={v => p.onChange((v.target as any).value) }/>
                         : <textarea
+                            id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
                             rows={p.lines}
                             placeholder={p.placeholder}
@@ -457,8 +505,6 @@ export interface MenuProps {
     tabular?: boolean | 'right';
     text?: boolean;
     vertical?: boolean;
-    tabIndex?: number;
-    onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
 export interface MenuItemProps {
@@ -475,6 +521,8 @@ export interface MenuItemProps {
     name?: string;
     onClick?: (event: React.MouseEvent, data: MenuItemProps) => void;
     position?: 'right';
+    ariaControls?: string;
+    id?: string;
 }
 
 export class MenuItem extends data.Component<MenuItemProps, {}> {
@@ -501,6 +549,8 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
             name,
             onClick,
             position,
+            ariaControls,
+            id
         } = this.props;
 
         const classes = cx([
@@ -520,7 +570,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         }
 
         return (
-            <div className={classes} onClick={this.handleClick}>
+            <div id={id} tabIndex={active ? 0 : undefined} className={classes} onClick={this.handleClick} role="tab" aria-controls={ariaControls} aria-selected={active} aria-label={content || name}>
                 {icon ? <i className={`icon ${icon}`} ></i> : undefined}
                 {content || name}
             </div>
@@ -537,7 +587,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         super(props);
     }
 
-    private handleKeyboardNavigation = (e: React.KeyboardEvent) => {
+    private handleKeyboardNavigation = (e: KeyboardEvent) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         let leftOrUpKey = charCode === 37 || charCode === 38
         let rightorBottomKey = charCode === 39 || charCode === 40
@@ -546,13 +596,12 @@ export class Menu extends data.Component<MenuProps, MenuState> {
             return
         }
 
-        let rootNode = ReactDOM.findDOMNode(this)
-        let items = rootNode.getElementsByClassName("link item")
+        let menuItems = this.child(".link")
         let activeNodeIndex = -1
         let i = 0
 
-        while (activeNodeIndex === -1 && i < items.length) {
-            if (items.item(i).classList.contains("active")) {
+        while (activeNodeIndex === -1 && i < menuItems.length) {
+            if (menuItems.get(i).classList.contains("active")) {
                 activeNodeIndex = i
             }
 
@@ -563,19 +612,33 @@ export class Menu extends data.Component<MenuProps, MenuState> {
             return
         }
 
+        let selectedTab: HTMLElement;
         if (leftOrUpKey) {
             if (activeNodeIndex === 0) {
-                (items.item(items.length - 1) as HTMLElement).click()
+                selectedTab = menuItems.get(menuItems.length - 1) as HTMLElement
             } else {
-                (items.item(activeNodeIndex - 1) as HTMLElement).click()
+                selectedTab = menuItems.get(activeNodeIndex - 1) as HTMLElement
             }
         } else if (rightorBottomKey) {
-            if (activeNodeIndex === items.length - 1) {
-                (items.item(0) as HTMLElement).click()
+            if (activeNodeIndex === menuItems.length - 1) {
+                selectedTab = menuItems.get(0) as HTMLElement
             } else {
-                (items.item(activeNodeIndex + 1) as HTMLElement).click()
+                selectedTab = menuItems.get(activeNodeIndex + 1) as HTMLElement
             }
         }
+
+        if (selectedTab !== undefined) {
+            selectedTab.click()
+            selectedTab.focus()
+        }
+    }
+
+
+    componentDidMount() {
+        var menuItems = this.child(".link")
+        menuItems.each((index: number, elem: HTMLElement) => {
+            elem.onkeydown = this.handleKeyboardNavigation
+        })
     }
 
     renderCore() {
@@ -625,7 +688,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         ]);
 
         return (
-            <div className={classes} tabIndex={this.props.tabIndex || 0} onKeyDown={this.props.onKeyDown || this.handleKeyboardNavigation}>
+            <div className={classes} role="tablist">
                 {children}
             </div>
         )
@@ -641,6 +704,7 @@ export interface ModalProps {
     closeOnDocumentClick?: boolean;
     dimmer?: boolean | 'blurring' | 'inverted';
     dimmerClassName?: string;
+    description?: string;
 
     onClose?: Function;
     onOpen?: Function;
@@ -807,15 +871,16 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const closeIconName = closeIcon === true ? 'close' : closeIcon;
 
         const modalJSX = (
-            <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.id + 'title'} aria-describedby={this.id + 'desc'} >
+            <div className={classes} style={{ marginTop }} ref={this.handleRef} role="dialog" aria-labelledby={this.props.header ? this.id + 'title' : undefined} aria-describedby={this.props.description ? this.id + 'description' : this.id + 'desc'} >
                 {this.props.header ? <div id={this.id + 'title'} className={"header " + (this.props.headerClass || "") }>
                     {this.props.header}
                     {this.props.helpUrl ?
-                    <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs">
+                    <a className={`ui huge icon clear focused`} href={this.props.helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", this.props.header)}>
                         <i className="help icon"></i>
                     </a>
                     : undefined}
                 </div> : undefined }
+                {this.props.description ? <label id={this.id + 'description'} className="accessible-hidden">{this.props.description}</label> : undefined}
                 <div id={this.id + 'desc'} className="content">
                     {children}
                 </div>
@@ -832,7 +897,8 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     icon={closeIconName}
                     class={`huge clear right floated closeIcon focused`}
                     onClick={() => this.handleClose(null) }
-                    tabIndex={0} /> : undefined }
+                    tabIndex={0}
+                    ariaLabel={lf("Close dialog")} /> : undefined }
             </div>
         )
 
