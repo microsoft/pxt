@@ -66,14 +66,21 @@ export function getHF2Devices() {
 }
 
 export function hf2ConnectAsync(path: string, raw = false) {
-    let h = new HF2.Wrapper(new HidIO(path))
-    h.rawMode = raw
-    return h.reconnectAsync(true).then(() => h)
+    return Promise.resolve()
+        .then(() => {
+            // in .then() to make sure we catch errors
+            let h = new HF2.Wrapper(new HidIO(path))
+            h.rawMode = raw
+            return h.reconnectAsync(true).then(() => h)
+        })
 }
 
 export function mkPacketIOAsync() {
-    let h = new HidIO(null)
-    return Promise.resolve(h)
+    return Promise.resolve()
+        .then(() => {
+            // in .then() to make sure we catch errors
+            return new HidIO(null)
+        })
 }
 
 pxt.HF2.mkPacketIOAsync = mkPacketIOAsync
