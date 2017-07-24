@@ -36,6 +36,7 @@ everything you throw at it. In particular, it is line based and doesn't take
 multi-line comments (other than doc comments) very well. To comment out a piece of C++
 code use `#if 0 .... #endif`.
 
+The [type mapping](/cpp2ts) from C++ to TypeScript is quite limited.
 Checkout the [microbit target](https://github.com/Microsoft/pxt-microbit) for an example.
 
 ## Auto-generation from the simulator

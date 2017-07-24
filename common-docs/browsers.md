@@ -34,6 +34,10 @@ version of one of the following:
 * Google Chrome, or Chromium (default in pixel)
 * Mozilla Firefox, Iceweasel, or Seamonkey
 
+## Chrome OS
+
+* Version 58 or higher
+
 ## How to check your OS or browser
 
 ### Windows

@@ -730,7 +730,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     <div className="actions">
                         <Button
                             text={this.props.action}
-                            class={`approve primary ${this.props.actionLoading ? "loading" : ""}`}
+                            class={`approve primary ${this.props.actionLoading ? "loading disabled" : ""}`}
                             onClick={() => {
                                 this.props.actionClick();
                             } } />
