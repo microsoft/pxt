@@ -149,7 +149,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
                 this.isOpened = false
                 this.forceUpdate()
-                return true;
+                return true
             }
         });
     }
@@ -482,7 +482,6 @@ export class Segment extends data.Component<SegmentProps, SegmentState> {
 }
 
 export interface MenuProps {
-    activeMenuItem?: any;
     activeIndex?: number;
     attached?: boolean | 'bottom' | 'top';
     borderless?: boolean;
@@ -595,7 +594,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
             return
         }
 
-        var menuItems = this.child(".link")
+        let menuItems = this.child(".link")
         let activeNodeIndex = -1
         let i = 0
 
@@ -642,7 +641,6 @@ export class Menu extends data.Component<MenuProps, MenuState> {
 
     renderCore() {
         const {
-            activeMenuItem,
             attached,
             borderless,
             children,
@@ -688,7 +686,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         ]);
 
         return (
-            <div className={classes} role="tablist" aria-live="assertive" aria-describedby={activeMenuItem}>
+            <div className={classes} role="tablist">
                 {children}
             </div>
         )

@@ -504,7 +504,7 @@ export function initializeFocusTabIndex(element: Element, allowResetFocus = fals
     lastTag.addEventListener('keydown', giveFocusToFirstTag);
 
     if (giveFocusToFirstElement) {
-        firstTag.focus()
+        firstTag.focus();
     }
 }
 
