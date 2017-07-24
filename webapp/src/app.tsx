@@ -1520,6 +1520,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const hc = !this.state.highContrast;
         pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
         this.setState({ highContrast: hc }, () => this.restartSimulator());
+        sui.highContrast = hc;
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(hc);
         }
@@ -1600,6 +1601,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             (this.state.hideEditorFloats || this.state.collapseEditorTools) && !inTutorial ? " hideEditorFloats" : '',
             this.state.collapseEditorTools && !inTutorial ? " collapsedEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
+            this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inTutorial ? 'tutorial' : '',

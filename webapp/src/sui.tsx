@@ -3,6 +3,8 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as core from "./core";
 
+export let highContrast: boolean;
+
 export interface UiProps {
     icon?: string;
     iconClass?: string;
@@ -837,6 +839,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const dimmerClasses = !dimmer
             ? null
             : cx([
+                highContrast ? 'hc' : '', 
                 'ui',
                 dimmer === 'inverted' ? 'inverted' : '',
                 pxt.options.light ? '' : "transition",
