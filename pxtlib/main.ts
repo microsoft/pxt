@@ -215,10 +215,10 @@ namespace pxt {
 
     export function outputName(trg: CompileTarget = null) {
         if (!trg) trg = appTarget.compile
-        if (trg.useELF)
-            return ts.pxtc.BINARY_ELF
-        else if (trg.useUF2)
+        if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
+        else if (trg.useELF)
+            return ts.pxtc.BINARY_ELF
         else
             return ts.pxtc.BINARY_HEX
     }
