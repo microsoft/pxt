@@ -293,7 +293,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
     if (!options.hideAgree) {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
-            class: options.agreeClass,
+            class: options.agreeClass + " focused",
             icon: options.agreeIcon,
             onclick: () => {
                 result = 1
