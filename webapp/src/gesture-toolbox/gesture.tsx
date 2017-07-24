@@ -21,11 +21,12 @@ type IProjectView = pxt.editor.IProjectView;
 
 export let gesturesContainerID: string = "gestures-container";
 
+
 export interface GestureToolboxState {
     visible?: boolean;
 }
 
-let maxInput = -999999;
+
 export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
@@ -57,29 +58,40 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
         this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
 
-        if (hidbridge.shouldUse()) {
-            hidbridge.initAsync()
-            .then(dev => {
-                dev.onSerial = (buf, isErr) => {
-                    let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
-                    let newData = Recorder.parseString(strBuf);
+        setInterval(() => {
+            let testData = new Types.Vector(Math.random() * 2048, Math.random() * 2048, Math.random() * 2048);
+            this.graphX.update(testData.X, Viz.smoothedLine);
+            this.graphY.update(testData.Y, Viz.smoothedLine);
+            this.graphZ.update(testData.Z, Viz.smoothedLine);
 
-                    if (newData.acc) {
-                        this.graphX.update(newData.accVec.X, Viz.smoothedLine);
-                        this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
-                        this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
-                    }
+            if (wasRecording == false && Recorder.isRecording == true) {
+                Recorder.startRecording(testData, 0, "TestGesture");
+            }
+            else if (wasRecording == true && Recorder.isRecording == true) {
+                Recorder.continueRecording(testData);
+            }
+            else if (wasRecording == true && Recorder.isRecording == false) {
+                Recorder.stopRecording();
+            }
+            
+            wasRecording = Recorder.isRecording;
+        }, 40);
 
-                    if (wasRecording == false && Recorder.isRecording == true) {
-                    }
-                    else if (wasRecording == true && Recorder.isRecording == true) {
-                    }
-                    else if (wasRecording == true && Recorder.isRecording == false) {
-                    }
-                    wasRecording = Recorder.isRecording;
-                }
-            });
-        }
+        // if (hidbridge.shouldUse()) {
+        //     hidbridge.initAsync()
+        //     .then(dev => {
+        //         dev.onSerial = (buf, isErr) => {
+        //             let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+        //             let newData = Recorder.parseString(strBuf);
+
+        //             if (newData.acc) {
+        //                 this.graphX.update(newData.accVec.X, Viz.smoothedLine);
+        //                 this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
+        //                 this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
+        //             }
+        //         }
+        //     });
+        // }
     }
 
 
@@ -102,9 +114,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         <video id="webcam-video"></video>
                     </div>
                     <div className="nine wide column">
-                        <div className="row" id="realtime-graph-x"></div>
-                        <div className="row" id="realtime-graph-y"></div>
-                        <div className="row" id="realtime-graph-z"></div>
+                        <div className="row graph-x" id="realtime-graph-x"></div>
+                        <div className="row graph-y" id="realtime-graph-y"></div>
+                        <div className="row graph-z" id="realtime-graph-z"></div>
                     </div>
                     <div className="three wide column">
                         <button className="ui button icon-and-text primary fluid download-button big">

@@ -78,20 +78,6 @@ export class RealTimeGraph {
     }
 }
 
-// set size parameters
-// let graph_width;
-// offset? maxval? graph height? 
-
-// let realtimedata;
-// how do we want to make the update algorithm faster?
-
-// append axis
-
-// update realtime graph based on new data
-
-// everything should be re-loadable (if you go out and come back again)
-
-// everything should be downloadable (video as mp4, data as json)
 
 function drawGraph(data: Point[], axis: any, color: string) {
     let width = axis.node().offsetWidth - margin.left - margin.right;
@@ -112,9 +98,8 @@ function drawGraph(data: Point[], axis: any, color: string) {
             .attr("fill", "none");
 }
 
-export function drawContainer(gestIndex: number) {
-    // add it to the html dom
 
+export function drawContainer(gestIndex: number) {
     let container = d3.select("#" + GestureUI.gesturesContainerID)
         .append("div")
         .attr("class", "gesture-container");
@@ -149,13 +134,14 @@ export function drawContainer(gestIndex: number) {
         .attr("class", "samples-container");
 
     // and then add it to that htmlContainer as a new object.
-    Recorder.recData[gestIndex].htmlContainer = {video: vidElement, mainGraph: mainGraph, samplesContainer: samples};
+    // Recorder.recData[gestIndex].htmlContainer = {video: vidElement, mainGraph: mainGraph, samplesContainer: samples};
 }
 
 
 export function drawVideo(gestIndex: number, vid: any) {
     Recorder.recData[gestIndex].htmlContainer.video.attr("src", vid);
 }
+
 
 export function drawMainGraph(gestIndex: number) {
     let data = Recorder.recData[gestIndex].displayGesture.rawData;
@@ -168,6 +154,7 @@ export function drawMainGraph(gestIndex: number) {
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Y)}), yAxis, "green");
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Z)}), zAxis, "blue");
 }
+
 
 export function drawGestureSample(gestIndex: number, sampleIndex: number) {
     let data = Recorder.recData[gestIndex].gestures[sampleIndex].rawData;
@@ -189,6 +176,7 @@ export function drawGestureSample(gestIndex: number, sampleIndex: number) {
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Y)}), yAxis, "green");
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Z)}), zAxis, "blue");
 }
+
 
 export function clearGestureSample(gestIndex: number, sampleIndex: number) {
 

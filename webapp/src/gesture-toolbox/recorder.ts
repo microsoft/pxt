@@ -1,8 +1,9 @@
 import { Vector, GestureSample, Gesture } from './types';
+import * as Viz from './visualizations';
 import * as Webcam from "./webcam";
 
 export let isRecording = false;
-export let recData: Gesture[];
+export let recData: Gesture[] = [];
 let recPointer: number = -1;
 
 export function initKeyboard() {
@@ -47,7 +48,7 @@ export function continueRecording(newData: Vector) {
 }
 
 
-export function stopRecording(newData: Vector) {
+export function stopRecording() {
     let cur = recData[recPointer].gestures.length - 1;
     recData[recPointer].gestures[cur].endTime = Date.now();
 
@@ -58,18 +59,22 @@ export function stopRecording(newData: Vector) {
         let vid = window.URL.createObjectURL(blob);
         recData[recPointer].gestures[cur].video = vid;
 
-        // draw everything
-        // drawSample(recPointer, cur);
+        if (cur == 0) {
+            // create the whole things
+            recData[recPointer].displayGesture.rawData = recData[recPointer].gestures[cur].rawData;
+
+            Viz.drawContainer(recPointer);
+            Viz.drawVideo(recPointer, vid);
+            Viz.drawMainGraph(recPointer);
+            Viz.drawGestureSample(recPointer, 0);
+        }
+        else {
+            // update the displayGesture using the DBA algorithm
+
+            // Viz.drawMainGraph(recPointer);
+            Viz.drawGestureSample(recPointer, 0);
+        }
     };
-}
-
-
-function drawSample(data: GestureSample) {
-    // if sampleIndex == 0, draw the video and the main sample, and store their pointers for future updates
-
-    // else:
-    // add the new sample to the right
-    // update the main sample based on the DBA algorithm - the new average (the left most sample, right next to the video)
 }
 
 
