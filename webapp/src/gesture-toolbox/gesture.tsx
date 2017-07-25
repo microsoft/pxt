@@ -59,7 +59,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
 
         setInterval(() => {
-            let testData = new Types.Vector(Math.random() * 2048, Math.random() * 2048, Math.random() * 2048);
+            let testData = new Types.Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024);
             this.graphX.update(testData.X, Viz.smoothedLine);
             this.graphY.update(testData.Y, Viz.smoothedLine);
             this.graphZ.update(testData.Z, Viz.smoothedLine);
@@ -130,33 +130,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         </button>
                     </div>
                 </div>
-                <br/>
                 <div id={gesturesContainerID}>
-                    {/* How each new gesture set will look like: */}
-                    {/*
-                    <div className="gesture-container">
-                        <span>Gesture Name: </span>
-                        <span contentEditable className="gesture-name ui text big">New Gesture</span>
-                        <br/>
-                        <video className="rec-video"></video>
-
-                        <div className="main-graph">
-                            <div className="ui row graph-x"> X </div>
-                            <div className="ui row graph-y"> Y </div>
-                            <div className="ui row graph-z"> Z </div>
-                        </div>
-
-                        <div className="vertical-sep"></div>
-
-                        <div className="samples-container">
-                            <div className="sample-graph">
-                                <div className="ui row graph-x"> X </div>
-                                <div className="ui row graph-y"> Y </div>
-                                <div className="ui row graph-z"> Z </div>
-                            </div>
-                        </div>
-                    </div>
-                    */}
                 </div>
             </sui.Modal>
         )

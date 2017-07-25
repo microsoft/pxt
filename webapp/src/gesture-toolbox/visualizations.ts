@@ -80,12 +80,14 @@ export class RealTimeGraph {
 
 
 function drawGraph(data: Point[], axis: any, color: string) {
-    let width = axis.node().offsetWidth - margin.left - margin.right;
-    let height = axis.offsetHeight - margin.top - margin.bottom;
+    let width = data.length * dx;
+    let height = axis.node().offsetHeight - margin.top - margin.bottom;
 
     let y = d3.scaleLinear()
             .domain([-maxVal, +maxVal])
-            .range([this.height, 0]);
+            .range([height, 0]);
+
+    data.forEach((d: Point) => {d.Y = y(d.Y)});
 
     let svg = axis.append("svg")
         .attr("width", width)
@@ -102,39 +104,41 @@ function drawGraph(data: Point[], axis: any, color: string) {
 export function drawContainer(gestIndex: number) {
     let container = d3.select("#" + GestureUI.gesturesContainerID)
         .append("div")
-        .attr("class", "gesture-container");
+        .attr("class", "gesture-container")
+        .attr("style", "overflow: auto; height: 300px;");
 
-    container.append("span")
+    let nameContainer = container.append("div")
+        .attr("class", "gest-name-container");
+
+    nameContainer.append("span")
         .html("Gesture Name: ");
 
-    container.append("span")
-        .attr("contenteditable")
+    nameContainer.append("span")
+        .attr("contenteditable", true)
         .attr("class", "gesture-name ui text big");
-
-    container.append("br");
 
     let vidElement = container.append("video")
         .attr("class", "rec-video")
-        .attr("controls", "controls");
+        .attr("autoplay", "rec-video")
+        .attr("loop", "true");
 
     let mainGraph = container.append("div")
         .attr("class", "main-graph");
 
     mainGraph.append("div")
-        .attr("class", "ui row graph-x");
+        .attr("class", "graph-x");
     mainGraph.append("div")
-        .attr("class", "ui row graph-y");
+        .attr("class", "graph-y");
     mainGraph.append("div")
-        .attr("class", "ui row graph-z");
-
-    container.append("div")
-        .attr("class", "vertical-sep");
+        .attr("class", "graph-z");
 
     let samples = container.append("div")
         .attr("class", "samples-container");
 
+    container.append("br");
+
     // and then add it to that htmlContainer as a new object.
-    // Recorder.recData[gestIndex].htmlContainer = {video: vidElement, mainGraph: mainGraph, samplesContainer: samples};
+    Recorder.recData[gestIndex].htmlContainer = {video: vidElement, mainGraph: mainGraph, samplesContainer: samples};
 }
 
 
@@ -146,9 +150,9 @@ export function drawVideo(gestIndex: number, vid: any) {
 export function drawMainGraph(gestIndex: number) {
     let data = Recorder.recData[gestIndex].displayGesture.rawData;
 
-    let xAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select("graph-x");
-    let yAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select("graph-y");
-    let zAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select("graph-z");
+    let xAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select(".graph-x");
+    let yAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select(".graph-y");
+    let zAxis = Recorder.recData[gestIndex].htmlContainer.mainGraph.select(".graph-z");
 
     drawGraph(data.map((v: Vector) => { return new Point(0, v.X)}), xAxis, "red");
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Y)}), yAxis, "green");
@@ -159,18 +163,27 @@ export function drawMainGraph(gestIndex: number) {
 export function drawGestureSample(gestIndex: number, sampleIndex: number) {
     let data = Recorder.recData[gestIndex].gestures[sampleIndex].rawData;
 
+    if (sampleIndex != 0)
+        Recorder.recData[gestIndex].htmlContainer.samplesContainer
+            .append("div")
+            .attr("class", "vertical-sep");
+
     let graphContainer = Recorder.recData[gestIndex].htmlContainer.samplesContainer
         .append("div")
         .attr("class", "sample-graph");
 
+
+    // set width based on number of samples
+    // height will be 32%
+
     let xAxis = graphContainer.append("div")
-        .attr("class", "ui row graph-x");
+        .attr("class", "graph-x");
 
     let yAxis = graphContainer.append("div")
-        .attr("class", "ui row graph-y");
+        .attr("class", "graph-y");
 
     let zAxis = graphContainer.append("div")
-        .attr("class", "ui row graph-z");
+        .attr("class", "graph-z");
 
     drawGraph(data.map((v: Vector) => { return new Point(0, v.X)}), xAxis, "red");
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Y)}), yAxis, "green");

@@ -18,6 +18,7 @@ export class Gesture {
 
     constructor() {
         this.gestures = [];
+        this.displayGesture = new GestureSample();
     }
 }
 

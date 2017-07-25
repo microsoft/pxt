@@ -72,7 +72,7 @@ export function stopRecording() {
             // update the displayGesture using the DBA algorithm
 
             // Viz.drawMainGraph(recPointer);
-            Viz.drawGestureSample(recPointer, 0);
+            Viz.drawGestureSample(recPointer, cur);
         }
     };
 }

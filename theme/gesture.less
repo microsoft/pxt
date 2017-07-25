@@ -1,4 +1,5 @@
 // command to re-compile:
+// do this in pxt-adafruit (not pxt!)
 // node node_modules/less/bin/lessc theme/style.less built/web/semantic.css --include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar
 
 #webcam-video {
@@ -21,10 +22,6 @@
     height: 33%;
 }
 
-.rec-video {
-    width: 300px;
-}
-
 .graph-x {
     height: 32%;
 }
@@ -37,18 +34,27 @@
     height: 32%;
 }
 
-.rec-graph {
-    float: left;
-}
-
 .rec-video {
+    width: 329px;
     float: left;
+
+    border: solid;
+    border-width: 1px;
+    border-radius: 7px 0 0 7px;
+    margin-right: 5px;
+    padding: 5px;
 }
 
 .vertical-sep {
-    float: left;
-    height: 125px;
-    border-left: 1px solid #000;
+    height: 211px;
+    margin: 7px 5px auto 5px;
+    display: inline-block;
+
+    border-left: 1px solid #bbb;
+}
+
+.gest-name-container {
+    margin: 10px 0 10px 0;
 }
 
 .gesture-name {
@@ -65,13 +71,36 @@
 
 .gesture-container {
     overflow: auto;
+    height: 305px;
 }
 
 .main-graph {
+    height: 250px;
     float: left;
+
+    border: solid;
+    border-width: 1px;
+}
+
+.sample-graph {
+    height: 100%;
+
+    display: inline-block;
 }
 
 .samples-container {
+    height: 250px;
     float: left;
-}
 
+    margin-left: 10px;
+    
+    max-width: 50%;
+
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+
+    border: solid;
+    border-width: 1px;
+    border-radius: 0 10px 10px 0;
+}
