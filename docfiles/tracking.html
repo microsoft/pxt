@@ -24,5 +24,5 @@
                 telemetryItem.properties["WindowsApp"] = 1;
         });
     });
-    appInsights.trackPageView();
+    appInsights.trackPageView(null, null, {urlReferrer: document.referrer});
 </script>
