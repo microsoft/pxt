@@ -26,6 +26,7 @@ export interface ShareEditorState {
     currentPubId?: string;
     pubCurrent?: boolean;
     visible?: boolean;
+    sharingError?: boolean;
 }
 
 export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
@@ -44,7 +45,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
     }
 
     show(header: pxt.workspace.Header) {
-        this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent });
+        this.setState({ visible: true, mode: ShareMode.Screenshot, pubCurrent: header.pubCurrent, sharingError: false });
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
@@ -53,7 +54,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             || this.state.mode != nextState.mode
             || this.state.pubCurrent != nextState.pubCurrent
             || this.state.screenshotId != nextState.screenshotId
-            || this.state.currentPubId != nextState.currentPubId;
+            || this.state.currentPubId != nextState.currentPubId
+            || this.state.sharingError != nextState.sharingError;
     }
 
     renderCore() {
@@ -142,9 +144,15 @@ pxt extract ${url}`;
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish");
-            this.props.parent.anonymousPublishAsync().done(() => {
-                this.setState({ pubCurrent: true });
-            });
+            this.setState({ sharingError: false });
+            this.props.parent.anonymousPublishAsync()
+                .catch((e) => {
+                    this.setState({ sharingError: true });
+                })
+                .done(() => {
+                    this.setState({ pubCurrent: true });
+                    this.forceUpdate();
+                });
             this.forceUpdate();
         }
 
@@ -155,13 +163,13 @@ pxt extract ${url}`;
         ];
 
         const action = !ready ? lf("Publish project") : undefined;
-        const actionLoading = this.props.parent.state.publishing;
+        const actionLoading = this.props.parent.state.publishing && !this.state.sharingError;
 
         let fbUrl = '';
         let twitterUrl = '';
         if (showSocialIcons) {
             let twitterText = lf("Check out what I made!");
-            const socialOptions =  pxt.appTarget.appTheme.socialOptions;
+            const socialOptions = pxt.appTarget.appTheme.socialOptions;
             if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
                 twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
             } else if (socialOptions.twitterHandle) {
@@ -173,7 +181,7 @@ pxt extract ${url}`;
             twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}` +
                 `&text=${encodeURIComponent(twitterText)}` +
                 (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '');
-                (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
+            (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
         }
         const showFbPopup = () => {
             pxt.tickEvent('share.facebook')
@@ -195,15 +203,20 @@ pxt extract ${url}`;
                 >
                 <div className={`ui form`}>
                     { action ?
-                        <p>{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
-                            lf("You acknowledge having consent to publish this project.") }</p>
+                        <div>
+                            <p>{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
+                                lf("You acknowledge having consent to publish this project.") }</p>
+                            { this.state.sharingError ?
+                                <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                                : undefined}
+                        </div>
                         : undefined }
                     { url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.") }</p>
                         <sui.Input class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true}/>
                         {showSocialIcons ? <div className="social-icons">
-                            <a className="ui button large icon facebook" onClick={(e) => {showFbPopup(); e.preventDefault(); return false;}}><i className="icon facebook"></i></a>
-                            <a className="ui button large icon twitter" onClick={(e) => {showTwtPopup(); e.preventDefault(); return false;}}><i className="icon twitter"></i></a>
+                            <a className="ui button large icon facebook" onClick={(e) => { showFbPopup(); e.preventDefault(); return false; } }><i className="icon facebook"></i></a>
+                            <a className="ui button large icon twitter" onClick={(e) => { showTwtPopup(); e.preventDefault(); return false; } }><i className="icon twitter"></i></a>
                         </div> : undefined}
                     </div>
                         : undefined }

@@ -1435,7 +1435,7 @@ ${output}</xml>`;
                 if (match) {
                     const matched = match[1].trim()
 
-                    if (matched === ON_START_COMMENT) {
+                    if (matched === ON_START_COMMENT || matched === HANDLER_COMMENT) {
                         return;
                     }
 

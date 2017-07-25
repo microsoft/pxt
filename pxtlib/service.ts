@@ -8,6 +8,7 @@ namespace ts.pxtc {
 
     export const ON_START_TYPE = "pxt-on-start";
     export const ON_START_COMMENT = U.lf("on start");
+    export const HANDLER_COMMENT = U.lf("code goes here");
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
@@ -100,7 +101,7 @@ namespace ts.pxtc {
         block?: string; // format of the block, used at namespace level for category name
         blockId?: string; // unique id of the block
         blockGap?: string; // pixels in toolbox after the block is inserted
-        blockExternalInputs?: boolean; // force external inputs
+        blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
         blockImportId?: string;
         blockBuiltin?: boolean;
         blockNamespace?: string;
@@ -141,6 +142,7 @@ namespace ts.pxtc {
         mutatePrefix?: string;
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
+        inlineInputMode?: string; // can be inline, external, or auto
 
         _name?: string;
         _source?: string;
@@ -401,6 +403,10 @@ namespace ts.pxtc {
 
         if (res.trackArgs) {
             res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
+        }
+
+        if (res.blockExternalInputs && !res.inlineInputMode) {
+            res.inlineInputMode = "external";
         }
 
         res.paramHelp = {}

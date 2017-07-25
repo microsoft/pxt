@@ -1345,7 +1345,7 @@ export class ProjectView
             })
             .catch(e => {
                 core.errorNotification(e.message)
-                return undefined;
+                throw e;
             })
     }
 
@@ -1484,6 +1484,10 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 return this.createProjectAsync({
                     name: title
                 });
+            })
+            .catch((e) => {
+                core.hideLoading();
+                core.handleNetworkError(e);
             });
     }
 
