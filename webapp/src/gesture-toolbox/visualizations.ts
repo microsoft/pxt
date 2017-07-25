@@ -221,8 +221,11 @@ export function deleteGestureSample(gestureID: number, sampleID: number) {
         Recorder.recData[gestIndex].htmlContainer.samplesContainer.select("#sample-" + sampleID).remove();
     }
     else {
+        // TODO:
         // need to delete the whole container as well.
         // or (which I prefer): the add new gesture button (that I haven't implemented yet) would create an empty container
         // to be used and deleting the last sample will put the gesture in that state.
     }
+
+    // TODO: update DTW models
 }

@@ -49,47 +49,43 @@ export function IntegerSqrt(n: number) {
 
 
 export class SpringAlgorithm<SampleType> {
+    private Y: SampleType[];
+    private eps: number;
+    private classNumber: number;
+    private avgProtoLen: number;
+
+    private M: number;
+
     private distFunction: (a: SampleType, b: SampleType) => number;
 
-    private Y: SampleType[];
-    private M: number;
-    private eps: number;
+    private minLen: number;
+    private maxLen: number;
+
     private s: number[];
     private d: number[];
     private s2: number[];
     private d2: number[];
+
     private dmin: number;
+
     private t: number;
     private te: number;
     private ts: number;
-    private minLen: number;
-    private maxLen: number;
-    private matchList: Match[];
-    private classNumber: number;
-    private report: (match: Match) => void;
-
-    public DMin(): number {
-        return this.dmin;
-    }
 
 
-    public GetMatchList(): Match[] {
-        return this.matchList;
-    }
-
-
-    constructor(_input: SampleType[], _epsilon: number, _distFun: (a: SampleType, b: SampleType) => number,
-                                                        _report: (match: Match) => void,
-                                                        _classNum: number) {
-        this.eps = _epsilon;
-        this.Y = _input;
-        this.M = _input.length;
-        this.distFunction = _distFun;
-        this.report = _report;
+    constructor(_refPrototype: SampleType[], _threshold: number, _classNum: number, _avgProtoLen: number,
+                _distFun: (a: SampleType, b: SampleType) => number) {
+        this.Y = _refPrototype;
+        this.eps = _threshold;
         this.classNumber = _classNum;
+        this.avgProtoLen = _avgProtoLen;
 
-        this.minLen = this.M * 7 / 10;
-        this.maxLen = this.M * 13 / 10;
+        this.M = _refPrototype.length;
+
+        this.distFunction = _distFun;
+
+        this.minLen = _avgProtoLen * 7 / 10;
+        this.maxLen = _avgProtoLen * 13 / 10;
 
         this.d = [];
         this.s = [];
@@ -109,15 +105,16 @@ export class SpringAlgorithm<SampleType> {
         }
 
         this.dmin = 1e10;
+
         this.t = 0;
         this.ts = 0;
         this.te = 0;
-
-        this.matchList = [];
     }
 
 
-    public Feed(xt: SampleType) {
+    public Feed(xt: SampleType): Match {
+        let predict = new Match(0, 0, 0, 0);
+
         let t = this.t + 1;
         let d: number[] = this.d2;
         let s: number[] = this.s2;
@@ -127,10 +124,10 @@ export class SpringAlgorithm<SampleType> {
 
         // update M distances (d[] based on dp[]) and M starting points (s[] based on sp[]):
         for (let i = 1; i <= this.M; i++) {
-            let dist = this.distFunction(this.Y[i-1], xt);
-            let di_minus1 = d[i-1];
+            let dist = this.distFunction(this.Y[i - 1], xt);
+            let di_minus1 = d[i - 1];
             let dip = this.d[i];
-            let dip_minus1 = this.d[i-1];
+            let dip_minus1 = this.d[i - 1];
 
             // compute dbest and use that to compute s[i]
             if (di_minus1 <= dip && di_minus1 <= dip_minus1) {
@@ -149,13 +146,13 @@ export class SpringAlgorithm<SampleType> {
             let condition = true;
             let matchLength = this.te - this.ts;
 
-            if(matchLength > this.minLen && matchLength < this.maxLen) {
+            if (matchLength > this.minLen && matchLength < this.maxLen) {
                 for (let i = 0; i <= this.M; i++)
                     if (!(d[i] >= this.dmin || s[i] > this.te))
                         condition = false;
 
                 if (condition) {
-                    this.report(new Match(this.dmin, this.ts - 1, this.te - 1, this.classNumber));
+                    predict = new Match(this.dmin, this.ts - 1, this.te - 1, this.classNumber);
                     this.dmin = 1e10;
 
                     for (let i = 1; i <= this.M; i++) {
@@ -176,71 +173,8 @@ export class SpringAlgorithm<SampleType> {
         this.d2 = this.d; this.d = d;
         this.s2 = this.s; this.s = s;
         this.t = t;
-    }
 
-
-    public FeedStoreMatch(xt: SampleType): void {
-        let t = this.t + 1;
-        let d: number[] = this.d2;
-        let s: number[] = this.s2;
-
-        d[0] = 0;
-        s[0] = t;
-
-        // update M distances (d[] based on dp[]) and M starting points (s[] based on sp[]):
-        for (let i = 1; i <= this.M; i++) {
-            let dist = this.distFunction(this.Y[i-1], xt);
-            let di_minus1 = d[i-1];
-            let dip = this.d[i];
-            let dip_minus1 = this.d[i-1];
-
-            // compute dbest and use that to compute s[i]
-            if (di_minus1 <= dip && di_minus1 <= dip_minus1) {
-                d[i] = dist + di_minus1;
-                s[i] = s[i - 1];
-            } else if (dip <= di_minus1 && dip <= dip_minus1) {
-                d[i] = dist + dip;
-                s[i] = this.s[i];
-            } else {
-                d[i] = dist + dip_minus1;
-                s[i] = this.s[i - 1];
-            }
-        }
-
-        if (this.dmin <= this.eps) {
-            let condition = true;
-            let matchLength = this.te - this.ts;
-
-            if(matchLength > this.minLen && matchLength < this.maxLen) {
-                for (let i = 0; i <= this.M; i++)
-                    if (!(d[i] >= this.dmin || s[i] > this.te))
-                        condition = false;
-
-                if (condition) {
-                    // found match and report:
-                    this.matchList.push(new Match(this.dmin, this.ts - 1, this.te - 1, this.classNumber));
-
-                    // reset everything:
-                    this.dmin = 1e10;
-
-                    for (let i = 1; i <= this.M; i++) {
-                        if (s[i] <= this.te) {
-                            d[i] = 1e10;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (d[this.M] <= this.eps && d[this.M] < this.dmin) {
-            this.dmin = d[this.M];
-            this.ts = s[this.M];
-            this.te = t;
-        }
-
-        this.d2 = this.d; this.d = d;
-        this.s2 = this.s; this.s = s;
-        this.t = t;
+        return predict;
     }
 }
 
@@ -531,4 +465,122 @@ export class DBA<SampleType> {
         })
         );
     }
+}
+
+export function Average(inp: Vector[]): Vector {
+    let mean = new Vector(0, 0, 0);
+
+    for (let i = 0; i < inp.length; i++) {
+        mean.X += inp[i].X;
+        mean.Y += inp[i].Y;
+        mean.Z += inp[i].Z;
+    }
+
+    mean.X /= inp.length;
+    mean.Y /= inp.length;
+    mean.Z /= inp.length;
+
+    return mean;
+}
+
+export function roundVecArray(data: Vector[]): Vector[] {
+    let roundedVec: Vector[] = [];
+
+    for (let i = 0; i < data.length; i++)
+        roundedVec.push(new Vector(Math.round(data[i].X), Math.round(data[i].Y), Math.round(data[i].Z)));
+
+    return roundedVec;
+}
+
+
+export function ComputeVarianceVec(protoArray: Vector[][]): number{
+    let sum = new Vector(0, 0, 0);
+    let sumSquares = new Vector(0, 0, 0);
+    let size = 0;
+
+    for (let i = 0; i < protoArray.length; i++) {
+        size += protoArray[i].length;
+
+        for (let j = 0; j < protoArray[i].length; j++) {
+            sum = new Vector(sum.X + protoArray[i][j].X, 
+                             sum.Y + protoArray[i][j].Y, 
+                             sum.Z + protoArray[i][j].Z);
+
+            sumSquares = new Vector(sumSquares.X + Math.pow(protoArray[i][j].X, 2), 
+                                    sumSquares.Y + Math.pow(protoArray[i][j].Y, 2), 
+                                    sumSquares.Z + Math.pow(protoArray[i][j].Z, 2));
+        }
+    }
+
+    let variance = new Vector(((sumSquares.X - (Math.pow(sum.X, 2) / size)) / size),
+                              ((sumSquares.Y - (Math.pow(sum.Y, 2) / size)) / size),
+                              ((sumSquares.Z - (Math.pow(sum.Z, 2) / size)) / size));
+
+    return EuclideanDistance(variance, new Vector(0, 0, 0));
+}
+
+
+export function findMinimumThreshold(prototypeArray: Vector[][],
+                                     referencePrototype: Vector[],
+                                     avgLen: number,
+                                     distFun: (a: Vector, b: Vector) => number,
+                                     step: number,
+                                     maxStep: number): number {
+    // TODO: slice the data into two random halves. run the avg algorithm on one half and then compute the threshold using the other half.
+    let threshold = 0;
+    let variance = ComputeVarianceVec(prototypeArray);
+    let condition = true;
+    let i = 0;
+
+    let testMatch: Match[] = [];
+    let predictMatch: Match[] = [];
+
+    do {
+        // TODO: make it more efficient by adding RESET function and accessors for the threshold 
+        let spring = new SpringAlgorithm<Vector>(referencePrototype, threshold, 1, avgLen, distFun);
+
+        let time = 0;
+
+        for (let k = 0; k < prototypeArray.length; k++) {
+            // run some random data
+            for (let r = 0; r < 10; r++) {
+                let m = spring.Feed(new Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                if (m.classNum != 0) predictMatch.push(m);
+                time++;
+            }
+
+            let ts = time;
+            for (let r = 0; r < prototypeArray[k].length; r++) {
+                let m = spring.Feed(prototypeArray[k][r]);
+                if (m.classNum != 0) predictMatch.push(m);
+                time++;
+            }
+            let te = time;
+
+            for (let r = 0; r < 10; r++) {
+                let m = spring.Feed(new Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024));
+                if (m.classNum != 0) predictMatch.push(m);
+                time++;
+            }
+
+            testMatch.push(new Match(0, ts, te, 1));
+        }
+
+        if (predictMatch.length == prototypeArray.length) {
+
+            // for (let k = 0; k < testMatch.length; k++) {
+                // check if te and ts are matching (e.g. pretty close!) as well
+            // }
+
+            condition = false;
+        }
+
+        i++;
+
+        if (i > maxStep) return threshold;
+
+        threshold = i * step * variance;
+    } while (condition);
+
+    return threshold;
 }
