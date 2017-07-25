@@ -435,6 +435,8 @@ namespace ts.pxtc {
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
 
+            let uf2 = useuf2 ? UF2.newBlockFile() : null
+
             if (elfInfo) {
                 let prog = new Uint8Array(buf.length * 2)
                 for (let i = 0; i < buf.length; ++i) {
@@ -444,10 +446,12 @@ namespace ts.pxtc {
                 for (let i = 0; i < hd.length; ++i)
                     pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
                 applyPatches(null, resbuf)
+                if (uf2) {
+                    UF2.writeBytes(uf2, 0, resbuf);
+                    return [UF2.serializeFile(uf2)];
+                }
                 return [U.uint8ArrayToString(resbuf)]
             }
-
-            let uf2 = useuf2 ? UF2.newBlockFile() : null
 
             if (uf2) {
                 UF2.writeHex(uf2, myhex)
