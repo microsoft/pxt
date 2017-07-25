@@ -1,6 +1,7 @@
 import { Vector, GestureSample, Gesture } from './types';
 import * as Viz from './visualizations';
 import * as Webcam from "./webcam";
+import * as Model from "./model";
 
 export let isRecording = false;
 export let recData: Gesture[] = [];
@@ -60,21 +61,21 @@ export function stopRecording() {
         recData[recPointer].gestures[cur].video = vid;
 
         if (cur == 0) {
-            // create the whole things
+            // create the whole container
             recData[recPointer].displayGesture.rawData = recData[recPointer].gestures[cur].rawData;
             recData[recPointer].displayGesture.video = recData[recPointer].gestures[cur].video;
 
             Viz.drawContainer(recPointer);
             Viz.drawVideo(recPointer, vid);
-            Viz.drawMainGraph(recPointer);
             Viz.drawGestureSample(recPointer, 0);
         }
         else {
-            // update the displayGesture using the DBA algorithm
-
-            // Viz.drawMainGraph(recPointer);
             Viz.drawGestureSample(recPointer, cur);
         }
+
+        Model.core.Update(recData[recPointer].getData());
+        recData[recPointer].displayGesture.rawData = Model.core.refPrototype;
+        Viz.drawMainGraph(recPointer);
     };
 }
 

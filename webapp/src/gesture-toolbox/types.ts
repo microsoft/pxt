@@ -23,6 +23,22 @@ export class Gesture {
         this.displayGesture = new GestureSample();
         this.gestureID = Gesture.id++;
     }
+
+    public getData(): Vector[][] {
+        let all_data: Vector[][] = [];
+
+        for (let i = 0; i < this.gestures.length; i++) {
+            let sample: Vector[] = [];
+
+            for (let j = 0; j < this.gestures[i].rawData.length; j++) {
+                sample.push(this.gestures[i].rawData[j].clone());
+            }
+
+            all_data.push(sample);
+        }
+
+        return all_data;
+    }
 }
 
 

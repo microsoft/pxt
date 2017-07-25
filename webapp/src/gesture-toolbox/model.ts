@@ -3,7 +3,7 @@ import * as Algorithms from './algorithms';
 import { Vector, Match } from './types';
 import * as pkg from "./../package";
 
-export class SingleDTWModel {
+export class SingleDTWCore {
     private dtw: Algorithms.SpringAlgorithm<Vector>;
     private dba: Algorithms.DBA<Vector>;
     private classNumber: number;
@@ -12,13 +12,15 @@ export class SingleDTWModel {
     public threshold: number;
     public avgLength: number;
 
-    constructor(initialData: Vector[][], classNum: number) {
+
+    constructor(classNum: number) {
         this.classNumber = classNum;
         this.dba = new Algorithms.DBA<Vector>(Algorithms.EuclideanDistanceFast, Algorithms.Average);
         // call update to generate the referencePrototype and threshold
-        this.Update(initialData);
-        this.dtw = new Algorithms.SpringAlgorithm<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
+        // this.Update(initialData);
+        // this.dtw = new Algorithms.SpringAlgorithm<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
     }
+
 
     public Update(data: Vector[][]) {
         // split data
@@ -33,10 +35,10 @@ export class SingleDTWModel {
             lengthSum += data.length;
         }
 
-        this.avgLength = lengthSum / data.length;
+        this.avgLength = Math.round(lengthSum / data.length);
 
         this.refPrototype = Algorithms.roundVecArray(this.dba.computeKMeans(trainData, 1, 10, 10, 0.01)[0].mean);
-        this.threshold = Algorithms.findMinimumThreshold(thresholdData, this.refPrototype, this.avgLength, Algorithms.EuclideanDistanceFast, 0.1, 5);
+        this.threshold = Math.round(Algorithms.findMinimumThreshold(thresholdData, this.refPrototype, this.avgLength, Algorithms.EuclideanDistanceFast, 0.1, 5));
 
         // update the Spring algorithm
         // reset the Spring algorithm
@@ -49,9 +51,8 @@ export class SingleDTWModel {
     }
 
 
-    public GenerateBlock(): string {
-        let gestureTS = "";
-`
+    public GenerateBlock() {
+        let gestureTS = `
 /**
  * Gesture blocks
  */
@@ -261,8 +262,10 @@ class SpringAlgorithm {
 
         return predicted;
     }
-}`
-        return gestureTS;
+}
+`;
+
+        pkg.mainEditorPkg().setFile("custom.ts", gestureTS);
     }
 
 
@@ -279,3 +282,5 @@ class SpringAlgorithm {
         return vecStr;
     }
 }
+
+export let core = new SingleDTWCore(1);

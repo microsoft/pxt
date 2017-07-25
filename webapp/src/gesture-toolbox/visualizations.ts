@@ -89,15 +89,26 @@ function drawGraph(data: Point[], axis: any, color: string) {
 
     data.forEach((d: Point) => {d.Y = y(d.Y)});
 
-    let svg = axis.append("svg")
-        .attr("width", width)
-        .attr("height", height);
+    let svg = axis.select("svg");
 
-    svg.append("path")
+    if (svg.empty()) {
+        svg = axis.append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        svg.append("path")
         .attr("d", smoothedLine(data))
             .attr("stroke", color)
             .attr("stroke-width", 1)
             .attr("fill", "none");
+    }
+    else {
+        svg.select("path")
+            .attr("d", smoothedLine(data))
+            .attr("stroke", color)
+            .attr("stroke-width", 1)
+            .attr("fill", "none");
+    }
 }
 
 
