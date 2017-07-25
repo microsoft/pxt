@@ -5,6 +5,15 @@
 /* Reference import */
 @import (reference) "semantic.less";
 
+
+/* Messages */
+#msg .hc {
+    background-color: black !important;
+    border: 1px solid white !important;
+    border-radius: 0em;
+    color: white !important;
+}
+
 .hc {
 
 @selected: #10C8CD;
@@ -18,10 +27,32 @@
     /* Simulator */
     #filelist {
         background: black !important;
+
+        #boardview {
+            background: black !important;
+        }
     }
 
 
     /* Menu bar */
+    #menubar .menu > .item:focus,
+    #menubar #accessibleMenu > .item:focus,
+    #menubar .editor-menuitem > .item:focus {
+        border: 1px solid @selected !important;
+    }
+
+    #menubar .menu > .item:focus > i, 
+    #menubar .menu > .item:focus > span {
+        color: @selected !important;
+    }
+
+    #menubar #accessibleMenu > .item:focus,
+    #menubar .editor-menuitem > .item:focus:not(.active) {
+        i, span {
+            color: @selected !important;
+        }
+    }
+
     #menubar .ui.inverted.menu, #menubar #accessibleMenu .ui.item.link.inverted:hover {
         background: black !important;
         border-bottom: 1px solid white;
@@ -176,14 +207,24 @@
         }
     }
 
+    #cookiemsg {
+        background: black !important;
+        border-radius: 0em;
+        border: 1px solid white !important;
+    }
+
     /* Blockly / Monaco toolbox */
+    .blocklyTreeSelected {
+        background: @selected !important;
+    }
+
     .blocklyToolboxDiv, .monacoToolboxDiv {
         background: black !important;
         border-left: 1px solid white !important; 
         border-right: 1px solid white !important;
     }
 
-    .blocklyTreeLabel {
+    .blocklyTreeLabel, .blocklyTreeIcon {
         color: white !important;
     }
 
@@ -226,5 +267,4 @@
             color: white !important;
         }
     }
-
 }

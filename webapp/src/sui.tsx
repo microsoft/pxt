@@ -3,8 +3,6 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as core from "./core";
 
-export let highContrast: boolean;
-
 export interface UiProps {
     icon?: string;
     iconClass?: string;
@@ -96,7 +94,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
     private isOpened = false
     private preventHide = false
 
-    private handleKeyDown = (e: KeyboardEvent) => {
+    private menuItemKeyDown = (e: KeyboardEvent) => {
         let charCode = (typeof e.which == "number") ? e.which : e.keyCode
         if (charCode === 9) {
             this.close()
@@ -107,6 +105,17 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
         }
     }
 
+    private dropDownKeyDown = (e: JQueryKeyEventObject) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 32 || charCode === 13) {
+            if (this.isOpened) {
+                this.child("").dropdown("hide")
+            } else {
+                this.child("").dropdown("show")
+            }
+        }
+    }
+
     private close() {
         this.preventHide = false
         this.child("").dropdown("hide")
@@ -114,7 +123,9 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
     componentDidMount() {
         this.popup()
-        this.child("").dropdown({
+        let dropdowmtag = this.child("")
+        dropdowmtag.on("keydown", this.dropDownKeyDown)
+        dropdowmtag.dropdown({
             action: (text: string, value: any, element: JQuery) => {
                 this.close()
 
@@ -140,7 +151,7 @@ export class DropdownMenuItem extends UiElement<DropdownProps> {
 
                 var menuItems = this.child(".item")
                 menuItems.each((index: number, elem: HTMLElement) => {
-                    elem.onkeydown = this.handleKeyDown
+                    elem.onkeydown = this.menuItemKeyDown
                 })
             },
             onHide: () => {
@@ -905,7 +916,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
         const dimmerClasses = !dimmer
             ? null
             : cx([
-                highContrast ? 'hc' : '', 
+                core.highContrast ? 'hc' : '', 
                 'ui',
                 dimmer === 'inverted' ? 'inverted' : '',
                 pxt.options.light ? '' : "transition",

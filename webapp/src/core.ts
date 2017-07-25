@@ -11,6 +11,8 @@ import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
+export let highContrast: boolean;
+
 const lf = Util.lf;
 
 export type Component<S, T> = data.Component<S, T>;
@@ -91,6 +93,22 @@ let lastTime: any = {}
 function htmlmsg(kind: string, msg: string) {
     let now = Date.now()
     let prev = lastTime[kind] || 0
+
+    let msgTag = $('#msg');
+    if (highContrast) {
+        msgTag.children().each((index: number, elem: Element) => {
+            if (!elem.classList.contains('hc')) {
+                elem.classList.add('hc')
+            }
+        });
+    } else {
+        msgTag.children().each((index: number, elem: Element) => {
+            if (!elem.classList.contains('hc')) {
+                elem.classList.remove('hc')
+            }
+        });
+    }
+
     if (now - prev < 100)
         $('#' + kind + 'msg').text(msg);
     else {

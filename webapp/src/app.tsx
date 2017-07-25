@@ -1190,7 +1190,7 @@ export class ProjectView
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label>${lf("Select a {0} file to open.", ext)}</label>
-    <input type="file" class="ui button blue fluid"></input>
+    <input type="file" class="ui button blue fluid focused"></input>
   </div>
 </div>`,
         }).done(res => {
@@ -1531,7 +1531,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
         const hc = !this.state.highContrast;
         pxt.tickEvent("menu.highcontrast", { on: hc ? 1 : 0 });
         this.setState({ highContrast: hc }, () => this.restartSimulator());
-        sui.highContrast = hc;
+        core.highContrast = hc;
         if (this.editor && this.editor.isReady) {
             this.editor.setHighContrast(hc);
         }
