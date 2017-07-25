@@ -216,7 +216,7 @@ export function deleteGestureSample(gestureID: number, sampleID: number) {
     }
     if (sampleIndex == -1) {console.error("sample doesn't exist..."); return;}
 
-    if (sampleIndex != 0) {
+    if (Recorder.recData[gestIndex].gestures.length != 1) {
         Recorder.recData[gestIndex].gestures.splice(sampleIndex, 1);
         Recorder.recData[gestIndex].htmlContainer.samplesContainer.select("#sample-" + sampleID).remove();
     }
