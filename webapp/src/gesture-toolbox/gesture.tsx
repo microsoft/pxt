@@ -58,6 +58,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
         this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
 
+        Recorder.Reload();
+
         setInterval(() => {
             let testData = new Types.Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024);
             this.graphX.update(testData.X, Viz.smoothedLine);
@@ -73,7 +75,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             else if (wasRecording == true && Recorder.isRecording == false) {
                 Recorder.stopRecording();
             }
-            
             wasRecording = Recorder.isRecording;
         }, 40);
 

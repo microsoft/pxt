@@ -62,6 +62,7 @@ export function stopRecording() {
         if (cur == 0) {
             // create the whole things
             recData[recPointer].displayGesture.rawData = recData[recPointer].gestures[cur].rawData;
+            recData[recPointer].displayGesture.video = recData[recPointer].gestures[cur].video;
 
             Viz.drawContainer(recPointer);
             Viz.drawVideo(recPointer, vid);
@@ -100,4 +101,20 @@ export function parseString(strBuf: string): any {
     }
 
     return result;
+}
+
+export function Reload() {
+    for (let i = 0; i < recData.length; i++) {
+        for (let j = 0; j < recData[i].gestures.length; j++) {
+            if (j == 0) {
+                Viz.drawContainer(i);
+                Viz.drawVideo(i, recData[i].displayGesture.video);
+                Viz.drawMainGraph(i);
+                Viz.drawGestureSample(i, 0);
+            }
+            else {
+                Viz.drawGestureSample(i, j);
+            }
+        }
+    }
 }
