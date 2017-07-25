@@ -42,6 +42,7 @@ namespace pxt.editor {
 
         running?: boolean;
         compiling?: boolean;
+        isSaving?: boolean;
         publishing?: boolean;
         hideEditorFloats?: boolean;
         collapseEditorTools?: boolean;
@@ -150,7 +151,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
-        toggleTrace(): void;
+        toggleTrace(intervalSpeed?: number): void;
 
         startTutorial(tutorialId: string): void;
 
@@ -262,6 +263,12 @@ namespace pxt.editor {
          * Snippet of code to insert when dragged into editor
          */
         snippet: string;
+
+        /**
+         * Group label used to categorize block.  Blocks are arranged with other
+         * blocks that share the same group.
+         */
+        group?: string,
 
         /**
          * Description of code to appear in the hover text

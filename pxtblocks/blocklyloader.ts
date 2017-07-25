@@ -46,6 +46,9 @@ namespace pxt.blocks {
         }
     }
 
+    // Matches arrays and tuple types
+    const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
+
     let usedBlocks: Map<boolean> = {};
     let updateUsedBlocks = false;
 
@@ -548,9 +551,16 @@ namespace pxt.blocks {
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_RIGHT)
-        // ignore generic types
-        if (type && type != "T")
-            i.setCheck(type);
+        // Ignore generic types
+        if (type && type != "T") {
+            if (arrayTypeRegex.test(type)) {
+                // All array types get the same check regardless of their subtype
+                i.setCheck("Array");
+            }
+            else {
+                i.setCheck(type);
+            }
+        }
         return i;
     }
 
@@ -751,7 +761,15 @@ namespace pxt.blocks {
             }
         }
 
-        block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        if (fn.attributes.inlineInputMode === "external") {
+            block.setInputsInline(false);
+        }
+        else if (fn.attributes.inlineInputMode === "inline") {
+            block.setInputsInline(true);
+        }
+        else {
+            block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        }
 
         switch (fn.retType) {
             case "number": block.setOutput(true, "Number"); break;
@@ -759,7 +777,13 @@ namespace pxt.blocks {
             case "boolean": block.setOutput(true, "Boolean"); break;
             case "void": break; // do nothing
             //TODO
-            default: block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+            default:
+                if (arrayTypeRegex.test(fn.retType)) {
+                    block.setOutput(true, "Array");
+                }
+                else {
+                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                }
         }
 
         // hook up/down if return value is void
@@ -1240,7 +1264,8 @@ namespace pxt.blocks {
             blocklySearchInput.appendChild(blocklySearchInputIcon);
             blocklySearchArea.appendChild(blocklySearchInput);
             const toolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0];
-            toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
+            if (toolboxDiv) // Only add if a toolbox exists, eg not in sandbox mode
+                toolboxDiv.insertBefore(blocklySearchArea, toolboxDiv.firstChild);
         }
 
         const hasSearchFlyout = () => {
@@ -1482,6 +1507,25 @@ namespace pxt.blocks {
         const listsLengthId = "lists_length";
         const listsLengthDef = pxt.blocks.getBlockDefinition(listsLengthId);
         msg.LISTS_LENGTH_TITLE = listsLengthDef.block["LISTS_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[listsLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.LISTS_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['Array']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
+
         installBuiltinHelpInfo(listsLengthId);
     }
 
@@ -2273,65 +2317,73 @@ namespace pxt.blocks {
 
     function initVariables() {
         let varname = lf("{id:var}item");
-        Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
+        Blockly.Variables.flyoutCategory = function(workspace) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
                 // Add the Heading label
-                let headingLabel = goog.dom.createDom('label');
+                let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
                 headingLabel.setAttribute('web-icon', '\uf039');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
-                xmlList.push(headingLabel as HTMLElement);
+                xmlList.push(headingLabel);
             }
 
-            let button = goog.dom.createDom('button');
+            let button = goog.dom.createDom('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-            workspace.registerButtonCallback('CREATE_VARIABLE', function (button: Blockly.FlyoutButton) {
+            workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
-            xmlList.push(button as HTMLElement);
 
-            let variableList = Blockly.Variables.allVariables(workspace);
-            variableList.sort(goog.string.caseInsensitiveCompare);
+            xmlList.push(button);
+
+            let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace);
+            xmlList = xmlList.concat(blockList);
+            return xmlList;
+        };
+        Blockly.Variables.flyoutCategoryBlocks = function(workspace) {
+            let variableModelList = workspace.getVariablesOfType('');
+            variableModelList.sort(Blockly.VariableModel.compareByName);
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
-            goog.array.remove(variableList, varname);
-            variableList.unshift(varname);
-
-            // variables getters first
-            for (let i = 0; i < variableList.length; i++) {
-                // <block type="variables_get" gap="24">
-                //   <field name="VAR">item</field>
-                // </block>
-                let block = goog.dom.createDom('block');
-                block.setAttribute('type', 'variables_get');
-                block.setAttribute('gap', '8');
-                block.setAttribute('colour', getNamespaceColor('variables'));
-                let field = goog.dom.createDom('field', null, variableList[i]);
-                field.setAttribute('name', 'VAR');
-                block.appendChild(field);
-                xmlList.push(block as HTMLElement);
+            for (let i = 0, tempVar: any; tempVar = variableModelList[i]; i++) {
+                if (tempVar.name == varname) {
+                    variableModelList.splice(i, 1);
+                    break;
+                }
             }
-            xmlList[xmlList.length - 1].setAttribute('gap', '24');
+            const defaultVar = new Blockly.VariableModel(workspace, varname);
+            variableModelList.unshift(defaultVar);
 
-            for (let i = 0; i < Math.min(1, variableList.length); i++) {
-                {
-                    // <block type="variables_set" gap="8">
-                    //   <field name="VAR">item</field>
-                    // </block>
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', 'variables_set');
-                    block.setAttribute('gap', '8');
-                    {
-                        let field = goog.dom.createDom('field', null, variableList[i]);
-                        field.setAttribute('name', 'VAR');
-                        block.appendChild(field);
+            let xmlList: HTMLElement[] = [];
+            if (variableModelList.length > 0) {
+                // variables getters first
+                for (let i = 0, variable: any; variable = variableModelList[i]; i++) {
+                    if (Blockly.Blocks['variables_get']) {
+                        let blockText = '<xml>' +
+                            '<block type="variables_get" gap="8">' +
+                            Blockly.Variables.generateVariableFieldXml_(variable) +
+                            '</block>' +
+                            '</xml>';
+                        let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
+                        xmlList.push(block);
                     }
+                }
+                xmlList[xmlList.length - 1].setAttribute('gap', '24');
+
+                let firstVariable = variableModelList[0];
+                if (Blockly.Blocks['variables_set']) {
+                    let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
+                    let blockText = '<xml>' +
+                            '<block type="variables_set" gap="' + gap + '">' +
+                            Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                            '</block>' +
+                            '</xml>';
+                    let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
                     {
                         let value = goog.dom.createDom('value');
                         value.setAttribute('name', 'VALUE');
@@ -2344,28 +2396,34 @@ namespace pxt.blocks {
                         shadow.appendChild(field);
                         block.appendChild(value);
                     }
-
-                    xmlList.push(block as HTMLElement);
+                    xmlList.push(block);
                 }
-                {
-                    // <block type="variables_get" gap="24">
-                    //   <field name="VAR">item</field>
-                    // </block>
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', 'variables_change');
-                    block.setAttribute('gap', '24');
-                    let value = goog.dom.createDom('value');
-                    value.setAttribute('name', 'VALUE');
-                    let shadow = goog.dom.createDom('shadow');
-                    shadow.setAttribute("type", "math_number");
-                    value.appendChild(shadow);
-                    let field = goog.dom.createDom('field');
-                    field.setAttribute('name', 'NUM');
-                    field.appendChild(document.createTextNode("1"));
-                    shadow.appendChild(field);
-                    block.appendChild(value);
-
-                    xmlList.push(block as HTMLElement);
+                if (Blockly.Blocks['variables_change']) {
+                    let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
+                    let blockText = '<xml>' +
+                        '<block type="variables_change" gap="' + gap + '">' +
+                        Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                        '<value name="DELTA">' +
+                        '<shadow type="math_number">' +
+                        '<field name="NUM">1</field>' +
+                        '</shadow>' +
+                        '</value>' +
+                        '</block>' +
+                        '</xml>';
+                    let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
+                    {
+                        let value = goog.dom.createDom('value');
+                        value.setAttribute('name', 'VALUE');
+                        let shadow = goog.dom.createDom('shadow');
+                        shadow.setAttribute("type", "math_number");
+                        value.appendChild(shadow);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NUM');
+                        field.appendChild(document.createTextNode("0"));
+                        shadow.appendChild(field);
+                        block.appendChild(value);
+                    }
+                    xmlList.push(block);
                 }
             }
             return xmlList;
@@ -2416,6 +2474,9 @@ namespace pxt.blocks {
                 setBuiltinHelpInfo(this, variablesChangeId);
             }
         };
+
+        // New variable dialog
+        msg.NEW_VARIABLE_TITLE = lf("New variable name:");
     }
 
     function initFunctions() {
@@ -2506,33 +2567,33 @@ namespace pxt.blocks {
                         JSON.stringify((def as any).arguments_) != JSON.stringify(this.arguments_))) {
                         // The signatures don't match.
                         def = null;
-                }
-                if (!def) {
-                    Blockly.Events.setGroup(event.group);
-                    /**
-                     * Create matching definition block.
-                     * <xml>
-                     *   <block type="procedures_defreturn" x="10" y="20">
-                     *     <field name="NAME">test</field>
-                     *   </block>
-                     * </xml>
-                     */
-                    let xml = goog.dom.createDom('xml');
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', this.defType_);
-                    let xy = this.getRelativeToSurfaceXY();
-                    let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
-                    let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
-                    block.setAttribute('x', x);
-                    block.setAttribute('y', y);
-                    let field = goog.dom.createDom('field');
-                    field.setAttribute('name', 'NAME');
-                    field.appendChild(document.createTextNode(this.getProcedureCall()));
-                    block.appendChild(field);
-                    xml.appendChild(block);
-                    Blockly.Xml.domToWorkspace(xml, this.workspace);
-                    Blockly.Events.setGroup(false);
-                }
+                    }
+                    if (!def) {
+                        Blockly.Events.setGroup(event.group);
+                        /**
+                         * Create matching definition block.
+                         * <xml>
+                         *   <block type="procedures_defreturn" x="10" y="20">
+                         *     <field name="NAME">test</field>
+                         *   </block>
+                         * </xml>
+                         */
+                        let xml = goog.dom.createDom('xml');
+                        let block = goog.dom.createDom('block');
+                        block.setAttribute('type', this.defType_);
+                        let xy = this.getRelativeToSurfaceXY();
+                        let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
+                        let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
+                        block.setAttribute('x', x);
+                        block.setAttribute('y', y);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NAME');
+                        field.appendChild(document.createTextNode(this.getProcedureCall()));
+                        block.appendChild(field);
+                        xml.appendChild(block);
+                        Blockly.Xml.domToWorkspace(xml, this.workspace);
+                        Blockly.Events.setGroup(false);
+                    }
                 } else if (event.type == Blockly.Events.DELETE) {
                     // Look for the case where a procedure definition has been deleted,
                     // leaving this block (a procedure call) orphaned.  In this case, delete
@@ -2545,6 +2606,15 @@ namespace pxt.blocks {
                         Blockly.Events.setGroup(false);
                     }
                 }
+            },
+            mutationToDom: function() {
+                const mutationElement = document.createElement("mutation");
+                mutationElement.setAttribute("name", this.getProcedureCall());
+                return mutationElement;
+            },
+            domToMutation: function(element: Element) {
+                const name = element.getAttribute("name");
+                this.renameProcedure(this.getProcedureCall(), name);
             },
             /**
              * Add menu option to find the definition block for this call.
@@ -2634,7 +2704,7 @@ namespace pxt.blocks {
                             }
                         }
                         if (newFunc) {
-                            if (workspace.variableIndexOf(newFunc) != -1) {
+                            if (workspace.getVariable(newFunc)) {
                                 Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
                                     function() {
@@ -2745,6 +2815,24 @@ namespace pxt.blocks {
         const textLengthId = "text_length";
         const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
         msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[textLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.TEXT_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['String']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
         installBuiltinHelpInfo(textLengthId);
 
         // builtin text_join
