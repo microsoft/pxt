@@ -43,12 +43,16 @@
     border-radius: 7px 0 0 7px;
     margin-right: 5px;
     padding: 5px;
+
+    transform: rotateY(180deg);
+    -webkit-transform:rotateY(180deg); /* Safari and Chrome */
+    -moz-transform:rotateY(180deg); /* Firefox */
 }
 
 .vertical-sep {
     height: 211px;
+    float: left;
     margin: 7px 5px auto 5px;
-    display: inline-block;
 
     border-left: 1px solid #bbb;
 }

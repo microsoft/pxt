@@ -15,10 +15,13 @@ export class Gesture {
     public name: string;
     public displayGesture: GestureSample;
     public htmlContainer: any;
+    private static id: number = 0;
+    public gestureID: number;
 
     constructor() {
         this.gestures = [];
         this.displayGesture = new GestureSample();
+        this.gestureID = Gesture.id++;
     }
 }
 
@@ -28,9 +31,12 @@ export class GestureSample {
     public video: any;
     public startTime: number;
     public endTime: number;
+    private static id: number = 0;
+    public sampleID: number;
 
     constructor() {
         this.rawData = [];
+        this.sampleID = GestureSample.id++;
     }
 }
 

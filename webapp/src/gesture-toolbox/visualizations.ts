@@ -120,6 +120,7 @@ export function drawContainer(gestIndex: number) {
     let vidElement = container.append("video")
         .attr("class", "rec-video")
         .attr("autoplay", "rec-video")
+        .attr("style", "rec-video")
         .attr("loop", "true");
 
     let mainGraph = container.append("div")
@@ -162,16 +163,17 @@ export function drawMainGraph(gestIndex: number) {
 
 export function drawGestureSample(gestIndex: number, sampleIndex: number) {
     let data = Recorder.recData[gestIndex].gestures[sampleIndex].rawData;
-
-    if (sampleIndex != 0)
-        Recorder.recData[gestIndex].htmlContainer.samplesContainer
-            .append("div")
-            .attr("class", "vertical-sep");
+    let gestureID = Recorder.recData[gestIndex].gestureID;
+    let sampleID = Recorder.recData[gestIndex].gestures[sampleIndex].sampleID;
 
     let graphContainer = Recorder.recData[gestIndex].htmlContainer.samplesContainer
         .append("div")
-        .attr("class", "sample-graph");
+        .attr("class", "sample-graph")
+        .attr("id", "sample-" + sampleID);
 
+    if (sampleIndex != 0)
+        graphContainer.append("div")
+            .attr("class", "vertical-sep");
 
     // set width based on number of samples
     // height will be 32%
@@ -185,12 +187,42 @@ export function drawGestureSample(gestIndex: number, sampleIndex: number) {
     let zAxis = graphContainer.append("div")
         .attr("class", "graph-z");
 
+    graphContainer.append("button")
+        .attr("class", "ui compact icon button")
+        .on("click", function() {
+            deleteGestureSample(gestureID, sampleID);
+        })
+        .append("i")
+        .attr("class", "remove icon");
+
     drawGraph(data.map((v: Vector) => { return new Point(0, v.X)}), xAxis, "red");
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Y)}), yAxis, "green");
     drawGraph(data.map((v: Vector) => { return new Point(0, v.Z)}), zAxis, "blue");
 }
 
 
-export function clearGestureSample(gestIndex: number, sampleIndex: number) {
+export function deleteGestureSample(gestureID: number, sampleID: number) {
+    let gestIndex = -1;
+    for (let i = 0; i < Recorder.recData.length; i++) {
+        if (Recorder.recData[i].gestureID == gestureID)
+            gestIndex = i;
+    }
+    if (gestIndex == -1) {console.error("gesture doesn't exist..."); return;}
 
+    let sampleIndex = -1;
+    for (let i = 0; i < Recorder.recData[gestIndex].gestures.length; i++) {
+        if (Recorder.recData[gestIndex].gestures[i].sampleID == sampleID)
+            sampleIndex = i;
+    }
+    if (sampleIndex == -1) {console.error("sample doesn't exist..."); return;}
+
+    if (sampleIndex != 0) {
+        Recorder.recData[gestIndex].gestures.splice(sampleIndex, 1);
+        Recorder.recData[gestIndex].htmlContainer.samplesContainer.select("#sample-" + sampleID).remove();
+    }
+    else {
+        // need to delete the whole container as well.
+        // or (which I prefer): the add new gesture button (that I haven't implemented yet) would create an empty container
+        // to be used and deleting the last sample will put the gesture in that state.
+    }
 }
