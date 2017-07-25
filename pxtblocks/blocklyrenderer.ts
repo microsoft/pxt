@@ -63,7 +63,7 @@ namespace pxt.blocks {
                 case BlockLayout.Shuffle:
                     pxt.blocks.layout.shuffle(workspace, options.aspectRatio); break;
                 case BlockLayout.Flow:
-                    pxt.blocks.layout.flow(workspace, options.aspectRatio); break;
+                    pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio }); break;
                 case BlockLayout.Clean:
                     if ((<any>workspace).cleanUp_)
                         (<any>workspace).cleanUp_();

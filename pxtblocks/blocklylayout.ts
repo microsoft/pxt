@@ -1,5 +1,10 @@
 
 namespace pxt.blocks.layout {
+    export interface FlowOptions {
+        ratio?: number;
+        maxWidth?: number;
+    }
+
     export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
         // position blocks
@@ -66,8 +71,13 @@ namespace pxt.blocks.layout {
         flowBlocks(blocks, ratio);
     }
 
-    export function flow(ws: B.Workspace, ratio?: number) {
-        flowBlocks(ws.getTopBlocks(true), ratio);
+    export function flow(ws: B.Workspace, opts?: FlowOptions) {
+        if (opts) {
+            flowBlocks(ws.getTopBlocks(true), opts.ratio, opts.maxWidth);
+        }
+        else {
+            flowBlocks(ws.getTopBlocks(true));
+        }
     }
 
     export function screenshotEnabled(): boolean {
@@ -213,18 +223,24 @@ namespace pxt.blocks.layout {
         return Promise.all(p).then(() => { })
     }
 
-    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62) {
+    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
         const gap = 16;
         const marginx = 20;
         const marginy = 20;
 
-        // compute total block surface and infer width
-        let surface = 0;
-        for (let block of blocks) {
-            let s = block.getHeightWidth();
-            surface += s.width * s.height;
+        let maxx: number;
+        if (maxWidth > marginx) {
+            maxx = maxWidth - marginx;
         }
-        const maxx = Math.sqrt(surface) * ratio;
+        else {
+            // compute total block surface and infer width
+            let surface = 0;
+            for (let block of blocks) {
+                let s = block.getHeightWidth();
+                surface += s.width * s.height;
+            }
+            maxx = Math.sqrt(surface) * ratio;
+        }
 
         let insertx = marginx;
         let inserty = marginy;
