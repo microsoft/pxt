@@ -241,10 +241,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
                                         <div className="column">
                                             <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project") }>
-                                                <label htmlFor="fileNameInput" id="fileNameInputLabel" className="accessible-hidden">{lf("Type a name for your project")}</label>
-                                                <input id="fileNameInput"
+                                                <label htmlFor="fileNameInput1" id="fileNameInputLabel1" className="accessible-hidden">{lf("Type a name for your project")}</label>
+                                                <input id="fileNameInput1"
                                                     type="text"
-                                                    aria-labelledby="fileNameInputLabel"
+                                                    aria-labelledby="fileNameInputLabel1"
                                                     placeholder={lf("Pick a name...") }
                                                     value={projectName || ''}
                                                     onChange={(e) => this.saveProjectName((e.target as any).value, 'tablet') }>
@@ -303,10 +303,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     {showProjectRename ?
                         <div className="column left aligned">
                             <div className={`ui right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project") }>
-                                <label htmlFor="fileNameInput" id="fileNameInputLabel" className="accessible-hidden">{lf("Type a name for your project")}</label>
-                                <input id="fileNameInput"
+                                <label htmlFor="fileNameInput2" id="fileNameInputLabel2" className="accessible-hidden">{lf("Type a name for your project")}</label>
+                                <input id="fileNameInput2"
                                     type="text"
-                                    aria-labelledby="fileNameInputLabel"
+                                    aria-labelledby="fileNameInputLabel2"
                                     placeholder={lf("Pick a name...") }
                                     value={projectName || ''}
                                     onChange={(e) => this.saveProjectName((e.target as any).value, 'computer') }>

@@ -1701,8 +1701,8 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                 <div id="simulator">
                     <aside id="filelist" className="ui items">
                         <label htmlFor="boardview" id="boardviewLabel" className="accessible-hidden">{lf("Simulator")}</label>
-                        <section id="boardview" className={`ui vertical editorFloat`} role="region" aria-describedby="boardviewLabel">
-                        </section>
+                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-describedby="boardviewLabel" tabIndex={0}>
+                        </div>
                         { !isHeadless ? <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
                             <div className={`ui icon buttons ${this.state.fullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                                 {make ? <sui.Button icon='configure' class="fluid sixty secondary" text={lf("Make") } title={makeTooltip} onClick={() => this.openInstructions() } /> : undefined}
@@ -1748,7 +1748,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     <span className="item"><a className="ui thin portrait only" title={compileTooltip} onClick={() => this.compile() }><i className="icon download"/>{lf("Download") }</a></span>
                 </div> : undefined}
                 {cookieConsented ? undefined : <div id='cookiemsg' className="ui teal inverted black segment" role="alert">
-                    <button arial-label={lf("Ok") } tabIndex={0} className="ui right floated icon button clear inverted" onClick={consentCookie}>
+                    <button className="ui right floated icon button clear inverted" aria-label="OK" tabIndex={0} onClick={consentCookie}>
                         <i className="remove icon"></i>
                     </button>
                     {lf("By using this site you agree to the use of cookies for analytics.") }
