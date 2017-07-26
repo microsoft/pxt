@@ -25,7 +25,7 @@ num = 6.7
 num = 10.083
 ```
 
-## Arithmetic binary operation (+, -, *, /)
+## Arithmetic binary operation (+, -, \*, /)
 
 The operations for basic arithmetic: add, subtract, multiply, and divide.
 
