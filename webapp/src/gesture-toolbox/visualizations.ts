@@ -1,7 +1,8 @@
 import { Point, Vector } from './types';
 import * as Recorder from './recorder';
 import * as GestureUI from './gesture';
-const d3 = require('d3');
+import * as Model from './model';
+export const d3 = require('d3');
 
 let dx: number = 7;
 let maxVal: number = 2500;
@@ -239,4 +240,7 @@ export function deleteGestureSample(gestureID: number, sampleID: number) {
     }
 
     // TODO: update DTW models
+    Model.core.Update(Recorder.recData[gestureID].getData());
+    Recorder.recData[gestureID].displayGesture.rawData = Model.core.refPrototype;
+    drawMainGraph(gestureID);
 }

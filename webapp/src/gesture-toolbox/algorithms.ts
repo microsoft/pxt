@@ -179,38 +179,6 @@ export class SpringAlgorithm<SampleType> {
 }
 
 
-export function SimulateSpring<SampleType>(spring: SpringAlgorithm<SampleType>, testData: SampleType[][], nothing: SampleType[][]): Match[][] {    
-    let inputTsTe: Match[] = [];
-    let k = 0;
-
-    for (let i = 0; i < testData.length; i++) {
-        let noGesture = nothing[Math.floor(Math.random() * nothing.length)];
-
-        for (let j = 0; j < 10; j++) {
-            spring.FeedStoreMatch(noGesture[j]);
-            k++;
-        }
-
-        let ts = k;
-        for (let j = 0; j < testData[i].length; j++) {
-            spring.FeedStoreMatch(testData[i][j]);
-            k++;
-        }
-        let te = k;
-
-        noGesture = nothing[Math.floor(Math.random() * nothing.length)];
-        for (let j = 0; j < 10; j++) {
-            spring.FeedStoreMatch(noGesture[j]);
-            k++;
-        }
-
-        inputTsTe.push(new Match(null, ts, te, 1));
-    }
-
-    return [inputTsTe, spring.GetMatchList()];
-}
-
-
 export class RC4 {
     // Based on the RC4 random generator. See https://en.wikipedia.org/wiki/RC4
     // Ported from the Multiclass ModelTracker (now called Squares) project (originally in Javascript, now in Typescript).

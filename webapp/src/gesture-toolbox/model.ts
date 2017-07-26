@@ -12,10 +12,13 @@ export class SingleDTWCore {
     public threshold: number;
     public avgLength: number;
 
+    public running: boolean;
+
 
     constructor(classNum: number) {
         this.classNumber = classNum;
         this.dba = new Algorithms.DBA<Vector>(Algorithms.EuclideanDistanceFast, Algorithms.Average);
+        this.running = false;
         // call update to generate the referencePrototype and threshold
         // this.Update(initialData);
         // this.dtw = new Algorithms.SpringAlgorithm<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
@@ -23,6 +26,15 @@ export class SingleDTWCore {
 
 
     public Update(data: Vector[][]) {
+        if (data.length == 0) {
+            // reset
+            this.running = false;
+            this.avgLength = 0;
+            this.threshold = 0;
+            this.refPrototype = [];
+
+            return;
+        }
         // split data
         let trainData: Vector[][] = [];
         let thresholdData: Vector[][] = [];
@@ -32,7 +44,7 @@ export class SingleDTWCore {
             if (i % 2 == 0) trainData.push(data[i]);
             else thresholdData.push(data[i]);
 
-            lengthSum += data.length;
+            lengthSum += data[i].length;
         }
 
         this.avgLength = Math.round(lengthSum / data.length);
@@ -43,6 +55,8 @@ export class SingleDTWCore {
         // update the Spring algorithm
         // reset the Spring algorithm
         this.dtw = new Algorithms.SpringAlgorithm<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
+        this.running = true;
+        this.GenerateBlock();
     }
 
 
@@ -266,6 +280,7 @@ class SpringAlgorithm {
 `;
 
         pkg.mainEditorPkg().setFile("custom.ts", gestureTS);
+        pkg.mainEditorPkg().saveFilesAsync();
     }
 
 

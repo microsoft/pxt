@@ -1,6 +1,3 @@
-// the serial data streamer code that will run on the device
-// adafruit circuit playground:
-
 // function ManhattanDistance(a: Vector, b: Vector): number {
 //     return Math.abs(a.X - b.X) + Math.abs(a.Y - b.Y) + Math.abs(a.Z - b.Z);
 // }
@@ -230,7 +227,3 @@
 //         loops.pause(40);
 //     }
 // })
-
-
-// the serial data streamer code that will run on the device
-// bbc microbit:

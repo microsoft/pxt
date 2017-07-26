@@ -13,6 +13,7 @@ import * as Recorder from "./recorder";
 import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations"
+import * as Model from "./model"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -60,39 +61,56 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         Recorder.Reload();
 
-        setInterval(() => {
-            let testData = new Types.Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024);
-            this.graphX.update(testData.X, Viz.smoothedLine);
-            this.graphY.update(testData.Y, Viz.smoothedLine);
-            this.graphZ.update(testData.Z, Viz.smoothedLine);
+        // setInterval(() => {
+        //     let testData = new Types.Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024);
+        //     this.graphX.update(testData.X, Viz.smoothedLine);
+        //     this.graphY.update(testData.Y, Viz.smoothedLine);
+        //     this.graphZ.update(testData.Z, Viz.smoothedLine);
 
-            if (wasRecording == false && Recorder.isRecording == true) {
-                Recorder.startRecording(testData, 0, "TestGesture");
-            }
-            else if (wasRecording == true && Recorder.isRecording == true) {
-                Recorder.continueRecording(testData);
-            }
-            else if (wasRecording == true && Recorder.isRecording == false) {
-                Recorder.stopRecording();
-            }
-            wasRecording = Recorder.isRecording;
-        }, 40);
+        //     if (wasRecording == false && Recorder.isRecording == true) {
+        //         Recorder.startRecording(testData, 0, "TestGesture");
+        //     }
+        //     else if (wasRecording == true && Recorder.isRecording == true) {
+        //         Recorder.continueRecording(testData);
+        //     }
+        //     else if (wasRecording == true && Recorder.isRecording == false) {
+        //         Recorder.stopRecording();
+        //     }
+        //     wasRecording = Recorder.isRecording;
+        // }, 40);
 
-        // if (hidbridge.shouldUse()) {
-        //     hidbridge.initAsync()
-        //     .then(dev => {
-        //         dev.onSerial = (buf, isErr) => {
-        //             let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
-        //             let newData = Recorder.parseString(strBuf);
+        if (hidbridge.shouldUse()) {
+            hidbridge.initAsync()
+            .then(dev => {
+                dev.onSerial = (buf, isErr) => {
+                    let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+                    let newData = Recorder.parseString(strBuf);
 
-        //             if (newData.acc) {
-        //                 this.graphX.update(newData.accVec.X, Viz.smoothedLine);
-        //                 this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
-        //                 this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
-        //             }
-        //         }
-        //     });
-        // }
+                    if (newData.acc) {
+                        this.graphX.update(newData.accVec.X, Viz.smoothedLine);
+                        this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
+                        this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
+                    }
+
+                    if (Model.core.running) {
+                        Viz.d3.select("#prediction-span")
+                            .html(Model.core.Feed(newData.accVec).classNum);
+                    }
+
+                    if (wasRecording == false && Recorder.isRecording == true) {
+                        Recorder.startRecording(newData.accVec, 0, "TestGesture");
+                    }
+                    else if (wasRecording == true && Recorder.isRecording == true) {
+                        Recorder.continueRecording(newData.accVec);
+                    }
+                    else if (wasRecording == true && Recorder.isRecording == false) {
+                        Recorder.stopRecording();
+                    }
+
+                    wasRecording = Recorder.isRecording;
+                }
+            });
+        }
     }
 
 
@@ -131,6 +149,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         </button>
                     </div>
                 </div>
+                <span className="ui text big" id="prediction-span"></span>
                 <div id={gesturesContainerID}>
                 </div>
             </sui.Modal>
