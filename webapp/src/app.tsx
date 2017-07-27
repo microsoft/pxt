@@ -489,6 +489,16 @@ export class ProjectView
             .then(() => this.reloadHeaderAsync())
     }
 
+    updateFileAsyncWithoutReload(name: string, content: string, open?: boolean): Promise<void> {
+        const p = pkg.mainEditorPkg();
+        p.setFile(name, content);
+        return p.updateConfigAsync(cfg => cfg.files.indexOf(name) < 0 ? cfg.files.push(name) : 0)
+            .then(() => {
+                if (open) this.setFile(p.lookupFile("this/" + name));
+                return p.savePkgAsync();
+            })
+    }
+
     setSideMarkdown(md: string) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
