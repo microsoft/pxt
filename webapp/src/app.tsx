@@ -32,7 +32,6 @@ import * as sounds from "./sounds";
 import * as make from "./make";
 import * as baseToolbox from "./toolbox";
 import * as monacoToolbox from "./monacoSnippets"
-import * as ld from "./landingdialog";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -933,7 +932,7 @@ export class ProjectView
 
     saveAndCompile() {
         if (!this.state.header) return;
-        this.setState({isSaving: true});
+        this.setState({ isSaving: true });
 
         return (this.state.projectName !== lf("Untitled")
             ? Promise.resolve(true) : this.promptRenameProjectAsync())
@@ -943,7 +942,7 @@ export class ProjectView
                 if (!pxt.appTarget.compile.hasHex) {
                     this.saveProjectToFileAsync()
                         .finally(() => {
-                            this.setState({isSaving: false});
+                            this.setState({ isSaving: false });
                         })
                         .done();
                 }
@@ -2151,8 +2150,7 @@ function initExtensionsAsync(): Promise<void> {
 
 pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
-    const useLandingDialog = true; // TODO MOVE TO PXTARGET.JSON
-    const landingDialogDeferred = Promise.defer<ld.SelectionResult>();
+    const useStartPage = true; // TODO MOVE TO PXTARGET.JSON
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -2205,66 +2203,41 @@ $(document).ready(() => {
             return Util.updateLocalizationAsync(config.commitCdnUrl, useLang, pxt.appTarget.versions.pxtCrowdinBranch, live);
         })
         .then(() => initTheme())
+        .then(() => cmds.initCommandsAsync())
+        .then(() => {
+            compiler.init();
+            return workspace.initAsync();
+        })
+        .then(() => {
+            render()
+            return workspace.syncAsync();
+        })
+        .then((state) => {
+            if (state) {
+                theEditor.setState(state);
+            }
+            initSerial();
+            initScreenshots();
+            initHashchange();
+            electron.init();
+            return initExtensionsAsync();
+        })
+        .then(() => pxt.winrt.initAsync(importHex))
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
-            const shouldShowLandingDialog = useLandingDialog && !hasWinRTProject && !isProjectRelatedHash(hash);
-            let landingDialogPromise = Promise.resolve<ld.SelectionResult>(null);
-            if (shouldShowLandingDialog) {
-                // Only show the landing dialog if there are no initial projects requested
-                // (e.g. from the URL hash or from WinRT activation arguments)
-                landingDialogPromise = landingDialogDeferred.promise;
-                const selectHandler = (result: ld.SelectionResult) => {
-                    landingDialogDeferred.resolve(result);
-                }
-                ReactDOM.render(
-                    <ld.LandingDialog onSelect={selectHandler}/>,
-                    $("#landingdialog")[0]);
-                $("#loading").remove();
+            $("#loading").remove();
+            // Only show the start page if there are no initial projects requested
+            // (e.g. from the URL hash or from WinRT activation arguments)
+            const shouldShowStartPage = useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
+            if (shouldShowStartPage) {
+                theEditor.projects.showOpenProject();
+                return Promise.resolve();
             }
-
-            return Promise.all([
-                landingDialogPromise,
-                Promise.resolve(hasWinRTProject),
-                Promise.resolve()
-                    .then(() => cmds.initCommandsAsync())
-                    .then(() => workspace.initAsync())
-                    .then(() => {
-                        render();
-                        if (!shouldShowLandingDialog) {
-                            $("#loading").remove();
-                        }
-                        return workspace.syncAsync();
-                    })
-                    .then((state) => {
-                        if (state) {
-                            theEditor.setState(state);
-                        }
-                        compiler.init();
-                        initSerial();
-                        initScreenshots();
-                        initHashchange();
-                        return pxt.winrt.initAsync(importHex);
-                    })
-                    .then(() => initExtensionsAsync())
-                    .then(() => {
-                        electron.init();
-                    })
-            ]);
-        })
-        .then((results) => {
-            const selectionResult = results[0];
-            const hasWinRTProject = results[1];
-
             if (hash.cmd && handleHash(hash)) {
                 return Promise.resolve();
             }
-
             if (hasWinRTProject) {
                 return pxt.winrt.loadActivationProject();
-            }
-
-            if (selectionResult) {
-                console.log(`Selection result: ${JSON.stringify(selectionResult)}`);
             }
 
             // default handlers
