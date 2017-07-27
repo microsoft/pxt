@@ -1629,9 +1629,12 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                                     </span>
                                 </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
-                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                                <div className="ui grid padded">
+                                    {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
+                                    <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                    <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                                    <div className="ui item toggle"></div>
+                                </div>
                             </sui.Item> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             <div className="right menu">
