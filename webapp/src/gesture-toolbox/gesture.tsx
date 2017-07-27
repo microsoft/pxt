@@ -12,8 +12,9 @@ import Cloud = pxt.Cloud;
 import * as Recorder from "./recorder";
 import * as Types from "./types";
 import * as Webcam from "./webcam";
-import * as Viz from "./visualizations"
-import * as Model from "./model"
+import * as Viz from "./visualizations";
+import * as Model from "./model";
+import { streamerCode } from "./streamer";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
@@ -37,7 +38,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         if (Model.SingleDTWCore.needsReload) {
             pkg.mainEditorPkg().saveFilesAsync();
             this.props.parent.reloadHeaderAsync();
-
+            
             Model.SingleDTWCore.needsReload = false;
         }
     }
@@ -68,7 +69,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
         this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
 
-        Recorder.Reload();
+        // Recorder.Reload();
 
         // setInterval(() => {
         //     let testData = new Types.Vector(Math.random() * 2048 - 1024, Math.random() * 2048 - 1024, Math.random() * 2048 - 1024);
@@ -121,6 +122,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 }
             });
         }
+
+        Viz.d3.select("#program-streamer-btn").on("click", () => {
+            pkg.mainEditorPkg().setFile("main.ts", streamerCode);
+            pkg.mainEditorPkg().saveFilesAsync();
+
+            this.props.parent.compile();
+            
+            pkg.mainEditorPkg().setFile("main.ts", "");
+        });
     }
 
 
@@ -150,7 +160,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     <div className="three wide column">
                         <button className="ui button icon-and-text primary fluid download-button big">
                             <i className="download icon icon-and-text"></i>
-                            <span className="ui text">Program Streamer</span>
+                            <span className="ui text" id="program-streamer-btn">Program Streamer</span>
                         </button>
                         <br/>
                         <button className="ui button blocks-menuitem green big">
