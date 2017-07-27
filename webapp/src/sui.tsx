@@ -581,7 +581,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         }
 
         return (
-            <div id={id} tabIndex={active ? 0 : undefined} className={classes} onClick={this.handleClick} role="tab" aria-controls={ariaControls} aria-selected={active} aria-label={content || name}>
+            <div id={id} tabIndex={active ? 0 : -1} className={classes} onClick={this.handleClick} role="tab" aria-controls={ariaControls} aria-selected={active} aria-label={content || name}>
                 {icon ? <i className={`icon ${icon}`} ></i> : undefined}
                 {content || name}
             </div>

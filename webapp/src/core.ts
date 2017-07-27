@@ -194,8 +194,8 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         .map(logo => `<img class="ui logo" src="${Util.toDataUri(logo)}" />`)
         .join(' ');
     let html = `
-  <div class="ui ${options.size || "small"} modal">
-    <div class="header">
+  <div role="dialog" class="ui ${options.size || "small"} modal">
+    <div role="heading" class="header">
         ${Util.htmlEscape(options.header)}
     </div>
     <div class="content">

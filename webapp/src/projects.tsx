@@ -231,10 +231,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </sui.Segment>
                 {tab == MYSTUFF ? <div className={tabClasses} id={`tab${tab}`} role="tabpanel" aria-labelledby={`${tab}tab`} aria-hidden="false">
                     <div className="group">
-                        <div className="ui cards" role="listbox">
+                        <div className="ui cards">
                             <codecard.CodeCardView
                                 ariaLabel={lf("Creates a new empty project")}
-                                role="option"
+                                role="button"
                                 key={'newproject'}
                                 icon="file outline"
                                 iconColor="primary"
@@ -245,7 +245,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             {pxt.appTarget.compile ?
                                 <codecard.CodeCardView
                                     ariaLabel={lf("Open files from your computer")}
-                                    role="option"
+                                    role="button"
                                     key={'import'}
                                     icon="upload"
                                     iconColor="secondary"
@@ -256,7 +256,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.publishing && pxt.appTarget.cloud.importing ?
                                 <codecard.CodeCardView
                                     ariaLabel={lf("Open a shared project URL")}
-                                    role="option"
+                                    role="button"
                                     key={'importurl'}
                                     icon="cloud download"
                                     iconColor="secondary"
@@ -267,7 +267,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             { legacyUrl ?
                                 <codecard.CodeCardView
                                     ariaLabel={lf("Import old programs")}
-                                    role="option"
+                                    role="button"
                                     key={'importlegacy'}
                                     icon="archive"
                                     iconColor="secondary"
