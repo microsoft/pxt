@@ -1663,13 +1663,17 @@ namespace pxt.blocks {
         const calculateDistance = (elemBounds: any, mouseX: any) => {
             return Math.floor(mouseX - (elemBounds.left + (elemBounds.width / 2)));
         }
+
         /**
-         * Track a drag of an object on this workspace.
-         * @param {!Event} e Mouse move event.
-         * @return {!goog.math.Coordinate} New location of object.
+         * Execute a step of block dragging, based on the given event.  Update the
+         * display accordingly.
+         * @param {!Event} e The most recent move event.
+         * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+         *     moved from the position at the start of the drag, in pixel units.
+         * @package
          */
-        let moveDrag = (<any>Blockly).WorkspaceSvg.prototype.moveDrag;
-        (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function (e: any) {
+        const blockDrag = (<any>Blockly).BlockDragger.prototype.dragBlock;
+        (<any>Blockly).BlockDragger.prototype.dragBlock = function (e: any, currentDragDeltaXY: any) {
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (blocklyTreeRoot && trashIcon) {
@@ -1684,22 +1688,24 @@ namespace pxt.blocks {
                     blocklyTreeRoot.style.opacity = '1';
                 }
             }
-            return moveDrag.call(this, e);
+            return blockDrag.call(this, e, currentDragDeltaXY);
         };
 
         /**
-         * Stop binding to the global mouseup and mousemove events.
-         * @private
+         * Finish dragging the workspace and put everything back where it belongs.
+         * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+         *     moved from the position at the start of the drag, in pixel coordinates.
+         * @package
          */
-        let terminateDrag_ = (<any>Blockly).terminateDrag_;
-        (<any>Blockly).terminateDrag_ = function () {
+        const blockEndDrag = (<any>Blockly).BlockDragger.prototype.endBlockDrag;
+        (<any>Blockly).BlockDragger.prototype.endBlockDrag = function (e: any, currentDragDeltaXY: any) {
+            blockEndDrag.call(this, e, currentDragDeltaXY);
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (trashIcon) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
             }
-            terminateDrag_.call(this);
         }
     }
 

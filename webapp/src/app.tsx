@@ -478,6 +478,17 @@ export class ProjectView
         })
     }
 
+    updateFileAsync(name: string, content: string, open?: boolean): Promise<void> {
+        const p = pkg.mainEditorPkg();
+        p.setFile(name, content);
+        return p.updateConfigAsync(cfg => cfg.files.indexOf(name) < 0 ? cfg.files.push(name) : 0)
+            .then(() => {
+                if (open) this.setFile(p.lookupFile("this/" + name));
+                return p.savePkgAsync();
+            })
+            .then(() => this.reloadHeaderAsync())
+    }
+
     setSideMarkdown(md: string) {
         let sd = this.refs["sidedoc"] as container.SideDocs;
         if (!sd) return;
@@ -645,7 +656,7 @@ export class ProjectView
 
     importBlocksFiles(file: File) {
         if (!file) return;
-        fileReadAsTextAsync(file)
+        ts.pxtc.Util.fileReadAsTextAsync(file)
             .done(contents => {
                 this.newProject({
                     filesOverride: { "main.blocks": contents, "main.ts": "  " },
@@ -656,7 +667,7 @@ export class ProjectView
 
     importTypescriptFile(file: File) {
         if (!file) return;
-        fileReadAsTextAsync(file)
+        ts.pxtc.Util.fileReadAsTextAsync(file)
             .done(contents => {
                 this.newProject({
                     filesOverride: { "main.blocks": '', "main.ts": contents || "  " },
@@ -690,6 +701,8 @@ export class ProjectView
         }
     }];
 
+    resourceImporters: pxt.editor.IResourceImporter[] = [];
+
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
@@ -720,7 +733,7 @@ export class ProjectView
     importProjectFile(file: File) {
         if (!file) return;
 
-        fileReadAsBufferAsync(file)
+        ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => pxt.lzmaDecompressAsync(buf))
             .done(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
@@ -740,7 +753,14 @@ export class ProjectView
             this.importTypescriptFile(file);
         } else if (isProjectFile(file.name)) {
             this.importProjectFile(file);
-        } else core.warningNotification(lf("Oops, don't know how to load this file!"));
+        } else {
+            const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
+            if (importer) {
+                importer.importAsync(this, file).done();
+            } else {
+                core.warningNotification(lf("Oops, don't know how to load this file!"));
+            }
+        }
     }
 
     importProjectAsync(project: pxt.workspace.Project, filters?: pxt.editor.ProjectFilters): Promise<void> {
@@ -938,7 +958,7 @@ export class ProjectView
 
     saveAndCompile() {
         if (!this.state.header) return;
-        this.setState({isSaving: true});
+        this.setState({ isSaving: true });
 
         return (this.state.projectName !== lf("Untitled")
             ? Promise.resolve(true) : this.promptRenameProjectAsync())
@@ -948,7 +968,7 @@ export class ProjectView
                 if (!pxt.appTarget.compile.hasHex) {
                     this.saveProjectToFileAsync()
                         .finally(() => {
-                            this.setState({isSaving: false});
+                            this.setState({ isSaving: false });
                         })
                         .done();
                 }
@@ -1785,32 +1805,6 @@ function isProjectFile(filename: string): boolean {
     return /\.(pxt|mkcd)$/i.test(filename)
 }
 
-function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
-    if (!f)
-        return Promise.resolve<Uint8Array>(null);
-    else {
-        return new Promise<Uint8Array>((resolve, reject) => {
-            let reader = new FileReader();
-            reader.onerror = (ev) => resolve(null);
-            reader.onload = (ev) => resolve(new Uint8Array(reader.result as ArrayBuffer));
-            reader.readAsArrayBuffer(f);
-        });
-    }
-}
-
-function fileReadAsTextAsync(f: File): Promise<string> { // ArrayBuffer
-    if (!f)
-        return Promise.resolve<string>(null);
-    else {
-        return new Promise<string>((resolve, reject) => {
-            let reader = new FileReader();
-            reader.onerror = (ev) => resolve(null);
-            reader.onload = (ev) => resolve(reader.result);
-            reader.readAsText(f);
-        });
-    }
-}
-
 function initLogin() {
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
@@ -2107,6 +2101,12 @@ function initExtensionsAsync(): Promise<void> {
                 res.hexFileImporters.forEach(fi => {
                     pxt.debug(`\tadded hex importer ${fi.id}`);
                     theEditor.hexFileImporters.push(fi);
+                });
+            }
+            if (res.resourceImporters) {
+                res.resourceImporters.forEach(fi => {
+                    pxt.debug(`\tadded resource importer ${fi.id}`);
+                    theEditor.resourceImporters.push(fi);
                 });
             }
             if (res.deployCoreAsync) {
