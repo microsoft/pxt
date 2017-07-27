@@ -1189,8 +1189,8 @@ export class ProjectView
             },
             htmlBody: `<div class="ui form">
   <div class="ui field">
-    <label>${lf("Select a {0} file to open.", ext)}</label>
-    <input type="file" class="ui button blue fluid focused"></input>
+    <label id="selectFileToOpenLabel">${lf("Select a {0} file to open.", ext)}</label>
+    <input type="file" tabindex="0" autofocus aria-describedby="selectFileToOpenLabel" class="ui button blue fluid focused"></input>
   </div>
 </div>`,
         }).done(res => {
@@ -1218,7 +1218,7 @@ export class ProjectView
             htmlBody: `<div class="ui form">
   <div class="ui field">
     <label>${lf("What is the URL of the offensive project?")}</label>
-    <input type="url" placeholder="Enter project URL here..."></input>
+    <input type="url" class="focused" tabindex="0" autofocus placeholder="Enter project URL here..."></input>
   </div>
   <div class="ui field">
     <label>${lf("Why do you find it offensive?")}</label>
@@ -1267,8 +1267,8 @@ export class ProjectView
     </div>
 </div>
   <div class="ui field">
-    <label>${lf("Copy the URL of the project.")}</label>
-    <input type="url" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
+    <label id="selectUrlToOpenLabel">${lf("Copy the URL of the project.")}</label>
+    <input type="url" tabindex="0" autofocus aria-describedby="selectUrlToOpenLabel" placeholder="${shareUrl}..." class="ui button blue fluid"></input>
   </div>
 </div>`,
         }).done(res => {
