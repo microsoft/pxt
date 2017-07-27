@@ -1469,7 +1469,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
                     tutorialStep: 0,
                     tutorialSteps: result
                 };
-                this.setState({ tutorialOptions: tutorialOptions })
+                this.setState({ tutorialOptions: tutorialOptions, tracing: undefined })
 
                 let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
@@ -1509,7 +1509,7 @@ ${compileService ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${Util.html
             })
             .finally(() => {
                 core.hideLoading()
-                this.setState({ active: true, tutorialOptions: undefined });
+                this.setState({ active: true, tutorialOptions: undefined, tracing: undefined });
             });
     }
 
