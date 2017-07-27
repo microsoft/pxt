@@ -2,7 +2,7 @@
 namespace pxt.blocks.layout {
     export interface FlowOptions {
         ratio?: number;
-        maxWidth?: number;
+        useViewWidth?: boolean;
     }
 
     export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
@@ -73,7 +73,16 @@ namespace pxt.blocks.layout {
 
     export function flow(ws: B.Workspace, opts?: FlowOptions) {
         if (opts) {
-            flowBlocks(ws.getTopBlocks(true), opts.ratio, opts.maxWidth);
+            if (opts.useViewWidth) {
+                const metrics = ws.getMetrics();
+
+                // Only use the width if in portrait, otherwise the blocks are too spread out
+                if (metrics.viewHeight > metrics.viewWidth) {
+                    flowBlocks(ws.getTopBlocks(true), undefined, metrics.viewWidth)
+                    return;
+                }
+            }
+            flowBlocks(ws.getTopBlocks(true), opts.ratio);
         }
         else {
             flowBlocks(ws.getTopBlocks(true));

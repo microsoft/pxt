@@ -1846,7 +1846,7 @@ namespace pxt.blocks {
                 enabled: true,
                 callback: () => {
                     pxt.tickEvent("blocks.context.format");
-                    pxt.blocks.layout.flow(this);
+                    pxt.blocks.layout.flow(this, { useViewWidth: true });
                 }
             }
             menuOptions.push(formatCodeOption);

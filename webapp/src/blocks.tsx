@@ -185,10 +185,8 @@ export class Editor extends srceditor.Editor {
         });
 
         if (needsLayout) {
-            const metrics = this.editor.getMetrics();
             // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
-            // Only limit the width if the editor is in portrait
-            pxt.blocks.layout.flow(this.editor, metrics.viewWidth < metrics.viewHeight ? { maxWidth: metrics.viewWidth } : undefined);
+            pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
