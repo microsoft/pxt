@@ -104,7 +104,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
             </button>
             <div id="sidedocs">
                 <div id="sidedocsbar">
-                    <h3><a className="ui icon link" data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut() } >
+                    <h3><a className="ui icon link" role="link" tabIndex={0} data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut() } >
                         <i className="external icon"></i>
                     </a></h3>
                 </div>
