@@ -123,13 +123,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             });
         }
 
-        Viz.d3.select("#program-streamer-btn").on("click", () => {
-            pkg.mainEditorPkg().setFile("main.ts", streamerCode);
-            pkg.mainEditorPkg().saveFilesAsync();
+        // Viz.d3.select("#program-streamer-btn").on("click", () => {
+        //     pkg.mainEditorPkg().setFile("main.ts", streamerCode);
+        //     pkg.mainEditorPkg().saveFilesAsync();
 
-            this.props.parent.compile();
+        //     this.props.parent.compile();
             
-            pkg.mainEditorPkg().setFile("main.ts", "");
+        //     pkg.mainEditorPkg().setFile("main.ts", "");
+        // });
+
+        Viz.d3.select("#generate-block").on("click", () => {
+            let blockCode = Model.core.GenerateBlock();
+            this.props.parent.updateFileAsync("custom.ts", blockCode);
         });
     }
 
@@ -158,12 +163,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         <div className="row graph-z" id="realtime-graph-z"></div>
                     </div>
                     <div className="three wide column">
-                        <button className="ui button icon-and-text primary fluid download-button big">
+                        <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
                             <i className="download icon icon-and-text"></i>
-                            <span className="ui text" id="program-streamer-btn">Program Streamer</span>
+                            <span className="ui text">Program Streamer</span>
                         </button>
                         <br/>
-                        <button className="ui button blocks-menuitem green big">
+                        <button id="generate-block" className="ui button blocks-menuitem green big">
                             <i className="xicon blocks icon icon-and-text"></i>
                             <span className="ui text">Create Block</span>
                         </button>

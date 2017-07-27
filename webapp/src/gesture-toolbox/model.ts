@@ -4,7 +4,7 @@ import { Vector, Match } from './types';
 import * as pkg from "./../package";
 
 export class SingleDTWCore {
-    private dtw: Algorithms.SpringAlgorithm<Vector>;
+    private dtw: Algorithms.DTW<Vector>;
     private dba: Algorithms.DBA<Vector>;
     private classNumber: number;
 
@@ -56,7 +56,7 @@ export class SingleDTWCore {
 
         // update the Spring algorithm
         // reset the Spring algorithm
-        this.dtw = new Algorithms.SpringAlgorithm<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
+        this.dtw = new Algorithms.DTW<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
         this.running = true;
         this.GenerateBlock();
     }
@@ -67,7 +67,7 @@ export class SingleDTWCore {
     }
 
 
-    public GenerateBlock() {
+    public GenerateBlock(): string {
         let gestureTS = `
 /**
  * Gesture blocks
@@ -280,11 +280,14 @@ class SpringAlgorithm {
     }
 }
 `;
-        pkg.mainEditorPkg().setFile("custom.ts", gestureTS);
-        pkg.mainEditorPkg().saveFilesAsync();
+        // pkg.mainEditorPkg().setFile("custom.ts", gestureTS);
+        // pkg.mainEditorPkg().saveFilesAsync();
+        
         // this will make sure that the blockly editor will reload according to the editted custom.ts file
         // the sync function will run in the main loop inside show() of gesture.tsx
-        SingleDTWCore.needsReload = true;
+        // SingleDTWCore.needsReload = true;
+
+        return gestureTS;
     }
 
 
