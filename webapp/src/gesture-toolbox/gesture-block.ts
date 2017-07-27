@@ -215,3 +215,62 @@
 //         return predicted;
 //     }
 // }
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// enum GestureName {
+//     //% block="Gesture1"
+//     Gesture1 = 1,
+//     //% block="Gesture2"
+//     Gesture2 = 2,
+// }
+
+
+// /**
+//  * Gesture blocks
+//  */
+// //% weight=100 color=#0fbc11 icon=""
+// namespace Gesture {
+//     let MY_EVENT_SRC = 12345;
+//     let initializedG1 = false;
+//     let initializedG2 = false;
+
+//     //% blockId=input_on_gesture_recognized block="on gesture %condition"
+//     export function onGesture(condition: GestureName, handler: () => void): void {
+//         if (condition == GestureName.Gesture1 && initializedG1 == false) {
+//             // initialize fiber for gesture1 that will control.raiseEvent(MY_EVENT_SRC, 1);
+
+//             control.runInBackground(() => {
+//                 while (true) {
+//                     if (input.lightLevel() > 70 && input.lightLevel() < 100)
+//                         control.raiseEvent(MY_EVENT_SRC, condition);
+
+//                     loops.pause(40);
+//                 }
+//             });
+
+//             initializedG1 = true;
+//         }
+//         else if (condition == GestureName.Gesture2 && initializedG2 == false) {
+//             // initialize fiber for gesture2 that will control.raiseEvent(MY_EVENT_SRC, 2);
+
+//             control.runInBackground(() => {
+//                 while (true) {
+//                     if (input.lightLevel() > 155 && input.lightLevel() < 185)
+//                         control.raiseEvent(MY_EVENT_SRC, condition);
+
+//                     loops.pause(40);
+//                 }
+//             });
+
+//             initializedG2 = true;
+//         }
+
+
+//         control.onEvent(MY_EVENT_SRC, condition, handler);
+//     }
+// }

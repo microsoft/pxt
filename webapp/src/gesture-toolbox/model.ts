@@ -14,6 +14,7 @@ export class SingleDTWCore {
 
     public running: boolean;
 
+    public static needsReload = false;
 
     constructor(classNum: number) {
         this.classNumber = classNum;
@@ -22,6 +23,7 @@ export class SingleDTWCore {
         // call update to generate the referencePrototype and threshold
         // this.Update(initialData);
         // this.dtw = new Algorithms.SpringAlgorithm<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
+        SingleDTWCore.needsReload = false;
     }
 
 
@@ -278,9 +280,10 @@ class SpringAlgorithm {
     }
 }
 `;
-
         pkg.mainEditorPkg().setFile("custom.ts", gestureTS);
-        pkg.mainEditorPkg().saveFilesAsync();
+        // this will make sure that the blockly editor will reload according to the editted custom.ts file
+        // the sync function will run in the main loop inside show() of gesture.tsx
+        SingleDTWCore.needsReload = true;
     }
 
 

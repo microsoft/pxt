@@ -33,6 +33,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
 
+    private syncGestureBlock() {
+        if (Model.SingleDTWCore.needsReload) {
+            pkg.mainEditorPkg().saveFilesAsync();
+            this.props.parent.reloadHeaderAsync();
+
+            Model.SingleDTWCore.needsReload = false;
+        }
+    }
+
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
@@ -108,6 +117,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     }
 
                     wasRecording = Recorder.isRecording;
+                    this.syncGestureBlock();
                 }
             });
         }
