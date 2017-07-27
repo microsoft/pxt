@@ -35,9 +35,10 @@ mountVirtualApi("cloud-search", {
 })
 
 mountVirtualApi("gallery", {
-    getAsync: p => gallery.loadGalleryAsync(stripProtocol(p)).catch(core.handleNetworkError),
-    expirationTime: p => 3600 * 1000,
-    isOffline: () => !Cloud.isOnline()
+    getAsync: p => gallery.loadGalleryAsync(stripProtocol(p)).catch((e) => {
+        return Promise.resolve(e);
+    }),
+    expirationTime: p => 3600 * 1000
 })
 
 mountVirtualApi("td-cloud", {
@@ -97,7 +98,7 @@ function expired(ce: CacheEntry) {
 }
 
 function shouldCache(ce: CacheEntry) {
-    if (!ce.data) return false
+    if (!ce.data || ce.data instanceof Error) return false;
     return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path);
 }
 
@@ -187,7 +188,7 @@ function getCached(component: AnyComponent, path: string) {
     let r = lookup(path)
     if (r.api.isSync)
         return r.api.getSync(r.path)
-    if (expired(r))
+    if (expired(r) || r.data instanceof Error)
         queue(r)
     return r.data
 }

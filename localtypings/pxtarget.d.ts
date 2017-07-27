@@ -255,6 +255,8 @@ declare namespace ts.pxtc {
         openocdScript?: string;
         flashChecksumAddr?: number;
         onStartText?: boolean;
+        hidSelectors?: HidSelector[];
+        emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
     }
 
     interface CompileOptions {
@@ -271,6 +273,8 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+
+        alwaysDecompileOnStart?: boolean; // decompiler only
 
         embedMeta?: string;
         embedBlob?: string; // base64
@@ -302,5 +306,13 @@ declare namespace ts.pxtc {
 
     interface HexInfo {
         hex: string[];
+    }
+
+    // HEX values as strings, e.g. "0xFF97"
+    interface HidSelector {
+        vid: string;
+        pid: string;
+        usagePage: string;
+        usageId: string;
     }
 }

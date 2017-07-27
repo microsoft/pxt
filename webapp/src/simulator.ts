@@ -92,6 +92,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             updateDebuggerButtons()
         },
         onStateChanged: function (state) {
+            if (state === pxsim.SimulatorState.Stopped) {
+                postSimEditorEvent("stopped");
+            }
             updateDebuggerButtons()
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {

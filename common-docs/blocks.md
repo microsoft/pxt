@@ -11,7 +11,7 @@ The [on-start](/blocks/on-start) event runs first.
 for (let i = 0;i<5;++i) {}
 if (true){}
 let x = 0;
-Math.random(5);
+Math.randomRange(0,5);
 ```
 
 ## See Also
