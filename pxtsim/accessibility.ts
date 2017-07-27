@@ -1,45 +1,10 @@
+// Helpers designed to help to make a simulator accessible.
 namespace pxsim.accessibility {
-    let isIE: boolean = undefined;
     let liveRegion: HTMLDivElement;
 
-    function detectIE(): boolean {
-        if (isIE !== undefined) {
-            return isIE;
-        }
-
-        let ua = window.navigator.userAgent;
-
-        let msie = ua.indexOf('MSIE ');
-        if (msie > 0) {
-            // IE 10 or older => return version number
-            isIE = true;
-            return true;
-        }
-
-        let trident = ua.indexOf('Trident/');
-        if (trident > 0) {
-            // IE 11 => return version number
-            isIE = true;
-            return true;
-        }
-
-        let edge = ua.indexOf('Edge/');
-        if (edge > 0) {
-            // Edge (IE 12+) => return version number
-            isIE = true;
-            return true;
-        }
-
-        isIE = false;
-        return false;
-    }
-
     export function makeFocusable(elem: SVGElement): void {
-        if (detectIE()) {
-            elem.setAttribute("focusable", "true");
-        } else {
-            elem.setAttribute("tabindex", "0");
-        }
+        elem.setAttribute("focusable", "true");
+        elem.setAttribute("tabindex", "0");
     }
 
     export function enableKeyboardInteraction(elem: Element, handler?: () => void): void {
