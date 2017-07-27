@@ -7,23 +7,23 @@ namespace pxsim.accessibility {
             return isIE;
         }
 
-        var ua = window.navigator.userAgent;
+        let ua = window.navigator.userAgent;
 
-        var msie = ua.indexOf('MSIE ');
+        let msie = ua.indexOf('MSIE ');
         if (msie > 0) {
             // IE 10 or older => return version number
             isIE = true;
             return true;
         }
 
-        var trident = ua.indexOf('Trident/');
+        let trident = ua.indexOf('Trident/');
         if (trident > 0) {
             // IE 11 => return version number
             isIE = true;
             return true;
         }
 
-        var edge = ua.indexOf('Edge/');
+        let edge = ua.indexOf('Edge/');
         if (edge > 0) {
             // Edge (IE 12+) => return version number
             isIE = true;
