@@ -2125,7 +2125,13 @@ function initExtensionsAsync(): Promise<void> {
         });
 }
 
+$('#content').bind("touchmove", (e: any) => {
+  //Disable scrolling on IOS
+  e.preventDefault();
+});
+
 pxt.winrt.captureInitialActivation();
+
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
