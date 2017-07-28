@@ -24,7 +24,7 @@
         height: @mobileMenuHeight !important;
         min-height: @mobileMenuHeight !important;
     }
-    #menubar .left.menu > .item:not(.logo),  #menubar .right.menu > .item:not(.logo) {
+    #menubar .left.menu > .item.icon:not(.logo),  #menubar .right.menu > .item.icon:not(.logo) {
         width: 48px;
     }
     .sandbox #menubar .ui.menu {
