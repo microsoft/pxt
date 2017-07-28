@@ -48,7 +48,7 @@ export function IntegerSqrt(n: number) {
 }
 
 
-export class SpringAlgorithm<SampleType> {
+export class DTW<SampleType> {
     private Y: SampleType[];
     private eps: number;
     private classNumber: number;
@@ -63,6 +63,8 @@ export class SpringAlgorithm<SampleType> {
 
     private s: number[];
     private d: number[];
+    private s1: number[];
+    private d1: number[];
     private s2: number[];
     private d2: number[];
 
@@ -87,21 +89,21 @@ export class SpringAlgorithm<SampleType> {
         this.minLen = _avgProtoLen * 7 / 10;
         this.maxLen = _avgProtoLen * 13 / 10;
 
-        this.d = [];
-        this.s = [];
+        this.d1 = [];
+        this.s1 = [];
         this.d2 = [];
         this.s2 = [];
 
         for (let i = 0; i < this.M + 1; i++) {
-            this.d.push(0);
-            this.s.push(0);
+            this.d1.push(0);
+            this.s1.push(0);
             this.d2.push(0);
             this.s2.push(0);
         }
 
         for (let i = 1; i <= this.M; i++) {
-            this.d[i] = 1e10;
-            this.s[i] = 0;
+            this.d1[i] = 1e10;
+            this.s1[i] = 0;
         }
 
         this.dmin = 1e10;
@@ -116,29 +118,29 @@ export class SpringAlgorithm<SampleType> {
         let predict = new Match(0, 0, 0, 0);
 
         let t = this.t + 1;
-        let d: number[] = this.d2;
-        let s: number[] = this.s2;
+        this.d = this.d2;
+        this.s = this.s2;
 
-        d[0] = 0;
-        s[0] = t;
+        this.d[0] = 0;
+        this.s[0] = t;
 
         // update M distances (d[] based on dp[]) and M starting points (s[] based on sp[]):
         for (let i = 1; i <= this.M; i++) {
             let dist = this.distFunction(this.Y[i - 1], xt);
-            let di_minus1 = d[i - 1];
-            let dip = this.d[i];
-            let dip_minus1 = this.d[i - 1];
+            let di_minus1 = this.d[i - 1];
+            let dip = this.d1[i];
+            let dip_minus1 = this.d1[i - 1];
 
             // compute dbest and use that to compute s[i]
             if (di_minus1 <= dip && di_minus1 <= dip_minus1) {
-                d[i] = dist + di_minus1;
-                s[i] = s[i - 1];
+                this.d[i] = dist + di_minus1;
+                this.s[i] = this.s[i - 1];
             } else if (dip <= di_minus1 && dip <= dip_minus1) {
-                d[i] = dist + dip;
-                s[i] = this.s[i];
+                this.d[i] = dist + dip;
+                this.s[i] = this.s1[i];
             } else {
-                d[i] = dist + dip_minus1;
-                s[i] = this.s[i - 1];
+                this.d[i] = dist + dip_minus1;
+                this.s[i] = this.s1[i - 1];
             }
         }
 
@@ -148,33 +150,38 @@ export class SpringAlgorithm<SampleType> {
 
             if (matchLength > this.minLen && matchLength < this.maxLen) {
                 for (let i = 0; i <= this.M; i++)
-                    if (!(d[i] >= this.dmin || s[i] > this.te))
+                    if (!(this.d[i] >= this.dmin || this.s[i] > this.te))
                         condition = false;
 
                 if (condition) {
                     predict = new Match(this.dmin, this.ts - 1, this.te - 1, this.classNumber);
-                    this.dmin = 1e10;
-
-                    for (let i = 1; i <= this.M; i++) {
-                        if (s[i] <= this.te) {
-                            d[i] = 1e10;
-                        }
-                    }
+                    this.Reset();
                 }
             }
         }
 
-        if (d[this.M] <= this.eps && d[this.M] < this.dmin) {
-            this.dmin = d[this.M];
-            this.ts = s[this.M];
+        if (this.d[this.M] <= this.eps && this.d[this.M] < this.dmin) {
+            this.dmin = this.d[this.M];
+            this.ts = this.s[this.M];
             this.te = t;
         }
 
-        this.d2 = this.d; this.d = d;
-        this.s2 = this.s; this.s = s;
+        this.d2 = this.d1; this.d1 = this.d;
+        this.s2 = this.s1; this.s1 = this.s;
         this.t = t;
 
         return predict;
+    }
+
+
+    public Reset() {
+        this.dmin = 1e10;
+
+        for (let i = 1; i <= this.M; i++) {
+            if (this.s[i] <= this.te) {
+                this.d[i] = 1e10;
+            }
+        }
     }
 }
 
@@ -505,7 +512,7 @@ export function findMinimumThreshold(prototypeArray: Vector[][],
 
     do {
         // TODO: make it more efficient by adding RESET function and accessors for the threshold 
-        let spring = new SpringAlgorithm<Vector>(referencePrototype, threshold, 1, avgLen, distFun);
+        let spring = new DTW<Vector>(referencePrototype, threshold, 1, avgLen, distFun);
 
         let time = 0;
 
@@ -551,4 +558,136 @@ export function findMinimumThreshold(prototypeArray: Vector[][],
     } while (condition);
 
     return threshold;
+}
+
+
+export class MultiDTW<SampleType> {
+    private cores: DTW<SampleType>[];
+    private activeCores: boolean[];
+    private thresholds: number[];
+
+    private activeCoresCount: number;
+    
+    private timer: number;
+    private waitTime: number;
+    private predictionsArray: Match[];
+    private bestMatch: Match;
+    private bestDist: number;
+
+    constructor(_refPrototypes: SampleType[][], _thresholds: number[], _avgProtoLengths: number[],
+                _distFun: (a: SampleType, b: SampleType) => number) {
+        this.predictionsArray = [];
+        this.cores = [];
+        this.activeCores = [];
+        this.activeCoresCount = 0;
+        this.bestMatch = new Match(0, 0, 0, 0);
+        this.bestDist = 1e8;
+        this.thresholds = _thresholds;
+
+        let minLen = 999;
+        let maxLen = -999;
+
+        for (let i = 0; i < _refPrototypes.length; i++) {
+             this.cores.push(new DTW<SampleType>(_refPrototypes[i], _thresholds[i], i + 1, _avgProtoLengths[i], _distFun));
+             this.activeCores.push(false);
+
+            if (minLen > _avgProtoLengths[i]) minLen = _avgProtoLengths[i];
+            if (maxLen < _avgProtoLengths[i]) maxLen = _avgProtoLengths[i];
+        }
+
+        this.waitTime = Math.abs(Math.round(1.3 * maxLen - 0.7 * minLen));
+    }
+
+    public ActivateCore(classNum: number) {
+        this.activeCores[classNum - 1] = true;
+        this.activeCoresCount++;
+    }
+
+    public DeactivateCore(classNum: number) {
+        this.activeCores[classNum - 1] = false;
+        this.activeCoresCount--;
+    }
+
+    public Feed(xt: SampleType): Match {
+        let prediction = new Match(0, 0, 0, 0);
+
+        for (let i = 0; i < this.cores.length; i++) {
+            if (this.activeCores[i]) {
+                let m = this.cores[i].Feed(xt);
+                
+                if (m.classNum != 0) {
+                    // we have a report:
+                    // add to predictions array
+                    let isUnique = true;
+
+                    for (let j = 0; j < this.predictionsArray.length; j++)
+                        if (m.classNum == this.predictionsArray[j].classNum)
+                            isUnique = false;
+
+                    if (isUnique) {
+                        this.predictionsArray.push(m);
+
+                        // should we report now? if there are only x active gestures and we have x reports in the array, then yes!
+                        let shouldReport = (this.activeCoresCount == this.predictionsArray.length);
+
+                        // but who should we report?
+                        // which one is the best match?
+                        // do we need to start or update the timer?
+                        if (this.predictionsArray.length == 1) {
+                            // the predictionsArray was empty, so lets start the timer and see if we will have a new match in the next waitTime ticsk!
+                            this.bestMatch = m;
+                            this.bestDist = m.minDist / this.thresholds[i];
+                            this.timer = this.waitTime;
+                        }
+                        else {
+                            // the predictionArray is non-empty! and we might find a better match with the addition of this new match
+                            let isUpdated = false;
+
+                            let curDist = m.minDist / this.thresholds[i];
+
+                            if ( curDist < this.bestDist ) {
+                                this.bestDist = curDist;
+                                this.bestMatch = m;
+
+                                isUpdated = true;
+                            }
+
+                            if (shouldReport) {
+                                // report
+                                prediction = this.bestMatch;
+                                this.predictionsArray = [];
+                                this.timer = 0;
+
+                                this.cores.forEach(core => {
+                                    core.Reset();
+                                });
+                            }
+                            else if (isUpdated) {
+                                // update timer (this could only happen when we have 3 or more gestures)
+                                this.timer = this.waitTime;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // tick timers
+        if (this.timer > 0) {
+            this.timer--;
+
+            if (this.timer == 0) {
+                // report:
+                prediction = this.bestMatch;
+                this.predictionsArray = [];
+                this.timer = 0;
+
+                this.cores.forEach(core => {
+                    core.Reset();
+                });
+            }
+        }
+
+        return prediction;
+    }
 }
