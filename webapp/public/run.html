@@ -87,12 +87,12 @@
     <script type="text/javascript">
         (function () {
         var loading = document.getElementById('loading');
-        var id = /id=([^&?]+)/i.exec(window.location.href);
-        var code = /code=([^&?]+)/i.exec(window.location.href);
-        var localToken = /local_token=([^&?]+)/i.exec(window.location.href);
-        var hex = !!/hex=1/i.exec(window.location.href);
-        var footer = !/nofooter=1/i.exec(window.location.href);
-        var debugSim = !!/debugSim=1/i.exec(window.location.href);
+        var id = /id(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var code = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var localToken = /local_token(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var hex = !!/hex(?:[:=])1/i.exec(window.location.href);
+        var footer = !/nofooter(?:[:=])1/i.exec(window.location.href);
+        var debugSim = !!/debugSim(?:[:=])1/i.exec(window.location.href);
         var sims = document.getElementById('simulators');
 
         if (!id && !code && !debugSim) {
