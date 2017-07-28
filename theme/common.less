@@ -414,12 +414,15 @@ div.simframe > iframe {
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor !important;
     z-index: 1;
-    -webkit-transition: width 1s; /* Safari */
-    -moz-transition: width 1s; /* Mozilla */
+    -webkit-transition: width 1s, background 0.3s; /* Safari */
+    -moz-transition: width 1s, background 0.3s; /* Mozilla */
     -webkit-transition-timing-function: ease-in; /* Mozilla */
-    -o-transition: width 1s; /* Opera */
-    transition: width 1s;
+    -o-transition: width 1s, background 0.3s; /* Opera */
+    transition: width 1s, background 0.3s;
     transition-timing-function: ease-in;
+}
+.blocklyToolboxDiv.blocklyToolboxDeleting {
+    background: lighten(@red, 10%) !important;
 }
 
 svg.blocklySvg {
