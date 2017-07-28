@@ -198,6 +198,7 @@ declare namespace pxt {
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
+        useStartPage?: boolean;
     }
 
     interface SocialOptions {

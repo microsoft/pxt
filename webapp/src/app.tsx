@@ -2150,7 +2150,6 @@ function initExtensionsAsync(): Promise<void> {
 
 pxt.winrt.captureInitialActivation();
 $(document).ready(() => {
-    const useStartPage = true; // TODO MOVE TO PXTARGET.JSON
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
@@ -2209,7 +2208,8 @@ $(document).ready(() => {
             return workspace.initAsync();
         })
         .then(() => {
-            render()
+            $("#loading").remove();
+            render();
             return workspace.syncAsync();
         })
         .then((state) => {
@@ -2225,12 +2225,11 @@ $(document).ready(() => {
         .then(() => pxt.winrt.initAsync(importHex))
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
-            $("#loading").remove();
             // Only show the start page if there are no initial projects requested
             // (e.g. from the URL hash or from WinRT activation arguments)
-            const shouldShowStartPage = useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
+            const shouldShowStartPage = pxt.appTarget.appTheme.useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
             if (shouldShowStartPage) {
-                theEditor.projects.showOpenProject();
+                theEditor.projects.showStartPage();
                 return Promise.resolve();
             }
             if (hash.cmd && handleHash(hash)) {

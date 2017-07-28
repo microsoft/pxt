@@ -22,6 +22,7 @@ interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
     tab?: string;
+    isStartPage?: boolean;
 }
 
 const MYSTUFF = "__mystuff";
@@ -41,7 +42,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     hide() {
-        this.setState({ visible: false });
+        this.setState({ visible: false, isStartPage: true });
+    }
+
+    showStartPage() {
+        this.setState({
+            visible: true,
+            tab: MYSTUFF,
+            isStartPage: false
+        });
     }
 
     showOpenProject(tab?: string) {
@@ -237,17 +246,18 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
-                onClose={() => this.setState({ visible: false }) } dimmer={true}
-                closeOnDimmerClick closeOnDocumentClick>
+                onClose={() => this.hide() } dimmer={true}
+                closeOnDimmerClick={!this.state.isStartPage}
+                closeOnDocumentClick={!this.state.isStartPage}>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t =>
                             <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
                         <div className="right menu">
-                            <sui.Button
+                            {this.state.isStartPage ? <sui.Button
                                 icon='close'
                                 class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.setState({ visible: false }) } />
+                                onClick={() => this.hide() } /> : null }
                         </div>
                     </sui.Menu>
                 </sui.Segment>
