@@ -259,7 +259,8 @@ namespace pxt.runner {
                     let runOptions: pxsim.SimulatorRunOptions = {
                         boardDefinition: board,
                         parts: parts,
-                        fnArgs: fnArgs
+                        fnArgs: fnArgs,
+                        cdnUrl: pxt.webConfig.commitCdnUrl
                     };
                     if (pxt.appTarget.simulator)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
@@ -576,6 +577,7 @@ ${files["main.ts"]}
                             return pxt.runner.decompileToBlocksAsync(code, {
                                 emPixels: 14,
                                 layout: pxt.blocks.BlockLayout.Flow,
+                                useViewWidth: true,
                                 package: undefined
                             }).then((r) => {
                                 let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];

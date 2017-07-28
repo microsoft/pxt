@@ -133,6 +133,7 @@ namespace pxt.editor {
         setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
+        updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
         openTutorials(): void;
         setTutorialStep(step: number): void;
@@ -178,6 +179,12 @@ namespace pxt.editor {
         importAsync(project: IProjectView, data: pxt.cpp.HexFile): Promise<void>;
     }
 
+    export interface IResourceImporter {
+        id: string;
+        canImport(data: File): boolean;
+        importAsync(project: IProjectView, data: File): Promise<void>;
+    }
+
     export interface ISettingsProps {
         parent: IProjectView;
         visible?: boolean;
@@ -202,6 +209,7 @@ namespace pxt.editor {
 
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
+        resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
