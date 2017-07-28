@@ -1,3 +1,16 @@
 /*******************************
     User Variable Overrides
 *******************************/
+
+@solidBorderColor: #e9eef2;
+
+@borderWidth: 2px;
+
+@linkBorderShadow: 0px 0px 0px @borderWidth @blue;
+
+@linkHoverBoxShadow:
+  @shadowHoverBoxShadow,
+  @linkBorderShadow
+;
+
+@linkHoverTransform: none;
