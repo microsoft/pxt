@@ -880,12 +880,10 @@ Avatar
         min-width: @blocklyRowWidthTablet;
         min-height: @blocklyRowHeightTablet;
         line-height: @blocklyRowHeightTablet;
+        border-left-width: 12px !important;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
-    }
-    div.blocklyTreeRow {
-        border-left-width: 12px !important;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
         border-left-width: 18px !important;
@@ -898,6 +896,7 @@ Avatar
         min-width: @blocklyRowWidthMobile;
         min-height: @blocklyRowHeightMobile;
         line-height: @blocklyRowHeightMobile/2;
+        border-left-width: 6px !important;
     }
     span.blocklyTreeIcon {
         font-size: 1.5rem;
@@ -1146,13 +1145,7 @@ Avatar
         font-size: 17pt !important;
     }
     /* Hide blockly tree labels on mobile */
-    span.blocklyTreeLabel {
-        display: none !important;
-    }
-    div.blocklyTreeRow:hover span.blocklyTreeLabel {
-        display: none !important;
-    }
-    div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel {
+    span.blocklyTreeLabel, div.blocklyTreeRow:hover span.blocklyTreeLabel, div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel{
         display: none !important;
     }
     div.blocklyTreeRow {
