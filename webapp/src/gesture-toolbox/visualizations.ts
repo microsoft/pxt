@@ -244,3 +244,23 @@ export function deleteGestureSample(gestureID: number, sampleID: number) {
     Recorder.recData[gestureID].displayGesture.rawData = Model.core.refPrototype;
     drawMainGraph(gestureID);
 }
+
+
+export function setConnected(id: string) {
+    let label = d3.select("#" + id);
+    label.attr("style", "color: white; background-color: green;");
+    
+    label.select("span").html("Connected");
+    label.select("i").classed("remove", false);
+    label.select("i").classed("checkmark", true);
+}
+
+
+export function setDisconnected(id: string) {
+    let label = d3.select("#" + id);
+    label.attr("style", "color: white; background-color: red;");
+
+    label.select("span").html("Disconnected");
+    label.select("i").classed("remove", true);
+    label.select("i").classed("checkmark", false);
+}

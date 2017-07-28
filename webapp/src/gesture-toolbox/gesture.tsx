@@ -16,6 +16,8 @@ import * as Viz from "./visualizations";
 import * as Model from "./model";
 import { streamerCode } from "./streamer";
 
+let connected = false;
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -62,6 +64,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     show() {
         this.setState({ visible: true });
         let wasRecording = false;
+        
+        connected = false;
+        Viz.setDisconnected("connection-indicator")
 
         Webcam.init("webcam-video");
 
@@ -95,6 +100,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 dev.onSerial = (buf, isErr) => {
                     let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
                     let newData = Recorder.parseString(strBuf);
+
+                    if (!connected) {
+                        connected = true;
+                        // update ui with the connected icon
+                        Viz.setConnected("connection-indicator");
+                    };
 
                     if (newData.acc) {
                         this.graphX.update(newData.accVec.X, Viz.smoothedLine);
@@ -153,6 +164,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 closeIcon={true}
                 closeOnDimmerClick
                 >
+                <div id="connection-indicator" className="ui label">
+                    <i className="remove icon"></i>
+                    <span></span>
+                </div>
+
                 <div className="ui three column grid">
                     <div className="four wide column">
                         <video id="webcam-video"></video>
