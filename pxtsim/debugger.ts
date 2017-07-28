@@ -174,7 +174,11 @@ namespace pxsim {
             }
 
             this.sendEvent(new protocol.InitializedEvent());
-            this.driver.run(js, { parts, fnArgs, boardDefinition: board });
+            this.driver.run(js, {
+                parts,
+                fnArgs,
+                boardDefinition: board
+            });
         }
 
         public stopSimulator(unload = false) {
