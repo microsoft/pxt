@@ -576,6 +576,7 @@ ${files["main.ts"]}
                             return pxt.runner.decompileToBlocksAsync(code, {
                                 emPixels: 14,
                                 layout: pxt.blocks.BlockLayout.Flow,
+                                useViewWidth: true,
                                 package: undefined
                             }).then((r) => {
                                 let blocksxml: string = r.compileBlocks.outfiles['main.blocks'];

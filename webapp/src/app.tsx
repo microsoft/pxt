@@ -1512,7 +1512,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     tutorialStep: 0,
                     tutorialSteps: result
                 };
-                this.setState({ tutorialOptions: tutorialOptions })
+                this.setState({ tutorialOptions: tutorialOptions, tracing: undefined })
 
                 let tc = this.refs["tutorialcontent"] as tutorial.TutorialContent;
                 tc.setPath(tutorialId);
@@ -1556,7 +1556,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
             })
             .finally(() => {
                 core.hideLoading()
-                this.setState({ active: true, tutorialOptions: undefined });
+                this.setState({ active: true, tutorialOptions: undefined, tracing: undefined });
             });
     }
 
@@ -2142,7 +2142,13 @@ function initExtensionsAsync(): Promise<void> {
         });
 }
 
+$('#content').bind("touchmove", (e: any) => {
+  //Disable scrolling on IOS
+  e.preventDefault();
+});
+
 pxt.winrt.captureInitialActivation();
+
 $(document).ready(() => {
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
