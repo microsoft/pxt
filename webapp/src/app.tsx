@@ -1656,8 +1656,8 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                         : <span className="name">{targetTheme.name}</span>}
                                     {targetTheme.portraitLogo ? (<a className="ui" target="_blank" rel="noopener" href={targetTheme.logoUrl}><img className='ui mini image portrait only' src={Util.toDataUri(targetTheme.portraitLogo) } alt={`${targetTheme.boardName} Logo`}/></a>) : null}
                                 </span>
-                                {!inTutorial ? <sui.Item class="openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
-                                {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
+                                {!inTutorial ? <sui.Item class="icon openproject" role="menuitem" textClass="landscape only" icon="folder open large" text={lf("Projects") } onClick={() => this.openProject() } /> : null}
+                                {!inTutorial && this.state.header && sharingEnabled ? <sui.Item class="icon shareproject" role="menuitem" textClass="widedesktop only" text={lf("Share") } icon="share alternate large" onClick={() => this.embed() } /> : null}
                                 {inTutorial ? <sui.Item class="tutorialname" role="menuitem" textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
                             </div> : <div className="left menu">
                                     <span id="logo" className="ui item logo">
@@ -1665,9 +1665,12 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                     </span>
                                 </div> }
                             {!inTutorial && !targetTheme.blocksOnly ? <sui.Item class="editor-menuitem">
-                                {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
-                                <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
-                                <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                                <div className="ui grid padded">
+                                    {sandbox ? <sui.Item class="sim-menuitem thin portrait only" textClass="landscape only" text={lf("Simulator") } icon={simActive && this.state.running ? "stop" : "play"} active={simActive} onClick={() => this.openSimView() } title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined }
+                                    <sui.Item class="blocks-menuitem" textClass="landscape only" text={lf("Blocks") } icon="xicon blocks" active={blockActive} onClick={() => this.openBlocks() } title={lf("Convert code to Blocks") } />
+                                    <sui.Item class="javascript-menuitem" textClass="landscape only" text={lf("JavaScript") } icon="xicon js" active={javascriptActive} onClick={() => this.openJavaScript() } title={lf("Convert code to JavaScript") } />
+                                    <div className="ui item toggle"></div>
+                                </div>
                             </sui.Item> : undefined}
                             {inTutorial ? <tutorial.TutorialMenuItem parent={this} /> : undefined}
                             <div className="right menu">
@@ -1695,8 +1698,6 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                                     </sui.DropdownMenuItem> }
 
                                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit") } onClick={() => this.launchFullEditor() } /> : undefined}
-                                {!sandbox && gettingStarted ? <span className="ui item tablet only"><sui.Button class="small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started") } onClick={() => this.gettingStarted() } /></span> : undefined}
-
                                 {inTutorial ? <sui.ButtonMenuItem class="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial") } textClass="landscape only" onClick={() => this.exitTutorial(true) } /> : undefined}
 
                                 {!sandbox ? <a id="organization" href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo" onClick={() => pxt.tickEvent("menu.org") }>
