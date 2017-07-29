@@ -182,35 +182,63 @@ div.simframe > iframe {
 
 /* Menu */
 #menubar .ui.menu .item.editor-menuitem {
-    background: fade(@black, 30%) !important;
-    margin: calc(@mainMenuHeight/10);
-    padding: calc(@mainMenuHeight/10);
-    border-radius: 0.5rem !important;
+    padding: 0;
 }
-.ui.menu.fixed .item.editor-menuitem .item {
-    border-radius: 0px !important;
+#menubar .ui.menu .item.editor-menuitem:hover {
+    background: none;
 }
-.ui.inverted.menu.fixed .item.editor-menuitem :first-child {
-    border-top-left-radius: 0.2rem !important;
-    border-bottom-left-radius: 0.2rem !important;
+#menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
+    background: fade(@black, 40%) !important;
+    border: 3px solid fade(@black, 20%);
+    border-radius: 2.5rem !important;
+    position: relative;
 }
+#menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
+    border-radius: 2.5rem !important;
+    width: 140px;
+    z-index: 2;
+}
+#menubar .ui.menu.fixed .ui.item.editor-menuitem .item.link:hover {
+    background: none;
+}
+#menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
+    opacity: 0.6;
+}
+#menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
+    background: none;
+    color: @mainMenuInvertedBackground !important;
+}
+.ui.item.editor-menuitem .item.toggle {
+    z-index: 1 !important;
+    margin: 1px;
+    height: 46px;
+    left: 0;
+    position: absolute;
+    opacity: 1 !important;
+    background: none;
+    margin: 0;
+    -webkit-transition: margin-left .3s; /* Safari */
+    -moz-transition: margin-left .3s; /* Mozilla */
+    -webkit-transition-timing-function: ease-in; /* Mozilla */
+    -o-transition: margin-left .3s; /* Opera */
+    transition: margin-left .3s;
+    transition-timing-function: ease-in;
+}
+
 .ui.inverted.menu.fixed .item.editor-menuitem :first-child[style*="display:none"] + .ui.inverted.menu.fixed .item.editor-menuitem :not([style*="display:none"]) {
     border-top-left-radius: 0.2rem !important;
     border-bottom-left-radius: 0.2rem !important;
 }
-.ui.inverted.menu.fixed .item.editor-menuitem :last-child {
-    border-top-right-radius: 0.2rem !important;
-    border-bottom-right-radius: 0.2rem !important;
-}
 
-// Add a transition between the blocks / js menu item toggle options
-.ui.inverted.menu .item.editor-menuitem .item {
-    -webkit-transition: background 1s; /* Safari */
-    -moz-transition: background 1s; /* Mozilla */
-    -webkit-transition-timing-function: ease-in; /* Mozilla */
-    -o-transition: background 1s; /* Opera */
-    transition: background 1s;
-    transition-timing-function: ease-in;
+.active.item.blocks-menuitem ~ .toggle {
+    margin-left: 0 !important;
+    box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
+    background: @editorToggleColor !important;
+}
+.active.item.javascript-menuitem ~ .toggle {
+    margin-left: 140px !important;
+    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+    background: @editorToggleColor !important;
 }
 
 /* Help card */
@@ -230,6 +258,8 @@ div.simframe > iframe {
     background-repeat: no-repeat;
     background-position: center;
     height: 10rem;
+    border-top-left-radius: @defaultBorderRadius;
+    border-top-right-radius: @defaultBorderRadius;
 }
 
 /* Logo */
@@ -249,7 +279,7 @@ div.simframe > iframe {
 }
 
 .ui.item.logo img {
-    max-height: 2.0rem;
+    max-height: 1.6rem;
     margin-left: 1rem;
     margin-right: 1rem;
 }
@@ -327,9 +357,11 @@ div.simframe > iframe {
 }
 
 /* Icon and text */
-#content .ui.button > .icon-and-text {
-    margin-right: 4px;
-    margin-left: -2px;
+.ui.menu > .menu > .ui.item > .icon-and-text.icon {
+    margin: 0em auto;
+}
+.ui.menu > .menu > .ui.item > .icon-and-text.icon ~ span.ui.text {
+    margin-left: 0.6em;
 }
 
 /* Beta */
@@ -414,12 +446,15 @@ div.simframe > iframe {
 .blocklyToolboxDiv, .monacoToolboxDiv {
     background: @blocklyToolboxColor !important;
     z-index: 1;
-    -webkit-transition: width 1s; /* Safari */
-    -moz-transition: width 1s; /* Mozilla */
+    -webkit-transition: width 1s, background 0.3s; /* Safari */
+    -moz-transition: width 1s, background 0.3s; /* Mozilla */
     -webkit-transition-timing-function: ease-in; /* Mozilla */
-    -o-transition: width 1s; /* Opera */
-    transition: width 1s;
+    -o-transition: width 1s, background 0.3s; /* Opera */
+    transition: width 1s, background 0.3s;
     transition-timing-function: ease-in;
+}
+.blocklyToolboxDiv.blocklyToolboxDeleting {
+    background: lighten(@red, 10%) !important;
 }
 
 svg.blocklySvg {
@@ -502,7 +537,6 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
     z-index: 8;
     font-size:5rem;
     color: @trashIconColor;
-    margin: 0.5rem;
 }
 
 /* Blockly / Monaco Toolbox Buttons */
@@ -521,7 +555,7 @@ div.blocklyTreeRoot div div div div div.blocklyTreeRow span.blocklyTreeLabel {
 span.blocklyTreeIcon {
     opacity: 1;
     margin: -0.2em 0.25em 0.0em 0.25em;
-    width: 1.18em;
+    width: 30px;
     font-family: 'Icons';
     font-style: normal;
     font-weight: normal;
@@ -533,7 +567,8 @@ span.blocklyTreeIcon {
     -webkit-font-smoothing: antialiased;
     backface-visibility: hidden;
     font-size: 1.2rem;
-    height: 15px;
+    height: 30px;
+    line-height: 35px;
     display: none;
 }
 .blocklyTreeSelected .blocklyTreeIcon{
@@ -880,6 +915,8 @@ Field editors
     /* Blockly */
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthWide;
+        min-height: @blocklyRowHeightWide;
+        line-height: @blocklyRowHeightWide;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthWide;
@@ -891,6 +928,8 @@ Field editors
     /* Blockly row */
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthComputer;
+        min-height: @blocklyRowHeightComputer;
+        line-height: @blocklyRowHeightComputer;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthComputer;
@@ -902,19 +941,15 @@ Field editors
     /* Blockly */
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthTablet;
+        min-height: @blocklyRowHeightTablet;
+        line-height: @blocklyRowHeightTablet;
+        border-left-width: 12px !important;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
     }
-    div.blocklyTreeRow {
-        padding-top: 0.5rem !important;
-        padding-bottom: 2.0rem !important;
-        border-left-width: 12px !important;
-    }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
         border-left-width: 18px !important;
-        padding-top: 0px !important;
-        padding-bottom: 1.6rem !important;
     }
 }
 
@@ -922,6 +957,13 @@ Field editors
 @media only screen and (max-width: @largestMobileScreen) {
     div.blocklyTreeRow {
         min-width: @blocklyRowWidthMobile;
+        min-height: @blocklyRowHeightMobile;
+        line-height: @blocklyRowHeightMobile;
+        border-left-width: 6px !important;
+    }
+    span.blocklyTreeIcon {
+        font-size: 1.5rem;
+        margin: 0.0em 0.25em 0.0em 0.25em;
     }
     #blocklyTrashIcon {
         width: @blocklyRowWidthMobile;
@@ -932,14 +974,10 @@ Field editors
 @media only screen and (min-width: @computerBreakpoint) {
     /* Blockly */
     div.blocklyTreeRow {
-        padding-top: 0.5rem !important;
-        padding-bottom: 2.0rem !important;
         border-left-width: 12px !important;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
         border-left-width: 18px !important;
-        padding-top: 0px !important;
-        padding-bottom: 1.6rem !important;
     }
     .collapsedEditorTools #filelist {
         display: none;
@@ -1056,6 +1094,11 @@ Field editors
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
+    /* Logo */
+    #logo, #organization {
+        font-size: 0rem;
+        padding-right: 0;
+    }
     /* Blockly */
     span.blocklyTreeLabel {
         font-size:1rem;
@@ -1126,16 +1169,15 @@ Field editors
     #root:not(.sandbox) #menubar .ui.menu .item {
         padding: 0.3em !important;
     }
-    #menubar .ui.menu .item.editor-menuitem {
-        margin: calc(@mobileMenuHeight/10);
-        padding: calc(@mobileMenuHeight/10);
+    #root #menubar .ui.menu .item.editor-menuitem .item {
+        padding: 0.7em !important;
     }
-    #menubar .ui.menu .item.editor-menuitem .item {
-        padding: 0.4em !important;
+    #root #menubar .ui.menu.fixed .ui.item.editor-menuitem .item {
+        width: 40px;
+        height: 38px;
     }
-    .sandbox #menubar .ui.menu .item.editor-menuitem {
-        margin: calc(@sandboxMobileMenuHeight/10);
-        padding: calc(@sandboxMobileMenuHeight/10);
+    .active.item.javascript-menuitem ~ .toggle {
+        margin-left: 40px !important;
     }
     /* Top Menu */
     #maineditor {
@@ -1151,8 +1193,8 @@ Field editors
     /* Logo */
     .ui.item.logo img {
         max-height: 2.5rem;
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
+        margin-left: 0.4rem;
+        margin-right: 0.4rem;
     }
     .ui.mini.image {
         display: block !important;
@@ -1161,37 +1203,20 @@ Field editors
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    /* Logo */
-    #logo, #organization {
-        font-size: 0rem;
-        padding-right: 0;
-    }
     /* Blockly */
     text.blocklyCheckbox {
         font-size: 17pt !important;
     }
     /* Hide blockly tree labels on mobile */
-    span.blocklyTreeLabel {
-        display: none !important;
-    }
-    div.blocklyTreeRow:hover span.blocklyTreeLabel {
-        display: none !important;
-    }
-    div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel {
+    span.blocklyTreeLabel, div.blocklyTreeRow:hover span.blocklyTreeLabel, div.blocklyTreeRow.blocklyTreeSelected:hover span.blocklyTreeLabel{
         display: none !important;
     }
     div.blocklyTreeRow {
         padding-right: 0;
-        padding-top: 0.25rem;
-        height: 2.5rem;
         text-align: center;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
         border-left-width: 8px !important;
-    }
-    span.blocklyTreeIcon {
-        font-size: 1.5rem;
-        margin: 0.0em 0.25em 0.0em 0.25em;
     }
     /* Blockly trash icon */
     #blocklyTrashIcon {
@@ -1314,5 +1339,24 @@ Field editors
         width: inherit;
         bottom: 1.5rem;
         padding: 0.3rem;
+    }
+}
+
+@media only screen and (max-height: @thinEditorBreakpoint) and (max-width: @computerBreakpoint){
+    /* sim-menuitem visible in this view (in sandbox mode), adjust toggle margins */
+    #root.sandbox .active.item.sim-menuitem ~ .toggle {
+        margin-left: 0 !important;
+        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
+    }
+    #root.sandbox .active.item.blocks-menuitem ~ .toggle {
+        margin-left: 40px !important;
+        box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
+    }
+    #root.sandbox .active.item.javascript-menuitem ~ .toggle {
+        margin-left: 80px !important;
+        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
     }
 }
