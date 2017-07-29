@@ -607,7 +607,7 @@ namespace pxt.blocks {
         }
 
         block.setTooltip(fn.attributes.jsDoc);
-        block.setColour(color);
+        block.setColour(color, fn.attributes.colorSecondary, fn.attributes.colorTertiary);
         let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
         switch (fn.retType) {
             case "number": blockShape = Blockly.OUTPUT_SHAPE_ROUND; break;
