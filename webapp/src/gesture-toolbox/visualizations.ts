@@ -246,8 +246,17 @@ export function deleteGestureSample(gestureID: number, sampleID: number) {
 }
 
 
-export function setConnected(id: string) {
-    let label = d3.select("#" + id);
+export function setConnIndicator(isConnected: boolean) {
+    if (isConnected) {
+        setConnected();
+    }
+    else {
+        setDisconnected();
+    }
+}
+
+export function setConnected() {
+    let label = d3.select("#" + GestureUI.connectionIndicatorID);
     label.attr("style", "color: white; background-color: green;");
     
     label.select("span").html("Connected");
@@ -255,9 +264,8 @@ export function setConnected(id: string) {
     label.select("i").classed("checkmark", true);
 }
 
-
-export function setDisconnected(id: string) {
-    let label = d3.select("#" + id);
+export function setDisconnected() {
+    let label = d3.select("#" + GestureUI.connectionIndicatorID);
     label.attr("style", "color: white; background-color: red;");
 
     label.select("span").html("Disconnected");
