@@ -1673,6 +1673,7 @@ namespace pxt.blocks {
          */
         const blockDrag = (<any>Blockly).BlockDragger.prototype.dragBlock;
         (<any>Blockly).BlockDragger.prototype.dragBlock = function (e: any, currentDragDeltaXY: any) {
+            const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (blocklyTreeRoot && trashIcon) {
@@ -1682,9 +1683,13 @@ namespace pxt.blocks {
                     trashIcon.style.opacity = `${1 - opacity}`;
                     trashIcon.style.display = 'block';
                     blocklyTreeRoot.style.opacity = `${opacity}`;
+                    if (distance < 50) {
+                        blocklyToolboxDiv.classList.add('blocklyToolboxDeleting');
+                    }
                 } else {
                     trashIcon.style.display = 'none';
                     blocklyTreeRoot.style.opacity = '1';
+                    blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
                 }
             }
             return blockDrag.call(this, e, currentDragDeltaXY);
@@ -1699,11 +1704,13 @@ namespace pxt.blocks {
         const blockEndDrag = (<any>Blockly).BlockDragger.prototype.endBlockDrag;
         (<any>Blockly).BlockDragger.prototype.endBlockDrag = function (e: any, currentDragDeltaXY: any) {
             blockEndDrag.call(this, e, currentDragDeltaXY);
+            const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (trashIcon) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
+                blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
             }
         }
     }

@@ -28,7 +28,7 @@ The BBC micro:bit is a small wearable and programmable mbed-based device that vi
 compass, buttons, I/O pins, Micro USB plug, Bluetooth Low Energy antenna, ARM Cortex-M0 processor, and battery plug.
 
 * [Try the micro:bit editor](https://makecode.microbit.org) for micro:bit!
-* [Fork our repo](https://github.com/pxt-microbit)
+* [Fork our repo](https://github.com/microsoft/pxt-microbit)
 
 ## MakeCode for Adafruit Circuit Playground Express
 
@@ -36,7 +36,7 @@ The Circuit Playground Express is board
 produced by Adafruit Industries.
 
 * [Try the Adafruit editor](https://makecode.adafruit.com) for Adafruit Circuit Playground Express!
-* [Fork our repo](https://github.com/pxt-common-packages)
+* [Fork our repo](https://github.com/microsoft/pxt-common-packages)
 
 
 ## Open Source
