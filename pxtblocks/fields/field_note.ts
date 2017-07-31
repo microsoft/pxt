@@ -59,7 +59,7 @@ namespace pxtblockly {
         large = 60
     }
 
-    let regex: RegExp = /^Note\.(.+)$/
+    let regex: RegExp = /^Note\.(.+)$/;
 
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
