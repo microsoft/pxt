@@ -237,7 +237,7 @@ namespace pxtblockly {
         setValue(note: string) {
             let regex: RegExp = new RegExp("Note.(.*)");
             let match = regex.exec(note);
-            let noteName: any = (match && match.length) > 1 ? match[1] : null;
+            let noteName: any = (match && match.length > 1) ? match[1] : null;
             note = Note[noteName] ? String(parseFloat(Note[noteName])) : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
                 return;
