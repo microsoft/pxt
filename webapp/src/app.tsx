@@ -1731,7 +1731,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 </div> }
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
+                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} hasGettingStarted={gettingStarted} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
@@ -2183,9 +2183,10 @@ $(document).ready(() => {
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
     const ws = /ws=(\w+)/.exec(window.location.href)
+    const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     if (ws) workspace.setupWorkspace(ws[1]);
     else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
-    else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
+    else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
     Promise.resolve()
@@ -2225,11 +2226,15 @@ $(document).ready(() => {
         .then(() => pxt.winrt.initAsync(importHex))
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
+            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
+            let hd = workspace.getHeaders()[0];
+            if (ent) hd = workspace.getHeader(ent.id);
+
             // Only show the start page if there are no initial projects requested
             // (e.g. from the URL hash or from WinRT activation arguments)
-            const shouldShowStartPage = pxt.appTarget.appTheme.useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
+            const shouldShowStartPage = !isSandbox && pxt.appTarget.appTheme.useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
             if (shouldShowStartPage) {
-                theEditor.projects.showStartPage();
+                theEditor.projects.showStartPage(/* resumeProject */ hd);
                 return Promise.resolve();
             }
             if (hash.cmd && handleHash(hash)) {
@@ -2240,9 +2245,6 @@ $(document).ready(() => {
             }
 
             // default handlers
-            let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
-            let hd = workspace.getHeaders()[0]
-            if (ent) hd = workspace.getHeader(ent.id)
             if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();

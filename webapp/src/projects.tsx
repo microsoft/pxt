@@ -18,22 +18,29 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
+interface ProjectsProps extends ISettingsProps {
+    hasGettingStarted: boolean;
+}
+
 interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
     tab?: string;
     isStartPage?: boolean;
+    resumeProject?: pxt.workspace.Header;
+    welcomeDescription?: string;
 }
 
+const WELCOME = "__welcome";
 const MYSTUFF = "__mystuff";
 
-export class Projects extends data.Component<ISettingsProps, ProjectsState> {
+export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
     private prevGalleries: pxt.Map<pxt.CodeCard[]> = {};
     private galleryFetchErrors: { [tab: string]: boolean } = {};
 
-    constructor(props: ISettingsProps) {
+    constructor(props: ProjectsProps) {
         super(props)
         this.state = {
             visible: false,
@@ -45,23 +52,32 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.setState({ visible: false, isStartPage: true });
     }
 
-    showStartPage() {
+    showStartPage(resumeProject?: pxt.workspace.Header) {
         this.setState({
             visible: true,
-            tab: MYSTUFF,
-            isStartPage: false
+            tab: WELCOME,
+            isStartPage: true,
+            resumeProject
         });
     }
 
     showOpenProject(tab?: string) {
         const gals = pxt.appTarget.appTheme.galleries || {};
         tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
-        this.setState({ visible: true, tab: tab || MYSTUFF })
+        this.setState({
+            visible: true,
+            tab: tab || MYSTUFF,
+            isStartPage: false
+        })
     }
 
     showOpenTutorials() {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
-        this.setState({ visible: true, tab: gals[0] || MYSTUFF })
+        this.setState({
+            visible: true,
+            tab: gals[0] || MYSTUFF,
+            isStartPage: false
+        })
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
@@ -104,7 +120,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.tab != nextState.tab
-            || this.state.searchFor != nextState.searchFor;
+            || this.state.searchFor != nextState.searchFor
+            || this.state.welcomeDescription != nextState.welcomeDescription;
     }
 
     private numDaysOld(d1: number) {
@@ -117,7 +134,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const theme = pxt.appTarget.appTheme;
         const galleries = theme.galleries || {};
-        const tabs = [MYSTUFF].concat(Object.keys(galleries));
+        const galleryNames = Object.keys(galleries);
+        const tabs = (this.state.isStartPage ? [WELCOME] : []).concat(MYSTUFF).concat(Object.keys(galleries));
 
         // lf("Make")
         // lf("Code")
@@ -203,6 +221,12 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
         }
+        const gettingStarted = () => {
+            pxt.tickEvent("projects.gettingstarted");
+            this.hide();
+            this.props.parent.gettingStarted();
+        }
+
         const isEmpty = () => {
             if (this.state.searchFor) {
                 if (headers.length > 0
@@ -237,7 +261,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         ];
 
         const hadFetchError = this.galleryFetchErrors[tab];
-        const isLoading = tab != MYSTUFF && !hadFetchError && !gals[tab].length;
+        const isLoading = tab != WELCOME && tab != MYSTUFF && !hadFetchError && !gals[tab].length;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
@@ -245,22 +269,63 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         ]);
 
         return (
-            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
+            <sui.Modal open={visible} className="projectsdialog" size={tab == WELCOME ? "medium" : "fullscreen"} closeIcon={false}
                 onClose={() => this.hide() } dimmer={true}
                 closeOnDimmerClick={!this.state.isStartPage}
                 closeOnDocumentClick={!this.state.isStartPage}>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
-                        {tabs.map(t =>
-                            <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t) } onClick={() => this.setState({ tab: t }) } />) }
+                        {tabs.map(t => {
+                            let name: string;
+                            if (t == MYSTUFF) name = lf("My Stuff");
+                            else if (t == WELCOME) name = lf("Welcome!");
+                            else name = Util.rlf(t);
+                            return (<sui.MenuItem key={`tab${t}`} active={tab == t} name={name} onClick={() => this.setState({ tab: t }) } />)
+                        }) }
                         <div className="right menu">
-                            {this.state.isStartPage ? <sui.Button
+                            {this.state.isStartPage ? undefined : <sui.Button
                                 icon='close'
                                 class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.hide() } /> : null }
+                                onClick={() => this.hide() } /> }
                         </div>
                     </sui.Menu>
                 </sui.Segment>
+                {tab == WELCOME ? <div className={tabClasses}>
+                    <span className="group welcomebuttons">
+                        {this.state.resumeProject ? <sui.Button
+                            class={"huge ui primary welcomebutton-resume"}
+                            text={lf("Resume") }
+                            onClick={() => chgHeader(this.state.resumeProject) }
+                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Open the last project you worked on.") }) }
+                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } /> : undefined}
+                        <sui.Button
+                            class={"huge primary welcomebutton-gettingstarted"}
+                            text={lf("Getting started") }
+                            onClick={() => gettingStarted()}
+                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Create a fun, beginner project in a guided tutorial.") }) }
+                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
+                        <sui.Button
+                            class={"huge primary welcomebutton-newproject"}
+                            text={lf("New project") }
+                            onClick={() => newProject() }
+                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Create a blank project.") }) }
+                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
+                        <sui.Button
+                            class={"huge primary welcomebutton-openproject"}
+                            text={lf("Load project") }
+                            onClick={() => this.setState({ tab: MYSTUFF }) }
+                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Continue working on a previous project.") }) }
+                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
+                        {galleryNames.length > 0 ? <sui.Button
+                            class={"huge primary welcomebutton-galleries"}
+                            text={lf("Project galleries") }
+                            onClick={() => this.setState({ tab: galleryNames[0] }) }
+                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Discover guided tutorials, full project samples and awesome activities!") }) }
+                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } /> : undefined}
+                        <div className="welcomedescription">{this.state.welcomeDescription}</div>
+                    </span>
+                    <span className="large ui loader"></span>
+                </div> : undefined }
                 {tab == MYSTUFF ? <div className={tabClasses}>
                     <div className="group">
                         <div className="ui cards">
@@ -328,7 +393,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </div>
                     </div>
                 </div> : undefined }
-                {tab != MYSTUFF ? <div className={tabClasses}>
+                {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses}>
                     {hadFetchError ?
                         <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
                         : <div className="ui cards centered">
