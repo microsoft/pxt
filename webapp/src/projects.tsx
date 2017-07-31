@@ -74,18 +74,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     showOpenProject(tab?: string) {
         const gals = pxt.appTarget.appTheme.galleries || {};
         tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
-        this.setState({
-            visible: true,
-            tab: tab || MYSTUFF
-        })
+        this.setState({ visible: true, tab: tab || MYSTUFF });
     }
 
     showOpenTutorials() {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
-        this.setState({
-            visible: true,
-            tab: gals[0] || MYSTUFF
-        })
+        this.setState({ visible: true, tab: gals[0] || MYSTUFF });
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
