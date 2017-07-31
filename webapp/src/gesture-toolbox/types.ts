@@ -49,6 +49,8 @@ export class GestureSample {
     public endTime: number;
     private static id: number = 0;
     public sampleID: number;
+    public cropStartIndex: number;
+    public cropEndIndex: number;
 
     constructor() {
         this.rawData = [];
