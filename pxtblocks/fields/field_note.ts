@@ -58,6 +58,8 @@ namespace pxtblockly {
         large = 60
     }
 
+    let regex: RegExp = /^Note\.(.+)$/
+
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
@@ -93,7 +95,6 @@ namespace pxtblockly {
          * @private
          */
         private noteName_: Array<string> = [];
-
 
         constructor(text: string, options: Blockly.FieldCustomOptions, validator?: Function) {
             super(text);
@@ -235,8 +236,8 @@ namespace pxtblockly {
          * @param {string} note The new note in string format.
          */
         setValue(note: string) {
-            let regex: RegExp = new RegExp("Note.(.*)");
-            let match: Array<String> = regex.exec(note);
+            // accommodate note strings like "Note.GSharp5" as well as numbers
+            let match: Array<string> = regex.exec(note);
             let noteName: any = (match && match.length > 1) ? match[1] : null;
             note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
