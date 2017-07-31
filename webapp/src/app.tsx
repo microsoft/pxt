@@ -2234,7 +2234,7 @@ $(document).ready(() => {
             // (e.g. from the URL hash or from WinRT activation arguments)
             const shouldShowStartPage = !isSandbox && pxt.appTarget.appTheme.useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
             if (shouldShowStartPage) {
-                theEditor.projects.showStartPage(/* resumeProject */ hd);
+                theEditor.projects.showInitialStartPage(hd);
                 return Promise.resolve();
             }
             if (hash.cmd && handleHash(hash)) {

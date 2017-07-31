@@ -26,7 +26,7 @@ interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
     tab?: string;
-    isStartPage?: boolean;
+    isInitialStartPage?: boolean;
     resumeProject?: pxt.workspace.Header;
     welcomeDescription?: string;
 }
@@ -48,15 +48,25 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         }
     }
 
-    hide() {
-        this.setState({ visible: false, isStartPage: true });
+    hide(closeOnly: boolean = false) {
+        if (this.state.isInitialStartPage && closeOnly) {
+            // If this was the initial start page and the dialog was close without a selection being made, load the
+            // previous project if available or create a new one
+            pxt.tickEvent("projects.welcome.hide");
+            if (this.state.resumeProject) {
+                this.props.parent.loadHeaderAsync(this.state.resumeProject);
+            } else {
+                this.props.parent.newProject();
+            }
+        }
+        this.setState({ visible: false, isInitialStartPage: false });
     }
 
-    showStartPage(resumeProject?: pxt.workspace.Header) {
+    showInitialStartPage(resumeProject?: pxt.workspace.Header) {
         this.setState({
             visible: true,
             tab: WELCOME,
-            isStartPage: true,
+            isInitialStartPage: true,
             resumeProject
         });
     }
@@ -66,8 +76,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
         this.setState({
             visible: true,
-            tab: tab || MYSTUFF,
-            isStartPage: false
+            tab: tab || MYSTUFF
         })
     }
 
@@ -75,8 +84,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
         this.setState({
             visible: true,
-            tab: gals[0] || MYSTUFF,
-            isStartPage: false
+            tab: gals[0] || MYSTUFF
         })
     }
 
@@ -135,7 +143,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const theme = pxt.appTarget.appTheme;
         const galleries = theme.galleries || {};
         const galleryNames = Object.keys(galleries);
-        const tabs = (this.state.isStartPage ? [WELCOME] : []).concat(MYSTUFF).concat(Object.keys(galleries));
+        const tabs = [WELCOME, MYSTUFF].concat(Object.keys(galleries));
 
         // lf("Make")
         // lf("Code")
@@ -149,7 +157,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
-            pxt.tickEvent("projects.header");
+            pxt.tickEvent(tab == WELCOME ? "projects.welcome.resume" : "projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
@@ -212,7 +220,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             this.props.parent.importUrlDialog();
         }
         const newProject = () => {
-            pxt.tickEvent("projects.new");
+            pxt.tickEvent(tab == WELCOME ? "projects.welcome.new" : "projects.new");
             this.hide();
             this.props.parent.newProject();
         }
@@ -221,10 +229,26 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
             this.hide();
             this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
         }
+        const resume = () => {
+            if (this.state.isInitialStartPage) {
+                chgHeader(this.state.resumeProject);
+            } else {
+                // The msot recent project is already loaded in the editor, so this is a no-op
+                this.hide();
+            }
+        }
         const gettingStarted = () => {
-            pxt.tickEvent("projects.gettingstarted");
+            pxt.tickEvent("projects.welcome.gettingstarted");
             this.hide();
             this.props.parent.gettingStarted();
+        }
+        const loadProject = () => {
+            pxt.tickEvent("projects.welcome.loadproject");
+            this.setState({ tab: MYSTUFF });
+        }
+        const projectGalleries = () => {
+            pxt.tickEvent("projects.welcome.galleries");
+            this.setState({ tab: galleryNames[0] })
         }
 
         const isEmpty = () => {
@@ -270,9 +294,8 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size={tab == WELCOME ? "medium" : "fullscreen"} closeIcon={false}
-                onClose={() => this.hide() } dimmer={true}
-                closeOnDimmerClick={!this.state.isStartPage}
-                closeOnDocumentClick={!this.state.isStartPage}>
+                onClose={() => this.hide(/* closeOnly */ true) } dimmer={true}
+                closeOnDimmerClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
                         {tabs.map(t => {
@@ -283,10 +306,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                             return (<sui.MenuItem key={`tab${t}`} active={tab == t} name={name} onClick={() => this.setState({ tab: t }) } />)
                         }) }
                         <div className="right menu">
-                            {this.state.isStartPage ? undefined : <sui.Button
+                            <sui.Button
                                 icon='close'
                                 class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.hide() } /> }
+                                onClick={() => this.hide(/* closeOnly */ true) } />
                         </div>
                     </sui.Menu>
                 </sui.Segment>
@@ -295,13 +318,13 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         {this.state.resumeProject ? <sui.Button
                             class={"huge ui primary welcomebutton-resume"}
                             text={lf("Resume") }
-                            onClick={() => chgHeader(this.state.resumeProject) }
+                            onClick={() => resume() }
                             onMouseEnter={() => this.setState({ welcomeDescription: lf("Open the last project you worked on.") }) }
                             onMouseLeave={() => this.setState({ welcomeDescription: "" }) } /> : undefined}
                         <sui.Button
                             class={"huge primary welcomebutton-gettingstarted"}
                             text={lf("Getting started") }
-                            onClick={() => gettingStarted()}
+                            onClick={() => gettingStarted() }
                             onMouseEnter={() => this.setState({ welcomeDescription: lf("Create a fun, beginner project in a guided tutorial.") }) }
                             onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
                         <sui.Button
@@ -313,13 +336,13 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         <sui.Button
                             class={"huge primary welcomebutton-openproject"}
                             text={lf("Load project") }
-                            onClick={() => this.setState({ tab: MYSTUFF }) }
+                            onClick={() => loadProject() }
                             onMouseEnter={() => this.setState({ welcomeDescription: lf("Continue working on a previous project.") }) }
                             onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
                         {galleryNames.length > 0 ? <sui.Button
                             class={"huge primary welcomebutton-galleries"}
                             text={lf("Project galleries") }
-                            onClick={() => this.setState({ tab: galleryNames[0] }) }
+                            onClick={() => projectGalleries() }
                             onMouseEnter={() => this.setState({ welcomeDescription: lf("Discover guided tutorials, full project samples and awesome activities!") }) }
                             onMouseLeave={() => this.setState({ welcomeDescription: "" }) } /> : undefined}
                         <div className="welcomedescription">{this.state.welcomeDescription}</div>
