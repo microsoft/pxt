@@ -15,6 +15,7 @@ import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations";
 import * as Model from "./model";
+import * as Indicator from "./indicator";
 import { streamerCode } from "./streamer";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -25,10 +26,12 @@ type IProjectView = pxt.editor.IProjectView;
 export const gesturesContainerID: string = "gestures-container";
 export const connectionIndicatorID: string = "connection-indicator";
 
-export interface GestureToolboxState {
+interface GestureToolboxState {
     visible?: boolean;
+    singleGestureView?: boolean;
+    data?: Types.Gesture[];
+    connected?: boolean;
 }
-
 
 export function getParent(): IProjectView {
     return p;
@@ -41,18 +44,23 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
-    
-    private lastConnectedTime: number;
-    private isConnected: boolean;
+
+    lastConnectedTime: number;
 
     constructor(props: ISettingsProps) {
         super(props);
+
+        // TODO:  
+        // Load data (accelerometer gesture data + video + ...) from cloud
+
         this.state = {
-            visible: false
-        }
+            visible: false,
+            singleGestureView: false,
+            data: [],
+            connected: false
+        };
 
         this.lastConnectedTime = 0;
-        this.isConnected = false;
 
         Recorder.initKeyboard();
         p = this.props.parent;
@@ -61,29 +69,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     hide() {
         this.setState({ visible: false });
+
         Webcam.mediaStream.stop();
     }
 
 
     show() {
         this.setState({ visible: true });
-        let wasRecording = false;
-        
-        setInterval(() => {
-            if (Date.now() - this.lastConnectedTime > 1000) {
-                Viz.setDisconnected();
-                this.isConnected = false;
 
-                if (hidbridge.shouldUse())
-                    hidbridge.initAsync();
-            }
-            else {
-                if (!this.isConnected) {
-                    this.isConnected = true;
-                    Viz.setConnected();
-                }
-            }
-        }, 1000);
+        let wasRecording = false;
 
         Webcam.init("webcam-video");
 
@@ -102,13 +96,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         this.graphX.update(newData.accVec.X, Viz.smoothedLine);
                         this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
                         this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
-                        
-                        this.lastConnectedTime = Date.now();
 
-                        if (!this.isConnected) {
-                            Viz.setConnected();
-                            this.isConnected = true;
-                        }
+                        this.lastConnectedTime = Date.now();
                     }
 
                     if (Model.core.running) {
@@ -132,7 +121,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         // Viz.d3.select("#program-streamer-btn").on("click", () => {
-            
+
         // });
 
         Viz.d3.select("#generate-block").on("click", () => {
@@ -142,7 +131,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: GestureToolboxState, nextContext: any): boolean {
-        return this.state.visible != nextState.visible;
+        return this.state.visible != nextState.visible || this.state.connected != nextState.connected;
     }
 
 
@@ -161,12 +150,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 closeIcon={true}
                 closeOnDimmerClick
                 >
-                <div id={connectionIndicatorID} className="ui label">
-                    <i className="remove icon"></i>
-                    <span></span>
-                </div>
 
-                <div className="ui cards">
+                {/* <div className="ui cards">
                     <codecard.CodeCardView
                                 key={'newpgesture'}
                                 icon="wizard outline"
@@ -183,12 +168,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 description={lf("Imports gesture from your computer") }
                                 onClick={() => importGesture() }
                                 />
-                </div>
+                </div> */}
 
-                <div className="ui segment">
-                    
-                </div>
-
+                <Indicator.ConnectionIndicatorView parent={ this }/>
 
                 <div className="ui three column grid">
                     <div className="four wide column">
