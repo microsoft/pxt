@@ -1,7 +1,7 @@
 /// <reference path="../../localtypings/blockly.d.ts" />
 
 namespace pxtblockly {
-        enum Note {
+    enum Note {
         C = 262,
         CSharp = 277,
         D = 294,
@@ -236,9 +236,9 @@ namespace pxtblockly {
          */
         setValue(note: string) {
             let regex: RegExp = new RegExp("Note.(.*)");
-            let match = regex.exec(note);
+            let match: Array<String> = regex.exec(note);
             let noteName: any = (match && match.length > 1) ? match[1] : null;
-            note = Note[noteName] ? String(parseFloat(Note[noteName])) : String(parseFloat(note || "0"));
+            note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
                 return;
             if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
