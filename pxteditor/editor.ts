@@ -134,6 +134,7 @@ namespace pxt.editor {
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
+        updateFileAsyncWithoutReload(name: string, content: string, open?: boolean): Promise<void>;
 
         openTutorials(): void;
         setTutorialStep(step: number): void;

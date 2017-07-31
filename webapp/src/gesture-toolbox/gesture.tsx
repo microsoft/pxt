@@ -30,6 +30,13 @@ export interface GestureToolboxState {
 }
 
 
+export function getParent(): IProjectView {
+    return p;
+}
+
+
+let p: IProjectView;
+
 export class GestureToolbox extends data.Component<ISettingsProps, GestureToolboxState> {
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
@@ -48,6 +55,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.isConnected = false;
 
         Recorder.initKeyboard();
+        p = this.props.parent;
     }
 
 
@@ -128,8 +136,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         // });
 
         Viz.d3.select("#generate-block").on("click", () => {
-            let blockCode = Model.core.GenerateBlock();
-            this.props.parent.updateFileAsync("custom.ts", blockCode);
+            this.props.parent.updateFileAsync("custom.ts", Model.core.GenerateBlock());
         });
     }
 

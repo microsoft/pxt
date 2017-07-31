@@ -2,9 +2,11 @@ import { Vector, GestureSample, Gesture } from './types';
 import * as Viz from './visualizations';
 import * as Webcam from "./webcam";
 import * as Model from "./model";
+import * as GestureUI from "./gesture";
 
 export let isRecording = false;
 export let recData: Gesture[] = [];
+
 let recPointer: number = -1;
 
 export function initKeyboard() {
@@ -76,6 +78,7 @@ export function stopRecording() {
         Model.core.Update(recData[recPointer].getData());
         recData[recPointer].displayGesture.rawData = Model.core.refPrototype;
         Viz.drawMainGraph(recPointer);
+        storeGestures();
     };
 }
 
@@ -118,4 +121,14 @@ export function Reload() {
             }
         }
     }
+}
+
+
+function storeGestures() {
+    GestureUI.getParent().updateFileAsyncWithoutReload("gestures.json", JSON.stringify(recData));
+}
+
+
+function loadGestures() {
+
 }

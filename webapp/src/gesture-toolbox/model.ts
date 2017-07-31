@@ -14,8 +14,6 @@ export class SingleDTWCore {
 
     public running: boolean;
 
-    public static needsReload = false;
-
     constructor(classNum: number) {
         this.classNumber = classNum;
         this.dba = new Algorithms.DBA<Vector>(Algorithms.EuclideanDistanceFast, Algorithms.Average);
@@ -23,7 +21,6 @@ export class SingleDTWCore {
         // call update to generate the referencePrototype and threshold
         // this.Update(initialData);
         // this.dtw = new Algorithms.SpringAlgorithm<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
-        SingleDTWCore.needsReload = false;
     }
 
 
