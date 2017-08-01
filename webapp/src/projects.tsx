@@ -308,47 +308,49 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </sui.Menu>
                 </sui.Segment>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <div className="startpage-labels">
-                        <h2>{pxt.appTarget.name}</h2>
-                        <div className="large ui loader"></div>
-                    </div>
-                    <div className="group startpage-cards">
-                        <div className="ui cards centered">
-                            {this.state.resumeProject ? <codecard.CodeCardView
-                                key={'resume'}
-                                iconColor="teal"
-                                iconContent={lf("Resume") }
-                                description={lf("Load the last project you worked on") }
-                                onClick={() => resume() }
-                                /> : undefined}
-                            <codecard.CodeCardView
-                                key={'gettingstarted'}
-                                iconColor="green"
-                                iconContent={lf("Getting started") }
-                                description={lf("Create a fun, beginner project in a guided tutorial") }
-                                onClick={() => gettingStarted() }
-                                />
-                            <codecard.CodeCardView
-                                key={'newproject'}
-                                iconColor="brown"
-                                iconContent={lf("New project") }
-                                description={lf("Start a new, empty project") }
-                                onClick={() => newProject() }
-                                />
-                            <codecard.CodeCardView
-                                key={'loadproject'}
-                                iconColor="grey"
-                                iconContent={lf("Load project") }
-                                description={lf("Load a previous project") }
-                                onClick={() => loadProject() }
-                                />
-                            {galleryNames.length > 0 ? <codecard.CodeCardView
-                                key={'projectgalleries'}
-                                iconColor="orange"
-                                iconContent={lf("Project galleries") }
-                                description={lf("Browse guided tutorials, project samples and awesome activities") }
-                                onClick={() => projectGalleries() }
-                                /> : undefined}
+                    <div className="ui stackable two column grid">
+                        <div className="six wide column">
+                            <h2 className="row">{pxt.appTarget.name}</h2>
+                            <div className={`row large ui loader ${pxt.appTarget.appTheme.invertedMenu ? "" : "avatar"}`}></div>
+                        </div>
+                        <div className="group ten wide column">
+                            <div className="ui cards centered">
+                                {this.state.resumeProject ? <codecard.CodeCardView
+                                    key={'resume'}
+                                    iconColor="teal"
+                                    iconContent={lf("Resume") }
+                                    description={lf("Load the last project you worked on") }
+                                    onClick={() => resume() }
+                                    /> : undefined}
+                                <codecard.CodeCardView
+                                    key={'gettingstarted'}
+                                    iconColor="green"
+                                    iconContent={lf("Getting started") }
+                                    description={lf("Create a fun, beginner project in a guided tutorial") }
+                                    onClick={() => gettingStarted() }
+                                    />
+                                <codecard.CodeCardView
+                                    key={'newproject'}
+                                    iconColor="brown"
+                                    iconContent={lf("New project") }
+                                    description={lf("Start a new, empty project") }
+                                    onClick={() => newProject() }
+                                    />
+                                <codecard.CodeCardView
+                                    key={'loadproject'}
+                                    iconColor="grey"
+                                    iconContent={lf("Load project") }
+                                    description={lf("Load a previous project") }
+                                    onClick={() => loadProject() }
+                                    />
+                                {galleryNames.length > 0 ? <codecard.CodeCardView
+                                    key={'projectgalleries'}
+                                    iconColor="orange"
+                                    iconContent={lf("Project galleries") }
+                                    description={lf("Browse guided tutorials, project samples and awesome activities") }
+                                    onClick={() => projectGalleries() }
+                                    /> : undefined}
+                            </div>
                         </div>
                     </div>
                 </div> : undefined }
