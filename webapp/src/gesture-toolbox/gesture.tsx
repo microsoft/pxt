@@ -10,12 +10,14 @@ import * as hidbridge from "./../hidbridge";
 import * as codecard from "./../codecard"
 import Cloud = pxt.Cloud;
 
+import { dataObj } from "./testData";
 import * as Recorder from "./recorder";
 import * as Types from "./types";
 import * as Webcam from "./webcam";
 import * as Viz from "./visualizations";
 import * as Model from "./model";
 import * as Indicator from "./indicator";
+import { GraphCard } from "./graphcard";
 import { streamerCode } from "./streamer";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -56,7 +58,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.state = {
             visible: false,
             singleGestureView: false,
-            data: [],
+            data: dataObj,
             connected: false
         };
 
@@ -144,13 +146,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const importGesture = () => {
         }
 
+        let gestureID = this.state.data[0].gestureID;
+        let samples = this.state.data[0].gestures;
+
         return (
             <sui.Modal open={this.state.visible} className="gesture_toolbox" header={lf("Gesture Toolkit") } size="fullscreen"
                 onClose={() => this.hide() } dimmer={true}
                 closeIcon={true}
                 closeOnDimmerClick
                 >
-                
 
                 {/* <div className="ui cards">
                     <codecard.CodeCardView
@@ -170,9 +174,21 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 onClick={() => importGesture() }
                                 />
                 </div> */}
-
+{/* gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number } */}
                 <Indicator.ConnectionIndicator parent={ this }/>
 
+                <div>
+                    {samples.map(sample =>
+                        <GraphCard
+                            parent = { this }
+                            gestureID = { gestureID }
+                            sampleID = { sample.sampleID }
+                            dx = { 7 }
+                            graphHeight = { 75 }
+                            maxVal = { 2048 }
+                        />
+                    )}
+                </div>
                 <div className="ui three column grid">
                     <div className="four wide column">
                         <video id="webcam-video"></video>

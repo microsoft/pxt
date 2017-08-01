@@ -15,10 +15,15 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
     constructor(props: IGraphCard) {
         super(props);
+        // init
+        this.parentData = props.parent.state.data;
 
-        let gid = this.getGestureIndex(this.props.gestureID);
-        let sid = this.getSampleIndex(gid, this.props.sampleID);
+        let gid = this.getGestureIndex(props.gestureID);
+        let sid = this.getSampleIndex(gid, props.sampleID);
+
         this.sample = props.parent.state.data[gid].gestures[sid];
+
+        this.setState({ editMode: false });
     }
 
     getGestureIndex(gid: number): number {
@@ -51,9 +56,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     // on "crop" event
     // parent.onSampleCropHandler(s, e);
 
-    render() {
-        const inEditMode = this.state.editMode;
-
+    componentDidMount() {
         let width = this.sample.rawData.length * this.props.dx;
         let height = this.props.graphHeight;
 
@@ -76,18 +79,23 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         for (let i = 0; i < this.sample.rawData.length; i++) {
             dataX.push(y(this.sample.rawData[i].X));
+            dataY.push(y(this.sample.rawData[i].Y));
+            dataZ.push(y(this.sample.rawData[i].Z));
         }
 
-        let svgX = d3.select(ReactDOM.findDOMNode(this.refs.svgX));
-        let svgY = d3.select(ReactDOM.findDOMNode(this.refs.svgY));
-        let svgZ = d3.select(ReactDOM.findDOMNode(this.refs.svgZ));
+        d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"]))
+            .attr("style", "width: " + width + "px;");
+
+        let svgX = d3.select(ReactDOM.findDOMNode(this.refs["svgX"]));
+        let svgY = d3.select(ReactDOM.findDOMNode(this.refs["svgY"]));
+        let svgZ = d3.select(ReactDOM.findDOMNode(this.refs["svgZ"]));
 
         svgX.attr("width", width)
-            .attr("heigt", height);
+            .attr("height", height);
         svgY.attr("width", width)
-            .attr("heigt", height);
+            .attr("height", height);
         svgZ.attr("width", width)
-            .attr("heigt", height);
+            .attr("height", height);
 
         svgX.append("path")
             .attr("d", smoothedLine(dataX))
@@ -104,13 +112,12 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .attr("stroke", "blue")
             .attr("stroke-width", 1)
             .attr("fill", "none");
+    }
 
+    render() {
         return (
             <div>
-                {
-                    inEditMode ? <h1>viewing</h1> : <h1>editing</h1>
-                }
-                <div>
+                <div ref="graphContainer" className="sample-graph">
                     <svg ref="svgX"></svg>
                     <svg ref="svgY"></svg>
                     <svg ref="svgZ"></svg>
