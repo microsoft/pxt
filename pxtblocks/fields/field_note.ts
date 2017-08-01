@@ -211,7 +211,7 @@ namespace pxtblockly {
                 }
                 for (let i = 0; i < thisField.nKeys_; i++) {
                     // set name of the i note
-                    thisField.noteName_.push(prefix + " " + curNote);
+                    thisField.noteName_.push(Util.rlf(prefix + " " + curNote));
                     // get frequency using math formula -> https://en.wikipedia.org/wiki/Piano_key_frequencies
                     let curFreq = Math.pow(2, (keyNumber - 49) / 12) * 440;
                     // set frequency of the i note
@@ -223,6 +223,80 @@ namespace pxtblockly {
                     // increment keyNumber
                     keyNumber++;
                 }
+
+                // Do not remove this comment.
+                // lf("C")
+                // lf("C#")
+                // lf("D")
+                // lf("D#")
+                // lf("E")
+                // lf("F")
+                // lf("F#")
+                // lf("G")
+                // lf("G#")
+                // lf("A")
+                // lf("A#")
+                // lf("B")
+                // lf("Deep C")
+                // lf("Deep C#")
+                // lf("Deep D")
+                // lf("Deep D#")
+                // lf("Deep E")
+                // lf("Deep F")
+                // lf("Deep F#")
+                // lf("Deep G")
+                // lf("Deep G#")
+                // lf("Deep A")
+                // lf("Deep A#")
+                // lf("Deep B")
+                // lf("Low C")
+                // lf("Low C#")
+                // lf("Low D")
+                // lf("Low D#")
+                // lf("Low E")
+                // lf("Low F")
+                // lf("Low F#")
+                // lf("Low G")
+                // lf("Low G#")
+                // lf("Low A")
+                // lf("Low A#")
+                // lf("Low B")
+                // lf("Middle C")
+                // lf("Middle C#")
+                // lf("Middle D")
+                // lf("Middle D#")
+                // lf("Middle E")
+                // lf("Middle F")
+                // lf("Middle F#")
+                // lf("Middle G")
+                // lf("Middle G#")
+                // lf("Middle A")
+                // lf("Middle A#")
+                // lf("Middle B")
+                // lf("Tenor C")
+                // lf("Tenor C#")
+                // lf("Tenor D")
+                // lf("Tenor D#")
+                // lf("Tenor E")
+                // lf("Tenor F")
+                // lf("Tenor F#")
+                // lf("Tenor G")
+                // lf("Tenor G#")
+                // lf("Tenor A")
+                // lf("Tenor A#")
+                // lf("Tenor B")
+                // lf("High C")
+                // lf("High C#")
+                // lf("High D")
+                // lf("High D#")
+                // lf("High E")
+                // lf("High F")
+                // lf("High F#")
+                // lf("High G")
+                // lf("High G#")
+                // lf("High A")
+                // lf("High A#")
+                // lf("High B")
             }
         }
         /**
