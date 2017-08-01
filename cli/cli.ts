@@ -3387,7 +3387,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                         .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
                         // upload to crowdin
                         .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                    )).then(() => { }))
+                        )).then(() => { }))
                 : Promise.resolve());
     }
 }
@@ -3785,6 +3785,22 @@ export function hexdumpAsync(c: commandParser.ParsedCommand) {
     }
     console.log("Binary file assumed.")
     console.log(pxtc.hex.hexDump(buf))
+    return Promise.resolve()
+}
+
+export function hex2uf2Async(c: commandParser.ParsedCommand) {
+    let filename = c.arguments[0]
+    let buf = fs.readFileSync(filename, "utf8").split(/\r?\n/)
+    if (buf[0][0] != ':') {
+        console.log("Not a hex file: " + filename)
+    } else {
+        let f = pxtc.UF2.newBlockFile()
+        pxtc.UF2.writeHex(f, buf)
+        let uf2buf = new Buffer(pxtc.UF2.serializeFile(f), "binary")
+        let uf2fn = filename.replace(/(\.hex)?$/i, ".uf2")
+        fs.writeFileSync(uf2fn, uf2buf)
+        console.log("Wrote: " + uf2fn)
+    }
     return Promise.resolve()
 }
 
@@ -4324,6 +4340,7 @@ function initCommands() {
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
+    advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
     p.defineCommand({
         name: "pyconv",

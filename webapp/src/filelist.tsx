@@ -109,8 +109,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
         }).then(v => {
             if (!v) return;
-            const p = pkg.mainEditorPkg();
-            p.setFile(customFile, `
+            return this.props.parent.updateFileAsync(customFile, `
 /**
  * ${lf("Use this file to define custom functions and blocks.")}
  * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'blocks/custom' )}
@@ -148,11 +147,7 @@ namespace custom {
         return value <= 1 ? value : fib(value -1) + fib(value - 2);
     }
 }
-`);
-            return p.updateConfigAsync(cfg => cfg.files.push(customFile))
-                .then(() => this.props.parent.setFile(p.lookupFile("this/" + customFile)))
-                .then(() => p.savePkgAsync())
-                .then(() => this.props.parent.reloadHeaderAsync())
+`, true);
         });
     }
 

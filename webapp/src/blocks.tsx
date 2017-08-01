@@ -185,8 +185,8 @@ export class Editor extends srceditor.Editor {
         });
 
         if (needsLayout) {
-            // If the blocks file has no location info (e.g. it's from the decompiler), format the code
-            pxt.blocks.layout.flow(this.editor);
+            // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
+            pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
