@@ -308,9 +308,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </sui.Menu>
                 </sui.Segment>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <div className="large ui loader"></div>
-                    <h2>{pxt.appTarget.name}</h2>
-                    <div className="group">
+                    <div className="startpage-labels">
+                        <h2>{pxt.appTarget.name}</h2>
+                        <div className="large ui loader"></div>
+                    </div>
+                    <div className="group startpage-cards">
                         <div className="ui cards centered">
                             {this.state.resumeProject ? <codecard.CodeCardView
                                 key={'resume'}
