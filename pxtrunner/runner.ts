@@ -408,6 +408,7 @@ ${files["main.ts"]}
 
     function renderBookAsync(content: HTMLElement, summaryid: string): Promise<void> {
         summaryid = summaryid.replace(/^\//, "");
+        pxt.tickEvent('book', { id: summaryid });
         pxt.log(`rendering book from ${summaryid}`)
         let toc: TOCMenuEntry[];
         return pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive)
