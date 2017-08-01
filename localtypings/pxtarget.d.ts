@@ -219,6 +219,8 @@ declare namespace pxt {
 
         nextName?: string;
         nextPath?: string;
+
+        markdown?: string;
     }
 
     interface TargetBundle extends AppTarget {
