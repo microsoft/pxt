@@ -150,6 +150,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 closeIcon={true}
                 closeOnDimmerClick
                 >
+                
 
                 {/* <div className="ui cards">
                     <codecard.CodeCardView
@@ -170,7 +171,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 />
                 </div> */}
 
-                <Indicator.ConnectionIndicatorView parent={ this }/>
+                <Indicator.ConnectionIndicator parent={ this }/>
 
                 <div className="ui three column grid">
                     <div className="four wide column">

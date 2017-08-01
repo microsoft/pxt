@@ -1,93 +1,121 @@
-// import * as React from "react";
-// import * as ReactDOM from "react-dom";
-// import * as sui from "./../sui";
-// import * as Types from "./types";
-// import * as blockspreview from "./../blockspreview";
+export const d3 = require('d3');
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import * as sui from "./../sui";
+import { Point, Gesture, GestureSample } from "./types";
 
-// const lf = pxt.Util.lf;
-// const repeat = pxt.Util.repeatMap;
+export interface IGraphCard { parent?: any, gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number }
+export interface GraphCardState { editMode?: boolean }
 
-// export interface GraphCardState { }
+export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
+    public static connected: boolean = false;
 
-// interface GraphCard {
-//     xData: Types.Vector[];
-//     yData: Types.Vector[];
-//     zData: Types.Vector[];
+    private parentData: Gesture[];
+    private sample: GestureSample;
 
-//     sampleID: number;
+    constructor(props: IGraphCard) {
+        super(props);
 
-//     startTime: number;
-//     endTime: number;
+        let gid = this.getGestureIndex(this.props.gestureID);
+        let sid = this.getSampleIndex(gid, this.props.sampleID);
+        this.sample = props.parent.state.data[gid].gestures[sid];
+    }
 
-//     // these two could be modified inside this react component
-//     cropStartIndex: number;
-//     cropEndIndex: number;
-// }
+    getGestureIndex(gid: number): number {
+        for (let i = 0; i < this.parentData.length; i++) {
+            if (this.parentData[i].gestureID == gid) return i;
+        }
 
-// export class GraphCardView extends React.Component<GraphCard, GraphCardState> {
+        return -1;
+    }
 
-//     constructor(props: GraphCard) {
-//         super(props);
+    getSampleIndex(gid: number, sid: number): number {
+        for (let i = 0; i < this.parentData[gid].gestures.length; i++) {
+            if (this.parentData[gid].gestures[i].sampleID == sid) return i;
+        }
 
-//         this.state = {};
-//     }
+        return -1;
+    }
 
-//     componentDidUpdate() {
-//         ($('.ui.embed') as any).embed();
-//     }
+    componentDidUpdate() {
+        ($('.ui.embed') as any).embed();
+    }
 
-//     render() {
-//         const card = this.props
-//         let color = card.color || "";
-//         if (!color) {
-//             if (card.hardware && !card.software) color = 'black';
-//             else if (card.software && !card.hardware) color = 'teal';
-//         }
-//         const renderMd = (md: string) => md.replace(/`/g, '');
-//         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
-//             : undefined;
-//         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
-//         const className = card.className;
-//         const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`} title={card.title} onClick={e => card.onClick ? card.onClick(e) : undefined } >
-//             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
-//                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "") }>
-//                     <div className="right floated meta">
-//                         {card.any ? (<i key="costany" className="ui grey circular label tiny">{card.any > 0 ? card.any : null}</i>) : null}
-//                         {repeat(card.blocks, (k) => <i key={"costblocks" + k} className="puzzle orange icon" ></i>) }
-//                         {repeat(card.javascript, (k) => <i key={"costjs" + k} className="align left blue icon" ></i>) }
-//                         {repeat(card.hardware, (k) => <i key={"costhardware" + k} className="certificate black icon" ></i>) }
-//                         {repeat(card.software, (k) => <i key={"costsoftware" + k} className="square teal icon" ></i>) }
-//                     </div>
-//                     {card.header}
-//                 </div> : null }
-//             {card.label || card.blocksXml || card.typeScript || card.imageUrl || card.youTubeId ? <div className={"ui image"}>
-//                 {card.label ? <label className="ui orange right ribbon label">{card.label}</label> : undefined }
-//                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
-//                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-//                 {card.imageUrl ? <div className="ui cardimage" style={ { backgroundImage: `url("${card.imageUrl}")` } } /> : undefined}
-//                 {card.youTubeId ? <div className="ui cardimage" style={ { backgroundImage: `url("https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg")` } } /> : undefined }
-//             </div> : undefined }
-//             {card.icon ?
-//                 <div className="ui"><div className={`${'ui button massive fluid ' + card.iconColor}`}> <i className={`${'icon ' + card.icon}`}></i> </div></div> : undefined }
-//             {card.shortName || card.name || card.description ?
-//                 <div className="content">
-//                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-//                     {card.time ? <div className="meta tall">
-//                         {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time) }</span> : null}
-//                     </div> : undefined}
-//                     {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
-//                 </div> : undefined }
-//         </div>;
+    // on "edit" click 
+    // setState -> editMode: true
 
-//         if (!card.onClick && url) {
-//             return (
-//                 <div>
-//                     <a href={url} target="docs" className="ui widedesktop hide">{cardDiv}</a>
-//                     <a href={sideUrl} className="ui widedesktop only">{cardDiv}</a>
-//                 </div>
-//             )
-//         } else {
-//             return (cardDiv)
-//         }
-//     }
-// }
+    // on "delete" click 
+    // parent.onSampleDeleteHandler(this) (or use the sampleID)
+    // and then the parents state will get updated (as the shouldComponentUpdate will detect a change in the number of samples)
+
+    // on "crop" event
+    // parent.onSampleCropHandler(s, e);
+
+    render() {
+        const inEditMode = this.state.editMode;
+
+        let width = this.sample.rawData.length * this.props.dx;
+        let height = this.props.graphHeight;
+
+        let y = d3.scaleLinear()
+            .domain([-this.props.maxVal, +this.props.maxVal])
+            .range([height, 0]);
+
+        let smoothedLine = d3.line()
+            .x((d: number, i: number) => {
+                return i * this.props.dx;
+            })
+            .y((d: number, i: number) => {
+                return d;
+            })
+            .curve(d3.curveCardinal);
+
+        let dataX: number[] = [];
+        let dataY: number[] = [];
+        let dataZ: number[] = [];
+
+        for (let i = 0; i < this.sample.rawData.length; i++) {
+            dataX.push(y(this.sample.rawData[i].X));
+        }
+
+        let svgX = d3.select(ReactDOM.findDOMNode(this.refs.svgX));
+        let svgY = d3.select(ReactDOM.findDOMNode(this.refs.svgY));
+        let svgZ = d3.select(ReactDOM.findDOMNode(this.refs.svgZ));
+
+        svgX.attr("width", width)
+            .attr("heigt", height);
+        svgY.attr("width", width)
+            .attr("heigt", height);
+        svgZ.attr("width", width)
+            .attr("heigt", height);
+
+        svgX.append("path")
+            .attr("d", smoothedLine(dataX))
+            .attr("stroke", "red")
+            .attr("stroke-width", 1)
+            .attr("fill", "none");
+        svgY.append("path")
+            .attr("d", smoothedLine(dataY))
+            .attr("stroke", "green")
+            .attr("stroke-width", 1)
+            .attr("fill", "none");
+        svgZ.append("path")
+            .attr("d", smoothedLine(dataZ))
+            .attr("stroke", "blue")
+            .attr("stroke-width", 1)
+            .attr("fill", "none");
+
+        return (
+            <div>
+                {
+                    inEditMode ? <h1>viewing</h1> : <h1>editing</h1>
+                }
+                <div>
+                    <svg ref="svgX"></svg>
+                    <svg ref="svgY"></svg>
+                    <svg ref="svgZ"></svg>
+                </div>
+            </div>
+        );
+    }
+}

@@ -1770,7 +1770,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
                 {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
-                <gesture.GestureToolbox parent={this} ref={v => this.gestureToolbox = v} />}
+                <gesture.GestureToolbox parent={this} ref={v => this.gestureToolbox = v} />
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
                 {sandbox ? <div className="ui horizontal small divided link list sandboxfooter">

@@ -1,23 +1,10 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-import * as sui from "./../sui"
-import * as blockspreview from "./../blockspreview"
 import * as hidbridge from "./../hidbridge";
 
-const lf = pxt.Util.lf;
-const repeat = pxt.Util.repeatMap;
-
-type ISettingsProps = pxt.editor.ISettingsProps;
-
-export interface IConnectionIndicator {
-    parent?: any;
-}
-
-export interface ConnectionState {
-    connected: boolean;
-}
-
-export class ConnectionIndicatorView extends React.Component<IConnectionIndicator, ConnectionState> {
+export interface IConnectionIndicator { parent?: any }
+export interface ConnectionState { connected: boolean }
+export class ConnectionIndicator extends React.Component<IConnectionIndicator, ConnectionState> {
+    static connected: boolean = false;
 
     constructor(props: IConnectionIndicator) {
         super(props);
@@ -27,6 +14,7 @@ export class ConnectionIndicatorView extends React.Component<IConnectionIndicato
         setInterval(() => {
             if (Date.now() - props.parent.lastConnectedTime > 1000) {
                 this.setState({ connected: false });
+                ConnectionIndicator.connected = false;
 
                 if (hidbridge.shouldUse())
                     hidbridge.initAsync();
@@ -34,6 +22,7 @@ export class ConnectionIndicatorView extends React.Component<IConnectionIndicato
             else {
                 if (!this.state.connected) {
                     this.setState({ connected: true });
+                    ConnectionIndicator.connected = true;
                 }
             }
         }, 1000);
@@ -56,3 +45,4 @@ export class ConnectionIndicatorView extends React.Component<IConnectionIndicato
         );
     }
 }
+
