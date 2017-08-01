@@ -314,41 +314,36 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                         <div className="ui cards centered">
                             {this.state.resumeProject ? <codecard.CodeCardView
                                 key={'resume'}
-                                icon="caret right"
                                 iconColor="teal"
-                                name={lf("Resume") }
+                                iconContent={lf("Resume") }
                                 description={lf("Load the last project you worked on") }
                                 onClick={() => resume() }
                                 /> : undefined}
                             <codecard.CodeCardView
                                 key={'gettingstarted'}
-                                icon="info circle"
                                 iconColor="green"
-                                name={lf("Getting started") }
+                                iconContent={lf("Getting started") }
                                 description={lf("Create a fun, beginner project in a guided tutorial") }
                                 onClick={() => gettingStarted() }
                                 />
                             <codecard.CodeCardView
                                 key={'newproject'}
-                                icon="file outline"
                                 iconColor="brown"
-                                name={lf("New project") }
+                                iconContent={lf("New project") }
                                 description={lf("Start a new, empty project") }
                                 onClick={() => newProject() }
                                 />
                             <codecard.CodeCardView
                                 key={'loadproject'}
-                                icon="folder open"
                                 iconColor="grey"
-                                name={lf("Load project") }
+                                iconContent={lf("Load project") }
                                 description={lf("Load a previous project") }
                                 onClick={() => loadProject() }
                                 />
                             {galleryNames.length > 0 ? <codecard.CodeCardView
                                 key={'projectgalleries'}
-                                icon="grid layout"
                                 iconColor="orange"
-                                name={lf("Project galleries") }
+                                iconContent={lf("Project galleries") }
                                 description={lf("Browse guided tutorials, project samples and awesome activities") }
                                 onClick={() => projectGalleries() }
                                 /> : undefined}
