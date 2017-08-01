@@ -981,10 +981,11 @@ namespace pxt.blocks {
         // lf("{id:category}Loops")
         // lf("{id:category}Logic")
         // lf("{id:category}Variables")
-        // lf("{id:category}Arrays")
-        // lf("{id:category}Text")
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
+        // lf("{id:category}Functions")
+        // lf("{id:category}Arrays")
+        // lf("{id:category}Text")
         // lf("{id:category}Search")
         // lf("{id:category}More\u2026")
 
