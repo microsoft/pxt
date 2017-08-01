@@ -37,6 +37,16 @@ namespace pxsim {
             return Date.now();
         }
 
+        export function perfNow(): number {
+            const perf = typeof performance != "undefined" ?
+                performance.now ||
+                (performance as any).moznow ||
+                (performance as any).msNow ||
+                (performance as any).oNow ||
+                Date.now : Date.now;
+            return perf.bind(performance)();
+        }
+
         export function nextTick(f: () => void) {
             (<any>Promise)._async._schedule(f)
         }
@@ -229,6 +239,7 @@ namespace pxsim {
         dead = false;
         running = false;
         startTime = 0;
+        startTimeUs = 0;
         id: string;
         globals: any = {};
         currFrame: StackFrame;
@@ -293,6 +304,7 @@ namespace pxsim {
                 this.running = r;
                 if (this.running) {
                     this.startTime = U.now();
+                    this.startTimeUs = U.perfNow();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
