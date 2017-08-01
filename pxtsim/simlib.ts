@@ -58,9 +58,7 @@ namespace pxsim {
         }
 
         getLastEventTime() {
-            let startTime = runtime.startTimeUs;
-            let lastEventTime = this.lastEventTimestamp;
-            return Math.floor((lastEventTime - startTime) * 1000);
+            return Math.floor(this.lastEventTimestamp - runtime.startTimeUs)*1000;
         }
     }
 

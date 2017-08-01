@@ -39,12 +39,13 @@ namespace pxsim {
 
         export function perfNow(): number {
             const perf = typeof performance != "undefined" ?
-                performance.now ||
-                (performance as any).moznow ||
-                (performance as any).msNow ||
-                (performance as any).oNow ||
-                Date.now : Date.now;
-            return perf.bind(performance)();
+                performance.now.bind(performance)                 ||
+                (performance as any).moznow.bind(performance)     ||
+                (performance as any).msNow.bind(performance)      ||
+                (performance as any).webkitNow.bind(performance)  ||
+                (performance as any).oNow.bind(performance)       :
+                Date.now;
+            return perf();
         }
 
         export function nextTick(f: () => void) {
