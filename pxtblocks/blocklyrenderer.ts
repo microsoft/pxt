@@ -30,6 +30,7 @@ namespace pxt.blocks {
         aspectRatio?: number;
         package?: string;
         snippetMode?: boolean;
+        useViewWidth?: boolean;
     }
 
     export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Flow }): SVGSVGElement {
@@ -63,7 +64,7 @@ namespace pxt.blocks {
                 case BlockLayout.Shuffle:
                     pxt.blocks.layout.shuffle(workspace, options.aspectRatio); break;
                 case BlockLayout.Flow:
-                    pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio }); break;
+                    pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio, useViewWidth: options.useViewWidth }); break;
                 case BlockLayout.Clean:
                     if ((<any>workspace).cleanUp_)
                         (<any>workspace).cleanUp_();
