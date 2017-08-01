@@ -15,7 +15,7 @@ function doSomething() {
 
 ## Calling a function
 
-A function [**call**](/typesfunction/call) is when you want to use the code in the function at some place in your program.
+A function [**call**](/types/function/call) is when you want to use the code in the function at some place in your program.
 
 ```sig
 function doSomething() {
