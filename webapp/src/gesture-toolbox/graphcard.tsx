@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./../sui";
 import { Point, Gesture, GestureSample } from "./types";
 
-export interface IGraphCard { parent?: any, gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number }
+export interface IGraphCard { parent?: any, gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number, onDeleteHandler?: (gid: number, sid: number) => void }
 export interface GraphCardState { editMode?: boolean }
 
 export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
@@ -16,6 +16,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     constructor(props: IGraphCard) {
         super(props);
         // init
+        this.props = props;
         this.parentData = props.parent.state.data;
 
         let gid = this.getGestureIndex(props.gestureID);
@@ -23,7 +24,10 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         this.sample = props.parent.state.data[gid].gestures[sid];
 
-        this.setState({ editMode: false });
+        this.state = { editMode: false };
+        this.handleDelete = this.handleDelete.bind(this);
+        this.handleEdit = this.handleEdit.bind(this);
+        this.handleSave = this.handleSave.bind(this);
     }
 
     getGestureIndex(gid: number): number {
@@ -44,6 +48,21 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
     componentDidUpdate() {
         ($('.ui.embed') as any).embed();
+    }
+
+    handleDelete(e: any) {
+        this.props.onDeleteHandler(this.props.gestureID, this.props.sampleID);
+    }
+
+    handleEdit(e: any) {
+        this.setState({ editMode: true });
+        // change UI into edit mode
+    }
+
+    handleSave(e: any) {
+        this.setState({ editMode: false });
+        // onSampleChange handler (passed from parent) should be called.
+        // the handler will change the state of itself (=parent)
     }
 
     // on "edit" click 
@@ -112,9 +131,18 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .attr("stroke", "blue")
             .attr("stroke-width", 1)
             .attr("fill", "none");
+
+        // add button actionListener:
+        let button = d3.select(ReactDOM.findDOMNode(this.refs["deleteButton"]));
+    }
+
+    shouldComponentUpdate(nextProps: IGraphCard, nextState: GraphCardState, nextContext: any): boolean {
+        return this.state.editMode != nextState.editMode;
     }
 
     render() {
+        const inEditMode = this.state.editMode;
+
         return (
             <div>
                 <div ref="graphContainer" className="sample-graph">
@@ -122,6 +150,14 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                     <svg ref="svgY"></svg>
                     <svg ref="svgZ"></svg>
                 </div>
+                <button onClick={this.handleDelete}>delete</button>
+                {
+                    this.state.editMode == true
+                    ?
+                        <button onClick={this.handleSave}>save</button>
+                    :
+                        <button onClick={this.handleEdit}>edit</button>
+                }
             </div>
         );
     }

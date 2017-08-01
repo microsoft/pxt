@@ -146,6 +146,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const importGesture = () => {
         }
 
+        const onSampleDelete = (gid: number, sid: number) => {
+            console.log("sample [" + gid + ", " + sid + "] has been deleted");
+            // should change the state of this ui -> with less items
+        }
+
         let gestureID = this.state.data[0].gestureID;
         let samples = this.state.data[0].gestures;
 
@@ -186,9 +191,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             dx = { 7 }
                             graphHeight = { 75 }
                             maxVal = { 2048 }
+                            onDeleteHandler = { onSampleDelete }
                         />
                     )}
                 </div>
+
+
                 <div className="ui three column grid">
                     <div className="four wide column">
                         <video id="webcam-video"></video>
