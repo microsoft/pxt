@@ -414,23 +414,26 @@ ${files["main.ts"]}
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
-                // collect all TOC entries
-                content.innerText = lf("Loading...");
                 const tocsp: Promise<void>[] = [];
                 pxt.docs.visitTOC(toc, entry => {
+                    if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
                     tocsp.push(
                         pxt.Cloud.downloadMarkdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
                             .then(md => {
-                                content.innerText += '.';
                                 entry.markdown = md;
+                            }, e => {
+                                entry.markdown = `_${entry.path} failed to load._`;
                             })
                     )
                 });
                 return Promise.all(tocsp);
             })
             .then(pages => {
-                const md = toc[0].name;
-                pxt.docs.visitTOC(toc, entry => md += '\n\n' + entry.markdown);
+                let md = toc[0].name;
+                pxt.docs.visitTOC(toc, entry => {
+                    if (entry.markdown)
+                        md += '\n\n' + entry.markdown
+                });
                 return renderMarkdownAsync(content, md);
             })
     }
