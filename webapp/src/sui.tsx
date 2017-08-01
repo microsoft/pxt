@@ -146,8 +146,6 @@ export class ButtonMenuItem extends UiElement<ItemProps> {
 export interface ButtonProps extends WithPopupProps {
     title?: string;
     onClick?: (e: React.MouseEvent) => void;
-    onMouseEnter?: (e: React.MouseEvent) => void;
-    onMouseLeave?: (e: React.MouseEvent) => void;
     disabled?: boolean;
 }
 
@@ -158,9 +156,7 @@ export class Button extends UiElement<ButtonProps> {
                 role={this.props.role}
                 title={this.props.title}
                 aria-label={this.props.title || this.props.text}
-                onClick={this.props.onClick}
-                onMouseEnter={this.props.onMouseEnter}
-                onMouseLeave={this.props.onMouseLeave}>
+                onClick={this.props.onClick}>
                 {genericContent(this.props) }
                 {this.props.children}
             </button>
