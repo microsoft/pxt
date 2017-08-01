@@ -311,7 +311,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     <div className="ui stackable two column grid">
                         <div className="six wide column">
                             <h2 className="row">{pxt.appTarget.name}</h2>
-                            <div className={`row large ui loader ${pxt.appTarget.appTheme.invertedMenu ? "" : "avatar"}`}></div>
+                            <div className={"row large ui loader"}></div>
                         </div>
                         <div className="group ten wide column">
                             <div className="ui cards centered">
