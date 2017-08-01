@@ -287,7 +287,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         ]);
 
         return (
-            <sui.Modal open={visible} className="projectsdialog" size={tab == WELCOME ? "medium" : "fullscreen"} closeIcon={false}
+            <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
                 onClose={() => this.hide(/* closeOnly */ true) } dimmer={true}
                 closeOnDimmerClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
@@ -308,40 +308,52 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </sui.Menu>
                 </sui.Segment>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <span className="group welcomebuttons">
-                        {this.state.resumeProject ? <sui.Button
-                            class={"huge ui primary welcomebutton-resume"}
-                            text={lf("Resume") }
-                            onClick={() => resume() }
-                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Open the last project you worked on.") }) }
-                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } /> : undefined}
-                        <sui.Button
-                            class={"huge primary welcomebutton-gettingstarted"}
-                            text={lf("Getting started") }
-                            onClick={() => gettingStarted() }
-                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Create a fun, beginner project in a guided tutorial.") }) }
-                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
-                        <sui.Button
-                            class={"huge primary welcomebutton-newproject"}
-                            text={lf("New project") }
-                            onClick={() => newProject() }
-                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Create a blank project.") }) }
-                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
-                        <sui.Button
-                            class={"huge primary welcomebutton-openproject"}
-                            text={lf("Load project") }
-                            onClick={() => loadProject() }
-                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Continue working on a previous project.") }) }
-                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } />
-                        {galleryNames.length > 0 ? <sui.Button
-                            class={"huge primary welcomebutton-galleries"}
-                            text={lf("Project galleries") }
-                            onClick={() => projectGalleries() }
-                            onMouseEnter={() => this.setState({ welcomeDescription: lf("Discover guided tutorials, full project samples and awesome activities!") }) }
-                            onMouseLeave={() => this.setState({ welcomeDescription: "" }) } /> : undefined}
-                        <div className="welcomedescription">{this.state.welcomeDescription}</div>
-                    </span>
-                    <span className="large ui loader"></span>
+                    <div className="large ui loader"></div>
+                    <h2>{pxt.appTarget.name}</h2>
+                    <div className="group">
+                        <div className="ui cards centered">
+                            {this.state.resumeProject ? <codecard.CodeCardView
+                                key={'resume'}
+                                icon="caret right"
+                                iconColor="teal"
+                                name={lf("Resume") }
+                                description={lf("Load the last project you worked on") }
+                                onClick={() => resume() }
+                                /> : undefined}
+                            <codecard.CodeCardView
+                                key={'gettingstarted'}
+                                icon="info circle"
+                                iconColor="green"
+                                name={lf("Getting started") }
+                                description={lf("Create a fun, beginner project in a guided tutorial") }
+                                onClick={() => gettingStarted() }
+                                />
+                            <codecard.CodeCardView
+                                key={'newproject'}
+                                icon="file outline"
+                                iconColor="brown"
+                                name={lf("New project") }
+                                description={lf("Start a new, empty project") }
+                                onClick={() => newProject() }
+                                />
+                            <codecard.CodeCardView
+                                key={'loadproject'}
+                                icon="folder open"
+                                iconColor="grey"
+                                name={lf("Load project") }
+                                description={lf("Load a previous project") }
+                                onClick={() => loadProject() }
+                                />
+                            {galleryNames.length > 0 ? <codecard.CodeCardView
+                                key={'projectgalleries'}
+                                icon="grid layout"
+                                iconColor="orange"
+                                name={lf("Project galleries") }
+                                description={lf("Browse guided tutorials, project samples and awesome activities") }
+                                onClick={() => projectGalleries() }
+                                /> : undefined}
+                        </div>
+                    </div>
                 </div> : undefined }
                 {tab == MYSTUFF ? <div className={tabClasses}>
                     <div className="group">
