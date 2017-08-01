@@ -49,6 +49,7 @@
     * [Number](/types/number)
     * [String](/types/string)
     * [Boolean](/types/boolean)
+    * [Array](/types/array)
 
 ## #other
 
