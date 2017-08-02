@@ -200,7 +200,8 @@ namespace pxt.docs {
                 return error("Invalid link: " + m.path)
             mparams["LINK"] = m.path
             if (tocPath.indexOf(m) >= 0) {
-                mparams["ACTIVE"] = 'active';
+                mparams["ACTIVE"] = "active";
+                mparams["EXPANDED"] = "true";
                 currentTocEntry = m;
                 breadcrumb.push({
                     name: m.name,

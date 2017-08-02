@@ -113,10 +113,10 @@
 </aside>
 
 <aside id=inner-dropdown class=toc>
-    <div class="ui inverted accordion item visible" title="@TITLE@">
+    <div class="ui inverted accordion item visible" role="tree" title="@TITLE@">
         <div class="@ACTIVE@ title">
             <i class="dropdown icon"></i>
-            <a class="header" href="@LINK@">@NAME@</a>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">
             @ITEMS@
@@ -128,7 +128,7 @@
     <div class="inverted accordion item visible" title="@TITLE@">
         <div class="@ACTIVE@ title">
             <i class="dropdown icon"></i>
-            <a class="header" href="@LINK@">@NAME@</a>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">
             @ITEMS@

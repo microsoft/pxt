@@ -63,6 +63,22 @@ function setupSidebar() {
                 trigger: '.title .icon'
             }
         });
+
+    let accordions = document.getElementsByClassName("ui accordion");
+    for (let i = 0; i < accordions.length; i++) {
+        let nodes = accordions.item(i).getElementsByClassName("title");
+        for (let j = 0; j < nodes.length; j++) {
+            let node = nodes.item(j);
+            node.getElementsByTagName("a").item(0).onkeydown = (e) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === 39) {
+                    $(e.target.parentElement.parentElement).accordion("open", 0);
+                } else if (charCode === 37) {
+                    $(e.target.parentElement.parentElement).accordion("close", 0);
+                }
+            };
+        }
+    }
 }
 
 function setupSemantic() {
@@ -127,7 +143,7 @@ function setupSemantic() {
         }).appendTo(outer);
     });
 
-    $('#printbtn').on("click", function() {
+    $('#printbtn').on("click", function () {
         window.print();
     })
 
