@@ -66,8 +66,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         // let svgX = d3.select(ReactDOM.findDOMNode(this.refs["svgX"]));
         // let svgY = d3.select(ReactDOM.findDOMNode(this.refs["svgY"]));
-        // let svgZ = d3.select(ReactDOM.findDOMNode(this.refs["svgZ"]));
 
+        this.svgCrop.style("opacity", 1);
 
     }
 
@@ -75,6 +75,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         this.setState({ editMode: false });
         // onSampleChange handler (passed from parent) should be called.
         // the handler will change the state of itself (=parent)
+
+        this.svgCrop.style("opacity", 0);
     }
 
     // on "edit" click 
@@ -159,7 +161,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         this.svgCrop = d3.select(ReactDOM.findDOMNode(this.refs["svgCrop"]));
         this.svgCrop.attr("width", svgCropWidth)
             .attr("height", svgCropHeight)
-            .attr("style", "background: rgba(0, 0, 0, 0); opacity: 1; position: absolute; top: 16px;");
+            .attr("style", "background: rgba(0, 0, 0, 0); position: absolute; top: 16px;");
 
         function dragLeft(d: any) {
             if (d3.event.x > 0 && d3.event.x < svgCropWidth /*&& d3.event.x < the other controlLine*/) {
@@ -171,7 +173,6 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         function dragRight(d: any) {
             if (d3.event.x > 0 && d3.event.x < svgCropWidth /*&& d3.event.x < the other controlLine*/) {
                 d3.select(this).attr("d", "M" + (d3.event.x + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
-                console.log("dx:" + d3.event.x);
                 d3.select(this.parentNode).select(".RightRec").attr("width", svgCropWidth - d3.event.x).attr("x", d3.event.x);
             }
         }
@@ -179,12 +180,12 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         this.svgCrop.append("rect")
             .attr("x", 0)
             .attr("y", 0)
-            .attr("width", 50) //TODO: should initialize all of these with the cropStart/End values
+            .attr("width", 0) //TODO: should initialize all of these with the cropStart/End values
             .attr("height", svgCropHeight)
             .attr("fill", "rgba(0, 0, 0, 0.5)")
             .attr("class", "leftRec");
         this.svgCrop.append("path")
-            .attr("d", "M" + (50 + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight)
+            .attr("d", "M" + (0 + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight)
             .attr("stroke-width", strokeWidth)
             .attr("stroke", "black") //attr("id", "").on("click", () => {})
             .attr("style", "cursor:w-resize")
@@ -206,6 +207,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .call(d3.drag()
                 .on("drag", dragRight));
         
+        this.svgCrop.style("opacity", 0);
     }
 
     shouldComponentUpdate(nextProps: IGraphCard, nextState: GraphCardState, nextContext: any): boolean {
