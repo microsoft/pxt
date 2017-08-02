@@ -154,6 +154,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         let gestureID = this.state.data[0].gestureID;
         let samples = this.state.data[0].gestures;
 
+        samples.forEach(s => {
+            s.cropStartIndex = 0;
+            s.cropEndIndex = s.rawData.length - 1;
+        })
+
         return (
             <sui.Modal open={this.state.visible} className="gesture_toolbox" header={lf("Gesture Toolkit") } size="fullscreen"
                 onClose={() => this.hide() } dimmer={true}

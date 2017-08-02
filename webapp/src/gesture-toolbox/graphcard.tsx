@@ -16,6 +16,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     private svgY: any;
     private svgZ: any;
     private svgCrop: any;
+    private mounted: boolean;
 
     constructor(props: IGraphCard) {
         super(props);
@@ -32,6 +33,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         this.handleDelete = this.handleDelete.bind(this);
         this.handleEdit = this.handleEdit.bind(this);
         this.handleSave = this.handleSave.bind(this);
+
+        this.mounted = false;
     }
 
     getGestureIndex(gid: number): number {
@@ -66,7 +69,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         // let svgX = d3.select(ReactDOM.findDOMNode(this.refs["svgX"]));
         // let svgY = d3.select(ReactDOM.findDOMNode(this.refs["svgY"]));
-
+        this.updateClipper(0, this.sample.rawData.length);
         this.svgCrop.style("opacity", 1);
 
     }
@@ -76,6 +79,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         // onSampleChange handler (passed from parent) should be called.
         // the handler will change the state of itself (=parent)
 
+        // re-render based on
+        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex);
         this.svgCrop.style("opacity", 0);
     }
 
@@ -88,6 +93,19 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
     // on "crop" event
     // parent.onSampleCropHandler(s, e);
+
+    updateClipper(start: number, end: number) {
+        let dx = this.props.dx;
+        let containerWidth = (end - start) * dx + 25;
+
+        d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"])).
+            attr("style", "width: " + containerWidth + "px;");
+
+        let transX = -start * dx;
+        this.svgX.style("transform", "translateX(" + transX + "px)");
+        this.svgY.style("transform", "translateX(" + transX + "px)");
+        this.svgZ.style("transform", "translateX(" + transX + "px)");
+    }
 
     componentDidMount() {
         // displays the graph and initializes all of the SVGs to be used in other places.
@@ -123,8 +141,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             dataZ.push(y(constrain(this.sample.rawData[i].Z)));
         }
 
-        d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"]))
-            .attr("style", "width: " + (width + 25).toString() + "px;");
+        d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"])).
+            attr("style", "width: " + (width + 25).toString() + "px;");
 
         this.svgX = d3.select(ReactDOM.findDOMNode(this.refs["svgX"]));
         this.svgY = d3.select(ReactDOM.findDOMNode(this.refs["svgY"]));
@@ -163,17 +181,34 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .attr("height", svgCropHeight)
             .attr("style", "background: rgba(0, 0, 0, 0); position: absolute; top: 16px;");
 
+        let localThis = this;
+        let dx = this.props.dx;
+
         function dragLeft(d: any) {
-            if (d3.event.x > 0 && d3.event.x < svgCropWidth /*&& d3.event.x < the other controlLine*/) {
-                d3.select(this).attr("d", "M" + (d3.event.x + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
-                d3.select(this.parentNode).select(".leftRec").attr("width", d3.event.x);
+            if (d3.event.x > 0 && d3.event.x < svgCropWidth) {
+                let startIndex = Math.round(d3.event.x / dx);
+
+                if (startIndex < localThis.sample.cropEndIndex) {
+                    localThis.sample.cropStartIndex = startIndex;
+
+                    d3.select(this).attr("d", "M" + ((startIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
+                    d3.select(this.parentNode).select(".leftRec").attr("width", (startIndex * dx));
+                }
             }
         }
 
         function dragRight(d: any) {
-            if (d3.event.x > 0 && d3.event.x < svgCropWidth /*&& d3.event.x < the other controlLine*/) {
-                d3.select(this).attr("d", "M" + (d3.event.x + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
-                d3.select(this.parentNode).select(".RightRec").attr("width", svgCropWidth - d3.event.x).attr("x", d3.event.x);
+            if (d3.event.x > 0 && d3.event.x < svgCropWidth) {
+                let endIndex = Math.round(d3.event.x / dx);
+
+                console.log(d3.event.x)
+
+                if (endIndex > localThis.sample.cropStartIndex) {
+                    localThis.sample.cropEndIndex = endIndex;
+
+                    d3.select(this).attr("d", "M" + ((endIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
+                    d3.select(this.parentNode).select(".RightRec").attr("width", svgCropWidth - (endIndex * dx)).attr("x", (endIndex * dx));
+                }
             }
         }
 
@@ -206,8 +241,13 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
             .attr("style", "cursor:w-resize")
             .call(d3.drag()
                 .on("drag", dragRight));
-        
+
         this.svgCrop.style("opacity", 0);
+        this.mounted = true;
+
+        // modify width and translateX based on 
+        // width = 32 => 0
+        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex);
     }
 
     shouldComponentUpdate(nextProps: IGraphCard, nextState: GraphCardState, nextContext: any): boolean {
@@ -217,6 +257,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     render() {
         let headerStyle = { height: "60px" };
         let containerStyle = { display: "inline-block", margin: "0 10px 10px 0" };
+        let clipperStyle = { overflow: "hidden" };
 
         return (
             <div className="ui segments" style={containerStyle}>
@@ -239,10 +280,12 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                     </button>
                 </div>
                 <div ref="graphContainer" className="ui segment">
-                    <svg ref="svgX"></svg>
-                    <svg ref="svgY"></svg>
-                    <svg ref="svgZ"></svg>
-                    <svg ref="svgCrop"></svg>
+                    <div style={clipperStyle}>
+                        <svg ref="svgX"></svg>
+                        <svg ref="svgY"></svg>
+                        <svg ref="svgZ"></svg>
+                        <svg ref="svgCrop"></svg>
+                    </div>
                 </div>
             </div>
         );
