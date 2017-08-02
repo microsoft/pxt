@@ -1752,7 +1752,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                 </div> }
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} /> : undefined}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={v => this.scriptSearch = v} />}
-                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} />}
+                {sandbox ? undefined : <projects.Projects parent={this} ref={v => this.projects = v} hasGettingStarted={gettingStarted} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={v => this.shareEditor = v} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={v => this.languagePicker = v} /> : undefined}
                 {inTutorial ? <tutorial.TutorialComplete parent={this} ref={v => this.tutorialComplete = v} /> : undefined }
@@ -2065,6 +2065,29 @@ function handleHash(hash: { cmd: string; arg: string }): boolean {
     return false;
 }
 
+// Determines whether the hash argument affects the starting project
+function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
+    if (!hash) {
+        return false;
+    }
+    switch (hash.cmd) {
+        case "follow":
+        case "newproject":
+        case "newjavascript":
+        // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
+        case "tutorial":
+        case "projects":
+        case "sandbox":
+        case "pub":
+        case "edit":
+        case "sandboxproject":
+        case "project":
+            return true;
+        default:
+            return false;
+    }
+}
+
 function loadHeaderBySharedId(id: string) {
     const existing = workspace.getHeaders()
         .filter(h => h.pubCurrent && h.pubId == id)[0]
@@ -2161,12 +2184,12 @@ $(document).ready(() => {
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
     const ws = /ws=(\w+)/.exec(window.location.href)
+    const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     if (ws) workspace.setupWorkspace(ws[1]);
     else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
-    else if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly()) workspace.setupWorkspace("mem");
+    else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost()) workspace.setupWorkspace("fs");
-
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -2182,34 +2205,47 @@ $(document).ready(() => {
         })
         .then(() => initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => compiler.init())
-        .then(() => workspace.initAsync())
-        .then(state => {
+        .then(() => {
+            compiler.init();
+            return workspace.initAsync();
+        })
+        .then(() => {
             $("#loading").remove();
-            render()
+            render();
             return workspace.syncAsync();
         })
-        .then(state => state ? theEditor.setState(state) : undefined)
-        .then(() => {
+        .then((state) => {
+            if (state) {
+                theEditor.setState(state);
+            }
             initSerial();
             initScreenshots();
             initHashchange();
-            return pxt.winrt.initAsync(importHex);
-        })
-        .then(() => initExtensionsAsync())
-        .then(() => {
             electron.init();
-            if (hash.cmd && handleHash(hash))
-                return Promise.resolve();
+            return initExtensionsAsync();
+        })
+        .then(() => pxt.winrt.initAsync(importHex))
+        .then(() => pxt.winrt.hasActivationProjectAsync())
+        .then((hasWinRTProject) => {
+            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
+            let hd = workspace.getHeaders()[0];
+            if (ent) hd = workspace.getHeader(ent.id);
 
-            if (pxt.winrt.hasActivationProject) {
+            // Only show the start page if there are no initial projects requested
+            // (e.g. from the URL hash or from WinRT activation arguments)
+            const shouldShowStartPage = !isSandbox && pxt.appTarget.appTheme.useStartPage && !hasWinRTProject && !isProjectRelatedHash(hash);
+            if (shouldShowStartPage) {
+                theEditor.projects.showInitialStartPage(hd);
+                return Promise.resolve();
+            }
+            if (hash.cmd && handleHash(hash)) {
+                return Promise.resolve();
+            }
+            if (hasWinRTProject) {
                 return pxt.winrt.loadActivationProject();
             }
 
             // default handlers
-            let ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0]
-            let hd = workspace.getHeaders()[0]
-            if (ent) hd = workspace.getHeader(ent.id)
             if (hd) return theEditor.loadHeaderAsync(hd, null)
             else theEditor.newProject();
             return Promise.resolve();
