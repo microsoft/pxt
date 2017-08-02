@@ -135,10 +135,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     }
 
 
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: GestureToolboxState, nextContext: any): boolean {
-        // return this.state.visible != nextState.visible || this.state.connected != nextState.connected;
-        return true;
-    }
+    // shouldComponentUpdate(nextProps: ISettingsProps, nextState: GestureToolboxState, nextContext: any): boolean {
+    //     // return this.state.visible != nextState.visible || this.state.connected != nextState.connected;
+    //     return true;
+    // }
 
     getGestureIndex(gid: number): number {
         for (let i = 0; i < this.state.data.length; i++) {
@@ -171,11 +171,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
 
-            let cloneArray = this.state.data.slice();
+            let cloneData = this.state.data.slice();
 
-            cloneArray[gi].gestures.splice(si, 1);
+            cloneData[gi].gestures.splice(si, 1);
 
-            this.setState({ data: cloneArray });
+            this.setState({ data: cloneData });
         }
 
         const onSampleCrop = (gid: number, sid: number, newStart: number, newEnd: number) => {
@@ -191,8 +191,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ data: cloneArray });
         }
 
-        const gestureID = this.state.data[0].gestureID;
-        const samples = this.state.data[0].gestures;
+        // const gestureID = this.state.data[0].gestureID;
+        // const samples = this.state.data[0].gestures;
 
         // samples.forEach(sample => {sample.cropEndIndex = sample.rawData.length -1; sample.cropStartIndex = 0;});
 
@@ -246,19 +246,27 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     </div>
                 </div>
 
-                <div className="ui segment">
-                    {samples.map(sample =>
-                        <GraphCard
-                            parent = { this }
-                            gestureID = { gestureID }
-                            sampleID = { sample.sampleID }
-                            dx = { 7 }
-                            graphHeight = { 70 }
-                            maxVal = { 2450 }
-                            onDeleteHandler = { onSampleDelete }
-                            onCropHandler = { onSampleCrop }
-                        />
-                    )}
+                <div className="ui segments">
+                    {
+                        this.state.data.map((gesture) => 
+                            <div className="ui segment">
+                            {
+                                gesture.gestures.map((sample) =>
+                                    <GraphCard
+                                        key={ sample.sampleID }
+                                        parent={ this }
+                                        gestureID={ gesture.gestureID }
+                                        sampleID={ sample.sampleID }
+                                        dx={ 7 }
+                                        graphHeight={ 70 }
+                                        maxVal={ 2450 }
+                                        onDeleteHandler={ onSampleDelete }
+                                        onCropHandler={ onSampleCrop }
+                                    />
+                                )
+                            }
+                            </div>)
+                    }
                 </div>
 
 

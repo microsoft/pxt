@@ -284,6 +284,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                                 <i className="toggle off icon"></i>
                             </button>
                     }
+                    <span className="ui compact">{this.props.sampleID}</span>
                     <button onClick={this.handleDelete} className="ui icon black button tiny compact right floated">
                         <i className="remove icon"></i>
                     </button>
