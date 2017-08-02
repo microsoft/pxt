@@ -367,7 +367,7 @@ namespace pxt.runner {
                         let nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
                         addItem({
                             name: nsi.name,
-                            url: nsi.attributes.help || ("reference/" + nsi.name),
+                            url: nsi.attributes.help || ("reference/" + nsi.name.toLowerCase()),
                             description: nsi.attributes.jsDoc,
                             blocksXml: block && block.codeCard
                                 ? block.codeCard.blocksXml
@@ -421,6 +421,14 @@ namespace pxt.runner {
                                 url: "blocks/loops" + (ns ? "" : "/while"),
                                 description: ns ? lf("Loops and repetition") : lf("Repeat code while a condition is true."),
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="device_while"></block></xml>'
+                            });
+                            break;
+                        case ts.SyntaxKind.ForOfStatement:
+                            addItem({
+                                name: ns ? "Loops" : "for of",
+                                url: "blocks/loops" + (ns ? "" : "/for-of"),
+                                description: ns ? lf("Loops and repetition") : lf("Repeat code for each item in a list."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_for_of"></block></xml>'
                             });
                             break;
                         case ts.SyntaxKind.ForStatement:

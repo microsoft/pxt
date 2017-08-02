@@ -30,7 +30,7 @@ namespace pxsim {
 
         pop() {
             let x = this.data.pop();
-            if (x != undefined) { //treat null & undefined as the same
+            if (x == undefined) { //treat null & undefined as the same
                 return 0;
             }
             return x;

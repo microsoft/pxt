@@ -17,11 +17,9 @@ namespace ts.pxtc.decompiler {
         fieldName?: string;
     }
 
-    enum ShadowType {
-        Boolean,
-        Number,
-        String
-    }
+    const numberType = "math_number";
+    const stringType = "text";
+    const booleanType = "logic_boolean";
 
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
@@ -88,7 +86,7 @@ namespace ts.pxtc.decompiler {
         kind: "value";
         name: string;
         value: OutputNode;
-        shadowType?: ShadowType;
+        shadowType?: string;
     }
 
     interface BlockNode extends BlocklyNode {
@@ -423,13 +421,15 @@ ${output}</xml>`;
 
             if (n.value.kind === "expr") {
                 const value = n.value as ExpressionNode;
-                switch (value.type) {
-                    case "math_number":
-                    case "logic_boolean":
-                    case "text":
-                        emitShadowOnly = true;
-                        break
-                    default:
+                emitShadowOnly = value.type === n.shadowType;
+                if (!emitShadowOnly) {
+                    switch (value.type) {
+                        case "math_number":
+                        case "logic_boolean":
+                        case "text":
+                            emitShadowOnly = !n.shadowType;
+                            break
+                    }
                 }
             }
 
@@ -440,16 +440,17 @@ ${output}</xml>`;
                 // Emit a shadow block to appear if the given input is removed
                 if (n.shadowType !== undefined) {
                     switch (n.shadowType) {
-                        case ShadowType.Number:
+                        case numberType:
                             write(`<shadow type="math_number"><field name="NUM">0</field></shadow>`)
                             break;
-                        case ShadowType.Boolean:
+                        case booleanType:
                             write(`<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>`)
                             break;
-                        case ShadowType.String:
+                        case stringType:
                             write(`<shadow type="text"><field name="TEXT"></field></shadow>`)
                             break;
                         default:
+                            write(`<shadow type="${n.shadowType}"/>`)
                     }
                 }
                 emitOutputNode(n.value);
@@ -578,7 +579,7 @@ ${output}</xml>`;
                 };
 
                 for (let i = 0; i < args.length; i++) {
-                    result.inputs.push(getValue("ADD" + i, args[i], ShadowType.String));
+                    result.inputs.push(getValue("ADD" + i, args[i], stringType));
                 }
 
                 return result;
@@ -595,7 +596,7 @@ ${output}</xml>`;
                 result.fields.push(getField("OP", npp.op))
             }
 
-            const shadowType = (op === "&&" || op === "||") ? ShadowType.Boolean : ShadowType.Number;
+            const shadowType = (op === "&&" || op === "||") ? booleanType : numberType;
 
             result.inputs.push(getValue(npp.leftName || "A", n.left, shadowType));
             result.inputs.push(getValue(npp.rightName || "B", n.right, shadowType));
@@ -625,7 +626,7 @@ ${output}</xml>`;
             }
         }
 
-        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: ShadowType): ValueNode {
+        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string): ValueNode {
             let value: OutputNode;
 
             if (typeof contents === "number") {
@@ -686,8 +687,8 @@ ${output}</xml>`;
                 kind: "expr",
                 type: "math_arithmetic",
                 inputs: [
-                    getValue("A", 0),
-                    getValue("B", node, ShadowType.Number)
+                    getValue("A", 0, numberType),
+                    getValue("B", node, numberType)
                 ],
                 fields: [
                     getField("OP", "MINUS")
@@ -699,7 +700,7 @@ ${output}</xml>`;
             switch (node.operator) {
                 case SK.ExclamationToken:
                     const r: ExpressionNode = { kind: "expr", type: "logic_negate" };
-                    r.inputs = [getValue("BOOL", node.operand, ShadowType.Boolean)]
+                    r.inputs = [getValue("BOOL", node.operand, booleanType)]
                     return r;
                 case SK.PlusToken:
                     return getOutputBlock(node.operand);
@@ -776,7 +777,7 @@ ${output}</xml>`;
             return {
                 kind: "expr",
                 type: "lists_index_get",
-                inputs: [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression)]
+                inputs: [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression, numberType)]
             };
         }
 
@@ -833,7 +834,7 @@ ${output}</xml>`;
                         stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
                         break;
                     case SK.CallExpression:
-                        stmt = getCallStatement(node as ts.CallExpression);
+                        stmt = getCallStatement(node as ts.CallExpression, asExpression);
                         break;
                     default:
                         if (next) {
@@ -958,7 +959,7 @@ ${output}</xml>`;
                             kind: "value",
                             name: "VALUE",
                             value: negateNumericNode(n.right),
-                            shadowType: ShadowType.Number
+                            shadowType: numberType
                         }],
                         fields: [getField("VAR", getVariableName(n.left as ts.Identifier))]
                     };
@@ -972,7 +973,7 @@ ${output}</xml>`;
             return {
                 kind: "statement",
                 type: "device_while",
-                inputs: [getValue("COND", n.expression, ShadowType.Boolean)],
+                inputs: [getValue("COND", n.expression, booleanType)],
                 handlers: [{ name: "DO", statement: getStatementBlock(n.statement) }]
             };
         }
@@ -992,7 +993,7 @@ ${output}</xml>`;
             };
 
             flatif.ifStatements.forEach((stmt, i) => {
-                r.inputs.push(getValue("IF" + i, stmt.expression, ShadowType.Boolean));
+                r.inputs.push(getValue("IF" + i, stmt.expression, booleanType));
                 r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
             });
 
@@ -1017,7 +1018,7 @@ ${output}</xml>`;
                     kind: "statement",
                     type: "controls_repeat_ext",
                     fields: [],
-                    inputs: [getValue("TIMES", condition.right, ShadowType.Number)],
+                    inputs: [getValue("TIMES", condition.right, numberType)],
                     handlers: []
                 };
             }
@@ -1034,20 +1035,20 @@ ${output}</xml>`;
                     r.inputs.push({
                         kind: "value",
                         name: "TO",
-                        shadowType: ShadowType.Number,
+                        shadowType: numberType,
                         value: {
                             kind: "expr",
                             type: "math_arithmetic",
                             fields: [getField("OP", "MINUS")],
                                 inputs: [
-                                    getValue("A", condition.right, ShadowType.Number),
-                                    getValue("B", 1)
+                                    getValue("A", condition.right, numberType),
+                                    getValue("B", 1, numberType)
                                 ]
                         }
                     });
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
-                    r.inputs.push(getValue("TO", condition.right, ShadowType.Number));
+                    r.inputs.push(getValue("TO", condition.right, numberType));
                 }
             }
 
@@ -1084,7 +1085,7 @@ ${output}</xml>`;
             return {
                 kind: "statement",
                 type: changed ? "variables_change" : "variables_set",
-                inputs: [getValue("VALUE", value, ShadowType.Number)],
+                inputs: [getValue("VALUE", value, numberType)],
                 fields: [getField("VAR", renamed)]
             };
         }
@@ -1095,7 +1096,7 @@ ${output}</xml>`;
                 type: "lists_index_set",
                 inputs: [
                     getValue("LIST", left.expression),
-                    getValue("INDEX", left.argumentExpression, ShadowType.Number),
+                    getValue("INDEX", left.argumentExpression, numberType),
                     getValue("VALUE", right)
                 ]
             };
@@ -1130,7 +1131,7 @@ ${output}</xml>`;
             };
         }
 
-        function getCallStatement(node: ts.CallExpression): StatementNode {
+        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode {
             const info: pxtc.CallInfo = (node as any).callInfo
 
             if (!info.attrs.blockId || !info.attrs.block) {
@@ -1166,10 +1167,10 @@ ${output}</xml>`;
 
             const paramInfo = getParameterInfo(info, blocksInfo);
 
-            const r: StatementNode = {
-                kind: "statement",
+            const r = {
+                kind: asExpression ? "expr" : "statement",
                 type: info.attrs.blockId
-            }
+            } as StatementNode;
 
             if (info.qName == "Math.max") {
                 (r.fields || (r.fields = [])).push({
@@ -1211,7 +1212,7 @@ ${output}</xml>`;
                         const aName = U.htmlEscape(paramInfo[i].name);
 
                         if (shadow && callInfo.attrs.blockIdentity !== info.qName) {
-                            (r.inputs || (r.inputs = [])).push(getValue(aName, e));
+                            (r.inputs || (r.inputs = [])).push(getValue(aName, e, paramInfo[i].type));
                         }
                         else {
                             const expr = getOutputBlock(e);
@@ -1222,7 +1223,8 @@ ${output}</xml>`;
                                 (r.inputs || (r.inputs = [])).push({
                                     kind: "value",
                                     name: aName,
-                                    value: expr
+                                    value: expr,
+                                    shadowType: paramInfo[i].type
                                 });
                             }
                         }
@@ -1236,7 +1238,8 @@ ${output}</xml>`;
                             v = {
                                 kind: "value",
                                 name: vName,
-                                value: getMathRandomArgumentExpresion(e)
+                                value: getMathRandomArgumentExpresion(e),
+                                shadowType: numberType
                             };
                             defaultV = false;
                         } else if (isLiteralNode(e)) {
@@ -1251,7 +1254,8 @@ ${output}</xml>`;
                                 v = {
                                     kind: "value",
                                     name: vName,
-                                    value: fieldBlock
+                                    value: fieldBlock,
+                                    shadowType: param.type
                                 };
                                 defaultV = false;
                             }
@@ -1261,7 +1265,7 @@ ${output}</xml>`;
                             }
                         }
                         if (defaultV) {
-                            v = getValue(vName, e);
+                            v = getValue(vName, e, paramInfo[i].type);
                         }
 
                         (r.inputs || (r.inputs = [])).push(v);
@@ -1276,7 +1280,7 @@ ${output}</xml>`;
         //     openBlockTag(info.attrs.blockId);
         //     write(`<mutation count="${info.args.length}" />`)
         //     info.args.forEach((expression, index) => {
-        //         emitValue("value_input_" + index, expression, ShadowType.Number);
+        //         emitValue("value_input_" + index, expression, numberType);
         //     });
         // }
 
@@ -1435,7 +1439,7 @@ ${output}</xml>`;
                 if (match) {
                     const matched = match[1].trim()
 
-                    if (matched === ON_START_COMMENT) {
+                    if (matched === ON_START_COMMENT || matched === HANDLER_COMMENT) {
                         return;
                     }
 

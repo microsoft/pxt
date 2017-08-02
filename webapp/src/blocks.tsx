@@ -185,8 +185,8 @@ export class Editor extends srceditor.Editor {
         });
 
         if (needsLayout) {
-            // If the blocks file has no location info (e.g. it's from the decompiler), format the code
-            pxt.blocks.layout.flow(this.editor);
+            // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
+            pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
@@ -576,7 +576,7 @@ export class Editor extends srceditor.Editor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
+            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: 0 });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
