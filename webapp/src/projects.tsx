@@ -322,13 +322,13 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     description={lf("Load the last project you worked on") }
                                     onClick={() => resume() }
                                     /> : undefined}
-                                <codecard.CodeCardView
-                                    key={'gettingstarted'}
-                                    iconColor="green"
-                                    iconContent={lf("Getting started") }
-                                    description={lf("Create a fun, beginner project in a guided tutorial") }
-                                    onClick={() => gettingStarted() }
-                                    />
+                                {pxt.appTarget.appTheme.sideDoc ? <codecard.CodeCardView
+                                        key={'gettingstarted'}
+                                        iconColor="green"
+                                        iconContent={lf("Getting started") }
+                                        description={lf("Create a fun, beginner project in a guided tutorial") }
+                                        onClick={() => gettingStarted() }
+                                        /> : undefined}
                                 <codecard.CodeCardView
                                     key={'newproject'}
                                     iconColor="brown"
