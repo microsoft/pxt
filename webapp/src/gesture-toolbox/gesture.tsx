@@ -189,8 +189,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             gestureID = { gestureID }
                             sampleID = { sample.sampleID }
                             dx = { 7 }
-                            graphHeight = { 75 }
-                            maxVal = { 2048 }
+                            graphHeight = { 70 }
+                            maxVal = { 2450 }
                             onDeleteHandler = { onSampleDelete }
                         />
                     )}
