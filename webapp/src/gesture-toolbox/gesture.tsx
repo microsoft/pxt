@@ -55,6 +55,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         // TODO:  
         // Load data (accelerometer gesture data + video + ...) from cloud
 
+        for (let i = 0; i < dataObj.length; i++)
+            dataObj[i].gestures.forEach(sample => { sample.cropEndIndex = sample.rawData.length - 1; sample.cropStartIndex = 0;})
+
         this.state = {
             visible: false,
             singleGestureView: false,
@@ -133,9 +136,25 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: GestureToolboxState, nextContext: any): boolean {
-        return this.state.visible != nextState.visible || this.state.connected != nextState.connected;
+        // return this.state.visible != nextState.visible || this.state.connected != nextState.connected;
+        return true;
     }
 
+    getGestureIndex(gid: number): number {
+        for (let i = 0; i < this.state.data.length; i++) {
+            if (this.state.data[i].gestureID == gid) return i;
+        }
+
+        return -1;
+    }
+
+    getSampleIndex(gid: number, sid: number): number {
+        for (let i = 0; i < this.state.data[gid].gestures.length; i++) {
+            if (this.state.data[gid].gestures[i].sampleID == sid) return i;
+        }
+
+        return -1;
+    }
 
     renderCore() {
         const { visible } = this.state;
@@ -149,15 +168,33 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const onSampleDelete = (gid: number, sid: number) => {
             console.log("sample [" + gid + ", " + sid + "] has been deleted");
             // should change the state of this ui -> with less items
+            let gi = this.getGestureIndex(gid);
+            let si = this.getSampleIndex(gi, sid);
+
+            let cloneArray = this.state.data.slice();
+
+            cloneArray[gi].gestures.splice(si, 1);
+
+            this.setState({ data: cloneArray });
         }
 
-        let gestureID = this.state.data[0].gestureID;
-        let samples = this.state.data[0].gestures;
+        const onSampleCrop = (gid: number, sid: number, newStart: number, newEnd: number) => {
+            console.log("sample [" + gid + ", " + sid + "] has been updated");
+            let gi = this.getGestureIndex(gid);
+            let si = this.getSampleIndex(gi, sid);
 
-        samples.forEach(s => {
-            s.cropStartIndex = 0;
-            s.cropEndIndex = s.rawData.length - 1;
-        })
+            let cloneArray = this.state.data.slice();
+
+            cloneArray[gi].gestures[si].cropStartIndex = newStart;
+            cloneArray[gi].gestures[si].cropEndIndex = newEnd;
+
+            this.setState({ data: cloneArray });
+        }
+
+        const gestureID = this.state.data[0].gestureID;
+        const samples = this.state.data[0].gestures;
+
+        // samples.forEach(sample => {sample.cropEndIndex = sample.rawData.length -1; sample.cropStartIndex = 0;});
 
         return (
             <sui.Modal open={this.state.visible} className="gesture_toolbox" header={lf("Gesture Toolkit") } size="fullscreen"
@@ -187,22 +224,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 {/* gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number } */}
                 <Indicator.ConnectionIndicator parent={ this }/>
 
-                <div>
-                    {samples.map(sample =>
-                        <GraphCard
-                            parent = { this }
-                            gestureID = { gestureID }
-                            sampleID = { sample.sampleID }
-                            dx = { 7 }
-                            graphHeight = { 70 }
-                            maxVal = { 2450 }
-                            onDeleteHandler = { onSampleDelete }
-                        />
-                    )}
-                </div>
-
-
-                <div className="ui three column grid">
+                <div className="ui segment three column grid">
                     <div className="four wide column">
                         <video id="webcam-video"></video>
                     </div>
@@ -223,6 +245,24 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         </button>
                     </div>
                 </div>
+
+                <div className="ui segment">
+                    {samples.map(sample =>
+                        <GraphCard
+                            parent = { this }
+                            gestureID = { gestureID }
+                            sampleID = { sample.sampleID }
+                            dx = { 7 }
+                            graphHeight = { 70 }
+                            maxVal = { 2450 }
+                            onDeleteHandler = { onSampleDelete }
+                            onCropHandler = { onSampleCrop }
+                        />
+                    )}
+                </div>
+
+
+                
                 <span className="ui text big" id="prediction-span"></span>
                 <div id={gesturesContainerID}>
                 </div>

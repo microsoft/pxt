@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./../sui";
 import { Point, Gesture, GestureSample } from "./types";
 
-export interface IGraphCard { parent?: any, gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number, onDeleteHandler?: (gid: number, sid: number) => void }
+export interface IGraphCard { parent?: any, gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number, onDeleteHandler?: (gid: number, sid: number) => void, onCropHandler?: (gid: number, sid: number, s: number, e: number) => void }
 export interface GraphCardState { editMode?: boolean }
 
 export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
@@ -69,9 +69,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         // let svgX = d3.select(ReactDOM.findDOMNode(this.refs["svgX"]));
         // let svgY = d3.select(ReactDOM.findDOMNode(this.refs["svgY"]));
-        this.updateClipper(0, this.sample.rawData.length);
-        this.svgCrop.style("opacity", 1);
-
+        this.updateClipper(0, this.sample.rawData.length, true);
+        this.svgCrop.transition().duration(150).delay(150).style("opacity", 1);
     }
 
     handleSave(e: any) {
@@ -80,8 +79,9 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         // the handler will change the state of itself (=parent)
 
         // re-render based on
-        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex);
+        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex + 1, true);
         this.svgCrop.style("opacity", 0);
+        this.props.onCropHandler(this.props.gestureID, this.props.sampleID, this.sample.cropStartIndex, this.sample.cropEndIndex);
     }
 
     // on "edit" click 
@@ -94,17 +94,28 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
     // on "crop" event
     // parent.onSampleCropHandler(s, e);
 
-    updateClipper(start: number, end: number) {
+    updateClipper(start: number, end: number, transition?: boolean) {
         let dx = this.props.dx;
         let containerWidth = (end - start) * dx + 25;
 
-        d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"])).
-            attr("style", "width: " + containerWidth + "px;");
+        if (transition == undefined) {
+            d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"])).
+                attr("style", "width: " + containerWidth + "px;");
 
-        let transX = -start * dx;
-        this.svgX.style("transform", "translateX(" + transX + "px)");
-        this.svgY.style("transform", "translateX(" + transX + "px)");
-        this.svgZ.style("transform", "translateX(" + transX + "px)");
+            let transX = -start * dx;
+            this.svgX.style("transform", "translateX(" + transX + "px)");
+            this.svgY.style("transform", "translateX(" + transX + "px)");
+            this.svgZ.style("transform", "translateX(" + transX + "px)");
+        } else if (transition == true) {
+            d3.select(ReactDOM.findDOMNode(this.refs["graphContainer"]))
+                .transition().duration(300)
+                .attr("style", "width: " + containerWidth + "px;");
+
+            let transX = -start * dx;
+            this.svgX.transition().duration(300).style("transform", "translateX(" + transX + "px)");
+            this.svgY.transition().duration(300).style("transform", "translateX(" + transX + "px)");
+            this.svgZ.transition().duration(300).style("transform", "translateX(" + transX + "px)");
+        }
     }
 
     componentDidMount() {
@@ -191,8 +202,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                 if (startIndex < localThis.sample.cropEndIndex) {
                     localThis.sample.cropStartIndex = startIndex;
 
-                    d3.select(this).attr("d", "M" + ((startIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
-                    d3.select(this.parentNode).select(".leftRec").attr("width", (startIndex * dx));
+                    d3.select(this).transition().duration(60).attr("d", "M" + ((startIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
+                    d3.select(this.parentNode).select(".leftRec").transition().duration(60).attr("width", (startIndex * dx));
                 }
             }
         }
@@ -206,8 +217,8 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                 if (endIndex > localThis.sample.cropStartIndex) {
                     localThis.sample.cropEndIndex = endIndex;
 
-                    d3.select(this).attr("d", "M" + ((endIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
-                    d3.select(this.parentNode).select(".RightRec").attr("width", svgCropWidth - (endIndex * dx)).attr("x", (endIndex * dx));
+                    d3.select(this).transition().duration(60).attr("d", "M" + ((endIndex * dx) + (strokeWidth / 2)).toString() + " 0 v " + svgCropHeight);
+                    d3.select(this.parentNode).select(".RightRec").transition().duration(60).attr("width", svgCropWidth - (endIndex * dx)).attr("x", (endIndex * dx));
                 }
             }
         }
@@ -247,7 +258,7 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         // modify width and translateX based on 
         // width = 32 => 0
-        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex);
+        this.updateClipper(this.sample.cropStartIndex, this.sample.cropEndIndex + 1);
     }
 
     shouldComponentUpdate(nextProps: IGraphCard, nextState: GraphCardState, nextContext: any): boolean {
@@ -265,14 +276,12 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                     {
                         this.state.editMode == true
                         ?
-                            <button onClick={this.handleSave} className="ui labeled violet icon button tiny compact left floated">
+                            <button onClick={this.handleSave} className="ui violet icon button tiny compact left floated">
                                 <i className="toggle on icon"></i>
-                                Save
                             </button>
                         :
-                            <button onClick={this.handleEdit} className="ui labeled icon button tiny compact left floated">
+                            <button onClick={this.handleEdit} className="ui icon button tiny compact left floated">
                                 <i className="toggle off icon"></i>
-                                Edit
                             </button>
                     }
                     <button onClick={this.handleDelete} className="ui icon black button tiny compact right floated">
