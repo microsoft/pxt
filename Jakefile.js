@@ -202,6 +202,7 @@ task('updatestrings', ['built/localization.json'])
 file('built/localization.json', ju.expand1(
     ["pxtlib",
         "pxtblocks",
+        "pxtblocks/fields",
         "webapp/src"]
 ), function () {
     var errCnt = 0;
