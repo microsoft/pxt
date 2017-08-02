@@ -297,7 +297,7 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    fn.attributes.block = locBlock;
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
                 }
             }))
             .then(() => apis);
