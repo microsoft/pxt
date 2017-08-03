@@ -11,6 +11,7 @@ type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
 export enum ShareMode {
+    Screenshot,
     Url,
     Editor,
     Gif,
@@ -111,6 +112,7 @@ pxt extract ${url}`;
                     case ShareMode.Url:
                         embed = editUrl;
                         break;
+                    case ShareMode.Screenshot:
                     default:
                         if (isBlocks && pxt.blocks.layout.screenshotEnabled()) {
                             // Render screenshot
@@ -160,7 +162,7 @@ pxt extract ${url}`;
             this.forceUpdate();
         }
 
-        const formats = [
+        const formats = [{ mode: ShareMode.Screenshot, label: lf("Screenshot") },
             { mode: ShareMode.Editor, label: lf("Editor") },
             header && header.icon ? { mode: ShareMode.Gif, label: lf("Gif") } : undefined,
             { mode: ShareMode.Simulator, label: lf("Simulator") },
