@@ -30,7 +30,7 @@ export const connectionIndicatorID: string = "connection-indicator";
 
 interface GestureToolboxState {
     visible?: boolean;
-    singleGestureView?: boolean;
+    editGestureMode?: boolean;
     data?: Types.Gesture[];
     connected?: boolean;
 }
@@ -52,15 +52,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     constructor(props: ISettingsProps) {
         super(props);
 
-        // TODO:  
-        // Load data (accelerometer gesture data + video + ...) from cloud
-
         for (let i = 0; i < dataObj.length; i++)
             dataObj[i].gestures.forEach(sample => { sample.cropEndIndex = sample.rawData.length - 1; sample.cropStartIndex = 0;})
 
         this.state = {
             visible: false,
-            singleGestureView: false,
+            editGestureMode: false,
             data: dataObj,
             connected: false
         };
@@ -73,7 +70,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
 
     hide() {
-        this.setState({ visible: false });
+        this.setState({ visible: false, editGestureMode: false });
 
         Webcam.mediaStream.stop();
     }
@@ -111,13 +108,13 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     }
 
                     if (wasRecording == false && Recorder.isRecording == true) {
-                        Recorder.startRecording(newData.accVec, 0, "TestGesture");
+                        // Recorder.startRecording(newData.accVec, 0, "TestGesture");
                     }
                     else if (wasRecording == true && Recorder.isRecording == true) {
-                        Recorder.continueRecording(newData.accVec);
+                        // Recorder.continueRecording(newData.accVec);
                     }
                     else if (wasRecording == true && Recorder.isRecording == false) {
-                        Recorder.stopRecording();
+                        // Recorder.stopRecording();
                     }
 
                     wasRecording = Recorder.isRecording;
@@ -134,11 +131,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         });
     }
 
-
-    // shouldComponentUpdate(nextProps: ISettingsProps, nextState: GestureToolboxState, nextContext: any): boolean {
-    //     // return this.state.visible != nextState.visible || this.state.connected != nextState.connected;
-    //     return true;
-    // }
 
     getGestureIndex(gid: number): number {
         for (let i = 0; i < this.state.data.length; i++) {
@@ -160,9 +152,14 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const { visible } = this.state;
 
         const newGesture = () => {
+            this.setState({ editGestureMode: true });
         }
 
         const importGesture = () => {
+        }
+
+        const onConnectionStatusChange = (connectionStatus: boolean) => {
+            this.setState({ connected: connectionStatus });
         }
 
         const onSampleDelete = (gid: number, sid: number) => {
@@ -191,88 +188,101 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ data: cloneArray });
         }
 
-        // const gestureID = this.state.data[0].gestureID;
-        // const samples = this.state.data[0].gestures;
-
-        // samples.forEach(sample => {sample.cropEndIndex = sample.rawData.length -1; sample.cropStartIndex = 0;});
+        const targetTheme = pxt.appTarget.appTheme;
 
         return (
-            <sui.Modal open={this.state.visible} className="gesture_toolbox" header={lf("Gesture Toolkit") } size="fullscreen"
-                onClose={() => this.hide() } dimmer={true}
-                closeIcon={true}
-                closeOnDimmerClick
-                >
-
-                {/* <div className="ui cards">
-                    <codecard.CodeCardView
-                                key={'newpgesture'}
-                                icon="wizard outline"
-                                iconColor="primary"
-                                name={lf("New Gesture...") }
-                                description={lf("Creates a new empty gesture") }
-                                onClick={() => newGesture() }
-                                />
-                    <codecard.CodeCardView
-                                key={'importgesture'}
-                                icon="upload outline"
-                                iconColor="secondary"
-                                name={lf("Import Gesture...") }
-                                description={lf("Imports gesture from your computer") }
-                                onClick={() => importGesture() }
-                                />
-                </div> */}
-{/* gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number } */}
-                <Indicator.ConnectionIndicator parent={ this }/>
-
-                <div className="ui segment three column grid">
-                    <div className="four wide column">
-                        <video id="webcam-video"></video>
-                    </div>
-                    <div className="nine wide column">
-                        <div className="row graph-x" id="realtime-graph-x"></div>
-                        <div className="row graph-y" id="realtime-graph-y"></div>
-                        <div className="row graph-z" id="realtime-graph-z"></div>
-                    </div>
-                    <div className="three wide column">
-                        <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
-                            <i className="download icon icon-and-text"></i>
-                            <span className="ui text">Program Streamer</span>
-                        </button>
-                        <br/>
-                        <button id="generate-block" className="ui button blocks-menuitem green big">
-                            <i className="xicon blocks icon icon-and-text"></i>
-                            <span className="ui text">Create Block</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div className="ui segments">
-                    {
-                        this.state.data.map((gesture) => 
+            <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
+                onClose={() => this.hide() } dimmer={true} closeIcon={false} closeOnDimmerClick>
+                <sui.Segment attached="top">
+                    <span className="ui header left floated">{lf("Gesture Toolbox")}</span>
+                    <Indicator.ConnectionIndicator 
+                        parent={ this }
+                        onConnStatChangeHandler={ onConnectionStatusChange }
+                        class={ "right floated" }
+                    />  
+                    {/* <button className="ui button icon huge clear" onClick={() => this.hide() }>
+                        <i className="icon close"></i>
+                    </button> */}
+                </sui.Segment>
+                <div className="ui segment bottom attached tab active tabsegment">
+                {
+                    this.state.editGestureMode == false ? 
+                    <div className="ui">
+                        <div className="ui cards">
+                            <codecard.CodeCardView
+                                        key={'newpgesture'}
+                                        icon="wizard outline"
+                                        iconColor="primary"
+                                        name={lf("New Gesture...") }
+                                        description={lf("Creates a new empty gesture") }
+                                        onClick={() => newGesture() }
+                                        />
+                            <codecard.CodeCardView
+                                        key={'importgesture'}
+                                        icon="upload outline"
+                                        iconColor="secondary"
+                                        name={lf("Import Gesture...") }
+                                        description={lf("Imports gesture from your computer") }
+                                        onClick={() => importGesture() }
+                                        />
+                        </div>
+                        <div className="ui segments">
                             <div className="ui segment">
+                                <h1>Gesture1</h1>
+                            </div>
+                            <div className="ui segment">
+                                <h1>Gesture2</h1>
+                            </div>
+                        </div>
+                    </div>
+                    :
+                    <div>
+                        <div className="ui segment three column grid">
+                            <div className="four wide column">
+                                <video id="webcam-video"></video>
+                            </div>
+                            <div className="nine wide column">
+                                <div className="row graph-x" id="realtime-graph-x"></div>
+                                <div className="row graph-y" id="realtime-graph-y"></div>
+                                <div className="row graph-z" id="realtime-graph-z"></div>
+                            </div>
+                            <div className="three wide column">
+                                <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
+                                    <i className="download icon icon-and-text"></i>
+                                    <span className="ui text">Program Streamer</span>
+                                </button>
+                                <br/>
+                                <button id="generate-block" className="ui button blocks-menuitem green big">
+                                    <i className="xicon blocks icon icon-and-text"></i>
+                                    <span className="ui text">Create Block</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="ui segments">
                             {
-                                gesture.gestures.map((sample) =>
-                                    <GraphCard
-                                        key={ sample.sampleID }
-                                        parent={ this }
-                                        gestureID={ gesture.gestureID }
-                                        sampleID={ sample.sampleID }
-                                        dx={ 7 }
-                                        graphHeight={ 70 }
-                                        maxVal={ 2450 }
-                                        onDeleteHandler={ onSampleDelete }
-                                        onCropHandler={ onSampleCrop }
-                                    />
-                                )
+                                this.state.data.map((gesture) => 
+                                    <div className="ui segment">
+                                    {
+                                        gesture.gestures.map((sample) =>
+                                            <GraphCard
+                                                key={ sample.sampleID }
+                                                parent={ this }
+                                                gestureID={ gesture.gestureID }
+                                                sampleID={ sample.sampleID }
+                                                dx={ 7 }
+                                                graphHeight={ 70 }
+                                                maxVal={ 2450 }
+                                                onDeleteHandler={ onSampleDelete }
+                                                onCropHandler={ onSampleCrop }
+                                            />
+                                        )
+                                    }
+                                    </div>)
                             }
-                            </div>)
-                    }
-                </div>
-
-
-                
-                <span className="ui text big" id="prediction-span"></span>
-                <div id={gesturesContainerID}>
+                        </div>
+                    </div>
+                }
                 </div>
             </sui.Modal>
         )
