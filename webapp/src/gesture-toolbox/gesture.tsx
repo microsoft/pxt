@@ -151,6 +151,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     renderCore() {
         const { visible } = this.state;
 
+        const backToMain = () => {
+            this.setState({ editGestureMode: false });
+        }
+
         const newGesture = () => {
             this.setState({ editGestureMode: true });
         }
@@ -194,7 +198,14 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
                 onClose={() => this.hide() } dimmer={true} closeIcon={false} closeOnDimmerClick>
                 <sui.Segment attached="top">
-                    <span className="ui header left floated">{lf("Gesture Toolbox")}</span>
+                    {this.state.editGestureMode
+                        ?
+                        <button className="ui button icon huge clear left floated" onClick={() => backToMain() }>
+                            <i className="icon chevron left"></i>
+                        </button>
+                        :
+                        <span className="ui header left floated">{lf("Gesture Toolbox")}</span>
+                    }
                     <Indicator.ConnectionIndicator 
                         parent={ this }
                         onConnStatChangeHandler={ onConnectionStatusChange }
