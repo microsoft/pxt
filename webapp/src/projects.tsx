@@ -165,7 +165,11 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
                     if (m) this.props.parent.startTutorial(m[1]);
-                    else this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                    else {
+                        if (scr.youTubeId && !scr.url)
+                            window.open('https://youtu.be/' + scr.youTubeId, 'yt');
+                        else this.props.parent.newEmptyProject(scr.name.toLowerCase(), scr.url);
+                    }
             }
         }
 
