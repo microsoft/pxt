@@ -1,10 +1,9 @@
 import * as React from "react";
 import * as hidbridge from "./../hidbridge";
 
-export interface IConnectionIndicator { parent?: any }
+export interface IConnectionIndicator { parent?: any, onConnStatChangeHandler?: (con: boolean) => void, class?: string }
 export interface ConnectionState { connected: boolean }
 export class ConnectionIndicator extends React.Component<IConnectionIndicator, ConnectionState> {
-    static connected: boolean = false;
 
     constructor(props: IConnectionIndicator) {
         super(props);
@@ -14,7 +13,7 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
         setInterval(() => {
             if (Date.now() - props.parent.lastConnectedTime > 1000) {
                 this.setState({ connected: false });
-                ConnectionIndicator.connected = false;
+                this.props.onConnStatChangeHandler(false);
 
                 if (hidbridge.shouldUse())
                     hidbridge.initAsync();
@@ -22,7 +21,7 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
             else {
                 if (!this.state.connected) {
                     this.setState({ connected: true });
-                    ConnectionIndicator.connected = true;
+                    this.props.onConnStatChangeHandler(true);
                 }
             }
         }, 1000);
@@ -38,9 +37,9 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
             : { string: "Disconnected", icon: "remove", color: "red" });
 
         return (
-            <div className={"ui basic label " + status.color}>
+            <div className={"ui basic label " + status.color + " " + this.props.class}>
                 <i className={"icon " + status.icon + " " + status.color}></i>
-                <span>{status.string}</span>
+                {status.string}
             </div>
         );
     }
