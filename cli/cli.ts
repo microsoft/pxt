@@ -134,7 +134,7 @@ function initConfig() {
 }
 
 interface KeyTar {
-    replacePassword(service: string, account: string, password: string): void;
+    setPassword(service: string, account: string, password: string): void;
     getPassword(service: string, account: string): string;
     deletePassword(service: string, account: string): void;
 }
@@ -159,7 +159,7 @@ function passwordDelete(account: string): void {
 function passwordUpdate(account: string, password: string) {
     try {
         const keytar = require("keytar") as KeyTar;
-        keytar.replacePassword("pxt/" + pxt.appTarget.id, account, password);
+        keytar.setPassword("pxt/" + pxt.appTarget.id, account, password);
     } catch (e) {
         console.error(e)
     }
