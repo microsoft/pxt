@@ -68,8 +68,8 @@ function showUploadInstructionsAsync(fn: string, url: string): Promise<void> {
     const saveAs = pxt.BrowserUtils.hasSaveAs();
     const useUF2 = pxt.appTarget.compile.useUF2;
     let body = saveAs ? lf("Click 'Save As' and save the {0} file to the {1} drive to transfer the code into your {2}.",
-            useUF2 ? ".uf2" : ".hex",
-            boardDriveName, boardName)
+        useUF2 ? ".uf2" : ".hex",
+        boardDriveName, boardName)
         : lf("Move the {0} file to the {1} drive to transfer the code into your {2}.",
             pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex",
             boardDriveName, boardName);
@@ -135,14 +135,30 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 
 export function initCommandsAsync(): Promise<void> {
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
+    pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
+
     if (/webusb=1/i.test(window.location.href) && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
+    } else if (pxt.winrt.isWinRT()) { // windows app
+        if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
+            hidbridge.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        } else {
+            pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
+        }
+        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
+        pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
+            return pxt.winrt.saveOnlyAsync(resp)
+                .then((saved) => {
+                    if (saved) {
+                        core.infoNotification(lf("file saved!"));
+                    }
+                })
+                .catch(() => core.errorNotification(lf("saving file failed...")));
+        };
     } else if (hidbridge.shouldUse() && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (pxt.winrt.isWinRT()) { // window app
-        pxt.commands.deployCoreAsync = pxt.winrt.deployCoreAsync;
-        pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser

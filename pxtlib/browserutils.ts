@@ -1,9 +1,4 @@
-/// <reference path="../typings/globals/winrt/index.d.ts"/>
-
 namespace pxt.BrowserUtils {
-    export function isWinRT(): boolean {
-        return typeof Windows !== "undefined";
-    }
 
     export function isIFrame(): boolean {
         try {
@@ -39,6 +34,11 @@ namespace pxt.BrowserUtils {
     // Detects if we are running on ARM (Raspberry pi)
     export function isARM(): boolean {
         return hasNavigator() && /arm/i.test(navigator.platform);
+    }
+
+    // Detects if we are running inside the UWP runtime (Edge)
+    export function isUwpEdge(): boolean {
+        return typeof window !== "undefined" && !!(<any>window).Windows;
     }
 
     /*

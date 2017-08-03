@@ -9,6 +9,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as gallery from "./gallery";
@@ -17,20 +18,29 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
+interface ProjectsProps extends ISettingsProps {
+    hasGettingStarted: boolean;
+}
+
 interface ProjectsState {
     searchFor?: string;
     visible?: boolean;
     tab?: string;
+    isInitialStartPage?: boolean;
+    resumeProject?: pxt.workspace.Header;
+    welcomeDescription?: string;
 }
 
+const WELCOME = "__welcome";
 const MYSTUFF = "__mystuff";
 
-export class Projects extends data.Component<ISettingsProps, ProjectsState> {
+export class Projects extends data.Component<ProjectsProps, ProjectsState> {
     private prevGhData: pxt.github.GitRepo[] = [];
     private prevUrlData: Cloud.JsonScript[] = [];
     private prevGalleries: pxt.Map<pxt.CodeCard[]> = {};
+    private galleryFetchErrors: { [tab: string]: boolean } = {};
 
-    constructor(props: ISettingsProps) {
+    constructor(props: ProjectsProps) {
         super(props)
         this.state = {
             visible: false,
@@ -38,26 +48,51 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
     }
 
-    hide() {
-        this.setState({ visible: false });
+    hide(closeOnly: boolean = false) {
+        if (this.state.isInitialStartPage && closeOnly) {
+            // If this was the initial start page and the dialog was close without a selection being made, load the
+            // previous project if available or create a new one
+            pxt.tickEvent("projects.welcome.hide");
+            if (this.state.resumeProject) {
+                this.props.parent.loadHeaderAsync(this.state.resumeProject);
+            } else {
+                this.props.parent.newProject();
+            }
+        }
+        this.setState({ visible: false, isInitialStartPage: false });
+    }
+
+    showInitialStartPage(resumeProject?: pxt.workspace.Header) {
+        this.setState({
+            visible: true,
+            tab: WELCOME,
+            isInitialStartPage: true,
+            resumeProject
+        });
     }
 
     showOpenProject(tab?: string) {
         const gals = pxt.appTarget.appTheme.galleries || {};
         tab = (!tab || !gals[tab]) ? MYSTUFF : tab;
-        this.setState({ visible: true, tab: tab || MYSTUFF })
+        this.setState({ visible: true, tab: tab || MYSTUFF });
     }
 
     showOpenTutorials() {
         const gals = Object.keys(pxt.appTarget.appTheme.galleries || {});
-        this.setState({ visible: true, tab: gals[0] || MYSTUFF})
+        this.setState({ visible: true, tab: gals[0] || MYSTUFF });
     }
 
     fetchGallery(tab: string, path: string): pxt.CodeCard[] {
         if (this.state.tab != tab) return [];
 
         let res = this.getData(`gallery:${encodeURIComponent(path)}`) as gallery.Gallery[];
-        if (res) this.prevGalleries[path] = Util.concat(res.map(g => g.cards));
+        if (res) {
+            if (res instanceof Error) {
+                this.galleryFetchErrors[tab] = true;
+            } else {
+                this.prevGalleries[path] = Util.concat(res.map(g => g.cards));
+            }
+        }
         return this.prevGalleries[path] || [];
     }
 
@@ -87,7 +122,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.tab != nextState.tab
-            || this.state.searchFor != nextState.searchFor;
+            || this.state.searchFor != nextState.searchFor
+            || this.state.welcomeDescription != nextState.welcomeDescription;
     }
 
     private numDaysOld(d1: number) {
@@ -100,7 +136,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const theme = pxt.appTarget.appTheme;
         const galleries = theme.galleries || {};
-        const tabs = [MYSTUFF].concat(Object.keys(galleries));
+        const galleryNames = Object.keys(galleries);
+        const tabs = [WELCOME, MYSTUFF].concat(Object.keys(galleries));
 
         // lf("Make")
         // lf("Code")
@@ -110,10 +147,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         const headers = this.fetchLocalData();
         const urldata = this.fetchUrlData();
+        this.galleryFetchErrors = {};
         const gals = Util.mapMap(galleries, k => this.fetchGallery(k, galleries[k]));
 
         const chgHeader = (hdr: pxt.workspace.Header) => {
-            pxt.tickEvent("projects.header");
+            pxt.tickEvent(tab == WELCOME ? "projects.welcome.resume" : "projects.header");
             this.hide();
             this.props.parent.loadHeaderAsync(hdr)
         }
@@ -122,6 +160,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             switch (scr.cardType) {
                 case "example": chgCode(scr); break;
+                case "blocksExample": chgCode(scr, true); break;
                 case "tutorial": this.props.parent.startTutorial(scr.url); break;
                 default:
                     const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url);
@@ -130,13 +169,24 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             }
         }
 
-        const chgCode = (scr: pxt.CodeCard) => {
+        const chgCode = (scr: pxt.CodeCard, loadBlocks?: boolean) => {
             core.showLoading(lf("Loading..."));
             gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
                 .done(opts => {
                     core.hideLoading();
-                    if (opts)
-                        this.props.parent.newProject(opts);
+                    if (opts) {
+                        if (loadBlocks) {
+                            const ts = opts.filesOverride["main.ts"]
+                            compiler.getBlocksAsync()
+                                .then(blocksInfo => compiler.decompileSnippetAsync(ts, blocksInfo))
+                                .then(resp => {
+                                    opts.filesOverride["main.blocks"] = resp
+                                    this.props.parent.newProject(opts);
+                                })
+                        } else {
+                            this.props.parent.newProject(opts);
+                        }
+                    }
                 });
         }
         const upd = (v: any) => {
@@ -164,7 +214,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.props.parent.importUrlDialog();
         }
         const newProject = () => {
-            pxt.tickEvent("projects.new");
+            pxt.tickEvent(tab == WELCOME ? "projects.welcome.new" : "projects.new");
             this.hide();
             this.props.parent.newProject();
         }
@@ -173,6 +223,28 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             this.hide();
             this.props.parent.setFile(pkg.mainEditorPkg().files[pxt.CONFIG_NAME])
         }
+        const resume = () => {
+            if (this.state.isInitialStartPage) {
+                chgHeader(this.state.resumeProject);
+            } else {
+                // The msot recent project is already loaded in the editor, so this is a no-op
+                this.hide();
+            }
+        }
+        const gettingStarted = () => {
+            pxt.tickEvent("projects.welcome.gettingstarted");
+            this.hide();
+            this.props.parent.gettingStarted();
+        }
+        const loadProject = () => {
+            pxt.tickEvent("projects.welcome.loadproject");
+            this.setState({ tab: MYSTUFF });
+        }
+        const projectGalleries = () => {
+            pxt.tickEvent("projects.welcome.galleries");
+            this.setState({ tab: galleryNames[0] })
+        }
+
         const isEmpty = () => {
             if (this.state.searchFor) {
                 if (headers.length > 0
@@ -206,7 +278,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             { name: lf("Older"), headers: headersOlder },
         ];
 
-        const isLoading = tab != MYSTUFF && !gals[tab].length;
+        const hadFetchError = this.galleryFetchErrors[tab];
+        const isLoading = tab != WELCOME && tab != MYSTUFF && !hadFetchError && !gals[tab].length;
 
         const tabClasses = sui.cx([
             isLoading ? 'loading' : '',
@@ -215,20 +288,72 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         return (
             <sui.Modal open={visible} className="projectsdialog" size="fullscreen" closeIcon={false}
-                onClose={() => this.setState({ visible: false }) } dimmer={true}
-                closeOnDimmerClick closeOnDocumentClick>
+                onClose={() => this.hide(/* closeOnly */ true) } dimmer={true}
+                closeOnDimmerClick>
                 <sui.Segment inverted={targetTheme.invertedMenu} attached="top">
                     <sui.Menu inverted={targetTheme.invertedMenu} secondary>
-                        {tabs.map(t =>
-                            <sui.MenuItem key={`tab${t}`} active={tab == t} name={t == MYSTUFF ? lf("My Stuff") : Util.rlf(t)} onClick={() => this.setState({ tab: t }) } />) }
+                        {tabs.map(t => {
+                            let name: string;
+                            if (t == MYSTUFF) name = lf("My Stuff");
+                            else if (t == WELCOME) name = lf("Welcome!");
+                            else name = Util.rlf(t);
+                            return (<sui.MenuItem key={`tab${t}`} active={tab == t} name={name} onClick={() => this.setState({ tab: t }) } />)
+                        }) }
                         <div className="right menu">
                             <sui.Button
                                 icon='close'
                                 class={`huge clear ${targetTheme.invertedMenu ? 'inverted' : ''}`}
-                                onClick={() => this.setState({ visible: false }) } />
+                                onClick={() => this.hide(/* closeOnly */ true) } />
                         </div>
                     </sui.Menu>
                 </sui.Segment>
+                {tab == WELCOME ? <div className={tabClasses}>
+                    <div className="ui stackable two column grid">
+                        <div className="six wide column">
+                            <h2 className="row">{pxt.appTarget.name}</h2>
+                            <div className={"row large ui loader"}></div>
+                        </div>
+                        <div className="group ten wide column">
+                            <div className="ui cards centered">
+                                {this.state.resumeProject ? <codecard.CodeCardView
+                                    key={'resume'}
+                                    iconColor="teal"
+                                    iconContent={lf("Resume") }
+                                    description={lf("Load the last project you worked on") }
+                                    onClick={() => resume() }
+                                    /> : undefined}
+                                {pxt.appTarget.appTheme.sideDoc ? <codecard.CodeCardView
+                                        key={'gettingstarted'}
+                                        iconColor="green"
+                                        iconContent={lf("Getting started") }
+                                        description={lf("Create a fun, beginner project in a guided tutorial") }
+                                        onClick={() => gettingStarted() }
+                                        /> : undefined}
+                                <codecard.CodeCardView
+                                    key={'newproject'}
+                                    iconColor="brown"
+                                    iconContent={lf("New project") }
+                                    description={lf("Start a new, empty project") }
+                                    onClick={() => newProject() }
+                                    />
+                                <codecard.CodeCardView
+                                    key={'loadproject'}
+                                    iconColor="grey"
+                                    iconContent={lf("Load project") }
+                                    description={lf("Load a previous project") }
+                                    onClick={() => loadProject() }
+                                    />
+                                {galleryNames.length > 0 ? <codecard.CodeCardView
+                                    key={'projectgalleries'}
+                                    iconColor="orange"
+                                    iconContent={lf("Project galleries") }
+                                    description={lf("Browse guided tutorials, project samples and awesome activities") }
+                                    onClick={() => projectGalleries() }
+                                    /> : undefined}
+                            </div>
+                        </div>
+                    </div>
+                </div> : undefined }
                 {tab == MYSTUFF ? <div className={tabClasses}>
                     <div className="group">
                         <div className="ui cards">
@@ -296,19 +421,21 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </div>
                     </div>
                 </div> : undefined }
-                {tab != MYSTUFF ? <div className={tabClasses}>
-                    <div className="ui cards centered">
-                        {gals[tab].map(scr => <codecard.CodeCardView
-                            key={tab + scr.name}
-                            name={scr.name}
-                            description={scr.description}
-                            url={scr.url}
-                            imageUrl={scr.imageUrl}
-                            youTubeId={scr.youTubeId}
-                            onClick={() => chgGallery(scr) }
-                            />
-                        ) }
-                    </div>
+                {tab != MYSTUFF && tab != WELCOME ? <div className={tabClasses}>
+                    {hadFetchError ?
+                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.") }</p>
+                        : <div className="ui cards centered">
+                            {gals[tab].map(scr => <codecard.CodeCardView
+                                key={tab + scr.name}
+                                name={scr.name}
+                                description={scr.description}
+                                url={scr.url}
+                                imageUrl={scr.imageUrl}
+                                youTubeId={scr.youTubeId}
+                                onClick={() => chgGallery(scr) }
+                                />
+                            ) }
+                        </div>}
                 </div> : undefined }
                 { isEmpty() ?
                     <div className="ui items">

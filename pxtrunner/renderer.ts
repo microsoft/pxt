@@ -40,10 +40,10 @@ namespace pxt.runner {
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
         $parent.append($('<div class="ui content js"/>').append($js));
-        $('code.highlight').each(function (i, block) {
-            let hljs = pxt.docs.requireHighlightJs();
-            if (hljs) hljs.highlightBlock(block);
-        });
+        if (typeof hljs !== "undefined")
+            $js.find('code.highlight').each(function (i, block) {
+                hljs.highlightBlock(block);
+            });
     }
 
     function fillWithWidget(
@@ -54,14 +54,7 @@ namespace pxt.runner {
         decompileResult: DecompileResult,
         woptions: WidgetOptions = {}
     ) {
-        if (!$svg || !$svg[0]) {
-            let $c = $('<div class="ui segment"></div>');
-            $c.append($js);
-            $container.replaceWith($c);
-            return;
-        }
-
-        let cdn = pxt.webConfig.commitCdnUrl
+        const cdn = pxt.webConfig.commitCdnUrl
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
@@ -77,7 +70,7 @@ namespace pxt.runner {
             $menu.append($editBtn);
         }
 
-        if (options.showJavaScript) {
+        if (options.showJavaScript || !$svg) {
             // blocks
             $c.append($js);
 
@@ -374,7 +367,7 @@ namespace pxt.runner {
                         let nsi = r.compileBlocks.blocksInfo.apis.byQName[ii.namespace];
                         addItem({
                             name: nsi.name,
-                            url: nsi.attributes.help || ("reference/" + nsi.name),
+                            url: nsi.attributes.help || ("reference/" + nsi.name.toLowerCase()),
                             description: nsi.attributes.jsDoc,
                             blocksXml: block && block.codeCard
                                 ? block.codeCard.blocksXml
@@ -430,6 +423,14 @@ namespace pxt.runner {
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="device_while"></block></xml>'
                             });
                             break;
+                        case ts.SyntaxKind.ForOfStatement:
+                            addItem({
+                                name: ns ? "Loops" : "for of",
+                                url: "blocks/loops" + (ns ? "" : "/for-of"),
+                                description: ns ? lf("Loops and repetition") : lf("Repeat code for each item in a list."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_for_of"></block></xml>'
+                            });
+                            break;
                         case ts.SyntaxKind.ForStatement:
                             let fs = stmt as ts.ForStatement;
                             // look for the 'repeat' loop style signature in the condition expression, explicitly: (let i = 0; i < X; i++)
@@ -437,14 +438,14 @@ namespace pxt.runner {
                             let forloop = true;
                             if (fs.condition.getChildCount() == 3) {
                                 forloop = !(fs.condition.getChildAt(0).getText() == "0" ||
-                                        fs.condition.getChildAt(1).kind == ts.SyntaxKind.LessThanToken);
+                                    fs.condition.getChildAt(1).kind == ts.SyntaxKind.LessThanToken);
                             }
                             if (forloop) {
                                 addItem({
                                     name: ns ? "Loops" : "for",
                                     url: "blocks/loops" + (ns ? "" : "/for"),
-                                     description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
-                                     blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
+                                    description: ns ? lf("Loops and repetition") : lf("Repeat code for a given number of times using an index."),
+                                    blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_simple_for"></block></xml>'
                                 });
                             } else {
                                 addItem({
@@ -532,6 +533,30 @@ namespace pxt.runner {
         });
     }
 
+    function renderTypeScript(options?: ClientRenderOptions) {
+        const woptions: WidgetOptions = {
+            showEdit: !!options.showEdit,
+            run: !!options.simulator
+        }
+
+        function render(e: Node) {
+            if (typeof hljs !== "undefined") {
+                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
+                hljs.highlightBlock(e)
+            }
+            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, woptions);
+        }
+
+        $('code.lang-typescript').each((i, e) => {
+            render(e);
+            $(e).removeClass('lang-typescript');
+        });
+        $('code.lang-typescript-ignore').each((i, e) => {
+            render(e);
+            $(e).removeClass('lang-typescript-ignore')
+        });
+    }
+
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         if (!options) options = {}
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
@@ -555,6 +580,7 @@ namespace pxt.runner {
             });
         }
 
+        renderTypeScript(options);
         return Promise.resolve()
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderShuffleAsync(options))

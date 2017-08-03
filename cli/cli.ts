@@ -880,6 +880,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/doccdn/": "@commitCdnUrl@",
         "/sim/": "@commitCdnUrl@",
         "/blb/": "@blobCdnUrl@",
+        "@timestamp@": "",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
@@ -915,8 +916,10 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/doccdn/": opts.localDir,
             "/sim/": opts.localDir,
             "/blb/": opts.localDir,
-            "@workerjs@": `${opts.localDir}worker.js\n# ver ${new Date().toString()}`,
-            //"data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
+            "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
+            "@workerjs@": `${opts.localDir}worker.js`,
+            "@timestamp@": `# ver ${new Date().toString()}`,
+            "data-manifest=\"\"": `manifest="${opts.localDir}release.manifest"`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
             "@defaultLocaleStrings@": "",
             "@cachedHexFiles@": "",
@@ -1305,7 +1308,9 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         const browserify = require('browserify');
         let b = browserify();
         nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
-            b.add(f);
+            if (f.match(/\.js$/)) {
+                b.add(f);
+            }
         });
 
         let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
@@ -3374,8 +3379,19 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
         }
         return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
-    } else return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
-        .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
+    } else {
+        return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
+            .then(() => uploadDocs
+                ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+                    // scan for docs in bundled packages
+                    .then(() => Promise.all(pxt.appTarget.bundleddirs
+                        // there must be a folder under .../docs
+                        .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
+                        // upload to crowdin
+                        .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
+                        )).then(() => { }))
+                : Promise.resolve());
+    }
 }
 
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
@@ -3774,6 +3790,22 @@ export function hexdumpAsync(c: commandParser.ParsedCommand) {
     return Promise.resolve()
 }
 
+export function hex2uf2Async(c: commandParser.ParsedCommand) {
+    let filename = c.arguments[0]
+    let buf = fs.readFileSync(filename, "utf8").split(/\r?\n/)
+    if (buf[0][0] != ':') {
+        console.log("Not a hex file: " + filename)
+    } else {
+        let f = pxtc.UF2.newBlockFile()
+        pxtc.UF2.writeHex(f, buf)
+        let uf2buf = new Buffer(pxtc.UF2.serializeFile(f), "binary")
+        let uf2fn = filename.replace(/(\.hex)?$/i, ".uf2")
+        fs.writeFileSync(uf2fn, uf2buf)
+        console.log("Wrote: " + uf2fn)
+    }
+    return Promise.resolve()
+}
+
 function openVsCode(dirname: string) {
     child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..
 }
@@ -3872,7 +3904,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string): Promise
             }
             const isResource = /\.[a-z]+$/i.test(url)
             if (!isResource && !toc) {
-                pxt.debug(`link not in SUMMARY: ${url}`);
+                pxt.log(`link not in SUMMARY: ${url}`);
                 noTOCs.push(url);
             }
             // TODO: correct resolution of static resources
@@ -4310,6 +4342,7 @@ function initCommands() {
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
+    advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
     p.defineCommand({
         name: "pyconv",

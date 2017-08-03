@@ -42,6 +42,7 @@ namespace pxt.editor {
 
         running?: boolean;
         compiling?: boolean;
+        isSaving?: boolean;
         publishing?: boolean;
         hideEditorFloats?: boolean;
         collapseEditorTools?: boolean;
@@ -133,12 +134,14 @@ namespace pxt.editor {
         setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
+        updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
         openTutorials(): void;
         setTutorialStep(step: number): void;
         exitTutorial(keep?: boolean): void;
         completeTutorial(): void;
         showTutorialHint(): void;
+        gettingStarted(): void;
 
         anonymousPublishAsync(): Promise<string>;
 
@@ -151,7 +154,7 @@ namespace pxt.editor {
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
         proxySimulatorMessage(content: string): void;
-        toggleTrace(): void;
+        toggleTrace(intervalSpeed?: number): void;
 
         startTutorial(tutorialId: string): void;
 
@@ -178,6 +181,12 @@ namespace pxt.editor {
         importAsync(project: IProjectView, data: pxt.cpp.HexFile): Promise<void>;
     }
 
+    export interface IResourceImporter {
+        id: string;
+        canImport(data: File): boolean;
+        importAsync(project: IProjectView, data: File): Promise<void>;
+    }
+
     export interface ISettingsProps {
         parent: IProjectView;
         visible?: boolean;
@@ -195,11 +204,106 @@ namespace pxt.editor {
 
     }
 
+    export interface IToolboxOptions {
+        blocklyXml?: string;
+        monacoToolbox?: MonacoToolboxDefinition;
+    }
+
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
+        resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
         fieldEditors?: IFieldCustomOptions[];
+        toolboxOptions?: IToolboxOptions;
+    }
+
+    export interface MonacoToolboxDefinition {
+        loops?: MonacoToolboxCategoryDefinition;
+        logic?: MonacoToolboxCategoryDefinition;
+        variables?: MonacoToolboxCategoryDefinition;
+        maths?: MonacoToolboxCategoryDefinition;
+        text?: MonacoToolboxCategoryDefinition;
+        arrays?: MonacoToolboxCategoryDefinition;
+        functions?: MonacoToolboxCategoryDefinition;
+    }
+
+    export interface MonacoToolboxCategoryDefinition {
+        /**
+         * The display name for the category
+         */
+        name?: string;
+
+        /**
+         * The weight of the category relative to other categories in the toolbox
+         */
+        weight?: number;
+
+        /**
+         * Whether or not the category should be placed in the advanced category
+         */
+        advanced?: boolean;
+
+        /**
+         * Whether or not the category should be removed
+         */
+        removed?: boolean;
+
+        /**
+         * Blocks to appear in the category. Specifying this field will override
+         * all existing blocks in the category. The ordering of the blocks is
+         * determined by the ordering of this array.
+         */
+        blocks?: MonacoToolboxBlockDefinition[];
+
+        /**
+         * Whether or not to replace or append blocks
+         */
+        appendBlocks?: boolean;
+    }
+
+    export interface MonacoToolboxBlockDefinition {
+        /**
+         * Name of the API or construct, used in highlighting of snippet. For function
+         * calls, should match the name of the function
+         */
+        name: string;
+
+        /**
+         * Snippet of code to insert when dragged into editor
+         */
+        snippet: string;
+
+        /**
+         * Group label used to categorize block.  Blocks are arranged with other
+         * blocks that share the same group.
+         */
+        group?: string,
+
+        /**
+         * Description of code to appear in the hover text
+         */
+        jsDoc?: string
+
+        /**
+         * Display just the snippet and nothing else. Should be set to true for
+         * language constructs (eg. for-loops) and to false for function
+         * calls (eg. Math.random())
+         */
+        snippetOnly?: boolean;
+
+        /**
+         * Indicates an advanced API. Advanced APIs appear after basic ones in the
+         * toolbox
+         */
+        advanced?: boolean;
+
+        /**
+         * The weight for the block. Blocks are arranged in order of they appear in the category
+         * definition's array but the weight can be specified in the case that other APIs are
+         * dynamically added to the category (eg. loops.forever())
+         */
+        weight?: number;
     }
 
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>;

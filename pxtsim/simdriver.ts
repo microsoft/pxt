@@ -37,6 +37,7 @@ namespace pxsim {
         partDefinitions?: pxsim.Map<PartDefinition>;
         mute?: boolean;
         highContrast?: boolean;
+        cdnUrl?: string;
     }
 
     export interface HwDebugger {
@@ -98,7 +99,7 @@ namespace pxsim {
             }
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
-            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket')) {
+            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket' || msg.type == 'irpacket')) {
                 if (frames.length < 2) {
                     this.container.appendChild(this.createFrame());
                     frames = this.container.getElementsByTagName("iframe");
@@ -261,7 +262,8 @@ namespace pxsim {
                 code: js,
                 partDefinitions: opts.partDefinitions,
                 mute: opts.mute,
-                highContrast: opts.highContrast
+                highContrast: opts.highContrast,
+                cdnUrl: opts.cdnUrl
             }
 
             this.applyAspectRatio();

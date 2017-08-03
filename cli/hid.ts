@@ -59,7 +59,7 @@ export function getHF2Devices() {
     const hid = getHID();
     if (!hid) return [];
     let devices = hid.devices() as HidDevice[]
-    return devices.filter(d => (d.release & 0xff00) == 0x4200 || (d.release & 0xff00) == 0x1000);
+    return devices.filter(d => (d.release & 0xff00) == 0x4200)
 }
 
 export function hf2ConnectAsync(path: string) {

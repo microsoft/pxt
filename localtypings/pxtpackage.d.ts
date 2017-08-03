@@ -78,7 +78,7 @@ declare namespace pxt {
         time?: number;
         url?: string;
         responsive?: boolean;
-        cardType?: "example" | "tutorial" | "project";
+        cardType?: "example" | "blocksExample" | "tutorial" | "project";
 
         header?: string;
         any?: number;
@@ -88,6 +88,7 @@ declare namespace pxt {
         javascript?: number;
 
         icon?: string;
+        iconContent?: string; // Text instead of icon name
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event

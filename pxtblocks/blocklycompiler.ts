@@ -10,19 +10,6 @@ import B = Blockly;
 let iface: pxt.worker.Iface
 
 namespace pxt.blocks {
-    export const reservedWords = [ "abstract", "any", "as", "break",
-    "case", "catch", "class", "continue", "const", "constructor", "debugger",
-    "declare", "default", "delete", "do", "else", "enum", "export", "extends",
-    "false", "finally", "for", "from", "function", "get", "if", "implements",
-    "import", "in", "instanceof", "interface", "is", "let", "module", "namespace",
-    "new", "null", "package", "private", "protected", "public",
-    "require", "global", "return", "set", "static", "super", "switch",
-    "symbol", "this", "throw", "true", "try", "type", "typeof", "var", "void",
-    "while", "with", "yield", "async", "await", "of",
-
-    // PXT Specific
-    "Math"];
-
     export function initWorker() {
         if (!iface) {
             iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
@@ -203,7 +190,7 @@ namespace pxt.blocks {
                     }
                 }
             }
-            return tp || ground("number[]");
+            return tp || ground("Array");
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
@@ -650,23 +637,6 @@ namespace pxt.blocks {
         return mkPrefix("!", [H.mkParenthesizedExpression(expr)]);
     }
 
-    function extractNumberLit(e: JsNode): number {
-        if (e.type != NT.Prefix || !/^-?\d+$/.test(e.op))
-            return null
-        const parsed = parseInt(e.op);
-        checkNumber(parsed);
-        return parsed;
-    }
-
-    function compileRandom(e: Environment, b: B.Block, comments: string[]): JsNode {
-        let expr = compileExpression(e, getInputTargetBlock(b, "limit"), comments);
-        let v = extractNumberLit(expr)
-        if (v != null)
-            return H.mathCall("random", [H.mkNumberLiteral(v + 1)]);
-        else
-            return H.mathCall("random", [H.mkSimpleCall(opToTok["ADD"], [expr, H.mkNumberLiteral(1)])])
-    }
-
     function compileCreateList(e: Environment, b: B.Block, comments: string[]): JsNode {
         // collect argument
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
@@ -693,6 +663,20 @@ namespace pxt.blocks {
 
         return listBlock.type === "lists_create_with" ? prefixWithSemicolon(res) : res;
 
+    }
+
+    function compileProcedure(e: Environment, b: B.Block, comments: string[]): JsNode[] {
+        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        const stmts = getInputTargetBlock(b, "STACK");
+        return [
+            mkText("function " + name + "() "),
+            compileStatements(e, stmts)
+        ];
+    }
+
+    function compileProcedureCall(e: Environment, b: B.Block, comments: string[]): JsNode {
+        const name = escapeVarName(b.getFieldValue("NAME"), e);
+        return mkStmt(mkText(name + "()"));
     }
 
     function defaultValueForType(t: Point): JsNode {
@@ -753,8 +737,6 @@ namespace pxt.blocks {
                 expr = compileMathOp2(e, b, comments); break;
             case "math_op3":
                 expr = compileMathOp3(e, b, comments); break;
-            case "device_random":
-                expr = compileRandom(e, b, comments); break;
             case "math_arithmetic":
             case "logic_compare":
             case "logic_operation":
@@ -990,12 +972,7 @@ namespace pxt.blocks {
             return e.renames.oldToNew[name];
         }
 
-        let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
-            ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
-
-        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) || reservedWords.indexOf(n) !== -1) {
-            n = "_" + n;
-        }
+        let n = ts.pxtc.escapeIdentifier(name);
 
         if (e.renames.takenNames[n]) {
             let i = 2;
@@ -1134,7 +1111,7 @@ namespace pxt.blocks {
             callback = mkGroup([argumentDeclaration, body]);
         }
         else {
-            callback = mkGroup([mkText("() =>"), body]);
+            callback = mkGroup([mkText("function ()"), body]);
         }
 
         if (isExtension)
@@ -1165,6 +1142,11 @@ namespace pxt.blocks {
         const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.emptyEventHandlerComments && body.children.length === 0) {
+            body.children.unshift(mkStmt(mkText(`// ${pxtc.HANDLER_COMMENT}`)))
+        }
+
         let argumentDeclaration: JsNode;
 
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.ObjectDestructuringMutator) {
@@ -1259,6 +1241,12 @@ namespace pxt.blocks {
 
             case 'device_while':
                 r = compileWhile(e, b, comments);
+                break;
+            case 'procedures_defnoreturn':
+                r = compileProcedure(e, b, comments);
+                break;
+            case 'procedures_callnoreturn':
+                r = [compileProcedureCall(e, b, comments)];
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
@@ -1572,7 +1560,7 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (call && call.attrs.blockAllowMultiple) return;
+            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple) return;
             // is this an event?
             else if (call && call.hasHandler) {
                 // compute key that identifies event call

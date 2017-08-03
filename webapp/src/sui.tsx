@@ -42,6 +42,11 @@ function genericContent(props: UiProps) {
     ]
 }
 
+export function popupWindow(url: string, title: string, width: number, height: number) {
+    return window.open(url, title, `resizable=no, copyhistory=no, ` +
+        `width=${width}, height=${height}, top=${(screen.height / 2) - (height / 2)}, left=${(screen.width / 2) - (width / 2)}`);
+}
+
 export class UiElement<T extends WithPopupProps> extends data.Component<T, {}> {
     popup() {
         if (this.props.popup) {
@@ -216,6 +221,7 @@ export class Input extends data.Component<{
     lines?: number;
     readOnly?: boolean;
     copy?: boolean;
+    selectOnClick?: boolean;
 }, {}> {
 
     copy() {
@@ -224,10 +230,12 @@ export class Input extends data.Component<{
 
         if (!p.lines || p.lines == 1) {
             const inp = el.getElementsByTagName("input")[0] as HTMLInputElement;
-            inp.select();
+            inp.focus();
+            inp.setSelectionRange(0, 9999);
         } else {
             const inp = el.getElementsByTagName("textarea")[0] as HTMLTextAreaElement;
-            inp.select();
+            inp.focus();
+            inp.setSelectionRange(0, 9999);
         }
 
         try {
@@ -252,6 +260,7 @@ export class Input extends data.Component<{
                         type={p.type || "text"}
                         placeholder={p.placeholder} value={p.value}
                         readOnly={!!p.readOnly}
+                        onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                         onChange={v => p.onChange((v.target as any).value) }/>
                         : <textarea
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
@@ -259,6 +268,7 @@ export class Input extends data.Component<{
                             placeholder={p.placeholder}
                             value={p.value}
                             readOnly={!!p.readOnly}
+                            onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                             onChange={v => p.onChange((v.target as any).value) }>
                         </textarea>}
                     {copyBtn}
@@ -720,7 +730,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                     <div className="actions">
                         <Button
                             text={this.props.action}
-                            class={`approve primary ${this.props.actionLoading ? "loading" : ""}`}
+                            class={`approve primary ${this.props.actionLoading ? "loading disabled" : ""}`}
                             onClick={() => {
                                 this.props.actionClick();
                             } } />

@@ -35,9 +35,10 @@ mountVirtualApi("cloud-search", {
 })
 
 mountVirtualApi("gallery", {
-    getAsync: p => gallery.loadGalleryAsync(stripProtocol(p)).catch(core.handleNetworkError),
-    expirationTime: p => 3600 * 1000,
-    isOffline: () => !Cloud.isOnline()
+    getAsync: p => gallery.loadGalleryAsync(stripProtocol(p)).catch((e) => {
+        return Promise.resolve(e);
+    }),
+    expirationTime: p => 3600 * 1000
 })
 
 mountVirtualApi("td-cloud", {
@@ -60,6 +61,13 @@ mountVirtualApi("gh-pkgcfg", {
         pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
+})
+
+mountVirtualApi("target-config", {
+    getAsync: query =>
+        pxt.targetConfigAsync().catch(core.handleNetworkError),
+    expirationTime: p => 60 * 1000,
+    isOffline: () => !Cloud.isOnline()
 })
 
 let cachedData: pxt.Map<CacheEntry> = {};
@@ -90,8 +98,8 @@ function expired(ce: CacheEntry) {
 }
 
 function shouldCache(ce: CacheEntry) {
-    if (!ce.data) return false
-    return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path)
+    if (!ce.data || ce.data instanceof Error) return false;
+    return /^cloud:(me\/settings|ptr-pkg-)/.test(ce.path);
 }
 
 export function clearCache() {
@@ -180,7 +188,7 @@ function getCached(component: AnyComponent, path: string) {
     let r = lookup(path)
     if (r.api.isSync)
         return r.api.getSync(r.path)
-    if (expired(r))
+    if (expired(r) || r.data instanceof Error)
         queue(r)
     return r.data
 }
@@ -287,7 +295,7 @@ export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspac
             return state;
         }),
         getTextAsync: ws.getTextAsync,
-        saveAsync: (h,t) => ws.saveAsync(h,t).then(() => {
+        saveAsync: (h, t) => ws.saveAsync(h, t).then(() => {
             invalidate("header:" + h.id);
             invalidate("text:" + h.id);
         }),

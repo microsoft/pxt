@@ -13,7 +13,7 @@ namespace ts.pxtc {
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
-        if (p.defaults) return p.defaults[0]
+        if (p.default) return p.default
         if (p.type == "number") return "0"
         if (p.type == "boolean") return "false"
         else if (p.type == "string") {
@@ -202,7 +202,7 @@ namespace ts.pxtc {
                         description: desc,
                         type: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
-                        defaults: m && m[1].trim() ? m[1].split(/,\s*/).map(e => e.trim()) : undefined,
+                        default: attributes.paramDefl[n],
                         properties: props,
                         options: options,
                         isEnum
@@ -243,10 +243,14 @@ namespace ts.pxtc {
             const ns = ts.pxtc.blocksCategory(si);
             if (ns)
                 locStrings[`{id:category}${ns}`] = ns;
+            if (si.attributes.subcategory)
+                locStrings[`{id:category}${si.attributes.subcategory}`] = si.attributes.subcategory;
             if (si.attributes.jsDoc)
                 jsdocStrings[si.qName] = si.attributes.jsDoc;
             if (si.attributes.block)
                 locStrings[`${si.qName}|block`] = si.attributes.block;
+            if (si.attributes.group)
+                locStrings[`{id:group}${si.attributes.group}`] = si.attributes.group;
             if (si.parameters)
                 si.parameters.filter(pi => !!pi.description).forEach(pi => {
                     jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
@@ -923,7 +927,7 @@ namespace ts.pxtc.service {
                     if (functionSignature) {
                         return getFunctionString(functionSignature);
                     }
-                    return `() => {}`;
+                    return `function () {}`;
             }
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
@@ -933,7 +937,7 @@ namespace ts.pxtc.service {
                     if (sigs.length) {
                         return getFunctionString(sigs[0]);
                     }
-                    return `() => {}`;
+                    return `function () {}`;
                 }
             }
             return "null";
@@ -962,7 +966,7 @@ namespace ts.pxtc.service {
             let displayPartsStr = ts.displayPartsToString(displayParts);
             functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
 
-            return `${functionArgument} => {\n    ${returnValue}\n}`
+            return `function ${functionArgument} {\n    ${returnValue}\n}`
         }
     }
 }

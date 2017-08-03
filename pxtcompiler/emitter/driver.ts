@@ -136,6 +136,13 @@ namespace ts.pxtc {
             opts.sourceFiles = Object.keys(opts.fileSystem)
 
         let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
+        // ensure that main.ts is last of TS files
+        let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
+        if (tsFiles.length > tsFilesNoMain.length) {
+            tsFiles = tsFilesNoMain
+            tsFiles.push("main.ts")
+        }
+        // TODO: ensure that main.ts is last???
         let program = createProgram(tsFiles, options, host);
 
         // First get and report any syntactic errors.
@@ -187,7 +194,7 @@ namespace ts.pxtc {
         let file = resp.ast.getSourceFile(fileName);
         const apis = getApiInfo(resp.ast);
         const blocksInfo = pxtc.getBlocksInfo(apis);
-        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false }, pxtc.decompiler.buildRenameMap(resp.ast, file))
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false, alwaysEmitOnStart: opts.alwaysDecompileOnStart }, pxtc.decompiler.buildRenameMap(resp.ast, file))
         return bresp;
     }
 

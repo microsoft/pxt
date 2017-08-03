@@ -8,6 +8,19 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
+    export function normalizeBlock(b: string): string {
+        if (!b) return b;
+        // normalize and validate common errors
+        // made while translating
+        let nb = b.replace(/%\s+/g, '%');
+        if (nb != b) {
+            pxt.log(`block has extra spaces: ${b}`);
+            return b;
+        }
+        nb = nb.replace(/\s*\|\s*/g, '|');
+        return nb;
+    }
+
     export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
         // collect blockly parameter name mapping
         const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
@@ -18,7 +31,7 @@ namespace pxt.blocks {
             fn.parameters.forEach(pr => attrNames[pr.name] = {
                 name: pr.name,
                 type: pr.type,
-                shadowValue: pr.defaults ? pr.defaults[0] : undefined
+                shadowValue: pr.default || undefined
             });
         if (fn.attributes.block) {
             Object.keys(attrNames).forEach(k => attrNames[k].name = "");
@@ -51,14 +64,7 @@ namespace pxt.blocks {
     export function parseFields(b: string): FieldDescription[] {
         // normalize and validate common errors
         // made while translating
-        let nb = b.replace(/%\s+/g, '%');
-        if (nb != b)
-            pxt.log(`block has extra spaces: ${b}`);
-        if (nb[0] == nb[0].toLocaleUpperCase() && nb[0] != nb[0].toLowerCase())
-            pxt.log(`block is capitalized: ${b}`);
-
-        nb = nb.replace(/\s*\|\s*/g, '|');
-        return nb.split('|').map((n, ni) => {
+        return b.split('|').map((n, ni) => {
             let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
             if (!m) return { n, ni };
 
@@ -144,15 +150,6 @@ namespace pxt.blocks {
                 category: 'math',
                 block: {
                     message0: Util.lf("absolute of %1")
-                }
-            },
-            'device_random': {
-                name: Util.lf("pick random number"),
-                tooltip: Util.lf("Returns a random integer between 0 and the specified bound (inclusive)."),
-                url: '/blocks/math/random',
-                category: 'math',
-                block: {
-                    message0: Util.lf("pick random 0 to %1")
                 }
             },
             'math_number': {
@@ -270,7 +267,7 @@ namespace pxt.blocks {
                 url: '/blocks/arrays/length',
                 category: 'arrays',
                 block: {
-                    LISTS_LENGTH_TITLE: Util.lf("length of %1")
+                    LISTS_LENGTH_TITLE: Util.lf("length of array %1")
                 }
             },
             'lists_index_get': {
@@ -354,7 +351,7 @@ namespace pxt.blocks {
                 url: 'types/string/length',
                 category: 'text',
                 block: {
-                    TEXT_LENGTH_TITLE: Util.lf("length of %1")
+                    TEXT_LENGTH_TITLE: Util.lf("length of text %1")
                 }
             },
             'text_join': {
@@ -364,6 +361,25 @@ namespace pxt.blocks {
                 category: 'text',
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")
+                }
+            },
+            'procedures_defnoreturn': {
+                name: Util.lf("define the function"),
+                tooltip: Util.lf("Create a function."),
+                url: 'types/function/define',
+                category: 'functions',
+                block: {
+                    PROCEDURES_DEFNORETURN_TITLE: Util.lf("function"),
+                    PROCEDURE_ALREADY_EXISTS: Util.lf("A function named '%1' already exists.")
+                }
+            },
+            'procedures_callnoreturn': {
+                name: Util.lf("call the function"),
+                tooltip: Util.lf("Call the user-defined function."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                    PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
             }
         };

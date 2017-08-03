@@ -75,6 +75,8 @@
         } else if (action == `renderblocks`) {
             msg.response = true;
             msg.ts = `control.forever(() => { })`
+        } else if (action == `toggletrace`) {
+            msg.intervalSpeed = 1000;
         }
         if (msg.response)
             pendingMsgs[msg.id] = msg;
@@ -134,6 +136,7 @@
         <button class="ui button" onclick="sendMessage('newproject')">newproject</button>
         <button class="ui button" onclick="sendMessage('importproject')">importproject</button>
         <button class="ui button" onclick="toggleFilters()">filter</button>
+        <button class="ui button" onclick="sendMessage('toggletrace')">trace</button>
         <button class="ui button" onclick="sendMessage('undo')">undo</button>
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
         <button class="ui button" onclick="sendMessage('renderblocks')">renderblocks</button>

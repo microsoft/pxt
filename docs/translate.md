@@ -24,7 +24,7 @@ Looking to help translate **microbit.org**? Try http://translate.microbit.org/ t
 
 To test your changes "live", use **beta** build and the ``?livelang=CODE`` query argument where ``CODE`` is your language ISO code. For example, to see the french translations:
 
-* micro:bit: https://pxt.microbit.org/beta?livelang=fr
+* micro:bit: https://makecode.microbit.org/beta?livelang=fr
 * Minecraft: https://minecraft.makecode.com/beta?livelang=fr
 
 Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.

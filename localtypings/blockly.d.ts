@@ -343,6 +343,7 @@ declare namespace Blockly {
     let ALIGN_RIGHT: number;
 
     let VARIABLE_CATEGORY_NAME: string;
+    let PROCEDURE_CATEGORY_NAME: string;
 
     namespace utils {
         function wrap(tip: string, limit: number): string;
@@ -363,6 +364,12 @@ declare namespace Blockly {
         getVars?: () => any[];
         renameVar?: (oldName: string, newName: string) => void;
         customContextMenu?: any;
+        getProcedureCall?: () => string;
+        renameProcedure?: (oldName: string, newName: string) => void;
+        defType_?: string;
+        onchange?: (event: any) => void;
+        mutationToDom?: () => Element;
+        domToMutation?: (xmlElement: Element) => void;
     }
 
     const Blocks: {
@@ -393,9 +400,14 @@ declare namespace Blockly {
         setValue(newValue: string): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
+        setSourceBlock(block: Block): void;
     }
 
     class FieldVariable extends Field {
+        constructor(d: any);
+    }
+
+    class FieldProcedure extends Field {
         constructor(d: any);
     }
 
@@ -414,7 +426,7 @@ declare namespace Blockly {
     }
 
     class FieldDropdown extends Field {
-        constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]));
+        constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]), opt_validator?: Function);
 
         static CHECKMARK_OVERHANG: number;
         protected value_: any;
@@ -460,6 +472,7 @@ declare namespace Blockly {
         type: string;
         id: string;
         isShadow_: boolean;
+        isInFlyout: boolean;
         rendered: boolean;
         nextConnection: Connection;
         outputConnection: Connection;
@@ -532,6 +545,8 @@ declare namespace Blockly {
 
         render(): void;
         bumpNeighbours_(): void;
+        select(): void;
+        getRelativeToSurfaceXY(): goog.math.Coordinate;
     }
 
     class Comment extends Icon {
@@ -653,6 +668,8 @@ declare namespace Blockly {
         redoStack_: Blockly.Events.Abstract[];
 
         newBlock(prototypeName: string, opt_id?: string): Block;
+        addTopBlock(block: Block): void;
+        getAllBlocks(): Block[];
         render(): void;
         clear(): void;
         dispose(): void;
@@ -684,13 +701,18 @@ declare namespace Blockly {
             viewTop: number;
             viewWidth: number;
         }
-        variableIndexOf(name: string): number;
-        playAudio(name: string): void;
+        getVariable(name: string): number;
+        getVariablesOfType(type: string): VariableModel[];
+        getAudioManager(): WorkspaceAudio;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
         registerToolboxCategoryCallback(a: string, b: Function): void;
 
         resizeContents(): void;
+    }
+
+    class WorkspaceAudio {
+        play(audio: string): void;
     }
 
     class WorkspaceSvg {
@@ -701,7 +723,7 @@ declare namespace Blockly {
     namespace Xml {
         function domToText(dom: Element): string;
         function domToPrettyText(dom: Element): string;
-        function domToWorkspace(dom: Element, workspace: Workspace): void;
+        function domToWorkspace(dom: Element, workspace: Workspace): string[];
         function textToDom(text: string): Element;
         function workspaceToDom(workspace: Workspace): Element;
     }
@@ -730,6 +752,7 @@ declare namespace Blockly {
             maxScale?: number;
             minScale?: number;
             scaleSpeed?: number;
+            startScale?: number;
         };
         enableRealTime?: boolean;
         rtl?: boolean;
@@ -757,9 +780,26 @@ declare namespace Blockly {
     }
 
     namespace Variables {
+        function generateVariableFieldXml_(variableModel: VariableModel): void;
         function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+    }
+
+    class VariableModel {
+        name: string;
+        type: string;
+        static compareByName: any;
+        constructor(wp: Workspace, name: string, type?: string, id?: string);
+        getId(): string;
+    }
+
+    namespace Procedures {
+        function allProcedures(wp: Workspace): [any, any][];
+        function getDefinition(name: string, wp: Workspace): Block;
+        let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        function isLegalName_(name: string, workspace: Workspace, opt_exclude?: Blockly.Block): boolean;
     }
 
     namespace ContextMenu {
@@ -824,6 +864,7 @@ declare namespace Blockly {
             setExpanded(expanded: boolean): void;
             toggle(): void;
             updateRow(): void;
+            onKeyDown(e: any): void;
         }
 
         class TreeControl {

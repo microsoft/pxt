@@ -13,6 +13,7 @@ namespace pxsim {
         code: string;
         mute?: boolean;
         highContrast?: boolean;
+        cdnUrl?: string;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {
@@ -70,11 +71,16 @@ namespace pxsim {
         linkButtonLabel?: string;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorMessage {
+        type: "radiopacket";
         rssi: number;
         serial: number;
         time: number;
 
         payload: SimulatorRadioPacketPayload;
+    }
+    export interface SimulatorInfraredPacketMessage extends SimulatorMessage {
+        type: "irpacket";
+        packet: Uint8Array; // base64 encoded
     }
 
     export interface SimulatorRadioPacketPayload {

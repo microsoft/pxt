@@ -55,7 +55,7 @@ The **blocks** language renders a JavaScript snippet into blocks and provide a s
     basic.showNumber(5)
     ```
 
-See [forever docs](https://pxt.microbit.org/reference/basic/show-string) 
+See [forever docs](https://makecode.microbit.org/reference/basic/show-string) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference/basic/forever.md).
 
 ### project
@@ -103,7 +103,7 @@ The **namespaces** language display a code card for the first symbol of each nam
     input.onButtonPressed(() => {});
     ```
 
-See [basic namespace docs](https://pxt.microbit.org/reference) 
+See [basic namespace docs](https://makecode.microbit.org/reference) 
 and the [markdown source](https://github.com/Microsoft/pxt-microbit/blob/master/docs/reference.md).
 
 ### block

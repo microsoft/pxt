@@ -15,6 +15,7 @@ declare namespace pxt {
         bannedOrgs?: string[];
         bannedRepos?: string[];
         allowUnapproved?: boolean;
+        preferredRepos?: string[]; // list of company/project(#tag) of packages to show by default in search
     }
 
     interface AppTarget {
@@ -56,13 +57,14 @@ declare namespace pxt {
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
+        functionBlocks?: boolean;
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
-        extraBlocks?: BlockToolboxDefinition[];
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        extraBlocks?: BlockToolboxDefinition[];  // deprecated
     }
 
     interface AppAnalytics {
@@ -72,7 +74,8 @@ declare namespace pxt {
 
     interface AppSerial {
         useHF2?: boolean;
-        manufacturerFilter?: string; // used by node-serial
+        vendorId?: string; // used by node-serial
+        productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
         log?: boolean;
     }
@@ -84,7 +87,6 @@ declare namespace pxt {
         sharing?: boolean; // uses cloud-based anonymous sharing
         importing?: boolean; // import url dialog
         embedding?: boolean;
-        preferredPackages?: string[]; // list of company/project(#tag) of packages
         githubPackages?: boolean; // allow searching github for packages
     }
 
@@ -163,6 +165,8 @@ declare namespace pxt {
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         disableBlockIcons?: boolean; // Disable icons in blocks
+        hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
+        monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         hideBlocklyJavascriptHint?: boolean; // hide javascript preview in blockly hint menu
         simAnimationEnter?: string; // Simulator enter animation
         simAnimationExit?: string; // Simulator exit animation
@@ -194,6 +198,15 @@ declare namespace pxt {
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
+        socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
+        useStartPage?: boolean;
+    }
+
+    interface SocialOptions {
+        twitterHandle?: string;
+        orgTwitterHandle?: string;
+        hashtags?: string;
+        related?: string;
     }
 
     interface DocMenuEntry {
@@ -214,12 +227,14 @@ declare namespace pxt {
 
         nextName?: string;
         nextPath?: string;
+
+        markdown?: string;
     }
 
     interface TargetBundle extends AppTarget {
-        bundledpkgs: Map<Map<string>>;
+        bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
-        versions: TargetVersions;
+        versions: TargetVersions;        // @derived
     }
 }
 
@@ -244,6 +259,8 @@ declare namespace ts.pxtc {
         openocdScript?: string;
         flashChecksumAddr?: number;
         onStartText?: boolean;
+        hidSelectors?: HidSelector[];
+        emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
     }
 
     interface CompileOptions {
@@ -260,6 +277,8 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+
+        alwaysDecompileOnStart?: boolean; // decompiler only
 
         embedMeta?: string;
         embedBlob?: string; // base64
@@ -291,5 +310,13 @@ declare namespace ts.pxtc {
 
     interface HexInfo {
         hex: string[];
+    }
+
+    // HEX values as strings, e.g. "0xFF97"
+    interface HidSelector {
+        vid: string;
+        pid: string;
+        usagePage: string;
+        usageId: string;
     }
 }

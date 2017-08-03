@@ -1,0 +1,87 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block id="#^v4=!XFM|kC?0];/]8N" type="pxt-on-start" x="-350" y="350">
+    <statement name="HANDLER">
+      <block id="s^UwO%u]hUv]]*=l6[5y" type="variables_set">
+        <field name="VAR">item</field>
+        <value name="VALUE">
+          <shadow id="6]9nylybhPGdNk?Ge|0s" type="math_number">
+            <field name="NUM">0</field>
+          </shadow>
+          <block id="o=c@tAUuL,sUvWO{:71b" type="math_arithmetic">
+            <field name="OP">ADD</field>
+            <value name="A">
+              <shadow id="gxY$BLK[D[6kjf5;iOl^" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+            <value name="B">
+              <shadow id="8u1R3V2*f~$+Bd,bL_)d" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+          </block>
+        </value>
+        <next>
+          <block id="bOC.fZJvi=s~X(AB}ET/" type="variables_set">
+            <field name="VAR">item</field>
+            <value name="VALUE">
+              <shadow id="6]9nylybhPGdNk?Ge|0s" type="math_number">
+                <field name="NUM">0</field>
+              </shadow>
+              <block id="s|RQzj:upF@$|W}@c)|E" type="math_op3">
+                <value name="x">
+                  <shadow id="$T2;bq)%~QuR@SadL;BL" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block id="i6gE8I?15(dCyxD@)/}:" type="math_op2">
+                    <field name="op">min</field>
+                    <value name="x">
+                      <shadow id="$tJRnBcv^[G/)V-@NWfS" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                      <block id="/Ke=a{;x1gFIJwM=aH|^" type="math_op2">
+                        <field name="op">max</field>
+                        <value name="x">
+                          <shadow id="%lx)tc`OXw/`w@9pc11H" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                        <value name="y">
+                          <shadow id="K;MbW~@}EFWcJ#B;a6C(" type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="y">
+                      <shadow id="2/:ev;Ww~PR@58$4^8$r" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <next>
+              <block id="GVgYQ^SDv46;T|UOR4D@" type="variables_set">
+                <field name="VAR">item2</field>
+                <value name="VALUE">
+                  <shadow id="6]9nylybhPGdNk?Ge|0s" type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block id="f@xOM/t_,[-6HEGc/O,H" type="stringFromCharCode">
+                    <value name="code">
+                      <shadow id="f:~(w`-^RI1+VB[C!Fs^" type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

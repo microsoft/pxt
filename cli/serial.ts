@@ -16,6 +16,8 @@ export interface SerialPortInfo {
     comName: string;
     pnpId: string;
     manufacturer: string;
+    vendorId: string;
+    productId: string;
 
     opened?: boolean;
     port?: any;
@@ -63,11 +65,16 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
         });
     }
 
-    const manufacturerRx = pxt.appTarget.serial.manufacturerFilter
-        ? new RegExp(pxt.appTarget.serial.manufacturerFilter, "i")
-        : undefined;
+    const vendorFilter = pxt.appTarget.serial.vendorId ? parseInt(pxt.appTarget.serial.vendorId, 16) : undefined;
+    const productFilter = pxt.appTarget.serial.productId ? parseInt(pxt.appTarget.serial.productId, 16) : undefined;
+
     function filterPort(info: SerialPortInfo): boolean {
-        return manufacturerRx ? manufacturerRx.test(info.manufacturer) : true;
+        let retVal = true;
+        if (vendorFilter)
+            retVal && (vendorFilter == parseInt(info.vendorId, 16));
+        if (productFilter)
+            retVal && (productFilter == parseInt(info.productId, 16));
+        return retVal;
     }
 
     setInterval(() => {

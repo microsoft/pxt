@@ -82,12 +82,6 @@ namespace pxt.docs {
         return require("marked");
     }
 
-    export var requireHighlightJs = () => {
-        if (typeof hljs !== "undefined") return hljs;
-        if (typeof require === "undefined") return undefined;
-        return require("highlight.js");
-    }
-
     export interface RenderData {
         html: string;
         theme: AppTheme;
@@ -215,7 +209,8 @@ namespace pxt.docs {
             }
             if (m.subitems && m.subitems.length > 0) {
                 if (lev == 0) templ = toc["top-dropdown"]
-                else templ = toc["inner-dropdown"]
+                else if (lev == 1) templ = toc["inner-dropdown"]
+                else templ = toc["nested-dropdown"]
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -236,7 +231,7 @@ namespace pxt.docs {
             breadcrumbHtml = `
             <div class="ui breadcrumb">
                 ${breadcrumb.map((b, i) =>
-                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section" 
+                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
                         href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
                     .join('<i class="right chevron icon divider"></i>')}
             </div>`;
@@ -412,17 +407,7 @@ namespace pxt.docs {
                 pedantic: false,
                 sanitize: true,
                 smartLists: true,
-                smartypants: true,
-                highlight: function (code, lang) {
-                    try {
-                        let hljs = requireHighlightJs();
-                        if (!hljs) return code;
-                        return hljs.highlightAuto(code, [lang.replace('-ignore', '')]).value;
-                    }
-                    catch (e) {
-                        return code;
-                    }
-                }
+                smartypants: true
             })
         };
 
@@ -803,6 +788,13 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         return TOC
     }
 
+    export function visitTOC(toc: TOCMenuEntry[], fn: (e: TOCMenuEntry) => void) {
+        function visitEntry(entry: TOCMenuEntry) {
+            fn(entry);
+            if (entry.subitems) entry.subitems.forEach(fn);
+        }
+        toc.forEach(visitEntry);
+    }
 
     let testedAugment = false
     export function augmentDocs(baseMd: string, childMd: string) {

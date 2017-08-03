@@ -1492,7 +1492,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                     let v = getName(comp.target)
                     defvar(v, { isParam: true }) // TODO this leaks the scope...
                     return B.mkInfix(expr(comp.iter), ".", B.H.mkCall("map", [
-                        B.mkGroup([ quote(v), B.mkText(" => "), expr(n.elt) ])
+                        B.mkGroup([quote(v), B.mkText(" => "), expr(n.elt)])
                     ]))
                 })
             }
@@ -1895,7 +1895,14 @@ function iterPy(e: py.AST, f: (v: py.AST) => void) {
 }
 
 export function convertAsync(fns: string[]) {
-    let primFiles = U.toDictionary(nodeutil.allFiles(fns[0]), s => s.replace(/\\/g, "/"))
+    let mainFiles: string[] = []
+    while (/\.py$/.test(fns[0])) {
+        mainFiles.push(fns.shift().replace(/\\/g, "/"))
+    }
+
+    let primFiles =
+        U.toDictionary(mainFiles.length ? mainFiles : nodeutil.allFiles(fns[0]),
+            s => s.replace(/\\/g, "/"))
     let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
     let dirs: Map<number> = {}
     for (let f of files) {
@@ -1912,13 +1919,18 @@ export function convertAsync(fns: string[]) {
             while (par) {
                 if (dirs[par]) {
                     let modName = f.slice(par.length + 1).replace(/\.py$/, "").replace(/\//g, ".")
-                    if (!U.startsWith(modName, "examples."))
+                    if (!U.startsWith(modName, "examples.")) {
                         pkgFiles[f] = modName
+                    }
                     break
                 }
                 par = par.replace(/\/?[^\/]*$/, "")
             }
         }
+    }
+
+    for (let m of mainFiles) {
+        pkgFiles[m] = m.replace(/.*\//, "").replace(/\.py$/, "")
     }
 
     const pkgFilesKeys = Object.keys(pkgFiles);

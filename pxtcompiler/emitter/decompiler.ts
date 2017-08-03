@@ -7,11 +7,19 @@ namespace ts.pxtc.decompiler {
 
     const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
 
-    enum ShadowType {
-        Boolean,
-        Number,
-        String
+    interface ParameterInfo {
+        name: string;
+        type?: string;
+        decompileLiterals?: boolean;
+        paramShadowOptions?: pxt.Map<string>;
+        paramFieldEditorOptions?: pxt.Map<string>;
+        paramFieldEditor?: string;
+        fieldName?: string;
     }
+
+    const numberType = "math_number";
+    const stringType = "text";
+    const booleanType = "logic_boolean";
 
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
@@ -54,7 +62,6 @@ namespace ts.pxtc.decompiler {
     const multiLineCommentRegex = /^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*(.*?)(?:\*?\*\/)?$/
 
     const builtinBlocks: pxt.Map<{ block: string; blockId: string; }> = {
-        "Math.random": { blockId: "device_random", block: "pick random 0 to %limit" },
         "Math.abs": { blockId: "math_op3", block: "absolute of %x" },
         "Math.min": { blockId: "math_op2", block: "of %x|and %y" },
         "Math.max": { blockId: "math_op2", block: "of %x|and %y" }
@@ -79,7 +86,7 @@ namespace ts.pxtc.decompiler {
         kind: "value";
         name: string;
         value: OutputNode;
-        shadowType?: ShadowType;
+        shadowType?: string;
     }
 
     interface BlockNode extends BlocklyNode {
@@ -270,6 +277,7 @@ namespace ts.pxtc.decompiler {
 
     export interface DecompileBlocksOptions {
         snippetMode?: boolean; // do not emit "on start"
+        alwaysEmitOnStart?: boolean; // emit "on start" even if empty
     }
 
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
@@ -283,6 +291,13 @@ namespace ts.pxtc.decompiler {
 
         const varUsages: pxt.Map<boolean> = {};
         const autoDeclarations: [string, ts.Node][] = [];
+        const declaredFunctions: pxt.Map<boolean> = {};
+
+        ts.forEachChild(file, topLevelNode => {
+            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, blocksInfo, false, true)) {
+                declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
+            }
+        })
 
         const n = codeBlock(stmts, undefined, true);
         emitStatementNode(n);
@@ -406,13 +421,15 @@ ${output}</xml>`;
 
             if (n.value.kind === "expr") {
                 const value = n.value as ExpressionNode;
-                switch (value.type) {
-                    case "math_number":
-                    case "logic_boolean":
-                    case "text":
-                        emitShadowOnly = true;
-                        break
-                    default:
+                emitShadowOnly = value.type === n.shadowType;
+                if (!emitShadowOnly) {
+                    switch (value.type) {
+                        case "math_number":
+                        case "logic_boolean":
+                        case "text":
+                            emitShadowOnly = !n.shadowType;
+                            break
+                    }
                 }
             }
 
@@ -423,16 +440,17 @@ ${output}</xml>`;
                 // Emit a shadow block to appear if the given input is removed
                 if (n.shadowType !== undefined) {
                     switch (n.shadowType) {
-                        case ShadowType.Number:
+                        case numberType:
                             write(`<shadow type="math_number"><field name="NUM">0</field></shadow>`)
                             break;
-                        case ShadowType.Boolean:
+                        case booleanType:
                             write(`<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>`)
                             break;
-                        case ShadowType.String:
+                        case stringType:
                             write(`<shadow type="text"><field name="TEXT"></field></shadow>`)
                             break;
                         default:
+                            write(`<shadow type="${n.shadowType}"/>`)
                     }
                 }
                 emitOutputNode(n.value);
@@ -561,7 +579,7 @@ ${output}</xml>`;
                 };
 
                 for (let i = 0; i < args.length; i++) {
-                    result.inputs.push(getValue("ADD" + i, args[i], ShadowType.String));
+                    result.inputs.push(getValue("ADD" + i, args[i], stringType));
                 }
 
                 return result;
@@ -578,7 +596,7 @@ ${output}</xml>`;
                 result.fields.push(getField("OP", npp.op))
             }
 
-            const shadowType = (op === "&&" || op === "||") ? ShadowType.Boolean : ShadowType.Number;
+            const shadowType = (op === "&&" || op === "||") ? booleanType : numberType;
 
             result.inputs.push(getValue(npp.leftName || "A", n.left, shadowType));
             result.inputs.push(getValue(npp.rightName || "B", n.right, shadowType));
@@ -608,7 +626,7 @@ ${output}</xml>`;
             }
         }
 
-        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: ShadowType): ValueNode {
+        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string): ValueNode {
             let value: OutputNode;
 
             if (typeof contents === "number") {
@@ -669,8 +687,8 @@ ${output}</xml>`;
                 kind: "expr",
                 type: "math_arithmetic",
                 inputs: [
-                    getValue("A", 0),
-                    getValue("B", node, ShadowType.Number)
+                    getValue("A", 0, numberType),
+                    getValue("B", node, numberType)
                 ],
                 fields: [
                     getField("OP", "MINUS")
@@ -682,7 +700,7 @@ ${output}</xml>`;
             switch (node.operator) {
                 case SK.ExclamationToken:
                     const r: ExpressionNode = { kind: "expr", type: "logic_negate" };
-                    r.inputs = [getValue("BOOL", node.operand, ShadowType.Boolean)]
+                    r.inputs = [getValue("BOOL", node.operand, booleanType)]
                     return r;
                 case SK.PlusToken:
                     return getOutputBlock(node.operand);
@@ -759,15 +777,15 @@ ${output}</xml>`;
             return {
                 kind: "expr",
                 type: "lists_index_get",
-                inputs: [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression)]
+                inputs: [getValue("LIST", n.expression), getValue("INDEX", n.argumentExpression, numberType)]
             };
         }
 
-        function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false): StatementNode {
+        function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false, topLevel = false): StatementNode {
             const node = n as ts.Node;
             let stmt: StatementNode;
 
-            if (checkStatement(node, blocksInfo, asExpression)) {
+            if (checkStatement(node, blocksInfo, asExpression, topLevel)) {
                 stmt = getTypeScriptStatementBlock(node);
             }
             else {
@@ -775,9 +793,10 @@ ${output}</xml>`;
                     case SK.Block:
                         return codeBlock((node as ts.Block).statements, next);
                     case SK.ExpressionStatement:
-                        return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression);
+                        return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression, topLevel);
                     case SK.VariableStatement:
                         return codeBlock((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
+                    case SK.FunctionExpression:
                     case SK.ArrowFunction:
                         return getArrowFunctionStatement(node as ts.ArrowFunction, next);
                     case SK.BinaryExpression:
@@ -811,8 +830,11 @@ ${output}</xml>`;
                     case SK.ForOfStatement:
                         stmt = getForOfStatement(node as ts.ForOfStatement);
                         break;
+                    case SK.FunctionDeclaration:
+                        stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
+                        break;
                     case SK.CallExpression:
-                        stmt = getCallStatement(node as ts.CallExpression);
+                        stmt = getCallStatement(node as ts.CallExpression, asExpression);
                         break;
                     default:
                         if (next) {
@@ -848,7 +870,7 @@ ${output}</xml>`;
 
             function getNext() {
                 if (next && next.length) {
-                    return getStatementBlock(next.shift(), next);
+                    return getStatementBlock(next.shift(), next, undefined, false, topLevel);
                 }
                 return undefined;
             }
@@ -937,7 +959,7 @@ ${output}</xml>`;
                             kind: "value",
                             name: "VALUE",
                             value: negateNumericNode(n.right),
-                            shadowType: ShadowType.Number
+                            shadowType: numberType
                         }],
                         fields: [getField("VAR", getVariableName(n.left as ts.Identifier))]
                     };
@@ -951,7 +973,7 @@ ${output}</xml>`;
             return {
                 kind: "statement",
                 type: "device_while",
-                inputs: [getValue("COND", n.expression, ShadowType.Boolean)],
+                inputs: [getValue("COND", n.expression, booleanType)],
                 handlers: [{ name: "DO", statement: getStatementBlock(n.statement) }]
             };
         }
@@ -971,7 +993,7 @@ ${output}</xml>`;
             };
 
             flatif.ifStatements.forEach((stmt, i) => {
-                r.inputs.push(getValue("IF" + i, stmt.expression, ShadowType.Boolean));
+                r.inputs.push(getValue("IF" + i, stmt.expression, booleanType));
                 r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
             });
 
@@ -996,7 +1018,7 @@ ${output}</xml>`;
                     kind: "statement",
                     type: "controls_repeat_ext",
                     fields: [],
-                    inputs: [getValue("TIMES", condition.right, ShadowType.Number)],
+                    inputs: [getValue("TIMES", condition.right, numberType)],
                     handlers: []
                 };
             }
@@ -1013,20 +1035,20 @@ ${output}</xml>`;
                     r.inputs.push({
                         kind: "value",
                         name: "TO",
-                        shadowType: ShadowType.Number,
+                        shadowType: numberType,
                         value: {
                             kind: "expr",
                             type: "math_arithmetic",
                             fields: [getField("OP", "MINUS")],
                                 inputs: [
-                                    getValue("A", condition.right, ShadowType.Number),
-                                    getValue("B", 1)
+                                    getValue("A", condition.right, numberType),
+                                    getValue("B", 1, numberType)
                                 ]
                         }
                     });
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
-                    r.inputs.push(getValue("TO", condition.right, ShadowType.Number));
+                    r.inputs.push(getValue("TO", condition.right, numberType));
                 }
             }
 
@@ -1063,7 +1085,7 @@ ${output}</xml>`;
             return {
                 kind: "statement",
                 type: changed ? "variables_change" : "variables_set",
-                inputs: [getValue("VALUE", value, ShadowType.Number)],
+                inputs: [getValue("VALUE", value, numberType)],
                 fields: [getField("VAR", renamed)]
             };
         }
@@ -1074,7 +1096,7 @@ ${output}</xml>`;
                 type: "lists_index_set",
                 inputs: [
                     getValue("LIST", left.expression),
-                    getValue("INDEX", left.argumentExpression, ShadowType.Number),
+                    getValue("INDEX", left.argumentExpression, numberType),
                     getValue("VALUE", right)
                 ]
             };
@@ -1098,18 +1120,34 @@ ${output}</xml>`;
             return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
         }
 
-        function getCallStatement(node: ts.CallExpression) {
+        function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
+            const name = getVariableName(n.name);
+            const statements = getStatementBlock(n.body);
+            return {
+                kind: "statement",
+                type: "procedures_defnoreturn",
+                fields: [getField("NAME", name)],
+                handlers: [{ name: "STACK", statement: statements }]
+            };
+        }
+
+        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode {
             const info: pxtc.CallInfo = (node as any).callInfo
-            if (!info) {
-                error(node);
-                return;
-            }
 
             if (!info.attrs.blockId || !info.attrs.block) {
                 const builtin = builtinBlocks[info.qName];
                 if (!builtin) {
-                    error(node)
-                    return;
+                    const name = getVariableName(node.expression as ts.Identifier);
+                    if (declaredFunctions[name]) {
+                        return {
+                            kind: "statement",
+                            type: "procedures_callnoreturn",
+                            mutation: {"name": name}
+                        };
+                    }
+                    else {
+                        return getTypeScriptStatementBlock(node);
+                    }
                 }
                 info.attrs.block = builtin.block;
                 info.attrs.blockId = builtin.blockId;
@@ -1127,20 +1165,12 @@ ${output}</xml>`;
                 // }
             }
 
-            const argNames: [string, string][] = []
-            info.attrs.block.replace(/%(\w+)(?:=(\w+))?/g, (f, n, v) => {
-                argNames.push([n, v])
-                return ""
-            });
+            const paramInfo = getParameterInfo(info, blocksInfo);
 
-            if (info.attrs.defaultInstance) {
-                argNames.unshift(["__instance__", undefined]);
-            }
-
-            const r: StatementNode = {
-                kind: "statement",
+            const r = {
+                kind: asExpression ? "expr" : "statement",
                 type: info.attrs.blockId
-            }
+            } as StatementNode;
 
             if (info.qName == "Math.max") {
                 (r.fields || (r.fields = [])).push({
@@ -1168,6 +1198,7 @@ ${output}</xml>`;
                 }
 
                 switch (e.kind) {
+                    case SK.FunctionExpression:
                     case SK.ArrowFunction:
                         const m = getDestructuringMutation(e as ArrowFunction);
                         if (m) {
@@ -1178,10 +1209,10 @@ ${output}</xml>`;
                     case SK.PropertyAccessExpression:
                         const callInfo = (e as any).callInfo as pxtc.CallInfo;
                         const shadow = callInfo && !!callInfo.attrs.blockIdentity
-                        const aName = U.htmlEscape(argNames[i][0]);
+                        const aName = U.htmlEscape(paramInfo[i].name);
 
                         if (shadow && callInfo.attrs.blockIdentity !== info.qName) {
-                            (r.inputs || (r.inputs = [])).push(getValue(aName, e));
+                            (r.inputs || (r.inputs = [])).push(getValue(aName, e, paramInfo[i].type));
                         }
                         else {
                             const expr = getOutputBlock(e);
@@ -1192,63 +1223,49 @@ ${output}</xml>`;
                                 (r.inputs || (r.inputs = [])).push({
                                     kind: "value",
                                     name: aName,
-                                    value: expr
+                                    value: expr,
+                                    shadowType: paramInfo[i].type
                                 });
                             }
                         }
                         break;
                     default:
                         let v: ValueNode;
-                        const vName = U.htmlEscape(argNames[i][0]);
+                        const vName = U.htmlEscape(paramInfo[i].name);
                         let defaultV = true;
 
                         if (info.qName == "Math.random") {
                             v = {
                                 kind: "value",
                                 name: vName,
-                                value: getMathRandomArgumentExpresion(e)
+                                value: getMathRandomArgumentExpresion(e),
+                                shadowType: numberType
                             };
                             defaultV = false;
-                        } else if (((e.kind == SK.TrueKeyword || e.kind == SK.FalseKeyword)
-                            || (e.kind == SK.StringLiteral || e.kind == SK.FirstTemplateToken || e.kind == SK.NoSubstitutionTemplateLiteral)
-                            || e.kind == SK.NumericLiteral
-                            || (e.kind == SK.PrefixUnaryExpression
-                                && ((e as PrefixUnaryExpression).operator == SK.PlusToken
-                                    || (e as PrefixUnaryExpression).operator == SK.MinusToken)
-                                && ((e as PrefixUnaryExpression).operand.kind == SK.NumericLiteral)))) {
-                            // Literal
-                            const shadowName = argNames[i][0];
-                            const shadowType = argNames[i][1];
-                            if (shadowName && shadowType) {
-                                const shadowBlock = blocksInfo.blocksById[shadowType];
-                                if (shadowBlock) {
-                                    let fieldName = '';
-                                    blocksInfo.blocksById[shadowType].attributes.block.replace(/%(\w+)/g, (f, n) => {
-                                        fieldName = n;
-                                        return "";
-                                    });
-                                    if (shadowBlock.attributes && shadowBlock.attributes.paramFieldEditor && shadowBlock.attributes.paramFieldEditor[fieldName]) {
-                                        let fieldBlock = getFieldBlock(shadowType, fieldName, e.getText(), true);
-                                        if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[shadowName]) {
-                                            fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(info.attrs.paramShadowOptions[shadowName]))}
-                                        }
-                                        v = {
-                                            kind: "value",
-                                            name: vName,
-                                            value: fieldBlock
-                                        };
-                                        defaultV = false;
-                                    }
+                        } else if (isLiteralNode(e)) {
+                            const param = paramInfo[i];
+
+                            if (param.decompileLiterals) {
+                                let fieldBlock = getFieldBlock(param.type, param.fieldName, e.getText(), true);
+                                if (param.paramShadowOptions) {
+                                    fieldBlock.mutation = {"customfield": Util.htmlEscape(JSON.stringify(param.paramShadowOptions))};
                                 }
-                            } else if (info.attrs && info.attrs.paramFieldEditor && info.attrs.paramFieldEditorOptions) {
-                                if (info.attrs.paramFieldEditorOptions[vName] && info.attrs.paramFieldEditorOptions[vName]['onParentBlock']) {
-                                    (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
-                                    return;
-                                }
+
+                                v = {
+                                    kind: "value",
+                                    name: vName,
+                                    value: fieldBlock,
+                                    shadowType: param.type
+                                };
+                                defaultV = false;
+                            }
+                            else if (param.paramFieldEditorOptions && param.paramFieldEditorOptions['onParentBlock']) {
+                                (r.fields || (r.fields = [])).push(getField(vName, e.getText()));
+                                return;
                             }
                         }
                         if (defaultV) {
-                            v = getValue(vName, e);
+                            v = getValue(vName, e, paramInfo[i].type);
                         }
 
                         (r.inputs || (r.inputs = [])).push(v);
@@ -1263,7 +1280,7 @@ ${output}</xml>`;
         //     openBlockTag(info.attrs.blockId);
         //     write(`<mutation count="${info.args.length}" />`)
         //     info.args.forEach((expression, index) => {
-        //         emitValue("value_input_" + index, expression, ShadowType.Number);
+        //         emitValue("value_input_" + index, expression, numberType);
         //     });
         // }
 
@@ -1332,7 +1349,9 @@ ${output}</xml>`;
 
             // Go over the statements in reverse so that we can insert the nodes into the existing list if there is one
             statements.reverse().forEach(statement => {
-                if (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement) && !checkStatement(statement, blocksInfo)) {
+                if ((statement.kind === SK.FunctionDeclaration ||
+                    (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement))) &&
+                    !checkStatement(statement, blocksInfo, false, topLevel)) {
                     eventStatements.unshift(statement)
                 }
                 else {
@@ -1340,12 +1359,12 @@ ${output}</xml>`;
                 }
             });
 
-            eventStatements.map(n => getStatementBlock(n)).forEach(emitStatementNode);
+            eventStatements.map(n => getStatementBlock(n, undefined, undefined, false, topLevel)).forEach(emitStatementNode);
 
+            const emitOnStart = topLevel && !options.snippetMode;
             if (blockStatements.length) {
                 // wrap statement in "on start" if top level
-                const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent);
-                const emitOnStart = topLevel && !options.snippetMode;
+                const stmt = getStatementBlock(blockStatements.shift(), blockStatements, parent, false, topLevel);
                 if (emitOnStart) {
                     // Preserve any variable edeclarations that were never used
                     let current = stmt;
@@ -1368,31 +1387,22 @@ ${output}</xml>`;
                             }]
                         } as StatementNode;
                     }
+                    else {
+                        maybeEmitEmptyOnStart();
+                    }
                 }
                 return stmt;
+            }
+            else if (emitOnStart) {
+                maybeEmitEmptyOnStart();
             }
 
             return undefined;
         }
 
-        function isLiteralNode(node: ts.Node): boolean {
-            if (!node) {
-                return false
-            }
-            switch (node.kind) {
-                case SK.ParenthesizedExpression:
-                    return isLiteralNode((node as ts.ParenthesizedExpression).expression)
-                case SK.NumericLiteral:
-                case SK.StringLiteral:
-                case SK.NoSubstitutionTemplateLiteral:
-                case SK.TrueKeyword:
-                case SK.FalseKeyword:
-                    return true
-                case SK.PrefixUnaryExpression:
-                    const expression = (node as ts.PrefixUnaryExpression)
-                    return (expression.operator === SK.PlusToken || expression.operator === SK.MinusToken) && isLiteralNode(expression.operand)
-                default:
-                    return false;
+        function maybeEmitEmptyOnStart() {
+            if (options.alwaysEmitOnStart) {
+                write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
             }
         }
 
@@ -1429,7 +1439,7 @@ ${output}</xml>`;
                 if (match) {
                     const matched = match[1].trim()
 
-                    if (matched === ON_START_COMMENT) {
+                    if (matched === ON_START_COMMENT || matched === HANDLER_COMMENT) {
                         return;
                     }
 
@@ -1470,23 +1480,24 @@ ${output}</xml>`;
         }
     }
 
-    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo, asExpression = false): string {
+    function checkStatement(node: ts.Node, blocksInfo: BlocksInfo, asExpression = false, topLevel = false): string {
         switch (node.kind) {
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
                 return undefined;
             case SK.ExpressionStatement:
-                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo, asExpression);
+                return checkStatement((node as ts.ExpressionStatement).expression, blocksInfo, asExpression, topLevel);
             case SK.VariableStatement:
                 return checkVariableStatement(node as ts.VariableStatement, blocksInfo);
             case SK.CallExpression:
-                return checkCall(node as ts.CallExpression, blocksInfo, asExpression);
+                return checkCall(node as ts.CallExpression, blocksInfo, asExpression, topLevel);
             case SK.VariableDeclaration:
                 return checkVariableDeclaration(node as ts.VariableDeclaration, blocksInfo);
             case SK.PostfixUnaryExpression:
             case SK.PrefixUnaryExpression:
                 return checkIncrementorExpression(node as (ts.PrefixUnaryExpression | ts.PostfixUnaryExpression));
+            case SK.FunctionExpression:
             case SK.ArrowFunction:
                 return checkArrowFunction(node as ts.ArrowFunction);
             case SK.BinaryExpression:
@@ -1495,6 +1506,8 @@ ${output}</xml>`;
                 return checkForStatement(node as ts.ForStatement);
             case SK.ForOfStatement:
                 return checkForOfStatement(node as ts.ForOfStatement);
+            case SK.FunctionDeclaration:
+                return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
         }
 
         return Util.lf("Unsupported statement in block: {0}", SK[node.kind]);
@@ -1631,7 +1644,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo, asExpression = false) {
+        function checkCall(n: ts.CallExpression, blocksInfo: BlocksInfo, asExpression = false, topLevel = false) {
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
@@ -1641,23 +1654,28 @@ ${output}</xml>`;
                 return Util.lf("No output expressions as statements");
             }
 
+            const hasCallback = hasArrowFunction(info);
+            if (hasCallback && !topLevel) {
+                return Util.lf("Events must be top level");
+            }
+
             if (!info.attrs.blockId || !info.attrs.block) {
                 const builtin = builtinBlocks[info.qName];
                 if (!builtin) {
+                    if (n.arguments.length === 0 && n.expression.kind === SK.Identifier) {
+                        return undefined; // Could be user defined function
+                    }
                     return Util.lf("Function call not supported in the blocks");
                 }
                 info.attrs.block = builtin.block;
                 info.attrs.blockId = builtin.blockId;
             }
 
-            const argNames: string[] = []
-            info.attrs.block.replace(/%(\w+)/g, (f, n) => {
-                argNames.push(n)
-                return ""
-            });
+            const params = getParameterInfo(info, blocksInfo);
+            const argumentDifference = info.args.length - params.length;
 
             if (info.attrs.imageLiteral) {
-                if (info.args.length - argNames.length > 1) {
+                if (argumentDifference > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
                 }
 
@@ -1673,11 +1691,7 @@ ${output}</xml>`;
                 return undefined;
             }
 
-
-            const argumentDifference = info.args.length - argNames.length;
-            if (argumentDifference > 0 && !(info.attrs.defaultInstance && argumentDifference === 1) && !checkForDestructuringMutation()) {
-
-                const hasCallback = hasArrowFunction(info);
+            if (argumentDifference > 0 && !checkForDestructuringMutation()) {
                 if (argumentDifference > 1 || !hasCallback) {
                     return Util.lf("Function call has more arguments than are supported by its block");
                 }
@@ -1685,7 +1699,7 @@ ${output}</xml>`;
 
             const api = blocksInfo.apis.byQName[info.qName];
             if (api && api.parameters && api.parameters.length) {
-                let fail = false;
+                let fail: string;
                 const instance = api.kind == pxtc.SymbolKind.Method || api.kind == pxtc.SymbolKind.Property;
                 info.args.forEach((e, i) => {
                     e = unwrapNode(e) as Expression;
@@ -1700,13 +1714,19 @@ ${output}</xml>`;
                                 return;
                             }
                         }
-                        fail = true;
+                        fail = Util.lf("Enum arguments may only be literal property access expressions");
                         return;
+                    }
+                    else if (isLiteralNode(e)) {
+                        const inf = params[i];
+                        if (inf.paramFieldEditor && (!inf.paramFieldEditorOptions || !inf.paramFieldEditorOptions["decompileLiterals"])) {
+                            fail = Util.lf("Field editor does not support literal arguments");
+                        }
                     }
                 });
 
                 if (fail) {
-                    return Util.lf("Enum arguments may only be literal property access expressions");
+                    return fail;
                 }
             }
 
@@ -1729,7 +1749,7 @@ ${output}</xml>`;
                     const arrayArg = info.args[info.args.length - 2] as ArrayLiteralExpression;
                     const callbackArg = info.args[info.args.length - 1] as ArrowFunction;
 
-                    if (arrayArg.kind === SK.ArrayLiteralExpression && callbackArg.kind === SK.ArrowFunction) {
+                    if (arrayArg.kind === SK.ArrayLiteralExpression && isFunctionExpression(callbackArg)) {
                         const propNames: string[] = [];
 
                         // Make sure that all elements in the array literal are enum values
@@ -1754,6 +1774,29 @@ ${output}</xml>`;
                 }
                 return false;
             }
+        }
+
+        function checkFunctionDeclaration(n: ts.FunctionDeclaration, topLevel: boolean) {
+            if (!topLevel) {
+                return Util.lf("Function declarations must be top level");
+            }
+
+            if (n.parameters.length > 0) {
+                return Util.lf("Functions with parameters not supported in blocks");
+            }
+
+            let fail = false;
+            ts.forEachReturnStatement(n.body, stmt => {
+                if (stmt.expression) {
+                    fail = true;
+                }
+            });
+
+            if (fail) {
+                return Util.lf("Function with return value not supported in blocks")
+            }
+
+            return undefined;
         }
     }
 
@@ -1936,6 +1979,76 @@ ${output}</xml>`;
 
     function hasArrowFunction(info: CallInfo): boolean {
         const parameters = (info.decl as FunctionLikeDeclaration).parameters;
-        return info.args.some((arg, index) => arg && arg.kind === SK.ArrowFunction);
+        return info.args.some((arg, index) => arg && isFunctionExpression(arg));
+    }
+
+    function isLiteralNode(node: ts.Node): boolean {
+        if (!node) {
+            return false
+        }
+        switch (node.kind) {
+            case SK.ParenthesizedExpression:
+                return isLiteralNode((node as ts.ParenthesizedExpression).expression)
+            case SK.NumericLiteral:
+            case SK.StringLiteral:
+            case SK.NoSubstitutionTemplateLiteral:
+            case SK.TrueKeyword:
+            case SK.FalseKeyword:
+                return true
+            case SK.PrefixUnaryExpression:
+                const expression = (node as ts.PrefixUnaryExpression)
+                return (expression.operator === SK.PlusToken || expression.operator === SK.MinusToken) && isLiteralNode(expression.operand)
+            default:
+                return false;
+        }
+    }
+
+    function getParameterInfo(info: CallInfo, blocksInfo: BlocksInfo) {
+        const argNames: [string, string][] = []
+        info.attrs.block.replace(/%(\w+)(?:=(\w+))?/g, (f, n, v) => {
+            argNames.push([n, v])
+            return ""
+        });
+
+        if (info.attrs.defaultInstance) {
+            argNames.unshift(["__instance__", undefined]);
+        }
+
+        return argNames.map(([name, type]) => {
+            const res: ParameterInfo = { name, type }
+            if (name && type) {
+                const shadowBlock = blocksInfo.blocksById[type];
+                if (shadowBlock) {
+                    let fieldName = '';
+                    shadowBlock.attributes.block.replace(/%(\w+)/g, (f, n) => {
+                        fieldName = n;
+                        return "";
+                    });
+                    res.fieldName = fieldName;
+                    const shadowA = shadowBlock.attributes;
+                    if (shadowA && shadowA.paramFieldEditor && shadowA.paramFieldEditor[fieldName]) {
+                        if (info.attrs.paramShadowOptions && info.attrs.paramShadowOptions[name]) {
+                            res.paramShadowOptions = info.attrs.paramShadowOptions[name];
+                        }
+
+                        res.decompileLiterals = !!(shadowA.paramFieldEditorOptions && shadowA.paramFieldEditorOptions[fieldName] && shadowA.paramFieldEditorOptions[fieldName]["decompileLiterals"])
+                    }
+                }
+            }
+
+            if (info.attrs.paramFieldEditorOptions) {
+                res.paramFieldEditorOptions = info.attrs.paramFieldEditorOptions[name];
+            }
+
+            if (info.attrs.paramFieldEditor) {
+                res.paramFieldEditor = info.attrs.paramFieldEditor[name];
+            }
+
+            return res;
+        });
+    }
+
+    function isFunctionExpression(node: Node) {
+        return node.kind === SK.ArrowFunction || node.kind === SK.FunctionExpression;
     }
 }

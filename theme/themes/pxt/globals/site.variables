@@ -58,13 +58,12 @@
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
 
-@mainMenuHeight: 4.5rem;
+@mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
-@sandboxMobileMenuHeight: 2.5rem;
-
-@mainMenuBlocksJsToggleColor: @primaryColor;
+@sandboxMobileMenuHeight: 3.0rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
+@editorToggleColor: white;
 
 /*-------------------
    Layout
@@ -110,3 +109,19 @@
 
 @blocklyRowWidthWide: 200px;
 @blocklyRowWidthComputer: 180px;
+@blocklyRowWidthTablet: 150px;
+@blocklyRowWidthMobile: 50px;
+
+@blocklyRowHeightWide: 40px;
+@blocklyRowHeightComputer: 40px;
+@blocklyRowHeightTablet: 45px;
+@blocklyRowHeightMobile: 50px;
+
+/*-------------------
+   Flyout
+--------------------*/
+
+@flyoutLabelColor: white;
+@blocklyFlyoutColor: @grey;
+@blocklyFlyoutColorOpacity: 0.9;
+@monacoFlyoutColor: rgba(221,221,221, 0.8);

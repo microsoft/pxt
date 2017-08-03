@@ -165,6 +165,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=48
+    //% help=text/char-at
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
@@ -185,6 +186,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
+    //% help=text/compare
     //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
     compare(that: string): number;
 
@@ -194,6 +196,7 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
+    //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
 
@@ -209,10 +212,11 @@ declare interface String {
 }
 
 /**
-  * Converts A string to an integer.
+  * Convert a string to an integer.
   * @param s A string to convert into a number.
   */
 //% shim=String_::toNumber
+//% help=text/parse-int
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
 declare function parseInt(text: string): number;
 
@@ -249,7 +253,6 @@ declare namespace String {
     function fromCharCode(code: number): string;
 }
 
-
 declare interface Number {
     /**
      * Returns a string representation of a number.
@@ -268,10 +271,86 @@ declare namespace Math {
     function pow(x: number, y: number): number;
 
     /**
-     * Returns a pseudorandom number between 0 and `max`.
+     * Returns a pseudorandom number between 0 and 1.
      */
     //% shim=Math_::random
-    function random(max: number): number;
+    //% helpUrl="/reference/math/random"
+    function random(): number;
+
+    /**
+     * Returns a pseudorandom number between min and max included. 
+     * If both numbers are integral, the result is integral.
+     * @param min the lower inclusive bound, eg: 0
+     * @param max the upper inclusive bound, eg: 10
+     */
+    //% blockId="device_random" block="pick random %min|to %limit"
+    //% helpUrl="/reference/math/random-range"
+    //% shim=Math_::randomRange
+    function randomRange(min: number, max: number): number;
+
+    /**
+     * Returns the natural logarithm (base e) of a number.
+     * @param x A number
+     */
+    //% shim=Math_::log
+    function log(x: number): number;
+
+    /**
+     * Returns returns ``e^x``.
+     * @param x A number
+     */
+    //% shim=Math_::exp
+    function exp(x: number): number;
+
+    /**
+     * Returns the sine of a number.
+     * @param x An angle in radians
+     */
+    //% shim=Math_::sin
+    function sin(x: number): number;
+
+    /**
+     * Returns the cosine of a number.
+     * @param x An angle in radians
+     */
+    //% shim=Math_::cos
+    function cos(x: number): number;
+
+    /**
+     * Returns the tangent of a number.
+     * @param x An angle in radians
+     */
+    //% shim=Math_::tan
+    function tan(x: number): number;
+
+    /**
+     * Returns the arcsine (in radians) of a number
+     * @param x A number
+     */
+    //% shim=Math_::asin
+    function asin(x: number): number;
+
+    /**
+     * Returns the arccosine (in radians) of a number
+     * @param x A number
+     */
+    //% shim=Math_::acos
+    function acos(x: number): number;
+
+    /**
+     * Returns the arctangent (in radians) of a number
+     * @param x A number
+     */
+    //% shim=Math_::atan
+    function atan(x: number): number;
+
+    /**
+     * Returns the arctangent of the quotient of its arguments.
+     * @param y A number
+     * @param x A number
+     */
+    //% shim=Math_::atan2
+    function atan2(y: number, x: number): number;
 
     /**
      * Returns the square root of a number.

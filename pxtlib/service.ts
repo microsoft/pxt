@@ -8,6 +8,7 @@ namespace ts.pxtc {
 
     export const ON_START_TYPE = "pxt-on-start";
     export const ON_START_COMMENT = U.lf("on start");
+    export const HANDLER_COMMENT = U.lf("code goes here");
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
@@ -20,7 +21,7 @@ namespace ts.pxtc {
         description: string;
         type: string;
         initializer?: string;
-        defaults?: string[];
+        default?: string;
         properties?: PropertyDesc[];
         options?: pxt.Map<PropertyOption>;
         isEnum?: boolean;
@@ -100,7 +101,7 @@ namespace ts.pxtc {
         block?: string; // format of the block, used at namespace level for category name
         blockId?: string; // unique id of the block
         blockGap?: string; // pixels in toolbox after the block is inserted
-        blockExternalInputs?: boolean; // force external inputs
+        blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
         blockImportId?: string;
         blockBuiltin?: boolean;
         blockNamespace?: string;
@@ -126,8 +127,11 @@ namespace ts.pxtc {
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         // On block
         subcategory?: string;
+        group?: string;
         // On namepspace
         subcategories?: string[];
+        groups?: string[];
+        labelLineWidth?: string;
 
         // on interfaces
         indexerGet?: string;
@@ -138,6 +142,7 @@ namespace ts.pxtc {
         mutatePrefix?: string;
         mutateDefaults?: string;
         mutatePropertyEnum?: string;
+        inlineInputMode?: string; // can be inline, external, or auto
 
         _name?: string;
         _source?: string;
@@ -311,7 +316,16 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    fn.attributes.block = locBlock;
+                    const ps = pxt.blocks.parameterNames(fn);
+                    const oldBlock = fn.attributes.block;
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    if (oldBlock != fn.attributes.block) {
+                        const locps = pxt.blocks.parameterNames(fn);
+                        if (JSON.stringify(ps) != JSON.stringify(locps)) {
+                            pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
+                            fn.attributes.block = oldBlock;
+                        }
+                    }
                 }
             }))
             .then(() => apis);
@@ -346,12 +360,17 @@ namespace ts.pxtc {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]+")|'([^'\n]+)'|([^\s]*)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]*")|'([^'\n]*)'|([^\s]*)))?/,
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
+                    if (!v) v = "";
                     if (U.endsWith(n, ".defl")) {
-                        res.paramDefl[n.slice(0, n.length - 5)] = v
+                        if (v.indexOf(" ") > -1) {
+                            res.paramDefl[n.slice(0, n.length - 5)] = `"${v}"`
+                        } else {
+                            res.paramDefl[n.slice(0, n.length - 5)] = v
+                        }
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
@@ -395,12 +414,33 @@ namespace ts.pxtc {
             res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
         }
 
+        if (res.blockExternalInputs && !res.inlineInputMode) {
+            res.inlineInputMode = "external";
+        }
+
         res.paramHelp = {}
         res.jsDoc = ""
         cmt = cmt.replace(/\/\*\*([^]*?)\*\//g, (full: string, doccmt: string) => {
             doccmt = doccmt.replace(/\n\s*(\*\s*)?/g, "\n")
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
+                if (!res.paramDefl[name]) {
+                    let m = /\beg\.?:\s*(.+)/.exec(desc);
+                    if (m && m[1]) {
+                        let defaultValue = /(?:"([^"]*)")|(?:'([^']*)')|(?:([^\s,]+))/g.exec(m[1]);
+                        if (defaultValue) {
+                            let val = defaultValue[1] || defaultValue[2] || defaultValue[3];
+                            if (!val) val = "";
+                            // If there are spaces in the value, it means the value was surrounded with quotes, so add them back
+                            if (val.indexOf(" ") > -1) {
+                                res.paramDefl[name] = `"${val}"`;
+                            }
+                            else {
+                                res.paramDefl[name] = val;
+                            }
+                        }
+                    }
+                }
                 return ""
             })
             res.jsDoc += doccmt
@@ -419,6 +459,14 @@ namespace ts.pxtc {
             }
             catch (e) {
                 res.subcategories = undefined;
+            }
+        }
+        if (res.groups) {
+            try {
+                res.groups = JSON.parse(res.groups as any);
+            }
+            catch (e) {
+                res.groups = undefined;
             }
         }
 

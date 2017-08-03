@@ -8,7 +8,7 @@ import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as data from "./data";
-import defaultToolbox from "./toolbox"
+import * as baseToolbox from "./toolbox";
 
 import CategoryMode = pxt.blocks.CategoryMode;
 import Util = pxt.Util;
@@ -185,8 +185,8 @@ export class Editor extends srceditor.Editor {
         });
 
         if (needsLayout) {
-            // If the blocks file has no location info (e.g. it's from the decompiler), format the code
-            pxt.blocks.layout.flow(this.editor);
+            // If the blocks file has no location info (e.g. it's from the decompiler), format the code.
+            pxt.blocks.layout.flow(this.editor, { useViewWidth: true });
         }
         else {
             // Otherwise translate the blocks so that they are positioned on the top left
@@ -548,6 +548,11 @@ export class Editor extends srceditor.Editor {
             this.filters = null;
         }
         this.currFile = file;
+        // Clear the search field if a value exists
+        let searchField = document.getElementById('blocklySearchInputField') as HTMLInputElement;
+        if (searchField && searchField.value) {
+            searchField.value = '';
+        }
         return Promise.resolve();
     }
 
@@ -571,7 +576,7 @@ export class Editor extends srceditor.Editor {
         let sourceMap = this.compilationResult.sourceMap;
 
         diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
-            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: diag.endLine - diag.line });
+            let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: 0 });
             if (bid) {
                 let b = this.editor.getBlockById(bid)
                 if (b) {
@@ -641,7 +646,7 @@ export class Editor extends srceditor.Editor {
 
     private getDefaultToolbox(showCategories = this.showToolboxCategories): HTMLElement {
         return showCategories !== CategoryMode.None ?
-            defaultToolbox.documentElement
+            baseToolbox.getBaseToolboxDom().documentElement
             : new DOMParser().parseFromString(`<xml id="blocklyToolboxDefinition" style="display: none"></xml>`, "text/xml").documentElement;
     }
 
