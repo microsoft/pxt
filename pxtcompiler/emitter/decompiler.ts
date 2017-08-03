@@ -1742,10 +1742,19 @@ ${output}</xml>`;
                         fail = true;
                         return;
                     }
+                    else if (e.kind === SK.ArrowFunction && info.attrs.mutate === "objectdestructuring") {
+                        const ar = e as ts.ArrowFunction;
+                        if (ar.parameters.length) {
+                            const param = unwrapNode(ar.parameters[0]) as ts.ParameterDeclaration;
+                            if (param.kind === SK.Parameter && param.name.kind !== SK.ObjectBindingPattern) {
+                                fail = true;
+                            }
+                        }
+                    }
                 });
 
                 if (fail) {
-                    return Util.lf("Enum arguments may only be literal property access expressions");
+                    return Util.lf("Invalid function arguments");
                 }
             }
 
