@@ -1723,6 +1723,15 @@ ${output}</xml>`;
                             fail = Util.lf("Field editor does not support literal arguments");
                         }
                     }
+                    else if (e.kind === SK.ArrowFunction && info.attrs.mutate === "objectdestructuring") {
+                        const ar = e as ts.ArrowFunction;
+                        if (ar.parameters.length) {
+                            const param = unwrapNode(ar.parameters[0]) as ts.ParameterDeclaration;
+                            if (param.kind === SK.Parameter && param.name.kind !== SK.ObjectBindingPattern) {
+                                fail = Util.lf("Object destructuring mutation callbacks can only have destructuring patters as arguments");
+                            }
+                        }
+                    }
                 });
 
                 if (fail) {
