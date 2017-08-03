@@ -277,14 +277,13 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                         this.state.editMode == true
                         ?
                             <button onClick={this.handleSave} className="ui violet icon button tiny compact left floated">
-                                <i className="toggle on icon"></i>
+                                <i className="checkmark icon"></i>
                             </button>
                         :
                             <button onClick={this.handleEdit} className="ui icon button tiny compact left floated">
-                                <i className="toggle off icon"></i>
+                                <i className="crop icon"></i>
                             </button>
                     }
-                    <span className="ui compact">{this.props.sampleID}</span>
                     <button onClick={this.handleDelete} className="ui icon black button tiny compact right floated">
                         <i className="remove icon"></i>
                     </button>
