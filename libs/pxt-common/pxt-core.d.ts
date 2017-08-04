@@ -241,6 +241,10 @@ declare interface Boolean {
     toString(): string;
 }
 
+/**
+ * Combine, split, and search text strings.
+*/
+//% blockNamespace="Text"
 declare namespace String {
 
     /**
@@ -261,6 +265,16 @@ declare interface Number {
     toString(): string;
 }
 
+/**
+ * Add, remove, and replace items in lists.
+*/
+//% blockNamespace="Arrays"
+declare namespace Array {
+}
+
+/**
+ * More complex operations with numbers.
+*/
 declare namespace Math {
     /**
      * Returns the value of a base expression taken to a specified power.
