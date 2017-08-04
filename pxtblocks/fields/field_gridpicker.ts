@@ -135,7 +135,9 @@ namespace pxtblockly {
             const searchBar = document.createElement("input");
             searchBar.setAttribute("type", "text");
             searchBar.addEventListener("click", () => {searchBar.focus()});
-            searchBar.addEventListener("keyup", this.filterOptions.bind(this));
+            searchBar.addEventListener("keyup", (() => {
+                this.filterOptions()
+            }).bind(this));
 
             this.setTableContainerContent(options);
 
