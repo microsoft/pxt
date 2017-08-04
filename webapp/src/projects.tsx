@@ -312,10 +312,10 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                     </sui.Menu>
                 </sui.Segment>
                 {tab == WELCOME ? <div className={tabClasses}>
-                    <div className="ui stackable two column grid">
-                        <div className="six wide column">
-                            <h2 className="row">{pxt.appTarget.name}</h2>
-                            <div className={"row large ui loader"}></div>
+                    <div className="ui stackable two column grid welcomegrid">
+                        <div className="six wide column labelsgroup">
+                            <h2 className="editorname">{pxt.appTarget.name}</h2>
+                            <div className={"large ui loader editoravatar"}></div>
                         </div>
                         <div className="group ten wide column">
                             <div className="ui cards centered">
@@ -327,12 +327,12 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
                                     onClick={() => resume() }
                                     /> : undefined}
                                 {pxt.appTarget.appTheme.sideDoc ? <codecard.CodeCardView
-                                        key={'gettingstarted'}
-                                        iconColor="green"
-                                        iconContent={lf("Getting started") }
-                                        description={lf("Create a fun, beginner project in a guided tutorial") }
-                                        onClick={() => gettingStarted() }
-                                        /> : undefined}
+                                    key={'gettingstarted'}
+                                    iconColor="green"
+                                    iconContent={lf("Getting started") }
+                                    description={lf("Create a fun, beginner project in a guided tutorial") }
+                                    onClick={() => gettingStarted() }
+                                    /> : undefined}
                                 <codecard.CodeCardView
                                     key={'newproject'}
                                     iconColor="brown"
