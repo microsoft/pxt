@@ -125,7 +125,7 @@ namespace ts.pxtc.Util {
         return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
-    export function memcpy(trg: Uint8Array, trgOff: number, src: Uint8Array, srcOff?: number, len?: number) {
+    export function memcpy(trg: Uint8Array, trgOff: number, src: ArrayLike<number>, srcOff?: number, len?: number) {
         if (srcOff === void 0)
             srcOff = 0
         if (len === void 0)

@@ -77,6 +77,7 @@ declare namespace pxt {
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
+        rawHID?: boolean;
         log?: boolean;
     }
 
@@ -111,8 +112,16 @@ declare namespace pxt {
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
-        githubCorePackage?: string; // microsoft/pxt-microbit-core
+
         platformioIni?: string[];
+
+        codalTarget?: string;
+        codalBinary?: string;
+        codalDefinitions?: any;
+
+        dockerImage?: string;
+
+        githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
@@ -243,6 +252,7 @@ declare namespace ts.pxtc {
         nativeType?: string; // currently only "thumb"
         hasHex: boolean;
         useUF2?: boolean;
+        useELF?: boolean;
         useModulator?: boolean;
         hexMimeType?: string;
         driveName?: string;
@@ -258,6 +268,7 @@ declare namespace ts.pxtc {
         openocdScript?: string;
         flashChecksumAddr?: number;
         onStartText?: boolean;
+        stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
     }
@@ -300,6 +311,7 @@ declare namespace ts.pxtc {
         extensionFiles: pxt.Map<string>;
         yotta?: pxt.YottaConfig;
         platformio?: pxt.PlatformIOConfig;
+        npmDependencies?: pxt.Map<string>;
         sha: string;
         compileData: string;
         shimsDTS: string;
