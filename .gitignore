@@ -17,3 +17,4 @@ temp/
 *.db
 *.log
 update-settings.sh
+.DS_Store
