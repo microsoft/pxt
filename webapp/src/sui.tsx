@@ -302,11 +302,14 @@ export class Popup extends data.Component<UiProps, {}> {
 export class Field extends data.Component<{
     label?: string;
     children?: any;
+    ariaLabel?: string;
+    htmlFor?: string;
 }, {}> {
     renderCore() {
         return (
             <div className="field">
-                {this.props.label ? <label>{this.props.label}</label> : null}
+                {this.props.label ? <label htmlFor={!this.props.ariaLabel ? this.props.htmlFor : undefined}>{this.props.label}</label> : null}
+                {this.props.ariaLabel && this.props.htmlFor ? (<label htmlFor={this.props.htmlFor} className="accessible-hidden">{this.props.ariaLabel}</label>) : ""}
                 {this.props.children}
             </div>
         );
@@ -358,16 +361,14 @@ export class Input extends data.Component<{
             : null;
 
         return (
-            <Field label={p.label}>
+            <Field ariaLabel={p.ariaLabel} htmlFor={p.id} label={p.label}>
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
-                    {p.ariaLabel ? (<label id={p.id + 'description'} htmlFor={p.id} className="accessible-hidden">{this.props.ariaLabel}</label>) : ""}
                     {!p.lines || p.lines == 1 ? <input
                         id={p.id}
                         className={p.class || ""}
                         type={p.type || "text"}
                         placeholder={p.placeholder} value={p.value}
-                        aria-label={p.ariaLabel ? p.id + 'description' : undefined}
                         readOnly={!!p.readOnly}
                         onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                         onChange={v => p.onChange((v.target as any).value) }/>
@@ -376,7 +377,6 @@ export class Input extends data.Component<{
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
                             rows={p.lines}
                             placeholder={p.placeholder}
-                            aria-label={p.ariaLabel ? p.id + 'description' : ""}
                             value={p.value}
                             readOnly={!!p.readOnly}
                             onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
