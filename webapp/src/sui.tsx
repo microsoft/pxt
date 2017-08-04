@@ -327,6 +327,7 @@ export class Input extends data.Component<{
     copy?: boolean;
     selectOnClick?: boolean;
     id?:string;
+    ariaLabel?:string;
 }, {}> {
 
     copy() {
@@ -360,11 +361,13 @@ export class Input extends data.Component<{
             <Field label={p.label}>
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "") }>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
+                    {p.ariaLabel ? (<label id={p.id + 'description'} htmlFor={p.id} className="accessible-hidden">{this.props.ariaLabel}</label>) : ""}
                     {!p.lines || p.lines == 1 ? <input
                         id={p.id}
                         className={p.class || ""}
                         type={p.type || "text"}
                         placeholder={p.placeholder} value={p.value}
+                        aria-label={p.ariaLabel ? p.id + 'description' : undefined}
                         readOnly={!!p.readOnly}
                         onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
                         onChange={v => p.onChange((v.target as any).value) }/>
@@ -373,6 +376,7 @@ export class Input extends data.Component<{
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "") }
                             rows={p.lines}
                             placeholder={p.placeholder}
+                            aria-label={p.ariaLabel ? p.id + 'description' : ""}
                             value={p.value}
                             readOnly={!!p.readOnly}
                             onClick={(e) => p.selectOnClick ? (e.target as any).setSelectionRange(0, 9999) : undefined}
