@@ -355,7 +355,7 @@ declare namespace Blockly {
         function genUid(): string;
         function mouseToSvg(e: Event, svg: Element): any;
         function isRightButton(e: Event): boolean;
-        function createSvgElement(tag: string, options: any, fg: any): any;
+        function createSvgElement(tag: string, options: any, fg?: any): any;
         function noEvent(e: Event): void;
     }
 
@@ -382,11 +382,14 @@ declare namespace Blockly {
     }
 
     class Field {
+        static NBSP: string;
         name: string;
         EDITABLE: boolean;
         sourceBlock_: Block;
         fieldGroup_: Element;
         textElement_: Element;
+        arrowWidth_: number;
+        maxDisplayLength: number;
         visible_: boolean;
         text_: string;
         size_: goog.math.Size;
@@ -406,6 +409,7 @@ declare namespace Blockly {
         getValue(): string;
         isCurrentlyEditable(): boolean;
         setSourceBlock(block: Block): void;
+        getCachedWidth(textElement: Element): number;
     }
 
     class FieldVariable extends Field {
@@ -431,6 +435,10 @@ declare namespace Blockly {
     }
 
     class FieldDropdown extends Field {
+        box_: Element;
+        arrowY_: number;
+        imageElement_: Element;
+        imageJson_: any;
         constructor(val: ({ src: string; alt: string; width: number; height: number; } | string)[][] | (() => ({ src: string; alt: string; width: number; height: number; } | string)[][]), opt_validator?: Function);
 
         static CHECKMARK_OVERHANG: number;
@@ -438,18 +446,23 @@ declare namespace Blockly {
         constructor(val: (string[] | Object)[]);
         protected getOptions(): (string[] | Object)[];
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
+        positionArrow(x: number): number;
     }
 
     class FieldNumber extends FieldTextInput {
-        constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: any);
+        constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
         setConstraints(min: any, max: any, precision?: any): void;
     }
 
-    class FieldGridPicker extends FieldDropdown {
-        constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], colour?: string | number, params?: pxt.Map<string> );
+    class FieldTextDropdown extends FieldDropdown {
+        constructor(text: string, menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], opt_validator?: Function, opt_restrictor?: any);
     }
 
-    class FieldIconDropdown extends FieldDropdown {
+    class FieldNumberDropdown extends FieldDropdown {
+        constructor(value: string | number, menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);        
+    }
+
+    class FieldIconMenu extends FieldDropdown {
         constructor(menuGenerator: ({ src: string; alt: string; width: number; height: number; } | string)[][], params?: pxt.Map<string> ); 
     }
 
@@ -525,6 +538,8 @@ declare namespace Blockly {
         appendValueInput(name: string): Input;
         getChildren(): Block[];
         getColour(): string;
+        getColourSecondary(): string;
+        getColourTertiary(): string;
         getDescendants(): Block[];
         initSvg(): void;
         removeInput(name: string, opt_quiet?: boolean): void;
@@ -668,6 +683,7 @@ declare namespace Blockly {
     }
 
     class Workspace {
+        scale: number;
         svgGroup_: any;
         scrollbar: ScrollbarPair;
         svgBlockCanvas_: SVGGElement;
@@ -843,6 +859,10 @@ declare namespace Blockly {
     namespace BlockSvg {
         let START_HAT: boolean;
         let SEP_SPACE_X: number;
+        let MIN_BLOCK_Y: number;
+        let FIELD_Y_OFFSET: number;
+        let EDITABLE_FIELD_PADDING: number;
+        let BOX_FIELD_PADDING: number;
     }
 
     namespace Events {
@@ -898,9 +918,14 @@ declare namespace Blockly {
     }
 
     namespace DropDownDiv {
+        let content_: HTMLElement;
+        function hide(): void;
+        function hideIfOwner(owner: any): void;
         function hideWithoutAnimation(): void;
+        function showPositionedByBlock(owner: any, block: Blockly.Block, opt_onHide?: Function, opt_secondaryYOffset?: number): void;
         function clearContent(): void;
         function getContentDiv(): HTMLElement;
+        function setColour(backgroundColour: string, borderColour: string): void;
     }
 
     var Tooltip: any;

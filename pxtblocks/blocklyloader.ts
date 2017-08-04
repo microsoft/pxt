@@ -654,8 +654,8 @@ namespace pxt.blocks {
                             v.attributes.blockImage ? {
                                 src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
-                                width: 32,
-                                height: 32,
+                                width: 36,
+                                height: 36,
                                 value: v.name
                             } : k,
                             v.namespace + "." + v.name

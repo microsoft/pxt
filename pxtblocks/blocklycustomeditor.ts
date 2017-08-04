@@ -26,6 +26,9 @@ namespace pxt.blocks {
         };
         registerFieldEditor('note', pxtblockly.FieldNote, noteValidator);
         registerFieldEditor('gridpicker', pxtblockly.FieldGridPicker);
+        registerFieldEditor('textdropdown', pxtblockly.FieldTextDropdown);
+        registerFieldEditor('numberdropdown', pxtblockly.FieldNumberDropdown);
+        registerFieldEditor('imagedropdown', pxtblockly.FieldImageDropdown);
     }
 
     export function registerFieldEditor(selector: string, field: Blockly.FieldCustomConstructor, validator?: any) {
