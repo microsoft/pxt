@@ -761,7 +761,15 @@ namespace pxt.blocks {
             }
         }
 
-        block.setInputsInline(!fn.attributes.blockExternalInputs && fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        if (fn.attributes.inlineInputMode === "external") {
+            block.setInputsInline(false);
+        }
+        else if (fn.attributes.inlineInputMode === "inline") {
+            block.setInputsInline(true);
+        }
+        else {
+            block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        }
 
         switch (fn.retType) {
             case "number": block.setOutput(true, "Number"); break;
@@ -973,10 +981,11 @@ namespace pxt.blocks {
         // lf("{id:category}Loops")
         // lf("{id:category}Logic")
         // lf("{id:category}Variables")
-        // lf("{id:category}Arrays")
-        // lf("{id:category}Text")
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
+        // lf("{id:category}Functions")
+        // lf("{id:category}Arrays")
+        // lf("{id:category}Text")
         // lf("{id:category}Search")
         // lf("{id:category}More\u2026")
 
@@ -1654,13 +1663,18 @@ namespace pxt.blocks {
         const calculateDistance = (elemBounds: any, mouseX: any) => {
             return Math.floor(mouseX - (elemBounds.left + (elemBounds.width / 2)));
         }
+
         /**
-         * Track a drag of an object on this workspace.
-         * @param {!Event} e Mouse move event.
-         * @return {!goog.math.Coordinate} New location of object.
+         * Execute a step of block dragging, based on the given event.  Update the
+         * display accordingly.
+         * @param {!Event} e The most recent move event.
+         * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+         *     moved from the position at the start of the drag, in pixel units.
+         * @package
          */
-        let moveDrag = (<any>Blockly).WorkspaceSvg.prototype.moveDrag;
-        (<any>Blockly).WorkspaceSvg.prototype.moveDrag = function (e: any) {
+        const blockDrag = (<any>Blockly).BlockDragger.prototype.dragBlock;
+        (<any>Blockly).BlockDragger.prototype.dragBlock = function (e: any, currentDragDeltaXY: any) {
+            const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (blocklyTreeRoot && trashIcon) {
@@ -1670,27 +1684,35 @@ namespace pxt.blocks {
                     trashIcon.style.opacity = `${1 - opacity}`;
                     trashIcon.style.display = 'block';
                     blocklyTreeRoot.style.opacity = `${opacity}`;
+                    if (distance < 50) {
+                        blocklyToolboxDiv.classList.add('blocklyToolboxDeleting');
+                    }
                 } else {
                     trashIcon.style.display = 'none';
                     blocklyTreeRoot.style.opacity = '1';
+                    blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
                 }
             }
-            return moveDrag.call(this, e);
+            return blockDrag.call(this, e, currentDragDeltaXY);
         };
 
         /**
-         * Stop binding to the global mouseup and mousemove events.
-         * @private
+         * Finish dragging the workspace and put everything back where it belongs.
+         * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+         *     moved from the position at the start of the drag, in pixel coordinates.
+         * @package
          */
-        let terminateDrag_ = (<any>Blockly).terminateDrag_;
-        (<any>Blockly).terminateDrag_ = function () {
+        const blockEndDrag = (<any>Blockly).BlockDragger.prototype.endBlockDrag;
+        (<any>Blockly).BlockDragger.prototype.endBlockDrag = function (e: any, currentDragDeltaXY: any) {
+            blockEndDrag.call(this, e, currentDragDeltaXY);
+            const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (trashIcon) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
+                blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
             }
-            terminateDrag_.call(this);
         }
     }
 
@@ -1832,7 +1854,7 @@ namespace pxt.blocks {
                 enabled: true,
                 callback: () => {
                     pxt.tickEvent("blocks.context.format");
-                    pxt.blocks.layout.flow(this);
+                    pxt.blocks.layout.flow(this, { useViewWidth: true });
                 }
             }
             menuOptions.push(formatCodeOption);
@@ -2309,65 +2331,73 @@ namespace pxt.blocks {
 
     function initVariables() {
         let varname = lf("{id:var}item");
-        Blockly.Variables.flyoutCategory = function (workspace: Blockly.Workspace) {
+        Blockly.Variables.flyoutCategory = function(workspace) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings && pxt.BrowserUtils.isMobile()) {
                 // Add the Heading label
-                let headingLabel = goog.dom.createDom('label');
+                let headingLabel = goog.dom.createDom('label') as HTMLElement;
                 headingLabel.setAttribute('text', lf("Variables"));
                 headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
                 headingLabel.setAttribute('web-icon', '\uf039');
                 headingLabel.setAttribute('web-icon-color', getNamespaceColor('variables'));
-                xmlList.push(headingLabel as HTMLElement);
+                xmlList.push(headingLabel);
             }
 
-            let button = goog.dom.createDom('button');
+            let button = goog.dom.createDom('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable"));
             button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
-            workspace.registerButtonCallback('CREATE_VARIABLE', function (button: Blockly.FlyoutButton) {
+            workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
             });
-            xmlList.push(button as HTMLElement);
 
-            let variableList = Blockly.Variables.allVariables(workspace);
-            variableList.sort(goog.string.caseInsensitiveCompare);
+            xmlList.push(button);
+
+            let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace);
+            xmlList = xmlList.concat(blockList);
+            return xmlList;
+        };
+        Blockly.Variables.flyoutCategoryBlocks = function(workspace) {
+            let variableModelList = workspace.getVariablesOfType('');
+            variableModelList.sort(Blockly.VariableModel.compareByName);
             // In addition to the user's variables, we also want to display the default
             // variable name at the top.  We also don't want this duplicated if the
             // user has created a variable of the same name.
-            goog.array.remove(variableList, varname);
-            variableList.unshift(varname);
-
-            // variables getters first
-            for (let i = 0; i < variableList.length; i++) {
-                // <block type="variables_get" gap="24">
-                //   <field name="VAR">item</field>
-                // </block>
-                let block = goog.dom.createDom('block');
-                block.setAttribute('type', 'variables_get');
-                block.setAttribute('gap', '8');
-                block.setAttribute('colour', getNamespaceColor('variables'));
-                let field = goog.dom.createDom('field', null, variableList[i]);
-                field.setAttribute('name', 'VAR');
-                block.appendChild(field);
-                xmlList.push(block as HTMLElement);
+            for (let i = 0, tempVar: any; tempVar = variableModelList[i]; i++) {
+                if (tempVar.name == varname) {
+                    variableModelList.splice(i, 1);
+                    break;
+                }
             }
-            xmlList[xmlList.length - 1].setAttribute('gap', '24');
+            const defaultVar = new Blockly.VariableModel(workspace, varname);
+            variableModelList.unshift(defaultVar);
 
-            for (let i = 0; i < Math.min(1, variableList.length); i++) {
-                {
-                    // <block type="variables_set" gap="8">
-                    //   <field name="VAR">item</field>
-                    // </block>
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', 'variables_set');
-                    block.setAttribute('gap', '8');
-                    {
-                        let field = goog.dom.createDom('field', null, variableList[i]);
-                        field.setAttribute('name', 'VAR');
-                        block.appendChild(field);
+            let xmlList: HTMLElement[] = [];
+            if (variableModelList.length > 0) {
+                // variables getters first
+                for (let i = 0, variable: any; variable = variableModelList[i]; i++) {
+                    if (Blockly.Blocks['variables_get']) {
+                        let blockText = '<xml>' +
+                            '<block type="variables_get" gap="8">' +
+                            Blockly.Variables.generateVariableFieldXml_(variable) +
+                            '</block>' +
+                            '</xml>';
+                        let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
+                        xmlList.push(block);
                     }
+                }
+                xmlList[xmlList.length - 1].setAttribute('gap', '24');
+
+                let firstVariable = variableModelList[0];
+                if (Blockly.Blocks['variables_set']) {
+                    let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
+                    let blockText = '<xml>' +
+                            '<block type="variables_set" gap="' + gap + '">' +
+                            Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                            '</block>' +
+                            '</xml>';
+                    let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
                     {
                         let value = goog.dom.createDom('value');
                         value.setAttribute('name', 'VALUE');
@@ -2380,28 +2410,34 @@ namespace pxt.blocks {
                         shadow.appendChild(field);
                         block.appendChild(value);
                     }
-
-                    xmlList.push(block as HTMLElement);
+                    xmlList.push(block);
                 }
-                {
-                    // <block type="variables_get" gap="24">
-                    //   <field name="VAR">item</field>
-                    // </block>
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', 'variables_change');
-                    block.setAttribute('gap', '24');
-                    let value = goog.dom.createDom('value');
-                    value.setAttribute('name', 'VALUE');
-                    let shadow = goog.dom.createDom('shadow');
-                    shadow.setAttribute("type", "math_number");
-                    value.appendChild(shadow);
-                    let field = goog.dom.createDom('field');
-                    field.setAttribute('name', 'NUM');
-                    field.appendChild(document.createTextNode("1"));
-                    shadow.appendChild(field);
-                    block.appendChild(value);
-
-                    xmlList.push(block as HTMLElement);
+                if (Blockly.Blocks['variables_change']) {
+                    let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
+                    let blockText = '<xml>' +
+                        '<block type="variables_change" gap="' + gap + '">' +
+                        Blockly.Variables.generateVariableFieldXml_(firstVariable) +
+                        '<value name="DELTA">' +
+                        '<shadow type="math_number">' +
+                        '<field name="NUM">1</field>' +
+                        '</shadow>' +
+                        '</value>' +
+                        '</block>' +
+                        '</xml>';
+                    let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
+                    {
+                        let value = goog.dom.createDom('value');
+                        value.setAttribute('name', 'VALUE');
+                        let shadow = goog.dom.createDom('shadow');
+                        shadow.setAttribute("type", "math_number");
+                        value.appendChild(shadow);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NUM');
+                        field.appendChild(document.createTextNode("0"));
+                        shadow.appendChild(field);
+                        block.appendChild(value);
+                    }
+                    xmlList.push(block);
                 }
             }
             return xmlList;
@@ -2414,13 +2450,15 @@ namespace pxt.blocks {
         msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
         installBuiltinHelpInfo(variablesGetId);
 
+        // Dropdown menu of variables_get
+        msg.RENAME_VARIABLE = lf("Rename variable...");
+        msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
+
         // builtin variables_set
         const variablesSetId = "variables_set";
         const variablesSetDef = pxt.blocks.getBlockDefinition(variablesSetId);
         msg.VARIABLES_SET = variablesSetDef.block["VARIABLES_SET"];
         msg.VARIABLES_DEFAULT_NAME = varname;
-        //XXX Do not translate the default variable name.
-        //XXX Variable names with Unicode character are harmful at this point.
         msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
         installBuiltinHelpInfo(variablesSetId);
 
@@ -2682,7 +2720,7 @@ namespace pxt.blocks {
                             }
                         }
                         if (newFunc) {
-                            if (workspace.variableIndexOf(newFunc) != -1) {
+                            if (workspace.getVariable(newFunc)) {
                                 Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
                                     function() {

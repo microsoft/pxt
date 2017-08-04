@@ -89,6 +89,7 @@ declare namespace pxt {
         javascript?: number;
 
         icon?: string;
+        iconContent?: string; // Text instead of icon name
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event

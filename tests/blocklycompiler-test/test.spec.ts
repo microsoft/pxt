@@ -239,6 +239,10 @@ describe("blockly compiler", () => {
         it("should not declare lists as strings when using the length block", done => {
             blockTestAsync("lists_length_with_for_of").then(done, done);
         });
+
+        it("should handle empty array blocks", done => {
+            blockTestAsync("lists_empty_arrays").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {

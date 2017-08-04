@@ -207,6 +207,7 @@ declare namespace pxt {
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
         socialOptions?: SocialOptions; // show social icons in share dialog, options like twitter handle and org handle
+        useStartPage?: boolean;
     }
 
     interface SocialOptions {
@@ -234,6 +235,8 @@ declare namespace pxt {
 
         nextName?: string;
         nextPath?: string;
+
+        markdown?: string;
     }
 
     interface TargetBundle extends AppTarget {
@@ -266,6 +269,8 @@ declare namespace ts.pxtc {
         flashChecksumAddr?: number;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2
+        hidSelectors?: HidSelector[];
+        emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
     }
 
     interface CompileOptions {
@@ -316,5 +321,13 @@ declare namespace ts.pxtc {
 
     interface HexInfo {
         hex: string[];
+    }
+
+    // HEX values as strings, e.g. "0xFF97"
+    interface HidSelector {
+        vid: string;
+        pid: string;
+        usagePage: string;
+        usageId: string;
     }
 }

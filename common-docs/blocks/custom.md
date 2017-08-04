@@ -4,8 +4,7 @@ This page provides a short introduction at defining your own blocks in PXT.
 
 ## Custom blocks? I can't find it in the editor!
 
-That's right. Currently, the block editor does not support functions... 
-but it's possible to define functions in JavaScript and turn them into blocks 
+That's right. It's possible to define your own functions in JavaScript and turn them into blocks 
 with some comment macros.
 
 In a nutshell, any exported JavaScript function can be turned into a block by adding a ``//% block`` comment:

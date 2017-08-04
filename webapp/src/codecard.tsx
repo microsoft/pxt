@@ -44,15 +44,18 @@ export class CodeCardView extends React.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                     {card.header}
                 </div> : null }
-            <div className={"ui image"}>
+            {card.label || card.blocksXml || card.typeScript || card.imageUrl || card.youTubeId ? <div className={"ui image"}>
                 {card.label ? <label className="ui orange right ribbon label">{card.label}</label> : undefined }
                 {card.blocksXml ? <blockspreview.BlocksPreview key="promoblocks" xml={card.blocksXml} /> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {card.imageUrl ? <div className="ui cardimage" style={ { backgroundImage: `url("${card.imageUrl}")` } } /> : undefined}
                 {card.youTubeId ? <div className="ui cardimage" style={ { backgroundImage: `url("https://img.youtube.com/vi/${card.youTubeId}/maxresdefault.jpg")` } } /> : undefined }
-            </div>
-            {card.icon ?
-                <div className={`${'ui button massive ' + card.iconColor}`}> <i className={`${'icon ' + card.icon}`}></i> </div> : null}
+            </div> : undefined }
+            {card.icon || card.iconContent ?
+                <div className="ui"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
+                    { card.icon ? <i className={`${'icon ' + card.icon}`}></i> : undefined }
+                    { card.iconContent || undefined }
+                    </div></div> : undefined }
             {card.shortName || card.name || card.description ?
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}

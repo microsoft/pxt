@@ -220,6 +220,12 @@ namespace pxt.cpp {
             // replace #if 0 .... #endif with newlines
             src = src.replace(/^\s*#\s*if\s+0\s*$[^]*?^\s*#\s*endif\s*$/mg, f => f.replace(/[^\n]/g, ""))
 
+            // special handling of C++ namespace that ends with Methods (e.g. FooMethods)
+            // such a namespace will be converted into a TypeScript interface
+            // this enables simple objects with methods to be defined. See, for example:
+            // https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp
+            // within that namespace, the first parameter of each function should have
+            // the type Foo
             function interfaceName() {
                 let n = currNs.replace(/Methods$/, "")
                 if (n == currNs) return null
@@ -311,6 +317,7 @@ namespace pxt.cpp {
             src.split(/\r?\n/).forEach(ln => {
                 ++lineNo
 
+                // remove comments (NC = no comments)
                 let lnNC = ln.replace(/\/\/.*/, "").replace(/\/\*/, "")
 
                 if (inEnum && lnNC.indexOf("}") >= 0) {
@@ -319,12 +326,14 @@ namespace pxt.cpp {
                 }
 
                 if (inEnum) {
+                    // parse the enum case, with lots of optional stuff (?)
                     let mm = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(lnNC)
                     if (mm) {
                         let nm = mm[1]
                         let v = mm[3]
                         let opt = ""
                         if (v) {
+                            // user-supplied value
                             v = v.trim()
                             let curr = U.lookup(enumVals, v)
                             if (curr != null) {
@@ -335,6 +344,7 @@ namespace pxt.cpp {
                             if (enumVal == null)
                                 err("cannot determine value of " + lnNC)
                         } else {
+                            // no user-supplied value
                             enumVal++
                             v = enumVal + ""
                         }
@@ -344,6 +354,7 @@ namespace pxt.cpp {
                     }
                 }
 
+                // TODO: why do we allow class/struct here?
                 let enM = /^\s*enum\s+(|class\s+|struct\s+)(\w+)\s*({|$)/.exec(lnNC)
                 if (enM) {
                     inEnum = true
@@ -431,10 +442,12 @@ namespace pxt.cpp {
                     return;
                 }
 
+                // function definition
                 m = /^\s*(\w+)([\*\&]*\s+[\*\&]*)(\w+)\s*\(([^\(\)]*)\)\s*(;\s*$|\{|$)/.exec(ln)
                 if (currAttrs && m) {
                     indexedInstanceAttrs = null
                     let parsedAttrs = pxtc.parseCommentString(currAttrs)
+                    // top-level functions (outside of a namespace) are not permitted
                     if (!currNs) err("missing namespace declaration");
                     let retTp = (m[1] + m[2]).replace(/\s+/g, "")
                     let funName = m[3]

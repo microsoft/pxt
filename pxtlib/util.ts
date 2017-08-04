@@ -14,6 +14,32 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
+        if (!f)
+            return Promise.resolve<Uint8Array>(null);
+        else {
+            return new Promise<Uint8Array>((resolve, reject) => {
+                let reader = new FileReader();
+                reader.onerror = (ev) => resolve(null);
+                reader.onload = (ev) => resolve(new Uint8Array(reader.result as ArrayBuffer));
+                reader.readAsArrayBuffer(f);
+            });
+        }
+    }
+
+    export function fileReadAsTextAsync(f: File): Promise<string> {
+        if (!f)
+            return Promise.resolve<string>(null);
+        else {
+            return new Promise<string>((resolve, reject) => {
+                let reader = new FileReader();
+                reader.onerror = (ev) => resolve(null);
+                reader.onload = (ev) => resolve(reader.result);
+                reader.readAsText(f);
+            });
+        }
+    }
+
     export function repeatMap<T>(n: number, fn: (index: number) => T): T[] {
         n = n || 0;
         let r: T[] = [];
