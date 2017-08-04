@@ -15,7 +15,6 @@ namespace pxtblockly {
         tooltips?: string;
         tooltipsXOffset?: string;
         tooltipsYOffset?: string;
-        hasSearchBar?: boolean;
     }
 
     export class FieldGridPicker extends Blockly.FieldDropdown implements Blockly.FieldCustom {
@@ -37,10 +36,6 @@ namespace pxtblockly {
 
         private tooltips_: goog.ui.Tooltip[] = [];
 
-        private hasSearchBar_: boolean;
-
-        private tableContainer_: goog.ui.Control;
-
         constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
             super(options.data);
 
@@ -58,41 +53,6 @@ namespace pxtblockly {
             }
 
             this.tooltipConfig_ = tooltipCfg;
-
-            this.hasSearchBar_ = options.hasSearchBar || false;
-        }
-
-        /**
-         * Set the content in the dropdown menu
-         * @private
-         */
-        private setTableContainerContent(options: (Object | string[])[]) {
-            this.tableContainer_.removeChildren(true);
-            for (let i = 0; i < options.length / this.columns_; i++) {
-                let row = this.createRow(i, options);
-                this.tableContainer_.addChild(row, true);
-            }
-        }
-
-        /**
-         * TODO
-         * @private
-         */
-        private filterOptions() {
-            let options = this.getOptions();
-            let prefix = document.getElementById("search-bar").value;
-            console.log(prefix);
-            //let re = /Block\.(.+)/;
-            let filteredOptions = options.filter((block) => {
-                 if (Array.isArray(block) && block.length > 1 && typeof block[1] === "string") {
-                    return block[1].toLowerCase().startsWith("block." + prefix.toLowerCase());
-                } else {
-                    return false;
-                }
-            });
-            console.log("AND HERE");
-            console.log(filteredOptions.length);
-            this.setTableContainerContent.bind(this)(filteredOptions);
         }
 
         /**
@@ -102,6 +62,16 @@ namespace pxtblockly {
         public dispose() {
             super.dispose();
             this.disposeTooltips();
+        }
+
+        public getTableContainer() {
+            const tableContainer = new goog.ui.Control();
+            const options = this.getOptions();
+            for (let i = 0; i < options.length / this.columns_; i++) {
+                let row = this.createRow(i, options);
+                tableContainer.addChild(row, true);
+            }
+            return tableContainer;
         }
 
         /**
@@ -116,8 +86,7 @@ namespace pxtblockly {
             const options = this.getOptions();
 
             // Container for the menu rows
-            const tableContainer = new goog.ui.Control();
-            this.tableContainer_ = tableContainer;
+            //const tableContainer = new goog.ui.Control();
 
             // Container used to limit the height of the tableContainer, because the tableContainer uses
             // display: table, which ignores height and maxHeight
@@ -128,16 +97,10 @@ namespace pxtblockly {
             // when scrolling
             const paddingContainer = new goog.ui.Control();
 
-            // Search bar
-            const searchBar = document.createElement("input");
-            searchBar.setAttribute("type", "text");
-            searchBar.setAttribute("id", "search-bar");
-            searchBar.addEventListener("click", () => {searchBar.focus()});
-            searchBar.addEventListener("keyup", (() => {
-                this.filterOptions()
-            }).bind(this));
-
-            this.setTableContainerContent(options);
+            //for (let i = 0; i < options.length / this.columns_; i++) {
+            //    let row = this.createRow(i, options);
+            //    tableContainer.addChild(row, true);
+            //}
 
             // Record windowSize and scrollOffset before adding menu.
             const windowSize = goog.dom.getViewportSize();
@@ -149,11 +112,9 @@ namespace pxtblockly {
             scrollContainer.addChild(tableContainer, true);
             paddingContainer.addChild(scrollContainer, true);
             paddingContainer.render(div);
+            (paddingContainer.getElement() as HTMLElement).style.border = `solid 1px ${this.borderColour_}`;
 
             const paddingContainerDom = paddingContainer.getElement() as HTMLElement;
-            paddingContainerDom.style.border = `solid 1px ${this.borderColour_}`;
-            paddingContainerDom.insertBefore(searchBar, paddingContainerDom.childNodes[0]);
-
             const scrollContainerDom = scrollContainer.getElement() as HTMLElement;
             const tableContainerDom = tableContainer.getElement() as HTMLElement;
 
@@ -169,7 +130,6 @@ namespace pxtblockly {
             tableContainerDom.className = 'blocklyGridPickerMenu';
             scrollContainerDom.className = 'blocklyGridPickerScroller';
             paddingContainerDom.className = 'blocklyGridPickerPadder';
-            //searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
 
             // Add the tooltips and style the items
             const menuItemsDom = tableContainerDom.getElementsByClassName('goog-menuitem');
