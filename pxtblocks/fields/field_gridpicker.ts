@@ -64,14 +64,33 @@ namespace pxtblockly {
             this.disposeTooltips();
         }
 
-        public getTableContainer() {
-            const tableContainer = new goog.ui.Control();
-            const options = this.getOptions();
+        /**
+         * TODO
+         * @private
+         */
+        /** 
+        private filterOptions() {
+            let options = this.getOptions();
+            let prefix = document.getElementById("search-bar").value;
+            console.log(prefix);
+            //let re = /Block\.(.+)/;
+            let filteredOptions = options.filter((block) => {
+                 if (Array.isArray(block) && block.length > 1 && typeof block[1] === "string") {
+                    return block[1].toLowerCase().startsWith("block." + prefix.toLowerCase());
+                } else {
+                    return false;
+                }
+            });
+            this.setTableContainerContent.bind(this)(filteredOptions);
+        }
+        */
+
+        public populateTableContainer(options: (Object | String[])[], tableContainer: goog.ui.Control) {
+            tableContainer.removeChildren(true);
             for (let i = 0; i < options.length / this.columns_; i++) {
                 let row = this.createRow(i, options);
                 tableContainer.addChild(row, true);
             }
-            return tableContainer;
         }
 
         /**
@@ -86,7 +105,9 @@ namespace pxtblockly {
             const options = this.getOptions();
 
             // Container for the menu rows
-            //const tableContainer = new goog.ui.Control();
+            const tableContainer = new goog.ui.Control();
+            //const tableContainer = this.getTableContainer(options);
+            this.populateTableContainer(options, tableContainer);
 
             // Container used to limit the height of the tableContainer, because the tableContainer uses
             // display: table, which ignores height and maxHeight
@@ -97,6 +118,17 @@ namespace pxtblockly {
             // when scrolling
             const paddingContainer = new goog.ui.Control();
 
+            // Search bar
+            const searchBar = document.createElement("input");
+            searchBar.setAttribute("type", "text");
+            searchBar.setAttribute("id", "search-bar");
+            searchBar.addEventListener("click", () => {searchBar.focus()});
+            searchBar.addEventListener("keyup", () => {
+                 this.populateTableContainer.bind(this)(options[0], tableContainer);
+            })
+            //searchBar.addEventListener("keyup", (() => {
+               // this.filterOptions()
+            //}).bind(this));
             //for (let i = 0; i < options.length / this.columns_; i++) {
             //    let row = this.createRow(i, options);
             //    tableContainer.addChild(row, true);
@@ -112,11 +144,13 @@ namespace pxtblockly {
             scrollContainer.addChild(tableContainer, true);
             paddingContainer.addChild(scrollContainer, true);
             paddingContainer.render(div);
-            (paddingContainer.getElement() as HTMLElement).style.border = `solid 1px ${this.borderColour_}`;
 
             const paddingContainerDom = paddingContainer.getElement() as HTMLElement;
             const scrollContainerDom = scrollContainer.getElement() as HTMLElement;
             const tableContainerDom = tableContainer.getElement() as HTMLElement;
+
+            paddingContainerDom.insertBefore(searchBar, paddingContainerDom.childNodes[0]);
+            paddingContainerDom.style.border = `solid 1px ${this.borderColour_}`;
 
             // Resize the grid picker if width > screen width
             if (this.width_ > windowSize.width) {
