@@ -80,21 +80,18 @@ namespace pxtblockly {
          */
         private filterOptions() {
             let options = this.getOptions();
-            console.log("HERE");
-            console.log(options.length);
-            let re = /Block\.(.+)/;
+            let prefix = document.getElementById("search-bar").value;
+            console.log(prefix);
+            //let re = /Block\.(.+)/;
             let filteredOptions = options.filter((block) => {
                  if (Array.isArray(block) && block.length > 1 && typeof block[1] === "string") {
-                    let result = re.exec(block[1]);
-                    //return result.startsWith(prefix);
-                    return block[1][6] == "G";
+                    return block[1].toLowerCase().startsWith("block." + prefix.toLowerCase());
                 } else {
                     return false;
                 }
             });
             console.log("AND HERE");
             console.log(filteredOptions.length);
-            //return filteredOptions;
             this.setTableContainerContent.bind(this)(filteredOptions);
         }
 
@@ -134,6 +131,7 @@ namespace pxtblockly {
             // Search bar
             const searchBar = document.createElement("input");
             searchBar.setAttribute("type", "text");
+            searchBar.setAttribute("id", "search-bar");
             searchBar.addEventListener("click", () => {searchBar.focus()});
             searchBar.addEventListener("keyup", (() => {
                 this.filterOptions()
