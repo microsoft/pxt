@@ -900,7 +900,7 @@ declare namespace Blockly {
     namespace DropDownDiv {
         function hideWithoutAnimation(): void;
         function clearContent(): void;
-        function getContentDiv(): Element;
+        function getContentDiv(): HTMLElement;
     }
 
     var Tooltip: any;

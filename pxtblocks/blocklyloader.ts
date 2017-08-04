@@ -1434,7 +1434,7 @@ namespace pxt.blocks {
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
 
-        if (window.navigator.pointerEnabled) {
+        if ((window as any).PointerEvent) {
             (Blockly.bindEvent_ as any).TOUCH_MAP = {
                 mousedown: 'pointerdown',
                 mousemove: 'pointermove',
