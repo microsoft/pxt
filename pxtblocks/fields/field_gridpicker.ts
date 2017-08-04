@@ -67,6 +67,7 @@ namespace pxtblockly {
          * @private
          */
         private setTableContainerContent(options: (Object | string[])[]) {
+            this.tableContainer_.removeChildren(true);
             for (let i = 0; i < options.length / this.columns_; i++) {
                 let row = this.createRow(i, options);
                 this.tableContainer_.addChild(row, true);
@@ -77,8 +78,10 @@ namespace pxtblockly {
          * TODO
          * @private
          */
-        private filterOptions(prefix: string) {
+        private filterOptions() {
             let options = this.getOptions();
+            console.log("HERE");
+            console.log(options.length);
             let re = /Block\.(.+)/;
             let filteredOptions = options.filter((block) => {
                  if (Array.isArray(block) && block.length > 1 && typeof block[1] === "string") {
@@ -89,7 +92,10 @@ namespace pxtblockly {
                     return false;
                 }
             });
-            return filteredOptions;
+            console.log("AND HERE");
+            console.log(filteredOptions.length);
+            //return filteredOptions;
+            this.setTableContainerContent.bind(this)(filteredOptions);
         }
 
         /**
@@ -129,24 +135,7 @@ namespace pxtblockly {
             const searchBar = document.createElement("input");
             searchBar.setAttribute("type", "text");
             searchBar.addEventListener("click", () => {searchBar.focus()});
-            searchBar.addEventListener("keyup", this.filterOptions)
-                        /**
-            searchBar.addEventListener("keyup", () => {
-                console.log("here");
-                let options = this.getOptions();
-                console.log(options.length);
-                let filteredOptions = options.filter((block) => {
-                    if (Array.isArray(block) && block.length > 1 && typeof block[1] === "string") {
-                        return block[1][6] === "G";
-                    } else {
-                        return false;
-                    }
-                })
-                console.log("and here");
-                console.log(filteredOptions.length);
-            });
-            **/
-            //searchBar.setAttribute("style", "user-select: text");
+            searchBar.addEventListener("keyup", this.filterOptions.bind(this));
 
             this.setTableContainerContent(options);
 
@@ -163,7 +152,7 @@ namespace pxtblockly {
 
             const paddingContainerDom = paddingContainer.getElement() as HTMLElement;
             paddingContainerDom.style.border = `solid 1px ${this.borderColour_}`;
-            //paddingContainerDom.insertBefore(searchBar, paddingContainerDom.childNodes[0]);
+            paddingContainerDom.insertBefore(searchBar, paddingContainerDom.childNodes[0]);
 
             const scrollContainerDom = scrollContainer.getElement() as HTMLElement;
             const tableContainerDom = tableContainer.getElement() as HTMLElement;
