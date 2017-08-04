@@ -137,7 +137,7 @@ export class Projects extends data.Component<ProjectsProps, ProjectsState> {
         const theme = pxt.appTarget.appTheme;
         const galleries = theme.galleries || {};
         const galleryNames = Object.keys(galleries);
-        const tabs = [WELCOME, MYSTUFF].concat(Object.keys(galleries));
+        const tabs = (pxt.appTarget.appTheme.useStartPage ? [WELCOME, MYSTUFF] : [MYSTUFF]).concat(Object.keys(galleries));
 
         // lf("Make")
         // lf("Code")
