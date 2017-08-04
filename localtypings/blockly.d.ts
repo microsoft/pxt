@@ -95,7 +95,7 @@ declare namespace goog {
             setRightToLeft(rightToLeft: boolean): void;
             addChild(child: Component, opt_render?: boolean): void;
             getChildAt(index: number): Component;
-            removeChildren(foo: boolean): void;
+            removeChildren(opt_unrender: boolean): void;
         }
         class CustomButton extends Control {
             title: string;
