@@ -123,9 +123,18 @@ namespace pxtblockly {
             searchBar.setAttribute("type", "text");
             searchBar.setAttribute("id", "search-bar");
             searchBar.addEventListener("click", () => {searchBar.focus()});
-            //searchBar.addEventListener("keyup", () => {
-            //     this.populateTableContainer.bind(this)(options[0], tableContainer);
-            //})
+            searchBar.addEventListener("keyup", () => {
+                let prefix = searchBar.value;
+                let re = new RegExp("Block." + prefix + ".*", "i");
+                let filteredOptions = options.filter((block) => {
+                    if (Array.isArray(block) && block.length > 1 && typeof block[1] === "string") {
+                        return re.test(block[1])
+                    } else {
+                        return false
+                    }
+                })
+                this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
+            })
             //searchBar.addEventListener("keyup", (() => {
                // this.filterOptions()
             //}).bind(this));
