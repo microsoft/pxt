@@ -753,12 +753,6 @@ namespace pxt.blocks {
             })
         }
 
-        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
-        if (body) {
-            block.appendStatementInput("HANDLER")
-                .setCheck("null");
-        }
-
         if (fn.attributes.imageLiteral) {
             for (let r = 0; r < 5; ++r) {
                 let ri = block.appendDummyInput();
@@ -778,6 +772,13 @@ namespace pxt.blocks {
         }
         else {
             block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        }
+
+        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
+        if (body) {
+            block.appendStatementInput("HANDLER")
+                .setCheck("null");
+            block.setInputsInline(true);
         }
 
         switch (fn.retType) {
