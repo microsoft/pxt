@@ -149,6 +149,39 @@ namespace pxtblockly {
         };
 
         /**
+         * Sets the text in this field.  Trigger a rerender of the source block.
+         * @param {?string} text New text.
+         */
+        setText(text: string) {
+            if (text === null || text === this.text_) {
+                // No change if null.
+                return;
+            }
+            this.text_ = text;
+            this.updateTextNode_();
+
+            if (this.imageJson_ && this.textElement_) {
+                // Update class for dropdown text.
+                // This class is reset every time updateTextNode_ is called.
+                this.textElement_.setAttribute('class',
+                    this.textElement_.getAttribute('class') + ' blocklyHidden'
+                );
+                this.imageElement_.parentNode.appendChild(this.arrow_);
+            } else if (this.textElement_) {
+                // Update class for dropdown text.
+                // This class is reset every time updateTextNode_ is called.
+                this.textElement_.setAttribute('class',
+                    this.textElement_.getAttribute('class') + ' blocklyDropdownText'
+                );
+                this.textElement_.parentNode.appendChild(this.arrow_);
+            }
+            if (this.sourceBlock_ && this.sourceBlock_.rendered) {
+                this.sourceBlock_.render();
+                this.sourceBlock_.bumpNeighbours_();
+            }
+        };
+
+        /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
          * the approximated width on IE/Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
@@ -201,16 +234,18 @@ namespace pxtblockly {
 
             // Empty the text element.
             goog.dom.removeChildren(/** @type {!Element} */ (this.textElement_));
+            goog.dom.removeNode(this.imageElement_);
+            this.imageElement_ = null;
             if (this.imageJson_) {
                 // Image option is selected.
-                let imageElement = Blockly.utils.createSvgElement('image',
+                this.imageElement_ = Blockly.utils.createSvgElement('image',
                     {'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
                     'width': this.imageJson_.width + 'px'});
-                imageElement.setAttributeNS('http://www.w3.org/1999/xlink',
+                this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
                                                 'xlink:href', this.imageJson_.src);
                 this.size_.height = Number(this.imageJson_.height) + 10;
 
-                this.textElement_.parentNode.appendChild(imageElement);
+                this.textElement_.parentNode.appendChild(this.imageElement_);
             } else {
                 // Replace whitespace with non-breaking spaces so the text doesn't collapse.
                 text = text.replace(/\s/g, Blockly.Field.NBSP);

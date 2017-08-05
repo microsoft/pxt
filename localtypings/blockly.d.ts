@@ -342,6 +342,7 @@ declare namespace Blockly {
 
     let ALIGN_LEFT: number;
     let ALIGN_RIGHT: number;
+    let ALIGN_CENTRE: number;
 
     const OUTPUT_SHAPE_HEXAGONAL: number;
     const OUTPUT_SHAPE_ROUND: number;
@@ -436,6 +437,7 @@ declare namespace Blockly {
 
     class FieldDropdown extends Field {
         box_: Element;
+        arrow_: Element;
         arrowY_: number;
         imageElement_: Element;
         imageJson_: any;
