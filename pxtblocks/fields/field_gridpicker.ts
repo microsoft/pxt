@@ -372,15 +372,19 @@ namespace pxtblockly {
          * it eventually does succeed, the result will be cached.
          **/
         updateWidth() {
-            // Calculate width of field
-            let width = this.imageJson_.width + 5;
+            let width: number;
+            if (this.imageJson_) {
+                width = this.imageJson_.width + 5;
+                this.arrowY_ = this.imageJson_.height / 2;
+            } else {
+                // Calculate width of field
+                width = Blockly.Field.getCachedWidth(this.textElement_);
+            }
 
             // Add padding to left and right of text.
             if (this.EDITABLE) {
                 width += Blockly.BlockSvg.EDITABLE_FIELD_PADDING;
             }
-
-            this.arrowY_ = this.imageJson_.height / 2;
 
             // Adjust width for drop-down arrows.
             this.arrowWidth_ = 0;

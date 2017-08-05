@@ -2529,6 +2529,7 @@ namespace pxt.blocks {
                 .appendField('', 'PARAMS');
             this.setColour(getNamespaceColor('functions'));
             this.arguments_ = [];
+            this.setStartHat(true);
             this.setStatements_(true);
             this.statementConnection_ = null;
         };

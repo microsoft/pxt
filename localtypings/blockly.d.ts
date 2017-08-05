@@ -410,7 +410,7 @@ declare namespace Blockly {
         getValue(): string;
         isCurrentlyEditable(): boolean;
         setSourceBlock(block: Block): void;
-        getCachedWidth(textElement: Element): number;
+        static getCachedWidth(textElement: Element): number;
     }
 
     class FieldVariable extends Field {
