@@ -91,6 +91,14 @@ namespace pxtblockly {
                 let row = this.createRow(i, options);
                 tableContainer.addChild(row, true);
             }
+            let tableContainerDom = tableContainer.getElement();
+            if (tableContainerDom) {
+                let children = tableContainerDom.childNodes;
+                for (let i = 0; i < children.length; ++i) {
+                    const elem = children[i] as HTMLElement;
+                    elem.className = "blocklyGridPickerRow";
+                }
+            }
         }
 
         /**
@@ -135,13 +143,6 @@ namespace pxtblockly {
                 })
                 this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
             })
-            //searchBar.addEventListener("keyup", (() => {
-               // this.filterOptions()
-            //}).bind(this));
-            //for (let i = 0; i < options.length / this.columns_; i++) {
-            //    let row = this.createRow(i, options);
-            //    tableContainer.addChild(row, true);
-            //}
 
             // Record windowSize and scrollOffset before adding menu.
             const windowSize = goog.dom.getViewportSize();
@@ -175,6 +176,7 @@ namespace pxtblockly {
             paddingContainerDom.className = 'blocklyGridPickerPadder';
 
             // Add the tooltips and style the items
+
             const menuItemsDom = tableContainerDom.getElementsByClassName('goog-menuitem');
             let largestTextItem = -1;
 
