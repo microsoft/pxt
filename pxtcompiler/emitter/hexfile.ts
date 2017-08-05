@@ -29,141 +29,6 @@ namespace ts.pxtc {
 
     export const vtableShift = 2;
 
-    export namespace UF2 {
-        function setWord(block: Uint8Array, ptr: number, v: number) {
-            block[ptr] = (v & 0xff)
-            block[ptr + 1] = ((v >> 8) & 0xff)
-            block[ptr + 2] = ((v >> 16) & 0xff)
-            block[ptr + 3] = ((v >> 24) & 0xff)
-        }
-
-        export interface BlockFile {
-            currBlock: Uint8Array;
-            currPtr: number;
-            blocks: Uint8Array[];
-            ptrs: number[];
-        }
-
-        export function newBlockFile(): BlockFile {
-            return {
-                currBlock: null,
-                currPtr: -1,
-                blocks: [],
-                ptrs: []
-            }
-        }
-
-        export function serializeFile(f: BlockFile) {
-            for (let i = 0; i < f.blocks.length; ++i) {
-                setWord(f.blocks[i], 24, f.blocks.length)
-            }
-            let res = ""
-            for (let b of f.blocks)
-                res += Util.uint8ArrayToString(b)
-            return res
-        }
-
-        function hasAddr(b: Block, a: number) {
-            if (!b) return false
-            return b.targetAddr <= a && a < b.targetAddr + b.payloadSize
-        }
-
-        export function readBytesFromFile(f: BlockFile, addr: number, length: number): Uint8Array {
-            //console.log(`read @${addr} len=${length}`)
-            let needAddr = addr >> 8
-            let bl: Uint8Array
-            if (needAddr == f.currPtr)
-                bl = f.currBlock
-            else {
-                for (let i = 0; i < f.ptrs.length; ++i) {
-                    if (f.ptrs[i] == needAddr) {
-                        bl = f.blocks[i]
-                        break
-                    }
-                }
-                if (bl) {
-                    f.currPtr = needAddr
-                    f.currBlock = bl
-                }
-            }
-            if (!bl)
-                return null
-            let res = new Uint8Array(length)
-            let toRead = Math.min(length, 256 - (addr & 0xff))
-            U.memcpy(res, 0, bl, (addr & 0xff) + 32, toRead)
-            let leftOver = length - toRead
-            if (leftOver > 0) {
-                let le = readBytesFromFile(f, addr + toRead, leftOver)
-                U.memcpy(res, toRead, le)
-            }
-            return res
-        }
-
-        export function writeBytes(f: BlockFile, addr: number, bytes: number[]) {
-            let currBlock = f.currBlock
-            let needAddr = addr >> 8
-
-            // account for unaligned writes
-            // this function is only used to write small chunks, so recursion is fine
-            let firstChunk = 256 - (addr & 0xff)
-            if (bytes.length > firstChunk) {
-                writeBytes(f, addr, bytes.slice(0, firstChunk))
-                writeBytes(f, addr + firstChunk, bytes.slice(firstChunk))
-                return
-            }
-
-            if (needAddr != f.currPtr) {
-                let i = 0;
-                currBlock = null
-                for (let i = 0; i < f.ptrs.length; ++i) {
-                    if (f.ptrs[i] == needAddr) {
-                        currBlock = f.blocks[i]
-                        break
-                    }
-                }
-                if (!currBlock) {
-                    currBlock = new Uint8Array(512)
-                    setWord(currBlock, 0, UF2_MAGIC_START0)
-                    setWord(currBlock, 4, UF2_MAGIC_START1)
-                    setWord(currBlock, 12, needAddr << 8)
-                    setWord(currBlock, 16, 256)
-                    setWord(currBlock, 20, f.blocks.length)
-                    setWord(currBlock, 512 - 4, UF2_MAGIC_END)
-                    f.blocks.push(currBlock)
-                    f.ptrs.push(needAddr)
-                }
-                f.currPtr = needAddr
-                f.currBlock = currBlock
-            }
-            let p = (addr & 0xff) + 32
-            for (let i = 0; i < bytes.length; ++i)
-                currBlock[p + i] = bytes[i]
-        }
-
-        export function writeHex(f: BlockFile, hex: string[]) {
-            let upperAddr = "0000"
-
-            for (let i = 0; i < hex.length; ++i) {
-                let m = /:02000004(....)/.exec(hex[i])
-                if (m) {
-                    upperAddr = m[1]
-                }
-                m = /^:..(....)00(.*)[0-9A-F][0-9A-F]$/.exec(hex[i])
-                if (m) {
-                    let newAddr = parseInt(upperAddr + m[1], 16)
-                    let hh = m[2]
-                    let arr: number[] = []
-                    for (let j = 0; j < hh.length; j += 2) {
-                        arr.push(parseInt(hh[j] + hh[j + 1], 16))
-                    }
-                    writeBytes(f, newAddr, arr)
-                }
-            }
-        }
-
-    }
-
-
 
     // TODO should be internal
     export namespace hex {
@@ -173,6 +38,7 @@ namespace ts.pxtc {
         let jmpStartIdx: number;
         let bytecodePaddingSize: number;
         let bytecodeStartAddr: number;
+        let elfInfo: pxt.elf.Info;
         export let bytecodeStartAddrPadded: number;
         let bytecodeStartIdx: number;
         let asmLabels: Map<boolean> = {};
@@ -280,12 +146,34 @@ namespace ts.pxtc {
             if (isSetupFor(extInfo))
                 return;
 
+            let funs: FuncInfo[] = extInfo.functions;
+
             currentSetup = extInfo.sha;
             currentHexInfo = hexinfo;
 
             hex = hexinfo.hex;
 
             patchSegmentHex(hex)
+
+            if (hex.length <= 2) {
+                elfInfo = pxt.elf.parse(U.fromHex(hex[0]))
+                bytecodeStartIdx = -1
+                bytecodeStartAddr = elfInfo.imageMemStart
+                bytecodeStartAddrPadded = elfInfo.imageMemStart
+                bytecodePaddingSize = 0
+
+                let jmpIdx = hex[0].indexOf("0108010842424242010801083ed8e98d")
+                if (jmpIdx < 0)
+                    oops("no jmp table in elf")
+
+                jmpStartAddr = jmpIdx / 2
+                jmpStartIdx = -1
+
+                let ptrs = hex[0].slice(jmpIdx + 32, jmpIdx + 32 + funs.length * 8 + 16)
+                readPointers(ptrs)
+                checkFuns()
+                return
+            }
 
             let i = 0;
             let upperAddr = "0000"
@@ -362,30 +250,42 @@ namespace ts.pxtc {
                 oops("No hex end")
 
             funcInfo = {};
-            let funs: FuncInfo[] = extInfo.functions;
 
             for (let i = jmpStartIdx + 1; i < hex.length; ++i) {
                 let m = /^:..(....)00(.{4,})/.exec(hex[i]);
                 if (!m) continue;
 
-                let s = m[2]
+                readPointers(m[2])
+                if (funs.length == 0) break
+            }
+
+            checkFuns();
+            return
+
+
+            function readPointers(s: string) {
                 let step = opts.shortPointers ? 4 : 8
                 while (s.length >= step) {
                     let hexb = s.slice(0, step)
                     let value = parseInt(swapBytes(hexb), 16)
                     s = s.slice(step)
                     let inf = funs.shift()
-                    if (!inf) return;
+                    if (!inf) break;
                     funcInfo[inf.name] = inf;
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
+                    }
+                    if (!(value & 1)) {
+                        U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
                     }
                     inf.value = value
                 }
             }
 
-            if (funs.length)
-                oops("premature EOF in hex file; missing: " + funs.map(f => f.name).join(", "));
+            function checkFuns() {
+                if (funs.length)
+                    oops("premature EOF in hex file; missing: " + funs.map(f => f.name).join(", "));
+            }
         }
 
         export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
@@ -455,35 +355,50 @@ namespace ts.pxtc {
             return r.toUpperCase();
         }
 
-        function applyPatches(f: UF2.BlockFile) {
+        function applyPatches(f: UF2.BlockFile, binfile: Uint8Array = null) {
             // constant strings in the binary are 4-byte aligned, and marked 
             // with "@PXT@:" at the beginning - this 6 byte string needs to be
             // replaced with proper reference count (0xffff to indicate read-only
             // flash location), string virtual table, and the length of the string
             let stringVT = [0xff, 0xff, 0x01, 0x00]
             assert(stringVT.length == 4)
-            for (let bidx = 0; bidx < f.blocks.length; ++bidx) {
-                let b = f.blocks[bidx]
-                let upper = f.ptrs[bidx] << 8
-                for (let i = 32; i < 32 + 256; i += 4) {
-                    // @PXT
-                    if (b[i] == 0x40 && b[i + 1] == 0x50 && b[i + 2] == 0x58 && b[i + 3] == 0x54) {
-                        let addr = upper + i - 32
-                        let bytes = UF2.readBytesFromFile(f, addr, 200)
-                        // @:
-                        if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
-                            let len = 0
-                            while (6 + len < bytes.length) {
-                                if (bytes[6 + len] == 0)
-                                    break
-                                len++
-                            }
-                            if (6 + len >= bytes.length)
-                                U.oops("constant string too long!")
-                            let patchV = stringVT.concat([len & 0xff, len >> 8])
-                            //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
-                            UF2.writeBytes(f, addr, patchV)
+            let patchAt = (b: Uint8Array, i: number,
+                readMore: () => Uint8Array) => {
+                // @PXT
+                if (b[i] == 0x40 && b[i + 1] == 0x50 && b[i + 2] == 0x58 && b[i + 3] == 0x54) {
+                    let bytes = readMore()
+                    // @:
+                    if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
+                        let len = 0
+                        while (6 + len < bytes.length) {
+                            if (bytes[6 + len] == 0)
+                                break
+                            len++
                         }
+                        if (6 + len >= bytes.length)
+                            U.oops("constant string too long!")
+                        return stringVT.concat([len & 0xff, len >> 8])
+                        //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
+                    }
+                }
+                return null
+            }
+
+            if (binfile) {
+                for (let i = 0; i < binfile.length - 8; i += 4) {
+                    let patchV = patchAt(binfile, i, () => binfile.slice(i, i + 200))
+                    if (patchV)
+                        U.memcpy(binfile, i, patchV)
+                }
+            } else {
+                for (let bidx = 0; bidx < f.blocks.length; ++bidx) {
+                    let b = f.blocks[bidx]
+                    let upper = f.ptrs[bidx] << 8
+                    for (let i = 32; i < 32 + 256; i += 4) {
+                        let addr = upper + i - 32
+                        let patchV = patchAt(b, i, () => UF2.readBytesFromFile(f, addr, 200))
+                        if (patchV)
+                            UF2.writeBytes(f, addr, patchV)
                     }
                 }
             }
@@ -521,6 +436,22 @@ namespace ts.pxtc {
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
 
             let uf2 = useuf2 ? UF2.newBlockFile() : null
+
+            if (elfInfo) {
+                let prog = new Uint8Array(buf.length * 2)
+                for (let i = 0; i < buf.length; ++i) {
+                    pxt.HF2.write16(prog, i * 2, buf[i])
+                }
+                let resbuf = pxt.elf.patch(elfInfo, prog)
+                for (let i = 0; i < hd.length; ++i)
+                    pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
+                applyPatches(null, resbuf)
+                if (uf2) {
+                    UF2.writeBytes(uf2, 0, resbuf);
+                    return [UF2.serializeFile(uf2)];
+                }
+                return [U.uint8ArrayToString(resbuf)]
+            }
 
             if (uf2) {
                 UF2.writeHex(uf2, myhex)
@@ -879,12 +810,12 @@ __flash_checksums:
                 chk[chk.length - 5] = len
                 bin.checksumBlock = chk;
             }
-            if (opts.target.useUF2) {
+            if (!pxt.isOutputText(target)) {
                 const myhex = btoa(hex.patchHex(bin, res.buf, false, true)[0])
-                bin.writeFile(pxtc.BINARY_UF2, myhex)
+                bin.writeFile(pxt.outputName(target), myhex)
             } else {
                 const myhex = hex.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"
-                bin.writeFile(pxtc.BINARY_HEX, myhex)
+                bin.writeFile(pxt.outputName(target), myhex)
             }
         }
 
