@@ -798,8 +798,8 @@ namespace pxt.blocks {
 
         // hook up/down if return value is void
         const hasHandlers = hasArrowFunction(fn);
-        block.setPreviousStatement(!hasHandlers && fn.retType == "void");
-        block.setNextStatement(!hasHandlers && fn.retType == "void");
+        block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
+        block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
     }
