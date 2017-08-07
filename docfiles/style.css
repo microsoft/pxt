@@ -186,6 +186,30 @@ svg {
     padding-bottom: 3em;
 }
 
+#accessibleMenu {
+    position: absolute;
+    z-index: 1001;
+    top: -20em;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+#accessibleMenu a {
+    position: absolute;
+    width: 100%;
+    height: 4em;
+    line-height: 4em;
+    font-size: 1em;
+    text-align: center;
+    color: white;
+}
+
+#accessibleMenu a:focus,
+#accessibleMenu a:hover {
+    top:20em;
+}
+
 /* Styling the table of contents much like the Semantic UI documentation site: http://semantic-ui.com/introduction/getting-started.html */
 .pusher > .full.height {
   display: -webkit-box;
