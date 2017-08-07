@@ -25,9 +25,55 @@ Learning by examples? See the source of an actual tutorial: [**getting-started.m
 
 ### ~
 
+### The 'Getting Started' tutorial
+
+The 'Getting Started' tutorial is special tutorial that is linked to a **Getting Started** button shown in the **BLOCKS** view of the editor. This tutorial is written to give a simple, first time introduction to using blocks in the editor.
+
+If the editor has the **Getting Started** button (enabled in [pxtarget.json](/targets/pxtarget) with
+```"sideDoc": "tutorials/getting-started"```), the tutorial linked to it is retrieved from_/docs/tutorials/getting-started.md_.
+
+### Adding tutorials
+
+You can create other tutorials besides 'Getting Started'. The other tutorial choices show up in the tutorials dialog using an entry in _/docs/tutorials.md_. The entry has these settings:
+
+* **name**: tutorial name
+* **imageUrl**: an optional icon image
+* **url**: tutorial document path
+* **cardType**: set to "tutorial"
+* **description**: description of what the tutorial does
+
+Here's an example entry in _tutorials.md_:
+
+````
+# Tutorials
+
+## Fun stuff
+
+```codecard
+[{
+    "name": "Light Blaster",
+    "imageUrl":"/static/tutorials/light-blast.png",
+    "url": "/tutorials/light-blaster",
+    "cardType": "tutorial",
+    "description": "Flash all the lights on the pixel strip!"
+},{
+    // another tutorial...
+}]
+```
+````
+
+The tutorial document tree has this layout:
+
+```
+/docs/tutorials.md
+/docs/tutorials/getting-started.md
+/docs/tutorials/light-blaster.md
+...
+```
+
 ## Format
 
-The page has a format that the guides the tutorial runner to make a sequence of interactions: 
+The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions: 
 
 ### Title
 
