@@ -111,7 +111,7 @@ namespace pxtblockly {
             this.disposeTooltips();
 
             const options = this.getOptions();
-            //options = [options[0], options[1]];
+            //options = [options[0], options[1], options[2], options[3], options[4], options[5], options[6], options[7], options[8]];
 
             // Container for the menu rows
             const tableContainer = new goog.ui.Control();
@@ -129,9 +129,10 @@ namespace pxtblockly {
 
             // Search bar
             const searchBar = document.createElement("input");
-            searchBar.setAttribute("type", "text");
+            searchBar.setAttribute("type", "search");
             searchBar.setAttribute("id", "search-bar");
             searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
+            searchBar.setAttribute("placeholder", "search items");
             searchBar.addEventListener("click", () => {searchBar.focus()});
             searchBar.addEventListener("keyup", () => {
                 let prefix = searchBar.value;
