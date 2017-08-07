@@ -13,7 +13,7 @@ blocks being described and ensures that the step is completed correctly.
 
 ## Tutorial documents
 
-Tutorials are created as documents in the target's document tree, under _/doc/tutorials_. A tutorial with the title '**Light blaster**' would have a path like this: _/doc/tutorials/light-blaster.md_.
+Tutorials are created as documents in the target's document tree, under _/docs/tutorials_. A tutorial with the title '**Light blaster**' would have a path like this: _/docs/tutorials/light-blaster.md_.
 
 When a tutorial is chosen in the editor, the tutorial runner converts the content of the tutorial markdown into user interactions. If selected from the help menu, a tutorial is viewed the same as any other help document.
 
