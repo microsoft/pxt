@@ -68,6 +68,61 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         p = this.props.parent;
     }
 
+    componentDidUpdate() {
+        if (this.state.editGestureMode) {
+            let wasRecording = false;
+
+            Webcam.init("webcam-video");
+
+            this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red");
+            this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
+            this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
+
+            if (hidbridge.shouldUse()) {
+                hidbridge.initAsync()
+                .then(dev => {
+                    dev.onSerial = (buf, isErr) => {
+                        let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+                        let newData = Recorder.parseString(strBuf);
+
+                        if (newData.acc) {
+                            this.graphX.update(newData.accVec.X, Viz.smoothedLine);
+                            this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
+                            this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
+
+                            this.lastConnectedTime = Date.now();
+                        }
+
+                        if (Model.core.running) {
+                            Viz.d3.select("#prediction-span")
+                                .html(Model.core.Feed(newData.accVec).classNum);
+                        }
+
+                        if (wasRecording == false && Recorder.isRecording == true) {
+                            // Recorder.startRecording(newData.accVec, 0, "TestGesture");
+                        }
+                        else if (wasRecording == true && Recorder.isRecording == true) {
+                            // Recorder.continueRecording(newData.accVec);
+                        }
+                        else if (wasRecording == true && Recorder.isRecording == false) {
+                            // Recorder.stopRecording();
+                        }
+
+                        wasRecording = Recorder.isRecording;
+                    }
+                });
+            }
+
+            // Viz.d3.select("#program-streamer-btn").on("click", () => {
+
+            // });
+
+            Viz.d3.select("#generate-block").on("click", () => {
+                this.props.parent.updateFileAsync("custom.ts", Model.core.GenerateBlock());
+            });
+        }
+    }
+
 
     hide() {
         this.setState({ visible: false, editGestureMode: false });
@@ -78,57 +133,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     show() {
         this.setState({ visible: true });
-
-        let wasRecording = false;
-
-        Webcam.init("webcam-video");
-
-        this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red");
-        this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
-        this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
-
-        if (hidbridge.shouldUse()) {
-            hidbridge.initAsync()
-            .then(dev => {
-                dev.onSerial = (buf, isErr) => {
-                    let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
-                    let newData = Recorder.parseString(strBuf);
-
-                    if (newData.acc) {
-                        this.graphX.update(newData.accVec.X, Viz.smoothedLine);
-                        this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
-                        this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
-
-                        this.lastConnectedTime = Date.now();
-                    }
-
-                    if (Model.core.running) {
-                        Viz.d3.select("#prediction-span")
-                            .html(Model.core.Feed(newData.accVec).classNum);
-                    }
-
-                    if (wasRecording == false && Recorder.isRecording == true) {
-                        // Recorder.startRecording(newData.accVec, 0, "TestGesture");
-                    }
-                    else if (wasRecording == true && Recorder.isRecording == true) {
-                        // Recorder.continueRecording(newData.accVec);
-                    }
-                    else if (wasRecording == true && Recorder.isRecording == false) {
-                        // Recorder.stopRecording();
-                    }
-
-                    wasRecording = Recorder.isRecording;
-                }
-            });
-        }
-
-        // Viz.d3.select("#program-streamer-btn").on("click", () => {
-
-        // });
-
-        Viz.d3.select("#generate-block").on("click", () => {
-            this.props.parent.updateFileAsync("custom.ts", Model.core.GenerateBlock());
-        });
     }
 
 
@@ -149,6 +153,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     }
 
     renderCore() {
+        
         const { visible } = this.state;
 
         const backToMain = () => {
@@ -299,3 +304,16 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         )
     }
 }
+
+
+// <div>
+//                 <div ref="graphContainer">
+//                     <svg ref="svgX"></svg>
+//                     <svg ref="svgY"></svg>
+//                     <svg ref="svgZ"></svg>
+//                 </div>
+//                 <div className="ui basic buttons">
+//                     <div className="ui button">Hold Recording</div>
+//                     <div className="ui button">Toggle Recording</div>
+//                 </div>
+//             </div>

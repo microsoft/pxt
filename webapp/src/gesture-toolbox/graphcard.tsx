@@ -1,22 +1,21 @@
-export const d3 = require('d3');
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./../sui";
+
+export const d3 = require('d3');
 import { Point, Gesture, GestureSample } from "./types";
 
 export interface IGraphCard { parent?: any, gestureID?: number, sampleID?: number, dx?: number, graphHeight?: number, maxVal?: number, onDeleteHandler?: (gid: number, sid: number) => void, onCropHandler?: (gid: number, sid: number, s: number, e: number) => void }
 export interface GraphCardState { editMode?: boolean }
 
 export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
-    public static connected: boolean = false;
-
+    // TODO: get rid of these unnecessary global variables
     private parentData: Gesture[];
     private sample: GestureSample;
     private svgX: any;
     private svgY: any;
     private svgZ: any;
     private svgCrop: any;
-    private mounted: boolean;
 
     constructor(props: IGraphCard) {
         super(props);
@@ -33,8 +32,6 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         this.handleDelete = this.handleDelete.bind(this);
         this.handleEdit = this.handleEdit.bind(this);
         this.handleSave = this.handleSave.bind(this);
-
-        this.mounted = false;
     }
 
     getGestureIndex(gid: number): number {
@@ -254,7 +251,6 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
                 .on("drag", dragRight));
 
         this.svgCrop.style("opacity", 0);
-        this.mounted = true;
 
         // modify width and translateX based on 
         // width = 32 => 0
