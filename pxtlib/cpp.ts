@@ -108,6 +108,8 @@ namespace pxt.cpp {
     export function parseCppInt(v: string): number {
         if (!v) return null
         v = v.trim()
+        let mm = /^\((.*)\)/.exec(v)
+        if (mm) v = mm[1]
         if (/^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v))
             return parseInt(v)
         return null
@@ -145,9 +147,22 @@ namespace pxt.cpp {
 
         pxt.debug("Generating new extinfo")
         const res = pxtc.emptyExtInfo();
-        const isPlatformio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+
+        let compileService = appTarget.compileService;
+        if (!compileService)
+            compileService = {
+                gittag: "none",
+                serviceId: "nocompile"
+            }
+
+        const isPlatformio = !!compileService.platformioIni;
+        const isCodal = compileService.buildEngine == "codal"
+        const isDockerMake = compileService.buildEngine == "dockermake"
+        const isYotta = !isPlatformio && !isCodal && !isDockerMake
         if (isPlatformio)
             sourcePath = "/src/"
+        else if (isCodal || isDockerMake)
+            sourcePath = "/pxtapp/"
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -163,12 +178,6 @@ namespace pxt.cpp {
         let allErrors = ""
         let knownEnums: Map<boolean> = {}
 
-        let compileService = appTarget.compileService;
-        if (!compileService)
-            compileService = {
-                gittag: "none",
-                serviceId: "nocompile"
-            }
 
         const enumVals: Map<string> = {
             "true": "1",
@@ -182,6 +191,8 @@ namespace pxt.cpp {
             return name.trim().replace(/[\_\*]$/, "")
         }
 
+        let makefile = ""
+
         for (const pkg of mainPkg.sortedDeps()) {
             if (pkg.getFiles().indexOf(constsName) >= 0) {
                 const src = pkg.host().readFile(pkg, constsName)
@@ -192,6 +203,9 @@ namespace pxt.cpp {
                         enumVals[m[1]] = m[2]
                     }
                 })
+            }
+            if (!makefile && pkg.getFiles().indexOf("Makefile") >= 0) {
+                makefile = pkg.host().readFile(pkg, "Makefile")
             }
         }
 
@@ -251,6 +265,7 @@ namespace pxt.cpp {
 
                     case "bool": return "boolean";
                     case "StringData*": return "string";
+                    case "String": return "string";
                     case "ImageLiteral": return "string";
                     case "Action": return "() => void";
 
@@ -352,7 +367,7 @@ namespace pxt.cpp {
                         currAttrs = ""
                         currDocComment = ""
                     }
-                    enumsDTS.write(`declare enum ${toJs(enM[2])} ${enM[3]}`)
+                    enumsDTS.write(`declare const enum ${toJs(enM[2])} ${enM[3]}`)
 
                     if (!isHeader) {
                         protos.setNs(currNs)
@@ -514,10 +529,10 @@ namespace pxt.cpp {
                         protos.write(`${retTp} ${funName}(${origArgs});`)
                     }
                     res.functions.push(fi)
-                    if (isPlatformio)
-                        pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
-                    else
+                    if (isYotta)
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
+                    else
+                        pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
                     return;
                 }
 
@@ -566,6 +581,9 @@ namespace pxt.cpp {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
 
+            if (res.npmDependencies && pkg.config.npmDependencies)
+                U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
+
             let json = pkg.config.yotta
             if (!json) return;
 
@@ -607,7 +625,7 @@ namespace pxt.cpp {
 
 
         // This is overridden on the build server, but we need it for command line build
-        if (!isPlatformio && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+        if (isYotta && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             let cs = pxt.appTarget.compileService
             U.assert(!!cs.yottaCorePackage);
             U.assert(!!cs.githubCorePackage);
@@ -635,11 +653,13 @@ namespace pxt.cpp {
                     let isHeader = U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ".cpp")) {
                         let fullName = pkg.config.name + "/" + fn
-                        if (pkg.config.name == "core" && isHeader)
+                        if ((pkg.config.name == "base" || pkg.config.name == "core") && isHeader)
                             fullName = fn
                         if (isHeader)
-                            includesInc += `#include "${isPlatformio ? "" : sourcePath.slice(1)}${fullName}"\n`
+                            includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`
                         let src = pkg.readFile(fn)
+                        if (src == null)
+                            U.userError(lf("C++ file {0} is missing in package {1}.", fn, pkg.config.name))
                         fileName = fullName
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         src = parseCpp(src, isHeader)
@@ -652,7 +672,7 @@ namespace pxt.cpp {
                     }
                     if (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s")) {
                         let src = pkg.readFile(fn)
-                        res.extensionFiles[sourcePath + pkg.config.name + "/" + fn] = src
+                        res.extensionFiles[sourcePath + pkg.config.name + "/" + fn.replace(/\.S$/, ".s")] = src
                     }
                 }
                 if (thisErrors) {
@@ -667,7 +687,30 @@ namespace pxt.cpp {
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
         const configJson = U.jsonUnFlatten(optSettings)
-        if (isPlatformio) {
+        if (isDockerMake) {
+            let packageJson = {
+                name: "pxt-app",
+                private: true,
+                dependencies: res.npmDependencies,
+            }
+            res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
+        } else if (isCodal) {
+            let cs = pxt.appTarget.compileService
+            let codalJson = {
+                "target": cs.codalTarget + ".json",
+                "definitions": U.clone(cs.codalDefinitions) || {},
+                "application": "pxtapp",
+                "output_folder": "build",
+                // include these, because we use hash of this file to see if anything changed
+                "pxt_gitrepo": cs.githubCorePackage,
+                "pxt_gittag": cs.gittag,
+            }
+            U.iterMap(U.jsonFlatten(configJson), (k, v) => {
+                k = k.toUpperCase().replace(/\./g, "_").replace("CODAL_", "DEVICE_")
+                codalJson.definitions[k] = v
+            })
+            res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
+        } else if (isPlatformio) {
             const iniLines = pxt.appTarget.compileService.platformioIni.slice()
             // TODO merge configjson
             iniLines.push("lib_deps =")
@@ -701,7 +744,8 @@ namespace pxt.cpp {
 
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
-        res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
+        if (isYotta)
+            res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
         res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
 #ifdef PXT_MAIN
@@ -715,6 +759,24 @@ int main() {
 }
 #endif
 `
+        if (makefile) {
+            let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
+            let inc = ""
+            let objs: string[] = []
+            let add = (name: string, ext: string) => {
+                let files = allfiles.filter(f => U.endsWith(f, ext)).map(s => s.slice(1))
+                inc += `${name} = ${files.join(" ")}\n`
+            }
+            add("PXT_C", ".c")
+            add("PXT_CPP", ".cpp")
+            add("PXT_S", ".s")
+            add("PXT_HEADERS", ".h")
+            inc += "PXT_SOURCES = $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
+            inc += "PXT_OBJS = $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
+            res.generatedFiles["/Makefile"] = makefile
+            res.generatedFiles["/Makefile.inc"] = inc
+
+        }
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)
@@ -723,7 +785,7 @@ int main() {
             config: compileService.serviceId,
             tag: compileService.gittag,
             replaceFiles: tmp,
-            dependencies: (!isPlatformio ? res.yotta.dependencies : null)
+            dependencies: (isYotta ? res.yotta.dependencies : null)
         }
 
         let data = JSON.stringify(creq)
@@ -877,10 +939,20 @@ int main() {
 
         let rawEmbed: RawEmbed
 
-        let bin = pxt.appTarget.compile.useUF2 ? ts.pxtc.UF2.toBin(dat) : undefined;
-        if (bin) {
-            rawEmbed = extractSourceFromBin(bin.buf)
-        } else {
+        // UF2?
+        if (pxt.HF2.read32(dat, 0) == ts.pxtc.UF2.UF2_MAGIC_START0) {
+            let bin = ts.pxtc.UF2.toBin(dat)
+            if (bin)
+                rawEmbed = extractSourceFromBin(bin.buf)
+        }
+
+        // ELF?
+        if (pxt.HF2.read32(dat, 0) == 0x464c457f) {
+            rawEmbed = extractSourceFromBin(dat)
+        }
+
+        // HEX? (check for colon)
+        if (dat[0] == 0x3a) {
             let str = fromUTF8Bytes(dat);
             rawEmbed = extractSource(str || "")
         }

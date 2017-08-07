@@ -12,9 +12,10 @@ namespace ts.pxtc {
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const BINARY_JS = "binary.js";
-    export const BINARY_HEX = "binary.hex";
     export const BINARY_ASM = "binary.asm";
+    export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
+    export const BINARY_ELF = "binary.elf";
 
     export interface ParameterDesc {
         name: string;
@@ -128,6 +129,7 @@ namespace ts.pxtc {
         // On block
         subcategory?: string;
         group?: string;
+        whenUsed?: boolean;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -316,14 +318,26 @@ namespace ts.pxtc {
                     }
                 }
                 else if (fn.attributes.block && locBlock) {
-                    fn.attributes.block = locBlock;
+                    const ps = pxt.blocks.parameterNames(fn);
+                    const oldBlock = fn.attributes.block;
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    if (oldBlock != fn.attributes.block) {
+                        const locps = pxt.blocks.parameterNames(fn);
+                        if (JSON.stringify(ps) != JSON.stringify(locps)) {
+                            pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
+                            fn.attributes.block = oldBlock;
+                        }
+                    }
                 }
             }))
             .then(() => apis);
     }
 
     export function emptyExtInfo(): ExtensionInfo {
-        const pio = pxt.appTarget.compileService && !!pxt.appTarget.compileService.platformioIni;
+        let cs = pxt.appTarget.compileService
+        if (!cs) cs = {} as any
+        const pio = !!cs.platformioIni;
+        const docker = cs.buildEngine == "dockermake";
         const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},
@@ -335,6 +349,7 @@ namespace ts.pxtc {
             onlyPublic: true
         }
         if (pio) r.platformio = { dependencies: {} };
+        else if (docker) r.npmDependencies = {};
         else r.yotta = { config: {}, dependencies: {} };
         return r;
     }
@@ -532,12 +547,18 @@ namespace ts.pxtc {
         export const UF2_MAGIC_START1 = 0x9E5D5157; // Randomly selected
         export const UF2_MAGIC_END = 0x0AB16F30;    // Ditto
 
+        export const UF2_FLAG_NONE = 0x00000000
+        export const UF2_FLAG_NOFLASH = 0x00000001
+        export const UF2_FLAG_FILE = 0x00001000
+
         export interface Block {
             flags: number;
             targetAddr: number;
             payloadSize: number;
             blockNo: number;
             numBlocks: number;
+            fileSize: number;
+            filename?: string;
             data: Uint8Array;
         }
 
@@ -549,13 +570,28 @@ namespace ts.pxtc {
                 wordAt(0) != UF2_MAGIC_START0 || wordAt(4) != UF2_MAGIC_START1 ||
                 wordAt(block.length - 4) != UF2_MAGIC_END)
                 return null
+            let flags = wordAt(8)
+            let payloadSize = wordAt(16)
+            if (payloadSize > 476)
+                payloadSize = 256
+            let filename: string = null
+            if (flags & UF2_FLAG_FILE) {
+                let fnbuf = block.slice(32 + payloadSize)
+                let len = fnbuf.indexOf(0)
+                if (len >= 0) {
+                    fnbuf = fnbuf.slice(0, len)
+                }
+                filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
+            }
             return {
-                flags: wordAt(8),
+                flags,
                 targetAddr: wordAt(12),
-                payloadSize: wordAt(16),
+                payloadSize,
                 blockNo: wordAt(20),
                 numBlocks: wordAt(24),
-                data: block.slice(32, 512 - 4)
+                fileSize: wordAt(28),
+                data: block.slice(32, 32 + payloadSize),
+                filename
             }
         }
 
@@ -627,6 +663,166 @@ namespace ts.pxtc {
             }
             return res
         }
+
+        function setWord(block: Uint8Array, ptr: number, v: number) {
+            block[ptr] = (v & 0xff)
+            block[ptr + 1] = ((v >> 8) & 0xff)
+            block[ptr + 2] = ((v >> 16) & 0xff)
+            block[ptr + 3] = ((v >> 24) & 0xff)
+        }
+
+        export interface BlockFile {
+            currBlock: Uint8Array;
+            currPtr: number;
+            blocks: Uint8Array[];
+            ptrs: number[];
+            filename?: string;
+            filesize: number;
+        }
+
+        export function newBlockFile(): BlockFile {
+            return {
+                currBlock: null,
+                currPtr: -1,
+                blocks: [],
+                ptrs: [],
+                filesize: 0
+            }
+        }
+
+        export function finalizeFile(f: BlockFile) {
+            for (let i = 0; i < f.blocks.length; ++i) {
+                setWord(f.blocks[i], 20, i)
+                setWord(f.blocks[i], 24, f.blocks.length)
+                if (f.filename)
+                    setWord(f.blocks[i], 28, f.filesize)
+            }
+        }
+
+        export function concatFiles(fs: BlockFile[]) {
+            for (let f of fs) {
+                finalizeFile(f)
+                f.filename = null
+            }
+            let r = newBlockFile()
+            r.blocks = U.concat(fs.map(f => f.blocks))
+            for (let f of fs) {
+                f.blocks = []
+            }
+            return r
+        }
+
+        export function serializeFile(f: BlockFile) {
+            finalizeFile(f)
+            let res = ""
+            for (let b of f.blocks)
+                res += Util.uint8ArrayToString(b)
+            return res
+        }
+
+        export function readBytesFromFile(f: BlockFile, addr: number, length: number): Uint8Array {
+            //console.log(`read @${addr} len=${length}`)
+            let needAddr = addr >> 8
+            let bl: Uint8Array
+            if (needAddr == f.currPtr)
+                bl = f.currBlock
+            else {
+                for (let i = 0; i < f.ptrs.length; ++i) {
+                    if (f.ptrs[i] == needAddr) {
+                        bl = f.blocks[i]
+                        break
+                    }
+                }
+                if (bl) {
+                    f.currPtr = needAddr
+                    f.currBlock = bl
+                }
+            }
+            if (!bl)
+                return null
+            let res = new Uint8Array(length)
+            let toRead = Math.min(length, 256 - (addr & 0xff))
+            U.memcpy(res, 0, bl, (addr & 0xff) + 32, toRead)
+            let leftOver = length - toRead
+            if (leftOver > 0) {
+                let le = readBytesFromFile(f, addr + toRead, leftOver)
+                U.memcpy(res, toRead, le)
+            }
+            return res
+        }
+
+        export function writeBytes(f: BlockFile, addr: number, bytes: ArrayLike<number>) {
+            let currBlock = f.currBlock
+            let needAddr = addr >> 8
+
+            // account for unaligned writes
+            let thisChunk = 256 - (addr & 0xff)
+            if (bytes.length > thisChunk) {
+                let b = new Uint8Array(bytes)
+                writeBytes(f, addr, b.slice(0, thisChunk))
+                while (thisChunk < bytes.length) {
+                    let nextOff = Math.min(thisChunk + 256, bytes.length)
+                    writeBytes(f, addr + thisChunk, b.slice(thisChunk, nextOff))
+                    thisChunk = nextOff
+                }
+                return
+            }
+
+            if (needAddr != f.currPtr) {
+                let i = 0;
+                currBlock = null
+                for (let i = 0; i < f.ptrs.length; ++i) {
+                    if (f.ptrs[i] == needAddr) {
+                        currBlock = f.blocks[i]
+                        break
+                    }
+                }
+                if (!currBlock) {
+                    currBlock = new Uint8Array(512)
+                    setWord(currBlock, 0, UF2_MAGIC_START0)
+                    setWord(currBlock, 4, UF2_MAGIC_START1)
+                    setWord(currBlock, 8, f.filename ? UF2_FLAG_FILE : UF2_FLAG_NONE)
+                    setWord(currBlock, 12, needAddr << 8)
+                    setWord(currBlock, 16, 256)
+                    setWord(currBlock, 20, f.blocks.length)
+                    setWord(currBlock, 512 - 4, UF2_MAGIC_END)
+                    if (f.filename) {
+                        U.memcpy(currBlock, 32 + 256, U.stringToUint8Array(U.toUTF8(f.filename)))
+                    }
+                    f.blocks.push(currBlock)
+                    f.ptrs.push(needAddr)
+                }
+                f.currPtr = needAddr
+                f.currBlock = currBlock
+            }
+            let p = (addr & 0xff) + 32
+            for (let i = 0; i < bytes.length; ++i)
+                currBlock[p + i] = bytes[i]
+            f.filesize = Math.max(f.filesize, bytes.length + addr)
+        }
+
+        export function writeHex(f: BlockFile, hex: string[]) {
+            let upperAddr = "0000"
+
+            for (let i = 0; i < hex.length; ++i) {
+                let m = /:02000004(....)/.exec(hex[i])
+                if (m) {
+                    upperAddr = m[1]
+                }
+                m = /^:..(....)00(.*)[0-9A-F][0-9A-F]$/.exec(hex[i])
+                if (m) {
+                    let newAddr = parseInt(upperAddr + m[1], 16)
+                    let hh = m[2]
+                    let arr: number[] = []
+                    for (let j = 0; j < hh.length; j += 2) {
+                        arr.push(parseInt(hh[j] + hh[j + 1], 16))
+                    }
+                    writeBytes(f, newAddr, arr)
+                }
+            }
+        }
+
+
     }
 }
 

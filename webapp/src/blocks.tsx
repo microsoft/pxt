@@ -406,6 +406,7 @@ export class Editor extends srceditor.Editor {
                 pxt.tickActivity("blocks.create", "blocks.create." + blockId);
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
+                this.parent.setState({ hideEditorFloats: false });
             }
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {

@@ -1308,7 +1308,9 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         const browserify = require('browserify');
         let b = browserify();
         nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
-            b.add(f);
+            if (f.match(/\.js$/)) {
+                b.add(f);
+            }
         });
 
         let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
@@ -2118,8 +2120,14 @@ class Host
             }
         }
         check(p)
+
         if (U.endsWith(filename, ".uf2"))
             fs.writeFileSync(p, contents, "base64")
+        else if (U.endsWith(filename, ".elf"))
+            fs.writeFileSync(p, contents, {
+                encoding: "base64",
+                mode: 0o777
+            })
         else
             fs.writeFileSync(p, contents, "utf8")
     }
@@ -3297,7 +3305,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }));
             }
 
-            console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
+            console.log(`Package built; written to ${pxt.outputName()}; size: ${(res.outfiles[pxt.outputName()] || "").length}`)
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
@@ -3395,7 +3403,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
 
-    const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f));
+    const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f)).reverse();
     const knownFolders: Map<boolean> = {};
     const ensureFolderAsync = (crowdd: string) => {
         if (!knownFolders[crowdd]) {
@@ -3405,23 +3413,24 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         }
         return Promise.resolve();
     }
-    const nextFileAsync = (): Promise<void> => {
-        const f = todo.pop();
+    const nextFileAsync = (f: string): Promise<void> => {
         if (!f) return Promise.resolve();
         const crowdf = path.join(crowdinDir, f);
         const crowdd = path.dirname(crowdf);
         // check if directory has a .crowdinignore file
-        if (nodeutil.fileExistsSync(path.join(path.dirname(f), ".crowdinignore")))
+        if (nodeutil.fileExistsSync(path.join(path.dirname(f), ".crowdinignore"))) {
+            pxt.log(`skpping ${f} because of .crowdinignore file`)
             return Promise.resolve();
+        }
 
         const data = fs.readFileSync(f, 'utf8');
         pxt.log(`uploading ${f} to ${crowdf}`);
         return ensureFolderAsync(crowdd)
             .then(() => pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, data))
-            .then(nextFileAsync);
+            .then(() => nextFileAsync(todo.pop()));
     }
     return ensureFolderAsync(path.join(crowdinDir, srcDir))
-        .then(nextFileAsync);
+        .then(() => nextFileAsync(todo.pop()));
 }
 
 function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {

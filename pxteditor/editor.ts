@@ -141,6 +141,7 @@ namespace pxt.editor {
         exitTutorial(keep?: boolean): void;
         completeTutorial(): void;
         showTutorialHint(): void;
+        gettingStarted(): void;
 
         anonymousPublishAsync(): Promise<string>;
 

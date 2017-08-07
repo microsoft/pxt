@@ -200,9 +200,9 @@ namespace ts.pxtc.thumb {
             if (v % 2) return pxtc.assembler.emitErr("uneven BL?", actual);
             let off = v / 2
             assert(off != null)
+            // Range is +-4M (i.e., 2M instructions)
             if ((off | 0) != off ||
-                // we can actually support more but the board has 256k (128k instructions)
-                !(-128 * 1024 <= off && off <= 128 * 1024))
+                !(-2 * 1024 * 1024 < off && off < 2 * 1024 * 1024))
                 return pxtc.assembler.emitErr("jump out of range", actual);
 
             // note that off is already in instructions, not bytes

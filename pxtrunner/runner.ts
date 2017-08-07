@@ -342,6 +342,8 @@ namespace pxt.runner {
                             let body = $('body');
                             body.addClass('tutorial');
                             return renderTutorialAsync(content, src);
+                        case "book":
+                            return renderBookAsync(content, src);
                         default:
                             return renderMarkdownAsync(content, src);
                     }
@@ -370,7 +372,7 @@ namespace pxt.runner {
         }
 
         function renderHash() {
-            let m = /^#(doc|md|tutorial):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
+            let m = /^#(doc|md|tutorial|book):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
@@ -419,6 +421,39 @@ ${files["main.ts"]}
         docid = docid.replace(/^\//, "");
         return pxt.Cloud.downloadMarkdownAsync(docid, editorLocale, pxt.Util.localizeLive)
             .then(md => renderMarkdownAsync(content, md, { path: docid }))
+    }
+
+    function renderBookAsync(content: HTMLElement, summaryid: string): Promise<void> {
+        summaryid = summaryid.replace(/^\//, "");
+        pxt.tickEvent('book', { id: summaryid });
+        pxt.log(`rendering book from ${summaryid}`)
+        let toc: TOCMenuEntry[];
+        return pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive)
+            .then(summary => {
+                toc = pxt.docs.buildTOC(summary);
+                pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
+                const tocsp: Promise<void>[] = [];
+                pxt.docs.visitTOC(toc, entry => {
+                    if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
+                    tocsp.push(
+                        pxt.Cloud.downloadMarkdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
+                            .then(md => {
+                                entry.markdown = md;
+                            }, e => {
+                                entry.markdown = `_${entry.path} failed to load._`;
+                            })
+                    )
+                });
+                return Promise.all(tocsp);
+            })
+            .then(pages => {
+                let md = toc[0].name;
+                pxt.docs.visitTOC(toc, entry => {
+                    if (entry.markdown)
+                        md += '\n\n' + entry.markdown
+                });
+                return renderMarkdownAsync(content, md);
+            })
     }
 
     const template = `

@@ -400,7 +400,31 @@ div.simframe > iframe {
 }
 
 .ui.modal.projectsdialog .group {
-    padding:1rem;
+    padding: 1rem;
+}
+
+.ui.modal.projectsdialog .group .cards .card .button.iconcontent {
+    min-height: 4em;
+}
+
+.ui.modal.projectsdialog .labelsgroup {
+    display: block;
+    position: relative;
+    min-height: 18em;
+}
+
+.ui.modal.projectsdialog h2.editorname {
+    top: 20%;
+    width: calc(100% - 2rem);
+    text-align: center;
+    position: absolute;
+    display: block;
+}
+
+.ui.modal.projectsdialog .loader.editoravatar {
+    display: block;
+    position: absolute;
+    top: 50%;
 }
 
 .ui.modal.projectsdialog > .content {
@@ -1200,6 +1224,17 @@ Field editors
     }
 }
 
+/* Custom width treshold to force vertical stacking on the start page */
+@media only screen and (max-width: 1095px) {
+    .ui.modal.projectsdialog h2.editorname {
+        top: 5%;
+    }
+
+    .ui.modal.projectsdialog .loader.editoravatar {
+        top: 60%;
+    }
+}
+
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
     /* Blockly */
@@ -1230,6 +1265,10 @@ Field editors
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
         bottom: @editorToolsCollapsedHeight;
+    }
+
+    .ui.modal.projectsdialog h2.editorname {
+        font-size: 1.2rem;
     }
 }
 
