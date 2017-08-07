@@ -51,6 +51,7 @@ text-align: center;
 .blocklyWidgetDiv .blocklyGridPickerMenu {
 display: table;
 outline: none;
+height: 100%;
 }
 
 .blocklyGridPickerSearchBar::before {
@@ -107,4 +108,8 @@ display: none;
 
 .blocklyGridPickerTooltip {
 z-index: 100000; /* big value for bootstrap3 compatibility */
+}
+
+.blocklyWidgetDiv .blocklyGridPickerMenu .blocklyGridPickerRow .goog-menuitem {
+float: left;
 }

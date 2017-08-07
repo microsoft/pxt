@@ -111,6 +111,7 @@ namespace pxtblockly {
             this.disposeTooltips();
 
             const options = this.getOptions();
+            //options = [options[0], options[1]];
 
             // Container for the menu rows
             const tableContainer = new goog.ui.Control();
