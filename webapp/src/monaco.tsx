@@ -563,6 +563,7 @@ export class Editor extends srceditor.Editor {
             false, null, () => {
                 this.showAdvanced = !this.showAdvanced;
                 this.updateToolbox();
+                this.resize();
             }, lf("{id:category}Advanced")))
         }
 
