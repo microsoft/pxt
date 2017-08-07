@@ -175,6 +175,7 @@ function blockTestAsync(name: string) {
         }, err => fail(`Unable to get ${name}.ts: ` + JSON.stringify(err)))
         .then(blocksInfo => {
             const workspace = new Blockly.Workspace();
+            (Blockly as any).mainWorkspace = workspace;
             const xml = Blockly.Xml.textToDom(blocksFile);
             Blockly.Xml.domToWorkspace(xml, workspace);
 
