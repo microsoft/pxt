@@ -131,6 +131,7 @@ namespace pxtblockly {
             const searchBar = document.createElement("input");
             searchBar.setAttribute("type", "text");
             searchBar.setAttribute("id", "search-bar");
+            searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
             searchBar.addEventListener("click", () => {searchBar.focus()});
             searchBar.addEventListener("keyup", () => {
                 let prefix = searchBar.value;
