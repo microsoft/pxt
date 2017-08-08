@@ -17,11 +17,17 @@ export class LogView extends React.Component<{}, LogViewState> {
 
     constructor(props: any) {
         super(props);
+        let chromeExtension = pxt.appTarget.serial ? pxt.appTarget.serial.chromeExtension : undefined;
+        if (!chromeExtension) {
+            const m = /chromeserial=([a-z]+)/i.exec(window.location.href);
+            if (m) chromeExtension = m[1];
+        }
         this.view = new pxsim.logs.LogViewElement({
             maxEntries: 80,
             maxAccValues: 500,
             onClick: (es) => this.onClick(es),
-            onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() })
+            onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() }),
+            chromeExtension
         })
         this.state = {};
     }
