@@ -74,6 +74,10 @@ export class DTW<SampleType> {
     private te: number;
     private ts: number;
 
+    public getTick() {
+        return this.t;
+    }
+
 
     constructor(_refPrototype: SampleType[], _threshold: number, _classNum: number, _avgProtoLen: number,
                 _distFun: (a: SampleType, b: SampleType) => number) {

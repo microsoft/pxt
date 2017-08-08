@@ -58,6 +58,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private recorder: Recorder.Recorder;
     private curGestureIndex: number;
 
+    private models: Model.SingleDTWCore[];
+
     lastConnectedTime: number;
 
     constructor(props: ISettingsProps) {
@@ -74,6 +76,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         };
 
         this.lastConnectedTime = 0;
+        this.models = [];
 
         p = this.props.parent;
 
@@ -115,6 +118,23 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     this.graphZ.update(newData.accVec.Z);
 
                     this.recorder.Feed(newData.accVec);
+
+                    if (this.models[this.curGestureIndex].isRunning()) {
+                        let match = this.models[this.curGestureIndex].Feed(newData.accVec);
+                        if (match.classNum != 0) {
+                            console.log("RECOGNIZED GESTURE");
+                            // TODO: add moving window that will show it has recognized something...
+                            // in particular, it will be a rectangle on top of the graph with these dimensions (at each data tick):
+
+                            let distFromRightEnd = this.models[this.curGestureIndex].getTick() - match.Te;
+                            let width = match.Te - match.Ts;
+
+                            // one way to implement this would be to create a RecognitionRectangle with a run() function
+                            // push them into an array (because we might have more than one that needs to be shown at each tick)
+                            // and then call the run() function on each element inside the array on each tick()
+                            // though I'm sure that there would definitely be nicer ways to visualize this...
+                        }
+                    }
                 }
             }
         };
@@ -158,6 +178,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.state.data.push(new Types.Gesture());
             // TODO: change this method of keeping the current gesture index to something more reliable
             this.curGestureIndex = this.state.data.length - 1;
+            this.models.push(new Model.SingleDTWCore(this.state.data[this.curGestureIndex].gestureID + 1));
         }
 
         const editGesture = (gestureID: number) => {
@@ -264,11 +285,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
                     let cloneData = gestureState.state.data.slice();
                     cloneData[gestureIndex].gestures.push(newSample);
+                    this.models[this.curGestureIndex].Update(cloneData[gestureIndex].getCroppedData());
 
                     this.setState({ data: cloneData });
                 }
 
-                this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressToToggle, onNewSampleRecorded);
+                this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressAndHold, onNewSampleRecorded);
                 this.recorderInitialized = true;
             }
         }

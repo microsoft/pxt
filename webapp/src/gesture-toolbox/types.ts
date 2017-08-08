@@ -24,13 +24,13 @@ export class Gesture {
         this.gestureID = Gesture.id++;
     }
 
-    public getData(): Vector[][] {
+    public getCroppedData(): Vector[][] {
         let all_data: Vector[][] = [];
 
         for (let i = 0; i < this.gestures.length; i++) {
             let sample: Vector[] = [];
 
-            for (let j = 0; j < this.gestures[i].rawData.length; j++) {
+            for (let j = this.gestures[i].cropStartIndex; j <= this.gestures[i].cropEndIndex; j++) {
                 sample.push(this.gestures[i].rawData[j].clone());
             }
 

@@ -12,7 +12,15 @@ export class SingleDTWCore {
     public threshold: number;
     public avgLength: number;
 
-    public running: boolean;
+    private running: boolean;
+
+    public isRunning() {
+        return this.running;
+    }
+
+    public getTick() {
+        return this.dtw.getTick();
+    }
 
     constructor(classNum: number) {
         this.classNumber = classNum;
@@ -55,7 +63,7 @@ export class SingleDTWCore {
         // reset the Spring algorithm
         this.dtw = new Algorithms.DTW<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
         this.running = true;
-        this.GenerateBlock();
+        // this.GenerateBlock();
     }
 
 
@@ -70,7 +78,7 @@ export class SingleDTWCore {
  * Gesture blocks
  */
 //% weight=100 color=#d3a226 icon=""
-namespace custom {
+namespace Gesture {
     let MY_EVENT_SRC: number = 873;
     let is_initialized: boolean = false;
 
@@ -277,12 +285,6 @@ class SpringAlgorithm {
     }
 }
 `;
-        // pkg.mainEditorPkg().setFile("custom.ts", gestureTS);
-        // pkg.mainEditorPkg().saveFilesAsync();
-        
-        // this will make sure that the blockly editor will reload according to the editted custom.ts file
-        // the sync function will run in the main loop inside show() of gesture.tsx
-        // SingleDTWCore.needsReload = true;
 
         return gestureTS;
     }
@@ -301,5 +303,3 @@ class SpringAlgorithm {
         return vecStr;
     }
 }
-
-export let core = new SingleDTWCore(1);
