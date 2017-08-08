@@ -17,17 +17,24 @@ export class LogView extends React.Component<{}, LogViewState> {
 
     constructor(props: any) {
         super(props);
-        let chromeExtension = pxt.appTarget.serial ? pxt.appTarget.serial.chromeExtension : undefined;
-        if (!chromeExtension) {
-            const m = /chromeserial=([a-z]+)/i.exec(window.location.href);
-            if (m) chromeExtension = m[1];
-        }
+
+        // resolve chrome extension info
+        const serial = pxt.appTarget.serial || {};
+        let chromeExtension = serial.chromeExtension;
+        const m = /chromeserial=([a-z]+)/i.exec(window.location.href);
+        if (m) chromeExtension = m[1];
+
+        // init view
         this.view = new pxsim.logs.LogViewElement({
             maxEntries: 80,
             maxAccValues: 500,
             onClick: (es) => this.onClick(es),
             onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() }),
-            chromeExtension
+            chromeExtension,
+            useHF2: serial.useHF2,
+            productId: serial.productId,
+            vendorId: serial.vendorId,
+            nameFilter: serial.nameFilter
         })
         this.state = {};
     }
@@ -42,7 +49,7 @@ export class LogView extends React.Component<{}, LogViewState> {
     }
 
     render() {
-        return <div/>
+        return <div />
     }
 
     componentDidUpdate() {
