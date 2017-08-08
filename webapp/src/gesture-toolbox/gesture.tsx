@@ -25,6 +25,11 @@ type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
+const MediaStreamRecorder = require("msr");
+let nav = navigator as any;
+let mediaStream: any;
+let mediaRecorder: any;
+
 export const gesturesContainerID: string = "gestures-container";
 export const connectionIndicatorID: string = "connection-indicator";
 
@@ -47,6 +52,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
 
+    private graphInitialized: boolean;
+    private webcamInitialized: boolean;
+
     lastConnectedTime: number;
 
     constructor(props: ISettingsProps) {
@@ -66,73 +74,99 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         Recorder.initKeyboard();
         p = this.props.parent;
+
+        this.graphInitialized = false;
+        this.webcamInitialized = false;
     }
 
     componentDidUpdate() {
-        if (this.state.editGestureMode) {
-            let wasRecording = false;
 
-            Webcam.init("webcam-video");
+        // if (this.state.editGestureMode) {
+        //     let wasRecording = false;
 
-            this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red");
-            this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
-            this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
+        //     Webcam.init("webcam-video");
 
-            if (hidbridge.shouldUse()) {
-                hidbridge.initAsync()
-                .then(dev => {
-                    dev.onSerial = (buf, isErr) => {
-                        let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
-                        let newData = Recorder.parseString(strBuf);
+        //     this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red");
+        //     this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
+        //     this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
 
-                        if (newData.acc) {
-                            this.graphX.update(newData.accVec.X, Viz.smoothedLine);
-                            this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
-                            this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
+            // if (hidbridge.shouldUse()) {
+            //     hidbridge.initAsync()
+            //     .then(dev => {
+            //         dev.onSerial = (buf, isErr) => {
+            //             let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+            //             let newData = Recorder.parseString(strBuf);
 
-                            this.lastConnectedTime = Date.now();
-                        }
+            //             if (newData.acc) {
+            //                 this.graphX.update(newData.accVec.X, Viz.smoothedLine);
+            //                 this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
+            //                 this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
 
-                        if (Model.core.running) {
-                            Viz.d3.select("#prediction-span")
-                                .html(Model.core.Feed(newData.accVec).classNum);
-                        }
+            //                 this.lastConnectedTime = Date.now();
+            //             }
 
-                        if (wasRecording == false && Recorder.isRecording == true) {
-                            // Recorder.startRecording(newData.accVec, 0, "TestGesture");
-                        }
-                        else if (wasRecording == true && Recorder.isRecording == true) {
-                            // Recorder.continueRecording(newData.accVec);
-                        }
-                        else if (wasRecording == true && Recorder.isRecording == false) {
-                            // Recorder.stopRecording();
-                        }
+            //             if (Model.core.running) {
+            //                 Viz.d3.select("#prediction-span")
+            //                     .html(Model.core.Feed(newData.accVec).classNum);
+            //             }
 
-                        wasRecording = Recorder.isRecording;
-                    }
-                });
-            }
+            //             if (wasRecording == false && Recorder.isRecording == true) {
+            //                 // Recorder.startRecording(newData.accVec, 0, "TestGesture");
+            //             }
+            //             else if (wasRecording == true && Recorder.isRecording == true) {
+            //                 // Recorder.continueRecording(newData.accVec);
+            //             }
+            //             else if (wasRecording == true && Recorder.isRecording == false) {
+            //                 // Recorder.stopRecording();
+            //             }
 
-            // Viz.d3.select("#program-streamer-btn").on("click", () => {
+            //             wasRecording = Recorder.isRecording;
+            //         }
+            //     });
+            // }
 
-            // });
+        //     // Viz.d3.select("#program-streamer-btn").on("click", () => {
 
-            Viz.d3.select("#generate-block").on("click", () => {
-                this.props.parent.updateFileAsync("custom.ts", Model.core.GenerateBlock());
-            });
-        }
+        //     // });
+
+        //     Viz.d3.select("#generate-block").on("click", () => {
+        //         this.props.parent.updateFileAsync("custom.ts", Model.core.GenerateBlock());
+        //     });
+        // }
     }
 
 
     hide() {
         this.setState({ visible: false, editGestureMode: false });
+        this.graphInitialized = false;
+        this.webcamInitialized = false;
 
-        Webcam.mediaStream.stop();
+        mediaStream.stop();
     }
 
 
     show() {
         this.setState({ visible: true });
+
+        if (hidbridge.shouldUse()) {
+            hidbridge.initAsync()
+            .then(dev => {
+                dev.onSerial = (buf, isErr) => {
+                    let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+                    let newData = Recorder.parseString(strBuf);
+
+                    this.lastConnectedTime = Date.now();
+
+                    if (this.state.editGestureMode && this.state.connected) {
+                        if (newData.acc && this.graphZ.isInitialized()) {
+                            this.graphX.update(newData.accVec.X);
+                            this.graphY.update(newData.accVec.Y);
+                            this.graphZ.update(newData.accVec.Z);
+                        }
+                    }
+                }
+            });
+        }
     }
 
 
@@ -153,22 +187,29 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     }
 
     renderCore() {
-        
-        const { visible } = this.state;
+        const targetTheme = pxt.appTarget.appTheme;
 
         const backToMain = () => {
             this.setState({ editGestureMode: false });
+            this.graphInitialized = false;
+            this.webcamInitialized = false;
+
+            mediaStream.stop();
         }
 
         const newGesture = () => {
             this.setState({ editGestureMode: true });
+            this.graphInitialized = false;
+            this.webcamInitialized = false;
+            // TODO: merge into a reset function
         }
 
         const importGesture = () => {
         }
 
         const onConnectionStatusChange = (connectionStatus: boolean) => {
-            this.setState({ connected: connectionStatus });
+            if (this.state.connected != connectionStatus)
+                this.setState({ connected: connectionStatus });
         }
 
         const onSampleDelete = (gid: number, sid: number) => {
@@ -197,7 +238,50 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ data: cloneArray });
         }
 
-        const targetTheme = pxt.appTarget.appTheme;
+        const initGraph = (elem: any) => {
+            if (elem != null && !this.graphInitialized) {
+                // initialize SVG
+                let graph = Viz.d3.select(elem);
+
+                let svgX_rt = graph.select("#realtime-graph-x");
+                let svgY_rt = graph.select("#realtime-graph-y");
+                let svgZ_rt = graph.select("#realtime-graph-z");
+
+                let width = graph.node().offsetWidth - 2 * 16;
+                let height = 75;
+                let maxVal = 2450;
+                let dx = 7;
+
+                this.graphX = new Viz.RealTimeGraph(svgX_rt, width, height, maxVal, dx, "red");
+                this.graphY = new Viz.RealTimeGraph(svgY_rt, width, height, maxVal, dx, "green");
+                this.graphZ = new Viz.RealTimeGraph(svgZ_rt, width, height, maxVal, dx, "blue");
+
+                this.graphInitialized = true;
+            }
+        }
+
+        const initWebCam = (video: any) => {
+            if (video != null && !this.webcamInitialized) {
+                nav.getUserMedia  = nav.getUserMedia || nav.webkitGetUserMedia ||
+                            nav.mozGetUserMedia || nav.msGetUserMedia;
+
+                if (nav.getUserMedia) {
+                    nav.getUserMedia({audio: false, video: true},
+                        (stream: any) => {
+                            video.autoplay = true;
+                            video.src = window.URL.createObjectURL(stream);
+                            mediaStream = stream;
+
+                            mediaRecorder = new MediaStreamRecorder(stream);
+                            mediaRecorder.mimeType = 'video/mp4';
+                        }, () => {
+                            console.error('unable to initialize webcam');
+                        });
+                }
+
+                this.webcamInitialized = true;
+            }
+        }
 
         return (
             <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
@@ -215,14 +299,14 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         parent={ this }
                         onConnStatChangeHandler={ onConnectionStatusChange }
                         class={ "right floated" }
-                    />  
+                    />
                     {/* <button className="ui button icon huge clear" onClick={() => this.hide() }>
                         <i className="icon close"></i>
                     </button> */}
                 </sui.Segment>
                 <div className="ui segment bottom attached tab active tabsegment">
                 {
-                    this.state.editGestureMode == false ? 
+                    this.state.editGestureMode == false ?
                     <div className="ui">
                         <div className="ui cards">
                             <codecard.CodeCardView
@@ -255,12 +339,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     <div>
                         <div className="ui segment three column grid">
                             <div className="four wide column">
-                                <video id="webcam-video"></video>
+                                <video id="webcam-video" ref={initWebCam}></video>
                             </div>
-                            <div className="nine wide column">
-                                <div className="row graph-x" id="realtime-graph-x"></div>
-                                <div className="row graph-y" id="realtime-graph-y"></div>
-                                <div className="row graph-z" id="realtime-graph-z"></div>
+                            <div className="nine wide column" ref={initGraph}>
+                                <svg className="row" id="realtime-graph-x"></svg>
+                                <svg className="row" id="realtime-graph-y"></svg>
+                                <svg className="row" id="realtime-graph-z"></svg>
                             </div>
                             <div className="three wide column">
                                 <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
@@ -277,7 +361,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
                         <div className="ui segments">
                             {
-                                this.state.data.map((gesture) => 
+                                this.state.data.map((gesture) =>
                                     <div className="ui segment">
                                     {
                                         gesture.gestures.map((sample) =>

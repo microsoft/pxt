@@ -25,62 +25,62 @@ export function initKeyboard() {
 }
 
 
-export function startRecording(newData: Vector, gestIndex: number, gestName: string) {
-    let newSample = new GestureSample();
-    newSample.startTime = Date.now();
-    newSample.rawData.push(newData.clone());
+// export function startRecording(newData: Vector, gestIndex: number, gestName: string) {
+//     let newSample = new GestureSample();
+//     newSample.startTime = Date.now();
+//     newSample.rawData.push(newData.clone());
 
-    if (gestIndex >= recData.length) {
-        let newGesture = new Gesture();
-        newGesture.label = gestIndex + 1;
-        newGesture.name = gestName;
+//     if (gestIndex >= recData.length) {
+//         let newGesture = new Gesture();
+//         newGesture.label = gestIndex + 1;
+//         newGesture.name = gestName;
 
-        recData.push(newGesture);
-    }
+//         recData.push(newGesture);
+//     }
 
-    recData[gestIndex].gestures.push(newSample);
-    recPointer = gestIndex;
+//     recData[gestIndex].gestures.push(newSample);
+//     recPointer = gestIndex;
 
-    Webcam.mediaRecorder.start(15 * 1000);
-}
-
-
-export function continueRecording(newData: Vector) {
-    let cur = recData[recPointer].gestures.length - 1;
-    recData[recPointer].gestures[cur].rawData.push(newData.clone());
-}
+//     Webcam.mediaRecorder.start(15 * 1000);
+// }
 
 
-export function stopRecording() {
-    let cur = recData[recPointer].gestures.length - 1;
-    recData[recPointer].gestures[cur].endTime = Date.now();
+// export function continueRecording(newData: Vector) {
+//     let cur = recData[recPointer].gestures.length - 1;
+//     recData[recPointer].gestures[cur].rawData.push(newData.clone());
+// }
 
-    Webcam.mediaRecorder.stop();
+
+// export function stopRecording() {
+//     let cur = recData[recPointer].gestures.length - 1;
+//     recData[recPointer].gestures[cur].endTime = Date.now();
+
+//     Webcam.mediaRecorder.stop();
 
 
-    Webcam.mediaRecorder.ondataavailable = function (blob: any) {
-        let vid = window.URL.createObjectURL(blob);
-        recData[recPointer].gestures[cur].video = vid;
+//     Webcam.mediaRecorder.ondataavailable = function (blob: any) {
+//         let vid = window.URL.createObjectURL(blob);
+//         recData[recPointer].gestures[cur].video = vid;
 
-        if (cur == 0) {
-            // create the whole container
-            recData[recPointer].displayGesture.rawData = recData[recPointer].gestures[cur].rawData;
-            recData[recPointer].displayGesture.video = recData[recPointer].gestures[cur].video;
+//         if (cur == 0) {
+//             // create the whole container
+//             recData[recPointer].displayGesture.rawData = recData[recPointer].gestures[cur].rawData;
+//             recData[recPointer].displayGesture.video = recData[recPointer].gestures[cur].video;
 
-            Viz.drawContainer(recPointer);
-            Viz.drawVideo(recPointer, vid);
-            Viz.drawGestureSample(recPointer, 0);
-        }
-        else {
-            Viz.drawGestureSample(recPointer, cur);
-        }
+//             Viz.drawContainer(recPointer);
+//             Viz.drawVideo(recPointer, vid);
+//             Viz.drawGestureSample(recPointer, 0);
+//         }
+//         else {
+//             Viz.drawGestureSample(recPointer, cur);
+//         }
 
-        Model.core.Update(recData[recPointer].getData());
-        recData[recPointer].displayGesture.rawData = Model.core.refPrototype;
-        Viz.drawMainGraph(recPointer);
-        storeGestures();
-    };
-}
+//         Model.core.Update(recData[recPointer].getData());
+//         recData[recPointer].displayGesture.rawData = Model.core.refPrototype;
+//         Viz.drawMainGraph(recPointer);
+//         storeGestures();
+//     };
+// }
 
 
 export function parseString(strBuf: string): any {
@@ -107,28 +107,28 @@ export function parseString(strBuf: string): any {
     return result;
 }
 
-export function Reload() {
-    for (let i = 0; i < recData.length; i++) {
-        for (let j = 0; j < recData[i].gestures.length; j++) {
-            if (j == 0) {
-                Viz.drawContainer(i);
-                Viz.drawVideo(i, recData[i].displayGesture.video);
-                Viz.drawMainGraph(i);
-                Viz.drawGestureSample(i, 0);
-            }
-            else {
-                Viz.drawGestureSample(i, j);
-            }
-        }
-    }
-}
+// export function Reload() {
+//     for (let i = 0; i < recData.length; i++) {
+//         for (let j = 0; j < recData[i].gestures.length; j++) {
+//             if (j == 0) {
+//                 Viz.drawContainer(i);
+//                 Viz.drawVideo(i, recData[i].displayGesture.video);
+//                 Viz.drawMainGraph(i);
+//                 Viz.drawGestureSample(i, 0);
+//             }
+//             else {
+//                 Viz.drawGestureSample(i, j);
+//             }
+//         }
+//     }
+// }
 
 
-function storeGestures() {
-    GestureUI.getParent().updateFileAsyncWithoutReload("gestures.json", JSON.stringify(recData));
-}
+// function storeGestures() {
+//     GestureUI.getParent().updateFileAsyncWithoutReload("gestures.json", JSON.stringify(recData));
+// }
 
 
-function loadGestures() {
+// function loadGestures() {
 
-}
+// }
