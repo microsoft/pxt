@@ -334,7 +334,7 @@ ${output}</xml>`;
                     error(expr)
                     return false;
                 }
-                return callInfo.attrs.blockId && !callInfo.isExpression && hasArrowFunction(callInfo);
+                return callInfo.attrs.blockId && !callInfo.attrs.handlerStatement && !callInfo.isExpression && hasArrowFunction(callInfo);
             }
             return false;
         }
@@ -1655,7 +1655,7 @@ ${output}</xml>`;
             }
 
             const hasCallback = hasArrowFunction(info);
-            if (hasCallback && !topLevel) {
+            if (hasCallback && !info.attrs.handlerStatement && !topLevel) {
                 return Util.lf("Events must be top level");
             }
 

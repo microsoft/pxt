@@ -1560,9 +1560,9 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple) return;
+            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
             // is this an event?
-            else if (call && call.hasHandler) {
+            else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
                 // detect if same event is registered already
                 const key = callKey(e, b);
