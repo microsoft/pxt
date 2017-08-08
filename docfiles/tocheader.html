@@ -5,10 +5,10 @@
         Documentation
     </a>
     <div class="item">
-        <form id="tocsearch1" method="get" action="https://www.bing.com/search">
+        <form id="tocsearch1" role="form" method="get" action="https://www.bing.com/search">
             <div class="ui fluid icon input">
                 <input type="hidden" name="q1" value="site:@homeurl@" />
-                <input type="search" name="q" placeholder="Search...">
+                <input type="search" name="q" placeholder="Search..." aria-label="Type anything to search in the documentation">
                 <i onclick="document.getElementById('tocsearch1').submit();" class="search link icon"></i>
             </div>
         </form>
