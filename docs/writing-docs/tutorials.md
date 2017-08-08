@@ -30,7 +30,7 @@ Learning by examples? See the source of an actual tutorial: [**getting-started.m
 The 'Getting Started' tutorial is special tutorial that is linked to a **Getting Started** button shown in the **BLOCKS** view of the editor. This tutorial is written to give a simple, first time introduction to using blocks in the editor.
 
 If the editor has the **Getting Started** button (enabled in [pxtarget.json](/targets/pxtarget) with
-```"sideDoc": "tutorials/getting-started"```), the tutorial linked to it is retrieved from_/docs/tutorials/getting-started.md_.
+```"sideDoc": "tutorials/getting-started"```), the tutorial linked to it is retrieved from _/docs/tutorials/getting-started.md_.
 
 ### Adding tutorials
 
