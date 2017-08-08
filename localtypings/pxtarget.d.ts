@@ -78,7 +78,7 @@ declare namespace pxt {
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
         rawHID?: boolean;
-        log?: boolean;
+        log?: boolean; // pipe messages to log
         chromeExtension?: string; // unique identifier of the chrome extension
     }
 
