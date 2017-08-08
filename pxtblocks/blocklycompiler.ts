@@ -1412,7 +1412,7 @@ namespace pxt.blocks {
         }
 
         // collect local variables.
-        w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach(b => {
             if (b.type == "controls_for" || b.type == "controls_simple_for" || b.type == "controls_for_of") {
                 let x = escapeVarName(b.getFieldValue("VAR"), e);
                 if (b.type == "controls_for_of") {

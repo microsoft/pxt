@@ -2448,7 +2448,7 @@ namespace pxt.blocks {
                         value.appendChild(shadow);
                         let field = goog.dom.createDom('field');
                         field.setAttribute('name', 'NUM');
-                        field.appendChild(document.createTextNode("0"));
+                        field.appendChild(document.createTextNode("1"));
                         shadow.appendChild(field);
                         block.appendChild(value);
                     }
