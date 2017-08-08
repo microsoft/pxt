@@ -79,65 +79,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.webcamInitialized = false;
     }
 
-    componentDidUpdate() {
 
-        // if (this.state.editGestureMode) {
-        //     let wasRecording = false;
-
-        //     Webcam.init("webcam-video");
-
-        //     this.graphX = new Viz.RealTimeGraph("realtime-graph-x", "red");
-        //     this.graphY = new Viz.RealTimeGraph("realtime-graph-y", "green");
-        //     this.graphZ = new Viz.RealTimeGraph("realtime-graph-z", "blue");
-
-            // if (hidbridge.shouldUse()) {
-            //     hidbridge.initAsync()
-            //     .then(dev => {
-            //         dev.onSerial = (buf, isErr) => {
-            //             let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
-            //             let newData = Recorder.parseString(strBuf);
-
-            //             if (newData.acc) {
-            //                 this.graphX.update(newData.accVec.X, Viz.smoothedLine);
-            //                 this.graphY.update(newData.accVec.Y, Viz.smoothedLine);
-            //                 this.graphZ.update(newData.accVec.Z, Viz.smoothedLine);
-
-            //                 this.lastConnectedTime = Date.now();
-            //             }
-
-            //             if (Model.core.running) {
-            //                 Viz.d3.select("#prediction-span")
-            //                     .html(Model.core.Feed(newData.accVec).classNum);
-            //             }
-
-            //             if (wasRecording == false && Recorder.isRecording == true) {
-            //                 // Recorder.startRecording(newData.accVec, 0, "TestGesture");
-            //             }
-            //             else if (wasRecording == true && Recorder.isRecording == true) {
-            //                 // Recorder.continueRecording(newData.accVec);
-            //             }
-            //             else if (wasRecording == true && Recorder.isRecording == false) {
-            //                 // Recorder.stopRecording();
-            //             }
-
-            //             wasRecording = Recorder.isRecording;
-            //         }
-            //     });
-            // }
-
-        //     // Viz.d3.select("#program-streamer-btn").on("click", () => {
-
-        //     // });
-
-        //     Viz.d3.select("#generate-block").on("click", () => {
-        //         this.props.parent.updateFileAsync("custom.ts", Model.core.GenerateBlock());
-        //     });
-        // }
-    }
-
-
-    hide() {
-        this.setState({ visible: false, editGestureMode: false });
+    resetGraph() {
         this.graphInitialized = false;
         this.webcamInitialized = false;
 
@@ -145,26 +88,34 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     }
 
 
+    hide() {
+        this.setState({ visible: false, editGestureMode: false });
+        this.resetGraph();
+    }
+
+
     show() {
         this.setState({ visible: true });
 
-        if (hidbridge.shouldUse()) {
+        const onSerialData = (buf: any, isErr: any) => {
+            let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
+            let newData = Recorder.parseString(strBuf);
+
+            this.lastConnectedTime = Date.now();
+
+            if (this.state.editGestureMode && this.state.connected) {
+                if (newData.acc && this.graphZ.isInitialized()) {
+                    this.graphX.update(newData.accVec.X);
+                    this.graphY.update(newData.accVec.Y);
+                    this.graphZ.update(newData.accVec.Z);
+                }
+            }
+        };
+
+         if (hidbridge.shouldUse()) {
             hidbridge.initAsync()
             .then(dev => {
-                dev.onSerial = (buf, isErr) => {
-                    let strBuf: string = Util.fromUTF8(Util.uint8ArrayToString(buf));
-                    let newData = Recorder.parseString(strBuf);
-
-                    this.lastConnectedTime = Date.now();
-
-                    if (this.state.editGestureMode && this.state.connected) {
-                        if (newData.acc && this.graphZ.isInitialized()) {
-                            this.graphX.update(newData.accVec.X);
-                            this.graphY.update(newData.accVec.Y);
-                            this.graphZ.update(newData.accVec.Z);
-                        }
-                    }
-                }
+                dev.onSerial = onSerialData;
             });
         }
     }
@@ -191,16 +142,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         const backToMain = () => {
             this.setState({ editGestureMode: false });
-            this.graphInitialized = false;
-            this.webcamInitialized = false;
-
-            mediaStream.stop();
+            this.resetGraph();
         }
 
         const newGesture = () => {
             this.setState({ editGestureMode: true });
-            this.graphInitialized = false;
-            this.webcamInitialized = false;
+            this.resetGraph();
             // TODO: merge into a reset function
         }
 
@@ -339,23 +286,41 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     <div>
                         <div className="ui segment three column grid">
                             <div className="four wide column">
-                                <video id="webcam-video" ref={initWebCam}></video>
+                                {
+                                    this.state.connected ?
+                                    <video id="webcam-video" ref={initWebCam}></video>
+                                    :
+                                    <div>Not Connected</div>
+                                }
                             </div>
-                            <div className="nine wide column" ref={initGraph}>
-                                <svg className="row" id="realtime-graph-x"></svg>
-                                <svg className="row" id="realtime-graph-y"></svg>
-                                <svg className="row" id="realtime-graph-z"></svg>
+                            <div className="nine wide column">
+                                {
+                                    this.state.connected ?
+                                    <div ref={initGraph}>
+                                        <svg className="row" id="realtime-graph-x"></svg>
+                                        <svg className="row" id="realtime-graph-y"></svg>
+                                        <svg className="row" id="realtime-graph-z"></svg>
+                                    </div>
+                                    :
+                                    <div>
+                                        <p>1. Connect Device</p>
+                                        <p>1. Upload Streamer Program</p>
+                                    </div>
+                                }
                             </div>
                             <div className="three wide column">
-                                <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
-                                    <i className="download icon icon-and-text"></i>
-                                    <span className="ui text">Program Streamer</span>
-                                </button>
-                                <br/>
-                                <button id="generate-block" className="ui button blocks-menuitem green big">
-                                    <i className="xicon blocks icon icon-and-text"></i>
-                                    <span className="ui text">Create Block</span>
-                                </button>
+                                {
+                                    this.state.connected ?
+                                    <button id="record-btn" className="ui button blocks-menuitem green big">
+                                        <i className="xicon blocks icon icon-and-text"></i>
+                                        <span className="ui text">Record</span>
+                                    </button>
+                                    :
+                                    <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
+                                        <i className="download icon icon-and-text"></i>
+                                        <span className="ui text">Program Streamer</span>
+                                    </button>
+                                }
                             </div>
                         </div>
 
