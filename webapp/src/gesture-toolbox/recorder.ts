@@ -4,24 +4,84 @@ import * as Webcam from "./webcam";
 import * as Model from "./model";
 import * as GestureUI from "./gesture";
 
-export let isRecording = false;
-export let recData: Gesture[] = [];
 
-let recPointer: number = -1;
+export enum RecordMode {
+    PressAndHold,
+    PressToToggle
+}
 
-export function initKeyboard() {
-    // assign events to capture if recording or not
-        window.onkeydown = (e: any) => {
-            // if pressed "space" key
-            if (e.keyCode == 32)
-                isRecording = true;
-        };
+export class Recorder {
+    private gestureIndex: number;
+    private recordMode: RecordMode;
+    private onRecordHandler: (gestureIndex: number, sample: GestureSample) => void;
+    private enabled: boolean;
+    private isRecording: boolean;
+    private wasRecording: boolean;
+    private sample: GestureSample;
 
-        window.onkeyup = (e: any) => {
-            // if released "space" key
-            if (e.keyCode == 32)
-                isRecording = false;
-        };
+    constructor(gestureIndex: number, recordMode: RecordMode, onNewSampleRecorded: (gestureIndex: number, sample: GestureSample) => void) {
+        this.gestureIndex = gestureIndex;
+        this.recordMode = recordMode;
+        this.onRecordHandler = onNewSampleRecorded;
+
+        if (this.recordMode == RecordMode.PressAndHold) {
+            // assign events to capture if recording or not
+            window.onkeydown = (e: any) => {
+                // if pressed "space" key
+                if (e.keyCode == 32)
+                    this.isRecording = true;
+            };
+
+            window.onkeyup = (e: any) => {
+                // if released "space" key
+                if (e.keyCode == 32)
+                    this.isRecording = false;
+            };
+        }
+        else if (this.recordMode == RecordMode.PressToToggle) {
+            // assign events to capture if recording or not
+            window.onkeydown = (e: any) => {
+                // if pressed "space" key
+                if (e.keyCode == 32 && this.isRecording == false)
+                    this.isRecording = true;
+                else if (e.keyCode == 32 && this.isRecording == true)
+                    this.isRecording = false;
+            };
+        }
+
+        this.wasRecording = false;
+    }
+
+    public Feed(yt: Vector) {
+        if (this.enabled) {
+            if (this.wasRecording == false && this.isRecording == true) {
+                // start recording
+                this.sample = new GestureSample();
+                this.sample.startTime = Date.now();
+                this.sample.rawData.push(yt);
+                // start recording the video:
+            }
+            else if (this.wasRecording == true && this.isRecording == true) {
+                // continue recording
+                this.sample.rawData.push(yt);
+            }
+            else if (this.wasRecording == true && this.isRecording == false) {
+                // stop recording
+                this.sample.endTime = Date.now();
+                this.sample.cropStartIndex = 0;
+                this.sample.cropEndIndex = this.sample.rawData.length - 1;
+                // stop recording the video
+                this.onRecordHandler(this.gestureIndex, this.sample);
+            }
+
+            this.wasRecording = this.isRecording;
+         }
+    }
+
+    public Disable() {
+        this.enabled = false;
+    }
+
 }
 
 

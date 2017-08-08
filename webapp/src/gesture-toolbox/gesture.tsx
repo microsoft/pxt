@@ -54,6 +54,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     private graphInitialized: boolean;
     private webcamInitialized: boolean;
+    private recorderInitialized: boolean;
+
+    private recorder: Recorder.Recorder;
 
     lastConnectedTime: number;
 
@@ -72,17 +75,18 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         this.lastConnectedTime = 0;
 
-        Recorder.initKeyboard();
         p = this.props.parent;
 
         this.graphInitialized = false;
         this.webcamInitialized = false;
+        this.recorderInitialized = false;
     }
 
 
     resetGraph() {
         this.graphInitialized = false;
         this.webcamInitialized = false;
+        this.recorderInitialized = false;
 
         mediaStream.stop();
     }
@@ -108,6 +112,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     this.graphX.update(newData.accVec.X);
                     this.graphY.update(newData.accVec.Y);
                     this.graphZ.update(newData.accVec.Z);
+
+                    this.recorder.Feed(newData.accVec);
                 }
             }
         };
@@ -137,6 +143,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         return -1;
     }
 
+    onNewSampleRecorded(gestureIndex: number, newSample: Types.GestureSample) {
+        // do stuff with `setState()` to update the graph
+
+        let cloneData = this.state.data.slice();
+        cloneData[gestureIndex].gestures.push(newSample);
+
+        this.setState({ data: cloneData });
+    }
+
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
@@ -160,7 +175,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const onSampleDelete = (gid: number, sid: number) => {
-            console.log("sample [" + gid + ", " + sid + "] has been deleted");
+            // console.log("sample [" + gid + ", " + sid + "] has been deleted");
             // should change the state of this ui -> with less items
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
@@ -230,6 +245,14 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
+        const initRecorder = (elem: any) => {
+            // TODO: change recording type based on selected recording method:
+            if (elem != null && !this.recorderInitialized) {
+                this.recorder = new Recorder.Recorder(0, Recorder.RecordMode.PressAndHold, this.onNewSampleRecorded);
+                this.recorderInitialized = true;
+            }
+        }
+
         return (
             <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
                 onClose={() => this.hide() } dimmer={true} closeIcon={false} closeOnDimmerClick>
@@ -242,7 +265,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         :
                         <span className="ui header left floated">{lf("Gesture Toolbox")}</span>
                     }
-                    <Indicator.ConnectionIndicator 
+                    <Indicator.ConnectionIndicator
                         parent={ this }
                         onConnStatChangeHandler={ onConnectionStatusChange }
                         class={ "right floated" }
@@ -311,7 +334,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div className="three wide column">
                                 {
                                     this.state.connected ?
-                                    <button id="record-btn" className="ui button blocks-menuitem green big">
+                                    <button id="record-btn" className="ui button blocks-menuitem green big" ref={initRecorder}>
                                         <i className="xicon blocks icon icon-and-text"></i>
                                         <span className="ui text">Record</span>
                                     </button>
