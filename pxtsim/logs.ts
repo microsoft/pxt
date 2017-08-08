@@ -1,5 +1,6 @@
 namespace pxsim.logs {
     export interface ILogProps {
+        chromeExtension?: string;
         maxEntries?: number;
         maxLineLength?: number;
         maxAccValues?: number;
@@ -149,10 +150,14 @@ namespace pxsim.logs {
         }
 
         registerChromeSerial() {
+            const extensionId = this.props.chromeExtension;
+            if (!extensionId) return;
+
             let buffers: pxsim.Map<string> = {};
             let chrome = (window as any).chrome;
             if (chrome && chrome.runtime) {
-                let port = chrome.runtime.connect("cihhkhnngbjlhahcfmhekmbnnjcjdbge", { name: "micro:bit" });
+                // "cihhkhnngbjlhahcfmhekmbnnjcjdbge"
+                let port = chrome.runtime.connect(extensionId, { name: "serial" });
                 port.onMessage.addListener((msg: { type: string; id: string; data: string; }) => {
                     if (msg.type == "serial") {
                         if (!this.dropSim) {
