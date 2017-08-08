@@ -85,7 +85,8 @@ declare namespace pxt {
         vendorId?: string; // used by node-serial
         productId?: string; // used by node-serial
         nameFilter?: string; // regex to match devices
-        log?: boolean;
+        log?: boolean; // pipe messages to log
+        chromeExtension?: string; // unique identifier of the chrome extension
     }
 
     interface AppCloud {
