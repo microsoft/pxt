@@ -68,7 +68,12 @@ namespace pxtblockly {
             this.disposeTooltips();
         }
 
-        public populateTableContainer(options: (Object | String[])[], tableContainer: goog.ui.Control) {
+        /**
+         * Create blocklyGridPickerRows and add them to table container
+         * @param options 
+         * @param tableContainer 
+         */
+        private populateTableContainer(options: (Object | String[])[], tableContainer: goog.ui.Control) {
             this.disposeTooltips();
             tableContainer.removeChildren(true);
             for (let i = 0; i < options.length / this.columns_; i++) {
@@ -85,7 +90,12 @@ namespace pxtblockly {
             }
         }
 
-        public createTooltips(options: (Object | String[])[], tableContainer: goog.ui.Control) {
+        /**
+         * Add the tooltips and style the items
+         * @param options 
+         * @param tableContainer 
+         */
+        private createTooltips(options: (Object | String[])[], tableContainer: goog.ui.Control) {
             let needToFloatLeft = (options.length < this.columns_);
             let tableContainerDom = tableContainer.getElement() as HTMLElement;
             const menuItemsDom = tableContainerDom.getElementsByClassName('goog-menuitem');
@@ -219,7 +229,6 @@ namespace pxtblockly {
             paddingContainerDom.className = 'blocklyGridPickerPadder';
 
             this.createTooltips(options, tableContainer);
-            // Add the tooltips and style the items
 
             // Record current container sizes after adding menu.
             const paddingContainerSize = goog.style.getSize(paddingContainerDom);
