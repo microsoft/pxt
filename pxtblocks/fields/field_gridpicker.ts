@@ -96,12 +96,10 @@ namespace pxtblockly {
                 elem.style.borderColor = this.backgroundColour_;
                 elem.style.backgroundColor = this.itemColour_;
                 if (needToFloatLeft) {
-                    elem.setAttribute("float", "left");
+                    elem.className += " floatLeft";
                 }
-                //elem.parentElement.className = 'blocklyGridPickerRow';
 
                 const tooltipText = (options[i] as any)[0].alt;
-                //const tooltipText = "";
                 if (tooltipText) {
                     const tooltip = new goog.ui.Tooltip(elem, tooltipText);
                     const onShowOld = tooltip.onShow;
