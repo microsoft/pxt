@@ -160,6 +160,25 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.curGestureIndex = this.state.data.length - 1;
         }
 
+        const editGesture = (gestureID: number) => {
+            this.setState({ editGestureMode: true });
+            this.resetGraph();
+
+            this.curGestureIndex = this.getGestureIndex(gestureID);
+        }
+
+        const downloadGesture = (gestureID: number) => {
+            this.setState({ editGestureMode: true });
+
+            // TODO: download this gesture as a .JSON file
+        }
+
+        const createGestureBlock = (gestureID: number) => {
+            this.setState({ editGestureMode: true });
+
+            // TODO: create "singular" gesture block for the current gesture
+        }
+
         const importGesture = () => {
         }
 
@@ -169,8 +188,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const onSampleDelete = (gid: number, sid: number) => {
-            // console.log("sample [" + gid + ", " + sid + "] has been deleted");
-            // should change the state of this ui -> with less items
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
 
@@ -182,7 +199,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const onSampleCrop = (gid: number, sid: number, newStart: number, newEnd: number) => {
-            console.log("sample [" + gid + ", " + sid + "] has been updated");
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
 
@@ -300,14 +316,43 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         onClick={() => importGesture() }
                                         />
                         </div>
-                        <div className="ui segments">
-                            <div className="ui segment">
-                                <h1>Gesture1</h1>
+                        {
+                            this.state.data.length == 0 ? undefined :
+                            <div className="ui segments">
+                                {
+                                    this.state.data.map((gesture) =>
+                                        <div className="ui segment">
+                                            <h1>{"Gesture " + gesture.name}</h1>
+                                            {/* <GraphCard
+                                                key={ gesture.gestureID }
+                                                editable={ false }
+                                                parent={ this }
+                                                data={ gesture.displayGesture }
+                                                dx={ 7 }
+                                                graphHeight={ 70 }
+                                                maxVal={ 2450 }
+                                                onDeleteHandler={ onSampleDelete }
+                                                onCropHandler={ onSampleCrop }
+                                            /> */}
+                                            <button className="ui button blue right floated" onClick={() => {editGesture(gesture.gestureID)}}>
+                                                <i className="icon edit icon-and-text"></i>
+                                                <span className="ui text">Edit Gesture</span>
+                                            </button>
+                                            <br/>
+                                            <button className="ui button teal right floated" onClick={() => {downloadGesture(gesture.gestureID)}}>
+                                                <i className="icon cloud download icon-and-text"></i>
+                                                <span className="ui text">ِDownload Gesture</span>
+                                            </button>
+                                            <br/>
+                                            <button className="ui button violet right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
+                                                <i className="icon puzzle icon-and-text"></i>
+                                                <span className="ui text">Create Block</span>
+                                            </button>
+                                        </div>
+                                    )
+                                }
                             </div>
-                            <div className="ui segment">
-                                <h1>Gesture2</h1>
-                            </div>
-                        </div>
+                        }
                     </div>
                     :
                     <div>
@@ -350,29 +395,27 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 }
                             </div>
                         </div>
-
-                        <div className="ui segments">
+                        {
+                            this.state.data[this.curGestureIndex].gestures.length == 0 ? undefined :
+                            <div className="ui segment">
                             {
-                                this.state.data.map((gesture) =>
-                                    <div className="ui segment">
-                                    {
-                                        gesture.gestures.map((sample) =>
-                                            <GraphCard
-                                                key={ sample.sampleID }
-                                                parent={ this }
-                                                gestureID={ gesture.gestureID }
-                                                sampleID={ sample.sampleID }
-                                                dx={ 7 }
-                                                graphHeight={ 70 }
-                                                maxVal={ 2450 }
-                                                onDeleteHandler={ onSampleDelete }
-                                                onCropHandler={ onSampleCrop }
-                                            />
-                                        )
-                                    }
-                                    </div>)
+                                this.state.data[this.curGestureIndex].gestures.map((sample) =>
+                                    <GraphCard
+                                        key={ sample.sampleID }
+                                        editable={ true }
+                                        parent={ this }
+                                        gestureID={ this.state.data[this.curGestureIndex].gestureID }
+                                        sampleID={ sample.sampleID }
+                                        dx={ 7 }
+                                        graphHeight={ 70 }
+                                        maxVal={ 2450 }
+                                        onDeleteHandler={ onSampleDelete }
+                                        onCropHandler={ onSampleCrop }
+                                    />
+                                )
                             }
-                        </div>
+                            </div>
+                        }
                     </div>
                 }
                 </div>
