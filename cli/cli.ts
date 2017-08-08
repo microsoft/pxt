@@ -4230,7 +4230,7 @@ function initCommands() {
                 aliases: ["no-serial", "nos"]
             },
             sourceMaps: {
-                description: "include souorce maps when building ts files",
+                description: "include source maps when building ts files",
                 aliases: ["include-source-maps"]
             },
             pkg: { description: "serve packaged" },
