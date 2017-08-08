@@ -86,6 +86,7 @@ namespace pxtblockly {
         }
 
         public createTooltips(options: (Object | String[])[], tableContainer: goog.ui.Control) {
+            let needToFloatLeft = (options.length < this.columns_);
             let tableContainerDom = tableContainer.getElement() as HTMLElement;
             const menuItemsDom = tableContainerDom.getElementsByClassName('goog-menuitem');
             let largestTextItem = -1;
@@ -94,7 +95,10 @@ namespace pxtblockly {
                 const elem = menuItemsDom[i] as HTMLElement;
                 elem.style.borderColor = this.backgroundColour_;
                 elem.style.backgroundColor = this.itemColour_;
-                elem.parentElement.className = 'blocklyGridPickerRow';
+                if (needToFloatLeft) {
+                    elem.setAttribute("float", "left");
+                }
+                //elem.parentElement.className = 'blocklyGridPickerRow';
 
                 const tooltipText = (options[i] as any)[0].alt;
                 //const tooltipText = "";
@@ -124,14 +128,12 @@ namespace pxtblockly {
             }
 
             // Resize text items so they have a uniform width
-            /**
             if (largestTextItem > -1) {
                 for (let i = 0; i < menuItemsDom.length; ++i) {
                     const elem = menuItemsDom[i] as HTMLElement;
                     goog.style.setWidth(elem, largestTextItem);
                 }
             }
-            **/
         }
 
         /**
@@ -143,7 +145,8 @@ namespace pxtblockly {
 
             this.disposeTooltips();
 
-            const options = this.getOptions();
+            let options = this.getOptions();
+            //options = [options[0]];
 
             // Container for the menu rows
             const tableContainer = new goog.ui.Control();
