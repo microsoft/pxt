@@ -124,12 +124,14 @@ namespace pxtblockly {
             }
 
             // Resize text items so they have a uniform width
+            /**
             if (largestTextItem > -1) {
                 for (let i = 0; i < menuItemsDom.length; ++i) {
                     const elem = menuItemsDom[i] as HTMLElement;
                     goog.style.setWidth(elem, largestTextItem);
                 }
             }
+            **/
         }
 
         /**
@@ -179,7 +181,7 @@ namespace pxtblockly {
                 searchBar.setAttribute("id", "search-bar");
                 searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
                 searchBar.setAttribute("placeholder", "search items");
-                searchBar.addEventListener("click", () => {searchBar.focus()});
+                searchBar.addEventListener("click", searchBar.focus);
                 searchBar.addEventListener("keyup", () => {
                     let text = searchBar.value;
                     let re = new RegExp(text + ".*", "i");
@@ -194,6 +196,7 @@ namespace pxtblockly {
                     this.createTooltips(filteredOptions, tableContainer);
                 });
                 paddingContainerDom.insertBefore(searchBar, paddingContainerDom.childNodes[0]);
+                searchBar.focus();
             }
 
             paddingContainerDom.style.border = `solid 1px ${this.borderColour_}`;
@@ -303,8 +306,6 @@ namespace pxtblockly {
             Blockly.WidgetDiv.position(xy.x, xy.y, windowSize, scrollOffset,
                 this.sourceBlock_.RTL);
             goog.style.setHeight(div, "auto");
-
-            (<any>tableContainerDom).focus();
         }
 
         private createRow(row: number, options: (Object | string[])[]): goog.ui.Menu {
