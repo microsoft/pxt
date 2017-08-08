@@ -17,11 +17,16 @@ export class LogView extends React.Component<{}, LogViewState> {
 
     constructor(props: any) {
         super(props);
-        let chromeExtension = pxt.appTarget.serial ? pxt.appTarget.serial.chromeExtension : undefined;
+
+        // resolve chrome extension info
+        let chromeExtension: string = undefined;
         if (!chromeExtension) {
             const m = /chromeserial=([a-z]+)/i.exec(window.location.href);
             if (m) chromeExtension = m[1];
         }
+        if (!chromeExtension) chromeExtension = pxt.appTarget.serial ? pxt.appTarget.serial.chromeExtension : undefined;
+
+        // init view
         this.view = new pxsim.logs.LogViewElement({
             maxEntries: 80,
             maxAccValues: 500,
@@ -42,7 +47,7 @@ export class LogView extends React.Component<{}, LogViewState> {
     }
 
     render() {
-        return <div/>
+        return <div />
     }
 
     componentDidUpdate() {
