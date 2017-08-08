@@ -48,8 +48,9 @@ export class Recorder {
                     this.isRecording = false;
             };
         }
-
+        this.enabled = true;
         this.wasRecording = false;
+        this.isRecording = false;
     }
 
     public Feed(yt: Vector) {

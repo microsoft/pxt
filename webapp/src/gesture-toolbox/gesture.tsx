@@ -10,7 +10,6 @@ import * as hidbridge from "./../hidbridge";
 import * as codecard from "./../codecard"
 import Cloud = pxt.Cloud;
 
-import { dataObj } from "./testData";
 import * as Recorder from "./recorder";
 import * as Types from "./types";
 import * as Webcam from "./webcam";
@@ -57,19 +56,20 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private recorderInitialized: boolean;
 
     private recorder: Recorder.Recorder;
+    private curGestureIndex: number;
 
     lastConnectedTime: number;
 
     constructor(props: ISettingsProps) {
         super(props);
 
-        for (let i = 0; i < dataObj.length; i++)
-            dataObj[i].gestures.forEach(sample => { sample.cropEndIndex = sample.rawData.length - 1; sample.cropStartIndex = 0;})
+        // TODO: change this to load from outside
+        let data: Types.Gesture[] = [];
 
         this.state = {
             visible: false,
             editGestureMode: false,
-            data: dataObj,
+            data: data,
             connected: false
         };
 
@@ -87,8 +87,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphInitialized = false;
         this.webcamInitialized = false;
         this.recorderInitialized = false;
+        // this.recorder.Disable();
 
-        mediaStream.stop();
+        // mediaStream.stop();
     }
 
 
@@ -118,7 +119,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         };
 
-         if (hidbridge.shouldUse()) {
+        if (hidbridge.shouldUse()) {
             hidbridge.initAsync()
             .then(dev => {
                 dev.onSerial = onSerialData;
@@ -143,15 +144,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         return -1;
     }
 
-    onNewSampleRecorded(gestureIndex: number, newSample: Types.GestureSample) {
-        // do stuff with `setState()` to update the graph
-
-        let cloneData = this.state.data.slice();
-        cloneData[gestureIndex].gestures.push(newSample);
-
-        this.setState({ data: cloneData });
-    }
-
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
@@ -163,7 +155,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const newGesture = () => {
             this.setState({ editGestureMode: true });
             this.resetGraph();
-            // TODO: merge into a reset function
+            this.state.data.push(new Types.Gesture());
+            // TODO: change this method of keeping the current gesture index to something more reliable
+            this.curGestureIndex = this.state.data.length - 1;
         }
 
         const importGesture = () => {
@@ -248,7 +242,17 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const initRecorder = (elem: any) => {
             // TODO: change recording type based on selected recording method:
             if (elem != null && !this.recorderInitialized) {
-                this.recorder = new Recorder.Recorder(0, Recorder.RecordMode.PressAndHold, this.onNewSampleRecorded);
+                const gestureState = this;
+                const onNewSampleRecorded = (gestureIndex: number, newSample: Types.GestureSample) => {
+                    // do stuff with `setState()` to update the graph
+
+                    let cloneData = gestureState.state.data.slice();
+                    cloneData[gestureIndex].gestures.push(newSample);
+
+                    this.setState({ data: cloneData });
+                }
+
+                this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressToToggle, onNewSampleRecorded);
                 this.recorderInitialized = true;
             }
         }
