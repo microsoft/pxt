@@ -3,7 +3,11 @@ import * as Viz from './visualizations';
 import * as Webcam from "./webcam";
 import * as Model from "./model";
 import * as GestureUI from "./gesture";
+const MediaStreamRecorder = require("msr");
 
+let nav = navigator as any;
+let mediaStream: any;
+let mediaRecorder: any;
 
 export enum RecordMode {
     PressAndHold,
@@ -53,6 +57,25 @@ export class Recorder {
         this.isRecording = false;
     }
 
+    public initWebcam(videoID: string) {
+        nav.getUserMedia  = nav.getUserMedia || nav.webkitGetUserMedia ||
+                            nav.mozGetUserMedia || nav.msGetUserMedia;
+
+        if (nav.getUserMedia) {
+            nav.getUserMedia({audio: false, video: true},
+                (stream: any) => {
+                    let video = document.getElementById(videoID) as any;
+                    video.src = window.URL.createObjectURL(stream);
+                    mediaStream = stream;
+
+                    mediaRecorder = new MediaStreamRecorder(stream);
+                    mediaRecorder.mimeType = 'video/mp4';
+                }, () => {
+                    console.error('unable to initialize webcam');
+                });
+        }
+    }
+
     public Feed(yt: Vector) {
         if (this.enabled) {
             if (this.wasRecording == false && this.isRecording == true) {
@@ -61,6 +84,7 @@ export class Recorder {
                 this.sample.startTime = Date.now();
                 this.sample.rawData.push(yt);
                 // start recording the video:
+                mediaRecorder.start(15 * 1000);
             }
             else if (this.wasRecording == true && this.isRecording == true) {
                 // continue recording
@@ -71,8 +95,15 @@ export class Recorder {
                 this.sample.endTime = Date.now();
                 this.sample.cropStartIndex = 0;
                 this.sample.cropEndIndex = this.sample.rawData.length - 1;
+
                 // stop recording the video
-                this.onRecordHandler(this.gestureIndex, this.sample);
+                mediaRecorder.stop();
+
+                mediaRecorder.ondataavailable = (blob: any) => {
+                    let vid = window.URL.createObjectURL(blob);
+                    this.sample.video = vid;
+                    this.onRecordHandler(this.gestureIndex, this.sample);
+                };
             }
 
             this.wasRecording = this.isRecording;
@@ -119,28 +150,28 @@ export class Recorder {
 //     Webcam.mediaRecorder.stop();
 
 
-//     Webcam.mediaRecorder.ondataavailable = function (blob: any) {
-//         let vid = window.URL.createObjectURL(blob);
-//         recData[recPointer].gestures[cur].video = vid;
+    // Webcam.mediaRecorder.ondataavailable = function (blob: any) {
+    //     let vid = window.URL.createObjectURL(blob);
+    //     recData[recPointer].gestures[cur].video = vid;
 
-//         if (cur == 0) {
-//             // create the whole container
-//             recData[recPointer].displayGesture.rawData = recData[recPointer].gestures[cur].rawData;
-//             recData[recPointer].displayGesture.video = recData[recPointer].gestures[cur].video;
+    //     if (cur == 0) {
+    //         // create the whole container
+    //         recData[recPointer].displayGesture.rawData = recData[recPointer].gestures[cur].rawData;
+    //         recData[recPointer].displayGesture.video = recData[recPointer].gestures[cur].video;
 
-//             Viz.drawContainer(recPointer);
-//             Viz.drawVideo(recPointer, vid);
-//             Viz.drawGestureSample(recPointer, 0);
-//         }
-//         else {
-//             Viz.drawGestureSample(recPointer, cur);
-//         }
+    //         Viz.drawContainer(recPointer);
+    //         Viz.drawVideo(recPointer, vid);
+    //         Viz.drawGestureSample(recPointer, 0);
+    //     }
+    //     else {
+    //         Viz.drawGestureSample(recPointer, cur);
+    //     }
 
-//         Model.core.Update(recData[recPointer].getData());
-//         recData[recPointer].displayGesture.rawData = Model.core.refPrototype;
-//         Viz.drawMainGraph(recPointer);
-//         storeGestures();
-//     };
+    //     Model.core.Update(recData[recPointer].getData());
+    //     recData[recPointer].displayGesture.rawData = Model.core.refPrototype;
+    //     Viz.drawMainGraph(recPointer);
+    //     storeGestures();
+    // };
 // }
 
 
