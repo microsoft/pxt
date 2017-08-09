@@ -707,7 +707,7 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
@@ -718,8 +718,13 @@ namespace ts.pxtc.Util {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
                     localizeLive = true;
+                    return downloadLiveTranslationsAsync(code, targetId + "/target-strings.json", branch);
                 }, e => {
-                    console.log('failed to load localizations')
+                    console.log(`failed to load localizations`)
+                }).then(tr => {
+                    if (tr) Util.jsonMergeFrom(_localizeStrings, tr);
+                }, e => {
+                    console.log(`failed to load target strings`);
                 })
         }
 

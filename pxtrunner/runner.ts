@@ -147,7 +147,7 @@ namespace pxt.runner {
 
         patchSemantic();
         const cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, versions ? versions.pxtCrowdinBranch : "", live)
+        return Util.updateLocalizationAsync(pxt.appTarget.id, cfg.commitCdnUrl, lang, versions ? versions.pxtCrowdinBranch : "", live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -285,6 +285,7 @@ namespace pxt.runner {
             const localeLiveRx = /^live-/;
             editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
+                pxt.appTarget.id,
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
