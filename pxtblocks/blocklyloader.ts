@@ -46,6 +46,9 @@ namespace pxt.blocks {
         }
     }
 
+    // Matches arrays and tuple types
+    const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
+
     let usedBlocks: Map<boolean> = {};
     let updateUsedBlocks = false;
 
@@ -498,9 +501,16 @@ namespace pxt.blocks {
             i.appendField(pre);
         if (right)
             i.setAlign(Blockly.ALIGN_RIGHT)
-        // ignore generic types
-        if (type && type != "T")
-            i.setCheck(type);
+        // Ignore generic types
+        if (type && type != "T") {
+            if (arrayTypeRegex.test(type)) {
+                // All array types get the same check regardless of their subtype
+                i.setCheck("Array");
+            }
+            else {
+                i.setCheck(type);
+            }
+        }
         return i;
     }
 
@@ -707,7 +717,13 @@ namespace pxt.blocks {
             case "boolean": block.setOutput(true, "Boolean"); break;
             case "void": break; // do nothing
             //TODO
-            default: block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+            default:
+                if (arrayTypeRegex.test(fn.retType)) {
+                    block.setOutput(true, "Array");
+                }
+                else {
+                    block.setOutput(true, fn.retType !== "T" ? fn.retType : undefined);
+                }
         }
 
         // hook up/down if return value is void
@@ -909,10 +925,11 @@ namespace pxt.blocks {
         // lf("{id:category}Loops")
         // lf("{id:category}Logic")
         // lf("{id:category}Variables")
-        // lf("{id:category}Arrays")
-        // lf("{id:category}Text")
         // lf("{id:category}Math")
         // lf("{id:category}Advanced")
+        // lf("{id:category}Functions")
+        // lf("{id:category}Arrays")
+        // lf("{id:category}Text")
         // lf("{id:category}Search")
         // lf("{id:category}More\u2026")
 
@@ -1335,6 +1352,25 @@ namespace pxt.blocks {
         const listsLengthId = "lists_length";
         const listsLengthDef = pxt.blocks.getBlockDefinition(listsLengthId);
         msg.LISTS_LENGTH_TITLE = listsLengthDef.block["LISTS_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[listsLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.LISTS_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['Array']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
+
         installBuiltinHelpInfo(listsLengthId);
     }
 
@@ -2222,13 +2258,15 @@ namespace pxt.blocks {
         msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
         installBuiltinHelpInfo(variablesGetId);
 
+        // Dropdown menu of variables_get
+        msg.RENAME_VARIABLE = lf("Rename variable...");
+        msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
+
         // builtin variables_set
         const variablesSetId = "variables_set";
         const variablesSetDef = pxt.blocks.getBlockDefinition(variablesSetId);
         msg.VARIABLES_SET = variablesSetDef.block["VARIABLES_SET"];
         msg.VARIABLES_DEFAULT_NAME = varname;
-        //XXX Do not translate the default variable name.
-        //XXX Variable names with Unicode character are harmful at this point.
         msg.VARIABLES_SET_CREATE_GET = lf("Create 'get %1'");
         installBuiltinHelpInfo(variablesSetId);
 
@@ -2350,33 +2388,33 @@ namespace pxt.blocks {
                         JSON.stringify((def as any).arguments_) != JSON.stringify(this.arguments_))) {
                         // The signatures don't match.
                         def = null;
-                }
-                if (!def) {
-                    Blockly.Events.setGroup(event.group);
-                    /**
-                     * Create matching definition block.
-                     * <xml>
-                     *   <block type="procedures_defreturn" x="10" y="20">
-                     *     <field name="NAME">test</field>
-                     *   </block>
-                     * </xml>
-                     */
-                    let xml = goog.dom.createDom('xml');
-                    let block = goog.dom.createDom('block');
-                    block.setAttribute('type', this.defType_);
-                    let xy = this.getRelativeToSurfaceXY();
-                    let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
-                    let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
-                    block.setAttribute('x', x);
-                    block.setAttribute('y', y);
-                    let field = goog.dom.createDom('field');
-                    field.setAttribute('name', 'NAME');
-                    field.appendChild(document.createTextNode(this.getProcedureCall()));
-                    block.appendChild(field);
-                    xml.appendChild(block);
-                    Blockly.Xml.domToWorkspace(xml, this.workspace);
-                    Blockly.Events.setGroup(false);
-                }
+                    }
+                    if (!def) {
+                        Blockly.Events.setGroup(event.group);
+                        /**
+                         * Create matching definition block.
+                         * <xml>
+                         *   <block type="procedures_defreturn" x="10" y="20">
+                         *     <field name="NAME">test</field>
+                         *   </block>
+                         * </xml>
+                         */
+                        let xml = goog.dom.createDom('xml');
+                        let block = goog.dom.createDom('block');
+                        block.setAttribute('type', this.defType_);
+                        let xy = this.getRelativeToSurfaceXY();
+                        let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
+                        let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
+                        block.setAttribute('x', x);
+                        block.setAttribute('y', y);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NAME');
+                        field.appendChild(document.createTextNode(this.getProcedureCall()));
+                        block.appendChild(field);
+                        xml.appendChild(block);
+                        Blockly.Xml.domToWorkspace(xml, this.workspace);
+                        Blockly.Events.setGroup(false);
+                    }
                 } else if (event.type == Blockly.Events.DELETE) {
                     // Look for the case where a procedure definition has been deleted,
                     // leaving this block (a procedure call) orphaned.  In this case, delete
@@ -2389,6 +2427,15 @@ namespace pxt.blocks {
                         Blockly.Events.setGroup(false);
                     }
                 }
+            },
+            mutationToDom: function() {
+                const mutationElement = document.createElement("mutation");
+                mutationElement.setAttribute("name", this.getProcedureCall());
+                return mutationElement;
+            },
+            domToMutation: function(element: Element) {
+                const name = element.getAttribute("name");
+                this.renameProcedure(this.getProcedureCall(), name);
             },
             /**
              * Add menu option to find the definition block for this call.
@@ -2576,6 +2623,24 @@ namespace pxt.blocks {
         const textLengthId = "text_length";
         const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
         msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
+
+        // We have to override this block definition because the builtin block
+        // allows both Strings and Arrays in its input check and that confuses
+        // our Blockly compiler
+        let block = Blockly.Blocks[textLengthId];
+        block.init = function() {
+            this.jsonInit({
+            "message0": msg.TEXT_LENGTH_TITLE,
+            "args0": [
+                {
+                "type": "input_value",
+                "name": "VALUE",
+                "check": ['String']
+                }
+            ],
+            "output": 'Number'
+            });
+        }
         installBuiltinHelpInfo(textLengthId);
 
         // builtin text_join

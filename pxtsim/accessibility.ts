@@ -28,12 +28,26 @@ namespace pxsim.accessibility {
 
     export function setLiveContent(value: string): void {
         if (!liveRegion) {
+            let style = "position: absolute !important;" +
+                        "display: block;" +
+                        "visibility: visible;" +
+                        "overflow: hidden;" +
+                        "width: 1px;" +
+                        "height: 1px;" +
+                        "margin: -1px;" +
+                        "border: 0;" +
+                        "padding: 0;" +
+                        "clip: rect(0 0 0 0);";
             liveRegion = document.createElement("div");
             liveRegion.setAttribute("role", "status");
             liveRegion.setAttribute("aria-live", "polite");
+            liveRegion.setAttribute("aria-hidden", "false");
+            liveRegion.setAttribute("style", style);
             document.body.appendChild(liveRegion);
         }
 
-        liveRegion.textContent = value;
+        if (liveRegion.textContent !== value) {
+            liveRegion.textContent = value;
+        }
     }
 }

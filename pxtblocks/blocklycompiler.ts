@@ -383,7 +383,7 @@ namespace pxt.blocks {
                     }
                 }
             }
-            return tp || ground("number[]");
+            return tp || ground("Array");
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];

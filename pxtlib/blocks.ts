@@ -8,6 +8,19 @@ namespace pxt.blocks {
         shadowValue?: string;
     }
 
+    export function normalizeBlock(b: string): string {
+        if (!b) return b;
+        // normalize and validate common errors
+        // made while translating
+        let nb = b.replace(/%\s+/g, '%');
+        if (nb != b) {
+            pxt.log(`block has extra spaces: ${b}`);
+            return b;
+        }
+        nb = nb.replace(/\s*\|\s*/g, '|');
+        return nb;
+    }
+
     export function parameterNames(fn: pxtc.SymbolInfo): Map<BlockParameter> {
         // collect blockly parameter name mapping
         const instance = (fn.kind == ts.pxtc.SymbolKind.Method || fn.kind == ts.pxtc.SymbolKind.Property) && !fn.attributes.defaultInstance;
@@ -51,14 +64,7 @@ namespace pxt.blocks {
     export function parseFields(b: string): FieldDescription[] {
         // normalize and validate common errors
         // made while translating
-        let nb = b.replace(/%\s+/g, '%');
-        if (nb != b)
-            pxt.log(`block has extra spaces: ${b}`);
-        if (nb[0] == nb[0].toLocaleUpperCase() && nb[0] != nb[0].toLowerCase())
-            pxt.log(`block is capitalized: ${b}`);
-
-        nb = nb.replace(/\s*\|\s*/g, '|');
-        return nb.split('|').map((n, ni) => {
+        return b.split('|').map((n, ni) => {
             let m = /([^%]*)\s*%([a-zA-Z0-9_]+)/.exec(n);
             if (!m) return { n, ni };
 
@@ -270,7 +276,7 @@ namespace pxt.blocks {
                 url: '/blocks/arrays/length',
                 category: 'arrays',
                 block: {
-                    LISTS_LENGTH_TITLE: Util.lf("length of %1")
+                    LISTS_LENGTH_TITLE: Util.lf("length of array %1")
                 }
             },
             'lists_index_get': {
@@ -354,7 +360,7 @@ namespace pxt.blocks {
                 url: 'types/string/length',
                 category: 'text',
                 block: {
-                    TEXT_LENGTH_TITLE: Util.lf("length of %1")
+                    TEXT_LENGTH_TITLE: Util.lf("length of text %1")
                 }
             },
             'text_join': {
