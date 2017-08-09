@@ -394,6 +394,8 @@ function initSocketServer(wsPort: number, hostname: string) {
     }
 
     function objToString(obj: any) {
+        if (obj == null)
+            return "null"
         let r = "{\n"
         for (let k of Object.keys(obj)) {
             r += "   " + k + ": "
@@ -420,7 +422,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                     .then(() => {
                         let hio = hios[msg.arg.path]
                         if (!hio && msg.arg.path)
-                            hios[msg.arg.path] = hio = hid.hf2ConnectAsync(msg.arg.path)
+                            hios[msg.arg.path] = hio = hid.hf2ConnectAsync(msg.arg.path, !!msg.arg.raw)
                         return hio
                     })
                     .then(hio => {
@@ -441,6 +443,8 @@ function initSocketServer(wsPort: number, hostname: string) {
                                                 }
                                             }))
                                         }
+                                        if (hio.rawMode)
+                                            hio.io.onData = hio.io.onEvent
                                         hio.onSerial = (v, isErr) => {
                                             if (!ws) return
                                             ws.send(JSON.stringify({
@@ -454,6 +458,11 @@ function initSocketServer(wsPort: number, hostname: string) {
                                         }
                                         return {}
                                     })
+                            case "send":
+                                if (!hio.rawMode)
+                                    return null
+                                return hio.io.sendPacketAsync(U.fromHex(msg.arg.data))
+                                    .then(() => ({}))
                             case "talk":
                                 return Promise.mapSeries(msg.arg.cmds, (obj: any) => {
                                     pxt.debug(`hid talk ${obj.cmd}`)

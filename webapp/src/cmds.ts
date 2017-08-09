@@ -19,9 +19,10 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let url = ""
     let fn = ""
-    if (pxt.appTarget.compile.useUF2) {
-        let uf2 = resp.outfiles[pxtc.BINARY_UF2]
-        fn = pkg.genFileName(".uf2");
+    let ext = pxt.outputName().replace(/[^.]*/, "")
+    if (!pxt.isOutputText()) {
+        let uf2 = resp.outfiles[pxt.outputName()]
+        fn = pkg.genFileName(ext);
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBase64(
             uf2,
@@ -31,8 +32,8 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
             e => core.errorNotification(lf("saving file failed..."))
         );
     } else {
-        let hex = resp.outfiles[pxtc.BINARY_HEX]
-        fn = pkg.genFileName(".hex");
+        let hex = resp.outfiles[pxt.outputName()]
+        fn = pkg.genFileName(ext);
         pxt.debug('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBinText(
             hex,
@@ -142,9 +143,12 @@ export function initCommandsAsync(): Promise<void> {
         pxt.commands.deployCoreAsync = webusbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
-            hidbridge.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = hidDeployCoreAsync;
         } else {
+            if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
+                pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
+            }
             pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;

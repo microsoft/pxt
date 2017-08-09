@@ -654,8 +654,8 @@ namespace pxt.blocks {
                             v.attributes.blockImage ? {
                                 src: pxt.webConfig.commitCdnUrl + `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`,
                                 alt: k,
-                                width: 32,
-                                height: 32,
+                                width: 36,
+                                height: 36,
                                 value: v.name
                             } : k,
                             v.namespace + "." + v.name
@@ -753,12 +753,6 @@ namespace pxt.blocks {
             })
         }
 
-        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
-        if (body) {
-            block.appendStatementInput("HANDLER")
-                .setCheck("null");
-        }
-
         if (fn.attributes.imageLiteral) {
             for (let r = 0; r < 5; ++r) {
                 let ri = block.appendDummyInput();
@@ -778,6 +772,13 @@ namespace pxt.blocks {
         }
         else {
             block.setInputsInline(fn.parameters.length < 4 && !fn.attributes.imageLiteral);
+        }
+
+        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
+        if (body) {
+            block.appendStatementInput("HANDLER")
+                .setCheck("null");
+            block.setInputsInline(true);
         }
 
         switch (fn.retType) {
@@ -1434,7 +1435,7 @@ namespace pxt.blocks {
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
 
-        if (window.navigator.pointerEnabled) {
+        if ((window as any).PointerEvent) {
             (Blockly.bindEvent_ as any).TOUCH_MAP = {
                 mousedown: 'pointerdown',
                 mousemove: 'pointermove',
@@ -2529,6 +2530,7 @@ namespace pxt.blocks {
                 .appendField('', 'PARAMS');
             this.setColour(getNamespaceColor('functions'));
             this.arguments_ = [];
+            this.setStartHat(true);
             this.setStatements_(true);
             this.statementConnection_ = null;
         };

@@ -35,6 +35,7 @@ declare namespace pxt {
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         yotta?: YottaConfig;
+        npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
         gistId?: string;
@@ -88,6 +89,7 @@ declare namespace pxt {
         javascript?: number;
 
         icon?: string;
+        iconContent?: string; // Text instead of icon name
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event

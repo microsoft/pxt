@@ -642,7 +642,7 @@ export class Editor extends srceditor.Editor {
                 maxScale: 2.5,
                 minScale: .2,
                 scaleSpeed: 1.05,
-                startScale: 0.75
+                startScale: 0.9
             },
             rtl: Util.isUserLanguageRtl()
         };
