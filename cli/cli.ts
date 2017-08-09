@@ -1228,6 +1228,9 @@ export function buildTargetAsync(): Promise<void> {
         initPromise = Promise.resolve();
     }
 
+    if (nodeutil.existsDirSync("sim"))
+        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", ["sim"]));
+
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
         .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
@@ -3396,6 +3399,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
     } else {
         return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
+            .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
             .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
             .then(() => uploadDocs
                 ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
@@ -4131,6 +4135,66 @@ function webstringsJson() {
     })
     missing = U.sortObjectFields(missing)
     return missing
+}
+
+function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
+    let prereqs: string[] = [];
+    dirs.forEach(dir => prereqs = prereqs.concat(nodeutil.allFiles(dir, 20)));
+
+    let errCnt = 0;
+    let translationStrings: pxt.Map<string> = {}
+
+    function processLf(filename: string) {
+        if (!/\.(ts|tsx|html)$/.test(filename)) return
+        if (/\.d\.ts$/.test(filename)) return
+
+        pxt.debug(`extracting strings from${filename}`);
+        fs.readFileSync(filename, "utf8").split('\n').forEach((line: string, idx: number) => {
+            function err(msg: string) {
+                console.log("%s(%d): %s", filename, idx, msg);
+                errCnt++;
+            }
+
+            while (true) {
+                let newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                    let m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
+                    if (m) {
+                        try {
+                            let str = JSON.parse(m[1])
+                            translationStrings[str] = str;
+                        } catch (e) {
+                            err("cannot JSON-parse " + m[1])
+                        }
+                    } else {
+                        if (!/util\.ts$/.test(filename))
+                            err("invalid format of lf() argument: " + args)
+                    }
+                    return "BLAH " + args
+                })
+                if (newLine == line) return;
+                line = newLine
+            }
+        })
+    }
+
+    let fileCnt = 0;
+    prereqs.forEach(pth => {
+        fileCnt++;
+        processLf(pth);
+    });
+
+    let tr = Object.keys(translationStrings)
+    tr.sort()
+    let strings: pxt.Map<string> = {};
+    tr.forEach(function (k) { strings[k] = k; });
+
+    nodeutil.mkdirP('built');
+    fs.writeFileSync(`built/${output}.json`, JSON.stringify(strings, null, 2));
+
+    pxt.log("log strings: " + fileCnt + " files; " + tr.length + " strings -> " + output + ".json");
+    if (errCnt > 0)
+        pxt.log(`${errCnt} errors`);
+    return Promise.resolve();
 }
 
 function initCommands() {
