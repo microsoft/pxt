@@ -323,7 +323,7 @@ namespace pxt.blocks {
         namespaceStyleBuffer += `
             span.docs.${ns} {
                 background-color: ${color} !important;
-                border-color: ${Blockly.PXTUtils.fadeColour(color, 0.3, false)} !important;
+                border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
             }
         `;
     }
