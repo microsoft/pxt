@@ -187,6 +187,8 @@ namespace pxtblockly {
 
             // Search bar
             if (this.hasSearchBar_) {
+                const searchBarDiv = document.createElement("div");
+                searchBarDiv.setAttribute("class", "ui");
                 const searchBar = document.createElement("input");
                 searchBar.setAttribute("type", "search");
                 searchBar.setAttribute("id", "search-bar");
@@ -209,7 +211,8 @@ namespace pxtblockly {
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
                     this.createTooltips(filteredOptions, tableContainer);
                 });
-                paddingContainerDom.insertBefore(searchBar, paddingContainerDom.childNodes[0]);
+                searchBarDiv.appendChild(searchBar);
+                paddingContainerDom.insertBefore(searchBarDiv, paddingContainerDom.childNodes[0]);
                 searchBar.focus();
             }
 
