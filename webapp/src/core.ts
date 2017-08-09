@@ -38,7 +38,7 @@ export function showLoading(msg: string) {
     $('body.main').dimmer('show');
     $('.ui.page.dimmer').html(`
   <div class="content loadingcontent">
-    <div class="ui text large loader msg">{lf("Please wait")}</div>
+    <div class="ui text large loader msg" aria-live="assertive">{lf("Please wait")}</div>
   </div>
 `)
     $('.ui.page.dimmer .msg').text(msg)
@@ -480,7 +480,11 @@ export function scrollIntoView(item: JQuery, margin = 0) {
     }
 }
 
-export function initializeFocusTabIndex(element: Element, allowResetFocus = false, giveFocusToFirstElement = true) {
+
+let giveFocusToFirstTag: (e: JQueryKeyEventObject) => void;
+let giveFocusToLastTag: (e: JQueryKeyEventObject) => void;
+
+export function initializeFocusTabIndex(element: Element, allowResetFocus = false, giveFocusToFirstElement = true, unregisterOnly = false) {
     if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
         return;
     }
@@ -490,45 +494,51 @@ export function initializeFocusTabIndex(element: Element, allowResetFocus = fals
         return;
     }
 
-    function unregister(): void {
-        firstTag.removeEventListener('keydown', giveFocusToLastTag);
-        lastTag.removeEventListener('keydown', giveFocusToFirstTag);
+    function unregister(firstTag: any, lastTag: any): void {
+        $(firstTag).off('keydown', giveFocusToLastTag);
+        $(lastTag).off('keydown', giveFocusToFirstTag);
     }
 
     const firstTag = focused[0] as HTMLElement;
     const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;
 
-    function giveFocusToFirstTag(e: KeyboardEvent) {
-        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-        if (charCode === 9 && !e.shiftKey) {
-            e.preventDefault();
-            unregister();
-            initializeFocusTabIndex(element, true);
-        } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
-            unregister();
-            initializeFocusTabIndex(element, true, false);
+    if (!giveFocusToFirstTag) {
+        giveFocusToFirstTag = function (e: JQueryKeyEventObject) {
+            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+            if (charCode === 9 && !e.shiftKey) {
+                e.preventDefault();
+                unregister(e.data.firstTag, e.data.lastTag);
+                initializeFocusTabIndex(e.data.targetArea, true);
+            } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+                unregister(e.data.firstTag, e.data.lastTag);
+                initializeFocusTabIndex(e.data.targetArea, true, false);
+            }
         }
     }
 
-    function giveFocusToLastTag(e: KeyboardEvent) {
-        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-        if (charCode === 9 && e.shiftKey) {
-            e.preventDefault();
-            unregister();
-            initializeFocusTabIndex(element, true, false);
-            lastTag.focus();
-        } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
-            unregister();
-            initializeFocusTabIndex(element, true, false);
+    if (!giveFocusToLastTag) {
+        giveFocusToLastTag = function (e: JQueryKeyEventObject) {
+            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+            if (charCode === 9 && e.shiftKey) {
+                e.preventDefault();
+                unregister(e.data.firstTag, e.data.lastTag);
+                initializeFocusTabIndex(e.data.targetArea, true, false);
+                e.data.lastTag.focus();
+            } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+                unregister(e.data.firstTag, e.data.lastTag);
+                initializeFocusTabIndex(e.data.targetArea, true, false);
+            }
         }
-    };
+    }
 
-    unregister();
-    firstTag.addEventListener('keydown', giveFocusToLastTag);
-    lastTag.addEventListener('keydown', giveFocusToFirstTag);
+    unregister(firstTag, lastTag);
+    if (!unregisterOnly) {
+        $(firstTag).on('keydown', {firstTag: firstTag, lastTag: lastTag, targetArea: element}, giveFocusToLastTag);
+        $(lastTag).on('keydown', {firstTag: firstTag, lastTag: lastTag, targetArea: element}, giveFocusToFirstTag);
 
-    if (giveFocusToFirstElement) {
-        firstTag.focus();
+        if (giveFocusToFirstElement) {
+            firstTag.focus();
+        }
     }
 }
 

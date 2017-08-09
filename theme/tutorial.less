@@ -36,7 +36,7 @@
 
 #tutorialcard {
     position: relative;
-    z-index: 0;
+    z-index: 1;
     height: 6rem;
     width: 100%;
     padding-left: 1rem;
@@ -146,6 +146,7 @@ body#docs.tutorial {
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady .ui.prevbutton, #root.dimmable.dimmed #tutorialcard.tutorialReady .ui.nextbutton {
     opacity: 0 !important;
+    z-index: -1;
 }
 
 #tutorialcard .ui.button.okbutton {
