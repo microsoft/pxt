@@ -191,7 +191,7 @@ namespace pxtblockly {
                 searchBar.setAttribute("type", "search");
                 searchBar.setAttribute("id", "search-bar");
                 searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
-                searchBar.setAttribute("placeholder", "search items");
+                searchBar.setAttribute("placeholder", pxt.Util.lf("search"));
                 searchBar.addEventListener("click", () => {
                     searchBar.focus();
                     searchBar.select();
