@@ -503,7 +503,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         if (imgM)
             pubinfo["cardLogo"] = html2Quote(imgM[1]);
 
-        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@mspxtio");
+        pubinfo["twitter"] = html2Quote(opts.theme.twitter || "@msmakecode");
 
         let registers: Map<string> = {}
         registers["main"] = "" // first
@@ -788,6 +788,13 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         return TOC
     }
 
+    export function visitTOC(toc: TOCMenuEntry[], fn: (e: TOCMenuEntry) => void) {
+        function visitEntry(entry: TOCMenuEntry) {
+            fn(entry);
+            if (entry.subitems) entry.subitems.forEach(fn);
+        }
+        toc.forEach(visitEntry);
+    }
 
     let testedAugment = false
     export function augmentDocs(baseMd: string, childMd: string) {
