@@ -190,7 +190,9 @@ function blockTestAsync(name: string) {
         }, err => fail('Compiling blocks failed'));
 }
 
-describe("blockly compiler", () => {
+describe("blockly compiler", function() {
+    this.timeout(3000);
+
     describe("compiling lists", () => {
         it("should handle unambiguously typed list generics", done => {
             blockTestAsync("lists_generics1").then(done, done);
