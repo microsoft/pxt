@@ -15,7 +15,7 @@ namespace pxtblockly {
         tooltips?: string;
         tooltipsXOffset?: string;
         tooltipsYOffset?: string;
-        hasSearchBar: boolean;
+        hasSearchBar?: boolean;
     }
 
     export class FieldGridPicker extends Blockly.FieldDropdown implements Blockly.FieldCustom {
@@ -56,7 +56,7 @@ namespace pxtblockly {
             }
 
             this.tooltipConfig_ = tooltipCfg;
-            this.hasSearchBar_ = options.hasSearchBar || false;
+            this.hasSearchBar_ = !!options.hasSearchBar || false;
         }
 
         /**
