@@ -6,6 +6,13 @@ namespace pxsim.logs {
         onClick?: (entries: ILogEntry[]) => void;
         onTrendChartChanged?: () => void;
         onTrendChartClick?: (entry: ILogEntry) => void;
+
+        // information for optional extensions
+        chromeExtension?: string;
+        useHF2?: boolean;
+        vendorId?: string; // used by node-serial
+        productId?: string; // used by node-serial
+        nameFilter?: string; // regex to match devices
     }
 
     export interface ILogEntry {
@@ -149,10 +156,21 @@ namespace pxsim.logs {
         }
 
         registerChromeSerial() {
+            const extensionId = this.props.chromeExtension;
+            if (!extensionId) return;
+
             let buffers: pxsim.Map<string> = {};
             let chrome = (window as any).chrome;
             if (chrome && chrome.runtime) {
-                let port = chrome.runtime.connect("cihhkhnngbjlhahcfmhekmbnnjcjdbge", { name: "micro:bit" });
+                console.debug(`chrome: connecting to extension ${extensionId}`)
+                const port = chrome.runtime.connect(extensionId, { name: "serial" });
+                port.postMessage({
+                    type: "serial-config",
+                    useHF2: this.props.useHF2,
+                    vendorId: this.props.vendorId,
+                    productId: this.props.productId,
+                    nameFilter: this.props.nameFilter
+                })
                 port.onMessage.addListener((msg: { type: string; id: string; data: string; }) => {
                     if (msg.type == "serial") {
                         if (!this.dropSim) {
