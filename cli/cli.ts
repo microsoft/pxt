@@ -1439,23 +1439,31 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
 
-    cfg.appTheme.locales = {}
-
-    let lpath = "docs/_locales"
-    if (fs.existsSync(lpath)) {
-        for (let loc of fs.readdirSync(lpath)) {
-            let fn = lpath + "/" + loc + "/_theme.json"
-            if (fs.existsSync(fn))
-                cfg.appTheme.locales[loc.toLowerCase()] = readJson(fn)
-        }
-    }
-
     if (fs.existsSync("built/templates.json")) {
         cfg.appTheme.htmlTemplates = readJson("built/templates.json")
     }
 
+    // extract strings from theme for target
+    const theme = cfg.appTheme;
+    let targetStrings: pxt.Map<string> = {};
+    if (theme.title) targetStrings[theme.title] = theme.title;
+    if (theme.name) targetStrings[theme.name] = theme.name;
+    if (theme.description) targetStrings[theme.description] = theme.description;
+    function walkDocs(docs: pxt.DocMenuEntry[]) {
+        if (!docs) return;
+        docs.forEach(doc => {
+            targetStrings[doc.name] = doc.name;
+            walkDocs(doc.subitems);
+        })
+    }
+    walkDocs(theme.docMenu);
+    let targetStringsSorted: pxt.Map<string> = {};
+    Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
+
+    // write files
     nodeutil.mkdirP("built");
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
+    fs.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
 }
 
 function buildSemanticUIAsync() {
