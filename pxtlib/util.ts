@@ -718,16 +718,17 @@ namespace ts.pxtc.Util {
                     _localizeStrings = tr || {};
                     _localizeLang = code;
                     localizeLive = true;
-                    return downloadLiveTranslationsAsync(code, targetId + "/target-strings.json", branch);
+                    return downloadLiveTranslationsAsync(code, targetId + "/target-strings.json", branch)
+                        .then(tr => {
+                            if (tr) Object
+                                .keys(tr)
+                                .filter(k => !!tr[k])
+                                .forEach(k => _localizeStrings[k] = tr[k]);
+                        }, e => {
+                            console.log(`failed to load target strings`);
+                        });
                 }, e => {
                     console.log(`failed to load localizations`)
-                }).then(tr => {
-                    if (tr) Object
-                            .keys(tr)
-                            .filter(k => !!tr[k])
-                            .forEach(k => _localizeStrings[k] = tr[k]);
-                }, e => {
-                    console.log(`failed to load target strings`);
                 })
         }
 
