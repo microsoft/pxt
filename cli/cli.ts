@@ -285,7 +285,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
     if (!args[0]) throw new Error("filename missing");
     switch (cmd.toLowerCase()) {
-        case "upload": return uploadCrowdinAsync(branch, prj, key, args[0]);
+        case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
             const fn = path.basename(args[0]);
@@ -309,8 +309,9 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 }
 
-function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string): Promise<void> {
-    const fn = path.basename(p);
+function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
+    let fn = path.basename(p);
+    if (dir) fn = dir.replace(/[\\/]*$/g, '') + '/' + fn;
     const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
     console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
     return pxt.crowdin.uploadTranslationAsync(branch, prj, key, fn, JSON.stringify(data));
@@ -3394,7 +3395,8 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
         return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
     } else {
-        return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
+        return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
+            .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
             .then(() => uploadDocs
                 ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
                     // scan for docs in bundled packages
