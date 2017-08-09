@@ -5,7 +5,7 @@ import * as sui from "./../sui";
 export const d3 = require('d3');
 import { Point, Gesture, GestureSample } from "./types";
 
-export interface IGraphCard { editable: boolean, parent: any, data?: GestureSample, gestureID?: number, sampleID?: number, dx: number, graphHeight: number, maxVal: number, onDeleteHandler: (gid: number, sid: number) => void, onCropHandler?: (gid: number, sid: number, s: number, e: number) => void }
+export interface IGraphCard { editable: boolean, parent: any, data?: GestureSample, gestureID?: number, sampleID?: number, dx: number, graphHeight: number, maxVal: number, onDeleteHandler?: (gid: number, sid: number) => void, onCropHandler?: (gid: number, sid: number, s: number, e: number) => void }
 export interface GraphCardState { editMode?: boolean }
 
 export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
@@ -21,13 +21,15 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
         super(props);
         // init
         this.props = props;
-        this.parentData = props.parent.state.data;
 
-        let gid = this.getGestureIndex(props.gestureID);
-        let sid = this.getSampleIndex(gid, props.sampleID);
+        if (this.props.editable) {
+            this.parentData = props.parent.state.data;
 
-        if (this.props.editable)
+            let gid = this.getGestureIndex(props.gestureID);
+            let sid = this.getSampleIndex(gid, props.sampleID);
+
             this.sample = props.parent.state.data[gid].gestures[sid];
+        }
         else
             this.sample = props.data;
 
@@ -269,25 +271,26 @@ export class GraphCard extends React.Component<IGraphCard, GraphCardState> {
 
         return (
             <div className="ui segments" style={containerStyle}>
-                <div className="ui segment inverted" style={headerStyle}>
-                    { this.props.editable == false ? undefined :
-                    <div> {
-                            this.state.editMode == true
-                            ?
-                                <button onClick={this.handleSave} className="ui violet icon button tiny compact left floated">
-                                    <i className="checkmark icon"></i>
-                                </button>
-                            :
-                                <button onClick={this.handleEdit} className="ui icon button tiny compact left floated">
-                                    <i className="crop icon"></i>
-                                </button>
-                            }
-                        <button onClick={this.handleDelete} className="ui icon black button tiny compact right floated">
-                            <i className="remove icon"></i>
-                        </button>
+                {
+                this.props.editable == false ? undefined :
+                    <div className="ui segment inverted" style={headerStyle}>
+                        <div> {
+                                this.state.editMode == true
+                                ?
+                                    <button onClick={this.handleSave} className="ui violet icon button tiny compact left floated">
+                                        <i className="checkmark icon"></i>
+                                    </button>
+                                :
+                                    <button onClick={this.handleEdit} className="ui icon button tiny compact left floated">
+                                        <i className="crop icon"></i>
+                                    </button>
+                                }
+                            <button onClick={this.handleDelete} className="ui icon black button tiny compact right floated">
+                                <i className="remove icon"></i>
+                            </button>
+                        </div>
                     </div>
-                    }
-                </div>
+                }
                 <div ref="graphContainer" className="ui segment">
                     <div style={clipperStyle}>
                         <svg ref="svgX"></svg>

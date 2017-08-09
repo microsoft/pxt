@@ -1,6 +1,6 @@
 import * as Recorder from './recorder';
 import * as Algorithms from './algorithms';
-import { Vector, Match } from './types';
+import { Vector, Match, Gesture, GestureSample } from './types';
 import * as pkg from "./../package";
 
 export class SingleDTWCore {
@@ -8,7 +8,7 @@ export class SingleDTWCore {
     private dba: Algorithms.DBA<Vector>;
     private classNumber: number;
 
-    public refPrototype: Vector[];
+    private refPrototype: Vector[];
     public threshold: number;
     public avgLength: number;
 
@@ -64,6 +64,18 @@ export class SingleDTWCore {
         this.dtw = new Algorithms.DTW<Vector>(this.refPrototype, this.threshold, this.classNumber, this.avgLength, Algorithms.EuclideanDistanceFast);
         this.running = true;
         // this.GenerateBlock();
+    }
+
+    public GetMainPrototype() {
+        let mainSample = new GestureSample();
+        mainSample.rawData = this.refPrototype;
+        mainSample.cropEndIndex = this.refPrototype.length - 1;
+        mainSample.cropStartIndex = 0;
+        mainSample.startTime = 0;
+        mainSample.endTime = 0;
+        mainSample.video = null;
+
+        return mainSample;
     }
 
 
