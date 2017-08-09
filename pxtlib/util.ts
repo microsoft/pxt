@@ -722,7 +722,10 @@ namespace ts.pxtc.Util {
                 }, e => {
                     console.log(`failed to load localizations`)
                 }).then(tr => {
-                    if (tr) Util.jsonMergeFrom(_localizeStrings, tr);
+                    if (tr) Object
+                            .keys(tr)
+                            .filter(k => !!tr[k])
+                            .forEach(k => _localizeStrings[k] = tr[k]);
                 }, e => {
                     console.log(`failed to load target strings`);
                 })
