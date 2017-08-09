@@ -480,12 +480,59 @@ export function scrollIntoView(item: JQuery, margin = 0) {
     }
 }
 
+interface FocusDataEventInfo {
+    firstTag: HTMLElement;
+    lastTag: HTMLElement;
+    targetArea: any;
+    giveFocusToLastTagBinding: (e: UIEvent) => any;
+    giveFocusToFirstTagBinding: (e: UIEvent) => any
+}
 
-let giveFocusToFirstTag: (e: JQueryKeyEventObject) => void;
-let giveFocusToLastTag: (e: JQueryKeyEventObject) => void;
+function unregisterFocusTracking(data: FocusDataEventInfo): void {
+    if (!data) {
+        return;
+    }
+
+    data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
+    data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
+    if (data.firstTag === data.lastTag) {
+        data.firstTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToFirstTagBinding);
+        data.lastTag.removeEventListener('keydown', data.targetArea.focusDataInfo.giveFocusToLastTagBinding);
+    }
+}
+
+function giveFocusToFirstTag(e: KeyboardEvent) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === 9 && !e.shiftKey) {
+        e.preventDefault();
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true);
+    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+    }
+}
+
+function giveFocusToLastTag(e: KeyboardEvent) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === 9 && e.shiftKey) {
+        e.preventDefault();
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+        this.lastTag.focus();
+    } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
+        unregisterFocusTracking(this);
+        initializeFocusTabIndex(this.targetArea, true, false);
+    }
+}
 
 export function initializeFocusTabIndex(element: Element, allowResetFocus = false, giveFocusToFirstElement = true, unregisterOnly = false) {
     if (!allowResetFocus && element !== document.activeElement && element.contains(document.activeElement)) {
+        return;
+    }
+
+    unregisterFocusTracking((element as any).focusDataInfo);
+    if (unregisterOnly) {
         return;
     }
 
@@ -494,51 +541,24 @@ export function initializeFocusTabIndex(element: Element, allowResetFocus = fals
         return;
     }
 
-    function unregister(firstTag: any, lastTag: any): void {
-        $(firstTag).off('keydown', giveFocusToLastTag);
-        $(lastTag).off('keydown', giveFocusToFirstTag);
-    }
-
     const firstTag = focused[0] as HTMLElement;
     const lastTag = focused.length > 1 ? focused[focused.length - 1] as HTMLElement : firstTag;
 
-    if (!giveFocusToFirstTag) {
-        giveFocusToFirstTag = function (e: JQueryKeyEventObject) {
-            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-            if (charCode === 9 && !e.shiftKey) {
-                e.preventDefault();
-                unregister(e.data.firstTag, e.data.lastTag);
-                initializeFocusTabIndex(e.data.targetArea, true);
-            } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
-                unregister(e.data.firstTag, e.data.lastTag);
-                initializeFocusTabIndex(e.data.targetArea, true, false);
-            }
-        }
+    let data = <FocusDataEventInfo>{};
+    data.firstTag = firstTag;
+    data.lastTag = lastTag;
+    data.targetArea = element;
+    data.giveFocusToLastTagBinding = giveFocusToLastTag.bind(data);
+    data.giveFocusToFirstTagBinding = giveFocusToFirstTag.bind(data);
+    (element as any).focusDataInfo = data;
+
+    if (firstTag !== lastTag) {
+        firstTag.addEventListener('keydown', data.giveFocusToLastTagBinding);
     }
+    lastTag.addEventListener('keydown', data.giveFocusToFirstTagBinding);
 
-    if (!giveFocusToLastTag) {
-        giveFocusToLastTag = function (e: JQueryKeyEventObject) {
-            let charCode = (typeof e.which == "number") ? e.which : e.keyCode
-            if (charCode === 9 && e.shiftKey) {
-                e.preventDefault();
-                unregister(e.data.firstTag, e.data.lastTag);
-                initializeFocusTabIndex(e.data.targetArea, true, false);
-                e.data.lastTag.focus();
-            } else if (!(e.currentTarget as HTMLElement).classList.contains("focused")) {
-                unregister(e.data.firstTag, e.data.lastTag);
-                initializeFocusTabIndex(e.data.targetArea, true, false);
-            }
-        }
-    }
-
-    unregister(firstTag, lastTag);
-    if (!unregisterOnly) {
-        $(firstTag).on('keydown', {firstTag: firstTag, lastTag: lastTag, targetArea: element}, giveFocusToLastTag);
-        $(lastTag).on('keydown', {firstTag: firstTag, lastTag: lastTag, targetArea: element}, giveFocusToFirstTag);
-
-        if (giveFocusToFirstElement) {
-            firstTag.focus();
-        }
+    if (giveFocusToFirstElement) {
+        firstTag.focus();
     }
 }
 
