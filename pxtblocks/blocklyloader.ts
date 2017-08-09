@@ -798,8 +798,8 @@ namespace pxt.blocks {
 
         // hook up/down if return value is void
         const hasHandlers = hasArrowFunction(fn);
-        block.setPreviousStatement(!hasHandlers && fn.retType == "void");
-        block.setNextStatement(!hasHandlers && fn.retType == "void");
+        block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
+        block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
     }
@@ -2448,7 +2448,7 @@ namespace pxt.blocks {
                         value.appendChild(shadow);
                         let field = goog.dom.createDom('field');
                         field.setAttribute('name', 'NUM');
-                        field.appendChild(document.createTextNode("0"));
+                        field.appendChild(document.createTextNode("1"));
                         shadow.appendChild(field);
                         block.appendChild(value);
                     }

@@ -136,6 +136,7 @@ namespace ts.pxtc {
         subcategories?: string[];
         groups?: string[];
         labelLineWidth?: string;
+        handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
 
         // on interfaces
         indexerGet?: string;
@@ -357,7 +358,7 @@ namespace ts.pxtc {
     }
 
     const numberAttributes = ["weight", "imageLiteral"]
-    const booleanAttributes = ["advanced"]
+    const booleanAttributes = ["advanced", "handlerStatement"]
 
     export function parseCommentString(cmt: string): CommentAttrs {
         let res: CommentAttrs = {
