@@ -712,24 +712,28 @@ namespace ts.pxtc.Util {
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
+        const mainStringsFile = "strings.json";
+        const stringFiles = [
+            mainStringsFile,
+            targetId + "/target-strings.json",
+            targetId + "/sim-strings.json"
+        ];
+
         if (_localizeLang != code && live) {
-            return downloadLiveTranslationsAsync(code, "strings.json", branch)
-                .then(tr => {
-                    _localizeStrings = tr || {};
-                    _localizeLang = code;
-                    localizeLive = true;
-                    return downloadLiveTranslationsAsync(code, targetId + "/target-strings.json", branch)
-                        .then(tr => {
-                            if (tr) Object
-                                .keys(tr)
+            return Promise.mapSeries(stringFiles, (file) => {
+                return downloadLiveTranslationsAsync(code, file, branch)
+                    .then((tr) => {
+                        if (file === mainStringsFile) {
+                            _localizeStrings = tr || {};
+                            _localizeLang = code;
+                            localizeLive = true;
+                        } else if (tr) {
+                            Object.keys(tr)
                                 .filter(k => !!tr[k])
                                 .forEach(k => _localizeStrings[k] = tr[k]);
-                        }, e => {
-                            console.log(`failed to load target strings`);
-                        });
-                }, e => {
-                    console.log(`failed to load localizations`)
-                })
+                        }
+                    }, e => console.log(`failed to load localizations for file ${file}`));
+            });
         }
 
         if (_localizeLang != code) {
