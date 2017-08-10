@@ -669,17 +669,16 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
-        const mainStringsFile = "strings.json";
-        const stringFiles = simulator
-            ? [targetId + "/sim-strings.json"]
+        const stringFiles: { branch: string, path: string }[] = simulator
+            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
             : [
-                mainStringsFile,
-                targetId + "/target-strings.json"
+                { branch: pxtBranch, path: "strings.json" },
+                { branch: targetBranch, path: targetId + "/target-strings.json" }
             ];
 
         if (_localizeLang != code && live) {
@@ -687,10 +686,10 @@ namespace ts.pxtc.Util {
             _localizeLang = code;
             localizeLive = true;
             return Promise.mapSeries(stringFiles, (file) => {
-                return downloadLiveTranslationsAsync(code, file, branch)
+                return downloadLiveTranslationsAsync(code, file.path, file.branch)
                     .then((tr) => Object.keys(tr)
-                                .filter(k => !!tr[k])
-                                .forEach(k => _localizeStrings[k] = tr[k])
+                        .filter(k => !!tr[k])
+                        .forEach(k => _localizeStrings[k] = tr[k])
                     , e => console.log(`failed to load localizations for file ${file}`));
             });
         }
@@ -901,7 +900,7 @@ namespace ts.pxtc.BrowserImpl {
 
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
-               client.responseType = "arraybuffer";
+                client.responseType = "arraybuffer";
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 
