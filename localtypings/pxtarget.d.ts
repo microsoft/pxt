@@ -159,7 +159,6 @@ declare namespace pxt {
         termsOfUseUrl?: string;
         contactUrl?: string;
         accentColor?: string;
-        locales?: Map<AppTheme>;
         cardLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
