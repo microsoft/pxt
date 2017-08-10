@@ -111,7 +111,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             // console.log("RECOGNIZED GESTURE");
                             // TODO: add moving window that will show it has recognized something...
                             // in particular, it will be a rectangle on top of the graph with these dimensions (at each data tick):
-                            this.recognitionOverlay.add(match);
+                            this.recognitionOverlay.add(match, this.models[this.curGestureIndex].getTick());
 
                             // one way to implement this would be to create a RecognitionRectangle with a run() function
                             // push them into an array (because we might have more than one that needs to be shown at each tick)

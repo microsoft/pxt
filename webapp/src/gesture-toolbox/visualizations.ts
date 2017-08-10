@@ -5,7 +5,6 @@ import * as Model from './model';
 
 export const d3 = require('d3');
 
-
 export class RealTimeGraph {
     // TODO: merge different line types into functions (instead of repeating them inside each function)
     private graphDiv: any;
@@ -111,10 +110,11 @@ export class RecognitionOverlay {
             .attr("style", "background: rgba(0, 0, 0, 0); position: absolute; top: 16px; left: 16px;");
     }
 
-    public add(match: Match) {
+    public add(match: Match, curTick: number) {
         let width = (match.Te - match.Ts) * this.dx;
+        let offsetX = (curTick - match.Te) * this.dx;
         let rect = this.overlaySVG.append("rect")
-            .attr("x", this.overlayWidth - width)
+            .attr("x", this.overlayWidth - width - offsetX)
             .attr("y", 0)
             .attr("width", width) //TODO: should initialize all of these with the cropStart/End values
             .attr("height", this.overlayHeight)
@@ -130,11 +130,12 @@ export class RecognitionOverlay {
             let width = this.activeMatches[i].Te - this.activeMatches[i].Ts;
 
             if (curTick - this.activeMatches[i].Te >= this.overlayWidth / this.dx) {
-                // finish displaying this tick
-                this.activeMatches.splice(i, 1);
-                // remove from DOM
+                // remove rectangle from DOM
                 this.activeRectangles[i].remove();
+                
+                this.activeRectangles.splice(i, 1);
                 this.activeMatches.splice(i, 1);
+                this.tickCount.splice(i, 1);
             }
             else {
                 let transX = (-this.dx * (++this.tickCount[i])).toString();
