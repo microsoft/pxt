@@ -2,29 +2,55 @@ import * as React from "react";
 import * as hidbridge from "./../hidbridge";
 
 export interface IConnectionIndicator { parent?: any, onConnStatChangeHandler?: (con: boolean) => void, class?: string }
-export interface ConnectionState { connected: boolean }
+export interface ConnectionState { connected?: boolean, reconnecting?: boolean }
 export class ConnectionIndicator extends React.Component<IConnectionIndicator, ConnectionState> {
+    private intervalID: number;
 
     constructor(props: IConnectionIndicator) {
         super(props);
+        this.props = props;
+        
+        if (Date.now() - this.props.parent.lastConnectedTime < 2500)
+            this.state = { connected: true, reconnecting: false };
+        else
+            this.state = { connected: false, reconnecting: false };
 
-        this.state = { connected: false };
+        this.intervalID = setInterval(() => {
+            let elapsedTime = Date.now() - this.props.parent.lastConnectedTime;
 
-        setInterval(() => {
-            if (Date.now() - props.parent.lastConnectedTime > 1000) {
-                this.setState({ connected: false });
-                this.props.onConnStatChangeHandler(false);
+            if (elapsedTime > 2500) {
+                if (this.state.connected && !this.state.reconnecting) {
+                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
+                    this.setState({ connected: false });
+                    this.props.onConnStatChangeHandler(false);
+                }
 
-                if (hidbridge.shouldUse())
-                    hidbridge.initAsync();
+                if(!this.state.reconnecting) {
+                    // make sure that it doesn't try to call hidbridge.initAsync() when it is being reconnected (and cause a race condition)
+                    this.setState({ reconnecting: true });
+
+                    if (hidbridge.shouldUse())
+                        hidbridge.initAsync();
+                }
             }
             else {
+                // we are connected to the device
                 if (!this.state.connected) {
-                    this.setState({ connected: true });
+                    // make sure that it only calls setState when it's going to change the state (and not overwrite the same state)
+                    this.setState({ connected: true, reconnecting: false });
                     this.props.onConnStatChangeHandler(true);
+
                 }
             }
         }, 1000);
+    }
+
+    componentDidMount() {
+        
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.intervalID);
     }
 
     componentDidUpdate() {
@@ -32,9 +58,14 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
     }
 
     render() {
-        const status = (this.state.connected ?
-            { string: "Connected", icon: "checkmark", color: "green" }
-            : { string: "Disconnected", icon: "remove", color: "red" });
+        let status = { string: "", icon: "", color: "" };
+
+        if (this.state.reconnecting)
+            status = { string: "Reconnecting", icon: "refresh", color: "yellow" };
+        else if (this.state.connected)
+            status = { string: "Connected", icon: "checkmark", color: "green" };
+        else if (!this.state.connected)
+            status = { string: "Disconnected", icon: "remove", color: "red" };
 
         return (
             <div className={"ui basic label " + status.color + " " + this.props.class}>
