@@ -143,10 +143,17 @@ namespace pxt.runner {
         const mlang = /(live)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
         const lang = mlang ? mlang[2] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || navigator.userLanguage || navigator.language);
         const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+        const versions = pxt.appTarget.versions;
 
         patchSemantic();
         const cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(cfg.commitCdnUrl, lang, pxt.appTarget.versions.pxtCrowdinBranch, live)
+        return Util.updateLocalizationAsync(
+            pxt.appTarget.id,
+            true,
+            cfg.commitCdnUrl, lang,
+            versions ? versions.pxtCrowdinBranch : "",
+            versions ? versions.branch : "",
+            live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -283,9 +290,12 @@ namespace pxt.runner {
             const localeLiveRx = /^live-/;
             editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
+                pxt.appTarget.id,
+                true,
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
+                pxt.appTarget.versions.branch,
                 localeLiveRx.test(editorLocale)
             );
         }
