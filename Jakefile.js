@@ -274,6 +274,7 @@ task('wapp', [
     'built/web/worker.js',
     'built/web/fonts/icons.woff2',
     'built/web/icons.css',
+    'built/web/blockly.css',
     'built/web/semantic.css',
     "built/web/semantic.js"
 ])
@@ -410,6 +411,12 @@ file('built/web/worker.js', ["built/webapp/src/app.js"], function () {
 
 file('built/web/fonts/icons.woff2', [], function () {
     jake.cpR("node_modules/semantic-ui-less/themes/default/assets/fonts", "built/web/")
+})
+
+file('built/web/blockly.css', ['built/pxt.js',
+    "theme/blockly.less", "theme/theme.config", "theme/themes/pxt/globals/site.variables"
+], { async: true }, function () {
+    cmdIn(this, ".", 'node built/pxt.js buildcss')
 })
 
 file('built/web/semantic.css', ['built/pxt.js',

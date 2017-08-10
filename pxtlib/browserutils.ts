@@ -335,4 +335,22 @@ namespace pxt.BrowserUtils {
             document.body.appendChild(script);
         });
     }
+
+    export function loadAjaxAsync(url: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            let httprequest = new XMLHttpRequest();
+            httprequest.onreadystatechange = function() {
+                if (httprequest.readyState == XMLHttpRequest.DONE ) {
+                    if (httprequest.status == 200) {
+                        resolve(httprequest.responseText);
+                    }
+                    else {
+                        reject(httprequest.status);
+                    }
+                }
+            };
+            httprequest.open("GET", url, true);
+            httprequest.send();
+        })
+    }
 }
