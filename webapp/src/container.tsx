@@ -9,6 +9,19 @@ import * as sui from "./sui";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+// common menu items -- do not remove
+// lf("About")
+// lf("Getting started")
+// lf("Buy")
+// lf("Blocks")
+// lf("JavaScript")
+// lf("Examples")
+// lf("Tutorials")
+// lf("Projects")
+// lf("Reference")
+// lf("Support")
+// lf("Hardware")
+
 
 export class DocsMenuItem extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
