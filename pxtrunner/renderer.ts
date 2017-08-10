@@ -277,6 +277,39 @@ namespace pxt.runner {
         }, { package: options.package, snippetMode: true });
     }
 
+    function renderNamespaces(options: ClientRenderOptions): Promise<void> {
+        return pxt.runner.decompileToBlocksAsync('', options)
+            .then((r) => {
+                let res: {[ns: string]: string} = {};
+                const info = r.compileBlocks.blocksInfo;
+                info.blocks.forEach(fn => {
+                    const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                    if (!res[ns]) {
+                        const nsn = info.apis.byQName[ns];
+                        if (nsn && nsn.attributes.color)
+                            res[ns] = nsn.attributes.color;
+                    }
+                });
+                let nsStyleBuffer = '';
+                Object.keys(res).forEach(ns => {
+                    const color = res[ns];
+                    nsStyleBuffer += `
+                        span.docs.${ns.toLowerCase()} {
+                            background-color: ${color} !important;
+                            border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+                        }
+                    `;
+                })
+                // Inject css
+                let nsStyle = document.createElement('style');
+                nsStyle.id = "namespaceColors";
+                nsStyle.type = 'text/css';
+                let head = document.head || document.getElementsByTagName('head')[0];
+                head.appendChild(nsStyle);
+                nsStyle.appendChild(document.createTextNode(nsStyleBuffer));
+            });
+    }
+
     function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
         options = Util.clone(options);
         options.emPixels = 18;
@@ -290,8 +323,10 @@ namespace pxt.runner {
             const text = $el.text();
             const mbtn = /^(\|+)([^\|]+)\|+$/.exec(text);
             if (mbtn) {
-                const lev = mbtn[1].length == 1 ? "docs inlinebutton" : "docs inlineblock";
-                const txt = mbtn[2];
+                const mtxt = /^([^\:]*?)\:?([^\:]+)$/.exec(mbtn[2]);
+                const ns = mtxt[1].toLowerCase();
+                const lev = mbtn[1].length == 1 ? `docs inlinebutton ${ns}` : `docs inlineblock ${ns}`;
+                const txt = mtxt[2];
                 $el.replaceWith($(`<span class="${lev}"/>`).text(U.rlf(txt)));
                 return renderNextAsync();
             }
@@ -583,6 +618,7 @@ namespace pxt.runner {
 
         renderTypeScript(options);
         return Promise.resolve()
+            .then(() => renderNamespaces(options))
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderShuffleAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
