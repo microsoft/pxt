@@ -11,10 +11,11 @@ export class Point {
 
 export class Gesture {
     public gestures: GestureSample[];
-    public label: number;
+    public labelNumber: number;
     public name: string;
+    public description: string;
     public displayGesture: GestureSample;
-    public htmlContainer: any;
+    public displayVideo: any;
     private static id: number = 0;
     public gestureID: number;
 
@@ -22,6 +23,8 @@ export class Gesture {
         this.gestures = [];
         this.displayGesture = new GestureSample();
         this.gestureID = Gesture.id++;
+        this.name = "gesture " + this.gestureID.toString();
+        this.description = "description of this gesture will be here. it's a great and wonderful gesture. you won't be dissapointed " + this.gestureID.toString();
     }
 
     public getCroppedData(): Vector[][] {

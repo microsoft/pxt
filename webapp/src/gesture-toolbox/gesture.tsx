@@ -24,11 +24,6 @@ type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
 type IProjectView = pxt.editor.IProjectView;
 
-const MediaStreamRecorder = require("msr");
-let nav = navigator as any;
-let mediaStream: any;
-let mediaRecorder: any;
-
 export const gesturesContainerID: string = "gestures-container";
 export const connectionIndicatorID: string = "connection-indicator";
 
@@ -59,6 +54,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private curGestureIndex: number;
 
     private models: Model.SingleDTWCore[];
+    private newName: string;
 
     lastConnectedTime: number;
 
@@ -260,29 +256,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
-        const initWebCam = (video: any) => {
-            if (video != null && !this.webcamInitialized) {
-                nav.getUserMedia  = nav.getUserMedia || nav.webkitGetUserMedia ||
-                            nav.mozGetUserMedia || nav.msGetUserMedia;
-
-                if (nav.getUserMedia) {
-                    nav.getUserMedia({audio: false, video: true},
-                        (stream: any) => {
-                            video.autoplay = true;
-                            video.src = window.URL.createObjectURL(stream);
-                            mediaStream = stream;
-
-                            mediaRecorder = new MediaStreamRecorder(stream);
-                            mediaRecorder.mimeType = 'video/mp4';
-                        }, () => {
-                            console.error('unable to initialize webcam');
-                        });
-                }
-
-                this.webcamInitialized = true;
-            }
-        }
-
         const initRecorder = (elem: any) => {
             // TODO: change recording type based on selected recording method:
             if (elem != null && !this.recorderInitialized) {
@@ -295,16 +268,35 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     cloneData[gestureIndex].gestures.push(newSample);
                     this.models[this.curGestureIndex].Update(cloneData[gestureIndex].getCroppedData());
                     cloneData[gestureIndex].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
-
+                    // TODO: allow users to change the video in the future.
+                    // Probably just for the demo:
+                    cloneData[gestureIndex].displayVideo = cloneData[gestureIndex].gestures[0].video;
                     this.setState({ data: cloneData });
                 }
 
                 this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressAndHold, onNewSampleRecorded);
+                this.recorder.initWebcam("webcam-video");
                 this.recorderInitialized = true;
             }
         }
 
-        const dividerStyle = {position: "relative", padding: "0 !important"};
+        const handleRenameChange = (event: any) => {
+            this.newName = event.target.value;
+        }
+
+        const renameGesture = (gid: number) => {
+            let gi = this.getGestureIndex(gid);
+
+            let cloneData = this.state.data.slice();
+            cloneData[gi].name = this.newName;
+
+            this.setState({ data: cloneData });
+        }
+
+        const headerStyle = { height: "60px" };
+        const videoStyle = { height: "258px", margin: "15px 0 15px 0" };
+        const mainGraphStyle = { margin: "15px 15px 15px 0" };
+        const containerStyle = { display: "inline-block", position: "relative", top: "1px", margin: "0 20px 15px 0" };
 
         return (
             <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
@@ -349,41 +341,39 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         onClick={() => importGesture() }
                                         />
                         </div>
+                        <div className="ui divider"></div>
                         {
                             this.state.data.length == 0 ? undefined :
-                            <div className="ui segments">
+                            <div>
                                 {
                                     this.state.data.map((gesture) =>
-                                        <div className="ui segment grid">
-                                            <div className="column">
-                                                <h1>{"Gesture " + gesture.name}</h1>
+                                        <div style={containerStyle} className="ui segments link" onClick={() => {editGesture(gesture.gestureID)}}>
+                                            <div className="ui segment inverted teal" style={headerStyle}>
+                                                <div className="ui label">
+                                                    {gesture.name}
+                                                </div>
+                                                <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(gesture.gestureID)}}>
+                                                    <i className="icon cloud download"></i>
+                                                </button>
+                                                <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
+                                                    <i className="icon puzzle"></i>
+                                                    &nbsp;Create Block
+                                                </button>
                                             </div>
-                                            <div className="column">
-                                                <GraphCard
-                                                    key={ gesture.gestureID }
-                                                    editable={ false }
-                                                    parent={ this }
-                                                    data={ gesture.displayGesture }
-                                                    dx={ 7 }
-                                                    graphHeight={ 70 }
-                                                    maxVal={ 2450 }
-                                                />
-                                            </div>
-                                            <div className="column">
-                                                <button className="ui button teal" onClick={() => {editGesture(gesture.gestureID)}}>
-                                                    <i className="icon edit icon-and-text"></i>
-                                                    <span className="ui text">Edit Gesture</span>
-                                                </button>
-                                                <br/>
-                                                <button className="ui button teal" onClick={() => {downloadGesture(gesture.gestureID)}}>
-                                                    <i className="icon cloud download icon-and-text"></i>
-                                                    <span className="ui text">Download Gesture</span>
-                                                </button>
-                                                <br/>
-                                                <button className="ui button violet" onClick={() => {createGestureBlock(gesture.gestureID)}}>
-                                                    <i className="icon puzzle icon-and-text"></i>
-                                                    <span className="ui text">Create Block</span>
-                                                </button>
+                                            <div className="ui segment">
+                                                <div className="ui grid">
+                                                    <video style={videoStyle} src={gesture.displayVideo} autoPlay loop></video>
+                                                    <GraphCard
+                                                        key={ gesture.gestureID }
+                                                        editable={ false }
+                                                        parent={ this }
+                                                        data={ gesture.displayGesture }
+                                                        dx={ 7 }
+                                                        graphHeight={ 70 }
+                                                        maxVal={ 2450 }
+                                                        style={ mainGraphStyle }
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     )
@@ -397,7 +387,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div className="four wide column">
                                 {
                                     this.state.connected ?
-                                    <video id="webcam-video" ref={initWebCam}></video>
+                                    <video id="webcam-video"></video>
                                     :
                                     <div>Not Connected</div>
                                 }
@@ -432,46 +422,64 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 }
                             </div>
                         </div>
-                        {
-                            this.state.data[this.curGestureIndex].gestures.length == 0 ? undefined :
-                            <div className="ui segment">
-                            {
-                                this.state.data[this.curGestureIndex].displayGesture.rawData.length == 0 ? undefined :
-                                <GraphCard
-                                        key={ this.state.data[this.curGestureIndex].displayGesture.sampleID }
-                                        editable={ false }
-                                        data={ this.state.data[this.curGestureIndex].displayGesture }
-                                        parent={ this }
-                                        dx={ 7 }
-                                        graphHeight={ 70 }
-                                        maxVal={ 2450 }
-                                    />
-                            }
-                            {
-                                this.state.data[this.curGestureIndex].displayGesture.rawData.length == 0 ? undefined :
-                                <div style={dividerStyle}>
-                                    <div className="ui vertical divider">
-                                    Samples:
-                                    </div>
+                        <div style={containerStyle} className="ui segments">
+                            <div className="ui segment inverted teal" style={headerStyle}>
+                                <div className="ui action input mini">
+                                    <input width="25" type="text" ref="gesture-name-input" placeholder={this.state.data[this.curGestureIndex].name} onChange={handleRenameChange}></input>
+                                    <button onClick={() => renameGesture(this.state.data[this.curGestureIndex].gestureID)} className="ui right labeled icon button compact tiny">
+                                        <i className="edit icon"></i>
+                                        Rename
+                                    </button>
                                 </div>
-                            }
-                            {
-                                this.state.data[this.curGestureIndex].gestures.map((sample) =>
-                                    <GraphCard
-                                        key={ sample.sampleID }
-                                        editable={ true }
-                                        parent={ this }
-                                        gestureID={ this.state.data[this.curGestureIndex].gestureID }
-                                        sampleID={ sample.sampleID }
-                                        dx={ 7 }
-                                        graphHeight={ 70 }
-                                        maxVal={ 2450 }
-                                        onDeleteHandler={ onSampleDelete }
-                                        onCropHandler={ onSampleCrop }
-                                    />
-                                )
-                            }
+                                <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(this.state.data[this.curGestureIndex].gestureID)}}>
+                                    <i className="icon cloud download"></i>
+                                </button>
+                                <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(this.state.data[this.curGestureIndex].gestureID)}}>
+                                    <i className="icon puzzle"></i>
+                                    &nbsp;Create Block
+                                </button>
                             </div>
+                            <div className="ui segment">
+                                <div className="ui grid">
+                                    {
+                                        this.state.data[this.curGestureIndex].gestures.length == 0 ?
+                                        <video style={videoStyle} src="" autoPlay loop></video>
+                                        :
+                                        <video style={videoStyle} src={this.state.data[this.curGestureIndex].displayVideo} autoPlay loop></video>
+                                    }
+                                    {
+                                        this.state.data[this.curGestureIndex].gestures.length == 0 ?
+                                        undefined
+                                        :
+                                        <GraphCard
+                                            key={ this.state.data[this.curGestureIndex].gestureID }
+                                            editable={ false }
+                                            parent={ this }
+                                            data={ this.state.data[this.curGestureIndex].displayGesture }
+                                            dx={ 7 }
+                                            graphHeight={ 70 }
+                                            maxVal={ 2450 }
+                                            style={ mainGraphStyle }
+                                        />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        {
+                            this.state.data[this.curGestureIndex].gestures.map((sample) =>
+                                <GraphCard
+                                    key={ sample.sampleID }
+                                    editable={ true }
+                                    parent={ this }
+                                    gestureID={ this.state.data[this.curGestureIndex].gestureID }
+                                    sampleID={ sample.sampleID }
+                                    dx={ 7 }
+                                    graphHeight={ 80 }
+                                    maxVal={ 2450 }
+                                    onDeleteHandler={ onSampleDelete }
+                                    onCropHandler={ onSampleCrop }
+                                />
+                            )
                         }
                     </div>
                 }
@@ -493,3 +501,60 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 //                     <div className="ui button">Toggle Recording</div>
 //                 </div>
 //             </div>
+
+
+// <div className="ui link card" onClick={() => {editGesture(gesture.gestureID)}}>
+//                                                 <div className="ui grid">
+//                                                     <div className="content column">
+//                                                         <h2 className="meta">{gesture.name}</h2>
+//                                                         <p className="meta">{gesture.description}</p>
+//                                                     </div>
+//                                                     <div className="column">
+                                                        // <GraphCard
+                                                        //     key={ gesture.gestureID }
+                                                        //     editable={ false }
+                                                        //     parent={ this }
+                                                        //     data={ gesture.displayGesture }
+                                                        //     dx={ 7 }
+                                                        //     graphHeight={ 70 }
+                                                        //     maxVal={ 2450 }
+                                                        // />
+//                                                     </div>
+//                                                     <div className="content column">
+//                                                         <span className="right floated">
+//                                                             <i className="icon lightning outline"></i>
+//                                                             {gesture.gestures.length + " "} Samples
+//                                                         </span>
+//                                                         <button className="ui button teal" onClick={() => {downloadGesture(gesture.gestureID)}}>
+//                                                             <i className="icon cloud download icon-and-text"></i>
+//                                                         </button>
+//                                                         <button className="ui button violet" onClick={() => {createGestureBlock(gesture.gestureID)}}>
+//                                                             <i className="icon puzzle icon-and-text"></i>
+//                                                             <span className="ui text">Create Block</span>
+//                                                         </button>
+//                                                     </div>
+//                                                 </div>
+//                                             </div>
+//                                              <div className="column">
+//                                                 <h1>{"Gesture " + gesture.name}</h1>
+//                                             </div>
+//                                             <div className="column">
+                            
+//                                             </div>
+//                                             <div className="column">
+//                                                 <button className="ui button teal" >
+//                                                     <i className="icon edit icon-and-text"></i>
+//                                                     <span className="ui text">Edit Gesture</span>
+//                                                 </button>
+//                                                 <br/>
+                                                // <button className="ui button teal" onClick={() => {downloadGesture(gesture.gestureID)}}>
+                                                //     <i className="icon cloud download icon-and-text"></i>
+                                                //     <span className="ui text">Download Gesture</span>
+                                                // </button>
+                                                // <br/>
+                                                // <button className="ui button violet" onClick={() => {createGestureBlock(gesture.gestureID)}}>
+                                                //     <i className="icon puzzle icon-and-text"></i>
+                                                //     <span className="ui text">Create Block</span>
+                                                // </button>
+//                                             </div>
+//                                         </div> 
