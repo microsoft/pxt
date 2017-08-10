@@ -2207,6 +2207,7 @@ $(document).ready(() => {
                 config.commitCdnUrl,
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,
+                pxt.appTarget.versions.branch,
                 live);
         })
         .then(() => initTheme())
