@@ -2203,6 +2203,7 @@ $(document).ready(() => {
             lang.initialLang = useLang;
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
+                false,
                 config.commitCdnUrl,
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,

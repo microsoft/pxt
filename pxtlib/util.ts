@@ -707,32 +707,29 @@ namespace ts.pxtc.Util {
         _localizeStrings = strs;
     }
 
-    export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
+    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, branch?: string, live?: boolean): Promise<any> {
         // normalize code (keep synched with localized files)
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
 
         const mainStringsFile = "strings.json";
-        const stringFiles = [
-            mainStringsFile,
-            targetId + "/target-strings.json",
-            targetId + "/sim-strings.json"
-        ];
+        const stringFiles = simulator
+            ? [targetId + "/sim-strings.json"]
+            : [
+                mainStringsFile,
+                targetId + "/target-strings.json"
+            ];
 
         if (_localizeLang != code && live) {
+            _localizeStrings = {};
+            _localizeLang = code;
+            localizeLive = true;
             return Promise.mapSeries(stringFiles, (file) => {
                 return downloadLiveTranslationsAsync(code, file, branch)
-                    .then((tr) => {
-                        if (file === mainStringsFile) {
-                            _localizeStrings = tr || {};
-                            _localizeLang = code;
-                            localizeLive = true;
-                        } else if (tr) {
-                            Object.keys(tr)
+                    .then((tr) => Object.keys(tr)
                                 .filter(k => !!tr[k])
-                                .forEach(k => _localizeStrings[k] = tr[k]);
-                        }
-                    }, e => console.log(`failed to load localizations for file ${file}`));
+                                .forEach(k => _localizeStrings[k] = tr[k])
+                    , e => console.log(`failed to load localizations for file ${file}`));
             });
         }
 
