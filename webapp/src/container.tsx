@@ -107,7 +107,7 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
         if (!docsUrl) return null;
 
         return <div>
-            <button id="sidedocstoggle" role="button" aria-label={state.sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation. Press tab to navigate into the documentation.")} className="ui icon button" onClick={() => this.toggleVisibility() }>
+            <button id="sidedocstoggle" role="button" aria-label={state.sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button" onClick={() => this.toggleVisibility() }>
                 <i className={`icon large inverted ${state.sideDocsCollapsed ? 'book' : 'chevron right'}`}></i>
                 {state.sideDocsCollapsed ? <i className={`icon large inverted chevron left hover`}></i> : undefined }
             </button>
