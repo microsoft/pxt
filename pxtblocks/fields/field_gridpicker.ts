@@ -154,7 +154,6 @@ namespace pxtblockly {
             this.disposeTooltips();
 
             let options = this.getOptions();
-            //options = [options[0]];
 
             // Container for the menu rows
             const tableContainer = new goog.ui.Control();
@@ -204,11 +203,9 @@ namespace pxtblockly {
                     let text = searchBar.value;
                     let re = new RegExp(text + ".*", "i");
                     let filteredOptions = options.filter((block) => {
-                        if (Array.isArray(block) && block.length > 1 && typeof block[1] === "string") {
-                            return re.test(block[1])
-                        } else {
-                            return false
-                        }
+                        const alt = (block as any)[0].alt; // Human-readable text or image.
+                        const value = (block as any)[1]; // Language-neutral value.
+                        return alt ? re.test(alt) : re.test(value);
                     })
                     this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
                     this.createTooltips(filteredOptions, tableContainer);
