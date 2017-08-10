@@ -213,6 +213,36 @@
         border: 1px solid white !important;
     }
 
+    /* Tutorial */
+    .ui.message {
+        background-color: black !important;
+        color: white !important;
+
+        .tutorialmessage {
+            outline: 1px solid white !important;
+            border: none !important;
+        
+            &:focus {
+                outline: 1px solid @selected !important;
+                color: @selected !important;
+            }
+        }
+    }
+
+    .ui.label {
+        background-color: black !important;
+        border: 2px solid white !important;
+        
+        &:focus {
+            border-color: @selected !important;
+        }
+    }
+
+    .ui.blue.labels .label, .ui.blue.label {
+        background-color: @selected !important;
+        border-color: @selected !important;
+    }
+
     /* Blockly / Monaco toolbox */
     .blocklyTreeSelected {
         background: @selected !important;
