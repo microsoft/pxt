@@ -1,3 +1,10 @@
+function handleEnterKey(e) {
+    let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+    if (charCode === 13 || charCode === 32) {
+        e.preventDefault();
+        e.currentTarget.click();
+    }
+}
 function describePlural(value, unit) {
     return value + " " + unit + (value == 1 ? "" : "s")
 }
@@ -47,8 +54,21 @@ function searchSubmit(form) {
 }
 
 function setupSidebar() {
+    let togglesidebar = document.getElementById("togglesidebar");
+    togglesidebar.onkeydown = handleEnterKey;
+
+
     $('.ui.sidebar')
-        .sidebar({ dimPage: false })
+        .sidebar({ 
+            dimPage: false,
+            onShow: () => {
+                togglesidebar.setAttribute("aria-expanded", "true");
+                document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
+            },
+            onHidden: () => {
+                togglesidebar.setAttribute("aria-expanded", "false");
+            }
+        })
         .sidebar(
         'attach events', '#togglesidebar'
         );
@@ -63,6 +83,37 @@ function setupSidebar() {
                 trigger: '.title .icon'
             }
         });
+
+    let accordions = document.getElementsByClassName("ui accordion");
+    for (let i = 0; i < accordions.length; i++) {
+        let nodes = accordions.item(i).getElementsByClassName("title");
+        for (let j = 0; j < nodes.length; j++) {
+            let hrefNode = nodes.item(j).getElementsByTagName("a").item(0);
+            let iNode = nodes.item(j).getElementsByTagName("i").item(0);
+            iNode.onclick = (e) => {
+                if (hrefNode.hasAttribute("aria-expanded") && hrefNode.getAttribute("aria-expanded") === "true") {
+                    hrefNode.setAttribute("aria-expanded", "false");
+                } else {
+                    hrefNode.setAttribute("aria-expanded", "true");
+                }
+            };
+            hrefNode.onkeydown = (e) => {
+                let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+                if (charCode === 39) {
+                    $(e.target.parentElement.parentElement).accordion("open", 0);
+                    e.target.setAttribute("aria-expanded", "true");
+                } else if (charCode === 37) {
+                    $(e.target.parentElement.parentElement).accordion("close", 0);
+                    e.target.setAttribute("aria-expanded", "false");
+                }
+            };
+        }
+    }
+
+    let searchIcons = document.getElementsByClassName("search link icon");
+    for (let i = 0; i < searchIcons.length; i++) {
+        searchIcons.item(i).onkeydown = handleEnterKey;
+    }
 }
 
 function setupSemantic() {
@@ -127,7 +178,7 @@ function setupSemantic() {
         }).appendTo(outer);
     });
 
-    $('#printbtn').on("click", function() {
+    $('#printbtn').on("click", function () {
         window.print();
     })
 
