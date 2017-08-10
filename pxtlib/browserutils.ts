@@ -243,10 +243,14 @@ namespace pxt.BrowserUtils {
 
     export function browserDownloadDataUri(uri: string, name: string, userContextWindow?: Window) {
         const windowOpen = isBrowserDownloadInSameWindow();
+        const versionString = browserVersion();
+        const v = parseInt(versionString || "0")
         if (windowOpen) {
             if (userContextWindow) userContextWindow.location.href = uri;
             else window.open(uri, "_self");
-        } else if (pxt.BrowserUtils.isSafari()) {
+        } else if (pxt.BrowserUtils.isSafari()
+            && (v < 10 || (versionString.indexOf('10.0') == 0) || isMobile())) {
+            // For Safari versions prior to 10.1 and all Mobile Safari versions
             // For mysterious reasons, the "link" trick closes the
             // PouchDB database
             let iframe = document.getElementById("downloader") as HTMLIFrameElement;

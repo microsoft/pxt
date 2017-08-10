@@ -388,9 +388,6 @@ export class Editor extends srceditor.Editor {
         let blocklyOptions = this.getBlocklyOptions(showCategories);
         Util.jsonMergeFrom(blocklyOptions, pxt.appTarget.appTheme.blocklyOptions || {});
         this.editor = Blockly.inject(blocklyDiv, blocklyOptions);
-        // zoom out on mobile by default
-        if (pxt.BrowserUtils.isMobile())
-            this.editor.zoomCenter(-4);
         this.editor.addChangeListener((ev) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui') {
@@ -642,7 +639,8 @@ export class Editor extends srceditor.Editor {
                 wheel: true,
                 maxScale: 2.5,
                 minScale: .2,
-                scaleSpeed: 1.05
+                scaleSpeed: 1.05,
+                startScale: pxt.BrowserUtils.isMobile() ? 1.2 : 1.0
             },
             rtl: Util.isUserLanguageRtl()
         };

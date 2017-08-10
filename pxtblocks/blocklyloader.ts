@@ -222,6 +222,7 @@ namespace pxt.blocks {
 
                     if (nsn && nsn.attributes.color) {
                         category.setAttribute("colour", nsn.attributes.color);
+                        appendNamespaceCss(catName, nsn.attributes.color);
                     }
                     else if (getNamespaceColor(ns)) {
                         category.setAttribute("colour", getNamespaceColor(ns));
@@ -358,10 +359,22 @@ namespace pxt.blocks {
         }
 
         if (toolboxStyle.sheet) {
-            toolboxStyle.textContent = toolboxStyleBuffer;
+            toolboxStyle.textContent = toolboxStyleBuffer + namespaceStyleBuffer;
         } else {
-            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer));
+            toolboxStyle.appendChild(document.createTextNode(toolboxStyleBuffer + namespaceStyleBuffer));
         }
+    }
+
+    let namespaceStyleBuffer: string = '';
+    export function appendNamespaceCss(namespace: string, color: string) {
+        const ns = namespace.toLowerCase();
+        if (namespaceStyleBuffer.indexOf(ns) > -1) return;
+        namespaceStyleBuffer += `
+            span.docs.${ns} {
+                background-color: ${color} !important;
+                border-color: ${Blockly.PXTUtils.fadeColour(color, 0.2, true)} !important;
+            }
+        `;
     }
 
     let iconCanvasCache: Map<string> = {};
@@ -788,8 +801,8 @@ namespace pxt.blocks {
 
         // hook up/down if return value is void
         const hasHandlers = hasArrowFunction(fn);
-        block.setPreviousStatement(!hasHandlers && fn.retType == "void");
-        block.setNextStatement(!hasHandlers && fn.retType == "void");
+        block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
+        block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
         block.setTooltip(fn.attributes.jsDoc);
     }
