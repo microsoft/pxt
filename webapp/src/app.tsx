@@ -1712,7 +1712,7 @@ ${compileService && compileService.githubCorePackage && compileService.gittag ? 
                     </div>}
                 {gettingStarted ?
                     <div id="getting-started-btn">
-                        <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting started")} onClick={() => this.gettingStarted()} />
+                        <sui.Button class="portrait hide bottom attached small getting-started-btn" title={gettingStartedTooltip} text={lf("Getting Started")} onClick={() => this.gettingStarted()} />
                     </div>
                     : undefined}
                 <div id="simulator">
