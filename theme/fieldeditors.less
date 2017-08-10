@@ -86,8 +86,13 @@ text-align: center;
 vertical-align: top;
 }
 
+.blocklyWidgetDiv .blocklyGridPickerMenu .floatLeft {
+float: left;
+}
+
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-option.goog-option-selected {
 outline: solid 3px #fc3;
+position: relative;
 }
 
 .blocklyWidgetDiv .blocklyGridPickerMenu .goog-menuitem .goog-menuitem-checkbox {
@@ -96,4 +101,30 @@ display: none;
 
 .blocklyGridPickerTooltip {
 z-index: 100000; /* big value for bootstrap3 compatibility */
+}
+
+.ui.input input.blocklyGridPickerSearchBar {
+    background: none;
+    border: none;
+    color: white;
+}
+
+.ui.input input.blocklyGridPickerSearchBar::placeholder {
+    color: white;
+}
+
+.ui.input input.blocklyGridPickerSearchBar::-webkit-input-placeholder {
+    color: white;
+}
+
+.ui.input input.blocklyGridPickerSearchBar::-moz-placeholder {
+    color: white;
+}
+
+.ui.input input.blocklyGridPickerSearchBar:-ms-input-placeholder {
+    color: white;
+}
+
+.ui.input input.blocklyGridPickerSearchBar:-moz-placeholder {
+    color: white;
 }
