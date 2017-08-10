@@ -148,7 +148,7 @@ namespace pxt.runner {
         patchSemantic();
         const cfg = pxt.webConfig
         return Util.updateLocalizationAsync(
-            pxt.appTarget.id, 
+            pxt.appTarget.id,
             true,
             cfg.commitCdnUrl, lang, versions ? versions.pxtCrowdinBranch : "", live)
             .then(() => {
