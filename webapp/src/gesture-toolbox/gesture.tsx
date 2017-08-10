@@ -262,11 +262,9 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         }
 
         const initRecorder = (elem: any) => {
-            // TODO: change recording type based on selected recording method:
             if (elem != null && !this.recorderInitialized) {
                 const gestureState = this;
                 const onNewSampleRecorded = (gestureIndex: number, newSample: Types.GestureSample) => {
-                    // do stuff with `setState()` to update the graph
 
                     let cloneData = gestureState.state.data.slice();
                     // do not change the order of the following lines:
@@ -281,7 +279,22 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
                 this.recorder = new Recorder.Recorder(this.curGestureIndex, Recorder.RecordMode.PressAndHold, onNewSampleRecorded);
                 this.recorder.initWebcam("webcam-video");
+                this.recorder.initRecordButton("record-btn");
                 this.recorderInitialized = true;
+            }
+        }
+
+        const onRecordMethodChange = (event: any) => {
+            let element = document.getElementById("record-mode-select") as HTMLSelectElement;
+
+            switch(element.value) {
+                case "PressAndHold":
+                    this.recorder.SetRecordingMethod(Recorder.RecordMode.PressAndHold);
+                break;
+
+                case "PressToToggle":
+                    this.recorder.SetRecordingMethod(Recorder.RecordMode.PressToToggle);
+                break;
             }
         }
 
@@ -405,18 +418,30 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     </div>
                                     :
                                     <div>
-                                        <p>1. Connect Device</p>
-                                        <p>1. Upload Streamer Program</p>
+                                        <ol className="ui list">
+                                            <li>Connect circuit playground</li>
+                                            <li>Set to program mode</li>
+                                            <li>Upload <em>streamer.uf2</em></li>
+                                        </ol>
                                     </div>
                                 }
                             </div>
                             <div className="three wide column">
                                 {
                                     this.state.connected ?
-                                    <button id="record-btn" className="ui button blocks-menuitem green big" ref={initRecorder}>
-                                        <i className="xicon blocks icon icon-and-text"></i>
-                                        <span className="ui text">Record</span>
-                                    </button>
+                                    <div ref={initRecorder}>
+                                        <button id="record-btn" className="circular ui icon button massive">
+                                            <i className="icon record"></i>
+                                        </button>
+                                        <br/>
+                                        <span className="ui text">Record method:</span>
+                                        <select id="record-mode-select" className="ui search dropdown" onChange={onRecordMethodChange}>
+                                            <option value="PressAndHold">Press &amp; Hold</option>
+                                            <option value="PressToToggle">Press to Toggle</option>
+                                        </select>
+                                        <div>
+                                        </div>
+                                    </div>
                                     :
                                     <button id="program-streamer-btn" className="ui button icon-and-text primary fluid download-button big">
                                         <i className="download icon icon-and-text"></i>

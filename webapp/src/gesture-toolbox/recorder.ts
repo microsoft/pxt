@@ -22,36 +22,15 @@ export class Recorder {
     private isRecording: boolean;
     private wasRecording: boolean;
     private sample: GestureSample;
+    private recordBtn: any;
 
     constructor(gestureIndex: number, recordMode: RecordMode, onNewSampleRecorded: (gestureIndex: number, sample: GestureSample) => void) {
         this.gestureIndex = gestureIndex;
         this.recordMode = recordMode;
         this.onRecordHandler = onNewSampleRecorded;
 
-        if (this.recordMode == RecordMode.PressAndHold) {
-            // assign events to capture if recording or not
-            window.onkeydown = (e: any) => {
-                // if pressed "space" key
-                if (e.keyCode == 32)
-                    this.isRecording = true;
-            };
+        this.SetRecordingMethod(recordMode);
 
-            window.onkeyup = (e: any) => {
-                // if released "space" key
-                if (e.keyCode == 32)
-                    this.isRecording = false;
-            };
-        }
-        else if (this.recordMode == RecordMode.PressToToggle) {
-            // assign events to capture if recording or not
-            window.onkeydown = (e: any) => {
-                // if pressed "space" key
-                if (e.keyCode == 32 && this.isRecording == false)
-                    this.isRecording = true;
-                else if (e.keyCode == 32 && this.isRecording == true)
-                    this.isRecording = false;
-            };
-        }
         this.enabled = true;
         this.wasRecording = false;
         this.isRecording = false;
@@ -76,6 +55,10 @@ export class Recorder {
         }
     }
 
+    public initRecordButton(btnID: string) {
+        this.recordBtn = Viz.d3.select("#" + btnID);
+    }
+
     public Feed(yt: Vector) {
         if (this.enabled) {
             if (this.wasRecording == false && this.isRecording == true) {
@@ -85,6 +68,8 @@ export class Recorder {
                 this.sample.rawData.push(yt);
                 // start recording the video:
                 mediaRecorder.start(15 * 1000);
+
+                this.recordBtn.classed("green", true);
             }
             else if (this.wasRecording == true && this.isRecording == true) {
                 // continue recording
@@ -104,6 +89,8 @@ export class Recorder {
                     this.sample.video = vid;
                     this.onRecordHandler(this.gestureIndex, this.sample);
                 };
+
+                this.recordBtn.classed("green", false);
             }
 
             this.wasRecording = this.isRecording;
@@ -112,6 +99,37 @@ export class Recorder {
 
     public Disable() {
         this.enabled = false;
+    }
+
+    public SetRecordingMethod(recordMode: RecordMode) {
+        this.recordMode = recordMode;
+        
+        if (recordMode == RecordMode.PressAndHold) {
+            // assign events to capture if recording or not
+            window.onkeydown = (e: any) => {
+                // if pressed "space" key
+                if (e.keyCode == 32)
+                    this.isRecording = true;
+            };
+
+            window.onkeyup = (e: any) => {
+                // if released "space" key
+                if (e.keyCode == 32)
+                    this.isRecording = false;
+            };
+        }
+        else if (recordMode == RecordMode.PressToToggle) {
+            // assign events to capture if recording or not
+            window.onkeydown = (e: any) => {
+                // if pressed "space" key
+                if (e.keyCode == 32 && this.isRecording == false)
+                    this.isRecording = true;
+                else if (e.keyCode == 32 && this.isRecording == true)
+                    this.isRecording = false;
+            };
+
+            window.onkeyup = null;
+        }
     }
 
 }
