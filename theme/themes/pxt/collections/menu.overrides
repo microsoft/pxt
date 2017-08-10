@@ -53,6 +53,13 @@
     background: rgba(255, 255, 255, 0.30);
 }
 
+.ui.vertical.menu .item > .label {
+    &:hover,
+    &:focus {
+        background: #6C6C6C;
+    }
+}
+
 /* Tutorial mode */
 .tutorial .ui.inverted.menu {
     background: @mainMenuTutorialBackground !important;

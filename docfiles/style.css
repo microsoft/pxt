@@ -186,6 +186,14 @@ svg {
     padding-bottom: 3em;
 }
 
+#accessibleMenu .ui.item.link {
+    height: 4em;
+    line-height: 4em;
+    font-size: 1em;
+    text-align: center;
+    color: white;
+}
+
 /* Styling the table of contents much like the Semantic UI documentation site: http://semantic-ui.com/introduction/getting-started.html */
 .pusher > .full.height {
   display: -webkit-box;
