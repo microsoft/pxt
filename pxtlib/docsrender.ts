@@ -201,11 +201,14 @@ namespace pxt.docs {
             mparams["LINK"] = m.path
             if (tocPath.indexOf(m) >= 0) {
                 mparams["ACTIVE"] = 'active';
+                mparams["EXPANDED"] = 'true';
                 currentTocEntry = m;
                 breadcrumb.push({
                     name: m.name,
                     href: m.path
                 })
+            } else {
+                mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
                 if (lev == 0) templ = toc["top-dropdown"]
@@ -229,12 +232,12 @@ namespace pxt.docs {
         let breadcrumbHtml = '';
         if (breadcrumb.length > 1) {
             breadcrumbHtml = `
-            <div class="ui breadcrumb">
+            <nav class="ui breadcrumb" aria-label="Breadcrumb">
                 ${breadcrumb.map((b, i) =>
                     `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
-                        href="${html2Quote(b.href)}">${html2Quote(b.name)}</a>`)
+                        href="${html2Quote(b.href)}" aria-current="${i == breadcrumb.length - 1 ? "page" : ""}">${html2Quote(b.name)}</a>`)
                     .join('<i class="right chevron icon divider"></i>')}
-            </div>`;
+            </nav>`;
         }
 
         params["breadcrumb"] = breadcrumbHtml;
@@ -260,7 +263,7 @@ namespace pxt.docs {
             params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
-        params["targetlogo"] = theme.docsLogo ? `<img class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${U.toDataUri(theme.docsLogo)}" />` : ""
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`
@@ -279,6 +282,7 @@ namespace pxt.docs {
         if (theme.accentColor) style += `
 .ui.accent { color: ${theme.accentColor}; }
 .ui.inverted.accent { background: ${theme.accentColor}; }
+#accessibleMenu a { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
 
