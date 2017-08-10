@@ -187,21 +187,21 @@ namespace pxtblockly {
             // Search bar
             if (this.hasSearchBar_) {
                 const searchBarDiv = document.createElement("div");
-                searchBarDiv.setAttribute("class", "ui icon input");
+                searchBarDiv.setAttribute("class", "ui fluid icon input");
                 const searchIcon = document.createElement("i");
                 searchIcon.setAttribute("class", "search icon");
                 const searchBar = document.createElement("input");
                 searchBar.setAttribute("type", "search");
                 searchBar.setAttribute("id", "search-bar");
                 searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
-                searchBar.setAttribute("placeholder", pxt.Util.lf("search"));
+                searchBar.setAttribute("placeholder", pxt.Util.lf("Search"));
                 searchBar.addEventListener("click", () => {
                     searchBar.focus();
-                    searchBar.select();
+                    searchBar.setSelectionRange(0, searchBar.value.length);
                 });
                 searchBar.addEventListener("keyup", () => {
                     let text = searchBar.value;
-                    let re = new RegExp(text + ".*", "i");
+                    let re = new RegExp(text, "i");
                     let filteredOptions = options.filter((block) => {
                         const alt = (block as any)[0].alt; // Human-readable text or image.
                         const value = (block as any)[1]; // Language-neutral value.
