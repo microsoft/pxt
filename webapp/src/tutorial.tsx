@@ -165,9 +165,17 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         this.props.parent.completeTutorial();
     }
 
+    closeLightboxOnEscape = (e: KeyboardEvent) => {
+        let charCode = (typeof e.which == "number") ? e.which : e.keyCode
+        if (charCode === 27) {
+            this.closeLightbox();
+        }
+    }
+
     closeLightbox() {
         // Hide light box
         sounds.tutorialNext();
+        document.documentElement.removeEventListener("keydown", this.closeLightboxOnEscape);
         core.initializeFocusTabIndex($('#tutorialcard').get(0), true, undefined, true);
         let tutorialmessage = document.getElementsByClassName("tutorialmessage");
         if (tutorialmessage.length > 0) {
@@ -181,6 +189,7 @@ export class TutorialCard extends data.Component<ISettingsProps, {}> {
         $('#tutorialhint')
          .modal('attach events', '#tutorialcard .ui.button.hintbutton', 'show');
         ;
+        document.documentElement.addEventListener("keydown", this.closeLightboxOnEscape);
     }
 
     componentDidUpdate() {
