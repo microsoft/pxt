@@ -150,8 +150,8 @@ namespace pxt.runner {
         return Util.updateLocalizationAsync(
             pxt.appTarget.id,
             true,
-            cfg.commitCdnUrl, lang, 
-            versions ? versions.pxtCrowdinBranch : "", 
+            cfg.commitCdnUrl, lang,
+            versions ? versions.pxtCrowdinBranch : "",
             versions ? versions.branch : "",
             live)
             .then(() => {
