@@ -27,7 +27,7 @@ The following sample shows a simple 2 step tutorial.
 
 ### Step 1
 
-Welcome! Place the ``||show string||`` block in the ``||on start||`` slot to scroll your name.
+Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.
 
 ```blocks
 basic.showString("Micro!")

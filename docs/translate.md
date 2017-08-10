@@ -49,14 +49,12 @@ Open the developer tools and watch the console, PXT wil validate the localized s
 * Do not reorder parameters
 * Maintain the same structure of ``|`` and ``%variables%``
 
+
+## Translating Target specific strings
+
+The `pxtarget.json` file contains a number of strings which
+show up on doc pages (mostly menu items and target name). These strings are uploaded as the ``targetid/target-strings.json`` file in Crowdin and loaded by the editor on demand.
+
 ## Translating Documentation
 
 Translation of documentation pages are pulled from crowdin by the cloud backend automatically.
-
-## Translating Help menu in editor
-
-The `pxtarget.json` file contains a number of strings which
-show up on doc pages (mostly menu items and target name). These can
-be localized in ``_theme.json`` files. 
-
-Check out `pxt-sample` target for an example!
