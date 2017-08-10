@@ -265,6 +265,32 @@
 			background: none;
 			height: 3.5rem;
 		}
+
+		/* Accessible menu */
+		#accessibleMenu {
+			width: 100%;
+			position: absolute;
+			top: -20em;
+			z-index: 1001;
+			padding: 0;
+			margin: 0;
+			left: 0;
+		}
+		#accessibleMenu .ui.item.link {
+			position: absolute;
+			left: 0;
+			right: 0;
+			padding: 12px 10px;
+			background: rgba(255,255,255,.9);
+			font-weight: 700;
+			text-align: center;
+			color: #0072c6;
+		}
+		#accessibleMenu	.ui.item.link:focus, #accessibleMenu .ui.item.link:hover {
+			box-shadow: 3px 3px 5px #aaa;
+			top: 20em;
+			text-decoration: none;
+		}
 	</style>
 	<script type="text/javascript">
 		$(document).ready(function () {
@@ -278,42 +304,63 @@
 			$('a.launch.icon').click(function () {
 				$('#makecode-sidebar')
 					.sidebar('toggle')
+					.sidebar('show', function () {
+						$('#sidenav-about').focus();
+					})
 					;
 			})
+
+			// Limit sidebar navigation to the list of menu elements
+			$('#sidenav-about').keydown(function (e) {
+				var charCode = (typeof e.which == "number") ? e.which : e.keyCode
+				if (charCode == 9 && e.shiftKey) {
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			})
+			$('#sidenav-contact').keydown(function (e) {
+				var charCode = (typeof e.which == "number") ? e.which : e.keyCode
+				if (charCode == 9 && !e.shiftKey) {
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			})
 		});
+
+		var fireClickOnEnter = function (e) {
+			var charCode = (typeof e.which == "number") ? e.which : e.keyCode
+			if (charCode === 13 || charCode === 32) {
+					e.preventDefault();
+					e.currentTarget.click();
+			}
+		}
 	</script>
 </head>
 
 <body id='root' class='root'>
-
-	<aside>
-		<nav id="sidenav" role="navigation">
-			<div id="makecode-sidebar" class="ui left vertical inverted sidebar labeled icon menu" role="menubar">
-				<a href="#about" class="item ms-font-m" aria-label="About MakeCode">
-				About
-			</a>
-				<a href="#get-inspired" class="item ms-font-m" role="menuitem">
-				Get Inspired
-			</a>
-				<a href="#learn" class="item ms-font-m" aria-label="Learn and Teach">
-				Learn
-			</a>
-				<a href="#hardware" class="item ms-font-m" role="menuitem">
-				Hardware
-			</a>
-				<a href="#resources" class="item ms-font-m" role="menuitem">
-				Resources
-			</a>
-				<a href="https://makecode.com/blog" target="_blank" class="item ms-font-m" role="menuitem">
-				Blog
-			</a>
-				<a href="mailto:makecode@microsoft.com" class="item ms-font-m" role="menuitem">
-				Contact
-			</a>
-			</div>
-		</nav>
-	</aside>
-
+	<div id="makecode-sidebar" class="ui left vertical inverted sidebar labeled icon menu" role="menubar">
+		<a id="sidenav-about" href="#about" class="item ms-font-m" aria-label="About MakeCode">
+			About
+		</a>
+			<a href="#get-inspired" class="item ms-font-m" role="menuitem">
+			Get Inspired
+		</a>
+			<a href="#learn" class="item ms-font-m" aria-label="Learn and Teach">
+			Learn
+		</a>
+			<a href="#hardware" class="item ms-font-m" role="menuitem">
+			Hardware
+		</a>
+			<a href="#resources" class="item ms-font-m" role="menuitem">
+			Resources
+		</a>
+			<a href="https://makecode.com/blog" target="_blank" class="item ms-font-m" role="menuitem">
+			Blog
+		</a>
+			<a id="sidenav-contact" href="mailto:makecode@microsoft.com" class="item ms-font-m" role="menuitem">
+			Contact
+		</a>
+	</div>
 	<div class="pusher">
 
 		<header id="makecode-header">
@@ -322,10 +369,15 @@
 				Microsoft MakeCode
 			</h1>
 
+
+			<div id="accessibleMenu" role="menubar">
+				<a id="skiptocontent" class="ui item link" role="menuitem" href="#document-main" tabindex="1">Skip to Content</a>
+			</div>
+
 			<div id="makecode-mobile-menu" class="ui fixed accent borderless inverted menu">
 				<div class="ui container fluid ">
-					<a class="launch icon item">
-						<i class="ms-Icon ms-Icon--GlobalNavButton"></i>
+					<a id="nav-button" class="launch icon item" aria-controls="sidenav" aria-haspopup="true" tabindex="2" onkeypress="fireClickOnEnter(event);">
+						<i class="ms-Icon ms-Icon--GlobalNavButton" aria-hidden="true"></i>
 					</a>
 					<div class="item ms-font-xl ms-fontWeight-light">
 						Microsoft MakeCode
@@ -333,7 +385,7 @@
 				</div>
 			</div>
 
-			<nav id="mainnav" role="navigation">
+			<nav id="mainnav" aria-label="Main navigation" role="navigation">
 				<div id="makecode-fixed-menu" class="ui borderless inverted menu" role="menubar">
 					<a href="#about" class="item ms-font-m" aria-label="About Microsoft MakeCode" role="menuitem">
 				About
@@ -363,17 +415,20 @@
 
 		<main role="main">
 
-			<div id="makecode-targets" class="ui inverted vertical center aligned segment targets">
 
-				<h2 class="ms-font-xxl ms-fontWeight-semilight">Hands-on computing education</h2>
+			<section id="document-main">
+				<div id="makecode-targets" class="ui inverted vertical center aligned segment targets">
 
-				<div class="ui padded menubar">
+					<h2 class="ms-font-xxl ms-fontWeight-semilight">Hands-on computing education</h2>
+
+					<div class="ui padded menubar">
+					</div>
+
+					<div class="ui three stackable cards doubling centered">
+						<!-- @include editorcards.html -->
+					</div>
 				</div>
-
-				<div class="ui three stackable cards doubling centered">
-					<!-- @include editorcards.html -->
-				</div>
-			</div>
+			<section id="about">
 
 			<section id="about">
 				<div id="makecode-about-container" class="ui vertical masthead center aligned segment">
