@@ -54,7 +54,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private curGestureIndex: number;
 
     private models: Model.SingleDTWCore[];
-    private newName: string;
 
     lastConnectedTime: number;
 
@@ -79,16 +78,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         this.graphInitialized = false;
         this.webcamInitialized = false;
         this.recorderInitialized = false;
-    }
-
-
-    resetGraph() {
-        this.graphInitialized = false;
-        this.webcamInitialized = false;
-        this.recorderInitialized = false;
-        // this.recorder.Disable();
-
-        // mediaStream.stop();
     }
 
 
@@ -144,6 +133,21 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     }
 
 
+    resetGraph() {
+        this.graphInitialized = false;
+        this.webcamInitialized = false;
+        this.recorderInitialized = false;
+        // this.recorder.Disable();
+
+        // mediaStream.stop();
+        if (this.state.data.length > 0 && this.state.data[this.curGestureIndex].gestures.length == 0) {
+            // delete the gesture
+            let cloneData = this.state.data.slice();
+            cloneData.splice(this.curGestureIndex, 1);
+            this.setState({ data: cloneData });
+        }
+    }
+
     getGestureIndex(gid: number): number {
         for (let i = 0; i < this.state.data.length; i++) {
             if (this.state.data[i].gestureID == gid) return i;
@@ -166,13 +170,6 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const backToMain = () => {
             this.setState({ editGestureMode: false });
             this.resetGraph();
-
-            if (this.state.data[this.curGestureIndex].gestures.length == 0) {
-                // delete the gesture
-                let cloneData = this.state.data.slice();
-                cloneData.splice(this.curGestureIndex, 1);
-                this.setState({ data: cloneData });
-            }
         }
 
         const newGesture = () => {
@@ -201,6 +198,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ editGestureMode: true });
 
             // TODO: create "singular" gesture block for the current gesture
+            this.models[this.curGestureIndex].GenerateBlock();
+            
         }
 
         const importGesture = () => {
@@ -218,6 +217,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let cloneData = this.state.data.slice();
 
             cloneData[gi].gestures.splice(si, 1);
+            this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
+            cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
 
             this.setState({ data: cloneData });
         }
@@ -226,12 +227,15 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             let gi = this.getGestureIndex(gid);
             let si = this.getSampleIndex(gi, sid);
 
-            let cloneArray = this.state.data.slice();
+            let cloneData = this.state.data.slice();
 
-            cloneArray[gi].gestures[si].cropStartIndex = newStart;
-            cloneArray[gi].gestures[si].cropEndIndex = newEnd;
+            cloneData[gi].gestures[si].cropStartIndex = newStart;
+            cloneData[gi].gestures[si].cropEndIndex = newEnd;
 
-            this.setState({ data: cloneArray });
+            this.models[this.curGestureIndex].Update(cloneData[gi].getCroppedData());
+            cloneData[gi].displayGesture = this.models[this.curGestureIndex].GetMainPrototype();
+
+            this.setState({ data: cloneData });
         }
 
         const initGraph = (elem: any) => {
@@ -280,15 +284,11 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
-        const handleRenameChange = (event: any) => {
-            this.newName = event.target.value;
-        }
-
         const renameGesture = (gid: number) => {
             let gi = this.getGestureIndex(gid);
 
             let cloneData = this.state.data.slice();
-            cloneData[gi].name = this.newName;
+            cloneData[gi].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
 
             this.setState({ data: cloneData });
         }
@@ -297,6 +297,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const videoStyle = { height: "258px", margin: "15px 0 15px 0" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
         const containerStyle = { display: "inline-block", position: "relative", top: "1px", margin: "0 20px 15px 0" };
+        // const scrollBarContainer = { overflowX: "scroll", width: "1500px" };
 
         return (
             <sui.Modal open={this.state.visible} className="gesturedialog" size="fullscreen"
@@ -422,139 +423,71 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 }
                             </div>
                         </div>
-                        <div style={containerStyle} className="ui segments">
-                            <div className="ui segment inverted teal" style={headerStyle}>
-                                <div className="ui action input mini">
-                                    <input width="25" type="text" ref="gesture-name-input" placeholder={this.state.data[this.curGestureIndex].name} onChange={handleRenameChange}></input>
-                                    <button onClick={() => renameGesture(this.state.data[this.curGestureIndex].gestureID)} className="ui right labeled icon button compact tiny">
-                                        <i className="edit icon"></i>
-                                        Rename
+                        <div>
+                            <div style={containerStyle} className="ui segments">
+                                <div className="ui segment inverted teal" style={headerStyle}>
+                                    <div className="ui action input mini">
+                                        <input width="25" type="text" ref="gesture-name-input" placeholder={this.state.data[this.curGestureIndex].name}></input>
+                                        <button onClick={() => renameGesture(this.state.data[this.curGestureIndex].gestureID)} className="ui right labeled icon button compact tiny">
+                                            <i className="edit icon"></i>
+                                            Rename
+                                        </button>
+                                    </div>
+                                    <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(this.state.data[this.curGestureIndex].gestureID)}}>
+                                        <i className="icon cloud download"></i>
+                                    </button>
+                                    <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(this.state.data[this.curGestureIndex].gestureID)}}>
+                                        <i className="icon puzzle"></i>
+                                        &nbsp;Create Block
                                     </button>
                                 </div>
-                                <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(this.state.data[this.curGestureIndex].gestureID)}}>
-                                    <i className="icon cloud download"></i>
-                                </button>
-                                <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(this.state.data[this.curGestureIndex].gestureID)}}>
-                                    <i className="icon puzzle"></i>
-                                    &nbsp;Create Block
-                                </button>
-                            </div>
-                            <div className="ui segment">
-                                <div className="ui grid">
-                                    {
-                                        this.state.data[this.curGestureIndex].gestures.length == 0 ?
-                                        <video style={videoStyle} src="" autoPlay loop></video>
-                                        :
-                                        <video style={videoStyle} src={this.state.data[this.curGestureIndex].displayVideo} autoPlay loop></video>
-                                    }
-                                    {
-                                        this.state.data[this.curGestureIndex].gestures.length == 0 ?
-                                        undefined
-                                        :
-                                        <GraphCard
-                                            key={ this.state.data[this.curGestureIndex].gestureID }
-                                            editable={ false }
-                                            parent={ this }
-                                            data={ this.state.data[this.curGestureIndex].displayGesture }
-                                            dx={ 7 }
-                                            graphHeight={ 70 }
-                                            maxVal={ 2450 }
-                                            style={ mainGraphStyle }
-                                        />
-                                    }
+                                <div className="ui segment">
+                                    <div className="ui grid">
+                                        {
+                                            this.state.data[this.curGestureIndex].gestures.length == 0 ?
+                                            <video style={videoStyle} src="" autoPlay loop></video>
+                                            :
+                                            <video style={videoStyle} src={this.state.data[this.curGestureIndex].displayVideo} autoPlay loop></video>
+                                        }
+                                        {
+                                            this.state.data[this.curGestureIndex].gestures.length == 0 ?
+                                            undefined
+                                            :
+                                            <GraphCard
+                                                key={ this.state.data[this.curGestureIndex].displayGesture.sampleID }
+                                                editable={ false }
+                                                parent={ this }
+                                                data={ this.state.data[this.curGestureIndex].displayGesture }
+                                                dx={ 7 }
+                                                graphHeight={ 70 }
+                                                maxVal={ 2450 }
+                                                style={ mainGraphStyle }
+                                            />
+                                        }
+                                    </div>
                                 </div>
                             </div>
+                            {
+                                this.state.data[this.curGestureIndex].gestures.map((sample) =>
+                                    <GraphCard
+                                        key={ sample.sampleID }
+                                        editable={ true }
+                                        parent={ this }
+                                        gestureID={ this.state.data[this.curGestureIndex].gestureID }
+                                        sampleID={ sample.sampleID }
+                                        dx={ 7 }
+                                        graphHeight={ 80 }
+                                        maxVal={ 2450 }
+                                        onDeleteHandler={ onSampleDelete }
+                                        onCropHandler={ onSampleCrop }
+                                    />
+                                )
+                            }
+                            </div>
                         </div>
-                        {
-                            this.state.data[this.curGestureIndex].gestures.map((sample) =>
-                                <GraphCard
-                                    key={ sample.sampleID }
-                                    editable={ true }
-                                    parent={ this }
-                                    gestureID={ this.state.data[this.curGestureIndex].gestureID }
-                                    sampleID={ sample.sampleID }
-                                    dx={ 7 }
-                                    graphHeight={ 80 }
-                                    maxVal={ 2450 }
-                                    onDeleteHandler={ onSampleDelete }
-                                    onCropHandler={ onSampleCrop }
-                                />
-                            )
-                        }
+                    }
                     </div>
-                }
-                </div>
             </sui.Modal>
         )
     }
 }
-
-
-// <div>
-//                 <div ref="graphContainer">
-//                     <svg ref="svgX"></svg>
-//                     <svg ref="svgY"></svg>
-//                     <svg ref="svgZ"></svg>
-//                 </div>
-//                 <div className="ui basic buttons">
-//                     <div className="ui button">Hold Recording</div>
-//                     <div className="ui button">Toggle Recording</div>
-//                 </div>
-//             </div>
-
-
-// <div className="ui link card" onClick={() => {editGesture(gesture.gestureID)}}>
-//                                                 <div className="ui grid">
-//                                                     <div className="content column">
-//                                                         <h2 className="meta">{gesture.name}</h2>
-//                                                         <p className="meta">{gesture.description}</p>
-//                                                     </div>
-//                                                     <div className="column">
-                                                        // <GraphCard
-                                                        //     key={ gesture.gestureID }
-                                                        //     editable={ false }
-                                                        //     parent={ this }
-                                                        //     data={ gesture.displayGesture }
-                                                        //     dx={ 7 }
-                                                        //     graphHeight={ 70 }
-                                                        //     maxVal={ 2450 }
-                                                        // />
-//                                                     </div>
-//                                                     <div className="content column">
-//                                                         <span className="right floated">
-//                                                             <i className="icon lightning outline"></i>
-//                                                             {gesture.gestures.length + " "} Samples
-//                                                         </span>
-//                                                         <button className="ui button teal" onClick={() => {downloadGesture(gesture.gestureID)}}>
-//                                                             <i className="icon cloud download icon-and-text"></i>
-//                                                         </button>
-//                                                         <button className="ui button violet" onClick={() => {createGestureBlock(gesture.gestureID)}}>
-//                                                             <i className="icon puzzle icon-and-text"></i>
-//                                                             <span className="ui text">Create Block</span>
-//                                                         </button>
-//                                                     </div>
-//                                                 </div>
-//                                             </div>
-//                                              <div className="column">
-//                                                 <h1>{"Gesture " + gesture.name}</h1>
-//                                             </div>
-//                                             <div className="column">
-                            
-//                                             </div>
-//                                             <div className="column">
-//                                                 <button className="ui button teal" >
-//                                                     <i className="icon edit icon-and-text"></i>
-//                                                     <span className="ui text">Edit Gesture</span>
-//                                                 </button>
-//                                                 <br/>
-                                                // <button className="ui button teal" onClick={() => {downloadGesture(gesture.gestureID)}}>
-                                                //     <i className="icon cloud download icon-and-text"></i>
-                                                //     <span className="ui text">Download Gesture</span>
-                                                // </button>
-                                                // <br/>
-                                                // <button className="ui button violet" onClick={() => {createGestureBlock(gesture.gestureID)}}>
-                                                //     <i className="icon puzzle icon-and-text"></i>
-                                                //     <span className="ui text">Create Block</span>
-                                                // </button>
-//                                             </div>
-//                                         </div> 
