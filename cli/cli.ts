@@ -1214,7 +1214,7 @@ export function buildTargetAsync(): Promise<void> {
         .then(() => buildFolderAsync('sim', true, 'sim'))
         .then(() => extractLocStringsAsync("sim-strings", ["sim"]))
         .then(buildTargetCoreAsync)
-        .then(buildSemanticUIAsync)
+        .then(() => buildSemanticUIAsync())
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildFolderAsync('editor', true, 'editor'))
         .then(() => buildFolderAsync('server', true, 'server'))
@@ -1383,9 +1383,10 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     fs.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
 }
 
-function buildSemanticUIAsync() {
+function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     const rtlcss = require('rtlcss');
     const autoprefixer = require('autoprefixer');
+    const forceRedbuild = parsed && parsed.flags["force"] || false;
 
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
@@ -1399,7 +1400,7 @@ function buildSemanticUIAsync() {
             .some(stat => stat.mtime > csstime);
     }
 
-    if (!dirty) return Promise.resolve();
+    if (!dirty && !forceRedbuild) return Promise.resolve();
 
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
@@ -1425,6 +1426,13 @@ function buildSemanticUIAsync() {
         let rtlCss = rtlcss.process(semCss);
         pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
+    }).then(() => {
+        if (!fs.existsSync(path.join("theme", "blockly.less")))
+            return Promise.resolve();
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
+        })
     })
 }
 
@@ -4426,7 +4434,17 @@ function initCommands() {
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
     advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
-    advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
+
+    p.defineCommand({
+        name: "buildcss",
+        help: "build required css files",
+        flags: {
+            force: {
+                description: "force re-compile of less files"
+            }
+        }
+    }, buildSemanticUIAsync);
+
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
     advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")

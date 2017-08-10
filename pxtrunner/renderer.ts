@@ -140,25 +140,9 @@ namespace pxt.runner {
             pxt.debug("Downloading screenshot for: " + woptions.hexname);
             let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
             let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
-            const customCss = `
-.blocklyMainBackground {
-    stroke:none !important;
-}
-
-.blocklyText {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-    font-size:${fontSize} !important;
-}
-
-.blocklyCheckbox,
-.blocklyLed {
-    fill: #ff3030 !important;
-    text-shadow: 0px 0px 6px #f00;
-    font-size: 17pt !important;
-}`;
             let svgElement = $svg.get(0) as any;
             let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, customCss, 0, 0, bbox.width, bbox.height, 4)
+            pxt.blocks.layout.svgToPngAsync(svgElement, 0, 0, bbox.width, bbox.height, 4)
                 .done(uri => {
                     if (uri)
                         BrowserUtils.browserDownloadDataUri(
