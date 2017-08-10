@@ -150,7 +150,10 @@ namespace pxt.runner {
         return Util.updateLocalizationAsync(
             pxt.appTarget.id,
             true,
-            cfg.commitCdnUrl, lang, versions ? versions.pxtCrowdinBranch : "", live)
+            cfg.commitCdnUrl, lang, 
+            versions ? versions.pxtCrowdinBranch : "", 
+            versions ? versions.branch : "",
+            live)
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -292,6 +295,7 @@ namespace pxt.runner {
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
+                pxt.appTarget.versions.branch,
                 localeLiveRx.test(editorLocale)
             );
         }
