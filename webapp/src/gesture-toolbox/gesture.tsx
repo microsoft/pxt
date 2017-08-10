@@ -198,8 +198,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ editGestureMode: true });
 
             // TODO: create "singular" gesture block for the current gesture
-            this.models[this.curGestureIndex].GenerateBlock();
-            
+            this.props.parent.updateFileAsync("custom.ts", this.models[this.curGestureIndex].GenerateBlock());
         }
 
         const importGesture = () => {
