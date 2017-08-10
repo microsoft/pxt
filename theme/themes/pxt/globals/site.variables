@@ -30,6 +30,12 @@
 @docsPageFont: @pageFont;
 
 /*-------------------
+   Links
+--------------------*/
+
+@linkColor           : #0F6C9B;
+
+/*-------------------
    Breakpoints
 --------------------*/
 
@@ -43,6 +49,23 @@
 
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 24rem;
+
+/*-------------------
+     Neutral Text
+--------------------*/
+ 
+@invertedLightTextColor      : rgba(255, 255, 255, 0.9);
+
+
+/*******************************
+             States
+*******************************/
+
+/*-------------------
+      Disabled
+--------------------*/
+
+@disabledOpacity: 0.80;
 
 /*******************************
      PXT Variables
