@@ -1,4 +1,4 @@
-import { Point, Vector } from './types';
+import { Point, Vector, Match } from './types';
 import * as Recorder from './recorder';
 import * as GestureUI from './gesture';
 import * as Model from './model';
@@ -86,6 +86,63 @@ export class RealTimeGraph {
     }
 }
 
+export class RecognitionOverlay {
+    private overlaySVG: any;
+    private overlayWidth: number;
+    private overlayHeight: number;
+    private dx: number;
+
+    private activeMatches: Match[];
+    private activeRectangles: any[];
+    private tickCount: number[];
+
+    constructor(svg: any, width: number, height: number, dx: number) {
+        this.overlaySVG = svg;
+        this.dx = dx;
+        this.overlayWidth = width - dx; //because the graph doesn't show the last point! TODO: fix this!
+        this.overlayHeight = height * 3 + 15;
+        this.activeMatches = [];
+        this.activeRectangles = [];
+        this.tickCount = [];
+        
+
+        svg.attr("width", this.overlayWidth)
+            .attr("height", this.overlayHeight)
+            .attr("style", "background: rgba(0, 0, 0, 0); position: absolute; top: 16px; left: 16px;");
+    }
+
+    public add(match: Match) {
+        let width = (match.Te - match.Ts) * this.dx;
+        let rect = this.overlaySVG.append("rect")
+            .attr("x", this.overlayWidth - width)
+            .attr("y", 0)
+            .attr("width", width) //TODO: should initialize all of these with the cropStart/End values
+            .attr("height", this.overlayHeight)
+            .attr("fill", "rgba(0, 0, 0, 0.5)");
+        
+        this.activeMatches.push(match);
+        this.activeRectangles.push(rect);
+        this.tickCount.push(0);
+    }
+
+    public tick(curTick: number) {
+        for (let i = 0; i < this.activeMatches.length; i++) {
+            let width = this.activeMatches[i].Te - this.activeMatches[i].Ts;
+
+            if (curTick - this.activeMatches[i].Te >= this.overlayWidth / this.dx) {
+                // finish displaying this tick
+                this.activeMatches.splice(i, 1);
+                // remove from DOM
+                this.activeRectangles[i].remove();
+                this.activeMatches.splice(i, 1);
+            }
+            else {
+                let transX = (-this.dx * (++this.tickCount[i])).toString();
+                this.activeRectangles[i].transition().duration(100).attr("transform", "translate(" + transX + ")");
+            }
+        }
+    }
+}
 
 // function drawGraph(data: Point[], axis: any, color: string) {
 //     let width = data.length * dx;

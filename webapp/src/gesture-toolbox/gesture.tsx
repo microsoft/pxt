@@ -45,6 +45,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private graphX: Viz.RealTimeGraph;
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
+    private recognitionOverlay: Viz.RecognitionOverlay;
 
     private graphInitialized: boolean;
     private webcamInitialized: boolean;
@@ -107,18 +108,17 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                     if (this.models[this.curGestureIndex].isRunning()) {
                         let match = this.models[this.curGestureIndex].Feed(newData.accVec);
                         if (match.classNum != 0) {
-                            console.log("RECOGNIZED GESTURE");
+                            // console.log("RECOGNIZED GESTURE");
                             // TODO: add moving window that will show it has recognized something...
                             // in particular, it will be a rectangle on top of the graph with these dimensions (at each data tick):
-
-                            let distFromRightEnd = this.models[this.curGestureIndex].getTick() - match.Te;
-                            let width = match.Te - match.Ts;
+                            this.recognitionOverlay.add(match);
 
                             // one way to implement this would be to create a RecognitionRectangle with a run() function
                             // push them into an array (because we might have more than one that needs to be shown at each tick)
                             // and then call the run() function on each element inside the array on each tick()
                             // though I'm sure that there would definitely be nicer ways to visualize this...
                         }
+                        this.recognitionOverlay.tick(this.models[this.curGestureIndex].getTick());
                     }
                 }
             }
@@ -254,6 +254,8 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                 this.graphX = new Viz.RealTimeGraph(svgX_rt, width, height, maxVal, dx, "red");
                 this.graphY = new Viz.RealTimeGraph(svgY_rt, width, height, maxVal, dx, "green");
                 this.graphZ = new Viz.RealTimeGraph(svgZ_rt, width, height, maxVal, dx, "blue");
+
+                this.recognitionOverlay = new Viz.RecognitionOverlay(graph.select("#recognition-overlay"), width, height, dx);
 
                 this.graphInitialized = true;
             }
@@ -399,6 +401,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                         <svg className="row" id="realtime-graph-x"></svg>
                                         <svg className="row" id="realtime-graph-y"></svg>
                                         <svg className="row" id="realtime-graph-z"></svg>
+                                        <svg id="recognition-overlay"></svg>
                                     </div>
                                     :
                                     <div>
