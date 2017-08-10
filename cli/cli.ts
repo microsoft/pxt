@@ -3442,9 +3442,9 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
         return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
     } else return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
-            .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))        
-            .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
-            .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
+        .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
+        .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
+        .then(() => uploadDocs ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key) : Promise.resolve());
 }
 
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
