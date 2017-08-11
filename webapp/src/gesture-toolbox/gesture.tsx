@@ -46,6 +46,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
     private graphY: Viz.RealTimeGraph;
     private graphZ: Viz.RealTimeGraph;
     private recognitionOverlay: Viz.RecognitionOverlay;
+    private generatedCodeBlocks: string[];
 
     private graphInitialized: boolean;
     private webcamInitialized: boolean;
@@ -73,6 +74,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
         this.lastConnectedTime = 0;
         this.models = [];
+        this.generatedCodeBlocks = [];
 
         p = this.props.parent;
 
@@ -178,7 +180,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.state.data.push(new Types.Gesture());
             // TODO: change this method of keeping the current gesture index to something more reliable
             this.curGestureIndex = this.state.data.length - 1;
-            this.models.push(new Model.SingleDTWCore(this.state.data[this.curGestureIndex].gestureID + 1));
+            this.models.push(new Model.SingleDTWCore(this.state.data[this.curGestureIndex].gestureID + 1, this.state.data[this.curGestureIndex].name));
         }
 
         const editGesture = (gestureID: number) => {
@@ -198,7 +200,13 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ editGestureMode: true });
 
             // TODO: create "singular" gesture block for the current gesture
-            this.props.parent.updateFileAsync("custom.ts", this.models[this.curGestureIndex].GenerateBlock());
+            // this.props.parent.updateFileAsync("custom.ts", this.models[this.curGestureIndex].GenerateBlock());
+            if(this.generatedCodeBlocks[this.curGestureIndex] == undefined)
+                this.generatedCodeBlocks.push(this.models[this.curGestureIndex].GenerateBlock());
+            else
+                this.generatedCodeBlocks[this.curGestureIndex] = this.models[this.curGestureIndex].GenerateBlock();
+
+            this.props.parent.updateFileAsync("custom.ts", Model.SingleDTWCore.GenerateNamespace(this.generatedCodeBlocks));
         }
 
         const importGesture = () => {
@@ -303,6 +311,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
             let cloneData = this.state.data.slice();
             cloneData[gi].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
+            this.models[this.curGestureIndex].UpdateName(cloneData[gi].name);
 
             this.setState({ data: cloneData });
         }
