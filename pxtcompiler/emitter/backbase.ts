@@ -666,18 +666,13 @@ ${baseLabel}:
             this.emitHelper(asm) // using shared helper saves about 3% of binary size
             this.write(this.t.call_lbl(this.proc.label()))
 
-<<<<<<< HEAD
-            if (parms.length)
-                this.write(this.t.pop_locals(parms.length))
+            if (numpop)
+                this.write(this.t.pop_locals(numpop))
             if (this.t.hasCommonalize())
                 this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
             else
                 this.write(this.t.pop_fixed(["r6", "r5"]))
-=======
-            if (numpop)
-                this.write(this.t.pop_locals(numpop))
-            this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
->>>>>>> refs/remotes/origin/master
+
             this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }
