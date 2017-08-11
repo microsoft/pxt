@@ -29,7 +29,7 @@ namespace ts.pxtc {
     // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
-        hasCommonalize(): boolean{ return false }
+        hasCommonalize(): boolean { return false }
         nop() { return "TBD(nop)" }
         reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
         // Registers are stored on the stack in numerical order 
@@ -53,8 +53,7 @@ namespace ts.pxtc {
         // inf?  - control over size of referenced data
         // str?  - true=Store/false=Load
         // src - can range over
-
-        load_reg_src_off(reg: string, src: string, off: string, word?: boolean, 
+        load_reg_src_off(reg: string, src: string, off: string, word?: boolean,
                          store?: boolean, inf?: BitSizeInfo) { 
                              return "TBD(load_reg_src_off)"; 
         }
@@ -62,16 +61,15 @@ namespace ts.pxtc {
         call_lbl(lbl: string) { return "TBD(call_lbl)" }
         call_reg(reg: string) { return "TBD(call_reg)" }
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
-            return "TBD(vcall)" 
+            return "TBD(vcall)"
         }
-        prologue_vtable(arg_index: number, vtableShift: number) { 
-            return "TBD(prologue_vtable" 
+        prologue_vtable(arg_index: number, vtableShift: number) {
+            return "TBD(prologue_vtable"
         }
         lambda_prologue() { return "TBD(lambda_prologue)" }
         lambda_epilogue() { return "TBD(lambda_epilogue)" }
         load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
-
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
     }
 
