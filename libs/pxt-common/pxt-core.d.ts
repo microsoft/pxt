@@ -165,6 +165,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=48
+    //% help=text/char-at
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
@@ -185,6 +186,7 @@ declare interface String {
      * @param that String to compare to target string
      */
     //% shim=String_::compare
+    //% help=text/compare
     //% blockId="string_compare" block="compare %this=text| to %that" blockNamespace="text"
     compare(that: string): number;
 
@@ -194,6 +196,7 @@ declare interface String {
      * @param length number of characters to extract
      */
     //% shim=String_::substr length.defl=1000000
+    //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
 
@@ -209,10 +212,11 @@ declare interface String {
 }
 
 /**
-  * Converts A string to an integer.
+  * Convert a string to an integer.
   * @param s A string to convert into a number.
   */
 //% shim=String_::toNumber
+//% help=text/parse-int
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
 declare function parseInt(text: string): number;
 
@@ -237,6 +241,10 @@ declare interface Boolean {
     toString(): string;
 }
 
+/**
+ * Combine, split, and search text strings.
+*/
+//% blockNamespace="Text"
 declare namespace String {
 
     /**
@@ -249,7 +257,6 @@ declare namespace String {
     function fromCharCode(code: number): string;
 }
 
-
 declare interface Number {
     /**
      * Returns a string representation of a number.
@@ -258,6 +265,16 @@ declare interface Number {
     toString(): string;
 }
 
+/**
+ * Add, remove, and replace items in lists.
+*/
+//% blockNamespace="Arrays"
+declare namespace Array {
+}
+
+/**
+ * More complex operations with numbers.
+*/
 declare namespace Math {
     /**
      * Returns the value of a base expression taken to a specified power.

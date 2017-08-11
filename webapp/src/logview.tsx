@@ -17,11 +17,24 @@ export class LogView extends React.Component<{}, LogViewState> {
 
     constructor(props: any) {
         super(props);
+
+        // resolve chrome extension info
+        const serial = pxt.appTarget.serial || {};
+        let chromeExtension = serial.chromeExtension;
+        const m = /chromeserial=([a-z]+)/i.exec(window.location.href);
+        if (m) chromeExtension = m[1];
+
+        // init view
         this.view = new pxsim.logs.LogViewElement({
             maxEntries: 80,
             maxAccValues: 500,
             onClick: (es) => this.onClick(es),
-            onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() })
+            onTrendChartChanged: () => this.setState({ trends: this.view.hasTrends() }),
+            chromeExtension,
+            useHF2: serial.useHF2,
+            productId: serial.productId,
+            vendorId: serial.vendorId,
+            nameFilter: serial.nameFilter
         })
         this.state = {};
     }
@@ -36,7 +49,7 @@ export class LogView extends React.Component<{}, LogViewState> {
     }
 
     render() {
-        return <div/>
+        return <div />
     }
 
     componentDidUpdate() {
@@ -119,7 +132,7 @@ export class LogView extends React.Component<{}, LogViewState> {
 
         core.confirmAsync({
             logos: streaming ? ["https://az851932.vo.msecnd.net/pub/hjlxsmaf"] : undefined, // azure logo
-            header: pxt.appTarget.title + ' - ' + lf("Analyze Data"),
+            header: lf("Analyze Data"),
             hideAgree: true,
             disagreeLbl: lf("Close"),
             onLoaded: (_) => {

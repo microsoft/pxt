@@ -36,6 +36,7 @@ everything you throw at it. In particular, it is line based and doesn't take
 multi-line comments (other than doc comments) very well. To comment out a piece of C++
 code use `#if 0 .... #endif`.
 
+The [type mapping](/cpp2ts) from C++ to TypeScript is quite limited.
 Checkout the [microbit target](https://github.com/Microsoft/pxt-microbit) for an example.
 
 ## Auto-generation from the simulator
@@ -160,7 +161,6 @@ are usually used to wrap native C++ classes that require no reference
 counting. Thus, you also need to manually add the following TypeScript:
 
 ```typescript
-//% noRefCounting
 interface DevicePin {
     // no methods needed, they come from C++
 }
@@ -172,6 +172,5 @@ chaos will prevail (even though you might not see it at the beginning).
 You can also specify inheritance in such a declaration:
 
 ```typescript
-//% noRefCounting
 interface AnalogPin extends DigitalPin {}
 ```

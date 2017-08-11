@@ -340,7 +340,23 @@ the optionals on `digital write` will be now `D0`, `D1` and `A0`.
 Variables with `fixedInstance` annotations can be added anywhere, at the top-level,
 even in different libraries or namespaces.
 
-This feature is often used with `indexedInstance*` and `noRefCounting` attributes.
+This feature is often used with `indexedInstance*` attributes.
+
+It is also possible to define the instances to be used in blocks in TypeScript,
+for example:
+
+```typescript
+namespace pins {
+    //% fixedInstance whenUsed
+    export const A7 = new AnalogPin(7);
+}
+``` 
+
+The `whenUsed` annotation causes the variable to be only included in compilation
+when it is used, even though it is initialized with something that can possibly
+have side effects. This happens automatically when there is no initializer,
+or the initializer is a simple constant, but for function calls and constructors
+you have to include `whenUsed`.
 
 ## Ordering
 

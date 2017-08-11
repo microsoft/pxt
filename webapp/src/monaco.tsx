@@ -525,6 +525,8 @@ export class Editor extends srceditor.Editor {
             this.selectedCategoryRow.className = 'blocklyTreeRow';
         }
 
+        this.parent.setState({ hideEditorFloats: !clear });
+
         if (clear) {
             this.selectedCategoryRow = null;
         }
@@ -567,6 +569,8 @@ export class Editor extends srceditor.Editor {
             false, null, () => {
                 this.showAdvanced = !this.showAdvanced;
                 this.updateToolbox();
+                this.parent.setState({ hideEditorFloats: false });
+                this.resize();
             }, lf("{id:category}Advanced")))
         }
 
@@ -711,6 +715,8 @@ export class Editor extends srceditor.Editor {
                 monacoFlyout.style.display = 'none';
 
                 treerow.className = 'blocklyTreeRow';
+
+                this.parent.setState({ hideEditorFloats: false });
                 return;
             } else {
                 // Selected category

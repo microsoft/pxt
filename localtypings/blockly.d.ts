@@ -95,6 +95,7 @@ declare namespace goog {
             setRightToLeft(rightToLeft: boolean): void;
             addChild(child: Component, opt_render?: boolean): void;
             getChildAt(index: number): Component;
+            removeChildren(opt_unrender: boolean): void;
         }
         class CustomButton extends Control {
             title: string;
@@ -701,13 +702,18 @@ declare namespace Blockly {
             viewTop: number;
             viewWidth: number;
         }
-        variableIndexOf(name: string): number;
-        playAudio(name: string): void;
+        getVariable(name: string): number;
+        getVariablesOfType(type: string): VariableModel[];
+        getAudioManager(): WorkspaceAudio;
 
         registerButtonCallback(key: string, func: (button: Blockly.FlyoutButton) => void): void;
         registerToolboxCategoryCallback(a: string, b: Function): void;
 
         resizeContents(): void;
+    }
+
+    class WorkspaceAudio {
+        play(audio: string): void;
     }
 
     class WorkspaceSvg {
@@ -747,6 +753,7 @@ declare namespace Blockly {
             maxScale?: number;
             minScale?: number;
             scaleSpeed?: number;
+            startScale?: number;
         };
         enableRealTime?: boolean;
         rtl?: boolean;
@@ -774,9 +781,19 @@ declare namespace Blockly {
     }
 
     namespace Variables {
+        function generateVariableFieldXml_(variableModel: VariableModel): void;
         function allVariables(wp: Workspace): string[];
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
+        let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+    }
+
+    class VariableModel {
+        name: string;
+        type: string;
+        static compareByName: any;
+        constructor(wp: Workspace, name: string, type?: string, id?: string);
+        getId(): string;
     }
 
     namespace Procedures {

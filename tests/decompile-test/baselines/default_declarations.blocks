@@ -12,17 +12,19 @@
 <block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
-<shadow type="logic_boolean">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="logic_boolean">
 <field name="BOOL">TRUE</field>
-</shadow>
+</block>
 </value>
 <next>
 <block type="variables_set">
 <field name="VAR">z</field>
 <value name="VALUE">
-<shadow type="text">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
 <field name="TEXT">hello</field>
-</shadow>
+</block>
 </value>
 </block>
 </next>

@@ -10,19 +10,6 @@ import B = Blockly;
 let iface: pxt.worker.Iface
 
 namespace pxt.blocks {
-    export const reservedWords = [ "abstract", "any", "as", "break",
-    "case", "catch", "class", "continue", "const", "constructor", "debugger",
-    "declare", "default", "delete", "do", "else", "enum", "export", "extends",
-    "false", "finally", "for", "from", "function", "get", "if", "implements",
-    "import", "in", "instanceof", "interface", "is", "let", "module", "namespace",
-    "new", "null", "package", "private", "protected", "public",
-    "require", "global", "return", "set", "static", "super", "switch",
-    "symbol", "this", "throw", "true", "try", "type", "typeof", "var", "void",
-    "while", "with", "yield", "async", "await", "of",
-
-    // PXT Specific
-    "Math"];
-
     export function initWorker() {
         if (!iface) {
             iface = pxt.worker.makeWebWorker(pxt.webConfig.workerjs)
@@ -985,12 +972,7 @@ namespace pxt.blocks {
             return e.renames.oldToNew[name];
         }
 
-        let n = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_$]/g, a =>
-            ts.pxtc.isIdentifierPart(a.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) ? a : "");
-
-        if (!n || !ts.pxtc.isIdentifierStart(n.charCodeAt(0), ts.pxtc.ScriptTarget.ES5) || reservedWords.indexOf(n) !== -1) {
-            n = "_" + n;
-        }
+        let n = ts.pxtc.escapeIdentifier(name);
 
         if (e.renames.takenNames[n]) {
             let i = 2;
@@ -1578,9 +1560,9 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple) return;
+            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
             // is this an event?
-            else if (call && call.hasHandler) {
+            else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
                 // detect if same event is registered already
                 const key = callKey(e, b);

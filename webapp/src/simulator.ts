@@ -65,7 +65,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onDebuggerBreakpoint: function (brk) {
             updateDebuggerButtons(brk)
             let brkInfo = lastCompileResult.breakpoints[brk.breakpointId]
-            config.highlightStatement(brkInfo)
+            if (config) config.highlightStatement(brkInfo)
             if (brk.exceptionMessage) {
                 core.errorNotification(lf("Program Error: {0}", brk.exceptionMessage))
             }
@@ -73,14 +73,14 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onTraceMessage: function (msg) {
             let brkInfo = lastCompileResult.breakpoints[msg.breakpointId]
-            config.highlightStatement(brkInfo)
+            if (config) config.highlightStatement(brkInfo)
         },
         onDebuggerWarning: function (wrn) {
             for (let id of wrn.breakpointIds) {
                 let brkInfo = lastCompileResult.breakpoints[id]
                 if (brkInfo) {
                     if (!U.startsWith("pxt_modules/", brkInfo.fileName)) {
-                        config.highlightStatement(brkInfo)
+                        if (config) config.highlightStatement(brkInfo)
                         break
                     }
                 }
@@ -88,7 +88,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onDebuggerResume: function () {
             postSimEditorEvent("resumed");
-            config.highlightStatement(null)
+            if (config) config.highlightStatement(null)
             updateDebuggerButtons()
         },
         onStateChanged: function (state) {
@@ -153,7 +153,7 @@ function postSimEditorEvent(subtype: string, exception?: string) {
 }
 
 export function setState(editor: string, tutMode?: boolean) {
-    if (config.editor != editor) {
+    if (config && config.editor != editor) {
         config.editor = editor;
         config.highlightStatement(null)
         updateDebuggerButtons();

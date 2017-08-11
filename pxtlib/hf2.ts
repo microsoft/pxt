@@ -28,6 +28,8 @@ namespace pxt.HF2 {
         onSerial?: (v: Uint8Array, isErr: boolean) => void;
     }
 
+    export let mkPacketIOAsync: () => Promise<pxt.HF2.PacketIO>
+
     // see https://github.com/Microsoft/uf2/blob/master/hf2.md for full spec
     export const HF2_CMD_BININFO = 0x0001 // no arguments
     export const HF2_MODE_BOOTLOADER = 0x01
@@ -223,6 +225,7 @@ namespace pxt.HF2 {
         }
 
         private lock = new U.PromiseQueue();
+        rawMode = false;
         infoRaw: string;
         info: BootloaderInfo;
         pageSize: number;
@@ -254,7 +257,7 @@ namespace pxt.HF2 {
         reconnectAsync(first = false): Promise<void> {
             this.resetState()
             if (first) return this.initAsync()
-            log(`reconnect`);
+            log(`reconnect raw=${this.rawMode}`);
             return this.io.reconnectAsync()
                 .then(() => this.initAsync())
                 .catch(e => {
@@ -437,6 +440,8 @@ namespace pxt.HF2 {
         }
 
         private initAsync() {
+            if (this.rawMode)
+                return Promise.resolve()
             return Promise.resolve()
                 .then(() => this.talkAsync(HF2_CMD_BININFO))
                 .then(binfo => {

@@ -1,5 +1,10 @@
 
 namespace pxt.blocks.layout {
+    export interface FlowOptions {
+        ratio?: number;
+        useViewWidth?: boolean;
+    }
+
     export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs: B.Workspace, newXml: string): string {
         const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
         // position blocks
@@ -66,8 +71,22 @@ namespace pxt.blocks.layout {
         flowBlocks(blocks, ratio);
     }
 
-    export function flow(ws: B.Workspace, ratio?: number) {
-        flowBlocks(ws.getTopBlocks(true), ratio);
+    export function flow(ws: B.Workspace, opts?: FlowOptions) {
+        if (opts) {
+            if (opts.useViewWidth) {
+                const metrics = ws.getMetrics();
+
+                // Only use the width if in portrait, otherwise the blocks are too spread out
+                if (metrics.viewHeight > metrics.viewWidth) {
+                    flowBlocks(ws.getTopBlocks(true), undefined, metrics.viewWidth)
+                    return;
+                }
+            }
+            flowBlocks(ws.getTopBlocks(true), opts.ratio);
+        }
+        else {
+            flowBlocks(ws.getTopBlocks(true));
+        }
     }
 
     export function screenshotEnabled(): boolean {
@@ -87,8 +106,8 @@ namespace pxt.blocks.layout {
             });
     }
 
-    export function svgToPngAsync(svg: SVGElement, customCss: string, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
-        return blocklyToSvgAsync(svg, customCss, x, y, width, height)
+    export function svgToPngAsync(svg: SVGElement, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
+        return blocklyToSvgAsync(svg, x, y, width, height)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
                 return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
@@ -116,28 +135,6 @@ namespace pxt.blocks.layout {
         })
     }
 
-    const CUSTOM_CSS = `
-.blocklyMainBackground {
-    stroke:none !important;
-}
-
-.blocklyTreeLabel, .blocklyText, .blocklyHtmlInput {
-    font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
-}
-
-.rtl .blocklyText {
-    text-align:right;
-}
-
-.blocklyTreeLabel {
-    font-size:1.25rem !important;
-}
-
-.blocklyCheckbox {
-    fill: #ff3030 !important;
-    text-shadow: 0px 0px 6px #f00;
-    font-size: 17pt !important;
-}`;
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
     export function toSvgAsync(ws: B.Workspace): Promise<{
@@ -150,10 +147,10 @@ namespace pxt.blocks.layout {
         let sg = (ws as any).svgBlockCanvas_.cloneNode(true) as SVGGElement;
 
 
-        return blocklyToSvgAsync(sg, CUSTOM_CSS, bbox.x, bbox.y, bbox.width, bbox.height);
+        return blocklyToSvgAsync(sg, bbox.x, bbox.y, bbox.width, bbox.height);
     }
 
-    export function blocklyToSvgAsync(sg: SVGElement, customCss: string, x: number, y: number, width: number, height: number): Promise<{
+    export function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!sg.childNodes[0])
@@ -168,14 +165,19 @@ namespace pxt.blocks.layout {
             ${new XMLSerializer().serializeToString(sg)}
             </svg>`, "image/svg+xml");
         const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
-        // CSS may contain <, > which need to be stored in CDATA section
-        cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
-        xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+        const customCssHref = (document.getElementById("blocklycss") as HTMLLinkElement).href;
+        return pxt.BrowserUtils.loadAjaxAsync(customCssHref)
+            .then((customCss) => {
 
-        return expandImagesAsync(xsg)
-            .then(() => {
-                return { width: width, height: height, xml: documentToSvg(xsg) };
-            });
+            // CSS may contain <, > which need to be stored in CDATA section
+            cssLink.appendChild(xsg.createCDATASection((Blockly as any).Css.CONTENT.join('') + '\n\n' + customCss + '\n\n'));
+            xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+            return expandImagesAsync(xsg)
+                .then(() => {
+                    return { width: width, height: height, xml: documentToSvg(xsg) };
+                });
+            })
     }
 
     export function documentToSvg(xsg: Node): string {
@@ -213,18 +215,24 @@ namespace pxt.blocks.layout {
         return Promise.all(p).then(() => { })
     }
 
-    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62) {
+    function flowBlocks(blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
         const gap = 16;
         const marginx = 20;
         const marginy = 20;
 
-        // compute total block surface and infer width
-        let surface = 0;
-        for (let block of blocks) {
-            let s = block.getHeightWidth();
-            surface += s.width * s.height;
+        let maxx: number;
+        if (maxWidth > marginx) {
+            maxx = maxWidth - marginx;
         }
-        const maxx = Math.sqrt(surface) * ratio;
+        else {
+            // compute total block surface and infer width
+            let surface = 0;
+            for (let block of blocks) {
+                let s = block.getHeightWidth();
+                surface += s.width * s.height;
+            }
+            maxx = Math.sqrt(surface) * ratio;
+        }
 
         let insertx = marginx;
         let inserty = marginy;

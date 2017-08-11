@@ -1,3 +1,42 @@
 /*******************************
          Site Overrides
 *******************************/
+
+/* Force the grid in the start page to stack vertically as soon as 2 cards don't fit horizontally */
+@media only screen and (max-width: 1095px) {
+  .ui.welcomegrid.stackable.grid {
+    width: auto;
+    margin-left: 0em !important;
+    margin-right: 0em !important;
+  }
+  .ui.welcomegrid.stackable.grid > .row > .wide.column,
+  .ui.welcomegrid.stackable.grid > .wide.column,
+  .ui.welcomegrid.stackable.grid > .column.grid > .column,
+  .ui.welcomegrid.stackable.grid > .column.row > .column,
+  .ui.welcomegrid.stackable.grid > .row > .column,
+  .ui.welcomegrid.stackable.grid > .column:not(.row),
+  .ui.welcomegrid.grid > .stackable.stackable.row > .column {
+    width: 100% !important;
+    margin: 0em 0em !important;
+    box-shadow: none !important;
+    padding: (@stackableRowSpacing / 2) (@stackableGutter / 2) !important;
+  }
+  .ui.welcomegrid.stackable.grid:not(.vertically) > .row {
+    margin: 0em;
+    padding: 0em;
+  }
+
+  /* Coupling */
+  .ui.container > .ui.welcomegrid.stackable.grid > .column,
+  .ui.container > .ui.welcomegrid.stackable.grid > .row > .column {
+    padding-left: 0em !important;
+    padding-right: 0em !important;
+  }
+
+  /* Don't pad inside segment or nested grid */
+  .ui.grid .ui.welcomegrid.stackable.grid,
+  .ui.segment:not(.vertical) .ui.welcomegrid.stackable.page.grid {
+    margin-left: -(@stackableGutter / 2) !important;
+    margin-right: -(@stackableGutter / 2) !important;
+  }
+}

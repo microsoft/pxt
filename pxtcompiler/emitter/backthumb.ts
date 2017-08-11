@@ -15,6 +15,17 @@ namespace ts.pxtc {
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
         hasCommonalize() { return true }
+        stackAligned() {
+            return target.stackAlign && target.stackAlign > 1
+        }
+        pushLR() {
+            if (this.stackAligned()) return "push {lr, r3}  ; r3 for align"
+            else return "push {lr}"
+        }
+        popPC() {
+            if (this.stackAligned()) return "pop {pc, r3}  ; r3 for align"
+            else return "pop {pc}"
+        }
         nop() { return "nop" }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
@@ -51,7 +62,8 @@ ${lbl}:`
         }
 
         push_local(reg: string) { return `push {${reg}}` }
-        pop_locals(n: number) { return `add sp, #4*${n} ; pop locals${n}` }
+        push_locals(n: number) { return `sub sp, #4*${n} ; push locals ${n} (align)` }
+        pop_locals(n: number) { return `add sp, #4*${n} ; pop locals ${n}` }
         unconditional_branch(lbl: string) { return "bb " + lbl; }
         beq(lbl: string) { return "beq " + lbl }
         bne(lbl: string) { return "bne " + lbl }
@@ -107,9 +119,9 @@ ${lbl}:`
     bx r0
 .objlit:
     ${isSet ? "ldr r2, [sp, #0]" : ""}
-    push {lr}
+    ${this.pushLR()}
     bl ${mapMethod}
-    pop {pc}
+    ${this.popPC()}
 `;
         }
         prologue_vtable(arg_top_index: number, vtableShift: number) {
@@ -122,7 +134,7 @@ ${lbl}:`
         lambda_prologue() {
             return `
     @stackmark args
-    push {lr}
+    ${this.pushLR()}
     mov r5, r0
 `;
         }
@@ -130,7 +142,7 @@ ${lbl}:`
             return `
     bl pxtrt::getGlobalsPtr
     mov r6, r0
-    pop {pc}
+    ${this.popPC()}
     @stackempty args
 `
         }
@@ -184,9 +196,9 @@ _numops_${op}:
 
                 r += `
 .boxed:
-    push {lr}
+    ${this.pushLR()}
     bl numops::${op}
-    pop {pc}
+    ${this.popPC()}
 `
             }
 
@@ -197,10 +209,10 @@ _numops_toInt:
     bcc .over
     blx lr
 .over:
-    push {lr}
+    ${this.pushLR()}
     lsls r0, r0, #1
     bl pxt::toInt
-    pop {pc}
+    ${this.popPC()}
 
 _numops_fromInt:
     lsls r2, r0, #1
@@ -210,9 +222,9 @@ _numops_fromInt:
     adds r0, r2, #1
     blx lr
 .over2:
-    push {lr}
+    ${this.pushLR()}
     bl pxt::fromInt
-    pop {pc}
+    ${this.popPC()}
 `
 
             return r

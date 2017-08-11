@@ -285,7 +285,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
 
     if (!args[0]) throw new Error("filename missing");
     switch (cmd.toLowerCase()) {
-        case "upload": return uploadCrowdinAsync(branch, prj, key, args[0]);
+        case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
         case "download": {
             if (!args[1]) throw new Error("output path missing");
             const fn = path.basename(args[0]);
@@ -309,8 +309,9 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
     }
 }
 
-function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string): Promise<void> {
-    const fn = path.basename(p);
+function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
+    let fn = path.basename(p);
+    if (dir) fn = dir.replace(/[\\/]*$/g, '') + '/' + fn;
     const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
     console.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
     return pxt.crowdin.uploadTranslationAsync(branch, prj, key, fn, JSON.stringify(data));
@@ -1227,12 +1228,15 @@ export function buildTargetAsync(): Promise<void> {
         initPromise = Promise.resolve();
     }
 
+    if (nodeutil.existsDirSync("sim"))
+        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", ["sim"]));
+
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
         .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
         .then(buildTargetCoreAsync)
         .then(() => buildFolderAsync('cmds', true))
-        .then(buildSemanticUIAsync)
+        .then(() => buildSemanticUIAsync())
         .then(() => {
             if (fs.existsSync(path.join("editor", "tsconfig.json"))) {
                 const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
@@ -1308,7 +1312,9 @@ function buildFolderAndBrowserifyAsync(p: string, optional?: boolean, outputName
         const browserify = require('browserify');
         let b = browserify();
         nodeutil.allFiles(`built/${outputName}`).forEach((f) => {
-            b.add(f);
+            if (f.match(/\.js$/)) {
+                b.add(f);
+            }
         });
 
         let outFile = fs.createWriteStream(`built/${outputName}.js`, 'utf8');
@@ -1437,26 +1443,35 @@ function saveThemeJson(cfg: pxt.TargetBundle) {
     if (!cfg.appTheme.htmlDocIncludes)
         cfg.appTheme.htmlDocIncludes = {}
 
-    cfg.appTheme.locales = {}
-
-    let lpath = "docs/_locales"
-    if (fs.existsSync(lpath)) {
-        for (let loc of fs.readdirSync(lpath)) {
-            let fn = lpath + "/" + loc + "/_theme.json"
-            if (fs.existsSync(fn))
-                cfg.appTheme.locales[loc.toLowerCase()] = readJson(fn)
-        }
-    }
-
     if (fs.existsSync("built/templates.json")) {
         cfg.appTheme.htmlTemplates = readJson("built/templates.json")
     }
 
+    // extract strings from theme for target
+    const theme = cfg.appTheme;
+    let targetStrings: pxt.Map<string> = {};
+    if (theme.title) targetStrings[theme.title] = theme.title;
+    if (theme.name) targetStrings[theme.name] = theme.name;
+    if (theme.description) targetStrings[theme.description] = theme.description;
+    function walkDocs(docs: pxt.DocMenuEntry[]) {
+        if (!docs) return;
+        docs.forEach(doc => {
+            targetStrings[doc.name] = doc.name;
+            walkDocs(doc.subitems);
+        })
+    }
+    walkDocs(theme.docMenu);
+    let targetStringsSorted: pxt.Map<string> = {};
+    Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
+
+    // write files
     nodeutil.mkdirP("built");
     fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
+    fs.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
 }
 
-function buildSemanticUIAsync() {
+function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
+    const forceRedbuild = parsed && parsed.flags["force"] || false;
     if (!fs.existsSync(path.join("theme", "style.less")) ||
         !fs.existsSync(path.join("theme", "theme.config")))
         return Promise.resolve();
@@ -1469,7 +1484,7 @@ function buildSemanticUIAsync() {
             .some(stat => stat.mtime > csstime);
     }
 
-    if (!dirty) return Promise.resolve();
+    if (!dirty && !forceRedbuild) return Promise.resolve();
 
     nodeutil.mkdirP(path.join("built", "web"));
     return nodeutil.spawnAsync({
@@ -1489,6 +1504,13 @@ function buildSemanticUIAsync() {
         const rtlCss = rtlcss.process(semCss);
         pxt.debug("converting semantic css to rtl");
         fs.writeFileSync('built/web/rtlsemantic.css', rtlCss)
+    }).then(() => {
+        if (!fs.existsSync(path.join("theme", "blockly.less")))
+            return Promise.resolve();
+        return nodeutil.spawnAsync({
+            cmd: "node",
+            args: ["node_modules/less/bin/lessc", "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
+        })
     })
 }
 
@@ -2118,8 +2140,14 @@ class Host
             }
         }
         check(p)
+
         if (U.endsWith(filename, ".uf2"))
             fs.writeFileSync(p, contents, "base64")
+        else if (U.endsWith(filename, ".elf"))
+            fs.writeFileSync(p, contents, {
+                encoding: "base64",
+                mode: 0o777
+            })
         else
             fs.writeFileSync(p, contents, "utf8")
     }
@@ -3297,7 +3325,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }));
             }
 
-            console.log("Package built; hexsize=" + (res.outfiles[pxtc.BINARY_HEX] || "").length)
+            console.log(`Package built; written to ${pxt.outputName()}; size: ${(res.outfiles[pxt.outputName()] || "").length}`)
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
@@ -3378,7 +3406,9 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
         return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
             .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
     } else {
-        return uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key)
+        return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
+            .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
+            .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
             .then(() => uploadDocs
                 ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
                     // scan for docs in bundled packages
@@ -3387,7 +3417,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                         .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
                         // upload to crowdin
                         .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                    )).then(() => { }))
+                        )).then(() => { }))
                 : Promise.resolve());
     }
 }
@@ -3395,7 +3425,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
 
-    const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f));
+    const todo = nodeutil.allFiles(srcDir).filter(f => /\.md$/.test(f) && !/_locales/.test(f)).reverse();
     const knownFolders: Map<boolean> = {};
     const ensureFolderAsync = (crowdd: string) => {
         if (!knownFolders[crowdd]) {
@@ -3405,23 +3435,24 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         }
         return Promise.resolve();
     }
-    const nextFileAsync = (): Promise<void> => {
-        const f = todo.pop();
+    const nextFileAsync = (f: string): Promise<void> => {
         if (!f) return Promise.resolve();
         const crowdf = path.join(crowdinDir, f);
         const crowdd = path.dirname(crowdf);
         // check if directory has a .crowdinignore file
-        if (nodeutil.fileExistsSync(path.join(path.dirname(f), ".crowdinignore")))
+        if (nodeutil.fileExistsSync(path.join(path.dirname(f), ".crowdinignore"))) {
+            pxt.log(`skpping ${f} because of .crowdinignore file`)
             return Promise.resolve();
+        }
 
         const data = fs.readFileSync(f, 'utf8');
         pxt.log(`uploading ${f} to ${crowdf}`);
         return ensureFolderAsync(crowdd)
             .then(() => pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, data))
-            .then(nextFileAsync);
+            .then(() => nextFileAsync(todo.pop()));
     }
     return ensureFolderAsync(path.join(crowdinDir, srcDir))
-        .then(nextFileAsync);
+        .then(() => nextFileAsync(todo.pop()));
 }
 
 function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
@@ -3788,6 +3819,22 @@ export function hexdumpAsync(c: commandParser.ParsedCommand) {
     return Promise.resolve()
 }
 
+export function hex2uf2Async(c: commandParser.ParsedCommand) {
+    let filename = c.arguments[0]
+    let buf = fs.readFileSync(filename, "utf8").split(/\r?\n/)
+    if (buf[0][0] != ':') {
+        console.log("Not a hex file: " + filename)
+    } else {
+        let f = pxtc.UF2.newBlockFile()
+        pxtc.UF2.writeHex(f, buf)
+        let uf2buf = new Buffer(pxtc.UF2.serializeFile(f), "binary")
+        let uf2fn = filename.replace(/(\.hex)?$/i, ".uf2")
+        fs.writeFileSync(uf2fn, uf2buf)
+        console.log("Wrote: " + uf2fn)
+    }
+    return Promise.resolve()
+}
+
 function openVsCode(dirname: string) {
     child_process.exec(`code -g main.ts ${dirname}`); // notice this without a callback..
 }
@@ -4098,6 +4145,66 @@ function webstringsJson() {
     return missing
 }
 
+function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
+    let prereqs: string[] = [];
+    dirs.forEach(dir => prereqs = prereqs.concat(nodeutil.allFiles(dir, 20)));
+
+    let errCnt = 0;
+    let translationStrings: pxt.Map<string> = {}
+
+    function processLf(filename: string) {
+        if (!/\.(ts|tsx|html)$/.test(filename)) return
+        if (/\.d\.ts$/.test(filename)) return
+
+        pxt.debug(`extracting strings from${filename}`);
+        fs.readFileSync(filename, "utf8").split('\n').forEach((line: string, idx: number) => {
+            function err(msg: string) {
+                console.log("%s(%d): %s", filename, idx, msg);
+                errCnt++;
+            }
+
+            while (true) {
+                let newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                    let m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
+                    if (m) {
+                        try {
+                            let str = JSON.parse(m[1])
+                            translationStrings[str] = str;
+                        } catch (e) {
+                            err("cannot JSON-parse " + m[1])
+                        }
+                    } else {
+                        if (!/util\.ts$/.test(filename))
+                            err("invalid format of lf() argument: " + args)
+                    }
+                    return "BLAH " + args
+                })
+                if (newLine == line) return;
+                line = newLine
+            }
+        })
+    }
+
+    let fileCnt = 0;
+    prereqs.forEach(pth => {
+        fileCnt++;
+        processLf(pth);
+    });
+
+    let tr = Object.keys(translationStrings)
+    tr.sort()
+    let strings: pxt.Map<string> = {};
+    tr.forEach(function (k) { strings[k] = k; });
+
+    nodeutil.mkdirP('built');
+    fs.writeFileSync(`built/${output}.json`, JSON.stringify(strings, null, 2));
+
+    pxt.log("log strings: " + fileCnt + " files; " + tr.length + " strings -> " + output + ".json");
+    if (errCnt > 0)
+        pxt.log(`${errCnt} errors`);
+    return Promise.resolve();
+}
+
 function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
@@ -4205,7 +4312,7 @@ function initCommands() {
                 aliases: ["no-serial", "nos"]
             },
             sourceMaps: {
-                description: "include souorce maps when building ts files",
+                description: "include source maps when building ts files",
                 aliases: ["include-source-maps"]
             },
             pkg: { description: "serve packaged" },
@@ -4315,7 +4422,17 @@ function initCommands() {
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
     advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
-    advancedCommand("buildcss", "build required css files", buildSemanticUIAsync);
+
+    p.defineCommand({
+        name: "buildcss",
+        help: "build required css files",
+        flags: {
+            force: {
+                description: "force re-compile of less files"
+            }
+        }
+    }, buildSemanticUIAsync);
+
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
     advancedCommand("crowdin", "upload, download files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.arguments), "<cmd> <path> [output]")
@@ -4324,6 +4441,7 @@ function initCommands() {
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
+    advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
     p.defineCommand({
         name: "pyconv",
