@@ -54,8 +54,8 @@ namespace ts.pxtc {
         // str?  - true=Store/false=Load
         // src - can range over
         load_reg_src_off(reg: string, src: string, off: string, word?: boolean,
-                         store?: boolean, inf?: BitSizeInfo) { 
-                             return "TBD(load_reg_src_off)"; 
+                         store?: boolean, inf?: BitSizeInfo) {
+                             return "TBD(load_reg_src_off)";
         }
         rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
         call_lbl(lbl: string) { return "TBD(call_lbl)" }
