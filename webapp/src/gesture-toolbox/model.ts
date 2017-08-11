@@ -15,7 +15,7 @@ export class SingleDTWCore {
     public avgLength: number;
 
     private running: boolean;
-    
+
     // used for generating unique event source IDs to be used in the custom.ts gesture block's code:
     private static EVENT_SRC_ID_COUNTER: number = 0;
     private eventSourceId: number;

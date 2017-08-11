@@ -54,6 +54,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
     private recorder: Recorder.Recorder;
     private curGestureIndex: number;
+    private editedGestureName: string;
 
     private models: Model.SingleDTWCore[];
 
@@ -85,6 +86,12 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
 
 
     hide() {
+        if (this.state.editGestureMode) {
+            let cloneData = this.state.data.slice();
+            cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
+            this.setState({ data: cloneData });
+        }
+
         this.setState({ visible: false, editGestureMode: false });
         this.resetGraph();
     }
@@ -170,7 +177,10 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
         const targetTheme = pxt.appTarget.appTheme;
 
         const backToMain = () => {
-            this.setState({ editGestureMode: false });
+            let cloneData = this.state.data.slice();
+            cloneData[this.curGestureIndex].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
+            this.setState({ editGestureMode: false, data: cloneData });
+
             this.resetGraph();
         }
 
@@ -306,14 +316,19 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             }
         }
 
-        const renameGesture = (gid: number) => {
-            let gi = this.getGestureIndex(gid);
+        // const renameGesture = (gid: number) => {
+        //     let gi = this.getGestureIndex(gid);
 
-            let cloneData = this.state.data.slice();
-            cloneData[gi].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
-            this.models[this.curGestureIndex].UpdateName(cloneData[gi].name);
+        //     cloneData[gi].name = (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value;
+        //     let cloneData = this.state.data.slice();
+        //     this.models[this.curGestureIndex].UpdateName(cloneData[gi].name);
 
-            this.setState({ data: cloneData });
+        //     this.setState({ data: cloneData });
+        // }
+
+        const renameGesture = (event: any) => {
+            (ReactDOM.findDOMNode(this.refs["gesture-name-input"]) as HTMLInputElement).value = event.target.value;
+            this.editedGestureName = event.target.value;
         }
 
         const colossalStyle = { fontSize: "5rem" };
@@ -374,20 +389,20 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                     this.state.data.map((gesture) =>
                                         <div style={containerStyle} className="ui segments link" onClick={() => {editGesture(gesture.gestureID)}}>
                                             <div className="ui segment inverted teal" style={headerStyle}>
-                                                <div className="ui label">
+                                                <div className="ui header inverted left floated">
                                                     {gesture.name}
                                                 </div>
                                                 <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(gesture.gestureID)}}>
                                                     <i className="icon cloud download"></i>
                                                 </button>
-                                                <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
+                                                {/* <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(gesture.gestureID)}}>
                                                     <i className="icon puzzle"></i>
                                                     &nbsp;Create Block
-                                                </button>
+                                                </button> */}
                                             </div>
                                             <div className="ui segment">
                                                 <div className="ui grid">
-                                                    <video style={videoStyle} src={gesture.displayVideo} autoPlay loop></video>
+                                                    <video style={videoStyle} className="flipped-video" src={gesture.displayVideo} autoPlay loop></video>
                                                     <GraphCard
                                                         key={ gesture.gestureID }
                                                         editable={ false }
@@ -412,7 +427,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                             <div className="four wide column">
                                 {
                                     this.state.connected ?
-                                    <video id="webcam-video"></video>
+                                    <video id="webcam-video" className="flipped-video"></video>
                                     :
                                     <div>Not Connected</div>
                                 }
@@ -463,20 +478,20 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                         <div>
                             <div style={containerStyle} className="ui segments">
                                 <div className="ui segment inverted teal" style={headerStyle}>
-                                    <div className="ui action input mini">
-                                        <input width="25" type="text" ref="gesture-name-input" placeholder={this.state.data[this.curGestureIndex].name}></input>
-                                        <button onClick={() => renameGesture(this.state.data[this.curGestureIndex].gestureID)} className="ui right labeled icon button compact tiny">
+                                    <div className="ui input">
+                                        <input width="25" type="text" ref="gesture-name-input" value={this.state.data[this.curGestureIndex].name} onChange={renameGesture}></input>
+                                    </div>
+                                        {/* <button className="ui right labeled icon button compact tiny">
                                             <i className="edit icon"></i>
                                             Rename
-                                        </button>
-                                    </div>
-                                    <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(this.state.data[this.curGestureIndex].gestureID)}}>
+                                        </button> */}
+                                    {/* <button className="ui icon button blue inverted compact tiny right floated" onClick={() => {downloadGesture(this.state.data[this.curGestureIndex].gestureID)}}>
                                         <i className="icon cloud download"></i>
                                     </button>
                                     <button className="ui icon button violet inverted compact tiny right floated" onClick={() => {createGestureBlock(this.state.data[this.curGestureIndex].gestureID)}}>
                                         <i className="icon puzzle"></i>
                                         &nbsp;Create Block
-                                    </button>
+                                    </button> */}
                                 </div>
                                 <div className="ui segment">
                                     <div className="ui grid">
@@ -484,7 +499,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                             this.state.data[this.curGestureIndex].gestures.length == 0 ?
                                             <video style={videoStyle} src="" autoPlay loop></video>
                                             :
-                                            <video style={videoStyle} src={this.state.data[this.curGestureIndex].displayVideo} autoPlay loop></video>
+                                            <video style={videoStyle} className="flipped-video" src={this.state.data[this.curGestureIndex].displayVideo} autoPlay loop></video>
                                         }
                                         {
                                             this.state.data[this.curGestureIndex].gestures.length == 0 ?
