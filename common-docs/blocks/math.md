@@ -25,7 +25,7 @@ num = 6.7
 num = 10.083
 ```
 
-## Arithmetic binary operation (+, -, *, /)
+## Arithmetic binary operation (+, -, \*, /)
 
 The operations for basic arithmetic: add, subtract, multiply, and divide.
 
@@ -70,7 +70,7 @@ let maxval = Math.max(8, 2);
 
 ## Random value
 
-Make up any number from a mimimum value to a some maximum value. If you want a random number up to
+Make up any number from a minimum value to a some maximum value. If you want a random number up to
 100, say: **Math.randomRange(0, 100)**.
 
 ```block
@@ -128,7 +128,7 @@ it's _hypotenuse_.
 What's the sine of 60 degrees? **Math.sin(60 \* Math.PI / 180)** equals 0.5. The vertical side of a right triangle
 is one half the length of the longest side when the opposite angle is 60 degrees.
 
-```block
+```typescript
 let ySide = Math.sin(60 * Math.PI / 180)
 ```
 
@@ -142,7 +142,7 @@ What's the cosine of 45 degrees? **Math.cos(45 \* Math.PI / 180)** equals 0.707.
 of a right triangle is about 70 percent of the length of the longest side when the angle between them
 is 45 degrees.
 
-```block
+```typescript
 let xSide = Math.cos(45 * Math.PI / 180)
 ```
 
@@ -160,3 +160,7 @@ temperature value of Fahrenheit (something between freezing and boiling maybe) t
 let dogsAge = 7
 let peoplesAge = Math.map(dogsAge, 1, 16, 15, 87)
 ```
+
+## See also
+
+[randomRange](/reference/math/random-range)
