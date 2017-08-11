@@ -222,7 +222,6 @@ namespace pxt.blocks {
 
                     if (nsn && nsn.attributes.color) {
                         category.setAttribute("colour", nsn.attributes.color);
-                        appendNamespaceCss(catName, nsn.attributes.color);
                     }
                     else if (getNamespaceColor(ns)) {
                         category.setAttribute("colour", getNamespaceColor(ns));
@@ -942,6 +941,8 @@ namespace pxt.blocks {
             for (let i = 0; i < cats.length; i++) {
                 cats[i].setAttribute('name',
                     Util.rlf(`{id:category}${cats[i].getAttribute('name')}`, []));
+                // Append Namespace CSS
+                appendNamespaceCss(cats[i].getAttribute('name'), cats[i].getAttribute('colour'));
             }
 
             // update category colors and add heading
