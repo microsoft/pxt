@@ -36,6 +36,7 @@ namespace ts.pxtc {
         proc_setup(main?: boolean) { return "TBD(proc_setup)" }
         push_fixed(reg: string[]) { return "TBD(push_fixed)" }
         push_local(reg: string) { return "TBD(push_local)" }
+        push_locals(n: number) { return "TBD(push_locals)" }
         pop_fixed(reg: string[]) { return "TBD(pop_fixed)" }
         pop_locals(n: number) { return "TBD(pop_locals)" }
         proc_return() { return "TBD(proc_return)" }
