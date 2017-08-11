@@ -49,6 +49,7 @@ namespace pxt.docs.codeCard {
             if (card.header) div(h, 'description', 'span', card.header);
         }
 
+        const name = (options.shortName ? card.shortName : '') || card.name;
         let img = div(r, "ui image" + (card.responsive ? " tall landscape only" : ""));
 
         if (card.label) {
@@ -79,10 +80,11 @@ namespace pxt.docs.codeCard {
             let image = document.createElement("img") as HTMLImageElement;
             image.className = "ui image";
             image.src = card.imageUrl;
+            image.alt = name;
+            image.setAttribute("role", "presentation");
             img.appendChild(image)
         }
 
-        const name = (options.shortName ? card.shortName : '') || card.name;
         if (name || card.description) {
             let ct = div(r, "ui content");
             if (name) {

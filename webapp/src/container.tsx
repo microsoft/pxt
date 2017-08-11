@@ -116,12 +116,12 @@ export class SideDocs extends data.Component<ISettingsProps, {}> {
                 {state.sideDocsCollapsed ? <i className={`icon large inverted chevron left hover`}></i> : undefined }
             </button>
             <div id="sidedocs">
+                <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
                 <div id="sidedocsbar">
-                    <h3><a className="ui icon link" role="link" tabIndex={0} data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } title={lf("Open documentation in new tab") } onClick={() => this.popOut() } >
+                    <a className="ui icon link" role="link" tabIndex={0} data-content={lf("Open documentation in new tab") } aria-label={lf("Open documentation in new tab") } onClick={() => this.popOut() } >
                         <i className="external icon"></i>
-                    </a></h3>
+                    </a>
                 </div>
-                <iframe id="sidedocsframe" src={docsUrl} role="complementary" aria-atomic="true" aria-live="assertive" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
             </div>
         </div>
     }
