@@ -316,6 +316,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
             this.setState({ data: cloneData });
         }
 
+        const colossalStyle = { fontSize: "5rem" };
         const headerStyle = { height: "60px" };
         const videoStyle = { height: "258px", margin: "15px 0 15px 0" };
         const mainGraphStyle = { margin: "15px 15px 15px 0" };
@@ -439,7 +440,7 @@ export class GestureToolbox extends data.Component<ISettingsProps, GestureToolbo
                                 {
                                     this.state.connected ?
                                     <div ref={initRecorder}>
-                                        <button id="record-btn" className="circular ui icon button massive">
+                                        <button id="record-btn" className="circular ui icon button" style={colossalStyle}>
                                             <i className="icon record"></i>
                                         </button>
                                         <br/>
