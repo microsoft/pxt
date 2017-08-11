@@ -118,7 +118,7 @@ export class RecognitionOverlay {
             .attr("y", 0)
             .attr("width", width) //TODO: should initialize all of these with the cropStart/End values
             .attr("height", this.overlayHeight)
-            .attr("fill", "rgba(0, 0, 0, 0.5)");
+            .attr("fill", "rgba(0, 255, 0, 0.25)");
         
         this.activeMatches.push(match);
         this.activeRectangles.push(rect);

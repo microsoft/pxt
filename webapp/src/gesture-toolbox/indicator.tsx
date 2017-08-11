@@ -5,10 +5,13 @@ export interface IConnectionIndicator { parent?: any, onConnStatChangeHandler?: 
 export interface ConnectionState { connected?: boolean, reconnecting?: boolean }
 export class ConnectionIndicator extends React.Component<IConnectionIndicator, ConnectionState> {
     private intervalID: number;
+    private attemptTimes: number;
 
     constructor(props: IConnectionIndicator) {
         super(props);
         this.props = props;
+
+        this.attemptTimes = 0;
         
         if (Date.now() - this.props.parent.lastConnectedTime < 2500)
             this.state = { connected: true, reconnecting: false };
@@ -31,6 +34,14 @@ export class ConnectionIndicator extends React.Component<IConnectionIndicator, C
 
                     if (hidbridge.shouldUse())
                         hidbridge.initAsync();
+                }
+                else {
+                    this.attemptTimes++;
+
+                    if (this.attemptTimes == 3) {
+                        this.attemptTimes = 0;
+                        this.setState({ connected: false, reconnecting: false });
+                    }
                 }
             }
             else {
