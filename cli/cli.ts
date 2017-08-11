@@ -992,7 +992,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                     content = content.replace(/\/(cdn|sim)\//g, "/blb/")
                 }
 
-                if (opts.minify && mime == "application/javascript" && fileName !== "target.js") {
+                if (minified) {
                     const res = uglify.minify(content);
                     if (!res.error) {
                         content = res.code;
@@ -3566,7 +3566,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string || "";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
-    const minify = parsed.flags["minify"] as boolean;
+    const minify = !!parsed.flags["minify"];
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
