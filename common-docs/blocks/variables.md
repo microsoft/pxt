@@ -19,3 +19,7 @@ let y = x;
 let x = 0;
 x+=1;
 ```
+
+## See also #seealso
+
+[var](/blocks/variables/var), [assign](/blocks/variables/assign), [change](/blocks/variables/change)
