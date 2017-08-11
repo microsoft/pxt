@@ -5,6 +5,8 @@ namespace ts.pxtc.decompiler {
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
 
+    const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
+
     const numberType = "math_number";
     const stringType = "text";
     const booleanType = "logic_boolean";
@@ -1883,9 +1885,6 @@ ${output}</xml>`;
 
     function checkExpression(n: ts.Node, blocksInfo: BlocksInfo): string {
         switch (n.kind) {
-            case SK.StringLiteral:
-            case SK.FirstTemplateToken:
-            case SK.NoSubstitutionTemplateLiteral:
             case SK.NumericLiteral:
             case SK.TrueKeyword:
             case SK.FalseKeyword:
@@ -1895,6 +1894,10 @@ ${output}</xml>`;
                 return undefined;
             case SK.ParenthesizedExpression:
                 return checkExpression((n as ts.ParenthesizedExpression).expression, blocksInfo);
+            case SK.StringLiteral:
+            case SK.FirstTemplateToken:
+            case SK.NoSubstitutionTemplateLiteral:
+                return checkStringLiteral(n as ts.StringLiteral);
             case SK.Identifier:
                 return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
             case SK.BinaryExpression:
@@ -1911,6 +1914,10 @@ ${output}</xml>`;
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
 
+        function checkStringLiteral(n: ts.StringLiteral) {
+            const literal = n.text;
+            return validStringRegex.test(literal) ? undefined : Util.lf("Only whitespace character allowed in string literals is space");
+        }
 
         function checkPropertyAccessExpression(n: ts.PropertyAccessExpression) {
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
